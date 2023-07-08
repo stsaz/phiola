@@ -102,6 +102,7 @@ static void info_qu_add(struct cmd_info *p, ffstr *fn)
 			.peaks_crc = p->pcm_crc,
 		},
 		.info_only = !p->pcm_peaks,
+		.print_tags = p->tags,
 		.print_time = p->perf,
 	};
 

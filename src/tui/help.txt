@@ -1,0 +1,22 @@
+Commands:
+
+Key     Command
+===============
+Space   Play/Pause
+s       Stop
+n       Next track
+p       Previous track
+
+Right   Seek forward
+          +Alt   medium step
+          +Ctrl  large step
+Left    Seek backward
+
+Up      Volume up
+Down    Volume down
+m       Mute
+
+i       Show tags
+r       "Choose random track" setting: on/off
+h       Show help
+q       Quit

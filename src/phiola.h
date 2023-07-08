@@ -211,6 +211,7 @@ struct phi_track_conf {
 
 	uint print_time :1;
 	uint info_only :1;
+	uint print_tags :1;
 	uint stream_copy :1;
 };
 
