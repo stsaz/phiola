@@ -204,6 +204,16 @@ public class Svc extends MediaBrowserServiceCompat {
 	 * Set session queue
 	 */
 	void sess_setqueue(int how, int pos) {
+		String[] l = { "1", "2", "3" };
+		ArrayList<MediaSessionCompat.QueueItem> q = new ArrayList<>(l.length);
+		int id = 0;
+		for (String s : l) {
+			MediaDescriptionCompat.Builder b = new MediaDescriptionCompat.Builder();
+			b.setMediaId(s);
+			MediaSessionCompat.QueueItem i = new MediaSessionCompat.QueueItem(b.build(), id++);
+			q.add(i);
+		}
+		sess.setQueue(q);
 	}
 
 	/**

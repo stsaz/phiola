@@ -197,7 +197,7 @@ static const struct cmd_arg cmd_rec[] = {
 	{ "-gain",			'd',	O(gain) },
 	{ "-help",			0,		rec_help },
 	{ "-loopback",		'1',	O(loopback) },
-	{ "-meta",			'S',	rec_meta },
+	{ "-meta",			'+S',	rec_meta },
 	{ "-o",				's',	O(output) },
 	{ "-opus-quality",	'u',	O(opus_q) },
 	{ "-out",			's',	O(output) },

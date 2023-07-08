@@ -7,17 +7,20 @@
 #include <FFOS/process.h>
 #include <android/log.h>
 
+#define PJC_META  "com/github/stsaz/phiola/Phiola$Meta"
+#define PJT_META  "Lcom/github/stsaz/phiola/Phiola$Meta;"
+
 struct phiola_jni {
 	phi_core *core;
 	const phi_queue_if *queue;
 	const phi_meta_if *metaif;
-	jobject thiz;
+	jclass Phiola_Meta;
 
 	ffbyte debug;
 
 	jmethodID Phiola_RecordCallback_on_finish;
 	jmethodID Phiola_ConvertCallback_on_finish;
-	jmethodID Phiola_Callback_on_info_finish;
+	jmethodID Phiola_MetaCallback_on_finish;
 };
 static struct phiola_jni *x;
 static JavaVM *jvm;
@@ -130,6 +133,7 @@ Java_com_github_stsaz_phiola_Phiola_init(JNIEnv *env, jobject thiz)
 
 	x = ffmem_new(struct phiola_jni);
 	if (!!conf()) return;
+	x->Phiola_Meta = jni_global_ref(jni_class(PJC_META));
 	core();
 	phi_core_run();
 	dbglog("%s: exit", __func__);
@@ -142,6 +146,7 @@ Java_com_github_stsaz_phiola_Phiola_destroy(JNIEnv *env, jobject thiz)
 
 	dbglog("%s: enter", __func__);
 	phi_core_destroy();
+	jni_global_unref(x->Phiola_Meta);
 	ffmem_free(x);  x = NULL;
 }
 

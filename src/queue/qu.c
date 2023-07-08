@@ -6,6 +6,7 @@
 
 extern const phi_core *core;
 extern const phi_track_if phi_track_iface;
+static const phi_meta_if *phi_metaif;
 #define dbglog(...)  phi_dbglog(core, "queue", NULL, __VA_ARGS__)
 
 struct queue_mgr {
@@ -54,6 +55,9 @@ void qm_init()
 
 static void qm_add(struct phi_queue *q)
 {
+	if (!phi_metaif)
+		phi_metaif = core->mod("format.meta");
+
 	*ffvec_pushT(&qm->lists, struct phi_queue*) = q;
 	dbglog("added list [%L]", qm->lists.len);
 }

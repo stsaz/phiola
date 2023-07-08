@@ -57,7 +57,7 @@ class PList {
 		q[1] = 0;
 	}
 
-	private long sel() {
+	long sel() {
 		return q[qi];
 	}
 
@@ -96,12 +96,12 @@ class PList {
 	}
 
 	QueueItemInfo getInfo(int i) {
-		core.phiola.quCmd(sel(), Phiola.QUCOM_META, i);
+		Phiola.Meta m = core.phiola.quMeta(sel(), i);
 		QueueItemInfo qi = new QueueItemInfo();
-		qi.url = core.phiola.url;
-		qi.artist = core.phiola.artist;
-		qi.title = core.phiola.title;
-		qi.length_sec = (int)core.phiola.length_msec / 1000;
+		qi.url = m.url;
+		qi.artist = m.artist;
+		qi.title = m.title;
+		qi.length_sec = m.length_msec / 1000;
 		core.dbglog(TAG, "getInfo: %s '%s' '%s'", qi.url, qi.artist, qi.title);
 		return qi;
 	}
@@ -215,6 +215,10 @@ class Queue {
 			i = 0;
 		pl.qi = i;
 		return i;
+	}
+
+	long cur_q() {
+		return pl.sel();
 	}
 
 	/** Add currently playing track to L2 */

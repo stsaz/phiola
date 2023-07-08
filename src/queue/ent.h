@@ -13,10 +13,20 @@ struct q_entry {
 	uint play_next_on_close :1;
 };
 
+static void meta_destroy(ffvec *meta)
+{
+	char **it;
+	FFSLICE_WALK(meta, it) {
+		ffmem_free(*it);
+	}
+	ffvec_free(meta);
+}
+
 static inline void track_conf_destroy(struct phi_track_conf *c)
 {
 	ffmem_free(c->ifile.name);
 	ffmem_free(c->ofile.name);
+	meta_destroy(&c->meta);
 }
 
 static void qe_free(struct q_entry *e)
@@ -45,8 +55,15 @@ static void* qe_open(phi_track *t) { return t->qent; }
 static void qe_close(void *f, phi_track *t)
 {
 	struct q_entry *e = f;
-	if (e->trk == t)
+	if (e->trk == t) {
 		e->trk = NULL;
+
+		if (!e->q->conf.conversion) {
+			meta_destroy(&e->pub.conf.meta);
+			e->pub.conf.meta = t->meta; // Remember the tags we read from file in this track
+			ffvec_null(&t->meta);
+		}
+	}
 	e->q->active_n--;
 	if (!(t->chain_flags & PHI_FSTOP)
 		&& (!e->expand || e->play_next_on_close))
@@ -89,6 +106,12 @@ static int qe_play(struct q_entry *e)
 			|| !track->filter(t, core->mod("format.auto-write"), 0)
 			|| !track->filter(t, core->mod("core.auto-output"), 0))
 			goto err;
+
+		char **it;
+		FFSLICE_WALK(&t->conf.meta, it) {
+			phi_metaif->set(&t->meta, FFSTR_Z(*it), FFSTR_Z(*(it + 1)));
+			it++;
+		}
 
 	} else if (c->info_only || c->afilter.peaks_info) {
 		if (!track->filter(t, e->q->conf.first_filter, 0)

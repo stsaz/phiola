@@ -19,10 +19,11 @@ Arrays:
 	jni_jsa_sza
 	jni_str_jba
 Object:
+	jni_obj_new
 	jni_obj_jo jni_obj_jo_set
 	jni_obj_sz_set jni_obj_sz_setf
 	jni_obj_long jni_obj_long_set
-	jni_obj_int
+	jni_obj_int jni_obj_int_set
 	jni_obj_bool
 Functions:
 	jni_func jni_call_void
@@ -148,6 +149,10 @@ static inline jobjectArray jni_jsa_sza(JNIEnv *env, char **asz, ffsize n)
 }
 
 
+/** object = new */
+#define	jni_obj_new(jc, ...) \
+	(*env)->NewObject(env, jc, __VA_ARGS__)
+
 /** obj.object = VAL */
 #define	jni_obj_jo_set(jobj, jfield, val) \
 	(*env)->SetObjectField(env, jobj, jfield, val)
@@ -185,6 +190,10 @@ static inline void jni_obj_sz_setf(JNIEnv *env, jobject jo, jfieldID jf, const c
 /** int = obj.int */
 #define jni_obj_int(jobj, jfield) \
 	(*env)->GetIntField(env, jobj, jfield)
+
+/** obj.int = VAL */
+#define	jni_obj_int_set(jobj, jfield, val) \
+	(*env)->SetIntField(env, jobj, jfield, val)
 
 /** bool = obj.bool */
 #define jni_obj_bool(jobj, jfield) \

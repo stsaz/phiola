@@ -54,7 +54,7 @@ static inline const char* pcm_format_str(uint f)
 	return ffaudio_formats_str[i];
 }
 
-void this_meta_fill(JNIEnv *env, jobject thiz, ffvec *meta, const char *filename, uint64 msec)
+jobject meta_create(JNIEnv *env, ffvec *meta, const char *filename, uint64 msec)
 {
 	char *artist, *title;
 	ffstr val;
@@ -68,35 +68,24 @@ void this_meta_fill(JNIEnv *env, jobject thiz, ffvec *meta, const char *filename
 	else
 		title = ffsz_dup("");
 
-	jclass jc = jni_class_obj(thiz);
-	jfieldID jf;
+	jclass jc = x->Phiola_Meta;
+	jmethodID init = jni_func(jc, "<init>", "()V");
+	jobject jmeta = jni_obj_new(jc, init);
 
-	// this.url = ...
-	jf = jni_field(jc, "url", JNI_TSTR);
-	jni_obj_sz_set(env, thiz, jf, filename);
-
-	// this.artist = ...
-	jf = jni_field(jc, "artist", JNI_TSTR);
-	jni_obj_sz_set(env, thiz, jf, artist);
-
-	// this.title = ...
-	jf = jni_field(jc, "title", JNI_TSTR);
-	jni_obj_sz_set(env, thiz, jf, title);
-
-	// this.length_msec = ...
-	jf = jni_field(jc, "length_msec", JNI_TLONG);
-	jni_obj_long_set(thiz, jf, msec);
+	jni_obj_sz_set(env, jmeta, jni_field(jc, "url", JNI_TSTR), filename);
+	jni_obj_sz_set(env, jmeta, jni_field(jc, "artist", JNI_TSTR), artist);
+	jni_obj_sz_set(env, jmeta, jni_field(jc, "title", JNI_TSTR), title);
+	jni_obj_int_set(jmeta, jni_field(jc, "length_msec", JNI_TINT), msec);
 
 	ffmem_free(artist);
 	ffmem_free(title);
+	return jmeta;
 }
 
-static ffvec info_prepare(JNIEnv *env, jobject thiz, jclass jc, phi_track *t)
+static ffvec info_prepare(JNIEnv *env, jobject jmeta, jclass jc_meta, phi_track *t)
 {
 	ffvec info = {};
-	uint64 msec = info_add(&info, t);
-
-	this_meta_fill(env, thiz, &t->meta, t->conf.ifile.name, msec);
+	info_add(&info, t);
 
 	char *format = ffsz_allocfmt("%ukbps %s %uHz %s %s"
 		, (t->audio.bitrate + 500) / 1000
@@ -104,7 +93,7 @@ static ffvec info_prepare(JNIEnv *env, jobject thiz, jclass jc, phi_track *t)
 		, t->audio.format.rate
 		, channel_str(t->audio.format.channels)
 		, pcm_format_str(t->audio.format.format));
-	jni_obj_sz_set(env, thiz, jni_field(jc, "info", JNI_TSTR), format);
+	jni_obj_sz_set(env, jmeta, jni_field(jc_meta, "info", JNI_TSTR), format);
 	*ffvec_pushT(&info, char*) = ffsz_dup("format");
 	*ffvec_pushT(&info, char*) = format;
 
@@ -126,6 +115,15 @@ static ffvec info_prepare(JNIEnv *env, jobject thiz, jclass jc, phi_track *t)
 	return info;
 }
 
+static void meta_queue_store(phi_track *t)
+{
+	struct phi_queue_entry *qe = t->qent;
+	x->metaif->destroy(&qe->conf.meta);
+	qe->conf.meta = t->meta; // Remember the tags we read from file in this track
+	qe->length_msec = (t->audio.format.rate) ? pcm_time(t->audio.total, t->audio.format.rate) : 0;
+	ffvec_null(&t->meta);
+}
+
 static void infotrk_close(void *ctx, phi_track *t)
 {
 	JNIEnv *env;
@@ -136,11 +134,15 @@ static void infotrk_close(void *ctx, phi_track *t)
 	}
 
 	if (t->chain_flags & PHI_FFINISHED) {
-		jclass jc = jni_class_obj(x->thiz);
-		ffvec info = info_prepare(env, x->thiz, jc, t);
+		uint64 msec = (t->audio.format.rate) ? pcm_time(t->audio.total, t->audio.format.rate) : 0;
+		jobject jmeta = meta_create(env, &t->meta, t->conf.ifile.name, msec);
+
+		jclass jc = jni_class_obj(jmeta);
+		ffvec info = info_prepare(env, jmeta, jc, t);
+		meta_queue_store(t);
 
 		jobjectArray jsa = jni_jsa_sza(env, info.ptr, info.len);
-		jni_obj_jo_set(x->thiz, jni_field(jc, "meta_data", JNI_TARR JNI_TSTR), jsa);
+		jni_obj_jo_set(jmeta, jni_field(jc, "meta", JNI_TARR JNI_TSTR), jsa);
 
 		char **it;
 		FFSLICE_WALK(&info, it) {
@@ -149,12 +151,11 @@ static void infotrk_close(void *ctx, phi_track *t)
 		ffvec_free(&info);
 
 		jobject jo = t->udata;
-		jni_call_void(jo, x->Phiola_Callback_on_info_finish);
+		jni_call_void(jo, x->Phiola_MetaCallback_on_finish, jmeta);
 	}
 
 end:
 	jni_global_unref(t->udata);
-	jni_global_unref(x->thiz);
 	jni_detach(jvm);
 }
 
@@ -170,7 +171,7 @@ static const phi_filter phi_android_info_guard = {
 
 
 JNIEXPORT jint JNICALL
-Java_com_github_stsaz_phiola_Phiola_meta(JNIEnv *env, jobject thiz, jint list_item, jstring jfilepath, jobject jcb)
+Java_com_github_stsaz_phiola_Phiola_meta(JNIEnv *env, jobject thiz, jlong q, jint list_item, jstring jfilepath, jobject jcb)
 {
 	dbglog("%s: enter", __func__);
 	const char *fn = jni_sz_js(jfilepath);
@@ -188,9 +189,10 @@ Java_com_github_stsaz_phiola_Phiola_meta(JNIEnv *env, jobject thiz, jint list_it
 		|| !track->filter(t, x->core->mod("format.detect"), 0))
 		goto end;
 
-	x->Phiola_Callback_on_info_finish = jni_func(jni_class_obj(jcb), "on_finish", "()V");
+	t->qent = x->queue->at((void*)q, list_item);
+
+	x->Phiola_MetaCallback_on_finish = jni_func(jni_class_obj(jcb), "on_finish", "(" PJT_META ")V");
 	t->udata = jni_global_ref(jcb);
-	x->thiz = jni_global_ref(thiz);
 
 	track->start(t);
 	t = NULL;

@@ -319,6 +319,30 @@ class Track {
 		tplay.title = "";
 		tplay.info = "";
 
+		if (!core.setts.no_tags) {
+			core.phiola.meta(core.queue().cur_q(), list_item, url,
+				(meta) -> {
+					Handler mloop = new Handler(Looper.getMainLooper());
+					mloop.post(() -> {
+						start_2(meta);
+					});
+				});
+			return;
+		}
+
+		start_3();
+	}
+
+	private void start_2(Phiola.Meta meta) {
+		tplay.meta = meta.meta;
+		tplay.artist = meta.artist;
+		tplay.title = meta.title;
+		tplay.info = meta.info;
+		tplay.time_total_msec = meta.length_msec;
+		start_3();
+	}
+
+	private void start_3() {
 		tplay.name = header(tplay);
 
 		for (Filter f : filters) {

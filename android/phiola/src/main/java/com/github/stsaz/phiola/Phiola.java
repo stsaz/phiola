@@ -5,11 +5,6 @@ package com.github.stsaz.phiola;
 
 class Phiola {
 	Phiola() {
-		length_msec = 0;
-		artist = "";
-		title = "";
-		info = "";
-		url = "";
 		init();
 	}
 	private native void init();
@@ -20,14 +15,15 @@ class Phiola {
 
 	native void setCodepage(String codepage);
 
-	interface Callback {
-		void on_finish();
+	static class Meta {
+		int length_msec;
+		String url, artist, title, info;
+		String[] meta;
 	}
-
-	long length_msec;
-	String url, artist, title, info;
-	String[] meta_data;
-	native int meta(int list_item, String filepath, Callback cb);
+	interface MetaCallback {
+		void on_finish(Meta meta);
+	}
+	native int meta(long q, int list_item, String filepath, MetaCallback cb);
 
 	static class ConvertParams {
 		ConvertParams() {
@@ -83,8 +79,9 @@ class Phiola {
 	static final int QUCOM_CLEAR = 1;
 	static final int QUCOM_REMOVE_I = 2;
 	static final int QUCOM_COUNT = 3;
-	static final int QUCOM_META = 4; // set url, length_msec, artist, title
 	native int quCmd(long q, int cmd, int i);
+
+	native Meta quMeta(long q, int i);
 
 	static final int QUFILTER_URL = 1;
 	static final int QUFILTER_META = 2;

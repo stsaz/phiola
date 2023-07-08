@@ -48,6 +48,7 @@ Options:\n\
 struct cmd_conv {
 	ffvec input; // ffstr[]
 	ffvec include, exclude; // ffstr[]
+	ffvec meta;
 	uint aformat;
 	uint channels;
 	uint rate;
@@ -80,6 +81,15 @@ static int conv_aformat(struct cmd_conv *v, ffstr s)
 {
 	if (~0U == (v->aformat = pcm_str_fmt(s.ptr, s.len)))
 		return cmdarg_err(&x->cmd, "incorrect audio format '%S'", &s);
+	return 0;
+}
+
+static int conv_meta(struct cmd_conv *v, ffstr s)
+{
+	ffstr name, val;
+	if (ffstr_splitby(&s, '=', &name, &val) <= 0)
+		return cmdarg_err(&x->cmd, "invalid meta: '%S'", &s);
+	*ffvec_pushT(&v->meta, ffstr) = s;
 	return 0;
 }
 
@@ -119,6 +129,17 @@ static int conv_until(struct cmd_conv *v, ffstr s)
 
 static void conv_qu_add(struct cmd_conv *v, ffstr *fn)
 {
+	if (!x->metaif)
+		x->metaif = x->core->mod("format.meta");
+
+	ffvec meta = {};
+	ffstr *it;
+	FFSLICE_WALK(&v->meta, it) {
+		ffstr name, val;
+		ffstr_splitby(it, '=', &name, &val);
+		x->metaif->set(&meta, name, val);
+	}
+
 	struct phi_track_conf c = {
 		.ifile = {
 			.name = ffsz_dupstr(fn),
@@ -126,6 +147,7 @@ static void conv_qu_add(struct cmd_conv *v, ffstr *fn)
 			.exclude = *(ffslice*)&v->exclude,
 			.preserve_date = v->preserve_date,
 		},
+		.meta = meta,
 		.seek_msec = v->seek,
 		.until_msec = v->until,
 		.afilter = {
@@ -207,6 +229,7 @@ static const struct cmd_arg cmd_conv[] = {
 	{ "-gain",			'd',	O(gain) },
 	{ "-help",			0,		conv_help },
 	{ "-include",		'S',	conv_include },
+	{ "-meta",			'+S',	conv_meta },
 	{ "-o",				's',	O(output) },
 	{ "-opus-quality",	'u',	O(opus_q) },
 	{ "-out",			's',	O(output) },

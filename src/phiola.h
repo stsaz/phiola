@@ -165,6 +165,8 @@ struct phi_track_conf {
 	uint64	seek_msec;
 	uint64	until_msec;
 
+	ffvec	meta; // char*[]
+
 	struct {
 		struct phi_af format;
 		uint	device_index; // 0:default

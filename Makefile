@@ -17,7 +17,7 @@ ALIB3_BIN := $(ALIB3)/_$(OS)-$(CPU)
 
 CFLAGS += -DFFBASE_MEM_ASSERT
 CFLAGS += -I$(FFBASE)
-CFLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-for-loop-analysis
+CFLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-for-loop-analysis -Wno-multichar
 CFLAGS += -g
 CFLAGS += -fPIC
 ifeq "$(DEBUG)" "1"

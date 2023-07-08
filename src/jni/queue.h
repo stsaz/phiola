@@ -50,7 +50,6 @@ Java_com_github_stsaz_phiola_Phiola_quEntry(JNIEnv *env, jobject thiz, jlong q, 
 #define QUCOM_CLEAR  1
 #define QUCOM_REMOVE_I  2
 #define QUCOM_COUNT  3
-#define QUCOM_META  4
 
 JNIEXPORT jint JNICALL
 Java_com_github_stsaz_phiola_Phiola_quCmd(JNIEnv *env, jobject thiz, jlong jq, jint cmd, jint i)
@@ -68,15 +67,17 @@ Java_com_github_stsaz_phiola_Phiola_quCmd(JNIEnv *env, jobject thiz, jlong jq, j
 
 	case QUCOM_COUNT:
 		return x->queue->count(q);
-
-	case QUCOM_META: {
-		struct phi_queue_entry *qe = x->queue->at(q, i);
-		ffvec meta = {};
-		this_meta_fill(env, thiz, &meta, qe->conf.ifile.name, qe->length_msec);
-		break;
-	}
 	}
 	return 0;
+}
+
+JNIEXPORT jobject JNICALL
+Java_com_github_stsaz_phiola_Phiola_quMeta(JNIEnv *env, jobject thiz, jlong jq, jint i)
+{
+	phi_queue_id q = (void*)jq;
+	struct phi_queue_entry *qe = x->queue->at(q, i);
+	jobject jmeta = meta_create(env, &qe->conf.meta, qe->conf.ifile.name, qe->length_msec);
+	return jmeta;
 }
 
 enum {

@@ -165,18 +165,35 @@ test_dir_read() {
 }
 
 test_list() {
-	if ! test -f list3.wav ; then
+	if ! test -f list3.ogg ; then
 		./phiola rec -o list1.wav -f -u 2
-		cp list1.wav list2.wav
-		cp list1.wav list3.wav
+		./phiola co list1.wav -m artist=A2 -m title=T2 -f -o list2.ogg
+		./phiola co list1.wav -m artist=A3 -m title=T3 -f -o list3.ogg
 	fi
-	echo "!!! PRESS Shift+L !!!"
-	./phiola `pwd`/list*.wav
-	./phiola i /tmp/phiola-*.m3u8
+	echo "!!! PRESS Shift+L at the 3rd track !!!"
+	./phiola `pwd`/list*
+	cat /tmp/phiola-*.m3u8 | grep 'A2 - T2'
+	# cat /tmp/phiola-*.m3u8 | grep 'A3 - T3'
+	./phiola i /tmp/phiola-*.m3u8 2>&1 | grep 'A2 - T2'
+}
+
+test_meta() {
+	# Recording
+	./phiola rec -u 1 -m artist='Great Artist' -m title='Cool Song' -f -o meta.flac && ./phiola i meta.flac 2>&1 | grep 'Great Artist - Cool Song' || false
+	./phiola rec -u 1 -m artist='Great Artist' -m title='Cool Song' -f -o meta.m4a && ./phiola i meta.m4a 2>&1 | grep 'Great Artist - Cool Song' || false
+	./phiola rec -u 1 -m artist='Great Artist' -m title='Cool Song' -f -o meta.ogg && ./phiola i meta.ogg 2>&1 | grep 'Great Artist - Cool Song' || false
+	./phiola rec -u 1 -m artist='Great Artist' -m title='Cool Song' -ra 48000 -f -o meta.opus && ./phiola i meta.opus 2>&1 | grep 'Great Artist - Cool Song' || false
+
+	# Conversion
+	./phiola co -m artist='AA' meta.flac -f -o meta2.flac && ./phiola i meta2.flac 2>&1 | grep 'AA - Cool Song' || false
+	./phiola co -copy -m artist='AA' meta.m4a -f -o meta2.m4a && ./phiola i meta2.m4a 2>&1 | grep 'AA - Cool Song' || false
+	./phiola co -m artist='AA' meta.ogg -f -o meta2.ogg && ./phiola i meta2.ogg 2>&1 | grep 'AA - Cool Song' || false
+	ffmpeg -y -i meta.ogg -metadata artist='Great Artist' -metadata title='Cool Song' meta.mp3
+	./phiola co -copy -m artist='AA' meta.mp3 -f -o meta2.mp3 && ./phiola i meta2.mp3 2>&1 | grep 'AA - Cool Song' || false
 }
 
 test_clean() {
-	rm -f *.wav co-* fm-* copy-*
+	rm -f *.wav *.flac *.m4a *.ogg *.mp3 fm-*
 }
 
 TESTS=(
@@ -188,6 +205,7 @@ TESTS=(
 	info
 	dir_read
 	list
+	meta
 	clean
 	# wasapi_exclusive
 	# wasapi_loopback

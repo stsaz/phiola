@@ -16,6 +16,8 @@ static void* m3u_open(phi_track *t)
 {
 	if (!queue)
 		queue = core->mod("core.queue");
+	if (!metaif)
+		metaif = core->mod("format.meta");
 
 	struct m3u *m = ffmem_new(struct m3u);
 	m3uread_open(&m->m3u);
@@ -49,8 +51,16 @@ static int m3u_add(struct m3u *m, phi_track *t)
 		.conf = t->conf,
 		.length_msec = dur,
 	};
+
 	qe.conf.ifile.name = url.ptr;
 	ffstr_null(&url);
+
+	if (m->pls_ent.artist.len)
+		metaif->set(&qe.conf.meta, FFSTR_Z("artist"), *(ffstr*)&m->pls_ent.artist);
+
+	if (m->pls_ent.title.len)
+		metaif->set(&qe.conf.meta, FFSTR_Z("title"), *(ffstr*)&m->pls_ent.title);
+
 	m->qu_cur = queue->insert(m->qu_cur, &qe);
 
 	if (!m->m3u_removed) {
