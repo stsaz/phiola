@@ -29,14 +29,25 @@ class Phiola {
 	String[] meta_data;
 	native int meta(int list_item, String filepath, Callback cb);
 
-	static final int F_DATE_PRESERVE = 1;
-	static final int F_OVERWRITE = 2;
-	String from_msec, to_msec;
-	boolean copy;
-	int sample_rate;
-	int aac_quality;
-	String result;
-	native int convert(String iname, String oname, int flags, Callback cb);
+	static class ConvertParams {
+		ConvertParams() {
+			from_msec = "";
+			to_msec = "";
+		}
+
+		static final int F_DATE_PRESERVE = 1;
+		static final int F_OVERWRITE = 2;
+		int flags;
+
+		String from_msec, to_msec;
+		boolean copy;
+		int sample_rate;
+		int aac_quality;
+	}
+	interface ConvertCallback {
+		void on_finish(String result);
+	}
+	native int convert(String iname, String oname, ConvertParams conf, ConvertCallback cb);
 
 	static final int REC_AACLC = 0;
 	static final int REC_AACHE = 1;

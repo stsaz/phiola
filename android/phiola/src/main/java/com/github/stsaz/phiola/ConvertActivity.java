@@ -105,30 +105,36 @@ public class ConvertActivity extends AppCompatActivity {
 		bstart.setEnabled(false);
 		lresult.setText("Working...");
 
-		int flags = 0;
-		if (bpreserve.isChecked())
-			flags |= Phiola.F_DATE_PRESERVE;
-		if (false)
-			flags |= Phiola.F_OVERWRITE;
+		Phiola.ConvertParams p = new Phiola.ConvertParams();
+		p.from_msec = tfrom.getText().toString();
+		p.to_msec = tuntil.getText().toString();
+		p.copy = bcopy.isChecked();
+		p.sample_rate = core.str_to_uint(tsample_rate.getText().toString(), 0);
+		p.aac_quality = core.str_to_uint(taac_q.getText().toString(), 0);
 
-		core.phiola.from_msec = tfrom.getText().toString();
-		core.phiola.to_msec = tuntil.getText().toString();
-		core.phiola.copy = bcopy.isChecked();
-		core.phiola.sample_rate = core.str_to_uint(tsample_rate.getText().toString(), 0);
-		core.phiola.aac_quality = core.str_to_uint(taac_q.getText().toString(), 0);
+		if (bpreserve.isChecked())
+			p.flags |= Phiola.ConvertParams.F_DATE_PRESERVE;
+		if (false)
+			p.flags |= Phiola.ConvertParams.F_OVERWRITE;
+
 		iname = tiname.getText().toString();
 		oname = String.format("%s/%s.%s", todir.getText().toString(), toname.getText().toString(), toext.getText().toString());
-		int r = core.phiola.convert(iname, oname, flags,
-			() -> {
+		core.phiola.convert(iname, oname, p,
+			(result) -> {
 				Handler mloop = new Handler(Looper.getMainLooper());
-				mloop.post(this::convert_done);
+				mloop.post(() -> {
+					convert_done(result);
+				});
 			}
 		);
 	}
 
-	private void convert_done() {
-		boolean ok = core.phiola.result.isEmpty();
-		lresult.setText(core.phiola.result);
+	private void convert_done(String result) {
+		boolean ok = result.isEmpty();
+		if (ok)
+			lresult.setText("DONE!");
+		else
+			lresult.setText(result);
 
 		if (ok && bpl_add.isChecked()) {
 			core.queue().add(oname);

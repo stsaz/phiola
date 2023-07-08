@@ -16,7 +16,7 @@ struct phiola_jni {
 	ffbyte debug;
 
 	jmethodID Phiola_Callback_on_finish;
-	jmethodID Phiola_Callback_on_convert_finish;
+	jmethodID Phiola_ConvertCallback_on_finish;
 	jmethodID Phiola_Callback_on_info_finish;
 };
 static struct phiola_jni *x;

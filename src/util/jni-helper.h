@@ -9,7 +9,7 @@ Meta:
 	jni_class jni_class_obj
 	jni_field
 String:
-	jni_js_sz
+	jni_js_sz jni_js_szf
 	jni_sz_js jni_sz_free
 Arrays:
 	jni_arr_len
@@ -80,6 +80,17 @@ T: JNI_T... */
 /** jstring = char* */
 #define jni_js_sz(sz) \
 	(*env)->NewStringUTF(env, sz)
+
+static inline jstring jni_js_szf(JNIEnv *env, const char *fmt, ...)
+{
+	va_list va;
+	va_start(va, fmt);
+	char *sz = ffsz_allocfmtv(fmt, va);
+	va_end(va);
+	jstring js = (*env)->NewStringUTF(env, sz);
+	ffmem_free(sz);
+	return js;
+}
 
 /** char* = jstring */
 #define jni_sz_js(js) \
@@ -198,7 +209,7 @@ class C {
 	(*env)->GetStaticMethodID(env, jclazz, name, sig)
 
 #define jni_call_void(jobj, jfunc, ...) \
-	(*env)->CallVoidMethod(env, jobj, jfunc, #__VA_ARGS__)
+	(*env)->CallVoidMethod(env, jobj, jfunc, ##__VA_ARGS__)
 
 #define jni_scall_void(jobj, jfunc, ...) \
-	(*env)->CallVoidMethod(env, jobj, jfunc, #__VA_ARGS__)
+	(*env)->CallVoidMethod(env, jobj, jfunc, ##__VA_ARGS__)

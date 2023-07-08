@@ -39,6 +39,15 @@ static const char* trk_errstr(uint e)
 	return s;
 }
 
+static void conv_finish(JNIEnv *env, jobject jo, const char *error)
+{
+	jstring js;
+	if (error)
+		js = jni_js_szf(env, "ERROR: %s", error);
+	else
+		js = jni_js_sz("");
+	jni_call_void(jo, x->Phiola_ConvertCallback_on_finish, js);
+}
 
 static void convtrk_close(void *ctx, phi_track *t)
 {
@@ -50,21 +59,11 @@ static void convtrk_close(void *ctx, phi_track *t)
 	}
 
 	if (t->chain_flags & PHI_FFINISHED) {
-		jclass jc = jni_class_obj(x->thiz);
-		if (t->error) {
-			jni_obj_sz_setf(env, x->thiz, jni_field(jc, "result", JNI_TSTR), "ERROR: %s"
-				, trk_errstr(t->error));
-		} else {
-			jni_obj_sz_set(env, x->thiz, jni_field(jc, "result", JNI_TSTR), "");
-		}
-
-		jobject jo = t->udata;
-		jni_call_void(jo, x->Phiola_Callback_on_convert_finish);
+		conv_finish(env, t->udata, (t->error) ? trk_errstr(t->error) : NULL);
 	}
 
 end:
 	jni_global_unref(t->udata);
-	jni_global_unref(x->thiz);
 	jni_detach(jvm);
 }
 
@@ -83,12 +82,13 @@ static const phi_filter phi_android_convert_guard = {
 #define F_OVERWRITE  2
 
 JNIEXPORT jint JNICALL
-Java_com_github_stsaz_phiola_Phiola_convert(JNIEnv *env, jobject thiz, jstring jiname, jstring joname, jint flags, jobject jcb)
+Java_com_github_stsaz_phiola_Phiola_convert(JNIEnv *env, jobject thiz, jstring jiname, jstring joname, jobject jconf, jobject jcb)
 {
 	dbglog("%s: enter", __func__);
-	jclass jc = jni_class_obj(thiz);
-	jstring jfrom = jni_obj_jo(thiz, jni_field(jc, "from_msec", JNI_TSTR));
-	jstring jto = jni_obj_jo(thiz, jni_field(jc, "to_msec", JNI_TSTR));
+	jclass jc_conf = jni_class_obj(jconf);
+	jstring jfrom = jni_obj_jo(jconf, jni_field(jc_conf, "from_msec", JNI_TSTR));
+	jstring jto = jni_obj_jo(jconf, jni_field(jc_conf, "to_msec", JNI_TSTR));
+	int flags = jni_obj_int(jconf, jni_field(jc_conf, "flags", JNI_TINT));
 	const char *ifn = jni_sz_js(jiname)
 		, *ofn = jni_sz_js(joname)
 		, *from = jni_sz_js(jfrom)
@@ -114,13 +114,13 @@ Java_com_github_stsaz_phiola_Phiola_convert(JNIEnv *env, jobject thiz, jstring j
 		.seek_msec = seek,
 		.until_msec = until,
 		.aac = {
-			.quality = jni_obj_int(thiz, jni_field(jc, "aac_quality", JNI_TINT)),
+			.quality = jni_obj_int(jconf, jni_field(jc_conf, "aac_quality", JNI_TINT)),
 		},
 		.ofile = {
 			.name = ffsz_dup(ofn),
 			.overwrite = !!(flags & F_OVERWRITE),
 		},
-		.stream_copy = jni_obj_bool(thiz, jni_field(jc, "copy", JNI_TBOOL)),
+		.stream_copy = jni_obj_bool(jconf, jni_field(jc_conf, "copy", JNI_TBOOL)),
 	};
 
 	const phi_track_if *track = x->core->track;
@@ -137,9 +137,8 @@ Java_com_github_stsaz_phiola_Phiola_convert(JNIEnv *env, jobject thiz, jstring j
 		goto end;
 	}
 
-	x->Phiola_Callback_on_convert_finish = jni_func(jni_class_obj(jcb), "on_finish", "()V");
+	x->Phiola_ConvertCallback_on_finish = jni_func(jni_class_obj(jcb), "on_finish", "(" JNI_TSTR ")V");
 	t->udata = jni_global_ref(jcb);
-	x->thiz = jni_global_ref(thiz);
 
 	track->start(t);
 	t = NULL;
@@ -149,8 +148,7 @@ end:
 		track->close(t);
 
 	if (error != NULL)
-		jni_obj_sz_setf(env, thiz, jni_field(jc, "result", JNI_TSTR), "ERROR: %s"
-			, error);
+		conv_finish(env, jcb, error);
 
 	jni_sz_free(ifn, jiname);
 	jni_sz_free(ofn, joname);
