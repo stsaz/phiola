@@ -27,10 +27,6 @@ static int wasapi_create(audio_out *w, phi_track *t)
 
 	fmt = t->oaudio.format;
 
-	int excl = 0;
-	//@ if ()
-	// 	excl = 1;
-
 	if (mod->out != NULL) {
 
 		core->timer(&mod->tmr, 0, NULL, NULL); // stop 'wasapi_close_tmr' timer
@@ -42,7 +38,7 @@ static int wasapi_create(audio_out *w, phi_track *t)
 		}
 
 		// Note: we don't support cases when devices are switched
-		if (mod->dev_idx == w->dev_idx && mod->excl == excl) {
+		if (mod->dev_idx == w->dev_idx && mod->excl == t->conf.oaudio.exclusive) {
 			if (af_eq(&fmt, &mod->fmt)) {
 				dbglog(NULL, "stop/clear");
 				ffwasapi.stop(mod->out);
@@ -69,8 +65,7 @@ static int wasapi_create(audio_out *w, phi_track *t)
 		wasapi_buf_close();
 	}
 
-	if (excl)
-		w->aflags = FFAUDIO_O_EXCLUSIVE;
+	w->aflags |= (t->conf.oaudio.exclusive) ? FFAUDIO_O_EXCLUSIVE | FFAUDIO_O_USER_EVENTS : 0;
 	w->aflags |= FFAUDIO_O_UNSYNC_NOTIFY;
 	r = audio_out_open(w, t, &fmt);
 	if (r == FFAUDIO_EFORMAT) {
@@ -84,18 +79,21 @@ static int wasapi_create(audio_out *w, phi_track *t)
 
 	mod->out = w->stream;
 	mod->buffer_length_msec = w->buffer_length_msec;
-	mod->excl = excl;
+	mod->excl = t->conf.oaudio.exclusive;
 	mod->fmt = fmt;
 	mod->dev_idx = w->dev_idx;
 
 fin:
 	mod->usedby = w;
-	dbglog(t, "%s buffer %ums, %s/%uHz/%u, excl:%u"
+	dbglog(t, "%s buffer %ums, %s/%uHz/%u, exclusive:%u"
 		, reused ? "reused" : "opened", mod->buffer_length_msec
 		, pcm_format_str(mod->fmt.format), mod->fmt.rate, mod->fmt.channels
-		, excl);
+		, t->conf.oaudio.exclusive);
 
-	core->timer(&mod->tmr, mod->buffer_length_msec / 2, audio_out_onplay, w);
+	if (!!w->event_h)
+		core->woeh(w->event_h, &w->tsk, audio_out_onplay, w);
+	else
+		core->timer(&mod->tmr, mod->buffer_length_msec / 2, audio_out_onplay, w);
 	return PHI_DONE;
 }
 
@@ -129,23 +127,23 @@ static int wasapi_write(void *ctx, phi_track *t)
 	int r;
 
 	switch (w->state) {
-	case 0:
-	case 1:
+	case ST_TRY:
+	case ST_OPEN:
 		w->try_open = (w->state == 0);
 		if (PHI_ERR == (r = wasapi_create(w, t)))
 			return PHI_ERR;
 
 		if (!(r == PHI_DONE && t->oaudio.format.interleaved)) {
 			t->oaudio.conv_format.interleaved = 1;
-			if (w->state == 1) {
+			if (w->state == ST_OPEN) {
 				errlog(t, "need input audio conversion");
 				return PHI_ERR;
 			}
-			w->state = 1;
+			w->state = ST_OPEN;
 			return PHI_MORE;
 		}
 
-		w->state = 2;
+		w->state = ST_WAITING;
 	}
 
 	r = audio_out_write(w, t);
@@ -159,7 +157,7 @@ static int wasapi_write(void *ctx, phi_track *t)
 			 so we won't request a new format conversion.
 			For exclusive mode we need to handle new format conversion properly which isn't that easy to do.
 			*/
-			w->state = 1;
+			w->state = ST_OPEN;
 			return wasapi_write(w, t);
 		}
 		return PHI_ERR;

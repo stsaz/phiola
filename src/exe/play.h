@@ -23,6 +23,7 @@ Options:\n\
 \n\
   -audio STRING         Audio library name (e.g. alsa)\n\
   -device NUMBER        Playback device number\n\
+  -exclusive            Open device in exclusive mode (WASAPI)\n\
   -buffer NUMBER        Length (in msec) of the playback buffer\n\
 \n\
   -perf                 Print performance counters\n\
@@ -44,6 +45,7 @@ struct cmd_play {
 	ffbyte random;
 	ffbyte repeat_all;
 	ffbyte perf;
+	ffbyte exclusive;
 };
 
 static int play_seek(struct cmd_play *p, ffstr s)
@@ -105,6 +107,7 @@ static void play_qu_add(struct cmd_play *p, ffstr *fn)
 		.oaudio = {
 			.device_index = p->device,
 			.buf_time = p->buffer,
+			.exclusive = p->exclusive,
 		},
 		.print_time = p->perf,
 	};
@@ -154,6 +157,7 @@ static const struct cmd_arg cmd_play[] = {
 	{ "-buffer",	'u',	O(buffer) },
 	{ "-device",	'u',	O(device) },
 	{ "-exclude",	'S',	play_exclude },
+	{ "-exclusive",	'1',	O(exclusive) },
 	{ "-help",		0,		play_help },
 	{ "-include",	'S',	play_include },
 	{ "-perf",		'1',	O(perf) },

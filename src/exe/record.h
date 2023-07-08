@@ -10,6 +10,7 @@ Record audio:\n\
 Options:\n\
   -audio STRING         Audio library name (e.g. alsa)\n\
   -device NUMBER        Capture device number\n\
+  -exclusive            Open device in exclusive mode (WASAPI)\n\
   -buffer NUMBER        Length (in msec) of the capture buffer\n\
   -aformat FORMAT       Audio sample format:\n\
                           int8 | int16 | int24 | int32 | float32\n\
@@ -60,6 +61,7 @@ struct cmd_rec {
 	uint vorbis_q;
 	char *output;
 	ffbyte force;
+	ffbyte exclusive;
 	ffvec meta;
 };
 
@@ -74,6 +76,7 @@ static int rec_action()
 				.channels = r->channels,
 			},
 			.device_index = r->device,
+			.exclusive = r->exclusive,
 			.buf_time = r->buffer,
 		},
 		.until_msec = r->until,
@@ -184,6 +187,7 @@ static const struct cmd_arg cmd_rec[] = {
 	{ "-buffer",		'u',	O(buffer) },
 	{ "-channels",		'u',	O(channels) },
 	{ "-device",		'u',	O(device) },
+	{ "-exclusive",		'1',	O(exclusive) },
 	{ "-force",			'1',	O(force) },
 	{ "-gain",			'd',	O(gain) },
 	{ "-help",			0,		rec_help },

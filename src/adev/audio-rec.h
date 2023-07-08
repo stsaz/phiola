@@ -15,7 +15,11 @@ typedef struct audio_in {
 	ffaudio_buf *stream;
 	uint64 total_samples;
 	uint frame_size;
-	uint async;
+	uint state; // enum ST
+
+#ifdef FF_WIN
+	HANDLE event_h;
+#endif
 } audio_in;
 
 static void audio_oncapt(void *udata);
@@ -129,6 +133,12 @@ static int audio_in_open(audio_in *a, phi_track *t)
 	t->audio.format = f;
 	t->data_type = "pcm";
 	a->frame_size = pcm_size1(&t->conf.iaudio.format);
+	a->state = ST_SIGNALLED;
+
+#ifdef FF_WIN
+	a->event_h = conf.event_h;
+#endif
+
 	return 0;
 
 err:
@@ -148,9 +158,9 @@ static void audio_in_close(audio_in *a)
 static void audio_oncapt(void *udata)
 {
 	audio_in *a = udata;
-	if (!a->async && !a->recv_events)
+	dbglog(a->trk, "%p state:%u", a, a->state);
+	if (FF_SWAP(&a->state, ST_SIGNALLED) != ST_WAITING)
 		return;
-	a->async = 0;
 	core->track->wake(a->trk);
 }
 
@@ -163,6 +173,12 @@ static int audio_in_read(audio_in *a, phi_track *t)
 		a->audio->stop(a->stream);
 		return PHI_DONE;
 	}
+
+#ifdef FF_WIN
+	if (!!a->event_h && a->state == ST_SIGNALLED) {
+		a->audio->signal(a->stream);
+	}
+#endif
 
 	for (;;) {
 		r = a->audio->read(a->stream, &buf);
@@ -179,7 +195,7 @@ static int audio_in_read(audio_in *a, phi_track *t)
 			return PHI_DONE;
 
 		} else if (r == 0) {
-			a->async = 1;
+			a->state = ST_WAITING;
 			return PHI_ASYNC;
 		}
 		break;
@@ -190,5 +206,6 @@ static int audio_in_read(audio_in *a, phi_track *t)
 	t->audio.pos = a->total_samples;
 	a->total_samples += r / a->frame_size;
 	ffstr_set(&t->data_out, buf, r);
+	a->state = ST_PROCESSING;
 	return PHI_DATA;
 }

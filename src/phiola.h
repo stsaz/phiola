@@ -199,6 +199,7 @@ struct phi_track_conf {
 		struct phi_af format;
 		uint	device_index; // 0:default
 		uint	buf_time; // msec
+		uint	exclusive :1;
 	} oaudio;
 
 	struct {

@@ -64,6 +64,11 @@ test_play() {
 	./phiola pl pl.wav -au alsa -dev 1
 }
 
+test_wasapi_exclusive() {
+	./phiola rec -o rec.wav -f -u 5 -exclusive -buf 50
+	./phiola pl rec.wav -exclusive -buf 50
+}
+
 convert_from_to() {
 	./phiola co co.$1 -f -o co-$1.$2 ; ./phiola pl co-$1.$2
 }
@@ -177,6 +182,7 @@ TESTS=(
 	dir_read
 	list
 	clean
+	# wasapi_exclusive
 	)
 if test "$#" -gt "0" ; then
 	TESTS=("$@")

@@ -4,6 +4,7 @@
 typedef struct was_in {
 	audio_in in;
 	phi_timer tmr;
+	phi_task tsk;
 	uint latcorr;
 } was_in;
 
@@ -31,14 +32,15 @@ static void* wasapi_in_open(phi_track *t)
 	// 	a->loopback = 1;
 	// }
 
-	//@ if ()
-	// 	a->aflags = FFAUDIO_O_EXCLUSIVE;
-
+	a->aflags = (t->conf.iaudio.exclusive) ? FFAUDIO_O_EXCLUSIVE | FFAUDIO_O_USER_EVENTS : 0;
 	a->aflags |= FFAUDIO_O_UNSYNC_NOTIFY;
 	if (0 != audio_in_open(a, t))
 		goto fail;
 
-	core->timer(&wi->tmr, a->buffer_length_msec / 2, audio_oncapt, a);
+	if (!!a->event_h)
+		core->woeh(a->event_h, &wi->tsk, audio_oncapt, a);
+	else
+		core->timer(&wi->tmr, a->buffer_length_msec / 2, audio_oncapt, a);
 	return wi;
 
 fail:

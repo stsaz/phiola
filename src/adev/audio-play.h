@@ -16,12 +16,15 @@ struct audio_out {
 	// runtime
 	ffaudio_buf *stream;
 	ffaudio_dev *dev;
-	uint async;
+	uint state; // enum ST
 	uint clear :1;
 
 	// user's
-	uint state;
+	phi_task tsk;
 	uint reconnect :1;
+#ifdef FF_WIN
+	HANDLE event_h;
+#endif
 };
 
 /**
@@ -112,8 +115,13 @@ static inline int audio_out_open(audio_out *a, phi_track *t, const struct phi_af
 		rc = FFAUDIO_ERROR;
 		goto end;
 	}
-
 	a->buffer_length_msec = conf.buffer_length_msec;
+	a->state = ST_FEEDING;
+
+#ifdef FF_WIN
+	a->event_h = conf.event_h;
+#endif
+
 	rc = 0;
 
 end:
@@ -127,10 +135,9 @@ end:
 static inline void audio_out_onplay(void *param)
 {
 	audio_out *a = param;
-	dbglog(a->trk, "%p async:%d", a, a->async);
-	if (!a->async)
+	dbglog(a->trk, "%p state:%u", a, a->state);
+	if (FF_SWAP(&a->state, ST_SIGNALLED) != ST_WAITING)
 		return;
-	a->async = 0;
 	core->track->wake(a->trk);
 }
 
@@ -159,13 +166,19 @@ static inline int audio_out_write(audio_out *a, phi_track *t)
 		return PHI_ASYNC;
 	}
 
+#ifdef FF_WIN
+	if (!!a->event_h && a->state == ST_SIGNALLED) {
+		a->audio->signal(a->stream);
+	}
+#endif
+
 	while (t->data_in.len != 0) {
 
 		r = a->audio->write(a->stream, t->data_in.ptr, t->data_in.len);
 		if (r > 0) {
 			//
 		} else if (r == 0) {
-			a->async = 1;
+			a->state = ST_WAITING;
 			return PHI_ASYNC;
 
 		} else if (r == -FFAUDIO_ESYNC) {
@@ -201,9 +214,10 @@ static inline int audio_out_write(audio_out *a, phi_track *t)
 			return PHI_ERR;
 		}
 
-		a->async = 1;
+		a->state = ST_WAITING;
 		return PHI_ASYNC; //wait until all filled bytes are played
 	}
 
+	a->state = ST_FEEDING;
 	return PHI_MORE;
 }

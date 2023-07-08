@@ -168,5 +168,14 @@ static int audio_devbyidx(const ffaudio_interface *audio, ffaudio_dev **t, uint 
 	return 0;
 }
 
+enum ST {
+	ST_TRY = 0,
+	ST_OPEN = 1,
+	ST_WAITING, // -> ST_SIGNALLED
+	ST_SIGNALLED, // -> ST_PROCESSING || ST_FEEDING
+	ST_PROCESSING, // -> ST_WAITING || ST_SIGNALLED
+	ST_FEEDING, // -> ST_WAITING || ST_SIGNALLED
+};
+
 #include <adev/audio-rec.h>
 #include <adev/audio-play.h>
