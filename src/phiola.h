@@ -170,6 +170,7 @@ struct phi_track_conf {
 		uint	device_index; // 0:default
 		uint	buf_time; // msec
 		uint	exclusive :1;
+		uint	loopback :1;
 		uint	power_save :1;
 	} iaudio;
 

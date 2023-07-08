@@ -26,12 +26,7 @@ static void* wasapi_in_open(phi_track *t)
 	audio_in *a = &wi->in;
 	a->audio = &ffwasapi;
 	a->trk = t;
-
-	//@ if () {
-	// 	// use loopback device specified by user
-	// 	a->loopback = 1;
-	// }
-
+	a->loopback = t->conf.iaudio.loopback;
 	a->aflags = (t->conf.iaudio.exclusive) ? FFAUDIO_O_EXCLUSIVE | FFAUDIO_O_USER_EVENTS : 0;
 	a->aflags |= FFAUDIO_O_UNSYNC_NOTIFY;
 	if (0 != audio_in_open(a, t))

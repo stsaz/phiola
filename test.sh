@@ -69,6 +69,13 @@ test_wasapi_exclusive() {
 	./phiola pl rec.wav -exclusive -buf 50
 }
 
+test_wasapi_loopback() {
+	./phiola rec -o lb.wav -f -u 5
+	./phiola pl lb.wav &
+	./phiola rec -o lb-rec.wav -f -u 4 -loopback
+	kill $!
+}
+
 convert_from_to() {
 	./phiola co co.$1 -f -o co-$1.$2 ; ./phiola pl co-$1.$2
 }
@@ -183,6 +190,7 @@ TESTS=(
 	list
 	clean
 	# wasapi_exclusive
+	# wasapi_loopback
 	)
 if test "$#" -gt "0" ; then
 	TESTS=("$@")

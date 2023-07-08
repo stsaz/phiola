@@ -11,6 +11,9 @@ Options:\n\
   -audio STRING         Audio library name (e.g. alsa)\n\
   -device NUMBER        Capture device number\n\
   -exclusive            Open device in exclusive mode (WASAPI)\n\
+  -loopback             Loopback mode (\"record what you hear\") (WASAPI)\n\
+                          Note: '-device NUMBER' specifies Playback device and not Capture device.\n\
+                          Note: recording is automatically on pause unless something is playing!\n\
   -buffer NUMBER        Length (in msec) of the capture buffer\n\
   -aformat FORMAT       Audio sample format:\n\
                           int8 | int16 | int24 | int32 | float32\n\
@@ -62,6 +65,7 @@ struct cmd_rec {
 	char *output;
 	ffbyte force;
 	ffbyte exclusive;
+	ffbyte loopback;
 	ffvec meta;
 };
 
@@ -77,6 +81,7 @@ static int rec_action()
 			},
 			.device_index = r->device,
 			.exclusive = r->exclusive,
+			.loopback = r->loopback,
 			.buf_time = r->buffer,
 		},
 		.until_msec = r->until,
@@ -191,6 +196,7 @@ static const struct cmd_arg cmd_rec[] = {
 	{ "-force",			'1',	O(force) },
 	{ "-gain",			'd',	O(gain) },
 	{ "-help",			0,		rec_help },
+	{ "-loopback",		'1',	O(loopback) },
 	{ "-meta",			'S',	rec_meta },
 	{ "-o",				's',	O(output) },
 	{ "-opus-quality",	'u',	O(opus_q) },
