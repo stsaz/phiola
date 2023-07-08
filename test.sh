@@ -175,6 +175,10 @@ test_list() {
 	cat /tmp/phiola-*.m3u8 | grep 'A2 - T2'
 	# cat /tmp/phiola-*.m3u8 | grep 'A3 - T3'
 	./phiola i /tmp/phiola-*.m3u8 2>&1 | grep 'A2 - T2'
+
+	LIST=`ls -1 /tmp/phiola-*.m3u8 | head -1`
+	zstd $LIST -o $LIST.m3uz
+	./phiola i $LIST.m3uz
 }
 
 test_meta() {

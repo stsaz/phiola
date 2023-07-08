@@ -36,6 +36,7 @@ cd phiola-src
 git clone https://github.com/stsaz/phiola
 git clone https://github.com/stsaz/avpack
 git clone https://github.com/stsaz/ffaudio
+git clone https://github.com/stsaz/ffpack
 git clone https://github.com/stsaz/ffos
 git clone https://github.com/stsaz/ffbase
 cd phiola
@@ -47,6 +48,7 @@ cd phiola
 * Build on Linux:
 
 	```sh
+	make -j8 -C ../ffpack libzstd
 	make -j8 -C alib3
 	make -j8
 	```
@@ -54,13 +56,15 @@ cd phiola
 * Build on Linux for Windows:
 
 	```sh
+	make -j8 -C ../ffpack libzstd OS=windows
 	make -j8 -C alib3 OS=windows
 	make -j8 OS=windows
 	```
 
-* Build on Linux for Android:
+* Build on Linux for Android/ARM64:
 
 	```sh
+	make -j8 -C ../ffpack libzstd NDK_DIR=$SDK_DIR/ndk/YOUR_NDK_VERSION SYS=android CPU=arm64
 	make -j8 -C alib3 NDK_DIR=$SDK_DIR/ndk/YOUR_NDK_VERSION SYS=android CPU=arm64
 	make -j8 -C android SDK_DIR=$SDK_DIR
 	```
@@ -68,6 +72,7 @@ cd phiola
 * Build on FreeBSD & macOS:
 
 	```sh
+	gmake -j8 -C ../ffpack libzstd
 	gmake -j8 -C alib3
 	gmake -j8
 	```

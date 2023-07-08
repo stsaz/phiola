@@ -4,6 +4,7 @@ ROOT_DIR := ..
 PHIOLA := $(ROOT_DIR)/phiola
 FFAUDIO := $(ROOT_DIR)/ffaudio
 AVPACK := $(ROOT_DIR)/avpack
+FFPACK := $(ROOT_DIR)/ffpack
 FFOS := $(ROOT_DIR)/ffos
 FFBASE := $(ROOT_DIR)/ffbase
 
@@ -12,6 +13,7 @@ include $(FFBASE)/test/makeconf
 SUBMAKE := $(MAKE) -f $(firstword $(MAKEFILE_LIST))
 ALIB3 := $(PHIOLA)/alib3
 ALIB3_BIN := $(ALIB3)/_$(OS)-$(CPU)
+FFPACK_BIN := $(FFPACK)/_$(OS)-$(CPU)
 
 # COMPILER
 
@@ -270,6 +272,14 @@ MODS += tui.$(SO)
 	$(C) $(CFLAGS) $< -o $@
 tui.$(SO): tui.o
 	$(LINK) -shared $+ $(LINKFLAGS) -lm -o $@
+
+MODS += zstd.$(SO)
+LIBS3 += $(FFPACK_BIN)/libzstd-ffpack.$(SO)
+%.o: $(PHIOLA)/src/dfilter/%.c $(DEPS) \
+		$(wildcard $(PHIOLA)/src/dfilter/zstd-*.h)
+	$(C) $(CFLAGS) -I$(FFPACK) $< -o $@
+zstd.$(SO): zstd.o
+	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(FFPACK_BIN) -lzstd-ffpack -o $@
 
 
 build: core.$(SO) \

@@ -2,6 +2,7 @@
 2023, Simon Zolin */
 
 #include <track.h>
+#include <util/util.h>
 #include <FFOS/random.h>
 
 extern const phi_core *core;
@@ -259,6 +260,10 @@ static int q_save(struct phi_queue *q, const char *filename)
 {
 	if (!q) q = qm_default();
 
+	ffstr ext = {};
+	ffpath_split3_str(FFSTR_Z(filename), NULL, NULL, &ext);
+	ffbool compress = ffstr_eqz(&ext, "m3uz");
+
 	struct phi_track_conf c = {
 		.ofile = {
 			.name = ffsz_dup(filename),
@@ -269,6 +274,8 @@ static int q_save(struct phi_queue *q, const char *filename)
 	phi_track *t = core->track->create(&c);
 	t->udata = q;
 	if (!core->track->filter(t, core->mod("format.m3u-write"), 0)
+		|| (compress
+			&& !core->track->filter(t, core->mod("zstd.compress"), 0))
 		|| !core->track->filter(t, core->mod("core.file-write"), 0)) {
 		core->track->close(t);
 		return -1;

@@ -156,7 +156,7 @@ static int qe_expand(struct q_entry *e)
 	struct phi_track_conf *c = &e->pub.conf;
 	const phi_track_if *track = core->track;
 
-	int dir = 0;
+	ffbool dir = 0, decompress = 0;
 	fffileinfo fi;
 	if (!fffile_info_path(c->ifile.name, &fi)
 		&& fffile_isdir(fffileinfo_attr(&fi))) {
@@ -166,7 +166,7 @@ static int qe_expand(struct q_entry *e)
 		ffpath_splitname_str(FFSTR_Z(c->ifile.name), NULL, &ext);
 		if (!(ffstr_eqz(&ext, "m3u8")
 			|| ffstr_eqz(&ext, "m3u")
-			|| ffstr_eqz(&ext, "m3uz")))
+			|| (decompress = ffstr_eqz(&ext, "m3uz"))))
 			return -1;
 	}
 
@@ -177,6 +177,8 @@ static int qe_expand(struct q_entry *e)
 	} else {
 		if (!core->track->filter(t, &phi_queue_guard, 0)
 			|| !core->track->filter(t, core->mod("core.file-read"), 0)
+			|| (decompress
+				&& !core->track->filter(t, core->mod("zstd.decompress"), 0))
 			|| !core->track->filter(t, core->mod("format.m3u"), 0))
 			goto err;
 	}

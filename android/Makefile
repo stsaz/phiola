@@ -104,6 +104,7 @@ ROOT_DIR := ../..
 PHIOLA := $(ROOT_DIR)/phiola
 FFAUDIO := $(ROOT_DIR)/ffaudio
 AVPACK := $(ROOT_DIR)/avpack
+FFPACK := $(ROOT_DIR)/ffpack
 FFBASE := $(ROOT_DIR)/ffbase
 FFOS := $(ROOT_DIR)/ffos
 
@@ -112,6 +113,7 @@ include andk.mk
 
 ALIB3 := $(PHIOLA)/alib3
 ALIB3_BIN := $(ALIB3)/_android-$(CPU)
+FFPACK_BIN := $(FFPACK)/_android-$(CPU)
 
 LIB_DIR_AMD64 := $(PHIOLA)/android/phiola/libs/x86_64
 LIB_DIR_ARM64 := $(PHIOLA)/android/phiola/libs/arm64-v8a
@@ -261,6 +263,15 @@ $(OBJ_DIR)/flac.o: $(PHIOLA)/src/acodec/flac.c $(DEPS) \
 	$(C) $(CFLAGS) -I$(ALIB3) -I$(AVPACK) $< -o $@
 $(LIB_DIR)/flac.$(SO): $(OBJ_DIR)/flac.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lFLAC-phi -o $@
+
+
+MODS += $(LIB_DIR)/zstd.$(SO)
+LIBS3 += $(FFPACK_BIN)/libzstd-ffpack.$(SO)
+$(OBJ_DIR)/%.o: $(PHIOLA)/src/dfilter/%.c $(DEPS) \
+		$(wildcard $(PHIOLA)/src/dfilter/zstd-*.h)
+	$(C) $(CFLAGS) -I$(FFPACK) $< -o $@
+$(LIB_DIR)/zstd.$(SO): $(OBJ_DIR)/zstd.o
+	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(FFPACK_BIN) -lzstd-ffpack -o $@
 
 
 libs: $(LIB_DIR)/libphiola.so.debug \
