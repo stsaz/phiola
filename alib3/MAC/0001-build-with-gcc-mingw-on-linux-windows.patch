@@ -1,0 +1,46 @@
+From c8ff0683f70f33c9d0cf6905bd8240615ef1f087 Mon Sep 17 00:00:00 2001
+From: Simon Zolin <stsaz@yandex.ru>
+Date: Mon, 8 Jan 2018 14:50:40 +0300
+Subject: [PATCH 1/3] build with gcc/mingw on linux/windows
+
+---
+ Source/Console/Console.cpp | 9 +++++++++
+ Source/Shared/NoWindows.h  | 4 ++++
+ 2 files changed, 13 insertions(+)
+
+diff --git a/Source/Console/Console.cpp b/Source/Console/Console.cpp
+index bc36a25..dc473c3 100644
+--- a/Source/Console/Console.cpp
++++ b/Source/Console/Console.cpp
+@@ -13,6 +13,15 @@ Copyrighted (c) 2000 - 2018 Matthew T. Ashland.  All Rights Reserved.
+ #include "CharacterHelper.h"
+ using namespace APE;
+ 
++#undef _T
++#define _T
++#define _ftprintf  fprintf
++#define _tcsncpy strncpy
++#define _tcscpy strcpy
++#define _tcsnicmp strncasecmp
++#define _ttoi atoi
++#define _tmain main
++
+ // defines
+ #define COMPRESS_MODE		0
+ #define DECOMPRESS_MODE		1
+diff --git a/Source/Shared/NoWindows.h b/Source/Shared/NoWindows.h
+index d188ee0..127c443 100644
+--- a/Source/Shared/NoWindows.h
++++ b/Source/Shared/NoWindows.h
+@@ -49,4 +49,8 @@ typedef long                LRESULT;
+ 
+ }
+ 
++#define TRUE 1
++#define FALSE 0
++#define TCHAR char
++
+ #endif // #ifndef _WIN32
+-- 
+2.8.1.windows.1
+

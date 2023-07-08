@@ -1,0 +1,29 @@
+From 9fbbd690fcbd659e068efcb2b0993fb886e9cd4c Mon Sep 17 00:00:00 2001
+From: Simon Zolin <4729655+stsaz@users.noreply.github.com>
+Date: Mon, 6 Mar 2023 19:45:44 +0300
+Subject: [PATCH] Correct TARGET_RT_LITTLE_ENDIAN on ARM & ARM64
+
+---
+ codec/EndianPortable.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/codec/EndianPortable.c b/codec/EndianPortable.c
+index 5a7d5b8..d7bf101 100644
+--- a/codec/EndianPortable.c
++++ b/codec/EndianPortable.c
+@@ -38,6 +38,12 @@
+ #define TARGET_RT_LITTLE_ENDIAN 1
+ #elif defined(__x86_64__)
+ #define TARGET_RT_LITTLE_ENDIAN 1
++
++#elif defined __aarch64__ || defined __arm__
++    #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
++        #define TARGET_RT_LITTLE_ENDIAN 1
++    #endif
++
+ #elif defined (TARGET_OS_WIN32)
+ #define TARGET_RT_LITTLE_ENDIAN 1
+ #endif
+-- 
+2.38.1
+

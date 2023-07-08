@@ -1,0 +1,25 @@
+From 6d527c992a4b17eb0a6696c06d67781431300f31 Mon Sep 17 00:00:00 2001
+From: Simon Zolin <stsaz@yandex.ru>
+Date: Sun, 17 Jan 2016 23:16:54 +0300
+Subject: [PATCH 2/3] vorbis_vendor()
+
+---
+ lib/info.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/lib/info.c b/lib/info.c
+index 8a2a001..249f5f1 100644
+--- a/lib/info.c
++++ b/lib/info.c
+@@ -671,3 +671,8 @@ double vorbis_granule_time(vorbis_dsp_state *v,ogg_int64_t granulepos){
+ const char *vorbis_version_string(void){
+   return GENERAL_VENDOR_STRING;
+ }
++
++EXP const char* vorbis_vendor(void)
++{
++  return ENCODE_VENDOR_STRING;
++}
+-- 
+2.4.3
+

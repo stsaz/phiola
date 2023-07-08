@@ -1,0 +1,65 @@
+From 95aee84c06b6d5ef2bb1d293ee3d79558ec36d1e Mon Sep 17 00:00:00 2001
+From: Simon Zolin <stsaz@yandex.ru>
+Date: Sun, 17 Jan 2016 23:17:12 +0300
+Subject: [PATCH 3/3] disable unused code
+
+---
+ lib/info.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/lib/info.c b/lib/info.c
+index 249f5f1..4ebce4f 100644
+--- a/lib/info.c
++++ b/lib/info.c
+@@ -384,10 +384,12 @@ int vorbis_synthesis_headerin(vorbis_info *vi,vorbis_comment *vc,ogg_packet *op)
+       }
+       switch(packtype){
+       case 0x01: /* least significant *bit* is read first */
++#if 0
+         if(!op->b_o_s){
+           /* Not the initial packet */
+           return(OV_EBADHEADER);
+         }
++#endif
+         if(vi->rate!=0){
+           /* previously initialized info header */
+           return(OV_EBADHEADER);
+@@ -395,6 +397,7 @@ int vorbis_synthesis_headerin(vorbis_info *vi,vorbis_comment *vc,ogg_packet *op)
+ 
+         return(_vorbis_unpack_info(vi,&opb));
+ 
++#if 0
+       case 0x03: /* least significant *bit* is read first */
+         if(vi->rate==0){
+           /* um... we didn't get the initial header */
+@@ -406,9 +409,10 @@ int vorbis_synthesis_headerin(vorbis_info *vi,vorbis_comment *vc,ogg_packet *op)
+         }
+ 
+         return(_vorbis_unpack_comment(vc,&opb));
++#endif
+ 
+       case 0x05: /* least significant *bit* is read first */
+-        if(vi->rate==0 || vc->vendor==NULL){
++        if(vi->rate==0 /*|| vc->vendor==NULL*/){
+           /* um... we didn;t get the initial header or comments yet */
+           return(OV_EBADHEADER);
+         }
+@@ -604,6 +608,7 @@ int vorbis_analysis_headerout(vorbis_dsp_state *v,
+   op->granulepos=0;
+   op->packetno=0;
+ 
++#if 0
+   /* second header packet (comments) **********************************/
+ 
+   oggpack_reset(&opb);
+@@ -618,6 +623,7 @@ int vorbis_analysis_headerout(vorbis_dsp_state *v,
+   op_comm->e_o_s=0;
+   op_comm->granulepos=0;
+   op_comm->packetno=1;
++#endif
+ 
+   /* third header packet (modes/codebooks) ****************************/
+ 
+-- 
+2.4.3
+

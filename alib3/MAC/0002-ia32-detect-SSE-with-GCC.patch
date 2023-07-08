@@ -1,0 +1,36 @@
+From f010fa31de6f9636c3f59202d45003a382f2c092 Mon Sep 17 00:00:00 2001
+From: Simon Zolin <stsaz@yandex.ru>
+Date: Mon, 8 Jan 2018 14:50:40 +0300
+Subject: [PATCH 2/3] ia32: detect SSE with GCC
+
+---
+ Source/Shared/GlobalFunctions.cpp | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/Source/Shared/GlobalFunctions.cpp b/Source/Shared/GlobalFunctions.cpp
+index 65e8f49..99da25b 100644
+--- a/Source/Shared/GlobalFunctions.cpp
++++ b/Source/Shared/GlobalFunctions.cpp
+@@ -5,6 +5,7 @@
+ #ifdef _MSC_VER
+     #include <intrin.h>
+ #endif
++#include <ffcpuid.h>
+ 
+ namespace APE
+ {
+@@ -120,6 +121,11 @@ bool GetSSEAvailable()
+ #if defined(__SSE2__)
+     return true;
+ #else
++
++    ffcpuid c = {0};
++    ff_cpuid(&c, FFCPUID_FEATURES);
++    return ff_cpuid_feat(&c, FFCPUID_SSE2);
++
+     bool bSSE = false;
+ #ifdef _MSC_VER
+     #define CPU_SSE2 (1 << 26)
+-- 
+2.8.1.windows.1
+

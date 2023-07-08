@@ -1,0 +1,85 @@
+From 4ff4c824e3faea4da3c039f1c4745e0780257d8e Mon Sep 17 00:00:00 2001
+From: Simon Zolin <stsaz@yandex.ru>
+Date: Tue, 25 Jul 2017 22:30:19 +0300
+Subject: [PATCH] disable unused code
+
+---
+ src/libmpg123/libmpg123.c |  7 ++++---
+ src/libmpg123/readers.c   | 22 +++++++++++++++++++++-
+ 2 files changed, 25 insertions(+), 4 deletions(-)
+
+diff --git a/src/libmpg123/libmpg123.c b/src/libmpg123/libmpg123.c
+index cc77905..5b56467 100644
+--- a/src/libmpg123/libmpg123.c
++++ b/src/libmpg123/libmpg123.c
+@@ -14,6 +14,7 @@
+ /* Want accurate rounding function regardless of decoder setup. */
+ #define FORCE_ACCURATE
+ #include "sample.h"
++#include <mpg123-ff.h>
+ 
+ #define SEEKFRAME(mh) ((mh)->ignoreframe < 0 ? 0 : (mh)->ignoreframe)
+ 
+@@ -436,7 +437,7 @@ double attribute_align_arg mpg123_geteq(mpg123_handle *mh, enum mpg123_channels
+ }
+ 
+ /* plain file access, no http! */
+-int attribute_align_arg mpg123_open(mpg123_handle *mh, const char *path)
++int attribute_align_arg _mpg123_open(mpg123_handle *mh, const char *path)
+ {
+ 	if(mh == NULL) return MPG123_BAD_HANDLE;
+ 
+@@ -867,7 +868,7 @@ int attribute_align_arg mpg123_decode_frame(mpg123_handle *mh, off_t *num, unsig
+ 
+ int attribute_align_arg mpg123_read(mpg123_handle *mh, unsigned char *out, size_t size, size_t *done)
+ {
+-	return mpg123_decode(mh, NULL, 0, out, size, done);
++	return _mpg123_decode(mh, NULL, 0, out, size, done);
+ }
+ 
+ int attribute_align_arg mpg123_feed(mpg123_handle *mh, const unsigned char *in, size_t size)
+@@ -915,7 +916,7 @@ int attribute_align_arg mpg123_feed(mpg123_handle *mh, const unsigned char *in,
+ 	}
+ */
+ 
+-int attribute_align_arg mpg123_decode(mpg123_handle *mh, const unsigned char *inmemory, size_t inmemsize, unsigned char *outmemory, size_t outmemsize, size_t *done)
++int attribute_align_arg _mpg123_decode(mpg123_handle *mh, const unsigned char *inmemory, size_t inmemsize, unsigned char *outmemory, size_t outmemsize, size_t *done)
+ {
+ 	int ret = MPG123_OK;
+ 	size_t mdone = 0;
+diff --git a/src/libmpg123/readers.c b/src/libmpg123/readers.c
+index 58dad6d..9140761 100644
+--- a/src/libmpg123/readers.c
++++ b/src/libmpg123/readers.c
+@@ -905,7 +905,27 @@ static void bad_rewind(mpg123_handle *mh){}
+ #define READER_FEED       2
+ #define READER_BUF_STREAM 3
+ #define READER_BUF_ICY_STREAM 4
+-static struct reader readers[] =
++
++static struct reader readers[] = {
++	{NULL}, {NULL},
++	{ /* READER_FEED */
++		feed_init,
++		stream_close,
++		feed_read,
++		generic_head_read,
++		generic_head_shift,
++		feed_skip_bytes,
++		generic_read_frame_body,
++		feed_back_bytes,
++		feed_seek_frame,
++		generic_tell,
++		stream_rewind,
++		buffered_forget
++	},
++	{NULL}, {NULL},
++};
++
++static struct reader _readers[] =
+ {
+ 	{ /* READER_STREAM */
+ 		default_init,
+-- 
+2.7.4
+

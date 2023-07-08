@@ -1,0 +1,317 @@
+From 07799834aa92d9b283d91edaf27e5c3c6828ae1d Mon Sep 17 00:00:00 2001
+From: Simon Zolin <stsaz@yandex.ru>
+Date: Mon, 8 Jan 2018 14:50:40 +0300
+Subject: [PATCH 3/3] modifications needed for ape_decode*()
+
+---
+ Source/MACLib/APEDecompress.cpp  | 37 +++++++++++++++++++------------------
+ Source/MACLib/APEDecompress.h    |  6 +++++-
+ Source/MACLib/UnBitArray.cpp     |  5 +++--
+ Source/MACLib/UnBitArrayBase.cpp | 18 +++++++++++-------
+ Source/MACLib/UnBitArrayBase.h   |  4 ++--
+ Source/Shared/All.h              |  4 ++--
+ 6 files changed, 42 insertions(+), 32 deletions(-)
+
+diff --git a/Source/MACLib/APEDecompress.cpp b/Source/MACLib/APEDecompress.cpp
+index b1ce096..74fe8bf 100644
+--- a/Source/MACLib/APEDecompress.cpp
++++ b/Source/MACLib/APEDecompress.cpp
+@@ -60,7 +60,7 @@ int CAPEDecompress::InitializeDecompressor()
+     m_cbFrameBuffer.CreateBuffer((GetInfo(APE_INFO_BLOCKS_PER_FRAME) + DECODE_BLOCK_SIZE) * m_nBlockAlign, m_nBlockAlign * 64);
+     
+     // create decoding components
+-    m_spUnBitArray.Assign((CUnBitArrayBase *) CreateUnBitArray(this, GetInfo(APE_INFO_FILE_VERSION)));
++    // m_spUnBitArray.Assign((CUnBitArrayBase *) CreateUnBitArray(this, GetInfo(APE_INFO_FILE_VERSION)));
+     if (m_spUnBitArray == NULL)
+         return ERROR_UPSUPPORTED_FILE_VERSION;
+ 
+@@ -75,8 +75,7 @@ int CAPEDecompress::InitializeDecompressor()
+         m_spNewPredictorY.Assign(new CPredictorDecompressNormal3930to3950(GetInfo(APE_INFO_COMPRESSION_LEVEL), GetInfo(APE_INFO_FILE_VERSION)));
+     }
+     
+-    // seek to the beginning
+-    return Seek(0);
++    return 0;
+ }
+ 
+ int CAPEDecompress::GetData(char * pBuffer, intn nBlocks, intn * pBlocksRetrieved)
+@@ -279,7 +278,7 @@ void CAPEDecompress::DecodeBlocksToFrameBuffer(intn nBlocks)
+ 	intn nBlocksProcessed = 0;
+ 	intn nFrameBufferBytes = m_cbFrameBuffer.MaxGet();
+ 
+-    try
++    // try
+     {
+         if (m_wfeInput.nChannels == 2)
+         {
+@@ -288,8 +287,8 @@ void CAPEDecompress::DecodeBlocksToFrameBuffer(intn nBlocks)
+             {
+                 for (nBlocksProcessed = 0; nBlocksProcessed < nBlocks; nBlocksProcessed++)
+                 {
+-                    m_Prepare.Unprepare(0, 0, &m_wfeInput, m_cbFrameBuffer.GetDirectWritePointer(), &m_nCRC);
+-                    m_cbFrameBuffer.UpdateAfterDirectWrite(m_nBlockAlign);
++                    m_Prepare.Unprepare(0, 0, &m_wfeInput, this->pcm, &m_nCRC);
++                    this->pcm += m_nBlockAlign;
+                 }
+             }
+             else if (m_nSpecialCodes & SPECIAL_FRAME_PSEUDO_STEREO)
+@@ -297,13 +296,13 @@ void CAPEDecompress::DecodeBlocksToFrameBuffer(intn nBlocks)
+                 for (nBlocksProcessed = 0; nBlocksProcessed < nBlocks; nBlocksProcessed++)
+                 {
+                     int X = m_spNewPredictorX->DecompressValue(m_spUnBitArray->DecodeValueRange(m_BitArrayStateX));
+-                    m_Prepare.Unprepare(X, 0, &m_wfeInput, m_cbFrameBuffer.GetDirectWritePointer(), &m_nCRC);
+-                    m_cbFrameBuffer.UpdateAfterDirectWrite(m_nBlockAlign);
++                    m_Prepare.Unprepare(X, 0, &m_wfeInput, this->pcm, &m_nCRC);
++                    this->pcm += m_nBlockAlign;
+                 }
+             }    
+             else
+             {
+-                if (m_spAPEInfo->GetInfo(APE_INFO_FILE_VERSION) >= 3950)
++                if (this->version >= 3950)
+                 {
+                     for (nBlocksProcessed = 0; nBlocksProcessed < nBlocks; nBlocksProcessed++)
+                     {
+@@ -313,8 +312,8 @@ void CAPEDecompress::DecodeBlocksToFrameBuffer(intn nBlocks)
+                         int X = m_spNewPredictorX->DecompressValue(nX, Y);
+                         m_nLastX = X;
+ 
+-                        m_Prepare.Unprepare(X, Y, &m_wfeInput, m_cbFrameBuffer.GetDirectWritePointer(), &m_nCRC);
+-                        m_cbFrameBuffer.UpdateAfterDirectWrite(m_nBlockAlign);
++                        m_Prepare.Unprepare(X, Y, &m_wfeInput, this->pcm, &m_nCRC);
++                        this->pcm += m_nBlockAlign;
+                     }
+                 }
+                 else
+@@ -324,8 +323,8 @@ void CAPEDecompress::DecodeBlocksToFrameBuffer(intn nBlocks)
+                         int X = m_spNewPredictorX->DecompressValue(m_spUnBitArray->DecodeValueRange(m_BitArrayStateX));
+                         int Y = m_spNewPredictorY->DecompressValue(m_spUnBitArray->DecodeValueRange(m_BitArrayStateY));
+                         
+-                        m_Prepare.Unprepare(X, Y, &m_wfeInput, m_cbFrameBuffer.GetDirectWritePointer(), &m_nCRC);
+-                        m_cbFrameBuffer.UpdateAfterDirectWrite(m_nBlockAlign);
++                        m_Prepare.Unprepare(X, Y, &m_wfeInput, this->pcm, &m_nCRC);
++                        this->pcm += m_nBlockAlign;
+                     }
+                 }
+             }
+@@ -336,8 +335,8 @@ void CAPEDecompress::DecodeBlocksToFrameBuffer(intn nBlocks)
+             {
+                 for (nBlocksProcessed = 0; nBlocksProcessed < nBlocks; nBlocksProcessed++)
+                 {
+-                    m_Prepare.Unprepare(0, 0, &m_wfeInput, m_cbFrameBuffer.GetDirectWritePointer(), &m_nCRC);
+-                    m_cbFrameBuffer.UpdateAfterDirectWrite(m_nBlockAlign);
++                    m_Prepare.Unprepare(0, 0, &m_wfeInput, this->pcm, &m_nCRC);
++                    this->pcm += m_nBlockAlign;
+                 }
+             }
+             else
+@@ -345,12 +344,13 @@ void CAPEDecompress::DecodeBlocksToFrameBuffer(intn nBlocks)
+                 for (nBlocksProcessed = 0; nBlocksProcessed < nBlocks; nBlocksProcessed++)
+                 {
+                     int X = m_spNewPredictorX->DecompressValue(m_spUnBitArray->DecodeValueRange(m_BitArrayStateX));
+-                    m_Prepare.Unprepare(X, 0, &m_wfeInput, m_cbFrameBuffer.GetDirectWritePointer(), &m_nCRC);
+-                    m_cbFrameBuffer.UpdateAfterDirectWrite(m_nBlockAlign);
++                    m_Prepare.Unprepare(X, 0, &m_wfeInput, this->pcm, &m_nCRC);
++                    this->pcm += m_nBlockAlign;
+                 }
+             }
+         }
+     }
++#if 0
+     catch(...)
+     {
+         m_bErrorDecodingCurrentFrame = true;
+@@ -363,6 +363,7 @@ void CAPEDecompress::DecodeBlocksToFrameBuffer(intn nBlocks)
+ 
+     // bump frame decode position
+     m_nCurrentFrameBufferBlock += nActualBlocks;
++#endif
+ }
+ 
+ void CAPEDecompress::StartFrame()
+@@ -376,7 +377,7 @@ void CAPEDecompress::StartFrame()
+ 
+     // get any 'special' codes if the file uses them (for silence, false stereo, etc.)
+     m_nSpecialCodes = 0;
+-    if (GET_USES_SPECIAL_FRAMES(m_spAPEInfo))
++    // if (GET_USES_SPECIAL_FRAMES(m_spAPEInfo))
+     {
+         if (m_nStoredCRC & 0x80000000) 
+         {
+diff --git a/Source/MACLib/APEDecompress.h b/Source/MACLib/APEDecompress.h
+index 3dc7368..287a9f6 100644
+--- a/Source/MACLib/APEDecompress.h
++++ b/Source/MACLib/APEDecompress.h
+@@ -17,6 +17,7 @@ class IPredictorDecompress;
+ class CAPEDecompress : public IAPEDecompress
+ {
+ public:
++    CAPEDecompress(){}
+     CAPEDecompress(int * pErrorCode, CAPEInfo * pAPEInfo, int nStartBlock = -1, int nFinishBlock = -1);
+     ~CAPEDecompress();
+ 
+@@ -25,7 +26,7 @@ public:
+ 
+     intn GetInfo(APE_DECOMPRESS_FIELDS Field, intn nParam1 = 0, intn nParam2 = 0);
+ 
+-protected:
++// protected:
+     // file info
+     intn m_nBlockAlign;
+     intn m_nCurrentFrame;
+@@ -68,6 +69,9 @@ protected:
+     intn m_nCurrentFrameBufferBlock;
+     intn m_nFrameBufferFinishedBlocks;
+     CCircleBuffer m_cbFrameBuffer;
++
++    int version;
++    unsigned char *pcm;
+ };
+ 
+ }
+diff --git a/Source/MACLib/UnBitArray.cpp b/Source/MACLib/UnBitArray.cpp
+index f47d0ac..a8e7102 100644
+--- a/Source/MACLib/UnBitArray.cpp
++++ b/Source/MACLib/UnBitArray.cpp
+@@ -33,14 +33,15 @@ Construction
+ CUnBitArray::CUnBitArray(CIO * pIO, intn nVersion, intn nFurthestReadByte) :
+     CUnBitArrayBase(nFurthestReadByte)
+ {
+-    CreateHelper(pIO, 16384, nVersion);
++    m_nVersion = nVersion;
++    // CreateHelper(pIO, 16384, nVersion);
+     m_nFlushCounter = 0;
+     m_nFinalizeCounter = 0;
+ }
+ 
+ CUnBitArray::~CUnBitArray()
+ {
+-    SAFE_ARRAY_DELETE(m_pBitArray)
++    // SAFE_ARRAY_DELETE(m_pBitArray)
+ }
+ 
+ unsigned int CUnBitArray::DecodeValue(DECODE_VALUE_METHOD DecodeMethod, int nParam1, int nParam2)
+diff --git a/Source/MACLib/UnBitArrayBase.cpp b/Source/MACLib/UnBitArrayBase.cpp
+index 456bc89..14552ad 100644
+--- a/Source/MACLib/UnBitArrayBase.cpp
++++ b/Source/MACLib/UnBitArrayBase.cpp
+@@ -6,6 +6,7 @@
+ 	#include "Old/APEDecompressOld.h"
+ 	#include "Old/UnBitArrayOld.h"
+ #endif
++#include <MAC-ff.h>
+ 
+ namespace APE
+ {
+@@ -14,6 +15,8 @@ const uint32 POWERS_OF_TWO_MINUS_ONE[33] = {0,1,3,7,15,31,63,127,255,511,1023,20
+ 
+ CUnBitArrayBase * CreateUnBitArray(IAPEDecompress * pAPEDecompress, intn nVersion)
+ {
++    intn nFurthestReadByte = 0;
++    /*
+     // determine the furthest position we should read in the I/O object
+     intn nFurthestReadByte = GET_IO(pAPEDecompress)->GetSize();
+     if (nFurthestReadByte > 0)
+@@ -26,6 +29,7 @@ CUnBitArrayBase * CreateUnBitArray(IAPEDecompress * pAPEDecompress, intn nVersio
+        if ((pAPETag != NULL) && pAPETag->GetAnalyzed())
+            nFurthestReadByte -= pAPETag->GetTagBytes();
+     }
++    */
+ 
+ #ifdef APE_BACKWARDS_COMPATIBILITY
+ 	if (nVersion >= 3900)
+@@ -42,7 +46,7 @@ CUnBitArrayBase * CreateUnBitArray(IAPEDecompress * pAPEDecompress, intn nVersio
+         return NULL;
+     }
+ 
+-    return (CUnBitArrayBase * ) new CUnBitArray(GET_IO(pAPEDecompress), nVersion, nFurthestReadByte);
++    return (CUnBitArrayBase * ) new CUnBitArray(NULL, nVersion, nFurthestReadByte);
+ #endif
+ }
+ 
+@@ -66,24 +70,24 @@ bool CUnBitArrayBase::EnsureBitsAvailable(uint32 nBits, bool bThrowExceptionOnFa
+ 	bool bResult = true;
+ 
+ 	// get more data if necessary
+-	if ((m_nCurrentBitIndex + nBits) >= (m_nGoodBytes * 8))
++	if ((m_nCurrentBitIndex + nBits) > (m_nGoodBytes * 8))
+ 	{
+ 		// fill
+-		FillBitArray();
++		/*FillBitArray();
+ 
+ 		// if we still don't have enough good bytes, we don't have the bits available
+ 		if ((m_nCurrentBitIndex + nBits) >= (m_nGoodBytes * 8))
+-		{
++		{*/
+ 			// overread error
+ 			ASSERT(false);
+ 
+ 			// throw exception if specified
+ 			if (bThrowExceptionOnFailure)
+-				throw(1);
++				throw(-APE_EMOREDATA);
+ 
+ 			// data not available
+ 			bResult = false;
+-		}
++		// }
+ 	}
+ 
+ 	return bResult;
+@@ -181,7 +185,7 @@ int CUnBitArrayBase::CreateHelper(CIO * pIO, intn nBytes, intn nVersion)
+     
+     // create the bitarray (we allocate and empty a little extra as buffer insurance, although it should never be necessary)
+     m_pBitArray = new uint32 [m_nElements + 64];
+-    memset(m_pBitArray, 0, (m_nElements + 64) * sizeof(uint32));
++    // memset(m_pBitArray, 0, (m_nElements + 64) * sizeof(uint32));
+     
+     return (m_pBitArray != NULL) ? 0 : ERROR_INSUFFICIENT_MEMORY;
+ }
+diff --git a/Source/MACLib/UnBitArrayBase.h b/Source/MACLib/UnBitArrayBase.h
+index 64f3e90..68487b7 100644
+--- a/Source/MACLib/UnBitArrayBase.h
++++ b/Source/MACLib/UnBitArrayBase.h
+@@ -41,7 +41,7 @@ public:
+     virtual void FlushBitArray() { }
+     virtual void Finalize() { }
+     
+-protected:
++// protected:
+     virtual int CreateHelper(CIO * pIO, intn nBytes, intn nVersion);
+     virtual uint32 DecodeValueXBits(uint32 nBits);
+     
+@@ -55,7 +55,7 @@ protected:
+     intn m_nFurthestReadByte;
+ 
+     uint32 m_nCurrentBitIndex;
+-    uint32 * m_pBitArray;
++    const uint32 * m_pBitArray;
+ };
+ 
+ CUnBitArrayBase * CreateUnBitArray(IAPEDecompress * pAPEDecompress, intn nVersion);
+diff --git a/Source/Shared/All.h b/Source/Shared/All.h
+index df5e04f..a38676b 100644
+--- a/Source/Shared/All.h
++++ b/Source/Shared/All.h
+@@ -60,7 +60,7 @@ Global compiler settings (useful for porting)
+ // porting or third party usage, it's probably best to not bother with APE_BACKWARDS_COMPATIBILITY.
+ // A future release of Monkey's Audio itself may remove support for these obsolete files.
+ //#if defined(PLATFORM_WINDOWS)
+-	#define APE_BACKWARDS_COMPATIBILITY
++	// #define APE_BACKWARDS_COMPATIBILITY
+ //#endif
+ 
+ // compression modes
+@@ -130,7 +130,7 @@ Global macros
+     #define IO_USE_WIN_FILE_IO
+     #define IO_HEADER_FILE                              "WinFileIO.h"
+     #define IO_CLASS_NAME                               CWinFileIO
+-    #define DLLEXPORT                                   __declspec(dllexport)
++    #define DLLEXPORT
+     #define SLEEP(MILLISECONDS)                         ::Sleep(MILLISECONDS)
+     #define MESSAGEBOX(PARENT, TEXT, CAPTION, TYPE)     ::MessageBox(PARENT, TEXT, CAPTION, TYPE)
+     #define PUMP_MESSAGE_LOOP                           { MSG Msg; while (PeekMessage(&Msg, NULL, 0, 0, PM_REMOVE) != 0) { TranslateMessage(&Msg); DispatchMessage(&Msg); } }
+-- 
+2.8.1.windows.1
+

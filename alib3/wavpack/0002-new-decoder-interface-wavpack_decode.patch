@@ -1,0 +1,481 @@
+From 7765f10d4cb7bba1756568a5e69cb6fc7a204055 Mon Sep 17 00:00:00 2001
+From: Simon Zolin <stsaz@yandex.ru>
+Date: Wed, 22 Jun 2016 16:50:09 +0300
+Subject: [PATCH 2/3] new decoder interface wavpack_decode()
+
+Only 1 block for multichannel audio is read per call to wavpack_decode().
+ If the next block must be read, return 0 and set state ST_UNPACK1.
+
+All input data is read just in one place - wps_read().
+All code that uses wps->sample_index is disabled.
+Support for wvc is disabled.
+Split WavpackOpenFileInputEx() into 2 parts.
+---
+ src/open_utils.c    |  70 +++++++++++++++++++++++--
+ src/unpack.c        |   2 +
+ src/unpack_utils.c  | 143 ++++++++++++++++++++++++++++++++++++++++++++++------
+ src/wavpack_local.h |  18 +++++++
+ 4 files changed, 212 insertions(+), 21 deletions(-)
+
+diff --git a/src/open_utils.c b/src/open_utils.c
+index a8c7baa..3779506 100644
+--- a/src/open_utils.c
++++ b/src/open_utils.c
+@@ -18,6 +18,7 @@
+ 
+ #include <stdlib.h>
+ #include <string.h>
++#include <wavpack-ff.h>
+ 
+ #include "wavpack_local.h"
+ 
+@@ -184,9 +185,7 @@ WavpackContext *WavpackOpenFileInputEx (WavpackStreamReader *reader, void *wv_id
+ {
+     WavpackContext *wpc = malloc (sizeof (WavpackContext));
+     WavpackStream *wps;
+-    int num_blocks = 0;
+     unsigned char first_byte;
+-    uint32_t bcount;
+ 
+     if (!wpc) {
+         if (error) strcpy (error, "can't allocate memory");
+@@ -202,7 +201,9 @@ WavpackContext *WavpackOpenFileInputEx (WavpackStreamReader *reader, void *wv_id
+     wpc->max_streams = OLD_MAX_STREAMS;     // use this until overwritten with actual number
+     wpc->open_flags = flags;
+ 
++#if 0
+     wpc->filelen = wpc->reader->get_length (wpc->wv_in);
++#endif
+ 
+ #ifndef NO_TAGS
+     if ((flags & (OPEN_TAGS | OPEN_EDIT_TAGS)) && wpc->reader->can_seek (wpc->wv_in)) {
+@@ -241,8 +242,52 @@ WavpackContext *WavpackOpenFileInputEx (WavpackStreamReader *reader, void *wv_id
+     }
+     CLEAR (*wps);
+ 
++    return wpc;
++}
++
++const char* wavpack_errstr(wavpack_ctx *w)
++{
++    return WavpackGetErrorMessage(w->wpc);
++}
++
++wavpack_ctx* wavpack_decode_init()
++{
++    wavpack_ctx *w;
++
++    if (NULL == (w = calloc(1, sizeof(wavpack_ctx))))
++        return NULL;
++
++    if (NULL == (w->wpc = WavpackOpenFileInputEx(NULL, NULL, NULL, NULL, 0, 0))) {
++        free(w);
++        return NULL;
++    }
++
++    return w;
++}
++
++void wavpack_decode_free(wavpack_ctx *w)
++{
++    WavpackCloseFile(w->wpc);
++    free(w);
++}
++
++int wavpack_read_header(wavpack_ctx *w, const char *data, size_t len, wavpack_info *info)
++{
++    WavpackContext *wpc = w->wpc;
++    WavpackStream *wps = wpc->streams[0];
++    int num_blocks = 0, flags = wpc->open_flags;
++    uint32_t bcount;
++
++    wpc->data = data;
++    wpc->len = len;
++
+     while (!wps->wphdr.block_samples) {
+ 
++        bcount = wps_read(wpc, wps);
++        if (bcount != 0)
++            return -1;
++
++#if 0
+         wpc->filepos = wpc->reader->get_pos (wpc->wv_in);
+         bcount = read_next_header (wpc->reader, wpc->wv_in, &wps->wphdr);
+ 
+@@ -264,9 +309,11 @@ WavpackContext *WavpackOpenFileInputEx (WavpackStreamReader *reader, void *wv_id
+             if (error) strcpy (error, "can't read all of WavPack file!");
+             return WavpackCloseFile (wpc);
+         }
++#endif
+ 
+         wps->init_done = FALSE;
+ 
++#if 0
+         if (wps->wphdr.block_samples && !(flags & OPEN_STREAMING)) {
+             if (wps->wphdr.block_index || wps->wphdr.total_samples == (uint32_t) -1) {
+                 wpc->initial_index = wps->wphdr.block_index;
+@@ -295,12 +342,13 @@ WavpackContext *WavpackOpenFileInputEx (WavpackStreamReader *reader, void *wv_id
+             if (error) strcpy (error, "not compatible with this version of correction file!");
+             return WavpackCloseFile (wpc);
+         }
++#endif
+ 
+         if (!wps->init_done && !unpack_init (wpc)) {
+-            if (error) strcpy (error, wpc->error_message [0] ? wpc->error_message :
++            strcpy (wpc->error_message, wpc->error_message [0] ? wpc->error_message :
+                 "not compatible with this version of WavPack file!");
+ 
+-            return WavpackCloseFile (wpc);
++            return -1;
+         }
+ 
+         wps->init_done = TRUE;
+@@ -329,7 +377,17 @@ WavpackContext *WavpackOpenFileInputEx (WavpackStreamReader *reader, void *wv_id
+     if ((flags & OPEN_2CH_MAX) && !(wps->wphdr.flags & FINAL_BLOCK))
+         wpc->reduced_channels = (wps->wphdr.flags & MONO_FLAG) ? 1 : 2;
+ 
+-    return wpc;
++    free_streams(wpc);
++    wpc->streams[0]->wphdr.block_samples = 0;
++    wpc->streams[0]->wphdr.ckSize = 24;
++
++    info->bps = wpc->config.bits_per_sample;
++    info->channels = wpc->config.num_channels;
++    info->rate = wpc->config.sample_rate;
++    info->mode = WavpackGetMode(wpc);
++    if (info->mode & MODE_MD5)
++        WavpackGetMD5Sum(wpc, info->md5);
++    return 0;
+ }
+ 
+ // This function returns the major version number of the WavPack program
+@@ -466,8 +524,10 @@ int unpack_init (WavpackContext *wpc)
+                 wpc->lossy_blocks = TRUE;
+     }
+ 
++#if 0
+     if (wps->wphdr.block_samples)
+         wps->sample_index = wps->wphdr.block_index;
++#endif
+ 
+     return TRUE;
+ }
+diff --git a/src/unpack.c b/src/unpack.c
+index 52246dd..a97cd8e 100644
+--- a/src/unpack.c
++++ b/src/unpack.c
+@@ -80,8 +80,10 @@ int32_t unpack_samples (WavpackContext *wpc, int32_t *buffer, uint32_t sample_co
+     struct decorr_pass *dpp;
+     int tcount, m = 0;
+ 
++#if 0
+     if (wps->sample_index + sample_count > wps->wphdr.block_index + wps->wphdr.block_samples)
+         sample_count = wps->wphdr.block_index + wps->wphdr.block_samples - wps->sample_index;
++#endif
+ 
+     if (wps->mute_error) {
+         if (wpc->reduced_channels == 1 || wpc->config.num_channels == 1 || (flags & MONO_FLAG))
+diff --git a/src/unpack_utils.c b/src/unpack_utils.c
+index 317dfd4..0809f3f 100644
+--- a/src/unpack_utils.c
++++ b/src/unpack_utils.c
+@@ -15,11 +15,56 @@
+ 
+ #include <stdlib.h>
+ #include <string.h>
++#include <wavpack-ff.h>
+ 
+ #include "wavpack_local.h"
+ 
+ ///////////////////////////// executable code ////////////////////////////////
+ 
++/* open_utils.c: read_next_header() */
++int check_header(const char *sp)
++{
++    if (*sp++ == 'w' && *sp == 'v' && *++sp == 'p' && *++sp == 'k' &&
++        !(*++sp & 1) && sp [2] < 16 && !sp [3] && (sp [2] || sp [1] || *sp >= 24) && sp [5] == 4 &&
++        sp [4] >= (MIN_STREAM_VERS & 0xff) && sp [4] <= (MAX_STREAM_VERS & 0xff) && sp [18] < 3 && !sp [19]) {
++
++        return 1;
++    }
++    return 0;
++}
++
++int wps_read(WavpackContext *wpc, WavpackStream *wps)
++{
++    if (wpc->len < sizeof(WavpackHeader) || !check_header(wpc->data)) {
++        strcpy (wpc->error_message, "bad block header");
++        return -1;
++    }
++
++    memcpy(&wps->wphdr, wpc->data, sizeof(WavpackHeader));
++    wpc->data += sizeof(WavpackHeader);
++    wpc->len -= sizeof(WavpackHeader);
++    WavpackLittleEndianToNative (&wps->wphdr, WavpackHeaderFormat);
++
++    wps->blockbuff = malloc (wps->wphdr.ckSize + 8);
++    if (!wps->blockbuff) {
++        strcpy (wpc->error_message, "memory allocation error");
++        return -1;
++    }
++
++    if (wpc->len < wps->wphdr.ckSize - 24) {
++        free(wps->blockbuff);
++        wps->blockbuff = NULL;
++        strcpy (wpc->error_message, "incomplete block");
++        return -1;
++    }
++
++    memcpy (wps->blockbuff, &wps->wphdr, 32);
++    memcpy (wps->blockbuff + 32, wpc->data, wps->wphdr.ckSize - 24);
++    wpc->data += wps->wphdr.ckSize - 24;
++    wpc->len -= wps->wphdr.ckSize - 24;
++    return 0;
++}
++
+ // Unpack the specified number of samples from the current file position.
+ // Note that "samples" here refers to "complete" samples, which would be
+ // 2 longs for stereo files or even more for multichannel files, so the
+@@ -34,19 +79,37 @@
+ // the end of fle is encountered or an error occurs. After all samples have
+ // been unpacked then 0 will be returned.
+ 
+-uint32_t WavpackUnpackSamples (WavpackContext *wpc, int32_t *buffer, uint32_t samples)
++int wavpack_decode(wavpack_ctx *w, const char *data, size_t len, int *buffer, unsigned int samples)
+ {
+-    WavpackStream *wps = wpc->streams ? wpc->streams [wpc->current_stream = 0] : NULL;
+-    uint32_t bcount, samples_unpacked = 0, samples_to_unpack;
++    WavpackContext *wpc = w->wpc;
++    WavpackStream *wps;
++    uint32_t samples_unpacked = 0, samples_to_unpack;
+     int num_channels = wpc->config.num_channels;
+-    int file_done = FALSE;
++    int r, offset;
+ 
+ #ifndef VER4_ONLY
+     if (wpc->stream3)
+         return unpack_samples3 (wpc, buffer, samples);
+ #endif
+ 
+-    while (samples) {
++    wpc->data = data;
++    wpc->len = len;
++
++    switch (wpc->state) {
++    case ST_UNPACK1:
++        // process the next multichannel block
++        wpc->state = 0;
++        samples_to_unpack = wpc->unpack_ctx.samples_to_unpack;
++        wps = wpc->streams[wpc->current_stream];
++        offset = wpc->unpack_ctx.offset;
++        goto unpack1;
++    }
++
++    wps = wpc->streams ? wpc->streams [wpc->current_stream = 0] : NULL;
++
++    {
++        if (!wps->wphdr.block_samples || !(wps->wphdr.flags & INITIAL_BLOCK)) {
++#if 0
+         if (!wps->wphdr.block_samples || !(wps->wphdr.flags & INITIAL_BLOCK) ||
+             wps->sample_index >= wps->wphdr.block_index + wps->wphdr.block_samples) {
+ 
+@@ -82,14 +145,23 @@ uint32_t WavpackUnpackSamples (WavpackContext *wpc, int32_t *buffer, uint32_t sa
+                         wps->wphdr.ckSize = 24;
+                         break;
+                 }
++ #endif
++
++                free_streams (wpc);
++
++                r = wps_read(wpc, wps);
++                if (r != 0)
++                    goto err;
+ 
+                 wps->init_done = FALSE;
+ 
++#if 0
+                 if (wps->wphdr.block_samples && wps->sample_index != wps->wphdr.block_index)
+                     wpc->crc_errors++;
+ 
+                 if (wps->wphdr.block_samples && wpc->wvc_flag)
+                     read_wvc_block (wpc);
++#endif
+ 
+                 if (!wps->wphdr.block_samples) {
+                     if (!wps->init_done && !unpack_init (wpc))
+@@ -99,6 +171,7 @@ uint32_t WavpackUnpackSamples (WavpackContext *wpc, int32_t *buffer, uint32_t sa
+                 }
+         }
+ 
++#if 0
+         if (!wps->wphdr.block_samples || !(wps->wphdr.flags & INITIAL_BLOCK) ||
+             wps->sample_index >= wps->wphdr.block_index + wps->wphdr.block_samples)
+                 continue;
+@@ -130,8 +203,10 @@ uint32_t WavpackUnpackSamples (WavpackContext *wpc, int32_t *buffer, uint32_t sa
+ 
+             continue;
+         }
++#endif
+ 
+-        samples_to_unpack = wps->wphdr.block_index + wps->wphdr.block_samples - wps->sample_index;
++        // samples_to_unpack = wps->wphdr.block_index + wps->wphdr.block_samples - wps->sample_index;
++        samples_to_unpack = wps->wphdr.block_samples;
+ 
+         if (samples_to_unpack > samples)
+             samples_to_unpack = samples;
+@@ -142,22 +217,26 @@ uint32_t WavpackUnpackSamples (WavpackContext *wpc, int32_t *buffer, uint32_t sa
+         wps->init_done = TRUE;
+ 
+         if (!wpc->reduced_channels && !(wps->wphdr.flags & FINAL_BLOCK)) {
+-            int32_t *temp_buffer = malloc (samples_to_unpack * 8), *src, *dst;
+-            int offset = 0;
+             uint32_t samcnt;
++            int32_t *temp_buffer, *src, *dst;
++            offset = 0;
++unpack1:
++            temp_buffer = malloc (samples_to_unpack * 8);
+ 
+ 	    if (!temp_buffer)
+-		break;
++                goto err_mem;
+ 
+-            while (1) {
++            do {
+                 if (wpc->current_stream == wpc->num_streams) {
+                     wpc->streams = realloc (wpc->streams, (wpc->num_streams + 1) * sizeof (wpc->streams [0]));
+                     if (!wpc->streams)
+-		        break;
++                        goto err_mem;
+                     wps = wpc->streams [wpc->num_streams++] = malloc (sizeof (WavpackStream));
+                     if (!wps)
+-			break;
++                        goto err_mem;
+                     CLEAR (*wps);
++
++#if 0
+                     bcount = read_next_header (wpc->reader, wpc->wv_in, &wps->wphdr);
+ 
+                     if (bcount == (uint32_t) -1) {
+@@ -189,6 +268,15 @@ uint32_t WavpackUnpackSamples (WavpackContext *wpc, int32_t *buffer, uint32_t sa
+ 
+                     if (wpc->wvc_flag)
+                         read_wvc_block (wpc);
++#endif
++
++                    r = wps_read(wpc, wps);
++                    if (r != 0) {
++                        free(temp_buffer);
++                        goto err_mem;
++                    }
++
++                    wps->init_done = FALSE;
+ 
+                     if (!wps->init_done && !unpack_init (wpc))
+                         wpc->crc_errors++;
+@@ -229,11 +317,13 @@ uint32_t WavpackUnpackSamples (WavpackContext *wpc, int32_t *buffer, uint32_t sa
+ 
+                     offset += 2;
+                 }
++            } while (0);
+ 
+-                if ((wps->wphdr.flags & FINAL_BLOCK) || wpc->current_stream == wpc->max_streams - 1 || offset == num_channels)
+-                    break;
+-                else
+-                    wpc->current_stream++;
++            if ((wps->wphdr.flags & FINAL_BLOCK) || wpc->current_stream == wpc->max_streams - 1 || offset == num_channels)
++                ;
++            else {
++                wpc->current_stream++;
++                goto nxt_stream;
+             }
+ 
+             wps = wpc->streams [wpc->current_stream = 0];
+@@ -242,10 +332,12 @@ uint32_t WavpackUnpackSamples (WavpackContext *wpc, int32_t *buffer, uint32_t sa
+         else
+             unpack_samples (wpc, buffer, samples_to_unpack);
+ 
++#if 0
+         if (file_done) {
+             strcpy (wpc->error_message, "can't read all of last block!");
+             break;
+         }
++#endif
+ 
+         if (wpc->reduced_channels)
+             buffer += samples_to_unpack * wpc->reduced_channels;
+@@ -255,6 +347,7 @@ uint32_t WavpackUnpackSamples (WavpackContext *wpc, int32_t *buffer, uint32_t sa
+         samples_unpacked += samples_to_unpack;
+         samples -= samples_to_unpack;
+ 
++#if 0
+         if (wps->sample_index == wps->wphdr.block_index + wps->wphdr.block_samples) {
+             if (check_crc_error (wpc) && wps->blockbuff) {
+ 
+@@ -274,7 +367,25 @@ uint32_t WavpackUnpackSamples (WavpackContext *wpc, int32_t *buffer, uint32_t sa
+ 
+         if (wpc->total_samples != (uint32_t) -1 && wps->sample_index == wpc->total_samples)
+             break;
++#endif
+     }
+ 
++    free_streams (wpc);
++    wpc->streams[0]->wphdr.block_samples = 0;
++    wpc->streams[0]->wphdr.ckSize = 24;
+     return samples_unpacked;
++
++nxt_stream:
++    wpc->unpack_ctx.samples_to_unpack = samples_to_unpack;
++    wpc->unpack_ctx.offset = offset;
++    wpc->state = ST_UNPACK1;
++    return 0;
++
++err_mem:
++    strcpy (wpc->error_message, "memory allocation error");
++
++err:
++    wpc->streams[0]->wphdr.block_samples = 0;
++    wpc->streams[0]->wphdr.ckSize = 24;
++    return -1;
+ }
+diff --git a/src/wavpack_local.h b/src/wavpack_local.h
+index f45416e..5ad97f6 100644
+--- a/src/wavpack_local.h
++++ b/src/wavpack_local.h
+@@ -425,9 +425,21 @@ typedef struct {
+     WavpackStream **streams;
+     void *stream3;
+ 
++    const char *data;
++    size_t len;
++    uint32_t state;
++    struct {
++        uint32_t samples_to_unpack;
++        int offset;
++    } unpack_ctx;
++
+     char error_message [80];
+ } WavpackContext;
+ 
++enum {
++    ST_UNPACK1 = 1,
++};
++
+ //////////////////////// function prototypes and macros //////////////////////
+ 
+ #define CLEAR(destin) memset (&destin, 0, sizeof (destin));
+@@ -763,6 +775,12 @@ void WavpackNativeToLittleEndian (void *data, char *format);
+ 
+ void free_streams (WavpackContext *wpc);
+ 
++struct wavpack_ctx {
++    WavpackContext *wpc;
++};
++
++int wps_read(WavpackContext *wpc, WavpackStream *wps);
++
+ /////////////////////////////////// tag utilities ////////////////////////////////////
+ // modules: tags.c, tag_utils.c
+ 
+-- 
+2.4.3
+

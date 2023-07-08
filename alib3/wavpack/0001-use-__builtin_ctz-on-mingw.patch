@@ -1,0 +1,34 @@
+From 55f3e8f6c8d61f1d2d0a575bf469a4f0912aa66c Mon Sep 17 00:00:00 2001
+From: Simon Zolin <stsaz@yandex.ru>
+Date: Sun, 17 Jan 2016 22:23:50 +0300
+Subject: [PATCH 1/3] use __builtin_ctz() on mingw
+
+---
+ src/read_words.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/read_words.c b/src/read_words.c
+index 16cc102..3232019 100644
+--- a/src/read_words.c
++++ b/src/read_words.c
+@@ -121,7 +121,7 @@ int32_t FASTCALL get_word (WavpackStream *wps, int chan, int32_t *correction)
+             wps->wvbits.bc += sizeof (*(wps->wvbits.ptr)) * 8;
+         }
+ 
+-#ifdef WIN32
++#ifdef _MSC_VER
+         _BitScanForward (&ones_count, ~wps->wvbits.sr);
+ #else
+         ones_count = __builtin_ctz (~wps->wvbits.sr);
+@@ -391,7 +391,7 @@ int32_t get_words_lossless (WavpackStream *wps, int32_t *buffer, int32_t nsample
+             bs->bc += sizeof (*(bs->ptr)) * 8;
+         }
+ 
+-#ifdef WIN32
++#ifdef _MSC_VER
+         _BitScanForward (&ones_count, ~wps->wvbits.sr);
+ #else
+         ones_count = __builtin_ctz (~wps->wvbits.sr);
+-- 
+2.4.3
+

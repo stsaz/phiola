@@ -1,0 +1,26 @@
+From 4be5a2e2075831d48483ab81e73f02a731748dd8 Mon Sep 17 00:00:00 2001
+From: Simon Zolin <stsaz@yandex.ru>
+Date: Tue, 23 Feb 2016 09:35:05 +0300
+Subject: [PATCH] Decode(): don't set output sample number if nothing was
+ decoded
+
+---
+ codec/ALACDecoder.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/codec/ALACDecoder.cpp b/codec/ALACDecoder.cpp
+index ce3340d..5f98520 100644
+--- a/codec/ALACDecoder.cpp
++++ b/codec/ALACDecoder.cpp
+@@ -207,7 +207,7 @@ int32_t ALACDecoder::Decode( BitBuffer * bits, uint8_t * sampleBuffer, uint32_t
+ 	samples = (int16_t *) sampleBuffer;
+ 
+ 	status = ALAC_noErr;
+-	*outNumSamples = numSamples;
++	// *outNumSamples = numSamples;
+ 
+ 	while ( status == ALAC_noErr )
+ 	{
+-- 
+2.4.3
+

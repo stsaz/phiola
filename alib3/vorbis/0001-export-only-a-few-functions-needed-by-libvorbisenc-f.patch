@@ -1,0 +1,70 @@
+From 1226d4f866c0951ac1b39e63df4d2cb01993cba3 Mon Sep 17 00:00:00 2001
+From: Simon Zolin <stsaz@yandex.ru>
+Date: Tue, 21 Jun 2016 12:34:40 +0300
+Subject: [PATCH 1/3] export only a few functions needed by libvorbisenc-ff
+
+---
+ include/vorbis/codec.h | 24 +++++++++++++-----------
+ 1 file changed, 13 insertions(+), 11 deletions(-)
+
+diff --git a/include/vorbis/codec.h b/include/vorbis/codec.h
+index 999aa33..5691715 100644
+--- a/include/vorbis/codec.h
++++ b/include/vorbis/codec.h
+@@ -162,8 +162,14 @@ typedef struct vorbis_comment{
+ 
+ /* Vorbis PRIMITIVES: general ***************************************/
+ 
+-extern void     vorbis_info_init(vorbis_info *vi);
+-extern void     vorbis_info_clear(vorbis_info *vi);
++#ifdef WIN32
++#define EXP  __declspec(dllexport)
++#else
++#define EXP  __attribute__((visibility("default")))
++#endif
++
++extern EXP void     vorbis_info_init(vorbis_info *vi);
++extern EXP void     vorbis_info_clear(vorbis_info *vi);
+ extern int      vorbis_info_blocksize(vorbis_info *vi,int zo);
+ extern void     vorbis_comment_init(vorbis_comment *vc);
+ extern void     vorbis_comment_add(vorbis_comment *vc, const char *comment);
+@@ -173,9 +175,9 @@ extern char    *vorbis_comment_query(vorbis_comment *vc, const char *tag, int co
+ extern int      vorbis_comment_query_count(vorbis_comment *vc, const char *tag);
+ extern void     vorbis_comment_clear(vorbis_comment *vc);
+ 
+-extern int      vorbis_block_init(vorbis_dsp_state *v, vorbis_block *vb);
+-extern int      vorbis_block_clear(vorbis_block *vb);
+-extern void     vorbis_dsp_clear(vorbis_dsp_state *v);
++extern EXP int      vorbis_block_init(vorbis_dsp_state *v, vorbis_block *vb);
++extern EXP int      vorbis_block_clear(vorbis_block *vb);
++extern EXP void     vorbis_dsp_clear(vorbis_dsp_state *v);
+ extern double   vorbis_granule_time(vorbis_dsp_state *v,
+                                     ogg_int64_t granulepos);
+ 
+@@ -183,17 +185,17 @@ extern const char *vorbis_version_string(void);
+ 
+ /* Vorbis PRIMITIVES: analysis/DSP layer ****************************/
+ 
+-extern int      vorbis_analysis_init(vorbis_dsp_state *v,vorbis_info *vi);
++extern EXP int      vorbis_analysis_init(vorbis_dsp_state *v,vorbis_info *vi);
+ extern int      vorbis_commentheader_out(vorbis_comment *vc, ogg_packet *op);
+-extern int      vorbis_analysis_headerout(vorbis_dsp_state *v,
++extern EXP int      vorbis_analysis_headerout(vorbis_dsp_state *v,
+                                           vorbis_comment *vc,
+                                           ogg_packet *op,
+                                           ogg_packet *op_comm,
+                                           ogg_packet *op_code);
+-extern float  **vorbis_analysis_buffer(vorbis_dsp_state *v,int vals);
+-extern int      vorbis_analysis_wrote(vorbis_dsp_state *v,int vals);
+-extern int      vorbis_analysis_blockout(vorbis_dsp_state *v,vorbis_block *vb);
+-extern int      vorbis_analysis(vorbis_block *vb,ogg_packet *op);
++extern EXP float  **vorbis_analysis_buffer(vorbis_dsp_state *v,int vals);
++extern EXP int      vorbis_analysis_wrote(vorbis_dsp_state *v,int vals);
++extern EXP int      vorbis_analysis_blockout(vorbis_dsp_state *v,vorbis_block *vb);
++extern EXP int      vorbis_analysis(vorbis_block *vb,ogg_packet *op);
+ 
+ extern int      vorbis_bitrate_addblock(vorbis_block *vb);
+ extern int      vorbis_bitrate_flushpacket(vorbis_dsp_state *vd,
+-- 
+2.4.3
+

@@ -1,0 +1,25 @@
+From a69fe062ee703dbedd7b20cac521325445a60f9e Mon Sep 17 00:00:00 2001
+From: Simon Zolin <stsaz@yandex.ru>
+Date: Tue, 21 Mar 2017 11:40:40 +0300
+Subject: [PATCH 2/2] mpc_demux_ST() is global
+
+---
+ libmpcdec/mpc_demux.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libmpcdec/mpc_demux.c b/libmpcdec/mpc_demux.c
+index 63e58e6..1abf0ef 100755
+--- a/libmpcdec/mpc_demux.c
++++ b/libmpcdec/mpc_demux.c
+@@ -271,7 +271,7 @@ static mpc_status mpc_demux_seek_init(mpc_demux * d)
+ 	return MPC_STATUS_OK;
+ }
+ 
+-static mpc_status mpc_demux_ST(mpc_demux * d)
++mpc_status mpc_demux_ST(mpc_demux * d)
+ {
+ 	mpc_uint64_t tmp;
+ 	mpc_seek_t * table, last[2];
+-- 
+2.7.4
+

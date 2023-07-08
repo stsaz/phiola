@@ -1,0 +1,27 @@
+From 84c1dc6650dba2c0eb447f1b0fd33ea792698e5d Mon Sep 17 00:00:00 2001
+From: Simon Zolin <stsaz@yandex.ru>
+Date: Fri, 3 Feb 2017 18:36:22 +0300
+Subject: [PATCH] * don't check header CRC
+
+---
+ libmpcdec/streaminfo.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/libmpcdec/streaminfo.c b/libmpcdec/streaminfo.c
+index 0e2e844..b03632a 100644
+--- a/libmpcdec/streaminfo.c
++++ b/libmpcdec/streaminfo.c
+@@ -191,8 +191,8 @@ streaminfo_read_header_sv8(mpc_streaminfo* si, const mpc_bits_reader * r_in,
+ 	mpc_bits_reader r = *r_in;
+ 
+ 	CRC = (mpc_bits_read(&r, 16) << 16) | mpc_bits_read(&r, 16);
+-	if (CRC != mpc_crc32(r.buff + 1 - (r.count >> 3), (int)block_size - 4))
+-		return MPC_STATUS_FAIL;
++	// if (CRC != mpc_crc32(r.buff + 1 - (r.count >> 3), (int)block_size - 4))
++	// 	return MPC_STATUS_FAIL;
+ 
+ 	si->stream_version = mpc_bits_read(&r, 8);
+ 	if (si->stream_version != 8)
+-- 
+2.8.1.windows.1
+
