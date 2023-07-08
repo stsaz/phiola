@@ -49,13 +49,26 @@ class Phiola {
 	}
 	native int convert(String iname, String oname, ConvertParams conf, ConvertCallback cb);
 
-	static final int REC_AACLC = 0;
-	static final int REC_AACHE = 1;
-	static final int REC_AACHE2 = 2;
-	static final int REC_FLAC = 3;
-	static final int RECF_EXCLUSIVE = 0x10;
-	static final int RECF_POWER_SAVE = 0x20;
-	native long recStart(String oname, int buf_len_msec, int gain_db100, int fmt, int q, int until_sec, int flags, Callback cb);
+	static class RecordParams {
+		static final int REC_AACLC = 0;
+		static final int REC_AACHE = 1;
+		static final int REC_AACHE2 = 2;
+		static final int REC_FLAC = 3;
+		int format;
+
+		static final int RECF_EXCLUSIVE = 0x10;
+		static final int RECF_POWER_SAVE = 0x20;
+		int flags;
+
+		int buf_len_msec;
+		int gain_db100;
+		int quality;
+		int until_sec;
+	}
+	interface RecordCallback {
+		void on_finish();
+	}
+	native long recStart(String oname, RecordParams conf, RecordCallback cb);
 	native void recStop(long trk);
 
 	// track queue

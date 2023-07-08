@@ -333,33 +333,42 @@ class Track {
 		}
 	}
 
-	TrackHandle rec_start(String out, Phiola.Callback cb) {
+	TrackHandle rec_start_26(String out, Phiola.RecordCallback cb) {
+		Phiola.RecordParams p = new Phiola.RecordParams();
+
+		p.format = Phiola.RecordParams.REC_AACLC;
+		if (core.setts.rec_enc.equals("AAC-HE"))
+			p.format = Phiola.RecordParams.REC_AACHE;
+		else if (core.setts.rec_enc.equals("AAC-HEv2"))
+			p.format = Phiola.RecordParams.REC_AACHE2;
+		else if (core.setts.rec_enc.equals("FLAC"))
+			p.format = Phiola.RecordParams.REC_FLAC;
+
+		if (core.setts.rec_exclusive)
+			p.flags |= Phiola.RecordParams.RECF_EXCLUSIVE;
+		if (true)
+			p.flags |= Phiola.RecordParams.RECF_POWER_SAVE;
+
+		p.quality = core.setts.enc_bitrate;
+		p.buf_len_msec = core.setts.rec_buf_len_ms;
+		p.gain_db100 = core.setts.rec_gain_db100;
+		p.until_sec = core.setts.rec_until_sec;
+
 		trec = new TrackHandle();
+		trec.phi_trk = core.phiola.recStart(out, p, cb);
+		if (trec.phi_trk == 0) {
+			trec = null;
+			return null;
+		}
+		return trec;
+	}
 
+	TrackHandle rec_start(String out, Phiola.RecordCallback cb) {
 		if (Build.VERSION.SDK_INT >= 26) {
-			int enc = Phiola.REC_AACLC;
-			if (core.setts.rec_enc.equals("AAC-HE"))
-				enc = Phiola.REC_AACHE;
-			else if (core.setts.rec_enc.equals("AAC-HEv2"))
-				enc = Phiola.REC_AACHE2;
-			else if (core.setts.rec_enc.equals("FLAC"))
-				enc = Phiola.REC_FLAC;
-
-			int flags = 0;
-			if (core.setts.rec_exclusive) flags |= Phiola.RECF_EXCLUSIVE;
-			if (true) flags |= Phiola.RECF_POWER_SAVE;
-
-			int q = core.setts.enc_bitrate;
-			trec.phi_trk = core.phiola.recStart(out, core.setts.rec_buf_len_ms
-				, core.setts.rec_gain_db100, enc, q, core.setts.rec_until_sec, flags
-				, cb);
-			if (trec.phi_trk == 0) {
-				trec = null;
-				return null;
-			}
-			return trec;
+			return rec_start_26(out, cb);
 		}
 
+		trec = new TrackHandle();
 		trec.mr = new MediaRecorder();
 		try {
 			trec.mr.setAudioSource(MediaRecorder.AudioSource.MIC);

@@ -11,7 +11,7 @@ static void rectrk_close(void *ctx, phi_track *t)
 	}
 	if (t->chain_flags & PHI_FFINISHED) {
 		jobject jo = t->udata;
-		jni_call_void(jo, x->Phiola_Callback_on_finish);
+		jni_call_void(jo, x->Phiola_RecordCallback_on_finish);
 	}
 
 end:
@@ -40,11 +40,19 @@ enum {
 #define RECF_POWER_SAVE  2
 
 JNIEXPORT jlong JNICALL
-Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring joname, jint buf_len_msec, jint gain_db100, jint fmt, jint q, jint until_sec, jint flags, jobject jcb)
+Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring joname, jobject jconf, jobject jcb)
 {
 	dbglog("%s: enter", __func__);
 	int e = -1;
 	const char *oname = jni_sz_js(joname);
+
+	jclass jc_conf = jni_class_obj(jconf);
+	jint buf_len_msec = jni_obj_int(jconf, jni_field(jc_conf, "buf_len_msec", JNI_TINT));
+	jint gain_db100 = jni_obj_int(jconf, jni_field(jc_conf, "gain_db100", JNI_TINT));
+	jint fmt = jni_obj_int(jconf, jni_field(jc_conf, "format", JNI_TINT));
+	jint q = jni_obj_int(jconf, jni_field(jc_conf, "quality", JNI_TINT));
+	jint until_sec = jni_obj_int(jconf, jni_field(jc_conf, "until_sec", JNI_TINT));
+	jint flags = jni_obj_int(jconf, jni_field(jc_conf, "flags", JNI_TINT));
 
 	uint aac_profile = 0;
 	switch (fmt) {
@@ -85,7 +93,7 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 		|| !track->filter(t, x->core->mod("core.file-write"), 0))
 		goto end;
 
-	x->Phiola_Callback_on_finish = jni_func(jni_class_obj(jcb), "on_finish", "()V");
+	x->Phiola_RecordCallback_on_finish = jni_func(jni_class_obj(jcb), "on_finish", "()V");
 	t->udata = jni_global_ref(jcb);
 
 	track->start(t);
