@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#805500</color>
+    <color name="colorPrimaryDark">#805500</color>
+    <color name="colorAccent">#805500</color>
+    <color name="list_text">#eeeeee</color>
+    <color name="list_row_pressed">#805500</color>
+    <color name="text">#eeeeee</color>
+    <color name="sett_group">#ffaa00</color>
+    <color name="track_header">#55ff55</color>
+    <color name="time_pos">#eeeeee</color>
+</resources>

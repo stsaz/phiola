@@ -1,0 +1,168 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent">
+
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:focusableInTouchMode="true"
+		android:orientation="vertical">
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:text="@string/conv_input_file"
+			android:textColor="@color/text" />
+
+		<EditText
+			android:id="@+id/conv_tiname"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:inputType="text"
+			android:textSize="@dimen/text_editbox" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:text="@string/conv_out_dir"
+			android:textColor="@color/text" />
+		<EditText
+			android:id="@+id/conv_todir"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:inputType="text"
+			android:textSize="@dimen/text_editbox" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:text="@string/conv_out_name"
+			android:textColor="@color/text" />
+		<EditText
+			android:id="@+id/conv_toname"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:inputType="text"
+			android:textSize="@dimen/text_editbox" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:text="@string/conv_out_fmt"
+			android:textColor="@color/text" />
+		<EditText
+			android:id="@+id/conv_toext"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:inputType="text"
+			android:textSize="@dimen/text_editbox" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:text="@string/conv_apos_start"
+			android:textColor="@color/text" />
+		<EditText
+			android:id="@+id/conv_tfrom"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:inputType="text"
+			android:textSize="@dimen/text_editbox" />
+		<Button
+			android:id="@+id/conv_bfrom_set_cur"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/conv_from_set_cur" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:text="@string/conv_apos_end"
+			android:textColor="@color/text" />
+		<EditText
+			android:id="@+id/conv_tuntil"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:inputType="text"
+			android:textSize="@dimen/text_editbox" />
+		<Button android:id="@+id/conv_until_set_cur"
+			android:layout_width="wrap_content" android:layout_height="wrap_content"
+			android:text="@string/conv_from_set_cur" />
+
+		<TextView
+			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:text="@string/conv_sample_rate"
+			android:textColor="@color/text" />
+		<EditText android:id="@+id/conv_tsample_rate"
+			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:inputType="text"
+			android:textSize="@dimen/text_editbox" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:text="@string/conv_aac_q"
+			android:textColor="@color/text" />
+		<EditText
+			android:id="@+id/conv_taac_q"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:inputType="text"
+			android:textSize="@dimen/text_editbox" />
+
+		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/conv_bcopy"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:layout_margin="10dp"
+			android:text="@string/conv_copy" />
+
+		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/conv_bpreserve_date"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:layout_margin="10dp"
+			android:text="@string/conv_preserve_date" />
+
+		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/conv_btrash_orig"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:layout_margin="10dp"
+			android:text="@string/conv_trash_orig" />
+
+		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/conv_bpl_add"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:layout_margin="10dp"
+			android:text="@string/conv_pl_add" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:text="Note: the process may take up to a minute! Be patient."
+			android:textColor="@color/text" />
+		<Button
+			android:id="@+id/conv_bstart"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/conv_go" />
+
+		<TextView
+			android:id="@+id/conv_lresult"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:text=""
+			android:textColor="@color/text" />
+
+	</LinearLayout>
+</ScrollView>

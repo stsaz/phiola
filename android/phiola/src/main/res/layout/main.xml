@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:focusableInTouchMode="true">
+
+	<com.google.android.material.appbar.AppBarLayout
+		android:id="@+id/appbar"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toTopOf="parent">
+
+		<androidx.appcompat.widget.Toolbar
+			android:id="@+id/toolbar"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:background="?attr/colorPrimary"
+			android:minHeight="?attr/actionBarSize"
+			android:theme="?attr/actionBarTheme" />
+
+	</com.google.android.material.appbar.AppBarLayout>
+
+	<TextView
+		android:id="@+id/lname"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:padding="5dp"
+		android:textColor="@color/track_header"
+		android:textSize="@dimen/text_label"
+		android:textStyle="bold"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@id/appbar" />
+
+	<androidx.recyclerview.widget.RecyclerView android:id="@+id/list"
+		android:layout_width="match_parent" android:layout_height="0dp"
+		android:longClickable="true"
+		android:scrollbars="vertical"
+		android:scrollbarThumbVertical="@color/colorPrimary"
+		app:layout_constraintBottom_toTopOf="@+id/tfilter"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@+id/lname" />
+
+	<androidx.appcompat.widget.SearchView
+		android:id="@+id/tfilter"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:iconifiedByDefault="false"
+		android:queryHint="Search Here"
+		app:layout_constraintBottom_toTopOf="@+id/bplaylist"
+		app:layout_constraintStart_toStartOf="parent" />
+
+	<ToggleButton
+		android:id="@+id/bexplorer"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginVertical="5dp"
+		android:textOff="@string/bexplorer"
+		android:textOn="@string/bexplorer"
+		app:layout_constraintBottom_toTopOf="@+id/seekbar"
+		app:layout_constraintStart_toStartOf="parent" />
+
+	<ToggleButton
+		android:id="@+id/bplaylist"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginVertical="5dp"
+		android:checked="true"
+		android:textOff="@string/bplaylist"
+		android:textOn="@string/bplaylist"
+		app:layout_constraintBottom_toTopOf="@+id/seekbar"
+		app:layout_constraintStart_toEndOf="@+id/bexplorer" />
+
+	<SeekBar
+		android:id="@+id/seekbar"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginVertical="5dp"
+		android:max="100"
+		app:layout_constraintBottom_toTopOf="@+id/bnext"
+		app:layout_constraintStart_toStartOf="parent" />
+
+	<ImageButton
+		android:id="@+id/brec"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:src="@drawable/ic_rec"
+		android:tint="@color/text"
+		app:layout_constraintBottom_toBottomOf="parent"
+		app:layout_constraintStart_toStartOf="parent" />
+
+	<ImageButton
+		android:id="@+id/bplay"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:src="@drawable/ic_play"
+		android:tint="@color/text"
+		app:layout_constraintBottom_toBottomOf="parent"
+		app:layout_constraintStart_toEndOf="@+id/brec" />
+
+	<ImageButton
+		android:id="@+id/bprev"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:src="@drawable/ic_prev"
+		android:tint="@color/text"
+		app:layout_constraintBottom_toBottomOf="parent"
+		app:layout_constraintStart_toEndOf="@+id/bplay" />
+
+	<ImageButton
+		android:id="@+id/bnext"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:src="@drawable/ic_next"
+		android:tint="@color/text"
+		app:layout_constraintBottom_toBottomOf="parent"
+		app:layout_constraintStart_toEndOf="@+id/bprev" />
+
+	<TextView
+		android:id="@+id/lpos"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:textColor="@color/time_pos"
+		android:textSize="@dimen/text_label"
+		android:textStyle="bold"
+		app:layout_constraintBottom_toTopOf="@id/seekbar"
+		app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

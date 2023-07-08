@@ -1,0 +1,2 @@
+-keep class com.github.stsaz.phiola.Phiola {*;}
+-keep interface com.github.stsaz.phiola.Phiola$Callback {*;}

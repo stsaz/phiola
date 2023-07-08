@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+	<item
+		android:id="@+id/action_settings"
+		android:title="@string/menu_settings" />
+	<item
+		android:id="@+id/action_file_tags_show"
+		android:title="@string/mfile_tags_show" />
+	<item
+		android:id="@+id/action_file_convert"
+		android:title="@string/mfile_convert" />
+	<item
+		android:id="@+id/action_file_showcur"
+		android:title="@string/menu_show_expl" />
+	<item
+		android:id="@+id/action_file_del"
+		android:title="@string/mfile_del" />
+	<item android:id="@+id/action_file_move"
+		android:title="@string/mfile_move" />
+	<item
+		android:id="@+id/action_list_save"
+		android:title="@string/mlist_save" />
+	<item
+		android:id="@+id/action_list_add"
+		android:title="@string/mlist_add" />
+	<item
+		android:id="@+id/action_list_rm"
+		android:title="@string/mlist_remove" />
+	<item
+		android:id="@+id/action_list_clear"
+		android:title="@string/mlist_clear" />
+	<item
+		android:id="@+id/action_list_showcur"
+		android:title="@string/mlist_show_track" />
+	<item
+		android:id="@+id/action_list_switch"
+		android:title="@string/mlist_switch" />
+	<item
+		android:id="@+id/action_list_l2add"
+		android:title="@string/mlist_l2add" />
+	<item
+		android:id="@+id/action_about"
+		android:title="@string/menu_about" />
+</menu>

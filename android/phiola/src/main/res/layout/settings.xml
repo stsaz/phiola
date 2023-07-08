@@ -1,0 +1,269 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent">
+
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:focusableInTouchMode="true"
+		android:orientation="vertical">
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:text="@string/sett_interface"
+			android:textColor="@color/sett_group" />
+
+		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/bdark"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="10dp"
+			android:text="@string/sett_dark" />
+
+		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/bshowfilter"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="10dp"
+			android:text="@string/sett_show_filter" />
+
+		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/bshowrec"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="10dp"
+			android:text="@string/sett_show_record" />
+
+		<androidx.appcompat.widget.SwitchCompat android:id="@+id/ui_info_in_title"
+			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:layout_margin="10dp"
+			android:text="@string/sett_ui_info_in_title" />
+
+		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/bsvc_notif_disable"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="10dp"
+			android:text="@string/sett_svc_notif_disable" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:text="@string/sett_playback"
+			android:textColor="@color/sett_group" />
+
+		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/brandom"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="10dp"
+			android:text="@string/sett_random" />
+
+		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/brepeat"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="10dp"
+			android:text="@string/sett_repeat_all" />
+
+		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/bnotags"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="10dp"
+			android:text="@string/sett_no_tags" />
+
+		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/blist_rm_on_next"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="10dp"
+			android:text="@string/sett_list_rm_on_next" />
+
+		<androidx.appcompat.widget.SwitchCompat android:id="@+id/blist_rm_on_err"
+			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:layout_margin="10dp"
+			android:text="@string/sett_list_rm_on_err" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:layout_marginTop="10dp"
+			android:text="@string/sett_codepage"
+			android:textColor="@color/text" />
+
+		<EditText
+			android:id="@+id/tcodepage"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:autofillHints=""
+			android:hint=""
+			android:inputType="text"
+			android:textSize="@dimen/text_editbox" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:layout_marginTop="10dp"
+			android:text="@string/sett_autoskip"
+			android:textColor="@color/text" />
+
+		<EditText
+			android:id="@+id/tautoskip"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:autofillHints=""
+			android:hint=""
+			android:inputType="text"
+			android:textSize="@dimen/text_editbox" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:text="@string/sett_operation"
+			android:textColor="@color/sett_group" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:layout_marginTop="10dp"
+			android:text="@string/sett_data_dir"
+			android:textColor="@color/text" />
+		<EditText
+			android:id="@+id/tdata_dir"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:inputType="text"
+			android:textSize="@dimen/text_editbox" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:layout_marginTop="10dp"
+			android:text="@string/sett_trash_dir"
+			android:textColor="@color/text" />
+		<EditText
+			android:id="@+id/ttrash_dir"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:autofillHints=""
+			android:hint=""
+			android:inputType="text"
+			android:textSize="@dimen/text_editbox" />
+
+		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/bfile_del"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="10dp"
+			android:text="@string/sett_file_del" />
+
+		<TextView android:text="@string/sett_quick_move_dir"
+			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:layout_marginTop="10dp"
+			android:textColor="@color/text" />
+		<EditText android:id="@+id/tquick_move_dir"
+			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:inputType="text"
+			android:textSize="@dimen/text_editbox" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:text="@string/sett_recording"
+			android:textColor="@color/sett_group" />
+
+		<TextView
+			android:id="@+id/trecdir_text"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:layout_marginTop="10dp"
+			android:text="@string/sett_rec_dir"
+			android:textColor="@color/text" />
+
+		<EditText
+			android:id="@+id/trecdir"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:autofillHints=""
+			android:hint=""
+			android:inputType="text"
+			android:textSize="@dimen/text_editbox" />
+
+		<TextView
+			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:text="@string/sett_rec_enc"
+			android:textColor="@color/text" />
+		<EditText android:id="@+id/rec_enc"
+			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:inputType="text"
+			android:textSize="@dimen/text_editbox" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:text="@string/sett_bitrate"
+			android:textColor="@color/text" />
+		<EditText
+			android:id="@+id/rec_bitrate"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:autofillHints=""
+			android:hint=""
+			android:inputType="text"
+			android:textSize="@dimen/text_editbox" />
+
+		<TextView android:text="@string/sett_rec_buf_len"
+			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:textColor="@color/text" />
+		<EditText android:id="@+id/rec_buf_len"
+			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:inputType="text"
+			android:textSize="@dimen/text_editbox" />
+
+		<TextView android:text="@string/sett_rec_until"
+			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:textColor="@color/text" />
+		<EditText android:id="@+id/rec_until"
+			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:inputType="text"
+			android:textSize="@dimen/text_editbox" />
+
+		<TextView android:text="@string/sett_rec_gain"
+			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:textColor="@color/text" />
+		<EditText android:id="@+id/rec_gain"
+			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:inputType="text"
+			android:textSize="@dimen/text_editbox" />
+
+		<androidx.appcompat.widget.SwitchCompat android:id="@+id/rec_exclusive"
+			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:layout_margin="10dp"
+			android:text="@string/sett_rec_exclusive" />
+
+	</LinearLayout>
+</ScrollView>
