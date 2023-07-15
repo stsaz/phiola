@@ -23,35 +23,39 @@ static void autoconv_close(void *ctx, phi_track *t)
 	ffmem_free(ctx);
 }
 
+static void phi_af_update(struct phi_af *dst, const struct phi_af *src)
+{
+	if (src->format)
+		dst->format = src->format;
+	if (src->rate)
+		dst->rate = src->rate;
+	if (src->channels)
+		dst->channels = src->channels;
+}
+
 static int autoconv_process(struct autoconv *c, phi_track *t)
 {
-	const struct phi_af *in;
-	if (t->oaudio.format.format) {
-		in = &t->oaudio.format;
-	} else {
-		in = &t->audio.format;
-		t->oaudio.format = t->audio.format;
-	}
-	struct phi_af *out = &t->oaudio.conv_format;
+	const struct phi_af *iaf = &t->audio.format;
+	struct phi_af *oaf = &t->oaudio.format;
 
-	switch (c->state) {
-	case 0:
-		*out = *in;
+	if (c->state == 0) {
+		phi_af_update(oaf, &t->conf.oaudio.format); // apply settings from user
+		t->oaudio.conv_format.interleaved = oaf->interleaved;
 		c->in = t->data_in;
 		c->state = 1;
 		return PHI_DATA;
 	}
 
-	if (!ffmem_cmp(in, out, sizeof(*in)))
+	phi_af_update(oaf, &t->oaudio.conv_format); // apply settings from encoder
+	oaf->interleaved = t->oaudio.conv_format.interleaved;
+
+	if (!ffmem_cmp(iaf, oaf, sizeof(*iaf)))
 		goto done; // no conversion is needed
 
+	t->aconv.in = *iaf;
+	t->aconv.out = *oaf;
 	if (!core->track->filter(t, core->mod("afilter.conv"), 0))
 		return PHI_ERR;
-
-	t->aconv.in = *in;
-	t->aconv.out = *out;
-
-	t->oaudio.format = *out;
 
 done:
 	t->data_out = c->in;
