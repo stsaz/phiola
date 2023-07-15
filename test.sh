@@ -179,6 +179,17 @@ test_list() {
 	LIST=`ls -1 /tmp/phiola-*.m3u8 | head -1`
 	zstd $LIST -o $LIST.m3uz
 	./phiola i $LIST.m3uz
+
+	cat <<EOF >/tmp/phiola-test.pls
+[playlist]
+File1=`pwd`/list1.wav
+Title1=TITLE1
+Length1=1
+File2=`pwd`/list2.ogg
+Title2=TITLE2
+Length2=2
+EOF
+	./phiola i /tmp/phiola-test.pls
 }
 
 test_meta() {

@@ -13,6 +13,7 @@ enum FILE_FORMAT {
 	FILE_MP3,
 	FILE_MP4,
 	FILE_OGG,
+	FILE_PLS,
 	FILE_WAV,
 	FILE_WV,
 	FILE_ID3,
@@ -27,6 +28,7 @@ const char file_ext[][5] = {
 	"mp3",
 	"mp4",
 	"ogg",
+	"pls",
 	"wav",
 	"wv",
 	"",
@@ -54,6 +56,12 @@ int file_format_detect(const void *data, ffsize len)
 		if (!ffmem_cmp(&d[0], "RIFF", 4)
 			&& !ffmem_cmp(&d[8], "AVI ", 4))
 			return FILE_AVI;
+	}
+
+	if (len >= 11) {
+		if (!ffmem_cmp(d, "[playlist]", 10)
+			&& (d[10] == '\r' || d[10] == '\n'))
+			return FILE_PLS;
 	}
 
 	if (len >= 10) {
