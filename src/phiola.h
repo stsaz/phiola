@@ -164,6 +164,8 @@ struct phi_track_conf {
 
 	uint64	seek_msec;
 	uint64	until_msec;
+	uint64	seek_cdframes;
+	uint64	until_cdframes;
 
 	ffvec	meta; // char*[]
 

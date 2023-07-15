@@ -9,6 +9,7 @@ struct q_entry {
 	phi_track *trk;
 	uint index;
 	uint used;
+	uint have_user_meta :1;
 	uint expand :1;
 	uint play_next_on_close :1;
 };
@@ -39,6 +40,7 @@ static struct q_entry* qe_new(struct phi_queue_entry *qe)
 {
 	struct q_entry *e = ffmem_new(struct q_entry);
 	e->pub = *qe;
+	e->have_user_meta = (!!e->pub.conf.meta.len);
 	e->used = 1;
 	return e;
 }
@@ -58,7 +60,7 @@ static void qe_close(void *f, phi_track *t)
 	if (e->trk == t) {
 		e->trk = NULL;
 
-		if (!e->q->conf.conversion) {
+		if (!e->q->conf.conversion && !e->have_user_meta) {
 			meta_destroy(&e->pub.conf.meta);
 			e->pub.conf.meta = t->meta; // Remember the tags we read from file in this track
 			ffvec_null(&t->meta);
@@ -107,12 +109,6 @@ static int qe_play(struct q_entry *e)
 			|| !track->filter(t, core->mod("core.auto-output"), 0))
 			goto err;
 
-		char **it;
-		FFSLICE_WALK(&t->conf.meta, it) {
-			phi_metaif->set(&t->meta, FFSTR_Z(*it), FFSTR_Z(*(it + 1)));
-			it++;
-		}
-
 	} else if (c->info_only || c->afilter.peaks_info) {
 		if (!track->filter(t, e->q->conf.first_filter, 0)
 			|| !track->filter(t, &phi_queue_guard, 0)
@@ -136,6 +132,13 @@ static int qe_play(struct q_entry *e)
 			|| !track->filter(t, core->mod("afilter.auto-conv"), 0)
 			|| !track->filter(t, core->mod(e->q->conf.audio_module), 0))
 			goto err;
+	}
+
+
+	char **it;
+	FFSLICE_WALK(&t->conf.meta, it) {
+		phi_metaif->set(&t->meta, FFSTR_Z(*it), FFSTR_Z(*(it + 1)));
+		it++;
 	}
 
 	e->trk = t;

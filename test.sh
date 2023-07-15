@@ -192,6 +192,30 @@ EOF
 	./phiola i /tmp/phiola-test.pls
 }
 
+test_cue() {
+	if ! test -f "rec6.wav" ; then
+		./phiola rec -u 6 -o rec6.wav -f
+	fi
+	cat <<EOF >cue.cue
+PERFORMER Artist
+FILE "rec6.wav" WAVE
+ TRACK 01 AUDIO
+  PERFORMER A1
+  TITLE T1
+  INDEX 01 00:00:00
+ TRACK 02 AUDIO
+  TITLE T2
+  INDEX 01 00:02:00
+ TRACK 03 AUDIO
+  TITLE T3
+  INDEX 01 00:04:00
+EOF
+	./phiola i cue.cue 2>&1 | grep 'A1 - T1'
+	./phiola i cue.cue 2>&1 | grep 'Artist - T2'
+	./phiola i cue.cue 2>&1 | grep 'Artist - T3'
+	./phiola cue.cue
+}
+
 test_meta() {
 	# Recording
 	./phiola rec -u 1 -m artist='Great Artist' -m title='Cool Song' -f -o meta.flac && ./phiola i meta.flac 2>&1 | grep 'Great Artist - Cool Song' || false
@@ -220,6 +244,7 @@ TESTS=(
 	info
 	dir_read
 	list
+	cue
 	meta
 	clean
 	# wasapi_exclusive

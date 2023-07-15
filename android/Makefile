@@ -208,6 +208,8 @@ MODS += $(LIB_DIR)/format.so.debug
 $(OBJ_DIR)/%.o: $(PHIOLA)/src/format/%.c $(DEPS) \
 		$(wildcard $(PHIOLA)/src/format/*.h)
 	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
+$(OBJ_DIR)/cue-read.o: $(PHIOLA)/src/list/cue-read.c $(DEPS)
+	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
 $(OBJ_DIR)/m3u.o: $(PHIOLA)/src/list/m3u.c $(DEPS) \
 		$(wildcard $(PHIOLA)/src/list/m3u-*.h)
 	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
@@ -227,6 +229,7 @@ $(LIB_DIR)/format.$(SO): $(OBJ_DIR)/mod-fmt.o \
 		$(OBJ_DIR)/wav.o \
 		$(OBJ_DIR)/wv.o \
 		\
+		$(OBJ_DIR)/cue-read.o \
 		$(OBJ_DIR)/m3u.o \
 		$(OBJ_DIR)/pls-read.o
 	$(LINK) -shared $+ $(LINKFLAGS) -o $@

@@ -156,10 +156,15 @@ MODS += format.$(SO)
 %.o: $(PHIOLA)/src/format/%.c $(DEPS) \
 		$(wildcard $(PHIOLA)/src/format/*.h)
 	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
-m3u.o: $(PHIOLA)/src/list/m3u.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/list/m3u-*.h)
+cue-read.o: $(PHIOLA)/src/list/cue-read.c $(DEPS) \
+		$(wildcard $(PHIOLA)/src/list/entry.h)
 	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
-pls-read.o: $(PHIOLA)/src/list/pls-read.c $(DEPS)
+m3u.o: $(PHIOLA)/src/list/m3u.c $(DEPS) \
+		$(wildcard $(PHIOLA)/src/list/m3u-*.h) \
+		$(wildcard $(PHIOLA)/src/list/entry.h)
+	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
+pls-read.o: $(PHIOLA)/src/list/pls-read.c $(DEPS) \
+		$(wildcard $(PHIOLA)/src/list/entry.h)
 	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
 format.$(SO): mod-fmt.o \
 		aac-adts.o \
@@ -175,6 +180,7 @@ format.$(SO): mod-fmt.o \
 		wav.o \
 		wv.o \
 		\
+		cue-read.o \
 		m3u.o \
 		pls-read.o
 	$(LINK) -shared $+ $(LINKFLAGS) -o $@

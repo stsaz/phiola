@@ -37,6 +37,7 @@ extern const phi_filter
 	phi_wav_read,
 	phi_wv_read;
 extern const phi_filter
+	phi_cue_read, phi_cue_hook,
 	phi_m3u_read, phi_m3u_write,
 	phi_pls_read;
 
@@ -82,6 +83,8 @@ static const void* fmt_mod_iface(const char *name)
 		{ "auto-write", &phi_auto_write },
 		{ "avi", &phi_avi_read },
 		{ "caf", &phi_caf_read },
+		{ "cue", &phi_cue_read },
+		{ "cue-hook", &phi_cue_hook },
 		{ "detect", &phi_format_detector },
 		{ "flac", &phi_flac_read },
 		{ "flacogg", &phi_flacogg_read },
