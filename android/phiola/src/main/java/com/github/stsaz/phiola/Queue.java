@@ -333,8 +333,9 @@ class Queue {
 		active = false;
 		boolean play_next = !t.stopped;
 
-		if ((t.error && core.setts.qu_rm_on_err)
-				|| (b_order_next && core.setts.list_rm_on_next)) {
+		if (trk_idx >= 0
+			&& ((t.error && core.setts.qu_rm_on_err)
+				|| (b_order_next && core.setts.list_rm_on_next))) {
 			String url = get(trk_idx);
 			if (url.equals(t.url))
 				remove(trk_idx);
