@@ -175,7 +175,8 @@ static int qe_expand(struct q_entry *e)
 
 	phi_track *t = track->create(c);
 	if (dir) {
-		if (!core->track->filter(t, core->mod("core.dir-read"), 0))
+		if (!core->track->filter(t, &phi_queue_guard, 0)
+			|| !core->track->filter(t, core->mod("core.dir-read"), 0))
 			goto err;
 	} else {
 		if (!core->track->filter(t, &phi_queue_guard, 0)
