@@ -40,7 +40,7 @@ static inline int plist_fullname(phi_track *t, ffstr name, ffstr *dst)
 		&& 0 == ffuri_scheme(name)) {
 
 		fn = t->conf.ifile.name;
-		if (0 != ffpath_splitpath_str(FFSTR_Z(fn), &path, NULL))
+		if (ffpath_splitpath_str(FFSTR_Z(fn), &path, NULL) >= 0)
 			path.len++;
 	}
 
