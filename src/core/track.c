@@ -56,7 +56,7 @@ static void track_busytime_print(phi_track *t)
 	fftime_sub(&total, &t->t_start);
 
 	ffvec buf = {};
-	ffvec_addfmt(&buf, "busy time: %u.%06u.  "
+	ffvec_addfmt(&buf, "total time: %u.%06u;  busy time: "
 		, (int)fftime_sec(&total), (int)fftime_usec(&total));
 
 	struct filter *f;

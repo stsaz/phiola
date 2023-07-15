@@ -14,6 +14,7 @@ static void meta_destroy(ffvec *meta)
 
 static void meta_set(ffvec *meta, ffstr name, ffstr val)
 {
+	phi_dbglog(core, NULL, NULL, "meta: %S = %S", &name, &val);
 	if (!name.len) return;
 
 	*ffvec_pushT(meta, char*) = ffsz_dupstr(&name);

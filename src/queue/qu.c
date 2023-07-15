@@ -125,7 +125,7 @@ static int q_add(struct phi_queue *q, struct phi_queue_entry *qe)
 
 	struct q_entry *e = q_insert(q, q->index.len, qe);
 	qe_expand(e);
-	return 0;
+	return e->index;
 }
 
 static int q_clear(struct phi_queue *q)
@@ -266,6 +266,7 @@ static int q_save(struct phi_queue *q, const char *filename)
 
 	struct phi_track_conf c = {
 		.ofile = {
+			.buf_size = 1*1024*1024,
 			.name = ffsz_dup(filename),
 			.name_tmp = 1,
 			.overwrite = 1,

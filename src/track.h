@@ -31,19 +31,19 @@
 
 #define phi_dbglogv(core, mod, trk, fmt, va) \
 do { \
-	if (core->conf.log_level == PHI_LOG_DEBUG) \
+	if (core->conf.log_level >= PHI_LOG_DEBUG) \
 		core->conf.logv(core->conf.log_obj, PHI_LOG_DEBUG, mod, trk, fmt, va); \
 } while (0)
 
 #define phi_dbglog(core, mod, trk, ...) \
 do { \
-	if (core->conf.log_level == PHI_LOG_DEBUG) \
+	if (core->conf.log_level >= PHI_LOG_DEBUG) \
 		core->conf.log(core->conf.log_obj, PHI_LOG_DEBUG, mod, trk, __VA_ARGS__); \
 } while (0)
 
 #define phi_extralog(core, mod, trk, ...) \
 do { \
-	if (core->conf.log_level >= PHI_LOG_DEBUG) \
+	if (core->conf.log_level >= PHI_LOG_EXTRA) \
 		core->conf.log(core->conf.log_obj, PHI_LOG_EXTRA, mod, trk, __VA_ARGS__); \
 } while (0)
 

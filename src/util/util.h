@@ -34,6 +34,7 @@ static inline void ffpath_split3_str(ffstr fullname, ffstr *path, ffstr *name, f
 }
 
 
+#define samples_to_msec(samples, rate)   ((uint64)(samples) * 1000 / (rate))
 #define msec_to_samples(time_ms, rate)   ((uint64)(time_ms) * (rate) / 1000)
 
 /** bits per sample */

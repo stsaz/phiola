@@ -250,7 +250,7 @@ test_http() {
 }
 
 test_clean() {
-	rm -f *.wav *.flac *.m4a *.ogg *.mp3 fm-*
+	rm -f *.wav *.flac *.m4a *.ogg *.opus *.mp3 fm-*
 }
 
 TESTS=(
@@ -260,10 +260,10 @@ TESTS=(
 	convert
 	copy
 	info
+	meta
 	dir_read
 	list
 	cue
-	meta
 	# http
 	clean
 	# wasapi_exclusive

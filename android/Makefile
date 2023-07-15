@@ -121,11 +121,11 @@ LIB_DIR_ARM := $(PHIOLA)/android/phiola/libs/armeabi-v7a
 
 lib-amd64:
 	$(MKDIR) obj-amd64 $(LIB_DIR_AMD64)
-	$(SUBMAKE) CPU=amd64 A_API=26 libs
+	$(SUBMAKE) -C obj-amd64 CPU=amd64 A_API=26 libs
 
 lib-arm64:
 	$(MKDIR) obj-arm64 $(LIB_DIR_ARM64)
-	$(SUBMAKE) CPU=arm64 A_API=26 libs
+	$(SUBMAKE) -C obj-arm64 CPU=arm64 A_API=26 libs
 
 clean-lib:
 	$(RM) obj-arm64 obj-amd64 $(LIB_DIR_AMD64) $(LIB_DIR_ARM64)
@@ -158,49 +158,49 @@ DEPS := $(PHIOLA)/src/phiola.h \
 	$(PHIOLA)/src/track.h
 
 
-$(OBJ_DIR)/%.o: $(PHIOLA)/src/core/%.c $(DEPS) \
+%.o: $(PHIOLA)/src/core/%.c $(DEPS) \
 		$(wildcard $(PHIOLA)/src/core/*.h) \
 		$(wildcard $(PHIOLA)/src/util/*.h)
 	$(C) $(CFLAGS) $< -o $@
-$(OBJ_DIR)/%.o: $(PHIOLA)/src/queue/%.c $(DEPS) \
+%.o: $(PHIOLA)/src/queue/%.c $(DEPS) \
 		$(wildcard $(PHIOLA)/src/queue/*.h)
 	$(C) $(CFLAGS) $< -o $@
-$(OBJ_DIR)/%.o: $(PHIOLA)/src/jni/%.c $(DEPS) \
+%.o: $(PHIOLA)/src/jni/%.c $(DEPS) \
 		$(wildcard $(PHIOLA)/src/jni/*.h)
 	$(C) $(CFLAGS) $< -o $@
-$(LIB_DIR)/libphiola.$(SO): \
-		$(OBJ_DIR)/phiola-jni.o \
-		$(OBJ_DIR)/core.o \
-		$(OBJ_DIR)/auto.o \
-		$(OBJ_DIR)/dir-read.o \
-		$(OBJ_DIR)/file.o\
-		$(OBJ_DIR)/qu.o \
-		$(OBJ_DIR)/track.o
+libphiola.so: \
+		phiola-jni.o \
+		core.o \
+		auto.o \
+		dir-read.o \
+		file.o\
+		qu.o \
+		track.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_PTHREAD) -o $@
 
 
-MODS += $(LIB_DIR)/aaudio.so.debug
-$(OBJ_DIR)/%.o: $(PHIOLA)/src/adev/%.c $(DEPS) \
+MODS += aaudio.so
+%.o: $(PHIOLA)/src/adev/%.c $(DEPS) \
 		$(wildcard $(PHIOLA)/src/adev/*.h)
 	$(C) $(CFLAGS) -I$(FFAUDIO) $< -o $@
-$(OBJ_DIR)/ffaudio-aaudio.o: $(FFAUDIO)/ffaudio/aaudio.c
+ffaudio-aaudio.o: $(FFAUDIO)/ffaudio/aaudio.c
 	$(C) -I$(FFAUDIO) $(CFLAGS) $< -o $@
-$(LIB_DIR)/aaudio.$(SO): $(OBJ_DIR)/aaudio.o $(OBJ_DIR)/ffaudio-aaudio.o
+aaudio.so: aaudio.o ffaudio-aaudio.o
 	$(LINK) -shared $+ $(LINKFLAGS) -laaudio -o $@
 
 
-MODS += $(LIB_DIR)/afilter.so.debug
-$(OBJ_DIR)/%.o: $(PHIOLA)/src/afilter/%.c $(DEPS) \
+MODS += afilter.so
+%.o: $(PHIOLA)/src/afilter/%.c $(DEPS) \
 		$(wildcard $(PHIOLA)/src/afilter/*.h)
 	$(C) $(CFLAGS) $< -o $@
-$(OBJ_DIR)/crc.o: $(PHIOLA)/3pt/crc/crc.c
+crc.o: $(PHIOLA)/3pt/crc/crc.c
 	$(C) $(CFLAGS) $< -o $@
-$(LIB_DIR)/afilter.$(SO): $(OBJ_DIR)/afilter.o \
-		$(OBJ_DIR)/crc.o \
-		$(OBJ_DIR)/peaks.o \
-		$(OBJ_DIR)/gain.o \
-		$(OBJ_DIR)/rtpeak.o \
-		$(OBJ_DIR)/conv.o
+afilter.so: afilter.o \
+		crc.o \
+		peaks.o \
+		gain.o \
+		rtpeak.o \
+		conv.o
 	$(LINK) -shared $+ $(LINKFLAGS) -lm -o $@
 
 
@@ -213,85 +213,85 @@ soxr.so: soxr.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lsoxr-phi -o $@
 
 
-MODS += $(LIB_DIR)/format.so.debug
-$(OBJ_DIR)/%.o: $(PHIOLA)/src/format/%.c $(DEPS) \
+MODS += format.so
+%.o: $(PHIOLA)/src/format/%.c $(DEPS) \
 		$(wildcard $(PHIOLA)/src/format/*.h)
 	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
-$(OBJ_DIR)/cue-read.o: $(PHIOLA)/src/list/cue-read.c $(DEPS)
+cue-read.o: $(PHIOLA)/src/list/cue-read.c $(DEPS)
 	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
-$(OBJ_DIR)/m3u.o: $(PHIOLA)/src/list/m3u.c $(DEPS) \
+m3u.o: $(PHIOLA)/src/list/m3u.c $(DEPS) \
 		$(wildcard $(PHIOLA)/src/list/m3u-*.h)
 	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
-$(OBJ_DIR)/pls-read.o: $(PHIOLA)/src/list/pls-read.c $(DEPS)
+pls-read.o: $(PHIOLA)/src/list/pls-read.c $(DEPS)
 	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
-$(LIB_DIR)/format.$(SO): $(OBJ_DIR)/mod-fmt.o \
-		$(OBJ_DIR)/aac-adts.o \
-		$(OBJ_DIR)/ape-read.o \
-		$(OBJ_DIR)/avi.o \
-		$(OBJ_DIR)/caf.o \
-		$(OBJ_DIR)/flac-fmt.o $(OBJ_DIR)/flac-ogg.o \
-		$(OBJ_DIR)/mkv.o \
-		$(OBJ_DIR)/mp3.o \
-		$(OBJ_DIR)/mp4.o \
-		$(OBJ_DIR)/mpc-read.o \
-		$(OBJ_DIR)/ogg.o \
-		$(OBJ_DIR)/wav.o \
-		$(OBJ_DIR)/wv.o \
+format.so: mod-fmt.o \
+		aac-adts.o \
+		ape-read.o \
+		avi.o \
+		caf.o \
+		flac-fmt.o flac-ogg.o \
+		mkv.o \
+		mp3.o \
+		mp4.o \
+		mpc-read.o \
+		ogg.o \
+		wav.o \
+		wv.o \
 		\
-		$(OBJ_DIR)/cue-read.o \
-		$(OBJ_DIR)/m3u.o \
-		$(OBJ_DIR)/pls-read.o
+		cue-read.o \
+		m3u.o \
+		pls-read.o
 	$(LINK) -shared $+ $(LINKFLAGS) -o $@
 
 # CODECS LOSSY
 
-MODS += $(LIB_DIR)/aac.$(SO).debug
-LIBS3 += $(ALIB3_BIN)/libfdk-aac-phi.$(SO)
-$(OBJ_DIR)/aac.o: $(PHIOLA)/src/acodec/aac.c $(DEPS) \
+MODS += aac.so
+LIBS3 += $(ALIB3_BIN)/libfdk-aac-phi.so
+aac.o: $(PHIOLA)/src/acodec/aac.c $(DEPS) \
 		$(wildcard $(PHIOLA)/src/acodec/aac-*.h) $(PHIOLA)/src/acodec/alib3-bridge/aac.h
 	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
-$(LIB_DIR)/aac.$(SO): $(OBJ_DIR)/aac.o
+aac.so: aac.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lfdk-aac-phi -o $@
 
-MODS += $(LIB_DIR)/mpeg.$(SO).debug
-LIBS3 += $(ALIB3_BIN)/libmpg123-phi.$(SO)
-$(OBJ_DIR)/mpeg.o: $(PHIOLA)/src/acodec/mpeg.c $(DEPS) \
+MODS += mpeg.so
+LIBS3 += $(ALIB3_BIN)/libmpg123-phi.so
+mpeg.o: $(PHIOLA)/src/acodec/mpeg.c $(DEPS) \
 		$(wildcard $(PHIOLA)/src/acodec/mpeg-*.h)
 	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
-$(LIB_DIR)/mpeg.$(SO): $(OBJ_DIR)/mpeg.o
+mpeg.so: mpeg.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lmpg123-phi -o $@
 
 # CODECS LOSSLESS
 
-MODS +=  $(LIB_DIR)/alac.$(SO).debug
-LIBS3 += $(ALIB3_BIN)/libALAC-phi.$(SO)
-$(OBJ_DIR)/alac.o: $(PHIOLA)/src/acodec/alac.c $(DEPS) \
+MODS +=  alac.so
+LIBS3 += $(ALIB3_BIN)/libALAC-phi.so
+alac.o: $(PHIOLA)/src/acodec/alac.c $(DEPS) \
 		$(wildcard $(PHIOLA)/src/acodec/alac-*.h) $(PHIOLA)/src/acodec/alib3-bridge/alac.h
 	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
-$(LIB_DIR)/alac.$(SO): $(OBJ_DIR)/alac.o
+alac.so: alac.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lALAC-phi -o $@
 
-MODS += $(LIB_DIR)/flac.$(SO).debug
-LIBS3 += $(ALIB3_BIN)/libFLAC-phi.$(SO)
-$(OBJ_DIR)/flac.o: $(PHIOLA)/src/acodec/flac.c $(DEPS) \
+MODS += flac.so
+LIBS3 += $(ALIB3_BIN)/libFLAC-phi.so
+flac.o: $(PHIOLA)/src/acodec/flac.c $(DEPS) \
 		$(wildcard $(PHIOLA)/src/acodec/flac-*.h) $(PHIOLA)/src/acodec/alib3-bridge/flac.h
 	$(C) $(CFLAGS) -I$(ALIB3) -I$(AVPACK) $< -o $@
-$(LIB_DIR)/flac.$(SO): $(OBJ_DIR)/flac.o
+flac.so: flac.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lFLAC-phi -o $@
 
 
-MODS += $(LIB_DIR)/zstd.$(SO)
-LIBS3 += $(FFPACK_BIN)/libzstd-ffpack.$(SO)
-$(OBJ_DIR)/%.o: $(PHIOLA)/src/dfilter/%.c $(DEPS) \
+MODS += zstd.so
+LIBS3 += $(FFPACK_BIN)/libzstd-ffpack.so
+%.o: $(PHIOLA)/src/dfilter/%.c $(DEPS) \
 		$(wildcard $(PHIOLA)/src/dfilter/zstd-*.h)
 	$(C) $(CFLAGS) -I$(FFPACK) $< -o $@
-$(LIB_DIR)/zstd.$(SO): $(OBJ_DIR)/zstd.o
+zstd.so: zstd.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(FFPACK_BIN) -lzstd-ffpack -o $@
 
 
-libs: $(LIB_DIR)/libphiola.so.debug \
-	$(MODS)
-	cp -u $(LIBS3) $(LIB_DIR)
+libs: libphiola.so.debug \
+		$(MODS:.so=.so.debug)
+	cp -u $(LIBS3) *.so *.debug $(LIB_DIR)
 
 
 OBJCOPY := $(C_DIR)/llvm-objcopy

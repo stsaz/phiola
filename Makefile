@@ -36,11 +36,13 @@ endif
 
 # MODULES
 
-default: build
 ifneq "$(DEBUG)" "1"
-	$(SUBMAKE) strip-debug
-endif
+default: strip-debug
 	$(SUBMAKE) app
+else
+default: build
+	$(SUBMAKE) app
+endif
 
 DEPS := $(PHIOLA)/src/phiola.h \
 	$(PHIOLA)/src/track.h
@@ -339,6 +341,7 @@ app:
 ifneq "$(LIBS3)" ""
 	$(CP) $(LIBS3) $(APP_DIR)/mod/
 endif
+	$(CP) $(PHIOLA)/src/tui/help.txt $(APP_DIR)/mod/tui-help.txt
 	chmod 644 $(APP_DIR)/mod/*
 
 ifeq "$(OS)" "windows"

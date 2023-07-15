@@ -153,8 +153,6 @@ static const char* pcm_channelstr(uint channels)
 	return _pcm_channelstr[ffmin(channels - 1, FF_COUNT(_pcm_channelstr) - 1)];
 }
 
-#define samples_to_msec(samples, rate)   ((uint64)(samples) * 1000 / (rate))
-
 #include <tui/play.h>
 #include <tui/rec.h>
 

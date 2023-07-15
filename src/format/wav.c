@@ -118,6 +118,9 @@ again:
 			t->audio.bitrate = ai->bitrate;
 			t->data_type = "pcm";
 
+			if (t->conf.info_only)
+				return PHI_LASTOUT;
+
 			w->sample_rate = ai->sample_rate;
 			w->state = I_DATA;
 			goto again;

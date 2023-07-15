@@ -3,6 +3,7 @@
 #pragma once
 #include <FFOS/file.h>
 #include <FFOS/timerqueue.h>
+#include <util/taskqueue.h>
 #include <ffbase/string.h>
 
 #define PHI_VERSION  20000

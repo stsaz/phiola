@@ -21,12 +21,12 @@ phi_core *core;
 	core->conf.log(core->conf.log_obj, PHI_LOG_ERR, "core", NULL, __VA_ARGS__)
 #define dbglog(...) \
 do { \
-	if (core->conf.log_level == PHI_LOG_DEBUG) \
+	if (core->conf.log_level >= PHI_LOG_DEBUG) \
 		core->conf.log(core->conf.log_obj, PHI_LOG_DEBUG, "core", NULL, __VA_ARGS__); \
 } while (0)
 #define extralog(...) \
 do { \
-	if (core->conf.log_level >= PHI_LOG_DEBUG) \
+	if (core->conf.log_level >= PHI_LOG_EXTRA) \
 		core->conf.log(core->conf.log_obj, PHI_LOG_EXTRA, "core", NULL, __VA_ARGS__); \
 } while (0)
 
