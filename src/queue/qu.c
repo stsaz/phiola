@@ -298,8 +298,10 @@ static int q_remove_at(struct phi_queue *q, uint pos, uint n)
 	if (!q) q = qm_default();
 
 	struct q_entry *e = q_get(q, pos);
+	if (!e)
+		return -1;
 	e->index = ~0;
-	dbglog("removed '%s'", e->pub.conf.ifile.name);
+	dbglog("removed '%s' @%u", e->pub.conf.ifile.name, pos);
 	qe_unref(e);
 	ffslice_rmT((ffslice*)&q->index, pos, 1, void*);
 	return 0;
