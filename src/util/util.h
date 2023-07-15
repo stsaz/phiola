@@ -15,6 +15,14 @@ static inline const void* map_sz_vptr_find(const struct map_sz_vptr *m, const ch
 	}
 	return NULL;
 }
+static inline const void* map_sz_vptr_findstr(const struct map_sz_vptr *m, ffstr name)
+{
+	for (uint i = 0;  m[i].key != NULL;  i++) {
+		if (ffstr_eqz(&name, m[i].key))
+			return m[i].val;
+	}
+	return NULL;
+}
 
 
 #include <FFOS/path.h>

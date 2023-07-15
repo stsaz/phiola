@@ -5,6 +5,7 @@ PHIOLA := $(ROOT_DIR)/phiola
 FFAUDIO := $(ROOT_DIR)/ffaudio
 AVPACK := $(ROOT_DIR)/avpack
 FFPACK := $(ROOT_DIR)/ffpack
+NETMILL := $(ROOT_DIR)/netmill
 FFOS := $(ROOT_DIR)/ffos
 FFBASE := $(ROOT_DIR)/ffbase
 
@@ -289,6 +290,19 @@ MODS += tui.$(SO)
 	$(C) $(CFLAGS) $< -o $@
 tui.$(SO): tui.o
 	$(LINK) -shared $+ $(LINKFLAGS) -lm -o $@
+
+MODS += http.$(SO)
+%.o: $(PHIOLA)/src/net/%.c $(DEPS) \
+		$(wildcard $(PHIOLA)/src/net/*.h)
+	$(C) $(CFLAGS) -I$(NETMILL)/src $< -o $@
+netmill-http-client.o: $(NETMILL)/src/http-client/oclient.c
+	$(C) $(CFLAGS_BASE) -I$(NETMILL)/src -I$(FFOS) $< -o $@
+netmill-http-filters.o: $(PHIOLA)/src/net/http-filters.c
+	$(C) $(CFLAGS_BASE) -I$(NETMILL)/src -I$(FFOS) $< -o $@
+http.$(SO): http.o \
+		netmill-http-client.o \
+		netmill-http-filters.o
+	$(LINK) -shared $+ $(LINKFLAGS) -o $@
 
 MODS += zstd.$(SO)
 LIBS3 += $(FFPACK_BIN)/libzstd-ffpack.$(SO)

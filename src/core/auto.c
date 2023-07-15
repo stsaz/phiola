@@ -99,6 +99,8 @@ static void* phi_autoinput_open(phi_track *t)
 
 	if (ffsz_eq(t->conf.ifile.name, "@stdin")) {
 		fname = "core.stdin";
+	} else if (ffsz_matchz(t->conf.ifile.name, "http://")) {
+		fname = "http.client";
 	} else {
 		fffileinfo fi;
 		if (!fffile_info_path(t->conf.ifile.name, &fi)

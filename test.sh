@@ -241,6 +241,14 @@ test_meta() {
 	./phiola co -copy -m artist='AA' meta.mp3 -f -o meta2.mp3 && ./phiola i meta2.mp3 2>&1 | grep 'AA - Cool Song' || false
 }
 
+test_http() {
+	./phiola pl "http://localhost:1/" || true # no connection
+	netmill -l 8080 -w "$HTTP_DIR" &
+	./phiola pl "http://localhost:8080/404" || true # http error
+	./phiola pl "http://localhost:8080/$HTTP_FILE"
+	kill $!
+}
+
 test_clean() {
 	rm -f *.wav *.flac *.m4a *.ogg *.mp3 fm-*
 }
@@ -256,6 +264,7 @@ TESTS=(
 	list
 	cue
 	meta
+	# http
 	clean
 	# wasapi_exclusive
 	# wasapi_loopback

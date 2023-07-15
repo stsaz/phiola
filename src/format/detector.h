@@ -144,6 +144,8 @@ static void* fdetcr_open(phi_track *t)
 	ffstr ext;
 	const char *fn = t->conf.ifile.name;
 	ffpath_split3_str(FFSTR_Z(fn), NULL, NULL, &ext);
+	if (t->data_type)
+		ffstr_setz(&ext, t->data_type);
 
 	int r = file_format_detect(t->data_in.ptr, t->data_in.len);
 	switch (r) {
