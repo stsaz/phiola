@@ -41,8 +41,8 @@ struct cmd_play {
 	char *audio_module;
 	uint buffer;
 	uint device;
-	uint seek;
-	uint until;
+	uint64 seek;
+	uint64 until;
 	ffbyte random;
 	ffbyte repeat_all;
 	ffbyte perf;
@@ -50,29 +50,9 @@ struct cmd_play {
 	ffvec tracks; // uint[]
 };
 
-static int play_seek(struct cmd_play *p, ffstr s)
-{
-	ffdatetime dt = {};
-	if (s.len != fftime_fromstr1(&dt, s.ptr, s.len, FFTIME_HMS_MSEC_VAR))
-		return cmdarg_err(&x->cmd, "incorrect time value '%S'", &s);
+static int play_seek(struct cmd_play *p, ffstr s) { return cmd_time_value(&p->seek, s); }
 
-	fftime t;
-	fftime_join1(&t, &dt);
-	p->seek = fftime_to_msec(&t);
-	return 0;
-}
-
-static int play_until(struct cmd_play *p, ffstr s)
-{
-	ffdatetime dt = {};
-	if (s.len != fftime_fromstr1(&dt, s.ptr, s.len, FFTIME_HMS_MSEC_VAR))
-		return cmdarg_err(&x->cmd, "incorrect time value '%S'", &s);
-
-	fftime t;
-	fftime_join1(&t, &dt);
-	p->until = fftime_to_msec(&t);
-	return 0;
-}
+static int play_until(struct cmd_play *p, ffstr s) { return cmd_time_value(&p->until, s); }
 
 static int play_include(struct cmd_play *p, ffstr s)
 {

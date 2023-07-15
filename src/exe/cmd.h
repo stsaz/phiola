@@ -64,6 +64,18 @@ static int pcm_str_fmt(const char *sfmt, size_t len)
 	return pcm_fmt[r];
 }
 
+static int cmd_time_value(ffuint64 *msec, ffstr s)
+{
+	ffdatetime dt = {};
+	if (s.len != fftime_fromstr1(&dt, s.ptr, s.len, FFTIME_HMS_MSEC_VAR))
+		return cmdarg_err(&x->cmd, "incorrect time value '%S'", &s);
+
+	fftime t;
+	fftime_join1(&t, &dt);
+	*msec = fftime_to_msec(&t);
+	return 0;
+}
+
 static int cmd_tracks(ffvec *tracks, ffstr s)
 {
 	while (s.len) {

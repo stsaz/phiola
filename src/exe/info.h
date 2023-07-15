@@ -35,8 +35,8 @@ Options:\n\
 struct cmd_info {
 	ffvec input; // ffstr[]
 	ffvec include, exclude; // ffstr[]
-	uint seek;
-	uint until;
+	uint64 seek;
+	uint64 until;
 	ffbyte pcm_crc;
 	ffbyte pcm_peaks;
 	ffbyte tags;
@@ -44,29 +44,9 @@ struct cmd_info {
 	ffvec tracks; // uint[]
 };
 
-static int info_seek(struct cmd_info *p, ffstr s)
-{
-	ffdatetime dt = {};
-	if (s.len != fftime_fromstr1(&dt, s.ptr, s.len, FFTIME_HMS_MSEC_VAR))
-		return cmdarg_err(&x->cmd, "incorrect time value '%S'", &s);
+static int info_seek(struct cmd_info *p, ffstr s) { return cmd_time_value(&p->seek, s); }
 
-	fftime t;
-	fftime_join1(&t, &dt);
-	p->seek = fftime_to_msec(&t);
-	return 0;
-}
-
-static int info_until(struct cmd_info *p, ffstr s)
-{
-	ffdatetime dt = {};
-	if (s.len != fftime_fromstr1(&dt, s.ptr, s.len, FFTIME_HMS_MSEC_VAR))
-		return cmdarg_err(&x->cmd, "incorrect time value '%S'", &s);
-
-	fftime t;
-	fftime_join1(&t, &dt);
-	p->until = fftime_to_msec(&t);
-	return 0;
-}
+static int info_until(struct cmd_info *p, ffstr s) { return cmd_time_value(&p->until, s); }
 
 static int info_include(struct cmd_info *p, ffstr s)
 {

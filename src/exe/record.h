@@ -57,7 +57,7 @@ struct cmd_rec {
 	uint rate;
 	uint channels;
 	int gain;
-	uint until;
+	uint64 until;
 	char *aac_profile;
 	uint aac_q;
 	uint opus_q;
@@ -171,17 +171,7 @@ static int rec_aformat(struct cmd_rec *r, ffstr s)
 	return 0;
 }
 
-static int rec_until(struct cmd_rec *r, ffstr s)
-{
-	ffdatetime dt = {};
-	if (s.len != fftime_fromstr1(&dt, s.ptr, s.len, FFTIME_HMS_MSEC_VAR))
-		return cmdarg_err(&x->cmd, "incorrect time value '%S'", &s);
-
-	fftime t;
-	fftime_join1(&t, &dt);
-	r->until = fftime_to_msec(&t);
-	return 0;
-}
+static int rec_until(struct cmd_rec *r, ffstr s) { return cmd_time_value(&r->until, s); }
 
 #define O(m)  (void*)FF_OFF(struct cmd_rec, m)
 static const struct cmd_arg cmd_rec[] = {

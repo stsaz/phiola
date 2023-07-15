@@ -54,8 +54,8 @@ struct cmd_conv {
 	uint aformat;
 	uint channels;
 	uint rate;
-	uint seek;
-	uint until;
+	uint64 seek;
+	uint64 until;
 	int gain;
 	uint copy;
 	char *aac_profile;
@@ -108,29 +108,9 @@ static int conv_input(struct cmd_conv *v, ffstr s)
 	return 0;
 }
 
-static int conv_seek(struct cmd_conv *v, ffstr s)
-{
-	ffdatetime dt = {};
-	if (s.len != fftime_fromstr1(&dt, s.ptr, s.len, FFTIME_HMS_MSEC_VAR))
-		return cmdarg_err(&x->cmd, "incorrect time value '%S'", &s);
+static int conv_seek(struct cmd_conv *v, ffstr s) { return cmd_time_value(&v->seek, s); }
 
-	fftime t;
-	fftime_join1(&t, &dt);
-	v->seek = fftime_to_msec(&t);
-	return 0;
-}
-
-static int conv_until(struct cmd_conv *v, ffstr s)
-{
-	ffdatetime dt = {};
-	if (s.len != fftime_fromstr1(&dt, s.ptr, s.len, FFTIME_HMS_MSEC_VAR))
-		return cmdarg_err(&x->cmd, "incorrect time value '%S'", &s);
-
-	fftime t;
-	fftime_join1(&t, &dt);
-	v->until = fftime_to_msec(&t);
-	return 0;
-}
+static int conv_until(struct cmd_conv *v, ffstr s) { return cmd_time_value(&v->until, s); }
 
 static void conv_qu_add(struct cmd_conv *v, ffstr *fn)
 {
