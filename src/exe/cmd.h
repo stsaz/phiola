@@ -64,6 +64,19 @@ static int pcm_str_fmt(const char *sfmt, size_t len)
 	return pcm_fmt[r];
 }
 
+static int cmd_tracks(ffvec *tracks, ffstr s)
+{
+	while (s.len) {
+		ffstr it;
+		ffstr_splitby(&s, ',', &it, &s);
+		uint n;
+		if (!ffstr_to_uint32(&it, &n))
+			return cmdarg_err(&x->cmd, "incorrect track number '%S'", &it);
+		*ffvec_pushT(tracks, uint) = n;
+	}
+	return 0;
+}
+
 #include <exe/record.h>
 #include <exe/play.h>
 #include <exe/info.h>

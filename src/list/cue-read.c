@@ -54,6 +54,7 @@ struct cue {
 	ffvec metas;
 	uint nmeta;
 
+	uint curtrk;
 	uint have_gmeta :1;
 	uint utf8 :1;
 	uint removed :1;
@@ -77,7 +78,7 @@ static void* cue_open(phi_track *t)
 		metaif = core->mod("format.meta");
 
 	struct cue *c = ffmem_new(struct cue);
-
+	ffarrint32_sort((uint*)t->conf.tracks.ptr, t->conf.tracks.len);
 	cueread_open(&c->cue);
 	c->qu_cur = t->qent;
 	c->cu.options = FFCUE_GAPPREV;
@@ -297,6 +298,15 @@ add_metaname:
 			continue;
 
 add:
+		c->curtrk++;
+		if (t->conf.tracks.len) {
+			ffsize n = ffarrint32_binfind((uint*)t->conf.tracks.ptr, t->conf.tracks.len, c->curtrk);
+			if ((ffssize)n < 0)
+				goto next;
+			if (n == t->conf.tracks.len - 1)
+				done = 1;
+		}
+
 		if (ctrk->to != 0 && ctrk->from >= ctrk->to) {
 			errlog(t, "invalid INDEX values");
 			continue;
@@ -304,6 +314,7 @@ add:
 
 		add(c, ctrk, t);
 
+next:
 		/* 'metas': TRACK_N TRACK_N+1
 		Remove the items for TRACK_N. */
 		m = (void*)c->metas.ptr;

@@ -162,6 +162,8 @@ struct phi_track_conf {
 		uint	preserve_date :1;
 	} ifile;
 
+	ffslice tracks; // uint[]
+
 	uint64	seek_msec;
 	uint64	until_msec;
 	uint64	seek_cdframes;

@@ -16,6 +16,7 @@ Options:\n\
 \n\
   -repeat-all           Repeat all tracks\n\
   -random               Choose the next track randomly\n\
+  -tracks NUMBER[,...]  Select only specific tracks in a .cue list\n\
 \n\
   -seek TIME            Seek to time:\n\
                           [[HH:]MM:]SS[.MSC]\n\
@@ -46,6 +47,7 @@ struct cmd_play {
 	ffbyte repeat_all;
 	ffbyte perf;
 	ffbyte exclusive;
+	ffvec tracks; // uint[]
 };
 
 static int play_seek(struct cmd_play *p, ffstr s)
@@ -84,6 +86,8 @@ static int play_exclude(struct cmd_play *p, ffstr s)
 	return 0;
 }
 
+static int play_tracks(struct cmd_play *p, ffstr s) { return cmd_tracks(&p->tracks, s); }
+
 static int play_input(struct cmd_play *p, ffstr s)
 {
 	if (s.len && s.ptr[0] == '-')
@@ -102,6 +106,7 @@ static void play_qu_add(struct cmd_play *p, ffstr *fn)
 			.include = *(ffslice*)&p->include,
 			.exclude = *(ffslice*)&p->exclude,
 		},
+		.tracks = *(ffslice*)&p->tracks,
 		.seek_msec = p->seek,
 		.until_msec = p->until,
 		.oaudio = {
@@ -164,6 +169,7 @@ static const struct cmd_arg cmd_play[] = {
 	{ "-random",	'1',	O(random) },
 	{ "-repeat-all",'1',	O(repeat_all) },
 	{ "-seek",		'S',	play_seek },
+	{ "-tracks",	'S',	play_tracks },
 	{ "-until",		'S',	play_until },
 	{ "\0\1",		'S',	play_input },
 	{ "",			0,		play_check },

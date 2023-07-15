@@ -214,6 +214,11 @@ EOF
 	./phiola i cue.cue 2>&1 | grep 'Artist - T2'
 	./phiola i cue.cue 2>&1 | grep 'Artist - T3'
 	./phiola cue.cue
+	if ./phiola i cue.cue -tracks 2,3 2>&1 | grep 'A1 - T1' ; then
+		false
+	fi
+	./phiola i cue.cue -tracks 2,3 2>&1 | grep 'Artist - T2'
+	./phiola i cue.cue -tracks 2,3 2>&1 | grep 'Artist - T3'
 }
 
 test_meta() {

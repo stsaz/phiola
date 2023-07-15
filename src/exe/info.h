@@ -16,6 +16,8 @@ Options:\n\
 \n\
   -tags                 Print all meta tags\n\
 \n\
+  -tracks NUMBER[,...]  Select only specific tracks in a .cue list\n\
+\n\
   -seek TIME            Seek to time:\n\
                           [[HH:]MM:]SS[.MSC]\n\
   -until TIME           Stop at time\n\
@@ -39,6 +41,7 @@ struct cmd_info {
 	ffbyte pcm_peaks;
 	ffbyte tags;
 	ffbyte perf;
+	ffvec tracks; // uint[]
 };
 
 static int info_seek(struct cmd_info *p, ffstr s)
@@ -77,6 +80,8 @@ static int info_exclude(struct cmd_info *p, ffstr s)
 	return 0;
 }
 
+static int info_tracks(struct cmd_info *p, ffstr s) { return cmd_tracks(&p->tracks, s); }
+
 static int info_input(struct cmd_info *p, ffstr s)
 {
 	if (s.len && s.ptr[0] == '-')
@@ -95,6 +100,7 @@ static void info_qu_add(struct cmd_info *p, ffstr *fn)
 			.include = *(ffslice*)&p->include,
 			.exclude = *(ffslice*)&p->exclude,
 		},
+		.tracks = *(ffslice*)&p->tracks,
 		.seek_msec = p->seek,
 		.until_msec = p->until,
 		.afilter = {
@@ -149,6 +155,7 @@ static const struct cmd_arg cmd_info[] = {
 	{ "-perf",		'1',	O(perf) },
 	{ "-seek",		'S',	info_seek },
 	{ "-tags",		'1',	O(tags) },
+	{ "-tracks",	'S',	info_tracks },
 	{ "-until",		'S',	info_until },
 	{ "\0\1",		'S',	info_input },
 	{ "",			0,		info_check },

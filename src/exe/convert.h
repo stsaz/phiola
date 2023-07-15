@@ -14,6 +14,8 @@ Options:\n\
   -include WILDCARD     Only include files matching a wildcard (case-insensitive)\n\
   -exclude WILDCARD     Exclude files & directories matching a wildcard (case-insensitive)\n\
 \n\
+  -tracks NUMBER[,...]  Select only specific tracks in a .cue list\n\
+\n\
   -seek TIME            Seek to time: [[HH:]MM:]SS[.MSC]\n\
   -until TIME           Stop at time\n\
 \n\
@@ -63,6 +65,7 @@ struct cmd_conv {
 	char *output;
 	uint force;
 	uint preserve_date;
+	ffvec tracks; // uint[]
 };
 
 static int conv_include(struct cmd_conv *v, ffstr s)
@@ -92,6 +95,8 @@ static int conv_meta(struct cmd_conv *v, ffstr s)
 	*ffvec_pushT(&v->meta, ffstr) = s;
 	return 0;
 }
+
+static int conv_tracks(struct cmd_conv *v, ffstr s) { return cmd_tracks(&v->tracks, s); }
 
 static int conv_input(struct cmd_conv *v, ffstr s)
 {
@@ -147,6 +152,7 @@ static void conv_qu_add(struct cmd_conv *v, ffstr *fn)
 			.exclude = *(ffslice*)&v->exclude,
 			.preserve_date = v->preserve_date,
 		},
+		.tracks = *(ffslice*)&v->tracks,
 		.meta = meta,
 		.seek_msec = v->seek,
 		.until_msec = v->until,
@@ -236,6 +242,7 @@ static const struct cmd_arg cmd_conv[] = {
 	{ "-preserve-date",	'1',	O(preserve_date) },
 	{ "-rate",			'u',	O(rate) },
 	{ "-seek",			'S',	conv_seek },
+	{ "-tracks",		'S',	conv_tracks },
 	{ "-until",			'S',	conv_until },
 	{ "-vorbis-quality",'u',	O(vorbis_q) },
 	{ "\0\1",			'S',	conv_input },
