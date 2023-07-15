@@ -98,7 +98,15 @@ static int aconv_prepare(struct aconv *c, phi_track *t)
 	const struct phi_af *out = &c->fo;
 
 	if (in->rate != out->rate) {
-		return PHI_ERR;
+		if (!core->track->filter(t, core->mod("soxr.conv"), 0))
+			return PHI_ERR;
+
+		if (in->channels != out->channels) {
+			return PHI_ERR;
+		}
+
+		t->data_out = t->data_in;
+		return PHI_DONE;
 	}
 
 	if (c->fi.channels > 8)

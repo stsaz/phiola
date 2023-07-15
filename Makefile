@@ -151,6 +151,14 @@ afilter.$(SO): afilter.o \
 		conv.o
 	$(LINK) -shared $+ $(LINKFLAGS) -lm -o $@
 
+MODS += soxr.$(SO)
+LIBS3 += $(ALIB3_BIN)/libsoxr-phi.$(SO)
+soxr.o: $(PHIOLA)/src/afilter/soxr.c $(DEPS) \
+		$(wildcard $(PHIOLA)/src/afilter/soxr*.h)
+	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
+soxr.$(SO): soxr.o
+	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lsoxr-phi -o $@
+
 # FORMAT
 MODS += format.$(SO)
 %.o: $(PHIOLA)/src/format/%.c $(DEPS) \

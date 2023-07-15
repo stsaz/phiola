@@ -98,15 +98,15 @@ test_convert() {
 	# audio format
 	./phiola co co.wav -f -o co-wav-i24.wav -af int24 ; ./phiola i co-wav-i24.wav 2>&1 | grep 'int24' ; ./phiola pl co-wav-i24.wav
 	./phiola co co.wav -f -o co-wav-mono.wav -ch 1 ; ./phiola i co-wav-mono.wav 2>&1 | grep 'mono' ; ./phiola pl co-wav-mono.wav
-	# ./phiola co co.wav -f -o co-wav-96k.wav -rate 96000 ; ./phiola i co-wav-96k.wav 2>&1 | grep '96000Hz' ; ./phiola pl co-wav-96k.wav
-	# ./phiola co co.wav -f -o co-wav-i32-96k.wav -af int32 -rate 96000 ; ./phiola i co-wav-i32-96k.wav 2>&1 | grep 'int32 96000Hz' ; ./phiola pl co-wav-i32-96k.wav
+	./phiola co co.wav -f -o co-wav-96k.wav -rate 96000 ; ./phiola i co-wav-96k.wav 2>&1 | grep '96000Hz' ; ./phiola pl co-wav-96k.wav
+	./phiola co co.wav -f -o co-wav-i32-96k.wav -af int32 -rate 96000 ; ./phiola i co-wav-i32-96k.wav 2>&1 | grep 'int32 96000Hz' ; ./phiola pl co-wav-i32-96k.wav
 
 	./phiola co co.wav -f -o co-wav-gain6.wav -gain -6 ; ./phiola pl co-wav-gain6.wav
 	./phiola co co.wav -f -o co-wav.wav -preserve-date
 
 	convert_from_to wav m4a
 	convert_from_to wav ogg
-	# convert_from_to wav opus
+	convert_from_to wav opus
 	convert_from_to wav flac
 }
 

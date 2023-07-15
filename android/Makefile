@@ -204,6 +204,15 @@ $(LIB_DIR)/afilter.$(SO): $(OBJ_DIR)/afilter.o \
 	$(LINK) -shared $+ $(LINKFLAGS) -lm -o $@
 
 
+MODS += soxr.so
+LIBS3 += $(ALIB3_BIN)/libsoxr-phi.so
+soxr.o: $(PHIOLA)/src/afilter/soxr.c $(DEPS) \
+		$(wildcard $(PHIOLA)/src/afilter/soxr*.h)
+	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
+soxr.so: soxr.o
+	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lsoxr-phi -o $@
+
+
 MODS += $(LIB_DIR)/format.so.debug
 $(OBJ_DIR)/%.o: $(PHIOLA)/src/format/%.c $(DEPS) \
 		$(wildcard $(PHIOLA)/src/format/*.h)

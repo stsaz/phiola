@@ -13,6 +13,7 @@ LIBS := \
 	musepack \
 	ogg \
 	opus \
+	soxr \
 	vorbis \
 	wavpack
 
@@ -40,6 +41,7 @@ clean:
 	$(MAKE) -I.. -C musepack clean
 	$(MAKE) -I.. -C ogg clean
 	$(MAKE) -I.. -C opus clean
+	$(MAKE) -I.. -C soxr clean
 	$(MAKE) -I.. -C vorbis clean
 	$(MAKE) -I.. -C wavpack clean
 
@@ -53,6 +55,7 @@ md5:
 		musepack/musepack_src_r475.tar.gz \
 		ogg/libogg-1.3.3.tar.xz \
 		opus/opus-1.3.1.tar.gz \
+		soxr/soxr-0.1.3-Source.tar.xz \
 		vorbis/libvorbis-1.3.7.tar.xz \
 		wavpack/wavpack-4.75.0.tar.bz2 \
 		>packages.md5
