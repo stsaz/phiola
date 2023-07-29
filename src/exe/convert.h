@@ -193,6 +193,7 @@ static int conv_action()
 	struct phi_queue_conf qc = {
 		.name = "convert",
 		.first_filter = &phi_guard,
+		.ui_module = "tui.play",
 		.conversion = 1,
 	};
 	x->queue->create(&qc);

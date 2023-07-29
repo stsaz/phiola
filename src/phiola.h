@@ -315,6 +315,7 @@ struct phi_queue_conf {
 	const char *name;
 	const phi_filter *first_filter;
 	const char *audio_module;
+	const char *ui_module;
 	uint conversion :1;
 	uint random :1;
 	uint repeat_all :1;

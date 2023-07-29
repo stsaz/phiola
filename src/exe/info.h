@@ -105,6 +105,7 @@ static int info_action()
 	struct phi_queue_conf qc = {
 		.name = "info",
 		.first_filter = &phi_guard,
+		.ui_module = "tui.play",
 	};
 	x->queue->create(&qc);
 	ffstr *it;

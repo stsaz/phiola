@@ -114,6 +114,7 @@ static int play_action()
 		.name = "play",
 		.first_filter = &phi_guard,
 		.audio_module = p->audio_module,
+		.ui_module = "tui.play",
 		.random = p->random,
 		.repeat_all = p->repeat_all,
 	};

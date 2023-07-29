@@ -97,13 +97,16 @@ static int qe_play(struct q_entry *e)
 	const phi_track_if *track = core->track;
 	phi_track *t = track->create(c);
 
+	if (e->q->conf.first_filter
+		&& !track->filter(t, e->q->conf.first_filter, 0))
+		goto err;
+
 	if (e->q->conf.conversion) {
-		if (!track->filter(t, e->q->conf.first_filter, 0)
-			|| !track->filter(t, &phi_queue_guard, 0)
+		if (!track->filter(t, &phi_queue_guard, 0)
 			|| !track->filter(t, core->mod("core.auto-input"), 0)
 			|| !track->filter(t, core->mod("format.detect"), 0)
 			|| !track->filter(t, core->mod("afilter.until"), 0)
-			|| !track->filter(t, core->mod("tui.play"), 0)
+			|| !track->filter(t, core->mod(e->q->conf.ui_module), 0)
 			|| !track->filter(t, core->mod("afilter.gain"), 0)
 			|| !track->filter(t, core->mod("afilter.auto-conv"), 0)
 			|| !track->filter(t, core->mod("format.auto-write"), 0)
@@ -111,24 +114,22 @@ static int qe_play(struct q_entry *e)
 			goto err;
 
 	} else if (c->info_only || c->afilter.peaks_info) {
-		if (!track->filter(t, e->q->conf.first_filter, 0)
-			|| !track->filter(t, &phi_queue_guard, 0)
+		if (!track->filter(t, &phi_queue_guard, 0)
 			|| !track->filter(t, core->mod("core.auto-input"), 0)
 			|| !track->filter(t, core->mod("format.detect"), 0)
 			|| !track->filter(t, core->mod("afilter.until"), 0)
-			|| !track->filter(t, core->mod("tui.play"), 0)
+			|| !track->filter(t, core->mod(e->q->conf.ui_module), 0)
 			|| !track->filter(t, core->mod("afilter.auto-conv"), 0)
 			|| (c->afilter.peaks_info
 				&& !track->filter(t, core->mod("afilter.peaks"), 0)))
 			goto err;
 
 	} else {
-		if (!track->filter(t, e->q->conf.first_filter, 0)
-			|| !track->filter(t, &phi_queue_guard, 0)
+		if (!track->filter(t, &phi_queue_guard, 0)
 			|| !track->filter(t, core->mod("core.auto-input"), 0)
 			|| !track->filter(t, core->mod("format.detect"), 0)
 			|| !track->filter(t, core->mod("afilter.until"), 0)
-			|| !track->filter(t, core->mod("tui.play"), 0)
+			|| !track->filter(t, core->mod(e->q->conf.ui_module), 0)
 			|| !track->filter(t, core->mod("afilter.gain"), 0)
 			|| !track->filter(t, core->mod("afilter.auto-conv"), 0)
 			|| !track->filter(t, core->mod(e->q->conf.audio_module), 0))
