@@ -42,6 +42,9 @@ static int meta_list(const ffvec *meta, uint *i, ffstr *name, ffstr *val, uint f
 		ffstr_setz(val, v);
 		(*i)++;
 
+		if (!(flags & PHI_META_PRIVATE) && ffstr_matchz(name, "_phi_"))
+			continue;
+
 		int skip = 0;
 		if (flags & PHI_META_UNIQUE) {
 			char **it;
@@ -65,7 +68,7 @@ static int meta_find(const ffvec *meta, ffstr name, ffstr *val, uint flags)
 {
 	uint i = 0;
 	ffstr n, v;
-	while (meta_list(meta, &i, &n, &v, 0)) {
+	while (meta_list(meta, &i, &n, &v, flags)) {
 		if (ffstr_eq2(&n, &name)) {
 			*val = v;
 			return 0;

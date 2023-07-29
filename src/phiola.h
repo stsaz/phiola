@@ -269,6 +269,7 @@ struct phi_track_if {
 
 enum PHI_META {
 	PHI_META_UNIQUE = 1,
+	PHI_META_PRIVATE = 2, // include private entries starting with "_phi_"
 };
 
 typedef struct phi_meta_if phi_meta_if;
