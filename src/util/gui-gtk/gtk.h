@@ -510,3 +510,29 @@ static inline int ffui_send_tab_count(ffui_tab *ctl)
 }
 
 #define ffui_send_stbar_settextz(sb, sz)  ffui_send(sb, FFUI_STBAR_SETTEXT, (void*)sz)
+
+
+#ifdef __cplusplus
+struct ffui_trackbarxx : ffui_trkbar {
+	void set(uint value) { ffui_post_trk_set(this, value); }
+	uint get() { return ffui_trk_val(this); }
+	void range(uint range) { ffui_post_trk_setrange(this, range); }
+};
+
+struct ffui_stbarxx : ffui_ctl {
+	void text(const char *sz) { ffui_send_stbar_settextz(this, sz); }
+};
+
+struct ffui_labelxx : ffui_label {
+	void text(const char *sz) { ffui_send_lbl_settext(this, sz); }
+	void markup(const char *sz) { gtk_label_set_markup(GTK_LABEL(h), sz); }
+};
+
+struct ffui_editxx : ffui_edit {
+	ffstr text() { ffstr s = {}; ffui_edit_textstr(this, &s); return s; }
+};
+
+struct ffui_tabxx : ffui_tab {
+	void add(const char *sz) { ffui_tab_append(this, sz); }
+};
+#endif

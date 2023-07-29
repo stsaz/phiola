@@ -82,3 +82,14 @@ static inline void ffui_wnd_setplacement(ffui_wnd *w, uint showcmd, const ffui_p
 	gtk_window_move(w->h, pos->x, pos->y);
 	gtk_window_set_default_size(w->h, pos->cx, pos->cy);
 }
+
+
+#ifdef __cplusplus
+struct ffui_wndxx : ffui_wnd {
+	void show(uint show) { ffui_show(this, show); }
+	void title(const char *sz) { ffui_send_wnd_settext(this, sz); }
+	void close() { ffui_wnd_close(this); }
+	ffui_pos pos() { ffui_pos p; ffui_wnd_pos(this, &p); return p; }
+	void place(const ffui_pos &pos) { ffui_wnd_setplacement(this, 0, &pos); }
+};
+#endif

@@ -310,3 +310,42 @@ static inline void ffui_view_popupmenu(ffui_view *v, ffui_menu *m)
 		gtk_widget_show_all(m->h);
 	}
 }
+
+
+#ifdef __cplusplus
+struct ffui_viewitemxx : ffui_viewitem {
+	ffui_viewitemxx(ffstr s) { ffmem_zero_obj(this); ffui_view_settextstr(this, &s); }
+};
+
+struct ffui_viewcolxx {
+	ffui_viewcol vc;
+	uint width() { return vc.width; }
+	void width(uint val) { vc.width = val; }
+};
+
+struct ffui_viewxx : ffui_view {
+	int append(ffstr text) {
+		ffui_viewitem vi = {};
+		ffui_view_settextstr(&vi, &text);
+		ffui_view_append(this, &vi);
+		return vi.idx;
+	}
+	void set(int idx, int col, ffstr text) {
+		ffui_viewitem vi = {};
+		vi.idx = idx;
+		ffui_view_settextstr(&vi, &text);
+		ffui_view_set(this, col, &vi);
+	}
+	void update(uint first, int delta) { ffui_post_view_setdata(this, first, delta); }
+	void clear() { ffui_post_view_clear(this); }
+	int focused() { return ffui_view_focused(this); }
+	ffui_sel* selected() { return ffui_view_getsel(this); }
+	int selected_first() { return ffui_view_selected_first(this); }
+	ffui_viewcolxx& column(int pos, ffui_viewcolxx *vc) {
+		ffui_view_col(this, pos, &vc->vc);
+		return *vc;
+	}
+	void column(int pos, const ffui_viewcolxx &vc) { ffui_view_setcol(this, pos, &vc.vc); }
+	void drag_drop_init(uint action_id) { ffui_view_dragdrop(this, action_id); }
+};
+#endif
