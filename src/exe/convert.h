@@ -38,7 +38,26 @@ Options:\n\
                         Vorbis encoding quality:\n\
                           -1..10\n\
 \n\
-  -out FILE             Output file name\n\
+  -meta STRING=STRING   Meta data\n\
+\n\
+  -out FILE             Output file name.\n\
+                          @stdout    Write to standard output\n\
+                        The encoder is selected automatically from the given file extension:\n\
+                          .m4a       AAC\n\
+                          .ogg       Vorbis\n\
+                          .opus      Opus\n\
+                          .flac      FLAC\n\
+                          .wav       PCM\n\
+                        Supports runtime variable expansion:\n\
+                          @filepath  Expands to the input file path\n\
+                          @filename  Input file name (without extension)\n\
+                          @nowdate   Current date\n\
+                          @nowtime   Current time\n\
+                          @counter   Sequentially incremented number\n\
+                          @STRING    Expands to file meta data,\n\
+                                       e.g. `-o \"@tracknumber. @artist - @title.flac\"`\n\
+                        When file name isn't specified, @filepath is used automatically,\n\
+                          e.g. `-o .ogg` == `-o @filename.ogg`\n\
   -force                Overwrite output file\n\
   -preserve-date        Preserve file modification date\n\
 ";

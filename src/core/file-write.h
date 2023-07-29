@@ -2,6 +2,7 @@
 2022, Simon Zolin */
 
 #include <util/fcache.h>
+#include <util/util.h>
 #include <FFOS/file.h>
 
 #define ALIGN (4*1024)
@@ -12,6 +13,7 @@ struct file_w {
 	uint64 off_cur, size;
 	struct fcache_buf wbuf;
 	ffsize buf_cap;
+	ffstr namebuf;
 	const char *name;
 	char *filename_tmp;
 	uint fin;
@@ -53,8 +55,127 @@ static void fw_close(void *ctx, phi_track *t)
 
 end:
 	ffmem_alignfree(f->wbuf.ptr);
+	ffstr_free(&f->namebuf);
 	ffmem_free(f->filename_tmp);
 	ffmem_free(f);
+}
+
+/** All printable, plus SPACE, except: ", *, /, :, <, >, ?, \, | */
+static const uint _ffpath_charmask_filename[] = {
+	0,
+	            // ?>=< ;:98 7654 3210  /.-, +*)( '&%$ #"!
+	0x2bff7bfb, // 0010 1011 1111 1111  0111 1011 1111 1011
+	            // _^]\ [ZYX WVUT SRQP  ONML KJIH GFED CBA@
+	0xefffffff, // 1110 1111 1111 1111  1111 1111 1111 1111
+	            //  ~}| {zyx wvut srqp  onml kjih gfed cba`
+	0x6fffffff, // 0110 1111 1111 1111  1111 1111 1111 1111
+	0xffffffff,
+	0xffffffff,
+	0xffffffff,
+	0xffffffff
+};
+
+static void fw_name_var(ffvec *buf, ffstr var, phi_track *t)
+{
+	enum VARS {
+		VAR_COUNTER,
+		VAR_FILENAME,
+		VAR_FILEPATH,
+		VAR_NOWDATE,
+		VAR_NOWTIME,
+	};
+	static const char vars[][9] = {
+		"counter",
+		"filename",
+		"filepath",
+		"nowdate",
+		"nowtime",
+	};
+
+	int r;
+	ffstr val;
+	ffdatetime dt = {};
+
+	if (0 > (r = ffcharr_findsorted(vars, FF_COUNT(vars), sizeof(*vars), var.ptr+1, var.len-1))) {
+
+		static const phi_meta_if *metaif;
+		if (!metaif)
+			metaif = core->mod("format.meta");
+
+		ffstr var_name = FFSTR_INITN(var.ptr+1, var.len-1);
+		if (!!metaif->find(&t->meta, var_name, &val, 0))
+			val = var;
+		goto data;
+	}
+
+	ffstr fdir = {}, fname = {};
+
+	switch (r) {
+	case VAR_FILEPATH:
+	case VAR_FILENAME:
+		if (!fname.len)
+			ffpath_split3_str(FFSTR_Z(t->conf.ifile.name), &fdir, &fname, NULL);
+		if (r == VAR_FILEPATH)
+			val = fdir;
+		else
+			val = fname;
+		break;
+
+	case VAR_NOWDATE:
+	case VAR_NOWTIME:
+		if (!dt.year)
+			core->time(&dt, 0);
+		if (r == VAR_NOWDATE)
+			ffvec_addfmt(buf, "%04u%02u%02u", dt.year, dt.month, dt.day);
+		else
+			ffvec_addfmt(buf, "%02u%02u%02u", dt.hour, dt.minute, dt.second);
+		return;
+
+	case VAR_COUNTER: {
+		static uint counter;
+		ffvec_addfmt(buf, "%u", ++counter);
+		return;
+	}
+	}
+
+data:
+	ffvec_grow(buf, val.len, 1);
+	buf->len += ffpath_makefn(ffslice_end(buf, 1), -1, val, '_', _ffpath_charmask_filename);
+}
+
+static const char* fw_name(ffstr *sbuf, const char *name, phi_track *t)
+{
+	ffstr fn = FFSTR_INITZ(name);
+	ffvec buf = {}, fnbuf = {};
+
+	// "PATH/.EXT" -> "PATH/@filename.EXT"
+	ffstr fdir, fname, ext;
+	ffpath_split3_output(fn, &fdir, &fname, &ext);
+	if (!fname.len) {
+		ffvec_addfmt(&fnbuf, "%S%*c@filename.%S"
+			, &fdir, (fdir.len) ? (ffsize)1 : (ffsize)0, FFPATH_SLASH, &ext);
+		ffstr_set2(&fn, &fnbuf);
+
+	} else if (ffstr_findchar(&fn, '@') < 0) {
+		return name; // no variables to expand
+	}
+
+	while (fn.len) {
+		ffstr val;
+		int r = ffstr_var_next(&fn, &val, '@');
+		if (r == 'v')
+			fw_name_var(&buf, val, t);
+		else
+			ffvec_addstr(&buf, &val);
+	}
+
+	ffvec_addchar(&buf, '\0');
+	ffstr_set2(sbuf, &buf);
+	ffvec_null(&buf);
+	sbuf->len--;
+
+	ffvec_free(&fnbuf);
+	return sbuf->ptr;
 }
 
 static void* fw_open(phi_track *t)
@@ -62,7 +183,7 @@ static void* fw_open(phi_track *t)
 	struct file_w *f = ffmem_new(struct file_w);
 	f->trk = t;
 	f->fd = FFFILE_NULL;
-	f->name = t->conf.ofile.name;
+	f->name = fw_name(&f->namebuf, t->conf.ofile.name, t);
 	f->buf_cap = (t->conf.ofile.buf_size) ? t->conf.ofile.buf_size : 64*1024;
 
 	f->wbuf.ptr = ffmem_align(f->buf_cap, ALIGN);

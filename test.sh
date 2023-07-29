@@ -249,8 +249,21 @@ test_http() {
 	kill $!
 }
 
+test_ofile_vars() {
+	if ! test -f ofv.wav ; then
+		./phiola rec -o ofv.wav -f -u 2
+	fi
+	./phiola co ofv.wav -f -o .ogg ; ./phiola i ofv.ogg
+	mkdir -p ofv ; ./phiola co ofv.wav -f -o ofv/.ogg ; ./phiola i ofv/ofv.ogg
+	./phiola co ofv.wav -f -o .ogg ; ./phiola i ofv.ogg
+	./phiola co ofv.wav -f -o ofv/ofv.ogg -m 'artist=A' -m 'title=T' ; ./phiola i ofv/ofv.ogg
+	./phiola co ofv/ofv.ogg -copy -f -o @filepath/@filename-@artist-@title.ogg ; ./phiola i ofv/ofv-A-T.ogg
+	./phiola co ofv/ofv.ogg -copy -f -o ofv/@nowdate-@nowtime-@counter.ogg ; ./phiola i ofv/*-1.ogg
+}
+
 test_clean() {
-	rm -f *.wav *.flac *.m4a *.ogg *.opus *.mp3 fm-*
+	rm -f *.wav *.flac *.m4a *.ogg *.opus *.mp3 fm-* ofv/*.ogg
+	rmdir ofv
 }
 
 TESTS=(
@@ -264,6 +277,7 @@ TESTS=(
 	dir_read
 	list
 	cue
+	ofile_vars
 	# http
 	clean
 	# wasapi_exclusive

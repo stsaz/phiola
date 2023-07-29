@@ -46,7 +46,7 @@ static void* phi_autow_open(phi_track *t) { return (void*)1; }
 static int phi_autow_process(void *obj, phi_track *t)
 {
 	ffstr ext = {};
-	ffpath_split3_str(FFSTR_Z(t->conf.ofile.name), NULL, NULL, &ext);
+	ffpath_split3_output(FFSTR_Z(t->conf.ofile.name), NULL, NULL, &ext);
 
 	static const struct map_sz_vptr mods[] = {
 		{ "aac", &phi_aac_adts_write },

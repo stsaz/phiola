@@ -39,9 +39,17 @@ Options:\n\
   -meta STRING=STRING   Meta data\n\
 \n\
   -out FILE             Output file name\n\
-                          Supported file extensions:\n\
-                            .m4a | .ogg | .opus | .flac | .wav\n\
-                          @stdout.<EXT>  Write to standard output\n\
+                          @stdout    Write to standard output\n\
+                        The encoder is selected automatically from the given file extension:\n\
+                          .m4a       AAC\n\
+                          .ogg       Vorbis\n\
+                          .opus      Opus\n\
+                          .flac      FLAC\n\
+                          .wav       PCM\n\
+                        Supports runtime variable expansion:\n\
+                          @nowdate   Current date\n\
+                          @nowtime   Current time\n\
+                          @counter   Sequentially incremented number\n\
   -force                Overwrite output file\n\
 ";
 	ffstdout_write(s, FFS_LEN(s));
