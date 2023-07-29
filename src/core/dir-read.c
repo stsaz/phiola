@@ -86,9 +86,15 @@ static int qu_add_dir_r(const char *fn, phi_track *t)
 		if (fffile_isdir(fffileinfo_attr(&fi))) {
 
 			ffmem_zero_obj(&ds);
+			uint flags = 0;
+#ifdef FF_WIN
+			fffile_close(f);  f = FFFILE_NULL;
+#else
+			flags = FFDIRSCAN_USEFD;
 			ds.fd = f;
 			f = FFFILE_NULL;
-			if (0 != ffdirscan_open(&ds, NULL, FFDIRSCAN_USEFD))
+#endif
+			if (0 != ffdirscan_open(&ds, fpath, flags))
 				continue;
 
 			ffstr_setz(&path, fpath);
