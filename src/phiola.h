@@ -230,6 +230,7 @@ struct phi_track_conf {
 	uint info_only :1;
 	uint print_tags :1;
 	uint stream_copy :1;
+	uint meta_transient :1;
 };
 
 enum PHI_TF {

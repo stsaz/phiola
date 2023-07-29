@@ -57,11 +57,14 @@ static int m3u_add(struct m3u *m, phi_track *t)
 		qe.conf.ofile.name = ffsz_dup(t->conf.ofile.name);
 	metaif->copy(&qe.conf.meta, &t->conf.meta);
 
-	if (m->pls_ent.artist.len)
-		metaif->set(&qe.conf.meta, FFSTR_Z("artist"), *(ffstr*)&m->pls_ent.artist);
+	if (!qe.conf.meta.len) { // must not mix user-meta with transient-meta
+		if (m->pls_ent.artist.len)
+			metaif->set(&qe.conf.meta, FFSTR_Z("artist"), *(ffstr*)&m->pls_ent.artist);
 
-	if (m->pls_ent.title.len)
-		metaif->set(&qe.conf.meta, FFSTR_Z("title"), *(ffstr*)&m->pls_ent.title);
+		if (m->pls_ent.title.len)
+			metaif->set(&qe.conf.meta, FFSTR_Z("title"), *(ffstr*)&m->pls_ent.title);
+		qe.conf.meta_transient = 1;
+	}
 
 	m->qu_cur = queue->insert(m->qu_cur, &qe);
 

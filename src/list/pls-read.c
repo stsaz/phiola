@@ -55,8 +55,10 @@ static int pls_add(struct pls_r *p, phi_track *t)
 		qe.conf.ofile.name = ffsz_dup(t->conf.ofile.name);
 	metaif->copy(&qe.conf.meta, &t->conf.meta);
 
-	if (p->pls_ent.title.len)
+	if (!qe.conf.meta.len && p->pls_ent.title.len) {
 		metaif->set(&qe.conf.meta, FFSTR_Z("title"), *(ffstr*)&p->pls_ent.title);
+		qe.conf.meta_transient = 1;
+	}
 
 	p->qu_cur = queue->insert(p->qu_cur, &qe);
 

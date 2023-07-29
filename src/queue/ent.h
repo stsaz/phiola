@@ -40,7 +40,7 @@ static struct q_entry* qe_new(struct phi_queue_entry *qe)
 {
 	struct q_entry *e = ffmem_new(struct q_entry);
 	e->pub = *qe;
-	e->have_user_meta = (!!e->pub.conf.meta.len);
+	e->have_user_meta = (e->pub.conf.meta.len && !e->pub.conf.meta_transient);
 	e->used = 1;
 	return e;
 }
@@ -135,11 +135,12 @@ static int qe_play(struct q_entry *e)
 			goto err;
 	}
 
-
-	char **it;
-	FFSLICE_WALK(&t->conf.meta, it) {
-		phi_metaif->set(&t->meta, FFSTR_Z(*it), FFSTR_Z(*(it + 1)));
-		it++;
+	if (e->have_user_meta) {
+		char **it;
+		FFSLICE_WALK(&t->conf.meta, it) {
+			phi_metaif->set(&t->meta, FFSTR_Z(it[0]), FFSTR_Z(it[1]));
+			it++;
+		}
 	}
 
 	e->trk = t;
