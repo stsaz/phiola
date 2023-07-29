@@ -354,13 +354,20 @@ gui.$(SO): gui-mod.o \
 	$(LINKXX) -shared $+ $(LINKFLAGS_GUI) -o $@
 
 MODS += http.$(SO)
+CFLAGS_NETMILL := $(CFLAGS_BASE) -I$(NETMILL)/src
+ifeq "$(DEBUG)" "1"
+	CFLAGS_NETMILL += -DNML_ENABLE_LOG_EXTRA
+endif
 %.o: $(PHIOLA)/src/net/%.c $(DEPS) \
 		$(wildcard $(PHIOLA)/src/net/*.h)
 	$(C) $(CFLAGS) -I$(NETMILL)/src $< -o $@
-netmill-http-client.o: $(NETMILL)/src/http-client/oclient.c
-	$(C) $(CFLAGS_BASE) -I$(NETMILL)/src -I$(FFOS) $< -o $@
-netmill-http-filters.o: $(PHIOLA)/src/net/http-filters.c
-	$(C) $(CFLAGS_BASE) -I$(NETMILL)/src -I$(FFOS) $< -o $@
+netmill-http-filters.o: $(PHIOLA)/src/net/http-filters.c \
+		$(PHIOLA)/src/net/http-bridge.h \
+		$(wildcard $(NETMILL)/src/http-client/*.h)
+	$(C) $(CFLAGS_NETMILL) -I$(PHIOLA)/src -I$(FFOS) $< -o $@
+netmill-http-client.o: $(NETMILL)/src/http-client/oclient.c \
+		$(wildcard $(NETMILL)/src/http-client/*.h)
+	$(C) $(CFLAGS_NETMILL) -I$(FFOS) $< -o $@
 http.$(SO): http.o \
 		netmill-http-client.o \
 		netmill-http-filters.o

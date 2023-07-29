@@ -8,15 +8,17 @@
 #include <http-client/response-receive.h>
 #include <http-client/response.h>
 #include <http-client/transfer.h>
+#include <net/http-bridge.h>
 
-extern int phi_hc_resp(void *ctx, uint code, ffstr status, ffstr ct);
-extern int phi_hc_data(void *ctx, ffstr data, uint flags);
 
 static int phi_output_open(nml_http_client *c)
 {
-	ffstr status = range16_tostr(&c->response.status, c->recv.buf.ptr);
-	ffstr ct = range16_tostr(&c->response.content_type, c->recv.buf.ptr);
-	return phi_hc_resp(c->conf->opaque, c->response.code, status, ct);
+	struct phi_http_data d = {
+		.code = c->response.code,
+		.status = range16_tostr(&c->response.status, c->recv.buf.ptr),
+		.ct = range16_tostr(&c->response.content_type, c->recv.buf.ptr),
+	};
+	return phi_hc_resp(c->conf->opaque, &d);
 }
 
 static int phi_output_process(nml_http_client *c)

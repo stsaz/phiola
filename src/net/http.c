@@ -6,6 +6,7 @@
 #include <util/http1.h>
 #include <util/kq.h>
 #include <util/util.h>
+#include <net/http-bridge.h>
 #include <FFOS/ffos-extern.h>
 
 const phi_core *core;
@@ -98,12 +99,12 @@ static const struct nml_core nmlcore = {
 	.date = nmlcore_date,
 };
 
-int phi_hc_resp(void *ctx, uint code, ffstr status, ffstr ct)
+int phi_hc_resp(void *ctx, struct phi_http_data *d)
 {
 	struct httpcl *h = ctx;
 
-	if (code != 200) {
-		errlog(NULL, "resource unavailable: %S", &status);
+	if (d->code != 200) {
+		errlog(NULL, "resource unavailable: %S", &d->status);
 		return NMLF_ERR;
 	}
 
@@ -115,7 +116,7 @@ int phi_hc_resp(void *ctx, uint code, ffstr status, ffstr ct)
 		{ "audio/ogg",	"ogg" },
 		{}
 	};
-	h->trk->data_type = map_sz_vptr_findstr(ct_ext, ct); // help format.detector in case it didn't detect format
+	h->trk->data_type = map_sz_vptr_findstr(ct_ext, d->ct); // help format.detector in case it didn't detect format
 
 	return NMLF_OPEN;
 }
@@ -154,7 +155,9 @@ static void conf_prepare(struct httpcl *h, struct nml_http_client_conf *c)
 {
 	nml_http_client_conf(NULL, c);
 	c->opaque = h;
-	if (core->conf.log_level >= PHI_LOG_DEBUG)
+	if (core->conf.log_level >= PHI_LOG_EXTRA)
+		c->log_level = NML_LOG_EXTRA;
+	else if (core->conf.log_level >= PHI_LOG_DEBUG)
 		c->log_level = NML_LOG_DEBUG;
 	c->log = nml_log;
 	c->log_obj = h;
