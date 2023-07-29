@@ -77,6 +77,8 @@ struct phi_core {
 	struct phi_core_conf conf;
 	const struct phi_track_if* track; // track manager interface
 
+	fftime (*time)(ffdatetime *dt, uint flags);
+
 	/** Get interface from a module.
 	Load module at first use.
 	name: "module.interface" */

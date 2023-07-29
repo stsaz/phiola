@@ -55,6 +55,7 @@ struct core_mod {
 };
 
 struct core_ctx {
+	fftime_zone tz;
 	struct wrk_ctx wx;
 	ffvec mods; // struct core_mod[]
 #ifdef FF_WIN
@@ -223,6 +224,16 @@ end:
 	return mi;
 }
 
+static fftime core_time(ffdatetime *dt, uint flags)
+{
+	fftime t;
+	fftime_now(&t);
+	t.sec += FFTIME_1970_SECONDS + cc->tz.real_offset;
+	if (dt)
+		fftime_split1(dt, &t);
+	return t;
+}
+
 static void core_timer(phi_timer *t, int interval_msec, phi_task_func func, void *param)
 {
 	struct worker *w = ffslice_itemT(&cc->wx.workers, 0, struct worker);
@@ -327,6 +338,7 @@ FF_EXPORT phi_core* phi_core_create(struct phi_core_conf *conf)
 	if (!core->conf.timer_interval_msec) core->conf.timer_interval_msec = 100;
 
 	cc = ffmem_new(struct core_ctx);
+	fftime_local(&cc->tz);
 	tracks_init();
 	qm_init();
 	win_sleep_init();
@@ -353,6 +365,7 @@ extern phi_track_if phi_track_iface;
 static phi_core _core = {
 	.version_str = PHI_VERSION_STR,
 	.track = &phi_track_iface,
+	.time = core_time,
 	.sig = core_sig,
 	.mod = core_mod,
 	.kev_alloc = core_kev_alloc,
