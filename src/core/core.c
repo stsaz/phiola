@@ -144,6 +144,10 @@ static ffdl mod_load(struct core_mod *m, ffstr file)
 	int done = 0;
 	ffdl dl = FFDL_NULL;
 
+	fftime t1;
+	if (core->conf.log_level >= PHI_LOG_DEBUG)
+		t1 = fftime_monotonic();
+
 	char *fn;
 	if (core->conf.root.len)
 		fn = ffsz_allocfmt("%Smod%c%S.%s"
@@ -166,11 +170,16 @@ static ffdl mod_load(struct core_mod *m, ffstr file)
 	if (NULL == (m->mod = mod_init(core)))
 		goto end;
 
-	uint ma = m->mod->ver/10000
-		, mi = m->mod->ver%10000/100
-		, pa = m->mod->ver%100;
-	dbglog("loaded module %S v%u.%u.%u"
-		, &file, ma, mi, pa);
+	if (core->conf.log_level >= PHI_LOG_DEBUG) {
+		fftime t2 = fftime_monotonic();
+		fftime_sub(&t2, &t1);
+
+		uint ma = m->mod->ver/10000
+			, mi = m->mod->ver%10000/100
+			, pa = m->mod->ver%100;
+		dbglog("loaded module %S v%u.%u.%u in %Uusec"
+			, &file, ma, mi, pa, fftime_to_usec(&t2));
+	}
 
 	if (m->mod->ver_core != PHI_VERSION_CORE) {
 		errlog("module %S is incompatible with this phiola version", &file);

@@ -67,6 +67,8 @@ static void cue_close(void *ctx, phi_track *t)
 	ffstr_free(&c->url);
 	FFSLICE_FOREACH_T(&c->gmetas, ffvec_free, ffvec);
 	FFSLICE_FOREACH_T(&c->metas, ffvec_free, ffvec);
+	ffvec_free(&c->gmetas);
+	ffvec_free(&c->metas);
 	ffmem_free(c);
 }
 
@@ -170,6 +172,7 @@ static void add(struct cue *c, struct ffcuetrk *ctrk, phi_track *t)
 	if (t->conf.ofile.name)
 		qe.conf.ofile.name = ffsz_dup(t->conf.ofile.name);
 	metaif->copy(&qe.conf.meta, &t->conf.meta);
+	ffslice_null(&qe.conf.tracks);
 	qe.conf.seek_cdframes = ctrk->from;
 	qe.conf.until_cdframes = ctrk->to;
 
@@ -274,14 +277,8 @@ add_metaname:
 			// fallthrough
 
 		case CUEREAD_REM_VAL:
-			meta = ffvec_pushT(&c->metas, ffvec);
-			*meta = val;
-			ffvec_null(&val);
-			break;
-
 		case CUEREAD_REM_NAME:
-			meta = ffvec_pushT(&c->metas, ffvec);
-			*meta = val;
+			*ffvec_pushT(&c->metas, ffvec) = val;
 			ffvec_null(&val);
 			break;
 

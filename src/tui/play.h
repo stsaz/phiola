@@ -31,45 +31,13 @@ static void tuiplay_close(void *ctx, phi_track *t)
 	ffmem_free(u);
 }
 
-/** All printable */
-const uint ffcharmask_printable[] = {
-	0,
-	            // ?>=< ;:98 7654 3210  /.-, +*)( '&%$ #"!
-	0xffffffff, // 1111 1111 1111 1111  1111 1111 1111 1111
-	            // _^]\ [ZYX WVUT SRQP  ONML KJIH GFED CBA@
-	0xffffffff, // 1111 1111 1111 1111  1111 1111 1111 1111
-	            //  ~}| {zyx wvut srqp  onml kjih gfed cba`
-	0x7fffffff, // 0111 1111 1111 1111  1111 1111 1111 1111
-	0xffffffff,
-	0xffffffff,
-	0xffffffff,
-	0xffffffff
-};
-
-static inline ffbool ffbit_testarr(const uint *ar, uint bit)
-{
-	return ffbit_test32(&ar[bit / 32], bit % 32);
-}
-
-/** Skip characters by mask.
-@mask: uint[8] */
-char* ffs_skip_mask(const char *buf, ffsize len, const uint *mask)
-{
-	for (ffsize i = 0;  i != len;  i++) {
-		if (!ffbit_testarr(mask, (ffbyte)buf[i]))
-			return (char*)buf + i;
-	}
-	return (char*)buf + len;
-}
-
 static void tui_addtags(tui_track *u, ffvec *buf)
 {
 	uint i = 0;
 	ffstr name, val;
 	while (mod->phi_metaif->list(&u->t->meta, &i, &name, &val, PHI_META_UNIQUE)) {
 		ffsize nt = (name.len < 8) ? 2 : 1;
-		const char *end = ffs_skip_mask(val.ptr, val.len, ffcharmask_printable);
-		if (end != ffstr_end(&val))
+		if (ffs_skip_ranges(val.ptr, val.len, "\x20\x7e\x80\xff", 4) >= 0)
 			ffstr_setz(&val, "<binary data>");
 		ffvec_addfmt(buf, "%S%*c%S\n", &name, nt, '\t', &val);
 	}

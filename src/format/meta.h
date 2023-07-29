@@ -8,6 +8,7 @@ static void meta_destroy(ffvec *meta)
 	char **it;
 	FFSLICE_WALK(meta, it) {
 		ffmem_free(*it);
+		it++;
 	}
 	ffvec_free(meta);
 }
@@ -17,8 +18,9 @@ static void meta_set(ffvec *meta, ffstr name, ffstr val)
 	phi_dbglog(core, NULL, NULL, "meta: %S = %S", &name, &val);
 	if (!name.len) return;
 
-	*ffvec_pushT(meta, char*) = ffsz_dupstr(&name);
-	*ffvec_pushT(meta, char*) = ffsz_dupstr(&val);
+	char *s = ffsz_allocfmt("%S%Z%S", &name, &val);
+	*ffvec_pushT(meta, char*) = s;
+	*ffvec_pushT(meta, char*) = s + name.len + 1;
 }
 
 static void meta_copy(ffvec *dst, const ffvec *src)

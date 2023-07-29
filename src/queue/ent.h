@@ -19,14 +19,16 @@ static void meta_destroy(ffvec *meta)
 	char **it;
 	FFSLICE_WALK(meta, it) {
 		ffmem_free(*it);
+		it++;
 	}
 	ffvec_free(meta);
 }
 
 static inline void track_conf_destroy(struct phi_track_conf *c)
 {
-	ffmem_free(c->ifile.name);
-	ffmem_free(c->ofile.name);
+	ffmem_free(c->ifile.name);  c->ifile.name = NULL;
+	ffmem_free(c->ofile.name);  c->ofile.name = NULL;
+	ffslice_free(&c->tracks);
 	meta_destroy(&c->meta);
 }
 

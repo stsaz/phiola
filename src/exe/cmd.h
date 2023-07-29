@@ -89,6 +89,19 @@ static int cmd_tracks(ffvec *tracks, ffstr s)
 	return 0;
 }
 
+static void cmd_meta_set(ffvec *dst, const ffvec *src)
+{
+	if (!x->metaif)
+		x->metaif = x->core->mod("format.meta");
+
+	ffstr *it;
+	FFSLICE_WALK(src, it) {
+		ffstr name, val;
+		ffstr_splitby(it, '=', &name, &val);
+		x->metaif->set(dst, name, val);
+	}
+}
+
 #include <exe/record.h>
 #include <exe/play.h>
 #include <exe/info.h>

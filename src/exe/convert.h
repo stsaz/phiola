@@ -133,17 +133,6 @@ static int conv_until(struct cmd_conv *v, ffstr s) { return cmd_time_value(&v->u
 
 static void conv_qu_add(struct cmd_conv *v, ffstr *fn)
 {
-	if (!x->metaif)
-		x->metaif = x->core->mod("format.meta");
-
-	ffvec meta = {};
-	ffstr *it;
-	FFSLICE_WALK(&v->meta, it) {
-		ffstr name, val;
-		ffstr_splitby(it, '=', &name, &val);
-		x->metaif->set(&meta, name, val);
-	}
-
 	struct phi_track_conf c = {
 		.ifile = {
 			.name = ffsz_dupstr(fn),
@@ -152,7 +141,6 @@ static void conv_qu_add(struct cmd_conv *v, ffstr *fn)
 			.preserve_date = v->preserve_date,
 		},
 		.tracks = *(ffslice*)&v->tracks,
-		.meta = meta,
 		.seek_msec = v->seek,
 		.until_msec = v->until,
 		.afilter = {
@@ -180,6 +168,9 @@ static void conv_qu_add(struct cmd_conv *v, ffstr *fn)
 		.stream_copy = v->copy,
 	};
 
+	cmd_meta_set(&c.meta, &v->meta);
+	ffvec_free(&v->meta);
+
 	struct phi_queue_entry qe = {
 		.conf = c,
 	};
@@ -201,6 +192,7 @@ static int conv_action()
 	FFSLICE_WALK(&v->input, it) {
 		conv_qu_add(v, it);
 	}
+	ffvec_free(&v->input);
 
 	x->queue->play(NULL, NULL);
 	return 0;

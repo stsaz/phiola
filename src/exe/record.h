@@ -133,15 +133,8 @@ static int rec_action()
 		return -1;
 	}
 
-	if (!x->metaif)
-		x->metaif = x->core->mod("format.meta");
-
-	ffstr *it;
-	FFSLICE_WALK(&r->meta, it) {
-		ffstr name, val;
-		ffstr_splitby(it, '=', &name, &val);
-		x->metaif->set(&t->meta, name, val);
-	}
+	cmd_meta_set(&t->meta, &r->meta);
+	ffvec_free(&r->meta);
 
 	x->mode_record = 1;
 	track->start(t);

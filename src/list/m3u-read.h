@@ -56,6 +56,7 @@ static int m3u_add(struct m3u *m, phi_track *t)
 	if (t->conf.ofile.name)
 		qe.conf.ofile.name = ffsz_dup(t->conf.ofile.name);
 	metaif->copy(&qe.conf.meta, &t->conf.meta);
+	ffslice_null(&qe.conf.tracks);
 
 	if (!qe.conf.meta.len) { // must not mix user-meta with transient-meta
 		if (m->pls_ent.artist.len)

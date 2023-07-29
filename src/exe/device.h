@@ -77,13 +77,13 @@ static const void* dev_find_mod()
 static int dev_list_action()
 {
 	struct cmd_dev_list *l = x->cmd_data;
+	char sbuf[1000];
 	ffvec buf = {};
 
 	const phi_adev_if *adev;
 	if (l->audio) {
-		char *amod = ffsz_allocfmt("%s.dev%Z", l->audio);
-		adev = x->core->mod(amod);
-		ffmem_free(amod);
+		ffsz_format(sbuf, sizeof(sbuf), "%s.dev", l->audio);
+		adev = x->core->mod(sbuf);
 
 	} else {
 		adev = dev_find_mod();

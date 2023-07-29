@@ -123,6 +123,7 @@ static int play_action()
 	FFSLICE_WALK(&p->input, it) {
 		play_qu_add(p, it);
 	}
+	ffvec_free(&p->input);
 
 	x->queue->play(NULL, NULL);
 	return 0;

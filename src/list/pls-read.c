@@ -54,6 +54,7 @@ static int pls_add(struct pls_r *p, phi_track *t)
 	if (t->conf.ofile.name)
 		qe.conf.ofile.name = ffsz_dup(t->conf.ofile.name);
 	metaif->copy(&qe.conf.meta, &t->conf.meta);
+	ffslice_null(&qe.conf.tracks);
 
 	if (!qe.conf.meta.len && p->pls_ent.title.len) {
 		metaif->set(&qe.conf.meta, FFSTR_Z("title"), *(ffstr*)&p->pls_ent.title);

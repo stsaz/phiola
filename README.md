@@ -13,60 +13,120 @@ It's a free and open-source project, and you can use it as a standalone applicat
 Contents:
 
 * [Features](#features)
+* [Install](#install)
 * [How to Use](#how-to-use)
+* [How to Use on Android](#how-to-use-on-android)
 * [Libraries](#libraries)
 * [Build](#build)
 
 
-# Features
+## Features
 
-* Play audio: .mp3, .ogg(Vorbis/Opus), .mp4/.mov(AAC/ALAC/MPEG), .mkv/.webm(AAC/ALAC/MPEG/Vorbis/Opus/PCM), .caf(AAC/ALAC/PCM), .avi(AAC/MPEG/PCM), .aac, .mpc; .flac, .ape, .wv, .wav
-* Record audio: .m4a(AAC), .ogg, .opus; .flac, .wav
+* Play audio: `.mp3`, `.ogg`(Vorbis/Opus), `.mp4`/`.mov`(AAC/ALAC/MPEG), `.mkv`/`.webm`(AAC/ALAC/MPEG/Vorbis/Opus/PCM), `.caf`(AAC/ALAC/PCM), `.avi`(AAC/MPEG/PCM), `.aac`, `.mpc`; `.flac`, `.ape`, `.wv`, `.wav`.  Note: on Android phiola can play only what your Android supports!
+* Record audio: `.m4a`(AAC), `.ogg`, `.opus`; `.flac`, `.wav`
 * Convert audio
+* Input: file, directory, HTTP URL, console (stdin), playlists: `.m3u`, `.pls`, `.cue`
 * List available audio devices
 * Command Line Interface for Desktop OS
-* GUI for Android
 * Terminal/Console UI for interaction at runtime
+* GUI for Windows, Linux, Android
+* Instant startup time: very short initial delay until the audio starts playing (e.g. Linux/PulseAudio: TUI: `~25ms`, GUI: `~50ms`)
 * Fast (low footprint): keeps your CPU, memory & disk I/O at absolute minimum; spends 99% of time inside codec algorithms
 
 **Bonus:** Convenient API with plugin-support which allows using all the above features from any C/C++/Java app!
 
 
-# How to Use
+## Install
+
+* Download the latest package for your OS and CPU from [phiola beta Releases](https://github.com/stsaz/phiola/releases)
+
+Linux:
+
+* Unpack the archive somewhere, e.g. to `~/bin`:
+
+	```sh
+	mkdir -p ~/bin
+	tar xf phiola-VERSION-linux-amd64.tar.zst -C ~/bin
+	```
+
+* Create a symbolic link:
+
+	```sh
+	ln -s ~/bin/phiola-2/phiola ~/bin/phiola
+	```
+
+Android:
+
+* To be able to install .apk you need to enable "Allow installation from unknown sources" option in your phone's settings (you can disable it again after installation)
+* Tap on .apk file to install it on your phone
+* Or you can install .apk file from PC with `adb install`
+
+
+## How to Use
+
+> Important: enclose in quotes the file names containing spaces or special characters, e.g.: `phiola play "My Music"`; `phiola play "My Recordings" -include "*.wav"`.
 
 Just a few quick examples:
 
 ```sh
 # Play files and directories
-phiola play file.mp3 *.flac 'My Music'
+phiola play file.mp3 *.flac "My Music"
 # or just
-phiola file.mp3 *.flac 'My Music'
+phiola file.mp3 *.flac "My Music"
 
-# Record until stopped
+# Record from the default audio device until stopped
 phiola record -o audio.flac
+
+# Record and set meta data
+phiola record -meta "artist=Great Artist" -o audio.flac
+
+# Record to the automatically named output file
+phiola record -o @nowdate-@nowtime.flac
 
 # Convert
 phiola convert audio.flac -o audio.m4a
+
+# Convert multiple files from .wav to .flac
+phiola convert *.wav -o .flac
+
+# Convert all .wav files inside a directory,
+#  preserving the original file names and file modification time
+phiola convert "My Recordings" -include "*.wav" -o @filepath/@filename.flac --preserve-date
 
 # List audio devices
 phiola device list
 
 # Show meta info on all .wav files inside a directory
-phiola info 'My Recordings' -include '*.wav'
+phiola info "My Recordings" -include "*.wav"
 ```
 
-Currently supported commands (click to view the details):
+Currently supported commands:
 
 * [convert](src/exe/convert.h) - Convert audio
 * [device](src/exe/device.h)   - List audio devices
+* [gui](src/exe/gui.h)         - Start graphical interface
 * [info](src/exe/info.h)       - Show file meta data
 * [play](src/exe/play.h)       - Play audio
 * [record](src/exe/record.h)   - Record audio
 
+> For the details on each command you can click on the links above or execute `phiola COMMAND -h` on your PC.
+
+
+## How to Use on Android
+
+First time start:
+
+* Run phiola app
+* Tap on `Explorer` tab
+* Android will ask you to grant/deny permissions to phiola.  Allow to read your storage files.
+* Tap on the music file you want to listen
+* Or long-press on the directory with your music, it will be added to the playlist; tap `Play`
+* Tap on `Playlist` tab to switch the view to your playlist
+
 
 ## Libraries
 
-phiola uses modified versions of these third party libraries: libALAC, libfdk-aac, libFLAC, libMAC, libmpg123, libmpc, libogg, libopus, libvorbisenc, libvorbis, libwavpack, libzstd.  Many thanks to their creators for the great work!!!  Please consider their licenses before commercial use.  See contents of `alib3/` for more info.
+phiola uses modified versions of these third party libraries: libALAC, libfdk-aac, libFLAC, libMAC, libmpg123, libmpc, libogg, libopus, libvorbisenc, libvorbis, libwavpack, libsoxr, libzstd.  Many thanks to their creators for the great work!!!  Please consider their licenses before commercial use.  See contents of `alib3/` for more info.
 
 
 ## Build

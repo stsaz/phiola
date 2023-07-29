@@ -262,7 +262,7 @@ test_ofile_vars() {
 }
 
 test_clean() {
-	rm -f *.wav *.flac *.m4a *.ogg *.opus *.mp3 fm-* ofv/*.ogg
+	rm -f *.wav *.flac *.m4a *.ogg *.opus *.mp3 fm-* ofv/*.ogg *.cue
 	rmdir ofv
 }
 
