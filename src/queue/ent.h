@@ -45,8 +45,9 @@ static struct q_entry* qe_new(struct phi_queue_entry *qe)
 	return e;
 }
 
-static void qe_unref(struct q_entry *e)
+void qe_unref(struct q_entry *e)
 {
+	FF_ASSERT(!!e->used);
 	if (--e->used != 0) return;
 
 	qe_free(e);

@@ -3,6 +3,7 @@
 
 #include <track.h>
 #include <util/util.h>
+#include <ffbase/lock.h>
 #include <FFOS/random.h>
 
 extern const phi_core *core;
@@ -19,6 +20,7 @@ static struct queue_mgr *qm;
 struct phi_queue {
 	struct phi_queue_conf conf;
 	ffvec index; // struct q_entry*[]
+	fflock lock;
 	struct q_entry *cursor;
 	uint cursor_index;
 	uint active_n;
@@ -132,8 +134,20 @@ static int q_clear(struct phi_queue *q)
 {
 	if (!q) q = qm_default();
 
-	ffvec_free(&q->index);
+	fflock_lock(&q->lock);
+	ffvec a = q->index;
+	ffvec_null(&q->index);
+	fflock_unlock(&q->lock);
 	q->cursor = NULL;
+
+	struct q_entry **it;
+	FFSLICE_WALK(&a, it) {
+		struct q_entry *e = *it;
+		e->index = ~0;
+		qe_unref(e);
+	}
+
+	ffvec_free(&a);
 	return 0;
 }
 
@@ -294,6 +308,20 @@ static struct phi_queue_entry* q_at(struct phi_queue *q, uint pos)
 	return &qe->pub;
 }
 
+static struct phi_queue_entry* q_ref(phi_queue_id q, uint pos)
+{
+	if (!q) q = qm_default();
+
+	fflock_lock(&q->lock);
+	struct q_entry *e = q_get(q, pos);
+	if (!e) { goto end; }
+	e->used++;
+
+end:
+	fflock_unlock(&q->lock);
+	return (e) ? &e->pub : NULL;
+}
+
 static int q_remove_at(struct phi_queue *q, uint pos, uint n)
 {
 	if (!q) q = qm_default();
@@ -303,8 +331,10 @@ static int q_remove_at(struct phi_queue *q, uint pos, uint n)
 		return -1;
 	e->index = ~0;
 	dbglog("removed '%s' @%u", e->pub.conf.ifile.name, pos);
-	qe_unref(e);
+	fflock_lock(&q->lock); // after q_ref() has read the item @pos, but before 'used++', the item must not be destroyed
 	ffslice_rmT((ffslice*)&q->index, pos, 1, void*);
+	qe_unref(e);
+	fflock_unlock(&q->lock);
 	return 0;
 }
 
@@ -330,6 +360,9 @@ const phi_queue_if phi_queueif = {
 	q_status,
 	q_at,
 	q_remove_at,
+
+	q_ref,
+	(void*)qe_unref,
 
 	(void*)qe_insert,
 	(void*)qe_conf,

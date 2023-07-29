@@ -157,6 +157,7 @@ static void infotrk_close(void *ctx, phi_track *t)
 end:
 	jni_global_unref(t->udata);
 	jni_detach(jvm);
+	x->queue->unref(t->qent);
 }
 
 static int infotrk_process(void *ctx, phi_track *t)
@@ -189,7 +190,7 @@ Java_com_github_stsaz_phiola_Phiola_meta(JNIEnv *env, jobject thiz, jlong q, jin
 		|| !track->filter(t, x->core->mod("format.detect"), 0))
 		goto end;
 
-	t->qent = x->queue->at((void*)q, list_item);
+	t->qent = x->queue->ref((void*)q, list_item);
 
 	x->Phiola_MetaCallback_on_finish = jni_func(jni_class_obj(jcb), "on_finish", "(" PJT_META ")V");
 	t->udata = jni_global_ref(jcb);

@@ -342,6 +342,14 @@ struct phi_queue_if {
 	struct phi_queue_entry* (*at)(phi_queue_id q, uint pos);
 	int (*remove_at)(phi_queue_id q, uint pos, uint n);
 
+	/** Get item pointer, increase refcount.
+	Guarantees that the returned item won't be suddenly destroyed by remove() from the main thread.
+	Each ref() must be paired with unref(). */
+	struct phi_queue_entry* (*ref)(phi_queue_id q, uint pos);
+
+	/** Decrease refcount for the item obtained by ref(). */
+	void (*unref)(struct phi_queue_entry *qe);
+
 	void* (*insert)(void *e, struct phi_queue_entry *qe);
 	struct phi_queue_conf* (*conf)(void *e);
 	int (*index)(void *e);

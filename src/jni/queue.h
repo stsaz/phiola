@@ -43,8 +43,11 @@ Java_com_github_stsaz_phiola_Phiola_quAdd(JNIEnv *env, jobject thiz, jlong q, jo
 JNIEXPORT jstring JNICALL
 Java_com_github_stsaz_phiola_Phiola_quEntry(JNIEnv *env, jobject thiz, jlong q, jint i)
 {
-	const char *url = x->queue->at((void*)q, i)->conf.ifile.name;
-	return jni_js_sz(url);
+	struct phi_queue_entry *qe = x->queue->ref((void*)q, i);
+	const char *url = qe->conf.ifile.name;
+	jstring s = jni_js_sz(url);
+	x->queue->unref(qe);
+	return s;
 }
 
 #define QUCOM_CLEAR  1
@@ -75,8 +78,9 @@ JNIEXPORT jobject JNICALL
 Java_com_github_stsaz_phiola_Phiola_quMeta(JNIEnv *env, jobject thiz, jlong jq, jint i)
 {
 	phi_queue_id q = (void*)jq;
-	struct phi_queue_entry *qe = x->queue->at(q, i);
+	struct phi_queue_entry *qe = x->queue->ref(q, i);
 	jobject jmeta = meta_create(env, &qe->conf.meta, qe->conf.ifile.name, qe->length_msec);
+	x->queue->unref(qe);
 	return jmeta;
 }
 
