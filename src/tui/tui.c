@@ -206,6 +206,9 @@ static void tui_op(uint cmd)
 static void list_save()
 {
 	char *fn = NULL, *tmpdir = "/tmp";
+#ifdef FF_WIN
+	tmpdir = core->conf.env_expand("%TMP%");
+#endif
 	fftime t;
 	fftime_now(&t);
 	fn = ffsz_allocfmt("%s/phiola-%U.m3u8", tmpdir, t.sec);
@@ -214,6 +217,9 @@ static void list_save()
 	infolog(NULL, "Saved playlist to %s", fn);
 
 	ffmem_free(fn);
+#ifdef FF_WIN
+	ffmem_free(tmpdir);
+#endif
 }
 
 struct key {
