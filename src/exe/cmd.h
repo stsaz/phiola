@@ -94,6 +94,7 @@ static int cmd_tracks(ffvec *tracks, ffstr s)
 #include <exe/info.h>
 #include <exe/convert.h>
 #include <exe/device.h>
+#include <exe/gui.h>
 
 static int root_help()
 {
@@ -109,6 +110,7 @@ Global options:\n\
 Commands:\n\
   convert   Convert audio\n\
   device    List audio devices\n\
+  gui       Show graphical interface\n\
   info      Show file meta data\n\
   play      Play audio [Default command]\n\
   record    Record audio\n\
@@ -161,6 +163,7 @@ static const struct cmd_arg cmd_root[] = {
 	{ "-help",		0,			root_help },
 	{ "convert",	'{',		cmd_conv_init },
 	{ "device",		'>',		cmd_dev },
+	{ "gui",		'{',		cmd_gui_init },
 	{ "info",		'{',		cmd_info_init },
 	{ "play",		'{',		cmd_play_init },
 	{ "record",		'{',		cmd_rec_init },

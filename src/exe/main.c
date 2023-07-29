@@ -177,6 +177,11 @@ static void phi_grd_close(void *f, phi_track *t)
 		x->core->sig(PHI_CORE_STOP);
 }
 
+static void phi_guigrd_close(void *f, phi_track *t)
+{
+	x->core->track->stop(t);
+}
+
 static int phi_grd_process(void *f, phi_track *t)
 {
 #ifdef FF_LINUX
@@ -190,6 +195,10 @@ static int phi_grd_process(void *f, phi_track *t)
 static phi_filter phi_guard = {
 	NULL, phi_grd_close, phi_grd_process,
 	"guard"
+};
+static phi_filter phi_guard_gui = {
+	NULL, phi_guigrd_close, phi_grd_process,
+	"gui-guard"
 };
 
 
