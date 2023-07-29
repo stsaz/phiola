@@ -54,6 +54,12 @@ struct phi_core_conf {
 	void (*logv)(void *log_obj, uint flags, const char *module, phi_track *trk, const char *fmt, va_list va);
 	void *log_obj;
 
+	/** Expand system environment variables.
+	* UNIX: "text $VAR text"
+	* Windows: "text %VAR% text"
+	Return newly allocated string; must free with ffmem_free() */
+	char* (*env_expand)(const char *s);
+
 	uint code_page; // enum FFUNICODE_CP
 	ffstr root; // phiola app directory
 

@@ -206,6 +206,11 @@ static int conf(const char *argv_0)
 	return 0;
 }
 
+static char* env_expand(const char *s)
+{
+	return ffenv_expand(NULL, NULL, 0, s);
+}
+
 static int core()
 {
 	struct phi_core_conf conf = {
@@ -214,6 +219,7 @@ static int core()
 		.logv = exe_logv,
 		.log_obj = &x->log,
 
+		.env_expand = env_expand,
 		.code_page = x->codepage_id,
 		.root = x->root_dir,
 		.stdin_busy = x->stdin_busy,
@@ -276,6 +282,7 @@ static void cleanup()
 
 int main(int argc, char **argv, char **env)
 {
+	ffenv_init(NULL, env);
 	x = ffmem_new(struct exe);
 	x->exit_code = 1;
 	logs(&x->log);
