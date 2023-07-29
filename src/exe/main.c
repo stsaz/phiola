@@ -20,8 +20,7 @@ struct exe {
 	const phi_core *core;
 	const phi_queue_if *queue;
 	const phi_meta_if *metaif;
-	phi_timer tmr;
-	fftime_zone tz;
+	fftime time_last;
 	char fn[4*1024];
 	ffstr root_dir;
 
@@ -68,17 +67,6 @@ static void version_print()
 		, x->core->version_str);
 }
 
-static void on_timer(void *param)
-{
-	(void)param;
-	fftime now;
-	fftime_now(&now);
-	now.sec += FFTIME_1970_SECONDS + x->tz.real_offset;
-	ffdatetime dt;
-	fftime_split1(&dt, &now);
-	fftime_tostr1(&dt, x->log.date, sizeof(x->log.date), FFTIME_HMS_MSEC);
-}
-
 /** Check if fd is a terminal */
 static int std_console(fffd fd)
 {
@@ -97,6 +85,16 @@ static void exe_logv(void *log_obj, uint flags, const char *module, phi_track *t
 {
 	const char *id = (!!t) ? t->id : NULL;
 	const char *ctx = (!!module || !t) ? module : (char*)x->core->track->cmd(t, PHI_TRACK_CUR_FILTER_NAME);
+
+	if (x->core) {
+		ffdatetime dt;
+		fftime tm = x->core->time(&dt, 0);
+		if (fftime_cmp(&tm, &x->time_last)) {
+			x->time_last = tm;
+			fftime_tostr1(&dt, x->log.date, sizeof(x->log.date), FFTIME_HMS_MSEC);
+		}
+	}
+
 	zzlog_printv(log_obj, flags, ctx, id, fmt, va);
 }
 
@@ -199,8 +197,6 @@ static phi_filter phi_guard = {
 
 static int conf(const char *argv_0)
 {
-	fftime_local(&x->tz);
-
 	const char *p;
 	if (NULL == (p = ffps_filename(x->fn, sizeof(x->fn), argv_0)))
 		return -1;
@@ -287,16 +283,14 @@ int main(int argc, char **argv, char **env)
 	if (!!conf(argv[0])) goto end;
 	if (x->stdout_busy)
 		logs(&x->log);
-	on_timer(NULL);
 	if (!!core()) goto end;
 	version_print();
-	x->core->timer(&x->tmr, 100, on_timer, NULL);
 	signals();
 	if (!!jobs()) goto end;
 	phi_core_run();
 
 end:
-	cleanup();
 	dbglog("exit code: %d", x->exit_code);
+	cleanup();
 	return x->exit_code;
 }
