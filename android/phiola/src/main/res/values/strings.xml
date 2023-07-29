@@ -68,5 +68,5 @@
 	<string name="conv_pl_add">Add New File to Playlist</string>
 	<string name="conv_go">Convert!</string>
 
-	<string name="about">phiola for Android v2.0-beta1\n\nhttps://stsaz.github.io/phiola</string>
+	<string name="about">phiola v2.0-beta2\n\nhttps://github.com/stsaz/phiola/</string>
 </resources>
