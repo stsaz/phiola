@@ -63,3 +63,10 @@ enum FFUI_EDIT_SCROLL {
 /*
 type: enum FFUI_EDIT_SCROLL */
 #define ffui_edit_scroll(e, type)  ffui_send((e)->h, EM_SCROLL, type, 0)
+
+
+#ifdef __cplusplus
+struct ffui_editxx : ffui_edit {
+	ffstr text() { ffstr s = {}; ffui_textstr(this, &s); return s; }
+};
+#endif

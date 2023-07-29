@@ -95,3 +95,14 @@ static inline ffbool ffui_tab_get(ffui_tab *t, int idx, ffui_tabitem *it)
 	ffui_tab_reset(it);
 	return r;
 }
+
+
+#ifdef __cplusplus
+struct ffui_tabxx : ffui_tab {
+	void add(const char *sz) {
+		ffui_tabitem ti = {};
+		ffui_tab_settextz(&ti, sz);
+		ffui_tab_append(this, &ti);
+	}
+};
+#endif

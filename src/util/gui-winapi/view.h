@@ -485,3 +485,46 @@ static inline void ffui_view_dispinfo_check(LVITEMW *it, int checked)
 	it->state &= ~LVIS_STATEIMAGEMASK;
 	it->state |= (checked) ? _FFUI_VIEW_CHECKED : _FFUI_VIEW_UNCHECKED;
 }
+
+
+#ifdef __cplusplus
+struct ffui_viewitemxx : ffui_viewitem {
+	ffui_viewitemxx(ffstr s) { ffmem_zero_obj(this); ffui_view_settextstr(this, &s); }
+};
+
+struct ffui_viewcolxx : ffui_viewcol {
+	uint width() { return ffui_viewcol_width(this); }
+	void width(uint val) { ffui_viewcol_setwidth(this, val); }
+};
+
+struct ffui_viewxx : ffui_view {
+	int append(ffstr text) {
+		ffui_viewitem vi = {};
+		ffui_view_settextstr(&vi, &text);
+		return ffui_view_append(this, &vi);
+	}
+	void set(int idx, int col, ffstr text) {
+		ffui_viewitem vi = {};
+		ffui_view_setindex(&vi, idx);
+		ffui_view_settextstr(&vi, &text);
+		ffui_view_set(this, col, &vi);
+	}
+	void update(uint first, int delta) { ffui_view_redraw(this, first, first + ((delta) ? 50 : 0)); }
+	void clear() { ffui_view_clear(this); }
+	int focused() { return ffui_view_focused(this); }
+	ffvec selected() {
+		ffvec sel = {};
+		int i = -1;
+		while (-1 != (i = ffui_view_selnext(this, i))) {
+			*ffvec_pushT(&sel, uint) = i;
+		}
+		return sel;
+	}
+	int selected_first() { return ffui_view_selnext(this, -1); }
+	ffui_viewcolxx& column(int pos, ffui_viewcolxx *vc) {
+		ffui_view_col(this, pos, vc);
+		return *vc;
+	}
+	void column(int pos, ffui_viewcol &vc) { ffui_view_setcol(this, pos, &vc); }
+};
+#endif

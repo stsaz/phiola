@@ -567,3 +567,20 @@ typedef void (*ffui_handler)(void *param);
 
 /** Post a task to the thread running GUI message loop. */
 FF_EXTERN void ffui_thd_post(ffui_handler func, void *udata);
+
+
+#ifdef __cplusplus
+struct ffui_trackbarxx : ffui_trkbar {
+	void set(uint value) { ffui_trk_set(this, value); }
+	uint get() { return ffui_trk_val(this); }
+	void range(uint range) { ffui_trk_setrange(this, range); }
+};
+
+struct ffui_stbarxx : ffui_stbar {
+	void text(const char *sz) { ffui_settextz(this, sz); }
+};
+
+struct ffui_labelxx : ffui_label {
+	void text(const char *sz) { ffui_settextz(this, sz); }
+};
+#endif
