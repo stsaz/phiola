@@ -31,20 +31,15 @@ struct worker {
 	struct zzkq_timer kq_timer;
 	fftime now;
 	uint now_msec;
+	fftimerqueue_node tmr_stop;
 };
 
-static void wrk_timer(struct worker *w, phi_timer *t, int interval_msec, phi_task_func func, void *param)
+static void timer_suspend(void *param)
 {
-	if (interval_msec == 0) {
-		dbglog("timer:%p stop", t);
-		fftimerqueue_remove(&w->timerq, t);
-		return;
-	}
-
-	dbglog("timer:%p  interval:%d  handler:%p  param:%p"
-		, t, interval_msec, func, param);
-
-	fftimerqueue_add(&w->timerq, t, w->now_msec, interval_msec, func, param);
+	struct worker *w = param;
+	if (!!zzkq_timer_stop(&w->kq_timer, w->kq.kq))
+		syserrlog("timer stop");
+	dbglog("ktimer: stopped");
 }
 
 static void on_timer(void *param)
@@ -55,6 +50,36 @@ static void on_timer(void *param)
 	w->now_msec = fftime_to_msec(&w->now);
 	uint n = fftimerqueue_process(&w->timerq, w->now_msec);
 	extralog("processed %u timers", n);
+	if (n != 0 && w->timerq.tree.len == 0) {
+		fftimerqueue_add(&w->timerq, &w->tmr_stop, w->now_msec, -10000, timer_suspend, w);
+	}
+}
+
+static void wrk_timer(struct worker *w, phi_timer *t, int interval_msec, phi_task_func func, void *param)
+{
+	if (interval_msec == 0) {
+		dbglog("timer:%p stop", t);
+		fftimerqueue_remove(&w->timerq, t);
+		if (w->timerq.tree.len == 0) {
+			fftimerqueue_add(&w->timerq, &w->tmr_stop, w->now_msec, -10000, timer_suspend, w);
+		}
+		return;
+	}
+
+	fftimerqueue_remove(&w->timerq, &w->tmr_stop);
+
+	if (!zzkq_timer_active(&w->kq_timer)) {
+		if (!!zzkq_timer_start(&w->kq_timer, w->kq.kq, core->conf.timer_interval_msec, on_timer, w)) {
+			syserrlog("timer start");
+			return;
+		}
+		dbglog("ktimer: %umsec", core->conf.timer_interval_msec);
+	}
+
+	dbglog("timer:%p  interval:%d  handler:%p  param:%p"
+		, t, interval_msec, func, param);
+
+	fftimerqueue_add(&w->timerq, t, w->now_msec, interval_msec, func, param);
 }
 
 static int FFTHREAD_PROCCALL wrk_run(void *param)
@@ -98,11 +123,10 @@ static int wrk_create(struct worker *w)
 		return -1;
 	}
 
-	if (!!zzkq_timer_create(&w->kq_timer, w->kq.kq, core->conf.timer_interval_msec, on_timer, w)) {
-		syserrlog("zzkq_timer_create");
+	if (!!zzkq_timer_create(&w->kq_timer)) {
+		syserrlog("timer create");
 		return -1;
 	}
-	dbglog("ktimer: %umsec", core->conf.timer_interval_msec);
 
 	on_timer(w);
 	return 0;
