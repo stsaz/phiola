@@ -1,0 +1,28 @@
+# phiola v2.0-beta2 GUI English
+
+MMFile					"_File"
+	MFExit					"E_xit"
+
+MMList					"_List"
+	MLRemove				"_Remove"
+	MLClear					"_Clear"
+
+MMPlayback				"_Playback"
+	MPPlayPause				"_Play/Pause"
+	MPStop					"_Stop"
+	MPNext					"_Next"
+	MPPrevious				"P_revious"
+	MPSeekForward			"Seek _Forward"
+	MPSeekBack				"Seek _Back"
+	MPLeapForward			"Leap Forward"
+	MPLeapBack				"Leap Back"
+	MPVolumeUp				"Volume _Up"
+	MPVolumeDown			"Volume _Down"
+
+LCArtist				"Artist"
+LCTitle					"Title"
+LCDuration				"Duration"
+LCInfo					"Info"
+LCDate					"Date"
+LCAlbum					"Album"
+LCFilename				"File Name"

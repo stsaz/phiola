@@ -30,6 +30,7 @@ else
 endif
 CFLAGS_BASE := $(CFLAGS)
 CFLAGS += -I$(PHIOLA)/src -I$(FFOS)
+CXXFLAGS := $(CFLAGS)
 ifeq "$(OS)" "windows"
 	LINKFLAGS += -lws2_32
 endif
@@ -293,6 +294,42 @@ MODS += tui.$(SO)
 tui.$(SO): tui.o
 	$(LINK) -shared $+ $(LINKFLAGS) -lm -o $@
 
+MODS += gui.$(SO)
+FFGUI_HDR := $(wildcard $(PHIOLA)/src/util/gui-gtk/*.h)
+ifeq "$(DEBUG)" "1"
+	CFLAGS_GUI := -DFFGUI_DEBUG
+endif
+CFLAGS_GUI += -Wno-free-nonheap-object -Wno-deprecated-declarations `pkg-config --cflags gtk+-3.0`
+CFLAGS_GUI := $(CFLAGS) $(CFLAGS_GUI)
+CXXFLAGS_GUI := $(CXXFLAGS) $(CFLAGS_GUI)
+LINKFLAGS_GUI := $(LINKFLAGS) `pkg-config --libs gtk+-3.0` $(LINK_PTHREAD) -lm
+gui-mod.o: $(PHIOLA)/src/gui/mod.c $(DEPS) \
+		$(PHIOLA)/src/gui/mod.h \
+		$(PHIOLA)/src/gui/track.h
+	$(C) $(CFLAGS) $< -o $@
+gui.o: $(PHIOLA)/src/gui/gui.c $(DEPS) $(FFGUI_HDR) \
+		$(PHIOLA)/src/gui/gui.h \
+		$(PHIOLA)/src/gui/mod.h \
+		$(PHIOLA)/src/gui/actions.h
+	$(C) $(CFLAGS_GUI) $< -o $@
+gui-main.o: $(PHIOLA)/src/gui/main.cpp $(DEPS) $(FFGUI_HDR) \
+		$(PHIOLA)/src/gui/gui.h \
+		$(PHIOLA)/src/gui/mod.h \
+		$(PHIOLA)/src/gui/actions.h
+	$(CXX) $(CXXFLAGS_GUI) $< -o $@
+ffgui-gtk.o: $(PHIOLA)/src/util/gui-gtk/ffgui-gtk.c $(DEPS) $(FFGUI_HDR)
+	$(C) $(CFLAGS_GUI) $< -o $@
+ffgui-gtk-loader.o: $(PHIOLA)/src/util/gui-gtk/ffgui-gtk-loader.c $(DEPS) $(FFGUI_HDR) \
+		$(PHIOLA)/src/util/conf-scheme.h \
+		$(wildcard $(PHIOLA)/src/util/ltconf*.h)
+	$(C) $(CFLAGS_GUI) $< -o $@
+gui.$(SO): gui-mod.o \
+		gui.o \
+		gui-main.o \
+		ffgui-gtk.o \
+		ffgui-gtk-loader.o
+	$(LINKXX) -shared $+ $(LINKFLAGS_GUI) -o $@
+
 MODS += http.$(SO)
 %.o: $(PHIOLA)/src/net/%.c $(DEPS) \
 		$(wildcard $(PHIOLA)/src/net/*.h)
@@ -342,7 +379,14 @@ ifneq "$(LIBS3)" ""
 	$(CP) $(LIBS3) $(APP_DIR)/mod/
 endif
 	$(CP) $(PHIOLA)/src/tui/help.txt $(APP_DIR)/mod/tui-help.txt
-	chmod 644 $(APP_DIR)/mod/*
+	chmod 644 $(APP_DIR)/mod/*.$(SO)
+
+	$(MKDIR) $(APP_DIR)/mod/gui
+	$(CP) $(PHIOLA)/src/gui/phiola.gui \
+		$(PHIOLA)/src/gui/gui_lang*.txt \
+		$(PHIOLA)/src/gui/res/* \
+		$(APP_DIR)/mod/gui/
+	chmod 644 $(APP_DIR)/mod/gui/*
 
 ifeq "$(OS)" "windows"
 	mv $(APP_DIR)/README.md $(APP_DIR)/README.txt

@@ -1,0 +1,169 @@
+# phiola v2.0-beta2 GUI
+
+include_language {
+	# <LANG> "gui_lang_<LANG>.txt"
+	default "gui_lang_en.txt"
+}
+
+menu mfile {
+	item $MFExit {
+		action A_QUIT
+		hotkey "Ctrl+Q"
+	}
+}
+
+menu mlist {
+	item $MLRemove {
+		action A_LIST_REMOVE
+		hotkey "Delete"
+	}
+	item $MLClear {
+		action A_LIST_CLEAR
+	}
+}
+
+menu mplay {
+	item $MPPlayPause {
+		action A_PLAYPAUSE
+		hotkey "Space"
+	}
+	item $MPStop {
+		action A_STOP
+		hotkey "S"
+	}
+	item $MPNext {
+		action A_NEXT
+		hotkey "N"
+	}
+	item $MPPrevious {
+		action A_PREV
+		hotkey "P"
+	}
+	item - {
+	}
+	item $MPSeekForward {
+		action A_STEP_FWD
+		hotkey "Alt+Right"
+	}
+	item $MPSeekBack {
+		action A_STEP_BACK
+		hotkey "Alt+Left"
+	}
+	item $MPLeapForward {
+		action A_LEAP_FWD
+		hotkey "Ctrl+Right"
+	}
+	item $MPLeapBack {
+		action A_LEAP_BACK
+		hotkey "Ctrl+Left"
+	}
+	item - {
+	}
+	item $MPVolumeUp {
+		action A_VOLUP
+		hotkey "Ctrl+Up"
+	}
+	item $MPVolumeDown {
+		action A_VOLDOWN
+		hotkey "Ctrl+Down"
+	}
+}
+
+window wmain {
+	title "phiola"
+	position 0 0 600 600
+	icon {
+		filename "phiola.ico"
+	}
+
+	mainmenu mm {
+		item $MMFile {
+			submenu mfile
+		}
+		item $MMList {
+			submenu mlist
+		}
+		item $MMPlayback {
+			submenu mplay
+		}
+	}
+
+	button bpause {
+		style horizontal
+		action A_PLAYPAUSE
+		icon {
+			filename "play.ico"
+		}
+	}
+
+	button bstop {
+		style horizontal
+		action A_STOP
+		icon {
+			filename "stop.ico"
+		}
+	}
+
+	button bprev {
+		style horizontal
+		action A_PREV
+		icon {
+			filename "prev.ico"
+		}
+	}
+
+	button bnext {
+		style horizontal
+		action A_NEXT
+		icon {
+			filename "next.ico"
+		}
+	}
+
+	label lpos {
+		style horizontal
+	}
+
+	trackbar tvol {
+		style horizontal
+		range 125
+		value 100
+		onscroll A_VOL
+	}
+
+	trackbar tpos {
+		range 0
+		onscroll A_SEEK
+	}
+
+	tab tabs {
+	}
+
+	listview vlist {
+		style grid_lines multi_select
+		dblclick A_PLAY
+
+		column "#" {
+			width 35
+		}
+		column $LCArtist {
+		}
+		column $LCTitle {
+			width 200
+		}
+		column $LCDuration {
+			width 50
+		}
+		column $LCInfo {
+		}
+		column $LCDate {
+		}
+		column $LCAlbum {
+		}
+		column $LCFilename {
+		}
+	}
+
+	statusbar stbar {
+	}
+}
