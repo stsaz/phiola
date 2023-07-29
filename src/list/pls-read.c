@@ -46,12 +46,14 @@ static int pls_add(struct pls_r *p, phi_track *t)
 		return 1;
 
 	struct phi_queue_entry qe = {
-		.conf = t->conf,
 		.length_msec = (p->pls_ent.duration != -1) ? p->pls_ent.duration * 1000 : 0,
 	};
-
+	phi_track_conf_assign(&qe.conf, &t->conf);
 	qe.conf.ifile.name = url.ptr;
 	ffstr_null(&url);
+	if (t->conf.ofile.name)
+		qe.conf.ofile.name = ffsz_dup(t->conf.ofile.name);
+	metaif->copy(&qe.conf.meta, &t->conf.meta);
 
 	if (p->pls_ent.title.len)
 		metaif->set(&qe.conf.meta, FFSTR_Z("title"), *(ffstr*)&p->pls_ent.title);

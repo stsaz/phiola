@@ -21,6 +21,15 @@ static void meta_set(ffvec *meta, ffstr name, ffstr val)
 	*ffvec_pushT(meta, char*) = ffsz_dupstr(&val);
 }
 
+static void meta_copy(ffvec *dst, const ffvec *src)
+{
+	char **it;
+	FFSLICE_WALK(src, it) {
+		meta_set(dst, FFSTR_Z(it[0]), FFSTR_Z(it[1]));
+		it++;
+	}
+}
+
 static int meta_list(const ffvec *meta, uint *i, ffstr *name, ffstr *val, uint flags)
 {
 	for (;;) {
@@ -67,6 +76,7 @@ static int meta_find(const ffvec *meta, ffstr name, ffstr *val, uint flags)
 
 const phi_meta_if phi_metaif = {
 	meta_set,
+	meta_copy,
 	meta_find,
 	meta_list,
 	meta_destroy,

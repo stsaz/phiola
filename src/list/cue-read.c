@@ -163,10 +163,13 @@ static struct ffcuetrk* ffcue_index(struct ffcue *c, uint type, uint val)
 static void add(struct cue *c, struct ffcuetrk *ctrk, phi_track *t)
 {
 	struct phi_queue_entry qe = {
-		.conf = t->conf,
 		.length_msec = (ctrk->to) ? (ctrk->to - ctrk->from) * 1000 / 75 : 0,
 	};
+	phi_track_conf_assign(&qe.conf, &t->conf);
 	qe.conf.ifile.name = ffsz_dupstr(&c->url);
+	if (t->conf.ofile.name)
+		qe.conf.ofile.name = ffsz_dup(t->conf.ofile.name);
+	metaif->copy(&qe.conf.meta, &t->conf.meta);
 	qe.conf.seek_cdframes = ctrk->from;
 	qe.conf.until_cdframes = ctrk->to;
 

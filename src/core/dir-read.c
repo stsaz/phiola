@@ -100,18 +100,17 @@ static int qu_add_dir_r(const char *fn, phi_track *t)
 			continue;
 		}
 
-		struct phi_queue_entry qe = {
-			.conf = t->conf,
-		};
+		struct phi_queue_entry qe = {};
+		phi_track_conf_assign(&qe.conf, &t->conf);
 		qe.conf.ifile.name = fpath;
+		fpath = NULL;
+
 		qcur = phi_queueif.insert(qcur, &qe);
 
 		if (!dir_removed) {
 			dir_removed = 1;
 			phi_queueif.remove(t->qent);
 		}
-
-		fpath = NULL;
 	}
 
 	rc = 0;

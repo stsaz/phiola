@@ -225,3 +225,12 @@ struct phi_track {
 		uint cant_seek :1;
 	} output;
 };
+
+static inline void phi_track_conf_assign(struct phi_track_conf *dst, const struct phi_track_conf *src)
+{
+	*dst = *src;
+	dst->ifile.name = NULL;
+	dst->ofile.name = NULL;
+	ffvec_null(&dst->meta);
+	ffslice_null(&dst->tracks);
+}

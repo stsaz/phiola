@@ -266,6 +266,7 @@ typedef struct phi_meta_if phi_meta_if;
 struct phi_meta_if {
 
 	void (*set)(ffvec *meta, ffstr name, ffstr val);
+	void (*copy)(ffvec *dst, const ffvec *src);
 
 	int (*find)(const ffvec *meta, ffstr name, ffstr *val, uint flags);
 
