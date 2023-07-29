@@ -158,6 +158,7 @@ end:
 	jni_global_unref(t->udata);
 	jni_detach(jvm);
 	x->queue->unref(t->qent);
+	x->core->track->stop(t);
 }
 
 static int infotrk_process(void *ctx, phi_track *t)

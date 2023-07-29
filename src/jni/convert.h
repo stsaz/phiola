@@ -65,6 +65,7 @@ static void convtrk_close(void *ctx, phi_track *t)
 end:
 	jni_global_unref(t->udata);
 	jni_detach(jvm);
+	x->core->track->stop(t);
 }
 
 static int convtrk_process(void *ctx, phi_track *t)
