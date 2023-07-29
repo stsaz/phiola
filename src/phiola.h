@@ -355,4 +355,14 @@ struct phi_queue_if {
 	struct phi_queue_conf* (*conf)(void *e);
 	int (*index)(void *e);
 	int (*remove)(void *e);
+
+	/** Assign callback function to receive events from queue module.
+	cb.flags:
+		'a': item @pos added
+		'r': item @pos removed
+		'n': list created
+		'c': cleared
+		'd': deleted
+	*/
+	void (*on_change)(void (*cb)(struct phi_queue *q, uint flags, uint pos));
 };

@@ -14,6 +14,7 @@ static const phi_meta_if *phi_metaif;
 struct queue_mgr {
 	ffvec lists; // struct phi_queue*[]
 	uint random_ready :1;
+	void (*on_change)(struct phi_queue *q, uint flags, uint pos);
 };
 static struct queue_mgr *qm;
 
@@ -37,6 +38,7 @@ static void* q_insert(struct phi_queue *q, uint pos, struct phi_queue_entry *qe)
 static int q_remove_at(struct phi_queue *q, uint pos, uint n);
 static struct q_entry* q_get(struct phi_queue *q, uint i);
 static int q_find(struct phi_queue *q, struct q_entry *e);
+static void q_on_change(struct phi_queue *q, uint flags, uint pos){}
 
 #include <queue/ent.h>
 
@@ -54,6 +56,7 @@ void qm_destroy()
 void qm_init()
 {
 	qm = ffmem_new(struct queue_mgr);
+	qm->on_change = q_on_change;
 }
 
 static void qm_add(struct phi_queue *q)
@@ -81,6 +84,11 @@ static struct phi_queue* qm_default()
 	return *ffslice_itemT(&qm->lists, 0, struct phi_queue*);
 }
 
+static void set_on_change(void (*cb)(struct phi_queue*, uint, uint))
+{
+	qm->on_change = cb;
+}
+
 
 static void q_free(struct phi_queue *q)
 {
@@ -98,12 +106,14 @@ static struct phi_queue* q_create(struct phi_queue_conf *conf)
 	q->conf = *conf;
 	if (!q->conf.audio_module) q->conf.audio_module = "core.auto-play";
 	qm_add(q);
+	qm->on_change(q, 'n', 0);
 	return q;
 }
 
 static void q_destroy(phi_queue_id q)
 {
 	qm_rm(q);
+	qm->on_change(q, 'd', 0);
 	q_free(q);
 }
 
@@ -118,6 +128,7 @@ static void* q_insert(struct phi_queue *q, uint pos, struct phi_queue_entry *qe)
 	else
 		*ffslice_moveT((ffslice*)&q->index, pos, pos + 1, q->index.len - 1 - pos, void*) = e;
 	dbglog("added '%s' [%L]", qe->conf.ifile.name, q->index.len);
+	qm->on_change(q, 'a', pos);
 	return e;
 }
 
@@ -139,6 +150,7 @@ static int q_clear(struct phi_queue *q)
 	ffvec_null(&q->index);
 	fflock_unlock(&q->lock);
 	q->cursor = NULL;
+	qm->on_change(q, 'c', 0);
 
 	struct q_entry **it;
 	FFSLICE_WALK(&a, it) {
@@ -335,6 +347,7 @@ static int q_remove_at(struct phi_queue *q, uint pos, uint n)
 	ffslice_rmT((ffslice*)&q->index, pos, 1, void*);
 	qe_unref(e);
 	fflock_unlock(&q->lock);
+	qm->on_change(q, 'r', pos);
 	return 0;
 }
 
@@ -368,4 +381,6 @@ const phi_queue_if phi_queueif = {
 	(void*)qe_conf,
 	(void*)qe_index,
 	(void*)qe_remove,
+
+	set_on_change,
 };
