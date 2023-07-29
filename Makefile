@@ -361,6 +361,8 @@ endif
 %.o: $(PHIOLA)/src/net/%.c $(DEPS) \
 		$(wildcard $(PHIOLA)/src/net/*.h)
 	$(C) $(CFLAGS) -I$(NETMILL)/src $< -o $@
+icy.o: $(PHIOLA)/src/net/icy.c $(DEPS)
+	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
 netmill-http-filters.o: $(PHIOLA)/src/net/http-filters.c \
 		$(PHIOLA)/src/net/http-bridge.h \
 		$(wildcard $(NETMILL)/src/http-client/*.h)
@@ -369,6 +371,7 @@ netmill-http-client.o: $(NETMILL)/src/http-client/oclient.c \
 		$(wildcard $(NETMILL)/src/http-client/*.h)
 	$(C) $(CFLAGS_NETMILL) -I$(FFOS) $< -o $@
 http.$(SO): http.o \
+		icy.o \
 		netmill-http-client.o \
 		netmill-http-filters.o
 	$(LINK) -shared $+ $(LINKFLAGS) -o $@

@@ -18,6 +18,19 @@ static int phi_output_open(nml_http_client *c)
 		.status = range16_tostr(&c->response.status, c->recv.buf.ptr),
 		.ct = range16_tostr(&c->response.content_type, c->recv.buf.ptr),
 	};
+
+	ffstr h = range16_tostr(&c->response.headers, c->recv.buf.ptr), name = {}, val = {};
+	for (;;) {
+		int r = http_hdr_parse(h, &name, &val);
+		if (r <= 2)
+			break;
+		ffstr_shift(&h, r);
+
+		if (ffstr_ieqz(&name, "icy-metaint")) {
+			(void)ffstr_to_uint32(&val, &d.icy_meta_interval);
+		}
+	}
+
 	return phi_hc_resp(c->conf->opaque, &d);
 }
 

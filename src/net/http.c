@@ -10,6 +10,7 @@
 #include <FFOS/ffos-extern.h>
 
 const phi_core *core;
+extern const phi_filter phi_icy;
 #define errlog(t, ...)  phi_errlog(core, "http-client", t, __VA_ARGS__)
 #define warnlog(t, ...)  phi_warnlog(core, "http-client", t, __VA_ARGS__)
 
@@ -23,6 +24,7 @@ struct httpcl {
 	uint state; // enum ST
 	uint fstate;
 	uint done :1;
+	uint icy :1;
 };
 
 enum ST {
@@ -118,6 +120,9 @@ int phi_hc_resp(void *ctx, struct phi_http_data *d)
 	};
 	h->trk->data_type = map_sz_vptr_findstr(ct_ext, d->ct); // help format.detector in case it didn't detect format
 
+	h->trk->icy_meta_interval = d->icy_meta_interval;
+	h->icy = !!d->icy_meta_interval;
+
 	return NMLF_OPEN;
 }
 
@@ -176,6 +181,11 @@ static void conf_prepare(struct httpcl *h, struct nml_http_client_conf *c)
 	h->path.len = httpurl_escape(h->path.ptr, h->path.cap, p.path);
 	c->path = *(ffstr*)&h->path;
 
+	if (1) {
+		ffsize cap = 0;
+		ffstr_growaddz(&c->headers, &cap, "Icy-MetaData: 1\r\n");
+	}
+
 	c->filters = hc_filters;
 }
 
@@ -196,6 +206,7 @@ static void httpcl_close(struct httpcl *h, phi_track *t)
 {
 	nml_http_client_free(h->cl);
 	ffvec_free(&h->path);
+	ffstr_free(&h->conf.headers);
 	ffmem_free(h);
 }
 
@@ -208,6 +219,12 @@ static int httpcl_process(struct httpcl *h, phi_track *t)
 
 	switch (h->state) {
 	case ST_DATA:
+		if (h->icy) {
+			h->icy = 0;
+			if (!core->track->filter(h->trk, &phi_icy, 0))
+				return PHI_ERR;
+		}
+
 		t->data_out = h->data;
 		h->state = ST_PROCESSING;
 		return (h->done) ? PHI_DONE : PHI_DATA;

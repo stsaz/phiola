@@ -200,8 +200,9 @@ static int tuiplay_process(void *ctx, phi_track *t)
 	uint64 playpos;
 	uint playtime;
 
-	if (u->show_info) {
+	if (u->show_info || t->meta_changed) {
 		u->show_info = 0;
+		t->meta_changed = 0;
 		u->total_samples = t->audio.total;
 		u->played_samples = 0;
 		tui_info(u);
