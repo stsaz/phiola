@@ -52,11 +52,20 @@ DEPS := $(PHIOLA)/src/phiola.h \
 	$(C) $(CFLAGS) $< -o $@
 
 # EXE
+_:=
+ifeq "$(OS)" "windows"
+	EXE_OBJ := exe.coff
+endif
 %.o: $(PHIOLA)/src/exe/%.c $(DEPS) \
 		$(wildcard $(PHIOLA)/src/exe/*.h) \
 		$(wildcard $(PHIOLA)/src/util/*.h)
 	$(C) $(CFLAGS) $< -o $@
+exe.coff: $(PHIOLA)/src/gui/res/exe.rc \
+		$(PHIOLA)/src/gui/res/exe.manifest \
+		$(wildcard $(PHIOLA)/src/gui/res/*.ico)
+	$(WINDRES) $< $@
 phiola$(DOTEXE): main.o \
+		$(EXE_OBJ) \
 		core.$(SO)
 	$(LINK) $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -o $@
 
@@ -295,14 +304,23 @@ tui.$(SO): tui.o
 	$(LINK) -shared $+ $(LINKFLAGS) -lm -o $@
 
 MODS += gui.$(SO)
-FFGUI_HDR := $(wildcard $(PHIOLA)/src/util/gui-gtk/*.h)
-ifeq "$(DEBUG)" "1"
-	CFLAGS_GUI := -DFFGUI_DEBUG
+ifeq "$(OS)" "windows"
+	FFGUI_HDR := $(wildcard $(PHIOLA)/src/util/gui-winapi/*.h)
+	CFLAGS_GUI := -Wno-missing-field-initializers
+	LINKFLAGS_GUI := -lshell32 -luxtheme -lcomctl32 -lcomdlg32 -lgdi32 -lole32 -luuid
+	FFGUI_OBJ := ffgui-winapi.o ffgui-winapi-loader.o
+else
+	FFGUI_HDR := $(wildcard $(PHIOLA)/src/util/gui-gtk/*.h)
+	CFLAGS_GUI := -Wno-free-nonheap-object -Wno-deprecated-declarations `pkg-config --cflags gtk+-3.0`
+	ifeq "$(DEBUG)" "1"
+		CFLAGS_GUI += -DFFGUI_DEBUG
+	endif
+	LINKFLAGS_GUI := `pkg-config --libs gtk+-3.0` $(LINK_PTHREAD) -lm
+	FFGUI_OBJ := ffgui-gtk.o ffgui-gtk-loader.o
 endif
-CFLAGS_GUI += -Wno-free-nonheap-object -Wno-deprecated-declarations `pkg-config --cflags gtk+-3.0`
 CFLAGS_GUI := $(CFLAGS) $(CFLAGS_GUI)
 CXXFLAGS_GUI := $(CXXFLAGS) $(CFLAGS_GUI)
-LINKFLAGS_GUI := $(LINKFLAGS) `pkg-config --libs gtk+-3.0` $(LINK_PTHREAD) -lm
+LINKFLAGS_GUI := $(LINKFLAGS) $(LINKFLAGS_GUI)
 gui-mod.o: $(PHIOLA)/src/gui/mod.c $(DEPS) \
 		$(PHIOLA)/src/gui/mod.h \
 		$(PHIOLA)/src/gui/track.h
@@ -323,11 +341,16 @@ ffgui-gtk-loader.o: $(PHIOLA)/src/util/gui-gtk/ffgui-gtk-loader.c $(DEPS) $(FFGU
 		$(PHIOLA)/src/util/conf-scheme.h \
 		$(wildcard $(PHIOLA)/src/util/ltconf*.h)
 	$(C) $(CFLAGS_GUI) $< -o $@
+ffgui-winapi.o: $(PHIOLA)/src/util/gui-winapi/ffgui-winapi.c $(DEPS) $(FFGUI_HDR)
+	$(C) $(CFLAGS_GUI) $< -o $@
+ffgui-winapi-loader.o: $(PHIOLA)/src/util/gui-winapi/ffgui-winapi-loader.c $(DEPS) $(FFGUI_HDR) \
+		$(PHIOLA)/src/util/conf-scheme.h \
+		$(wildcard $(PHIOLA)/src/util/ltconf*.h)
+	$(C) $(CFLAGS_GUI) $< -o $@
 gui.$(SO): gui-mod.o \
 		gui.o \
 		gui-main.o \
-		ffgui-gtk.o \
-		ffgui-gtk-loader.o
+		$(FFGUI_OBJ)
 	$(LINKXX) -shared $+ $(LINKFLAGS_GUI) -o $@
 
 MODS += http.$(SO)
@@ -382,10 +405,18 @@ endif
 	chmod 644 $(APP_DIR)/mod/*.$(SO)
 
 	$(MKDIR) $(APP_DIR)/mod/gui
-	$(CP) $(PHIOLA)/src/gui/phiola.gui \
-		$(PHIOLA)/src/gui/gui_lang*.txt \
-		$(PHIOLA)/src/gui/res/* \
+ifeq "$(OS)" "windows"
+	$(CP) $(PHIOLA)/src/gui/phiola-winapi.gui $(APP_DIR)/mod/gui/phiola.gui
+	$(CP) $(PHIOLA)/src/gui/gui_lang*.txt \
 		$(APP_DIR)/mod/gui/
+	sed -i 's/_/\&/' $(APP_DIR)/mod/gui/gui_lang*.txt
+	unix2dos $(APP_DIR)/mod/gui/phiola.gui $(APP_DIR)/mod/gui/*.txt
+else
+	$(CP) $(PHIOLA)/src/gui/phiola-gtk.gui $(APP_DIR)/mod/gui/phiola.gui
+	$(CP) $(PHIOLA)/src/gui/gui_lang*.txt \
+		$(PHIOLA)/src/gui/res/*.ico $(PHIOLA)/src/gui/res/phiola.desktop \
+		$(APP_DIR)/mod/gui/
+endif
 	chmod 644 $(APP_DIR)/mod/gui/*
 
 ifeq "$(OS)" "windows"

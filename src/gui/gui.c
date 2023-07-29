@@ -6,11 +6,27 @@
 
 struct gui *gg;
 
+#ifdef FF_WIN
+static int _fdrop_next(ffvec *fn, ffstr *dropdata)
+{
+	if (!dropdata->len) return -1;
+
+	ffstr line;
+	ffstr_splitby(dropdata, '\n', &line, dropdata);
+	ffslice_set2(fn, &line);
+	return 0;
+}
+#endif
+
 void gui_dragdrop(ffstr data)
 {
 	ffvec fn = {};
 	ffstr d = data;
+#ifdef FF_WIN
+	while (!_fdrop_next(&fn, &d)) {
+#else
 	while (!ffui_fdrop_next(&fn, &d)) {
+#endif
 		list_add(*(ffstr*)&fn);
 	}
 	ffvec_free(&fn);

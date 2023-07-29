@@ -18,7 +18,9 @@ struct gui_wmain {
 	ffui_tabxx tabs;
 	ffui_viewxx vlist;
 	ffui_stbarxx stbar;
-
+#ifdef FF_WIN
+	ffui_paned pntop;
+#endif
 	struct phi_queue_entry *qe_active;
 	uint tabs_counter;
 };
@@ -36,6 +38,9 @@ FF_EXTERN const ffui_ldr_ctl wmain_ctls[] = {
 	FFUI_LDR_CTL(gui_wmain, tabs),
 	FFUI_LDR_CTL(gui_wmain, vlist),
 	FFUI_LDR_CTL(gui_wmain, stbar),
+#ifdef FF_WIN
+	FFUI_LDR_CTL(gui_wmain, pntop),
+#endif
 	FFUI_LDR_CTL_END
 };
 
@@ -241,19 +246,27 @@ void wmain_track_update(uint time_cur, uint time_total)
 	m->lpos.text(buf);
 }
 
-static void list_display(struct ffui_view_disp *disp)
+static void list_display(ffui_view_disp *disp)
 {
+#ifdef FF_WIN
+	if (!(disp->mask & LVIF_TEXT))
+		return;
+	uint i = disp->iItem, sub = disp->iSubItem;
+#else
+	uint i = disp->idx, sub = disp->sub;
+#endif
+
 	gui_wmain *m = gg->wmain;
 	char buf[1000];
 	ffstr *val = NULL, s;
-	struct phi_queue_entry *qe = gd->queue->ref(NULL, disp->idx);
+	struct phi_queue_entry *qe = gd->queue->ref(NULL, i);
 	if (!qe)
 		return;
 
-	switch (disp->sub) {
+	switch (sub) {
 	case H_INDEX:
 		ffsz_format(buf, sizeof(buf), "%s%u"
-			, (qe == m->qe_active) ? "> " : "", disp->idx + 1);
+			, (qe == m->qe_active) ? "> " : "", i + 1);
 		ffstr_setz(&s, buf);
 		val = &s;
 		break;
@@ -264,11 +277,11 @@ static void list_display(struct ffui_view_disp *disp)
 		break;
 
 	default:
-		if (!gd->metaif->find(&qe->conf.meta, FFSTR_Z(list_colname[disp->sub]), &s, PHI_META_PRIVATE))
+		if (!gd->metaif->find(&qe->conf.meta, FFSTR_Z(list_colname[sub]), &s, PHI_META_PRIVATE))
 			val = &s;
 	}
 
-	switch (disp->sub) {
+	switch (sub) {
 	case H_TITLE:
 		if (!val || !val->len) {
 			ffpath_split3_str(FFSTR_Z(qe->conf.ifile.name), NULL, &s, NULL); // use filename as a title
@@ -287,8 +300,13 @@ static void list_display(struct ffui_view_disp *disp)
 		break;
 	}
 
-	if (val)
+	if (val) {
+#ifdef FF_WIN
+		ffui_view_dispinfo_settext(disp, val->ptr, val->len);
+#else
 		disp->text.len = ffmem_ncopy(disp->text.ptr, disp->text.len, val->ptr, val->len);
+#endif
+	}
 
 	gd->queue->unref(qe);
 }
@@ -297,13 +315,20 @@ static void list_display(struct ffui_view_disp *disp)
 static void q_on_change(struct phi_queue *q, uint flags, uint pos)
 {
 	gui_wmain *m = gg->wmain;
+
+#ifdef FF_WIN
+	ffui_view_setcount(&m->vlist, gd->queue->count(NULL));
+#endif
+
 	switch (flags & 0xff) {
 	case 'a':
 		m->vlist.update(pos, 1);  break;
 
 	case 'r':
 		m->vlist.update(pos, -1);
+#ifdef FF_LINUX
 		m->vlist.update(pos, 0);
+#endif
 		break;
 
 	case 'c':
@@ -343,6 +368,16 @@ apply:
 }
 
 /** Thread: main */
+#ifdef FF_WIN
+static void list_remove(ffstr data)
+{
+	ffslice d = *(ffslice*)&data;
+	for (int i = d.len - 1;  i >= 0;  i--) {
+		gd->queue->remove(gd->queue->at(NULL, *ffslice_itemT(&d, i, uint)));
+	}
+	ffslice_free(&d);
+}
+#else
 static void list_remove(void *ptr)
 {
 	ffui_sel *sel = (ffui_sel*)ptr;
@@ -351,6 +386,20 @@ static void list_remove(void *ptr)
 	}
 	ffui_view_sel_free(sel);
 }
+#endif
+
+#ifdef FF_WIN
+static void wmain_on_drop_files(ffui_wnd *wnd, ffui_fdrop *df)
+{
+	ffvec buf = {};
+	const char *fn;
+	while (NULL != (fn = ffui_fdrop_next(df))) {
+		ffvec_addfmt(&buf, "%s\n", fn);
+	}
+	gui_core_task_data(gui_dragdrop, *(ffstr*)&buf);
+	ffvec_null(&buf);
+}
+#endif
 
 /** Create a new tab */
 static void tab_new()
@@ -371,7 +420,15 @@ static void wmain_action(ffui_wnd *wnd, int id)
 		m->wnd.close();  break;
 
 	case A_LIST_REMOVE:
-		gui_core_task_ptr(list_remove, m->vlist.selected());  break;
+#ifdef FF_WIN
+		{
+		ffvec v = m->vlist.selected();
+		gui_core_task_data(list_remove, *(ffstr*)&v);
+		}
+#else
+		gui_core_task_ptr(list_remove, m->vlist.selected());
+#endif
+		break;
 
 	case A_LIST_CLEAR:
 		gui_core_task_uint(ctl_action, A_LIST_CLEAR);  break;
@@ -394,15 +451,22 @@ static void wmain_action(ffui_wnd *wnd, int id)
 		break;
 
 	case A_LIST_DISPLAY:
-		list_display(&m->vlist.disp);  break;
+#ifdef FF_WIN
+		list_display(m->vlist.dispinfo_item);
+#else
+		list_display(&m->vlist.disp);
+#endif
+		break;
 
 	case A_CLOSE:
 		gui_quit();  break;
 
 	case A_FILE_DRAGDROP: {
+#ifdef FF_LINUX
 		ffstr d = {};
 		ffstr_dupstr(&d, &m->vlist.drop_data);
 		gui_core_task_data(gui_dragdrop, d);
+#endif
 		break;
 	}
 
@@ -415,9 +479,13 @@ void wmain_init()
 {
 	gui_wmain *m = ffmem_new(gui_wmain);
 	gg->wmain = m;
-	m->vlist.dispinfo_id = A_LIST_DISPLAY;
+#ifdef FF_WIN
+	m->wnd.top = 1;
+	m->wnd.manual_close = 1;
+#endif
 	m->wnd.on_action = wmain_action;
 	m->wnd.onclose_id = A_CLOSE;
+	m->vlist.dispinfo_id = A_LIST_DISPLAY;
 }
 
 void wmain_show()
@@ -425,7 +493,20 @@ void wmain_show()
 	gui_wmain *m = gg->wmain;
 	tab_new();
 	m->wnd.show(1);
-	m->vlist.update(0, gd->queue->count(NULL));
+
+	uint n = gd->queue->count(NULL);
+#ifdef FF_WIN
+	ffui_view_setcount_redraw(&m->vlist, n);
+#else
+	m->vlist.update(0, n);
+#endif
+
+#ifdef FF_WIN
+	m->wnd.on_dropfiles = wmain_on_drop_files;
+	ffui_fdrop_accept(&m->wnd, 1);
+#else
 	m->vlist.drag_drop_init(A_FILE_DRAGDROP);
+#endif
+
 	gd->queue->on_change(q_on_change);
 }

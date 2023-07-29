@@ -2,7 +2,11 @@
 2023, Simon Zolin */
 
 #include <gui/mod.h>
+#ifdef FF_WIN
+#include <util/gui-winapi/loader.h>
+#else
 #include <util/gui-gtk/loader.h>
+#endif
 
 #define USER_CONF_NAME  "gui.conf"
 

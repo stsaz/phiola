@@ -10,7 +10,11 @@ const phi_core *core;
 struct gui_data *gd;
 
 #define AUTO_LIST_FN  "list%u.m3uz"
-#define USER_CONF_DIR  "$HOME/.config/phiola/"
+#ifdef FF_WIN
+	#define USER_CONF_DIR  "%APPDATA%/phiola/"
+#else
+	#define USER_CONF_DIR  "$HOME/.config/phiola/"
+#endif
 #define USER_CONF_NAME  "gui.conf"
 
 void ctl_play(uint i)
