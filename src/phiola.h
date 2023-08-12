@@ -6,13 +6,13 @@
 #include <util/taskqueue.h>
 #include <ffbase/string.h>
 
-#define PHI_VERSION  20002
+#define PHI_VERSION  20003
 
 /** Inter-module compatibility version.
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20002
+#define PHI_VERSION_CORE  20003
 
 typedef ffuint uint;
 typedef ffushort ushort;
