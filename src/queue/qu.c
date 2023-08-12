@@ -13,6 +13,7 @@ static const phi_meta_if *phi_metaif;
 
 struct queue_mgr {
 	ffvec lists; // struct phi_queue*[]
+	uint selected;
 	uint random_ready :1;
 	void (*on_change)(struct phi_queue *q, uint flags, uint pos);
 };
@@ -81,7 +82,14 @@ static void qm_rm(struct phi_queue *q)
 
 static struct phi_queue* qm_default()
 {
-	return *ffslice_itemT(&qm->lists, 0, struct phi_queue*);
+	return *ffslice_itemT(&qm->lists, qm->selected, struct phi_queue*);
+}
+
+static phi_queue_id qm_select(uint pos)
+{
+	if (pos >= qm->lists.len) return NULL;
+	qm->selected = pos;
+	return qm_default();
 }
 
 static void set_on_change(void (*cb)(struct phi_queue*, uint, uint))
@@ -358,6 +366,7 @@ struct phi_queue_conf* qe_conf(struct q_entry *e)
 const phi_queue_if phi_queueif = {
 	q_create,
 	q_destroy,
+	qm_select,
 	q_add,
 	q_clear,
 	q_count,

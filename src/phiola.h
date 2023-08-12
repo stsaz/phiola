@@ -343,6 +343,8 @@ typedef struct phi_queue_if phi_queue_if;
 struct phi_queue_if {
 	phi_queue_id (*create)(struct phi_queue_conf *conf);
 	void (*destroy)(phi_queue_id q);
+	phi_queue_id (*select)(uint pos);
+
 	int (*add)(phi_queue_id q, struct phi_queue_entry *qe);
 	int (*clear)(phi_queue_id q);
 	int (*count)(phi_queue_id q);
