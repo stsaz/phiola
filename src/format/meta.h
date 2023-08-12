@@ -13,12 +13,26 @@ static void meta_destroy(ffvec *meta)
 	ffvec_free(meta);
 }
 
-static void meta_set(ffvec *meta, ffstr name, ffstr val)
+static void meta_set(ffvec *meta, ffstr name, ffstr val, uint flags)
 {
 	phi_dbglog(core, NULL, NULL, "meta: %S = %S", &name, &val);
 	if (!name.len) return;
 
 	char *s = ffsz_allocfmt("%S%Z%S", &name, &val);
+
+	if (flags & PHI_META_REPLACE) {
+		char **it;
+		FFSLICE_WALK(meta, it) {
+			if (ffstr_eqz(&name, it[0])) {
+				ffmem_free(*it);
+				it[0] = s;
+				it[1] = s + name.len + 1;
+				return;
+			}
+			it++;
+		}
+	}
+
 	*ffvec_pushT(meta, char*) = s;
 	*ffvec_pushT(meta, char*) = s + name.len + 1;
 }
@@ -27,7 +41,7 @@ static void meta_copy(ffvec *dst, const ffvec *src)
 {
 	char **it;
 	FFSLICE_WALK(src, it) {
-		meta_set(dst, FFSTR_Z(it[0]), FFSTR_Z(it[1]));
+		meta_set(dst, FFSTR_Z(it[0]), FFSTR_Z(it[1]), 0);
 		it++;
 	}
 }

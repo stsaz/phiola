@@ -40,7 +40,7 @@ static void flacogg_meta(struct flacogg_r *f, phi_track *t)
 	if (tag != 0)
 		ffstr_setz(&name, ffmmtag_str[tag]);
 	dbglog(t, "%S: %S", &name, &val);
-	phi_metaif.set(&t->meta, name, val);
+	phi_metaif.set(&t->meta, name, val, 0);
 }
 
 static int flacogg_in_read(void *ctx, phi_track *t)

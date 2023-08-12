@@ -49,13 +49,13 @@ static int icy_meta(struct icy *c, ffstr data, phi_track *t)
 		utf.len = 0;
 	}
 	c->metaif->destroy(&t->meta);
-	c->metaif->set(&t->meta, FFSTR_Z("artist"), artist);
+	c->metaif->set(&t->meta, FFSTR_Z("artist"), artist, 0);
 
 	if (!ffutf8_valid_str(title)) {
 		ffstr_growadd_codepage((ffstr*)&utf, &utf.cap, title.ptr, title.len, FFUNICODE_WIN1252);
 		title = *(ffstr*)&utf;
 	}
-	c->metaif->set(&t->meta, FFSTR_Z("title"), title);
+	c->metaif->set(&t->meta, FFSTR_Z("title"), title, 0);
 
 	t->meta_changed = 1;
 	ffvec_free(&utf);

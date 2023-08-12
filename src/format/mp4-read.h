@@ -49,7 +49,7 @@ static void mp4_meta(struct mp4_r *m, phi_track *t)
 
 	dbglog(t, "tag: %S: %S", &name, &val);
 
-	phi_metaif.set(&t->meta, name, val);
+	phi_metaif.set(&t->meta, name, val, 0);
 }
 
 static void print_tracks(struct mp4_r *m, phi_track *t)

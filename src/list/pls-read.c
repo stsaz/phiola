@@ -57,7 +57,7 @@ static int pls_add(struct pls_r *p, phi_track *t)
 	ffslice_null(&qe.conf.tracks);
 
 	if (!qe.conf.meta.len && p->pls_ent.title.len) {
-		metaif->set(&qe.conf.meta, FFSTR_Z("title"), *(ffstr*)&p->pls_ent.title);
+		metaif->set(&qe.conf.meta, FFSTR_Z("title"), *(ffstr*)&p->pls_ent.title, 0);
 		qe.conf.meta_transient = 1;
 	}
 

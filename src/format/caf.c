@@ -39,12 +39,6 @@ static void caf_close(void *ctx, phi_track *t)
 	ffmem_free(c);
 }
 
-static void caf_meta(struct caf_r *c, phi_track *t)
-{
-	c->caf.tagname = cafread_tag(&c->caf, &c->caf.tagval);
-	phi_metaif.set(&t->meta, c->caf.tagname, c->caf.tagval);
-}
-
 static const ffbyte caf_codecs[] = {
 	CAF_AAC, CAF_ALAC, CAF_LPCM,
 };
@@ -142,9 +136,12 @@ static int caf_process(void *ctx, phi_track *t)
 			return PHI_DATA;
 		}
 
-		case CAFREAD_TAG:
-			caf_meta(c, t);
+		case CAFREAD_TAG: {
+			ffstr name, val;
+			name = cafread_tag(&c->caf, &val);
+			phi_metaif.set(&t->meta, name, val, 0);
 			break;
+		}
 
 		case CAFREAD_SEEK:
 			t->input.seek = cafread_offset(&c->caf);

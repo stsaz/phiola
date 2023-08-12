@@ -45,7 +45,7 @@ static void flac_meta(struct flac_r *f, phi_track *t)
 		return;
 	if (tag > 0)
 		ffstr_setz(&name, ffmmtag_str[tag]);
-	phi_metaif.set(&t->meta, name, val);
+	phi_metaif.set(&t->meta, name, val, 0);
 }
 
 static int flac_in_read(void *ctx, phi_track *t)

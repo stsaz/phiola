@@ -183,13 +183,13 @@ static void add(struct cue *c, struct ffcuetrk *ctrk, phi_track *t)
 		if (cue_meta_find(&c->metas, c->nmeta, &m[i]) >= 0)
 			continue;
 
-		metaif->set(&qe.conf.meta, *(ffstr*)&m[i], *(ffstr*)&m[i + 1]);
+		metaif->set(&qe.conf.meta, *(ffstr*)&m[i], *(ffstr*)&m[i + 1], 0);
 	}
 
 	// add TRACK meta
 	m = (void*)c->metas.ptr;
 	for (uint i = 0;  i != c->nmeta;  i += 2) {
-		metaif->set(&qe.conf.meta, *(ffstr*)&m[i], *(ffstr*)&m[i + 1]);
+		metaif->set(&qe.conf.meta, *(ffstr*)&m[i], *(ffstr*)&m[i + 1], 0);
 	}
 
 	c->qu_cur = queue->insert(c->qu_cur, &qe);

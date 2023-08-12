@@ -142,11 +142,7 @@ static int qe_play(struct q_entry *e)
 	}
 
 	if (e->have_user_meta) {
-		char **it;
-		FFSLICE_WALK(&t->conf.meta, it) {
-			phi_metaif->set(&t->meta, FFSTR_Z(it[0]), FFSTR_Z(it[1]));
-			it++;
-		}
+		phi_metaif->copy(&t->meta, &t->conf.meta);
 	}
 
 	e->trk = t;

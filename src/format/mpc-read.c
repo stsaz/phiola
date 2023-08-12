@@ -106,7 +106,7 @@ static int mpc_process(void *ctx, phi_track *t)
 			if (r != 0)
 				ffstr_setz(&name, ffmmtag_str[r]);
 			dbglog(t, "tag: %S: %S", &name, &val);
-			phi_metaif.set(&t->meta, name, val);
+			phi_metaif.set(&t->meta, name, val, 0);
 			continue;
 		}
 

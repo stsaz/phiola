@@ -53,7 +53,7 @@ static void wav_meta(struct wav_r *w, phi_track *t)
 	if (tag == 0)
 		return;
 	ffstr_setz(&name, ffmmtag_str[tag]);
-	phi_metaif.set(&t->meta, name, val);
+	phi_metaif.set(&t->meta, name, val, 0);
 }
 
 static int wav_process(void *ctx, phi_track *t)

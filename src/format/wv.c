@@ -53,7 +53,7 @@ static void wv_in_meta(wvpk_r *w, phi_track *t)
 	if (tag != 0)
 		ffstr_setz(&name, ffmmtag_str[tag]);
 	dbglog(t, "tag: %S: %S", &name, &val);
-	phi_metaif.set(&t->meta, name, val);
+	phi_metaif.set(&t->meta, name, val, 0);
 }
 
 static int wv_in_process(void *ctx, phi_track *t)

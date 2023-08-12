@@ -98,7 +98,7 @@ static void cmd_meta_set(ffvec *dst, const ffvec *src)
 	FFSLICE_WALK(src, it) {
 		ffstr name, val;
 		ffstr_splitby(it, '=', &name, &val);
-		x->metaif->set(dst, name, val);
+		x->metaif->set(dst, name, val, 0);
 	}
 }
 

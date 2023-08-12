@@ -52,7 +52,7 @@ static void mkv_meta(struct mkv_r *m, phi_track *t)
 {
 	ffstr name, val;
 	name = mkvread_tag(&m->mkv, &val);
-	phi_metaif.set(&t->meta, name, val);
+	phi_metaif.set(&t->meta, name, val, 0);
 }
 
 static const ushort mkv_codecs[] = {

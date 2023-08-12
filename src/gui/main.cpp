@@ -185,7 +185,7 @@ int wmain_track_new(struct phi_queue_entry *qe, uint time_total, phi_track *t)
 		, t->audio.format.rate
 		, pcm_fmt_str(t->audio.format.format)
 		, pcm_channelstr(t->audio.format.channels));
-	gd->metaif->set(&t->meta, FFSTR_Z("_phi_info"), FFSTR_Z(buf));
+	gd->metaif->set(&t->meta, FFSTR_Z("_phi_info"), FFSTR_Z(buf), 0);
 
 	m->tpos.range(time_total);
 	qe->length_msec = time_total * 1000;
@@ -294,7 +294,7 @@ static void list_display(ffui_view_disp *disp)
 			uint sec = qe->length_msec / 1000;
 			ffsz_format(buf, sizeof(buf), "%u:%02u", sec / 60, sec % 60);
 			ffstr_setz(&s, buf);
-			gd->metaif->set(&qe->conf.meta, FFSTR_Z("_phi_dur"), s);
+			gd->metaif->set(&qe->conf.meta, FFSTR_Z("_phi_dur"), s, 0);
 			val = &s;
 		}
 		break;

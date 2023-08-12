@@ -60,10 +60,10 @@ static int m3u_add(struct m3u *m, phi_track *t)
 
 	if (!qe.conf.meta.len) { // must not mix user-meta with transient-meta
 		if (m->pls_ent.artist.len)
-			metaif->set(&qe.conf.meta, FFSTR_Z("artist"), *(ffstr*)&m->pls_ent.artist);
+			metaif->set(&qe.conf.meta, FFSTR_Z("artist"), *(ffstr*)&m->pls_ent.artist, 0);
 
 		if (m->pls_ent.title.len)
-			metaif->set(&qe.conf.meta, FFSTR_Z("title"), *(ffstr*)&m->pls_ent.title);
+			metaif->set(&qe.conf.meta, FFSTR_Z("title"), *(ffstr*)&m->pls_ent.title, 0);
 		qe.conf.meta_transient = 1;
 	}
 

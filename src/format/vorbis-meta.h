@@ -99,7 +99,7 @@ int vorbistag_read(phi_track *t, ffstr vc)
 		dbglog(t, "%S: %S", &name, &val);
 		if (tag != 0)
 			ffstr_setz(&name, ffmmtag_str[tag]);
-		phi_metaif.set(&t->meta, name, val);
+		phi_metaif.set(&t->meta, name, val, 0);
 	}
 }
 

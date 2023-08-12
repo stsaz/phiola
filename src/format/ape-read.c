@@ -42,7 +42,7 @@ static void ape_in_meta(struct ape_r *a, phi_track *t)
 	if (tag != 0)
 		ffstr_setz(&name, ffmmtag_str[tag]);
 	dbglog(t, "tag: %S: %S", &name, &val);
-	phi_metaif.set(&t->meta, name, val);
+	phi_metaif.set(&t->meta, name, val, 0);
 }
 
 static int ape_in_process(void *ctx, phi_track *t)

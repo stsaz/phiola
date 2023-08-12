@@ -55,7 +55,7 @@ static void mp3_meta(struct mp3_r *m, phi_track *t, uint type)
 		ffstr_setz(&name, ffmmtag_str[tag]);
 
 	dbglog(t, "tag: %S: %S", &name, &val);
-	phi_metaif.set(&t->meta, name, val);
+	phi_metaif.set(&t->meta, name, val, 0);
 }
 
 static int mp3_process(struct mp3_r *m, phi_track *t)

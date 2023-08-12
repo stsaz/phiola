@@ -267,15 +267,22 @@ struct phi_track_if {
 };
 
 
-enum PHI_META {
+enum PHI_META_LIST {
 	PHI_META_UNIQUE = 1, // exclude duplicate (with the same key) entries
 	PHI_META_PRIVATE = 2, // include private entries starting with "_phi_"
+};
+
+enum PHI_META_SET {
+	PHI_META_REPLACE = 1, // replace existing key-value pair
 };
 
 typedef struct phi_meta_if phi_meta_if;
 struct phi_meta_if {
 
-	void (*set)(ffvec *meta, ffstr name, ffstr val);
+	/** Set meta data.
+	flags: enum PHI_META_SET */
+	void (*set)(ffvec *meta, ffstr name, ffstr val, uint flags);
+
 	void (*copy)(ffvec *dst, const ffvec *src);
 
 	/**
@@ -284,7 +291,7 @@ struct phi_meta_if {
 
 	/**
 	idx: must be initialized to 0
-	flags: enum PHI_META
+	flags: enum PHI_META_LIST
 	Return 0 on complete */
 	int (*list)(const ffvec *meta, uint *idx, ffstr *name, ffstr *val, uint flags);
 

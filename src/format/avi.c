@@ -48,7 +48,7 @@ static void avi_meta(struct avi_r *a, phi_track *t)
 	if (tag == -1)
 		return;
 	ffstr_setz(&name, ffmmtag_str[tag]);
-	phi_metaif.set(&t->meta, name, val);
+	phi_metaif.set(&t->meta, name, val, 0);
 }
 
 static const ushort avi_codecs[] = {
