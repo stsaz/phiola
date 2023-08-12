@@ -149,7 +149,6 @@ static int q_clear(struct phi_queue *q)
 	ffvec a = q->index;
 	ffvec_null(&q->index);
 	fflock_unlock(&q->lock);
-	q->cursor = NULL;
 	qm->on_change(q, 'c', 0);
 
 	struct q_entry **it;
@@ -227,9 +226,7 @@ static int q_play(struct phi_queue *q, void *_e)
 	if (!e) {
 		if (!q)
 			q = qm_default();
-		e = q->cursor;
-		if (!e
-			&& !(e = q_get(q, q_get_index(q, 0))))
+		if (!(e = q_get(q, q_get_index(q, q->cursor_index))))
 			return -1;
 	} else {
 		q = e->q;

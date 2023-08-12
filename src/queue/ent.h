@@ -34,6 +34,9 @@ static inline void track_conf_destroy(struct phi_track_conf *c)
 
 static void qe_free(struct q_entry *e)
 {
+	if (e == e->q->cursor)
+		e->q->cursor = NULL;
+
 	track_conf_destroy(&e->pub.conf);
 	ffmem_free(e);
 }
