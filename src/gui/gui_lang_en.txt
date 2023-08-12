@@ -1,6 +1,7 @@
 # phiola v2.0-beta2 GUI English
 
 MMFile					"_File"
+	MFDelete				"_Delete (Trash)"
 	MFExit					"E_xit"
 
 MMList					"_List"

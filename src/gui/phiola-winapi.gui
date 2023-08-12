@@ -6,6 +6,12 @@ include_language {
 }
 
 menu mfile {
+	item $MFDelete {
+		action A_FILE_DEL
+		hotkey "Shift+Delete"
+	}
+	item - {
+	}
 	item $MFExit {
 		action A_QUIT
 		hotkey "Ctrl+Q"

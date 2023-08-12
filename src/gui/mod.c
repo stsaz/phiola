@@ -1,6 +1,11 @@
 /** phiola: GUI--Core bridge
 2023, Simon Zolin */
 
+#ifdef _WIN32
+#include <util/windows-shell.h>
+#else
+#include <util/unix-shell.h>
+#endif
 #include <gui/mod.h>
 #include <gui/track.h>
 #include <FFOS/dir.h>
@@ -16,6 +21,57 @@ struct gui_data *gd;
 	#define USER_CONF_DIR  "$HOME/.config/phiola/"
 #endif
 #define USER_CONF_NAME  "gui.conf"
+
+#ifdef FF_LINUX
+static int file_del_trash(const char **names, ffsize n)
+{
+	ffsize err = 0;
+	const char *e;
+	for (ffsize i = 0;  i != n;  i++) {
+		if (0 != ffui_glib_trash(names[i], &e)) {
+			errlog("can't move file to trash: %s: %s"
+				, names[i], e);
+			err++;
+		}
+	}
+
+	dbglog("moved %L files to Trash", n - err);
+	return (err == 0) ? 0 : -1;
+}
+#endif
+
+/** Trash all selected files */
+void file_del(ffstr data)
+{
+	ffslice indexes = *(ffslice*)&data;
+	ffvec names = {};
+	struct phi_queue_entry *qe;
+	uint *it;
+
+	FFSLICE_WALK(&indexes, it) {
+		qe = gd->queue->at(NULL, *it);
+		*ffvec_pushT(&names, char*) = qe->conf.ifile.name;
+	}
+
+#ifdef FF_WIN
+	int r = ffui_fop_del((const char *const *)names.ptr, names.len, FFUI_FOP_ALLOWUNDO);
+#else
+	int r = file_del_trash((const char**)names.ptr, names.len);
+#endif
+
+	FFSLICE_RWALK(&indexes, it) {
+		qe = gd->queue->at(NULL, *it);
+		gd->queue->remove(qe);
+	}
+
+	if (r == 0)
+		wmain_status("Deleted %L files", names.len);
+	else
+		wmain_status("Couldn't delete some files");
+
+	ffvec_free(&names);
+	ffslice_free(&indexes);
+}
 
 void ctl_play(uint i)
 {

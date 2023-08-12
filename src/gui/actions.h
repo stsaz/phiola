@@ -1,5 +1,6 @@
 
 // File
+	X(A_FILE_DEL),
 	X(A_QUIT),
 
 // List

@@ -396,6 +396,9 @@ static void wmain_action(ffui_wnd *wnd, int id)
 	dbglog("%s cmd:%u", __func__, id);
 
 	switch (id) {
+	case A_FILE_DEL:
+		gui_core_task_slice(file_del, m->vlist.selected());  break;
+
 	case A_QUIT:
 		m->wnd.close();  break;
 

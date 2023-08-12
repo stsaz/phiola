@@ -25,4 +25,5 @@ struct gui {
 FF_EXTERN struct gui *gg;
 
 FF_EXTERN void gui_dragdrop(ffstr data);
+FF_EXTERN void file_del(ffstr data);
 FF_EXTERN void gui_quit();
