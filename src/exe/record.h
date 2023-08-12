@@ -22,6 +22,14 @@ Options:\n\
 \n\
   -until TIME           Stop at time\n\
                           [[HH:]MM:]SS[.MSC]\n\
+\n\
+  -danorm \"OPTIONS\"     Apply Dynamic Audio Normalizer filter. Options:\n\
+                          frame       Integer\n\
+                          size        Integer\n\
+                          peak        Float\n\
+                          max-amp     Float\n\
+                          target-rms  Float\n\
+                          compress    Float\n\
   -gain NUMBER          Gain/attenuation in dB\n\
 \n\
   -aac-profile CHAR     AAC profile:\n\
@@ -74,6 +82,7 @@ struct cmd_rec {
 	ffbyte force;
 	ffbyte exclusive;
 	ffbyte loopback;
+	const char *danorm;
 	ffvec meta;
 };
 
@@ -95,6 +104,7 @@ static int rec_action()
 		.until_msec = r->until,
 		.afilter = {
 			.gain_db = r->gain,
+			.danorm = r->danorm,
 		},
 		.aac = {
 			.profile = r->aac_profile[0],
@@ -125,6 +135,8 @@ static int rec_action()
 		|| !track->filter(t, x->core->mod("afilter.until"), 0)
 		|| !track->filter(t, x->core->mod("afilter.rtpeak"), 0)
 		|| !track->filter(t, x->core->mod("tui.rec"), 0)
+		|| (r->danorm
+			&& !track->filter(t, x->core->mod("danorm.f"), 0))
 		|| !track->filter(t, x->core->mod("afilter.gain"), 0)
 		|| !track->filter(t, x->core->mod("afilter.auto-conv"), 0)
 		|| !track->filter(t, x->core->mod("format.auto-write"), 0)
@@ -182,6 +194,7 @@ static const struct ffarg cmd_rec[] = {
 	{ "-audio",			's',	O(audio) },
 	{ "-buffer",		'u',	O(buffer) },
 	{ "-channels",		'u',	O(channels) },
+	{ "-danorm",		's',	O(danorm) },
 	{ "-device",		'u',	O(device) },
 	{ "-exclusive",		'1',	O(exclusive) },
 	{ "-force",			'1',	O(force) },

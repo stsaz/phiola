@@ -110,6 +110,17 @@ test_convert() {
 	convert_from_to wav flac
 }
 
+test_danorm() {
+	if ! test -f dani.wav ; then
+		./phiola rec -u 10 -f -o dani.wav
+	fi
+	./phiola co -danorm "frame 500 size 15" dani.wav -f -o dan-co.wav ; ./phiola dan-co.wav
+	./phiola co -danorm "" dani.wav -f -o dan-co.flac -af int24 ; ./phiola i dan-co.flac 2>&1 | grep 'int24' ; ./phiola dan-co.flac
+	# ./phiola co -danorm "" dani.wav -f -o dan-co96k.flac -af int24 -rate 96000 ; ./phiola dan-co96k.flac
+	./phiola rec -danorm "frame 500 size 15" -f -o dan-rec.wav     -u 10 ; ./phiola dan-rec.wav
+	./phiola rec -danorm "" -f -o dan-rec96k.flac -u 10 -af int24 -rate 96000 ; ./phiola i dan-rec96k.flac 2>&1 | grep 'int24 96000Hz' ; ./phiola dan-rec96k.flac
+}
+
 ffmpeg_encode() {
 	ffmpeg -i $1 -y -c:a aac        fm-aac.aac    2>/dev/null
 	ffmpeg -i $1 -y -c:a aac        fm-aac.avi    2>/dev/null
@@ -271,6 +282,7 @@ TESTS=(
 	record
 	play
 	convert
+	danorm
 	copy
 	info
 	meta

@@ -38,6 +38,7 @@ enum {
 
 #define RECF_EXCLUSIVE  1
 #define RECF_POWER_SAVE  2
+#define RECF_DANORM  4
 
 JNIEXPORT jlong JNICALL
 Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring joname, jobject jconf, jobject jcb)
@@ -71,6 +72,7 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 		.until_msec = (uint)until_sec*1000,
 		.afilter = {
 			.gain_db = (double)gain_db100 / 100,
+			.danorm = (flags & RECF_DANORM) ? "" : NULL,
 		},
 		.aac = {
 			.profile = aac_profile,
@@ -87,6 +89,8 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 	if (!track->filter(t, &phi_android_guard, 0)
 		|| !track->filter(t, x->core->mod("core.auto-rec"), 0)
 		|| !track->filter(t, x->core->mod("afilter.until"), 0)
+		|| ((flags & RECF_DANORM)
+			&& !track->filter(t, x->core->mod("danorm.f"), 0))
 		|| !track->filter(t, x->core->mod("afilter.gain"), 0)
 		|| !track->filter(t, x->core->mod("afilter.auto-conv"), 0)
 		|| !track->filter(t, x->core->mod("format.auto-write"), 0)

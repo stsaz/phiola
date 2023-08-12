@@ -172,6 +172,13 @@ soxr.o: $(PHIOLA)/src/afilter/soxr.c $(DEPS) \
 soxr.$(SO): soxr.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lsoxr-phi -o $@
 
+MODS += danorm.$(SO)
+LIBS3 += $(ALIB3_BIN)/libDynamicAudioNormalizer-phi.$(SO)
+dynanorm.o: $(PHIOLA)/src/afilter/dynanorm.c $(DEPS)
+	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
+danorm.$(SO): dynanorm.o
+	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lDynamicAudioNormalizer-phi -o $@
+
 # FORMAT
 MODS += format.$(SO)
 %.o: $(PHIOLA)/src/format/%.c $(DEPS) \

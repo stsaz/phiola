@@ -52,8 +52,9 @@ class Phiola {
 		static final int REC_FLAC = 3;
 		int format;
 
-		static final int RECF_EXCLUSIVE = 0x10;
-		static final int RECF_POWER_SAVE = 0x20;
+		static final int RECF_EXCLUSIVE = 1;
+		static final int RECF_POWER_SAVE = 2;
+		static final int RECF_DANORM = 4;
 		int flags;
 
 		int buf_len_msec;

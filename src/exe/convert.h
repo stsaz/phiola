@@ -23,6 +23,13 @@ Options:\n\
                           int8 | int16 | int24 | int32 | float32\n\
   -rate NUMBER          Sample rate\n\
   -channels NUMBER      Channels number\n\
+  -danorm \"OPTIONS\"     Apply Dynamic Audio Normalizer filter. Options:\n\
+                          frame       Integer\n\
+                          size        Integer\n\
+                          peak        Float\n\
+                          max-amp     Float\n\
+                          target-rms  Float\n\
+                          compress    Float\n\
   -gain NUMBER          Gain/attenuation in dB\n\
 \n\
   -copy                 Copy audio data without re-encoding\n\
@@ -76,7 +83,8 @@ struct cmd_conv {
 	uint64 seek;
 	uint64 until;
 	int gain;
-	uint copy;
+	ffbyte copy;
+	const char *danorm;
 	char *aac_profile;
 	uint aac_q;
 	uint opus_q;
@@ -145,6 +153,7 @@ static void conv_qu_add(struct cmd_conv *v, ffstr *fn)
 		.until_msec = v->until,
 		.afilter = {
 			.gain_db = v->gain,
+			.danorm = v->danorm,
 		},
 		.oaudio = {
 			.format = {
@@ -222,6 +231,7 @@ static const struct ffarg cmd_conv[] = {
 	{ "-aformat",		'S',	conv_aformat },
 	{ "-channels",		'u',	O(channels) },
 	{ "-copy",			'1',	O(copy) },
+	{ "-danorm",		's',	O(danorm) },
 	{ "-exclude",		'S',	conv_exclude },
 	{ "-force",			'1',	O(force) },
 	{ "-gain",			'd',	O(gain) },

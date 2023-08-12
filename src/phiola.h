@@ -193,6 +193,7 @@ struct phi_track_conf {
 		double	gain_db; // Audio gain/attenuation
 		uint	peaks_info :1;
 		uint	peaks_crc :1;
+		const char *danorm;
 	} afilter;
 
 	struct {

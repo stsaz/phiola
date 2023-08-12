@@ -28,7 +28,7 @@ class CoreSettings {
 	String rec_path; // directory for recordings
 	String rec_enc, rec_fmt;
 	int enc_bitrate, rec_buf_len_ms, rec_until_sec, rec_gain_db100;
-	boolean rec_exclusive;
+	boolean rec_danorm, rec_exclusive;
 
 	String conv_outext;
 	int conv_aac_quality;
@@ -70,6 +70,7 @@ class CoreSettings {
 				String.format("rec_bitrate %d\n", enc_bitrate) +
 				String.format("rec_buf_len %d\n", rec_buf_len_ms) +
 				String.format("rec_until %d\n", rec_until_sec) +
+				String.format("rec_danorm %d\n", core.bool_to_int(rec_danorm)) +
 				String.format("rec_gain %d\n", rec_gain_db100) +
 				String.format("rec_exclusive %d\n", core.bool_to_int(rec_exclusive)) +
 
@@ -134,6 +135,8 @@ class CoreSettings {
 			enc_bitrate = core.str_to_uint(v, enc_bitrate);
 		else if (k.equals("rec_buf_len"))
 			rec_buf_len_ms = core.str_to_uint(v, rec_buf_len_ms);
+		else if (k.equals("rec_danorm"))
+			rec_danorm = core.str_to_bool(v);
 		else if (k.equals("rec_exclusive"))
 			rec_exclusive = core.str_to_bool(v);
 		else if (k.equals("rec_until"))

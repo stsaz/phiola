@@ -6,6 +6,7 @@ ROOT := ../..
 
 LIBS := \
 	ALAC \
+	DynamicAudioNormalizer \
 	fdk-aac \
 	FLAC \
 	MAC \
@@ -34,6 +35,7 @@ $(TGT_DIR)/libvorbis-phi.$(SO): vorbis $(TGT_DIR)/libogg-phi.$(SO)
 
 clean:
 	$(MAKE) -I.. -C ALAC clean
+	$(MAKE) -I.. -C DynamicAudioNormalizer clean
 	$(MAKE) -I.. -C fdk-aac clean
 	$(MAKE) -I.. -C FLAC clean
 	$(MAKE) -I.. -C MAC clean
@@ -48,6 +50,7 @@ clean:
 md5:
 	md5sum -b \
 		ALAC/master.zip \
+		DynamicAudioNormalizer/2.10.tar.gz \
 		fdk-aac/v0.1.6.tar.gz \
 		FLAC/flac-1.3.3.tar.xz \
 		MAC/MAC_SDK_433.zip \

@@ -372,6 +372,8 @@ class Track {
 			p.flags |= Phiola.RecordParams.RECF_EXCLUSIVE;
 		if (true)
 			p.flags |= Phiola.RecordParams.RECF_POWER_SAVE;
+		if (core.setts.rec_danorm)
+			p.flags |= Phiola.RecordParams.RECF_DANORM;
 
 		p.quality = core.setts.enc_bitrate;
 		p.buf_len_msec = core.setts.rec_buf_len_ms;

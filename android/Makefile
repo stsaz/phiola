@@ -213,6 +213,14 @@ soxr.so: soxr.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lsoxr-phi -o $@
 
 
+MODS += danorm.so
+LIBS3 += $(ALIB3_BIN)/libDynamicAudioNormalizer-phi.so
+dynanorm.o: $(PHIOLA)/src/afilter/dynanorm.c $(DEPS)
+	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
+danorm.so: dynanorm.o
+	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lDynamicAudioNormalizer-phi -o $@
+
+
 MODS += format.so
 %.o: $(PHIOLA)/src/format/%.c $(DEPS) \
 		$(wildcard $(PHIOLA)/src/format/*.h)

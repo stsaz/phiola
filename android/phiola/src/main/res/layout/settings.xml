@@ -250,6 +250,11 @@
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
 
+		<androidx.appcompat.widget.SwitchCompat android:id="@+id/rec_danorm"
+			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:layout_margin="10dp"
+			android:text="@string/sett_danorm" />
+
 		<TextView android:text="@string/sett_rec_gain"
 			android:layout_width="match_parent" android:layout_height="wrap_content"
 			android:layout_marginHorizontal="10dp"
