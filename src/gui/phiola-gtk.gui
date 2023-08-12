@@ -75,6 +75,12 @@ menu mplay {
 	}
 }
 
+menu mhelp {
+	item $MHAbout {
+		action A_ABOUT_SHOW
+	}
+}
+
 window wmain {
 	title "phiola"
 	position 0 0 600 600
@@ -91,6 +97,9 @@ window wmain {
 		}
 		item $MMPlayback {
 			submenu mplay
+		}
+		item $MMHelp {
+			submenu mhelp
 		}
 	}
 
@@ -171,5 +180,22 @@ window wmain {
 	}
 
 	statusbar stbar {
+	}
+}
+
+window wabout {
+	title $WTAbout
+	popupfor wmain
+
+	image ico {
+		icon {
+			filename "phiola.ico"
+		}
+	}
+
+	label labout {
+	}
+
+	label lurl {
 	}
 }

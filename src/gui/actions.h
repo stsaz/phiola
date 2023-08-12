@@ -23,3 +23,7 @@
 	X(A_VOL),
 	X(A_VOLUP),
 	X(A_VOLDOWN),
+
+// Help
+	X(A_ABOUT_SHOW),
+	X(A_ABOUT_HOMEPAGE),

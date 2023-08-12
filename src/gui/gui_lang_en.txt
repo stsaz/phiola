@@ -20,6 +20,10 @@ MMPlayback				"_Playback"
 	MPVolumeUp				"Volume _Up"
 	MPVolumeDown			"Volume _Down"
 
+MMHelp					"_Help"
+	MHAbout					"_About"
+		WTAbout					"About phiola"
+
 LCArtist				"Artist"
 LCTitle					"Title"
 LCDuration				"Duration"

@@ -1404,10 +1404,7 @@ static int wnd_borderstick(ffconf_scheme *cs, ffui_loader *g, int64 val)
 
 static int wnd_style(ffconf_scheme *cs, ffui_loader *g, const ffstr *val)
 {
-	if (ffstr_eqcz(val, "popup"))
-		ffui_wnd_setpopup(g->wnd);
-
-	else if (ffstr_eqcz(val, "visible"))
+	if (ffstr_eqcz(val, "visible"))
 		g->vis = 1;
 
 	else
@@ -1434,12 +1431,13 @@ static int wnd_onclose(ffconf_scheme *cs, ffui_loader *g, const ffstr *val)
 	return 0;
 }
 
-static int wnd_parent(ffconf_scheme *cs, ffui_loader *g, const ffstr *val)
+static int wnd_popupfor(ffconf_scheme *cs, ffui_loader *g, const ffstr *val)
 {
 	ffui_ctl *parent = g->getctl(g->udata, val);
-	if (parent == NULL)
-		return FFUI_EINVAL;
-	(void)SetWindowLongPtr(g->wnd->h, GWLP_HWNDPARENT, (LONG_PTR)parent->h);
+	if (parent == NULL) return FFUI_EINVAL;
+
+	SetWindowLongPtr(g->wnd->h, GWLP_HWNDPARENT, (LONG_PTR)parent->h);
+	ffui_wnd_setpopup(g->wnd);
 	return 0;
 }
 
@@ -1488,7 +1486,7 @@ static const ffconf_arg wnd_args[] = {
 	{ "borderstick",FFCONF_TINT8,_F(wnd_borderstick) },
 	{ "icon",		T_OBJ,		_F(wnd_icon) },
 	{ "style",		T_STRLIST,	_F(wnd_style) },
-	{ "parent",		T_STR,		_F(wnd_parent) },
+	{ "popupfor",	T_STR,		_F(wnd_popupfor) },
 	{ "font",		T_OBJ,		_F(label_font) },
 	{ "bgcolor",	T_STR,		_F(wnd_bgcolor) },
 	{ "onclose",	T_STR,		_F(wnd_onclose) },

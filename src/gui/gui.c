@@ -53,7 +53,9 @@ end:
 	ffmem_free(fn);
 }
 
-extern const ffui_ldr_ctl wmain_ctls[];
+extern const ffui_ldr_ctl
+	wmain_ctls[],
+	wabout_ctls[];
 
 static void* gui_getctl(void *udata, const ffstr *name)
 {
@@ -61,7 +63,9 @@ static void* gui_getctl(void *udata, const ffstr *name)
 		FFUI_LDR_CTL(struct gui, mfile),
 		FFUI_LDR_CTL(struct gui, mlist),
 		FFUI_LDR_CTL(struct gui, mplay),
+		FFUI_LDR_CTL(struct gui, mhelp),
 		FFUI_LDR_CTL3_PTR(struct gui, wmain, wmain_ctls),
+		FFUI_LDR_CTL3_PTR(struct gui, wabout, wabout_ctls),
 		FFUI_LDR_CTL_END
 	};
 
@@ -118,6 +122,7 @@ int FFTHREAD_PROCCALL gui_worker(void *param)
 	gg = ffmem_new(struct gui);
 	ffui_init();
 	wmain_init();
+	wabout_init();
 
 	if (!!load_ui())
 		goto end;

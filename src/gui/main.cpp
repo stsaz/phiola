@@ -433,6 +433,9 @@ static void wmain_action(ffui_wnd *wnd, int id)
 #endif
 		break;
 
+	case A_ABOUT_SHOW:
+		wabout_show(1);  break;
+
 	case A_CLOSE:
 		gui_quit();  break;
 

@@ -75,6 +75,12 @@ menu mplay {
 	}
 }
 
+menu mhelp {
+	item $MHAbout {
+		action A_ABOUT_SHOW
+	}
+}
+
 window wmain {
 	title "phiola"
 	position 100 100 600 600
@@ -95,6 +101,9 @@ window wmain {
 		}
 		item $MMPlayback {
 			submenu mplay
+		}
+		item $MMHelp {
+			submenu mhelp
 		}
 	}
 
@@ -212,5 +221,38 @@ window wmain {
 
 	statusbar stbar {
 		parts -1
+	}
+}
+
+window wabout {
+	title $WTAbout
+	position 300 300 425 175
+	popupfor wmain
+	font {
+		name Arial
+		height 10
+	}
+
+	image ico {
+		icon {
+			resource 2
+			size 128 128
+		}
+	}
+
+	label labout {
+		position 130 15 300 80
+	}
+
+	label lurl {
+		position 130 100 300 25
+		font {
+			name Arial
+			height 10
+			style underline
+		}
+		cursor hand
+		color blue
+		onclick A_ABOUT_HOMEPAGE
 	}
 }

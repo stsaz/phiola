@@ -16,11 +16,17 @@ FF_EXTERN void wmain_show();
 FF_EXTERN void wmain_userconf_write(ffvec *buf);
 FF_EXTERN int wmain_userconf_read(ffstr key, ffstr val);
 
+struct gui_wabout;
+FF_EXTERN void wabout_init();
+FF_EXTERN void wabout_show(uint show);
+
 struct gui {
 	ffui_menu mfile;
 	ffui_menu mlist;
 	ffui_menu mplay;
+	ffui_menu mhelp;
 	struct gui_wmain *wmain;
+	struct gui_wabout *wabout;
 };
 FF_EXTERN struct gui *gg;
 

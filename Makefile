@@ -342,6 +342,9 @@ gui-main.o: $(PHIOLA)/src/gui/main.cpp $(DEPS) $(FFGUI_HDR) \
 		$(PHIOLA)/src/gui/mod.h \
 		$(PHIOLA)/src/gui/actions.h
 	$(CXX) $(CXXFLAGS_GUI) $< -o $@
+gui-dialogs.o: $(PHIOLA)/src/gui/dialogs.cpp $(DEPS) $(FFGUI_HDR) \
+		$(wildcard $(PHIOLA)/src/gui/*.h)
+	$(CXX) $(CXXFLAGS_GUI) $< -o $@
 ffgui-gtk.o: $(PHIOLA)/src/util/gui-gtk/ffgui-gtk.c $(DEPS) $(FFGUI_HDR)
 	$(C) $(CFLAGS_GUI) $< -o $@
 ffgui-gtk-loader.o: $(PHIOLA)/src/util/gui-gtk/ffgui-gtk-loader.c $(DEPS) $(FFGUI_HDR) \
@@ -357,6 +360,7 @@ ffgui-winapi-loader.o: $(PHIOLA)/src/util/gui-winapi/ffgui-winapi-loader.c $(DEP
 gui.$(SO): gui-mod.o \
 		gui.o \
 		gui-main.o \
+		gui-dialogs.o \
 		$(FFGUI_OBJ)
 	$(LINKXX) -shared $+ $(LINKFLAGS_GUI) -o $@
 
