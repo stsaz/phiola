@@ -131,8 +131,7 @@ static int conv_input(struct cmd_conv *v, ffstr s)
 		return _ffargs_err(&x->cmd, 1, "unknown option '%S'. Use '-h' for usage info.", &s);
 
 	x->stdin_busy = ffstr_eqz(&s, "@stdin");
-	*ffvec_pushT(&v->input, ffstr) = s;
-	return 0;
+	return cmd_input(&v->input, s);
 }
 
 static int conv_seek(struct cmd_conv *v, ffstr s) { return cmd_time_value(&v->seek, s); }

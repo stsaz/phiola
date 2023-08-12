@@ -83,8 +83,7 @@ static int play_input(struct cmd_play *p, ffstr s)
 		return _ffargs_err(&x->cmd, 1, "unknown option '%S'. Use '-h' for usage info.", &s);
 
 	x->stdin_busy = ffstr_eqz(&s, "@stdin");
-	*ffvec_pushT(&p->input, ffstr) = s;
-	return 0;
+	return cmd_input(&p->input, s);
 }
 
 static void play_qu_add(struct cmd_play *p, ffstr *fn)

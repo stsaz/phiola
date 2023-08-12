@@ -68,8 +68,7 @@ static int info_input(struct cmd_info *p, ffstr s)
 		return _ffargs_err(&x->cmd, 1, "unknown option '%S'. Use '-h' for usage info.", &s);
 
 	x->stdin_busy = ffstr_eqz(&s, "@stdin");
-	*ffvec_pushT(&p->input, ffstr) = s;
-	return 0;
+	return cmd_input(&p->input, s);
 }
 
 static void info_qu_add(struct cmd_info *p, ffstr *fn)

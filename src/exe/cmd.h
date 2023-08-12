@@ -3,6 +3,7 @@
 
 #include <FFOS/std.h>
 #include <FFOS/path.h>
+#include <FFOS/dirscan.h>
 
 static const char pcm_fmtstr[][8] = {
 	"float32",
@@ -100,6 +101,56 @@ static void cmd_meta_set(ffvec *dst, const ffvec *src)
 		ffstr_splitby(it, '=', &name, &val);
 		x->metaif->set(dst, name, val, 0);
 	}
+}
+
+#ifdef FF_WIN
+static int wildcard_expand(ffvec *input, ffstr s)
+{
+	int rc = -1;
+	ffstr dir, name;
+	ffpath_splitpath(s.ptr, s.len, &dir, &name);
+	if (!dir.len)
+		ffstr_setz(&dir, ".");
+	char *dirz = ffsz_dupstr(&dir);
+
+	ffdirscan ds = {};
+	ds.wildcard = ffsz_dupstr(&name);
+	if (!!ffdirscan_open(&ds, dirz, FFDIRSCAN_USEWILDCARD)) {
+		errlog("dir open: %s: %s", dirz, fferr_strptr(fferr_last()));
+		goto err;
+	}
+
+	const char *fn;
+	while (!!(fn = ffdirscan_next(&ds))) {
+		dbglog("wildcard expand: %s", fn);
+		ffstr *p = ffvec_zpushT(input, ffstr);
+		ffsize cap = 0;
+		ffstr_growfmt(p, &cap, "%S\\%s", &dir, fn);
+	}
+
+	rc = 0;
+
+err:
+	ffmem_free(dirz);
+	ffmem_free((char*)ds.wildcard);
+	ffdirscan_close(&ds);
+	return rc;
+}
+#endif
+
+static int cmd_input(ffvec *input, ffstr s)
+{
+#ifdef FF_WIN
+	if (ffstr_findany(&s, "*?", 2) >= 0
+		&& !ffstr_matchz(&s, "\\\\?\\")) {
+		if (!!wildcard_expand(input, s))
+			return 1;
+	} else
+#endif
+	{
+		*ffvec_pushT(input, ffstr) = s;
+	}
+	return 0;
 }
 
 #include <exe/record.h>
