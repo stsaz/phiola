@@ -402,6 +402,9 @@ static void wmain_action(ffui_wnd *wnd, int id)
 	case A_QUIT:
 		m->wnd.close();  break;
 
+	case A_LIST_ADD:
+		wlistadd_show(1);  break;
+
 	case A_LIST_REMOVE:
 		gui_core_task_slice(list_remove, m->vlist.selected());  break;
 

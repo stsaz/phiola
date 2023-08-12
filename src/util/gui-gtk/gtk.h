@@ -526,6 +526,7 @@ struct ffui_labelxx : ffui_label {
 
 struct ffui_editxx : ffui_edit {
 	ffstr text() { ffstr s = {}; ffui_edit_textstr(this, &s); return s; }
+	void focus() { gtk_widget_grab_focus(h); }
 };
 
 struct ffui_tabxx : ffui_tab {

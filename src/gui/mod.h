@@ -18,6 +18,7 @@ static inline void gui_core_task_slice(void (*func)(ffstr), ffslice d) {
 }
 
 FF_EXTERN void list_add(ffstr fn);
+FF_EXTERN void list_add_sz(void *sz);
 FF_EXTERN void list_remove(ffstr data);
 FF_EXTERN void lists_save();
 FF_EXTERN void ctl_play(uint i);

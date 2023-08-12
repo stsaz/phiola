@@ -290,7 +290,8 @@ static int img_new(ffconf_scheme *cs, ffui_loader *g)
 // BUTTON
 static int btn_text(ffconf_scheme *cs, ffui_loader *g, const ffstr *val)
 {
-	ffui_btn_settextstr(g->btn, val);
+	ffstr s = vars_val(&g->vars, *val);
+	ffui_btn_settextstr(g->btn, &s);
 	return 0;
 }
 static int btn_style(ffconf_scheme *cs, ffui_loader *g, const ffstr *val)

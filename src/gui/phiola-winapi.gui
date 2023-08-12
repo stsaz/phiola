@@ -19,6 +19,12 @@ menu mfile {
 }
 
 menu mlist {
+	item $MLAdd {
+		action A_LIST_ADD
+		hotkey "Insert"
+	}
+	item - {
+	}
 	item $MLRemove {
 		action A_LIST_REMOVE
 		hotkey "Delete"
@@ -221,6 +227,29 @@ window wmain {
 
 	statusbar stbar {
 		parts -1
+	}
+}
+
+window wlistadd {
+	title $WTListAdd
+	position 300 300 400 100
+	popupfor wmain
+	font {
+		name Arial
+		height 10
+	}
+
+	label lname {
+		text $LAName
+	}
+
+	editbox turi {
+		resize cx
+	}
+
+	button badd {
+		text $LAAdd
+		action A_LISTADD_ADD
 	}
 }
 

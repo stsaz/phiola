@@ -68,5 +68,6 @@ type: enum FFUI_EDIT_SCROLL */
 #ifdef __cplusplus
 struct ffui_editxx : ffui_edit {
 	ffstr text() { ffstr s = {}; ffui_textstr(this, &s); return s; }
+	void focus() { SetFocus(h); }
 };
 #endif

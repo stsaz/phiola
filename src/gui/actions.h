@@ -4,6 +4,8 @@
 	X(A_QUIT),
 
 // List
+	X(A_LIST_ADD),
+		X(A_LISTADD_ADD),
 	X(A_LIST_REMOVE),
 	X(A_LIST_CLEAR),
 

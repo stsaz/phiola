@@ -182,6 +182,14 @@ void list_add(ffstr fn)
 	gd->queue->add(NULL, &qe);
 }
 
+void list_add_sz(void *sz)
+{
+	struct phi_queue_entry qe = {
+		.conf.ifile.name = sz,
+	};
+	gd->queue->add(NULL, &qe);
+}
+
 void list_remove(ffstr data)
 {
 	ffslice d = *(ffslice*)&data;

@@ -5,6 +5,10 @@ MMFile					"_File"
 	MFExit					"E_xit"
 
 MMList					"_List"
+	MLAdd					"_Add..."
+		WTListAdd				"Add to List"
+		LAAdd					"Add"
+		LAName					"File Path or URL:"
 	MLRemove				"_Remove"
 	MLClear					"_Clear"
 
