@@ -108,18 +108,15 @@ static void fw_name_var(ffvec *buf, ffstr var, phi_track *t)
 		goto data;
 	}
 
-	ffstr fdir = {}, fname = {};
-
 	switch (r) {
 	case VAR_FILEPATH:
-	case VAR_FILENAME:
-		if (!fname.len)
-			ffpath_split3_str(FFSTR_Z(t->conf.ifile.name), &fdir, &fname, NULL);
-		if (r == VAR_FILEPATH)
-			val = fdir;
-		else
-			val = fname;
-		break;
+	case VAR_FILENAME: {
+		ffstr fdir = {}, fname = {};
+		ffpath_split3_str(FFSTR_Z(t->conf.ifile.name), &fdir, &fname, NULL);
+		val = (r == VAR_FILEPATH) ? fdir : fname;
+		ffvec_addstr(buf, &val);
+		return;
+	}
 
 	case VAR_NOWDATE:
 	case VAR_NOWTIME:
