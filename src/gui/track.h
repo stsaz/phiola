@@ -93,9 +93,11 @@ static int gtrk_process(void *ctx, phi_track *t)
 		gt->time_total = samples_to_msec(t->audio.total, gt->sample_rate) / 1000;
 	}
 
-	if (!gt->opened) {
-		if (!wmain_track_new(gt->t->qent, gt->time_total, t))
+	if (!gt->opened || t->meta_changed) {
+		if (!wmain_track_new(t, gt->time_total)) {
 			gt->opened = 1;
+			t->meta_changed = 0;
+		}
 	}
 
 	if (gt->seek_msec != -1) {

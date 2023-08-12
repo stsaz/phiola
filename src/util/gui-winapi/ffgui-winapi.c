@@ -27,7 +27,7 @@ enum {
 };
 static uint _ffui_flags;
 
-static HWND create(enum FFUI_UID uid, const ffsyschar *text, HWND parent, const ffui_pos *r, uint style, uint exstyle, void *param);
+static HWND create(enum FFUI_UID uid, const wchar_t *text, HWND parent, const ffui_pos *r, uint style, uint exstyle, void *param);
 static int ctl_create(ffui_ctl *c, enum FFUI_UID uid, HWND parent);
 static void getpos_noscale(HWND h, ffui_pos *r);
 static int setpos_noscale(void *ctl, int x, int y, int cx, int cy, int flags);
@@ -43,7 +43,7 @@ static int process_accels(MSG *m);
 
 struct ctlinfo {
 	const char *stype;
-	const ffsyschar *sid;
+	const wchar_t *sid;
 	uint style;
 	uint exstyle;
 };
@@ -305,7 +305,7 @@ void ffui_getpos2(void *ctl, ffui_pos *r, uint flags)
 	}
 }
 
-static HWND create(enum FFUI_UID uid, const ffsyschar *text, HWND parent, const ffui_pos *r, uint style, uint exstyle, void *param)
+static HWND create(enum FFUI_UID uid, const wchar_t *text, HWND parent, const ffui_pos *r, uint style, uint exstyle, void *param)
 {
 	HINSTANCE inst = NULL;
 	if (uid == FFUI_UID_WINDOW)
@@ -348,7 +348,7 @@ int ffui_ctl_destroy(void *_c)
 int ffui_textstr(void *_c, ffstr *dst)
 {
 	ffui_ctl *c = _c;
-	ffsyschar ws[255], *w = ws;
+	wchar_t ws[255], *w = ws;
 	ffsize len = ffui_send(c->h, WM_GETTEXTLENGTH, 0, 0);
 
 	if (len >= FF_COUNT(ws)
@@ -488,7 +488,7 @@ int ffui_lbl_create(ffui_label *c, ffui_wnd *parent)
 }
 
 
-int ffui_img_create(ffui_img *im, ffui_wnd *parent)
+int ffui_img_create(ffui_image *im, ffui_wnd *parent)
 {
 	if (0 != ctl_create((void*)im, FFUI_UID_IMAGE, parent->h))
 		return 1;
@@ -534,7 +534,7 @@ int ffui_combx_create(ffui_ctl *c, ffui_wnd *parent)
 int ffui_combx_textstr(ffui_combx *c, uint idx, ffstr *dst)
 {
 	ffsize len = ffui_send(c->h, CB_GETLBTEXTLEN, idx, 0);
-	ffsyschar ws[255], *w = ws;
+	wchar_t ws[255], *w = ws;
 
 	if (len >= FF_COUNT(ws)
 		&& NULL == (w = ffws_alloc(len + 1)))
@@ -724,7 +724,7 @@ void ffui_pos_limit(ffui_pos *r, const ffui_pos *screen)
 }
 
 
-int ffui_icon_load_q(ffui_icon *ico, const ffsyschar *filename, uint index, uint flags)
+int ffui_icon_load_q(ffui_icon *ico, const wchar_t *filename, uint index, uint flags)
 {
 	HICON *big = NULL, *small = NULL;
 	if (flags & FFUI_ICON_SMALL)
@@ -736,7 +736,7 @@ int ffui_icon_load_q(ffui_icon *ico, const ffsyschar *filename, uint index, uint
 
 int ffui_icon_load(ffui_icon *ico, const char *filename, uint index, uint flags)
 {
-	ffsyschar *w, ws[255];
+	wchar_t *w, ws[255];
 	size_t n = FF_COUNT(ws) - 1;
 	int r;
 	if (NULL == (w = ffs_utow(ws, &n, filename, ffsz_len(filename))))
@@ -748,7 +748,7 @@ int ffui_icon_load(ffui_icon *ico, const char *filename, uint index, uint flags)
 	return r;
 }
 
-int ffui_icon_loadimg_q(ffui_icon *ico, const ffsyschar *filename, uint cx, uint cy, uint flags)
+int ffui_icon_loadimg_q(ffui_icon *ico, const wchar_t *filename, uint cx, uint cy, uint flags)
 {
 	if (flags & FFUI_ICON_DPISCALE) {
 		cx = _ffui_dpi_scale(cx);
@@ -760,7 +760,7 @@ int ffui_icon_loadimg_q(ffui_icon *ico, const ffsyschar *filename, uint cx, uint
 
 int ffui_icon_loadimg(ffui_icon *ico, const char *filename, uint cx, uint cy, uint flags)
 {
-	ffsyschar *w, ws[255];
+	wchar_t *w, ws[255];
 	size_t n = FF_COUNT(ws) - 1;
 	int r;
 	if (NULL == (w = ffs_utow(ws, &n, filename, ffsz_len(filename))))
@@ -774,7 +774,7 @@ int ffui_icon_loadimg(ffui_icon *ico, const char *filename, uint cx, uint cy, ui
 
 int ffui_icon_loadstd(ffui_icon *ico, uint tag)
 {
-	const ffsyschar *fn;
+	const wchar_t *fn;
 	uint type = tag & ~0xffff, n = (tag & 0xffff);
 
 	switch (type) {
@@ -791,7 +791,7 @@ int ffui_icon_loadstd(ffui_icon *ico, uint tag)
 	return ffui_icon_load_q(ico, fn, n, 0);
 }
 
-int ffui_icon_loadres(ffui_icon *ico, const ffsyschar *name, uint cx, uint cy)
+int ffui_icon_loadres(ffui_icon *ico, const wchar_t *name, uint cx, uint cy)
 {
 	uint f = (cx == 0 && cy == 0) ? LR_DEFAULTSIZE : 0;
 	ico->h = LoadImageW(GetModuleHandleW(NULL), name, IMAGE_ICON, _ffui_dpi_scale(cx), _ffui_dpi_scale(cy), f);

@@ -173,11 +173,12 @@ static const char* pcm_channelstr(uint channels)
 }
 
 /** Thread: worker */
-int wmain_track_new(struct phi_queue_entry *qe, uint time_total, phi_track *t)
+int wmain_track_new(phi_track *t, uint time_total)
 {
 	gui_wmain *m = gg->wmain;
 	if (!m) return -1;
 
+	struct phi_queue_entry *qe = (struct phi_queue_entry*)t->qent;
 	char buf[1000];
 	ffsz_format(buf, sizeof(buf), "%u kbps, %s, %u Hz, %s, %s"
 		, (t->audio.bitrate + 500) / 1000
@@ -367,27 +368,6 @@ apply:
 	gui_core_task(ctl_volume);
 }
 
-/** Thread: main */
-#ifdef FF_WIN
-static void list_remove(ffstr data)
-{
-	ffslice d = *(ffslice*)&data;
-	for (int i = d.len - 1;  i >= 0;  i--) {
-		gd->queue->remove(gd->queue->at(NULL, *ffslice_itemT(&d, i, uint)));
-	}
-	ffslice_free(&d);
-}
-#else
-static void list_remove(void *ptr)
-{
-	ffui_sel *sel = (ffui_sel*)ptr;
-	for (int i = sel->len - 1;  i >= 0;  i--) {
-		gd->queue->remove(gd->queue->at(NULL, *ffslice_itemT(sel, i, uint)));
-	}
-	ffui_view_sel_free(sel);
-}
-#endif
-
 #ifdef FF_WIN
 static void wmain_on_drop_files(ffui_wnd *wnd, ffui_fdrop *df)
 {
@@ -420,15 +400,7 @@ static void wmain_action(ffui_wnd *wnd, int id)
 		m->wnd.close();  break;
 
 	case A_LIST_REMOVE:
-#ifdef FF_WIN
-		{
-		ffvec v = m->vlist.selected();
-		gui_core_task_data(list_remove, *(ffstr*)&v);
-		}
-#else
-		gui_core_task_ptr(list_remove, m->vlist.selected());
-#endif
-		break;
+		gui_core_task_slice(list_remove, m->vlist.selected());  break;
 
 	case A_LIST_CLEAR:
 		gui_core_task_uint(ctl_action, A_LIST_CLEAR);  break;

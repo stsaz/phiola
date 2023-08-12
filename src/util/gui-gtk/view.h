@@ -195,29 +195,25 @@ static inline int ffui_view_selected_first(const ffui_view *v)
 }
 
 /** Get array of selected items.
-Return ffui_sel*.  Free with ffui_view_sel_free(). */
-static inline ffui_sel* ffui_view_getsel(ffui_view *v)
+Return uint[]; free with ffslice_free(). */
+static inline ffslice ffui_view_selected(ffui_view *v)
 {
 	GtkTreeSelection *tvsel = gtk_tree_view_get_selection(GTK_TREE_VIEW(v->h));
 	GList *rows = gtk_tree_selection_get_selected_rows(tvsel, NULL);
 	uint n = gtk_tree_selection_count_selected_rows(tvsel);
 
-	ffvec a = {};
-	if (NULL == ffvec_allocT(&a, n, uint))
-		return NULL;
+	ffslice a = {};
+	if (NULL == ffslice_allocT(&a, n, uint))
+		return a;
 
 	for (GList *l = rows;  l != NULL;  l = l->next) {
 		GtkTreePath *path = (GtkTreePath*)l->data;
 		int *ii = gtk_tree_path_get_indices(path);
-		*ffvec_pushT(&a, uint) = ii[0];
+		*ffslice_pushT(&a, n, uint) = ii[0];
 	}
 	g_list_free_full(rows, (GDestroyNotify)gtk_tree_path_free);
 
-	ffui_sel *sel = ffmem_new(ffui_sel);
-	sel->ptr = (char*)a.ptr;
-	sel->len = a.len;
-	sel->off = 0;
-	return sel;
+	return a;
 }
 
 static inline void ffui_view_sel_free(ffui_sel *sel)
@@ -339,7 +335,7 @@ struct ffui_viewxx : ffui_view {
 	void update(uint first, int delta) { ffui_post_view_setdata(this, first, delta); }
 	void clear() { ffui_post_view_clear(this); }
 	int focused() { return ffui_view_focused(this); }
-	ffui_sel* selected() { return ffui_view_getsel(this); }
+	ffslice selected() { return ffui_view_selected(this); }
 	int selected_first() { return ffui_view_selected_first(this); }
 	ffui_viewcolxx& column(int pos, ffui_viewcolxx *vc) {
 		ffui_view_col(this, pos, &vc->vc);

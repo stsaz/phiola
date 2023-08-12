@@ -127,7 +127,7 @@ static inline void ffui_wnd_setplacement(ffui_wnd *w, uint showcmd, const ffui_p
 static inline int ffui_wnd_tooltip(ffui_wnd *w, ffui_ctl *ctl, const char *text, ffsize len)
 {
 	TTTOOLINFOW ti = {};
-	ffsyschar *pw, ws[255];
+	wchar_t *pw, ws[255];
 	ffsize n = FF_COUNT(ws) - 1;
 
 	if (w->ttip == NULL

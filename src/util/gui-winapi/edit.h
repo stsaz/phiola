@@ -31,7 +31,7 @@ static inline ffstr ffui_edit_text(ffui_edit *e)
 
 static inline int ffui_edit_addtext(ffui_edit *c, const char *text, size_t len)
 {
-	ffsyschar *w, ws[255];
+	wchar_t *w, ws[255];
 	ffsize n = FF_COUNT(ws) - 1;
 	if (NULL == (w = ffs_utow(ws, &n, text, len)))
 		return -1;

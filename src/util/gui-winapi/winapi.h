@@ -271,7 +271,7 @@ static inline int ffui_setpos(void *ctl, int x, int y, int cx, int cy, int flags
 
 static inline int ffui_settext(void *c, const char *text, ffsize len)
 {
-	ffsyschar *w, ws[255];
+	wchar_t *w, ws[255];
 	ffsize n = FF_COUNT(ws) - 1;
 	if (NULL == (w = ffs_utow(ws, &n, text, len)))
 		return -1;
@@ -416,14 +416,14 @@ static inline void ffui_lbl_setcursor(ffui_label *c, uint type)
 
 
 // IMAGE
-typedef struct ffui_img {
+typedef struct ffui_image {
 	FFUI_CTL;
 	uint click_id;
-} ffui_img;
+} ffui_image;
 
-FF_EXTERN int ffui_img_create(ffui_img *im, ffui_wnd *parent);
+FF_EXTERN int ffui_img_create(ffui_image *im, ffui_wnd *parent);
 
-static inline void ffui_img_set(ffui_img *im, ffui_icon *ico)
+static inline void ffui_img_set(ffui_image *im, ffui_icon *ico)
 {
 	ffui_send(im->h, STM_SETIMAGE, IMAGE_ICON, ico->h);
 }
@@ -456,7 +456,7 @@ FF_EXTERN int ffui_stbar_create(ffui_stbar *c, ffui_wnd *parent);
 
 static inline void ffui_stbar_settext(ffui_stbar *sb, int idx, const char *text, ffsize len)
 {
-	ffsyschar *w, ws[255];
+	wchar_t *w, ws[255];
 	ffsize n = FF_COUNT(ws) - 1;
 	if (NULL == (w = ffs_utow(ws, &n, text, len)))
 		return;
@@ -538,7 +538,7 @@ typedef struct ffui_view ffui_view;
 union ffui_anyctl {
 	ffui_ctl *ctl;
 	ffui_label *lbl;
-	ffui_img *img;
+	ffui_image *img;
 	ffui_btn *btn;
 	ffui_checkbox *cb;
 	ffui_edit *edit;

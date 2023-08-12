@@ -126,6 +126,16 @@ void list_add(ffstr fn)
 	gd->queue->add(NULL, &qe);
 }
 
+void list_remove(ffstr data)
+{
+	ffslice d = *(ffslice*)&data;
+	uint *it;
+	FFSLICE_RWALK(&d, it) {
+		gd->queue->remove(gd->queue->at(NULL, *it));
+	}
+	ffslice_free(&d);
+}
+
 struct cmd {
 	phi_task task;
 	void (*func)();

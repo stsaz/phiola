@@ -22,7 +22,7 @@ FF_EXTERN int ffui_combx_create(ffui_ctl *c, ffui_wnd *parent);
 idx: -1: insert to end */
 static inline void ffui_combx_ins(ffui_combx *c, int idx, const char *txt, ffsize len)
 {
-	ffsyschar *w, ws[255];
+	wchar_t *w, ws[255];
 	ffsize n = FF_COUNT(ws) - 1;
 	if (NULL == (w = ffs_utow(ws, &n, txt, len)))
 		return;

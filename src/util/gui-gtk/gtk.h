@@ -454,7 +454,6 @@ enum FFUI_MSG {
 	FFUI_TRK_SET,
 	FFUI_TRK_SETRANGE,
 	FFUI_VIEW_CLEAR,
-	FFUI_VIEW_GETSEL,
 	FFUI_VIEW_SCROLLSET,
 	FFUI_VIEW_SETDATA,
 	FFUI_WND_SETTEXT,
@@ -478,9 +477,6 @@ FF_EXTERN ffsize ffui_send(void *ctl, uint id, void *udata);
 #define ffui_post_view_scroll_set(ctl, vert_pos)  ffui_post(ctl, FFUI_VIEW_SCROLLSET, (void*)(ffsize)vert_pos)
 #define ffui_clipboard_settextstr(str)  ffui_send(NULL, FFUI_CLIP_SETTEXT, (void*)str)
 
-/** See ffui_view_getsel().
-Return ffui_sel* */
-#define ffui_send_view_getsel(v)  ffui_send(v, FFUI_VIEW_GETSEL, NULL)
 static inline void ffui_send_view_setdata(ffui_view *v, uint first, int delta)
 {
 	ffsize p = ((first & 0xffff) << 16) | (delta & 0xffff);

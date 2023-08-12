@@ -93,9 +93,10 @@ window wmain {
 	}
 
 	button bpause {
-		position 5 5 30 30
+		size 30 30
 		tooltip "Play/Pause"
 		action A_PLAYPAUSE
+		style horizontal
 		icon {
 			resource 3
 			size 30 30
@@ -136,17 +137,18 @@ window wmain {
 	}
 
 	label lpos {
-		position 135 10 150 30
+		size 150 30
+		style horizontal
 		font {
 			name Arial
-			height 12
+			height 16
 			style bold
 		}
 	}
 
 	trackbar tvol {
-		position 305 10 120 20
-		style no_ticks both
+		size 120 20
+		style horizontal no_ticks both
 		range 125
 		value 100
 		page_size 5
@@ -203,6 +205,6 @@ window wmain {
 	}
 
 	statusbar stbar {
-		parts 150 -1
+		parts -1
 	}
 }

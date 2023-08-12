@@ -125,9 +125,9 @@ int FFTHREAD_PROCCALL gui_worker(void *param)
 
 	wmain_show();
 
-	dbglog("entering GTK loop");
+	dbglog("entering GUI loop");
 	ffui_run();
-	dbglog("exited GTK loop");
+	dbglog("exited GUI loop");
 
 end:
 	ffui_uninit();

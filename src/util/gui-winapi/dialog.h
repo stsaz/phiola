@@ -68,7 +68,7 @@ static inline char* ffui_dlg_open(ffui_dialog *d, ffui_wnd *wnd)
 		d->pname += d->of.nFileOffset; //skip directory
 
 	} else {
-		d->pname += ffq_len(w); //for ffui_dlg_nextname() to return NULL
+		d->pname += wcslen(w); //for ffui_dlg_nextname() to return NULL
 		ffmem_free(d->name);
 		if (NULL == (d->name = ffsz_alloc_wtou(w)))
 			return NULL;
@@ -114,7 +114,7 @@ static inline char* ffui_dlg_nextname(ffui_dialog *d)
 {
 	ffmem_free(d->name); d->name = NULL; //free the previous name
 
-	ffsize cap, namelen = ffq_len(d->pname);
+	ffsize cap, namelen = wcslen(d->pname);
 	if (namelen == 0) {
 		ffmem_free(d->names); d->names = NULL;
 		return NULL;

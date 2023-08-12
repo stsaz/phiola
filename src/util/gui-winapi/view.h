@@ -391,11 +391,11 @@ static inline int ffui_view_get(ffui_view *v, int sub, ffui_viewitem *it)
 	while (ffui_ctl_send(v, LVM_GETITEMW, 0, &it->item)) {
 
 		if (!(it->item.mask & LVIF_TEXT)
-			|| ffq_len(it->item.pszText) + 1 != (size_t)it->item.cchTextMax)
+			|| wcslen(it->item.pszText) + 1 != (size_t)it->item.cchTextMax)
 			return 0;
 
 		wchar_t *p;
-		if (NULL == (p = (wchar_t*)ffmem_realloc(it->w, cap * sizeof(ffsyschar))))
+		if (NULL == (p = (wchar_t*)ffmem_realloc(it->w, cap * sizeof(wchar_t))))
 			return -1;
 		it->w = p;
 		it->item.pszText = it->w;
@@ -509,16 +509,25 @@ struct ffui_viewxx : ffui_view {
 		ffui_view_settextstr(&vi, &text);
 		ffui_view_set(this, col, &vi);
 	}
-	void update(uint first, int delta) { ffui_view_redraw(this, first, first + ((delta) ? 50 : 0)); }
+	void update(uint first, int delta) {
+		uint last = first;
+		if (delta > 0) {
+			last = first + 50;
+		} else if (delta < 0) {
+			last = first + 50;
+			first = ffmax((int)first - 50, 0);
+		}
+		ffui_view_redraw(this, first, last);
+	}
 	void clear() { ffui_view_clear(this); }
 	int focused() { return ffui_view_focused(this); }
-	ffvec selected() {
+	ffslice selected() {
 		ffvec sel = {};
 		int i = -1;
 		while (-1 != (i = ffui_view_selnext(this, i))) {
 			*ffvec_pushT(&sel, uint) = i;
 		}
-		return sel;
+		return *(ffslice*)&sel;
 	}
 	int selected_first() { return ffui_view_selnext(this, -1); }
 	ffui_viewcolxx& column(int pos, ffui_viewcolxx *vc) {

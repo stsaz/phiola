@@ -97,7 +97,7 @@ static inline void ffui_tree_get(ffui_view *v, HTREEITEM pitem, ffui_tvitem *it)
 
 static inline char* ffui_tree_text(ffui_view *t, void *item)
 {
-	ffsyschar buf[255];
+	wchar_t buf[255];
 	TVITEMW it = {};
 	it.mask = TVIF_TEXT;
 	it.pszText = buf;

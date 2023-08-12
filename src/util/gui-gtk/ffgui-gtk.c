@@ -634,9 +634,6 @@ static gboolean _ffui_send_handler(gpointer data)
 	case FFUI_VIEW_SCROLLSET:
 		ffui_view_scroll_setvert((ffui_view*)c->ctl, (ffsize)c->udata);  break;
 
-	case FFUI_VIEW_GETSEL:
-		c->udata = ffui_view_getsel((ffui_view*)c->ctl);  break;
-
 	case FFUI_VIEW_SETDATA: {
 		uint first = (ffsize)c->udata >> 16;
 		uint delta = (ffssize)c->udata & 0xffff;

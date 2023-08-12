@@ -86,7 +86,7 @@ do { \
 
 static inline int ffui_menu_settext(ffui_menuitem *mi, const char *s, ffsize len)
 {
-	ffsyschar *w;
+	wchar_t *w;
 	ffsize n;
 	if (NULL == (w = ffs_utow(NULL, &n, s, len)))
 		return -1;

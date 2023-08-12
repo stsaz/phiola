@@ -13,8 +13,12 @@ FF_EXTERN void gui_core_task(void (*func)());
 FF_EXTERN void gui_core_task_uint(void (*func)(uint), uint i);
 FF_EXTERN void gui_core_task_ptr(void (*func)(void*), void *ptr);
 FF_EXTERN void gui_core_task_data(void (*func)(ffstr), ffstr d);
+static inline void gui_core_task_slice(void (*func)(ffstr), ffslice d) {
+	gui_core_task_data(func, *(ffstr*)&d);
+}
 
 FF_EXTERN void list_add(ffstr fn);
+FF_EXTERN void list_remove(ffstr data);
 FF_EXTERN void lists_save();
 FF_EXTERN void ctl_play(uint i);
 FF_EXTERN void ctl_volume();
@@ -23,7 +27,7 @@ FF_EXTERN void userconf_save(ffstr data);
 FF_EXTERN void gui_stop();
 
 FF_EXTERN void wmain_status(const char *fmt, ...);
-FF_EXTERN int wmain_track_new(struct phi_queue_entry *qe, uint time_total, phi_track *t);
+FF_EXTERN int wmain_track_new(phi_track *t, uint time_total);
 FF_EXTERN void wmain_track_close();
 FF_EXTERN void wmain_track_update(uint playtime, uint time_total);
 
