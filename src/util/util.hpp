@@ -6,6 +6,7 @@
 struct ffstrxx : ffstr {
 	ffstrxx() { ptr = NULL;  len = 0; }
 	ffstrxx(ffstr s) { ptr = s.ptr;  len = s.len; }
+	ffstrxx(const char *sz) { ptr = (char*)sz;  len = ffsz_len(sz); }
 	bool operator==(const char *sz) const { return ffstr_eqz(this, sz); }
 	ffssize split(char by, ffstrxx *left, ffstrxx *right) const { return ffstr_splitby(this, by, left, right); }
 	ffssize matchf(const char *fmt, ...) const {

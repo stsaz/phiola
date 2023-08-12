@@ -6,6 +6,10 @@ include_language {
 }
 
 menu mfile {
+	item $MFInfo {
+		action A_FILE_INFO
+		hotkey "I"
+	}
 	item $MFDelete {
 		action A_FILE_DEL
 		hotkey "Shift+Delete"
@@ -227,6 +231,22 @@ window wmain {
 
 	statusbar stbar {
 		parts -1
+	}
+}
+
+window winfo {
+	position 300 100 300 500
+	popupfor wmain
+
+	listview vinfo {
+		size 100 100
+		resize cx cy
+		style edit_labels explorer_theme grid_lines multi_select
+
+		column $FIName {
+		}
+		column $FIValue {
+		}
 	}
 }
 

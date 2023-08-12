@@ -1,6 +1,9 @@
 # phiola v2.0-beta2 GUI English
 
 MMFile					"_File"
+	MFInfo					"Show _Info"
+		FIName					"Name"
+		FIValue					"Value"
 	MFDelete				"_Delete (Trash)"
 	MFExit					"E_xit"
 

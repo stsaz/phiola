@@ -393,9 +393,15 @@ static void tab_new()
 static void wmain_action(ffui_wnd *wnd, int id)
 {
 	gui_wmain *m = gg->wmain;
+	int i;
 	dbglog("%s cmd:%u", __func__, id);
 
 	switch (id) {
+	case A_FILE_INFO:
+		if ((i = m->vlist.selected_first()) >= 0)
+			winfo_show(1, i);
+		break;
+
 	case A_FILE_DEL:
 		gui_core_task_slice(file_del, m->vlist.selected());  break;
 
@@ -411,12 +417,10 @@ static void wmain_action(ffui_wnd *wnd, int id)
 	case A_LIST_CLEAR:
 		gui_core_task_uint(ctl_action, A_LIST_CLEAR);  break;
 
-	case A_PLAY: {
-		int i = m->vlist.focused();
-		if (i >= 0)
+	case A_PLAY:
+		if ((i = m->vlist.focused()) >= 0)
 			gui_core_task_uint(ctl_play, i);
 		break;
-	}
 
 	case A_VOL:
 	case A_VOLUP:

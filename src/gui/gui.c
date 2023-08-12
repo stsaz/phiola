@@ -55,6 +55,7 @@ end:
 
 extern const ffui_ldr_ctl
 	wmain_ctls[],
+	winfo_ctls[],
 	wlistadd_ctls[],
 	wabout_ctls[];
 
@@ -66,6 +67,7 @@ static void* gui_getctl(void *udata, const ffstr *name)
 		FFUI_LDR_CTL(struct gui, mplay),
 		FFUI_LDR_CTL(struct gui, mhelp),
 		FFUI_LDR_CTL3_PTR(struct gui, wmain, wmain_ctls),
+		FFUI_LDR_CTL3_PTR(struct gui, winfo, winfo_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, wlistadd, wlistadd_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, wabout, wabout_ctls),
 		FFUI_LDR_CTL_END
@@ -124,6 +126,7 @@ int FFTHREAD_PROCCALL gui_worker(void *param)
 	gg = ffmem_new(struct gui);
 	ffui_init();
 	wmain_init();
+	winfo_init();
 	wlistadd_init();
 	wabout_init();
 
