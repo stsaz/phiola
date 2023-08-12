@@ -27,10 +27,18 @@ FF_EXTERN void ctl_action(uint id);
 FF_EXTERN void userconf_save(ffstr data);
 FF_EXTERN void gui_stop();
 
+FF_EXTERN void convert_add(ffstr data);
+FF_EXTERN void convert_begin(void *param);
+
 FF_EXTERN void wmain_status(const char *fmt, ...);
 FF_EXTERN int wmain_track_new(phi_track *t, uint time_total);
 FF_EXTERN void wmain_track_close();
-FF_EXTERN void wmain_track_update(uint playtime, uint time_total);
+FF_EXTERN void wmain_track_update(uint time_cur, uint time_total);
+FF_EXTERN void wmain_conv_track_new(phi_track *t, uint time_total);
+FF_EXTERN void wmain_conv_track_close(phi_track *t);
+FF_EXTERN void wmain_conv_track_update(phi_track *t, uint time_cur, uint time_total);
+
+FF_EXTERN void wconvert_done();
 
 struct gtrk;
 
@@ -48,6 +56,9 @@ struct gui_data {
 
 	fftask task;
 	ffthread th;
+
+	phi_queue_id q_selected, q_convert;
+	uint tab_conversion :1;
 
 	struct {
 		uint seek_step_delta;

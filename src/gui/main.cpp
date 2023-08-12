@@ -247,6 +247,37 @@ void wmain_track_update(uint time_cur, uint time_total)
 	m->lpos.text(buf);
 }
 
+
+void wmain_conv_track_new(phi_track *t, uint time_total)
+{
+}
+
+static void conv_track_update(phi_track *t, const char *progress)
+{
+	gui_wmain *m = gg->wmain;
+	struct phi_queue_entry *qe = (struct phi_queue_entry*)t->qent;
+	gd->metaif->set(&qe->conf.meta, FFSTR_Z("_phi_dur"), FFSTR_Z(progress), PHI_META_REPLACE);
+	if (gd->tab_conversion) {
+		int idx = gd->queue->index(t->qent);
+		m->vlist.update(idx, 0);
+	}
+}
+
+void wmain_conv_track_close(phi_track *t)
+{
+	conv_track_update(t, "Done");
+}
+
+void wmain_conv_track_update(phi_track *t, uint time_cur, uint time_total)
+{
+	char buf[256];
+	ffsz_format(buf, sizeof(buf), "%u:%02u / %u:%02u"
+		, time_cur / 60, time_cur % 60
+		, time_total / 60, time_total % 60);
+	conv_track_update(t, buf);
+}
+
+
 static void list_display(ffui_view_disp *disp)
 {
 #ifdef FF_WIN
@@ -260,7 +291,7 @@ static void list_display(ffui_view_disp *disp)
 	gui_wmain *m = gg->wmain;
 	char buf[1000];
 	ffstr *val = NULL, s;
-	struct phi_queue_entry *qe = gd->queue->ref(NULL, i);
+	struct phi_queue_entry *qe = gd->queue->ref(gd->q_selected, i);
 	if (!qe)
 		return;
 
@@ -316,9 +347,17 @@ static void list_display(ffui_view_disp *disp)
 static void q_on_change(struct phi_queue *q, uint flags, uint pos)
 {
 	gui_wmain *m = gg->wmain;
+	uint n = gd->queue->count(q);
+
+	if ((flags & 0xff) != 'n' && gd->q_selected && q != gd->q_selected)
+		return;
 
 #ifdef FF_WIN
-	ffui_view_setcount(&m->vlist, gd->queue->count(NULL));
+	switch (flags & 0xff) {
+	case 'a':
+	case 'r':
+		m->vlist.length(n, 0);
+	}
 #endif
 
 	switch (flags & 0xff) {
@@ -328,14 +367,22 @@ static void q_on_change(struct phi_queue *q, uint flags, uint pos)
 	case 'r':
 		m->vlist.update(pos, -1);
 #ifdef FF_LINUX
-		m->vlist.update(pos, 0);
+		if (pos < n)
+			m->vlist.update(pos, 0);
 #endif
 		break;
 
 	case 'c':
 		m->vlist.clear();  break;
 
-	// case 'n':
+	case 'n':
+		gd->tab_conversion = 1;
+		gd->q_selected = q;
+		m->tabs.add("Conversion");
+		m->tabs.select(1);
+		m->vlist.clear();
+		break;
+
 	// case 'd':
 	}
 }
@@ -390,6 +437,24 @@ static void tab_new()
 	m->tabs.add(buf);
 }
 
+static void list_changed(uint i)
+{
+	gui_wmain *m = gg->wmain;
+
+	gd->tab_conversion = (gd->q_convert && i+1 == m->tabs.count());
+	if (!gd->tab_conversion)
+		gd->queue->select(i);
+	gd->q_selected = (gd->tab_conversion) ? gd->q_convert : NULL;
+	uint n = gd->queue->count(gd->q_selected);
+
+#ifdef FF_WIN
+	m->vlist.length(n, 1);
+#else
+	m->vlist.clear();
+	m->vlist.update(0, n);
+#endif
+}
+
 static void wmain_action(ffui_wnd *wnd, int id)
 {
 	gui_wmain *m = gg->wmain;
@@ -403,10 +468,15 @@ static void wmain_action(ffui_wnd *wnd, int id)
 		break;
 
 	case A_FILE_DEL:
-		gui_core_task_slice(file_del, m->vlist.selected());  break;
+		if (!gd->tab_conversion)
+			gui_core_task_slice(file_del, m->vlist.selected());
+		break;
 
 	case A_QUIT:
 		m->wnd.close();  break;
+
+	case A_LIST_CHANGE:
+		list_changed(m->tabs.changed());  break;
 
 	case A_LIST_ADD:
 		wlistadd_show(1);  break;
@@ -418,7 +488,7 @@ static void wmain_action(ffui_wnd *wnd, int id)
 		gui_core_task_uint(ctl_action, A_LIST_CLEAR);  break;
 
 	case A_PLAY:
-		if ((i = m->vlist.focused()) >= 0)
+		if (!gd->tab_conversion && (i = m->vlist.focused()) >= 0)
 			gui_core_task_uint(ctl_play, i);
 		break;
 
@@ -439,6 +509,14 @@ static void wmain_action(ffui_wnd *wnd, int id)
 		list_display(&m->vlist.disp);
 #endif
 		break;
+
+	case A_CONVERT_SHOW: {
+		ffslice items = {};
+		if (!gd->tab_conversion)
+			items = m->vlist.selected();
+		wconvert_show(1, items);
+		break;
+	}
 
 	case A_ABOUT_SHOW:
 		wabout_show(1);  break;

@@ -5,6 +5,7 @@
 	X(A_QUIT),
 
 // List
+	X(A_LIST_CHANGE),
 	X(A_LIST_ADD),
 		X(A_LISTADD_ADD),
 	X(A_LIST_REMOVE),
@@ -26,6 +27,10 @@
 	X(A_VOL),
 	X(A_VOLUP),
 	X(A_VOLDOWN),
+
+// Convert
+	X(A_CONVERT_SHOW),
+		X(A_CONVERT_START),
 
 // Help
 	X(A_ABOUT_SHOW),

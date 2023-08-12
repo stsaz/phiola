@@ -27,6 +27,13 @@ MMPlayback				"_Playback"
 	MPVolumeUp				"Volume _Up"
 	MPVolumeDown			"Volume _Down"
 
+MMConvert				"_Convert"
+	MCConvert				"_Convert..."
+		WTConvert				"Convert"
+		COutName				"Output File Name:"
+		COutExt					"Output File Extension:"
+		CStart					"Begin Conversion"
+
 MMHelp					"_Help"
 	MHAbout					"_About"
 		WTAbout					"About phiola"

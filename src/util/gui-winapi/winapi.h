@@ -570,6 +570,11 @@ FF_EXTERN void ffui_thd_post(ffui_handler func, void *udata);
 
 
 #ifdef __cplusplus
+struct ffui_buttonxx : ffui_btn {
+	void text(const char *sz) { ffui_settextz(this, sz); }
+	void enable(uint val) { EnableWindow(h, val); }
+};
+
 struct ffui_trackbarxx : ffui_trkbar {
 	void set(uint value) { ffui_trk_set(this, value); }
 	uint get() { return ffui_trk_val(this); }

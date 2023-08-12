@@ -231,7 +231,8 @@ static int lbl_style(ffconf_scheme *cs, ffui_loader *g, const ffstr *val)
 }
 static int lbl_text(ffconf_scheme *cs, ffui_loader *g, const ffstr *val)
 {
-	ffui_lbl_settextstr(g->lbl, val);
+	ffstr s = vars_val(&g->vars, *val);
+	ffui_lbl_settextstr(g->lbl, &s);
 	return 0;
 }
 static int lbl_done(ffconf_scheme *cs, ffui_loader *g)

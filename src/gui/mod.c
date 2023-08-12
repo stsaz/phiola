@@ -8,6 +8,7 @@
 #endif
 #include <gui/mod.h>
 #include <gui/track.h>
+#include <gui/track-convert.h>
 #include <FFOS/dir.h>
 #include <FFOS/ffos-extern.h>
 
@@ -49,7 +50,7 @@ void file_del(ffstr data)
 	uint *it;
 
 	FFSLICE_WALK(&indexes, it) {
-		qe = gd->queue->at(NULL, *it);
+		qe = gd->queue->at(gd->q_selected, *it);
 		*ffvec_pushT(&names, char*) = qe->conf.ifile.name;
 	}
 
@@ -60,7 +61,7 @@ void file_del(ffstr data)
 #endif
 
 	FFSLICE_RWALK(&indexes, it) {
-		qe = gd->queue->at(NULL, *it);
+		qe = gd->queue->at(gd->q_selected, *it);
 		gd->queue->remove(qe);
 	}
 
@@ -116,7 +117,7 @@ void ctl_action(uint cmd)
 {
 	switch (cmd) {
 	case A_LIST_CLEAR:
-		gd->queue->clear(NULL);  break;
+		gd->queue->clear(gd->q_selected);  break;
 
 	case A_PLAYPAUSE:
 		if (gd->playing_track)
@@ -195,10 +196,70 @@ void list_remove(ffstr data)
 	ffslice d = *(ffslice*)&data;
 	uint *it;
 	FFSLICE_RWALK(&d, it) {
-		gd->queue->remove(gd->queue->at(NULL, *it));
+		gd->queue->remove(gd->queue->at(gd->q_selected, *it));
 	}
 	ffslice_free(&d);
 }
+
+
+static void grd_conv_close(void *f, phi_track *t)
+{
+	core->track->stop(t);
+	if (!gd->queue->status(gd->q_convert))
+		wconvert_done();
+}
+static int grd_conv_process(void *f, phi_track *t) { return PHI_DONE; }
+static const phi_filter phi_gui_convert_guard = {
+	NULL, grd_conv_close, grd_conv_process,
+	"convert-guard"
+};
+
+/** Create conversion queue and add tracks to it */
+void convert_add(ffstr data)
+{
+	ffslice indexes = *(ffslice*)&data;
+
+	if (!gd->q_convert) {
+		struct phi_queue_conf qc = {
+			.name = "Conversion",
+			.first_filter = &phi_gui_convert_guard,
+			.ui_module = "gui.track-convert",
+			.conversion = 1,
+		};
+		gd->q_convert = gd->queue->create(&qc); // q_on_change('n') adds a tab
+	}
+
+	uint *it;
+	FFSLICE_WALK(&indexes, it) {
+		const struct phi_queue_entry *iqe = gd->queue->at(NULL, *it);
+
+		struct phi_queue_entry qe = {};
+		phi_track_conf_assign(&qe.conf, &iqe->conf);
+		qe.conf.ifile.name = ffsz_dup(iqe->conf.ifile.name);
+		gd->metaif->copy(&qe.conf.meta, &iqe->conf.meta);
+		gd->queue->add(gd->q_convert, &qe);
+	}
+
+	ffslice_free(&indexes);
+}
+
+/** Set config for each track and begin conversion */
+void convert_begin(void *param)
+{
+	struct phi_track_conf *c = param;
+	struct phi_queue_entry *qe;
+	uint i;
+	for (i = 0;  !!(qe = gd->queue->at(gd->q_convert, i));  i++) {
+		qe->conf.ofile.name = ffsz_dup(c->ofile.name);
+	}
+	if (i)
+		gd->queue->play(NULL, gd->queue->at(gd->q_convert, 0));
+	else
+		wconvert_done();
+	ffmem_free(c->ofile.name);
+	ffmem_free(c);
+}
+
 
 struct cmd {
 	phi_task task;
@@ -287,6 +348,7 @@ extern const phi_filter phi_gui_track;
 static const void* gui_iface(const char *name)
 {
 	if (ffsz_eq(name, "track")) return &phi_gui_track;
+	else if (ffsz_eq(name, "track-convert")) return &phi_gui_conv;
 	return NULL;
 }
 

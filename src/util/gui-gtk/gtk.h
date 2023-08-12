@@ -430,13 +430,7 @@ FF_EXTERN void ffui_run();
 
 typedef void (*ffui_handler)(void *param);
 
-enum {
-	FFUI_POST_WAIT = 1 << 31,
-};
-
-/**
-flags: FFUI_POST_WAIT */
-FF_EXTERN void ffui_thd_post(ffui_handler func, void *udata, uint flags);
+FF_EXTERN void ffui_thd_post(ffui_handler func, void *udata);
 
 enum FFUI_MSG {
 	FFUI_QUITLOOP,
@@ -451,6 +445,7 @@ enum FFUI_MSG {
 	FFUI_TAB_SETACTIVE,
 	FFUI_TEXT_ADDTEXT,
 	FFUI_TEXT_SETTEXT,
+	FFUI_CTL_ENABLE,
 	FFUI_TRK_SET,
 	FFUI_TRK_SETRANGE,
 	FFUI_VIEW_CLEAR,
@@ -490,7 +485,7 @@ static inline void ffui_post_view_setdata(ffui_view *v, uint first, int delta)
 #define ffui_post_trk_setrange(ctl, range)  ffui_post(ctl, FFUI_TRK_SETRANGE, (void*)(ffsize)range)
 #define ffui_post_trk_set(ctl, val)  ffui_post(ctl, FFUI_TRK_SET, (void*)(ffsize)val)
 
-#define ffui_send_tab_ins(ctl, textz)  ffui_send(ctl, FFUI_TAB_INS, textz)
+#define ffui_send_tab_ins(ctl, textz)  ffui_send(ctl, FFUI_TAB_INS, (void*)textz)
 #define ffui_send_tab_setactive(ctl, idx)  ffui_send(ctl, FFUI_TAB_SETACTIVE, (void*)(ffsize)idx)
 static inline int ffui_send_tab_active(ffui_tab *ctl)
 {
@@ -526,10 +521,20 @@ struct ffui_labelxx : ffui_label {
 
 struct ffui_editxx : ffui_edit {
 	ffstr text() { ffstr s = {}; ffui_edit_textstr(this, &s); return s; }
+	void text(const char *sz) { ffui_edit_settextz(this, sz); }
+	void text(ffstr s) { ffui_edit_settextstr(this, &s); }
 	void focus() { gtk_widget_grab_focus(h); }
 };
 
+struct ffui_buttonxx : ffui_btn {
+	void text(const char *sz) { ffui_btn_settextz(this, sz); }
+	void enable(uint val) { ffui_post(this, FFUI_CTL_ENABLE, (void*)(ffsize)val); }
+};
+
 struct ffui_tabxx : ffui_tab {
-	void add(const char *sz) { ffui_tab_append(this, sz); }
+	void add(const char *sz) { ffui_send_tab_ins(this, sz); }
+	void select(int i) { ffui_send_tab_setactive(this, i); }
+	uint changed() { return changed_index; }
+	uint count() { return ffui_tab_count(this); }
 };
 #endif

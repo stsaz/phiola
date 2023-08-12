@@ -30,7 +30,7 @@ else
 endif
 CFLAGS_BASE := $(CFLAGS)
 CFLAGS += -I$(PHIOLA)/src -I$(FFOS)
-CXXFLAGS := $(CFLAGS)
+CXXFLAGS := $(CFLAGS) -fno-exceptions -fno-rtti -Wno-c++11-narrowing
 ifeq "$(OS)" "windows"
 	LINKFLAGS += -lws2_32
 endif
@@ -330,7 +330,8 @@ CXXFLAGS_GUI := $(CXXFLAGS) $(CFLAGS_GUI)
 LINKFLAGS_GUI := $(LINKFLAGS) $(LINKFLAGS_GUI)
 gui-mod.o: $(PHIOLA)/src/gui/mod.c $(DEPS) \
 		$(PHIOLA)/src/gui/mod.h \
-		$(PHIOLA)/src/gui/track.h
+		$(PHIOLA)/src/gui/track.h \
+		$(PHIOLA)/src/gui/track-convert.h
 	$(C) $(CFLAGS) $< -o $@
 gui.o: $(PHIOLA)/src/gui/gui.c $(DEPS) $(FFGUI_HDR) \
 		$(PHIOLA)/src/gui/gui.h \
@@ -343,7 +344,9 @@ gui-main.o: $(PHIOLA)/src/gui/main.cpp $(DEPS) $(FFGUI_HDR) \
 		$(PHIOLA)/src/gui/actions.h
 	$(CXX) $(CXXFLAGS_GUI) $< -o $@
 gui-dialogs.o: $(PHIOLA)/src/gui/dialogs.cpp $(DEPS) $(FFGUI_HDR) \
-		$(wildcard $(PHIOLA)/src/gui/*.h)
+		$(PHIOLA)/src/gui/gui.h \
+		$(PHIOLA)/src/gui/mod.h \
+		$(wildcard $(PHIOLA)/src/gui/*.hpp)
 	$(CXX) $(CXXFLAGS_GUI) $< -o $@
 ffgui-gtk.o: $(PHIOLA)/src/util/gui-gtk/ffgui-gtk.c $(DEPS) $(FFGUI_HDR)
 	$(C) $(CFLAGS_GUI) $< -o $@

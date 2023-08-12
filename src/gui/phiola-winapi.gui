@@ -85,6 +85,13 @@ menu mplay {
 	}
 }
 
+menu mconvert {
+	item $MCConvert {
+		action A_CONVERT_SHOW
+		hotkey "Ctrl+T"
+	}
+}
+
 menu mhelp {
 	item $MHAbout {
 		action A_ABOUT_SHOW
@@ -111,6 +118,9 @@ window wmain {
 		}
 		item $MMPlayback {
 			submenu mplay
+		}
+		item $MMConvert {
+			submenu mconvert
 		}
 		item $MMHelp {
 			submenu mhelp
@@ -192,6 +202,7 @@ window wmain {
 	tab tabs {
 		size 300 20
 		resize cx
+		onchange A_LIST_CHANGE
 	}
 
 	listview vlist {
@@ -270,6 +281,33 @@ window wlistadd {
 	button badd {
 		text $LAAdd
 		action A_LISTADD_ADD
+	}
+}
+
+window wconvert {
+	position 300 100 300 300
+	title $WTConvert
+	popupfor wmain
+	font {
+		name Arial
+		height 10
+	}
+
+	label lname {
+		text $COutName
+	}
+	editbox oname {
+		resize cx
+	}
+	label lext {
+		text $COutExt
+	}
+	editbox oext {
+		resize cx
+	}
+	button bstart {
+		text $CStart
+		action A_CONVERT_START
 	}
 }
 

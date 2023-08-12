@@ -519,6 +519,10 @@ struct ffui_viewxx : ffui_view {
 		}
 		ffui_view_redraw(this, first, last);
 	}
+	void length(uint n, bool redraw) {
+		uint flags = (redraw) ? 0 : LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL;
+		ffui_ctl_send(this, LVM_SETITEMCOUNT, n, flags);
+	}
 	void clear() { ffui_view_clear(this); }
 	int focused() { return ffui_view_focused(this); }
 	ffslice selected() {

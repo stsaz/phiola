@@ -44,8 +44,10 @@ void gui_userconf_load()
 	while (d.len) {
 		ffstr_splitby(&d, '\n', &line, &d);
 		ffstr_splitby(&line, ' ', &k, &v);
-		if (k.len)
-			wmain_userconf_read(k, v);
+		if (k.len
+			&& (!wmain_userconf_read(k, v)
+				|| !wconvert_userconf_read(k, v)))
+		{}
 	}
 
 end:
@@ -55,6 +57,7 @@ end:
 
 extern const ffui_ldr_ctl
 	wmain_ctls[],
+	wconvert_ctls[],
 	winfo_ctls[],
 	wlistadd_ctls[],
 	wabout_ctls[];
@@ -65,8 +68,10 @@ static void* gui_getctl(void *udata, const ffstr *name)
 		FFUI_LDR_CTL(struct gui, mfile),
 		FFUI_LDR_CTL(struct gui, mlist),
 		FFUI_LDR_CTL(struct gui, mplay),
+		FFUI_LDR_CTL(struct gui, mconvert),
 		FFUI_LDR_CTL(struct gui, mhelp),
 		FFUI_LDR_CTL3_PTR(struct gui, wmain, wmain_ctls),
+		FFUI_LDR_CTL3_PTR(struct gui, wconvert, wconvert_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, winfo, winfo_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, wlistadd, wlistadd_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, wabout, wabout_ctls),
@@ -128,13 +133,14 @@ int FFTHREAD_PROCCALL gui_worker(void *param)
 	wmain_init();
 	winfo_init();
 	wlistadd_init();
+	wconvert_init();
 	wabout_init();
 
 	if (!!load_ui())
 		goto end;
 	gui_userconf_load();
 
-	wmain_show();
+	ffui_thd_post((void(*)(void*))wmain_show, NULL);
 
 	dbglog("entering GUI loop");
 	ffui_run();
@@ -152,6 +158,7 @@ void gui_quit()
 
 	ffvec buf = {};
 	wmain_userconf_write(&buf);
+	wconvert_userconf_write(&buf);
 	gui_core_task_data(userconf_save, *(ffstr*)&buf);
 
 	ffui_post_quitloop();

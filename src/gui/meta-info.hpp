@@ -66,7 +66,7 @@ void winfo_show(uint show, uint idx)
 		return;
 	}
 
-	struct phi_queue_entry *qe = gd->queue->ref(NULL, idx);
+	struct phi_queue_entry *qe = gd->queue->ref(gd->q_selected, idx);
 	if (qe == NULL) return;
 
 	w->wnd.title(qe->conf.ifile.name);

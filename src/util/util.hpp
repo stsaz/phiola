@@ -2,6 +2,7 @@
 2023, Simon Zolin */
 
 #include <ffbase/string.h>
+#include <ffbase/vector.h>
 
 struct ffstrxx : ffstr {
 	ffstrxx() { ptr = NULL;  len = 0; }
@@ -16,4 +17,29 @@ struct ffstrxx : ffstr {
 		va_end(va);
 		return r;
 	}
+};
+
+struct ffvecxx : ffvec {
+	ffvecxx() { ffvec_null(this); }
+	ffvecxx(ffstr s) {
+		ptr = s.ptr, len = s.len, cap = s.len;
+	}
+	~ffvecxx() { ffvec_free(this); }
+	void free() { ffvec_free(this); }
+	ffvecxx& set(const char *sz) {
+		ffvec_free(this);
+		ptr = (void*)sz, len = ffsz_len(sz);
+		return *this;
+	}
+	ffvecxx& acquire(ffstr s) {
+		ffvec_free(this);
+		ptr = s.ptr, len = s.len, cap = s.len;
+		return *this;
+	}
+	ffvecxx& copy(ffstr s) {
+		len = 0;
+		ffvec_addstr(this, &s);
+		return *this;
+	}
+	const ffstr& str() const { return *(ffstr*)(this); }
 };

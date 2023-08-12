@@ -558,22 +558,9 @@ static gboolean _ffui_thd_func(gpointer data)
 	return 0;
 }
 
-void ffui_thd_post(ffui_handler func, void *udata, uint id)
+void ffui_thd_post(ffui_handler func, void *udata)
 {
-	_ffui_log("func:%p  udata:%p  id:%xu", func, udata, id);
-
-	if (id & FFUI_POST_WAIT) {
-		struct cmd c;
-		c.func = func;
-		c.udata = udata;
-		c.ref = 1;
-		ffcpu_fence_release();
-
-		if (0 != gdk_threads_add_idle(_ffui_thd_func, &c)) {
-			ffint_wait_until_equal(&c.ref, 0);
-		}
-		return;
-	}
+	_ffui_log("func:%p  udata:%p", func, udata);
 
 	struct cmd *c = ffmem_new(struct cmd);
 	c->func = func;
@@ -597,6 +584,11 @@ static gboolean _ffui_send_handler(gpointer data)
 
 	case FFUI_QUITLOOP:
 		ffui_quitloop();  break;
+
+
+	case FFUI_CTL_ENABLE:
+		gtk_widget_set_sensitive(((ffui_ctl*)c->ctl)->h, (ffsize)c->udata);  break;
+
 
 	case FFUI_LBL_SETTEXT:
 		ffui_lbl_settextz((ffui_label*)c->ctl, c->udata);  break;
