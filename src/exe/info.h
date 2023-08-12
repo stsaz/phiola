@@ -65,7 +65,7 @@ static int info_tracks(struct cmd_info *p, ffstr s) { return cmd_tracks(&p->trac
 static int info_input(struct cmd_info *p, ffstr s)
 {
 	if (s.len && s.ptr[0] == '-')
-		return cmdarg_err(&x->cmd, "unknown option '%S'. Use '-h' for usage info.", &s);
+		return _ffargs_err(&x->cmd, 1, "unknown option '%S'. Use '-h' for usage info.", &s);
 
 	x->stdin_busy = ffstr_eqz(&s, "@stdin");
 	*ffvec_pushT(&p->input, ffstr) = s;
@@ -121,14 +121,14 @@ static int info_action()
 static int info_check(struct cmd_info *p)
 {
 	if (!p->input.len)
-		return cmdarg_err(&x->cmd, "please specify input file");
+		return _ffargs_err(&x->cmd, 1, "please specify input file");
 
 	x->action = info_action;
 	return 0;
 }
 
 #define O(m)  (void*)FF_OFF(struct cmd_info, m)
-static const struct cmd_arg cmd_info[] = {
+static const struct ffarg cmd_info[] = {
 	{ "-exclude",	'S',	info_exclude },
 	{ "-help",		0,		info_help },
 	{ "-include",	'S',	info_include },
@@ -144,10 +144,10 @@ static const struct cmd_arg cmd_info[] = {
 };
 #undef O
 
-static struct cmd_ctx cmd_info_init(void *obj)
+static struct ffarg_ctx cmd_info_init(void *obj)
 {
 	x->cmd_data = ffmem_new(struct cmd_info);
-	struct cmd_ctx cx = {
+	struct ffarg_ctx cx = {
 		cmd_info, x->cmd_data
 	};
 	return cx;

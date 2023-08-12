@@ -55,16 +55,16 @@ static int gui_open()
 	return 0;
 }
 
-static const struct cmd_arg cmd_gui[] = {
+static const struct ffarg cmd_gui[] = {
 	{ "-help",		0,		gui_help },
 	{ "\0\1",		'S',	gui_input },
 	{ "",			0,		gui_open },
 };
 
-static struct cmd_ctx cmd_gui_init(void *obj)
+static struct ffarg_ctx cmd_gui_init(void *obj)
 {
 	x->cmd_data = ffmem_new(struct cmd_gui);
-	struct cmd_ctx cx = {
+	struct ffarg_ctx cx = {
 		cmd_gui, x->cmd_data
 	};
 	return cx;

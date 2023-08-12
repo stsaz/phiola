@@ -116,7 +116,7 @@ static int dev_list_prepare()
 }
 
 #define O(m)  (void*)FF_OFF(struct cmd_dev_list, m)
-static const struct cmd_arg cmd_dev_list[] = {
+static const struct ffarg cmd_dev_list[] = {
 	{ "-audio",		's',	O(audio) },
 	{ "-capture",	'1',	O(capture) },
 	{ "-help",		'1',	dev_help },
@@ -125,16 +125,16 @@ static const struct cmd_arg cmd_dev_list[] = {
 };
 #undef O
 
-static struct cmd_ctx cmd_dev_list_init()
+static struct ffarg_ctx cmd_dev_list_init()
 {
 	x->cmd_data = ffmem_new(struct cmd_dev_list);
-	struct cmd_ctx cx = {
+	struct ffarg_ctx cx = {
 		cmd_dev_list, x->cmd_data
 	};
 	return cx;
 }
 
-static const struct cmd_arg cmd_dev[] = {
+static const struct ffarg cmd_dev[] = {
 	{ "-help",	'1',	dev_help },
 	{ "list",	'{',	cmd_dev_list_init },
 	{ "",		0,		dev_help },

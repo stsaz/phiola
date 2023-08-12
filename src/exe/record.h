@@ -144,7 +144,7 @@ static int rec_action()
 static int rec_check(struct cmd_rec *r)
 {
 	if (!r->output)
-		return cmdarg_err(&x->cmd, "please specify output file name with '-out FILE'");
+		return _ffargs_err(&x->cmd, 1, "please specify output file name with '-out FILE'");
 	if (!r->aac_profile)
 		r->aac_profile = "l";
 
@@ -160,7 +160,7 @@ static int rec_meta(struct cmd_rec *r, ffstr s)
 {
 	ffstr name, val;
 	if (ffstr_splitby(&s, '=', &name, &val) <= 0)
-		return cmdarg_err(&x->cmd, "invalid meta: '%S'", &s);
+		return _ffargs_err(&x->cmd, 1, "invalid meta: '%S'", &s);
 	*ffvec_pushT(&r->meta, ffstr) = s;
 	return 0;
 }
@@ -168,14 +168,14 @@ static int rec_meta(struct cmd_rec *r, ffstr s)
 static int rec_aformat(struct cmd_rec *r, ffstr s)
 {
 	if (~0U == (r->aformat = pcm_str_fmt(s.ptr, s.len)))
-		return cmdarg_err(&x->cmd, "incorrect audio format '%S'", &s);
+		return _ffargs_err(&x->cmd, 1, "incorrect audio format '%S'", &s);
 	return 0;
 }
 
 static int rec_until(struct cmd_rec *r, ffstr s) { return cmd_time_value(&r->until, s); }
 
 #define O(m)  (void*)FF_OFF(struct cmd_rec, m)
-static const struct cmd_arg cmd_rec[] = {
+static const struct ffarg cmd_rec[] = {
 	{ "-aac-profile",	's',	O(aac_profile) },
 	{ "-aac-quality",	'u',	O(aac_q) },
 	{ "-aformat",		'S',	rec_aformat },
@@ -199,10 +199,10 @@ static const struct cmd_arg cmd_rec[] = {
 };
 #undef O
 
-static struct cmd_ctx cmd_rec_init(void *obj)
+static struct ffarg_ctx cmd_rec_init(void *obj)
 {
 	x->cmd_data = ffmem_new(struct cmd_rec);
-	struct cmd_ctx cx = {
+	struct ffarg_ctx cx = {
 		cmd_rec, x->cmd_data
 	};
 	return cx;

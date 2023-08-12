@@ -5,10 +5,10 @@
 #include <track.h>
 #include <util/log.h>
 #include <util/crash.h>
-#include <util/cmdarg.h>
 #include <FFOS/std.h>
 #include <FFOS/environ.h>
 #include <FFOS/ffos-extern.h>
+#include <ffbase/args.h>
 
 #ifndef FF_DEBUG
 #define PHI_CRASH_HANDLER
@@ -32,7 +32,7 @@ struct exe {
 	uint stdout_busy :1;
 
 	ffstr codepage;
-	struct cmd_obj cmd;
+	struct ffargs cmd;
 	void *cmd_data;
 	int (*action)();
 

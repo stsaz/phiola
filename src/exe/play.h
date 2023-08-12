@@ -71,7 +71,7 @@ static int play_tracks(struct cmd_play *p, ffstr s) { return cmd_tracks(&p->trac
 static int play_input(struct cmd_play *p, ffstr s)
 {
 	if (s.len && s.ptr[0] == '-')
-		return cmdarg_err(&x->cmd, "unknown option '%S'. Use '-h' for usage info.", &s);
+		return _ffargs_err(&x->cmd, 1, "unknown option '%S'. Use '-h' for usage info.", &s);
 
 	x->stdin_busy = ffstr_eqz(&s, "@stdin");
 	*ffvec_pushT(&p->input, ffstr) = s;
@@ -132,14 +132,14 @@ static int play_action()
 static int play_check(struct cmd_play *p)
 {
 	if (!p->input.len)
-		return cmdarg_err(&x->cmd, "please specify input file");
+		return _ffargs_err(&x->cmd, 1, "please specify input file");
 
 	x->action = play_action;
 	return 0;
 }
 
 #define O(m)  (void*)FF_OFF(struct cmd_play, m)
-static const struct cmd_arg cmd_play[] = {
+static const struct ffarg cmd_play[] = {
 	{ "-audio",		'S',	O(audio) },
 	{ "-buffer",	'u',	O(buffer) },
 	{ "-device",	'u',	O(device) },
@@ -158,10 +158,10 @@ static const struct cmd_arg cmd_play[] = {
 };
 #undef O
 
-static struct cmd_ctx cmd_play_init(void *obj)
+static struct ffarg_ctx cmd_play_init(void *obj)
 {
 	x->cmd_data = ffmem_new(struct cmd_play);
-	struct cmd_ctx cx = {
+	struct ffarg_ctx cx = {
 		cmd_play, x->cmd_data
 	};
 	return cx;

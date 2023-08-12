@@ -102,7 +102,7 @@ static int conv_exclude(struct cmd_conv *v, ffstr s)
 static int conv_aformat(struct cmd_conv *v, ffstr s)
 {
 	if (~0U == (v->aformat = pcm_str_fmt(s.ptr, s.len)))
-		return cmdarg_err(&x->cmd, "incorrect audio format '%S'", &s);
+		return _ffargs_err(&x->cmd, 1, "incorrect audio format '%S'", &s);
 	return 0;
 }
 
@@ -110,7 +110,7 @@ static int conv_meta(struct cmd_conv *v, ffstr s)
 {
 	ffstr name, val;
 	if (ffstr_splitby(&s, '=', &name, &val) <= 0)
-		return cmdarg_err(&x->cmd, "invalid meta: '%S'", &s);
+		return _ffargs_err(&x->cmd, 1, "invalid meta: '%S'", &s);
 	*ffvec_pushT(&v->meta, ffstr) = s;
 	return 0;
 }
@@ -120,7 +120,7 @@ static int conv_tracks(struct cmd_conv *v, ffstr s) { return cmd_tracks(&v->trac
 static int conv_input(struct cmd_conv *v, ffstr s)
 {
 	if (s.len && s.ptr[0] == '-')
-		return cmdarg_err(&x->cmd, "unknown option '%S'. Use '-h' for usage info.", &s);
+		return _ffargs_err(&x->cmd, 1, "unknown option '%S'. Use '-h' for usage info.", &s);
 
 	x->stdin_busy = ffstr_eqz(&s, "@stdin");
 	*ffvec_pushT(&v->input, ffstr) = s;
@@ -201,9 +201,9 @@ static int conv_action()
 static int conv_prepare(struct cmd_conv *v)
 {
 	if (!v->input.len)
-		return cmdarg_err(&x->cmd, "please specify input file");
+		return _ffargs_err(&x->cmd, 1, "please specify input file");
 	if (!v->output)
-		return cmdarg_err(&x->cmd, "please specify output file name with '-out FILE'");
+		return _ffargs_err(&x->cmd, 1, "please specify output file name with '-out FILE'");
 	if (!v->aac_profile)
 		v->aac_profile = "l";
 
@@ -216,7 +216,7 @@ static int conv_prepare(struct cmd_conv *v)
 }
 
 #define O(m)  (void*)FF_OFF(struct cmd_conv, m)
-static const struct cmd_arg cmd_conv[] = {
+static const struct ffarg cmd_conv[] = {
 	{ "-aac-profile",	's',	O(aac_profile) },
 	{ "-aac-quality",	'u',	O(aac_q) },
 	{ "-aformat",		'S',	conv_aformat },
@@ -242,10 +242,10 @@ static const struct cmd_arg cmd_conv[] = {
 };
 #undef O
 
-static struct cmd_ctx cmd_conv_init(void *obj)
+static struct ffarg_ctx cmd_conv_init(void *obj)
 {
 	x->cmd_data = ffmem_new(struct cmd_conv);
-	struct cmd_ctx cx = {
+	struct ffarg_ctx cx = {
 		cmd_conv, x->cmd_data
 	};
 	return cx;

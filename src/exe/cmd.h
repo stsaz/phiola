@@ -68,7 +68,7 @@ static int cmd_time_value(ffuint64 *msec, ffstr s)
 {
 	ffdatetime dt = {};
 	if (s.len != fftime_fromstr1(&dt, s.ptr, s.len, FFTIME_HMS_MSEC_VAR))
-		return cmdarg_err(&x->cmd, "incorrect time value '%S'", &s);
+		return _ffargs_err(&x->cmd, 1, "incorrect time value '%S'", &s);
 
 	fftime t;
 	fftime_join1(&t, &dt);
@@ -83,7 +83,7 @@ static int cmd_tracks(ffvec *tracks, ffstr s)
 		ffstr_splitby(&s, ',', &it, &s);
 		uint n;
 		if (!ffstr_to_uint32(&it, &n))
-			return cmdarg_err(&x->cmd, "incorrect track number '%S'", &it);
+			return _ffargs_err(&x->cmd, 1, "incorrect track number '%S'", &it);
 		*ffvec_pushT(tracks, uint) = n;
 	}
 	return 0;
@@ -162,7 +162,7 @@ static int cmd_codepage(void *obj, ffstr s)
 {
 	int r = ffu_coding(s);
 	if (r < 0) {
-		cmdarg_err(&x->cmd, "unknown codepage: '%S'", &s);
+		_ffargs_err(&x->cmd, 1, "unknown codepage: '%S'", &s);
 		return 1;
 	}
 	x->codepage_id = r;
@@ -170,7 +170,7 @@ static int cmd_codepage(void *obj, ffstr s)
 }
 
 #define O(m)  (void*)FF_OFF(struct exe, m)
-static const struct cmd_arg cmd_root[] = {
+static const struct ffarg cmd_root[] = {
 	{ "-Debug",		'1',		O(debug) },
 	{ "-codepage",	's',		cmd_codepage },
 	{ "-help",		0,			root_help },
@@ -187,17 +187,8 @@ static const struct cmd_arg cmd_root[] = {
 
 static int cmd(char **argv, uint argc)
 {
-	struct cmd_obj c = {
-		.argv = argv + 1,
-		.argc = argc - 1,
-		.cx = {
-			cmd_root, x
-		},
-		.options = CMDO_PARTIAL | CMDO_DUPLICATES,
-	};
-	x->cmd = c;
 	int r;
-	if ((r = cmd_process(&x->cmd)) < 0) {
+	if ((r = ffargs_process_argv(&x->cmd, cmd_root, x, FFARGS_O_PARTIAL | FFARGS_O_DUPLICATES, argv + 1, argc -1)) < 0) {
 		errlog("%s", x->cmd.error);
 	}
 
