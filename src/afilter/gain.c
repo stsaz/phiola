@@ -11,8 +11,7 @@ extern const phi_core *core;
 struct gain {
 	struct phi_af pcm;
 	uint samp_size;
-	int db;
-	double gain;
+	double db, gain;
 };
 
 static void* gain_open(phi_track *t)

@@ -128,11 +128,11 @@ static void tuiplay_seek(tui_track *u, uint cmd, void *udata)
 
 static int tui_setvol(tui_track *u, uint vol)
 {
-	int db;
+	double db;
 	if (vol <= 100)
-		db = vol2db(vol, VOL_LO) * 100;
+		db = vol2db(vol, VOL_LO);
 	else
-		db = vol2db_inc(vol - 100, VOL_MAX - 100, VOL_HI) * 100;
+		db = vol2db_inc(vol - 100, VOL_MAX - 100, VOL_HI);
 	u->t->audio.gain_db = db;
 	return db;
 }
