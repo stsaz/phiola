@@ -126,8 +126,10 @@ static void mod_destroy(struct core_mod *m)
 		dbglog("%s: closing module", m->name);
 		m->mod->close();
 	}
-	if (m->dl != FFDL_NULL)
+	if (m->dl != FFDL_NULL) {
+		dbglog("%s: ffdl_close", m->name);
 		ffdl_close(m->dl);
+	}
 	ffmem_free(m->name);
 }
 

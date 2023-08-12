@@ -47,6 +47,10 @@ static int phi_autow_process(void *obj, phi_track *t)
 {
 	ffstr ext = {};
 	ffpath_split3_output(FFSTR_Z(t->conf.ofile.name), NULL, NULL, &ext);
+	if (!ext.len) {
+		errlog(t, "Please specify output file extension");
+		return PHI_ERR;
+	}
 
 	static const struct map_sz_vptr mods[] = {
 		{ "aac", &phi_aac_adts_write },
@@ -57,6 +61,7 @@ static int phi_autow_process(void *obj, phi_track *t)
 		{ "ogg", &phi_ogg_write },
 		{ "opus", &phi_ogg_write },
 		{ "wav", &phi_wav_write },
+		{}
 	};
 	const void *f;
 	if (NULL == (f = map_sz_vptr_find(mods, ext.ptr))) {

@@ -133,7 +133,7 @@ static inline int woeh_add(woeh *oh, HANDLE h, woeh_handler_t handler, void *uda
 	fflock_lock(&oh->lk);
 	if (oh->count == MAXIMUM_WAIT_OBJECTS || oh->count == (uint)-1) {
 		if (oh->count == MAXIMUM_WAIT_OBJECTS)
-			fferr_set(EOVERFLOW);
+			fferr_set(ERROR_INVALID_PARAMETER);
 		else
 			fferr_set(oh->thderr);
 		fflock_unlock(&oh->lk);

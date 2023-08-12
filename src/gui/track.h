@@ -117,17 +117,17 @@ static int gtrk_process(void *ctx, phi_track *t)
 	}
 
 	if (t->audio.pos == ~0ULL)
-		goto done;
+		goto end;
 
 	uint pos_sec = (uint)(samples_to_msec(t->audio.pos, gt->sample_rate) / 1000);
 	if (pos_sec == gt->last_pos_sec && !(t->chain_flags & PHI_FFIRST))
-		goto done;
+		goto end;
 	gt->last_pos_sec = pos_sec;
 
 	if (gt == gd->playing_track)
 		wmain_track_update(pos_sec, gt->time_total);
 
-done:
+end:
 	t->data_out = t->data_in;
 	return (t->chain_flags & PHI_FFIRST) ? PHI_DONE : PHI_DATA;
 }

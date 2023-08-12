@@ -11,11 +11,12 @@ extern const phi_track_if phi_track_iface;
 static const phi_meta_if *phi_metaif;
 #define dbglog(...)  phi_dbglog(core, "queue", NULL, __VA_ARGS__)
 
+typedef void (*on_change_t)(phi_queue_id, uint, uint);
 struct queue_mgr {
 	ffvec lists; // struct phi_queue*[]
 	uint selected;
 	uint random_ready :1;
-	void (*on_change)(struct phi_queue *q, uint flags, uint pos);
+	on_change_t on_change;
 };
 static struct queue_mgr *qm;
 
@@ -39,7 +40,7 @@ static void* q_insert(struct phi_queue *q, uint pos, struct phi_queue_entry *qe)
 static int q_remove_at(struct phi_queue *q, uint pos, uint n);
 static struct q_entry* q_get(struct phi_queue *q, uint i);
 static int q_find(struct phi_queue *q, struct q_entry *e);
-static void q_on_change(struct phi_queue *q, uint flags, uint pos){}
+static void q_on_change(phi_queue_id q, uint flags, uint pos){}
 
 #include <queue/ent.h>
 
@@ -51,6 +52,7 @@ void qm_destroy()
 	FFSLICE_WALK(&qm->lists, q) {
 		q_free(*q);
 	}
+	ffvec_free(&qm->lists);
 	ffmem_free(qm);
 }
 
@@ -92,7 +94,7 @@ static phi_queue_id qm_select(uint pos)
 	return qm_default();
 }
 
-static void set_on_change(void (*cb)(struct phi_queue*, uint, uint))
+static void set_on_change(on_change_t cb)
 {
 	qm->on_change = cb;
 }
@@ -287,6 +289,18 @@ static int q_status(struct phi_queue *q)
 	return r;
 }
 
+static void q_save_close(void *f, phi_track *t)
+{
+	ffmem_free(t->conf.ofile.name);  t->conf.ofile.name = NULL;
+	core->track->stop(t);
+}
+
+static int q_save_process(void *f, phi_track *t) { return PHI_DONE; }
+
+static const phi_filter phi_qsave_guard = {
+	NULL, q_save_close, q_save_process, "qsave-guard"
+};
+
 static int q_save(struct phi_queue *q, const char *filename)
 {
 	if (!q) q = qm_default();
@@ -305,7 +319,8 @@ static int q_save(struct phi_queue *q, const char *filename)
 	};
 	phi_track *t = core->track->create(&c);
 	t->udata = q;
-	if (!core->track->filter(t, core->mod("format.m3u-write"), 0)
+	if (!core->track->filter(t, &phi_qsave_guard, 0)
+		|| !core->track->filter(t, core->mod("format.m3u-write"), 0)
 		|| (compress
 			&& !core->track->filter(t, core->mod("zstd.compress"), 0))
 		|| !core->track->filter(t, core->mod("core.file-write"), 0)) {

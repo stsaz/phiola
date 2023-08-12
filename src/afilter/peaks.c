@@ -93,7 +93,7 @@ static int peaks_process(struct peaks *p, phi_track *t)
 
 	if (t->chain_flags & PHI_FFIRST) {
 		ffvec buf = {};
-		ffvec_addfmt(&buf, FF_NEWLN "PCM peaks (%,U total samples):" FF_NEWLN
+		ffvec_addfmt(&buf, "\nPCM peaks (%,U total samples):\n"
 			, p->total);
 
 		if (p->total != 0) {
@@ -101,7 +101,7 @@ static int peaks_process(struct peaks *p, phi_track *t)
 
 				double hi = gain_db(pcm_16le_flt(p->ch[ich].high));
 				double avg = gain_db(pcm_16le_flt(p->ch[ich].sum / p->total));
-				ffvec_addfmt(&buf, "Channel #%L: highest peak:%.2FdB, avg peak:%.2FdB.  Clipped: %U (%.4F%%).  CRC:%08xu" FF_NEWLN
+				ffvec_addfmt(&buf, "Channel #%L: highest peak:%.2FdB, avg peak:%.2FdB.  Clipped: %U (%.4F%%).  CRC:%08xu\n"
 					, ich + 1, hi, avg
 					, p->ch[ich].clipped, ((double)p->ch[ich].clipped * 100 / p->total)
 					, p->ch[ich].crc);

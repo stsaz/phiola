@@ -161,7 +161,8 @@ class Core extends Util {
 	private int refcount;
 
 	private static final String TAG = "phiola.Core";
-	private final String CONF_FN = "phiola-user.conf";
+	private static final String CONF_FN = "phiola-user.conf";
+	private static String PUB_DATA_DIR = "phiola";
 
 	private GUI gui;
 	private Queue qu;
@@ -184,6 +185,8 @@ class Core extends Util {
 
 	static Core init_once(Context ctx) {
 		if (instance == null) {
+			if (BuildConfig.DEBUG)
+				PUB_DATA_DIR = "phiola-dbg";
 			Core c = new Core();
 			c.refcount = 1;
 			if (0 != c.init(ctx))
@@ -214,7 +217,7 @@ class Core extends Util {
 
 		loadconf();
 		if (setts.pub_data_dir.isEmpty())
-			setts.pub_data_dir = storage_path + "/phiola";
+			setts.pub_data_dir = storage_path + "/" + PUB_DATA_DIR;
 		if (setts.plist_save_dir.isEmpty())
 			setts.plist_save_dir = setts.pub_data_dir;
 		qu.load();

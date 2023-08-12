@@ -33,7 +33,7 @@ Contents:
 * Instant startup time: very short initial delay until the audio starts playing (e.g. Linux/PulseAudio: TUI: `~25ms`, GUI: `~50ms`)
 * Fast (low footprint): keeps your CPU, memory & disk I/O at absolute minimum; spends 99% of time inside codec algorithms
 
-**Bonus:** Convenient API with plugin-support which allows using all the above features from any C/C++/Java app!
+**Bonus:** Convenient API with plugin support which allows using all the above features from any C/C++/Java app!
 
 
 ## Install
@@ -55,6 +55,12 @@ Linux:
 	ln -s ~/bin/phiola-2/phiola ~/bin/phiola
 	```
 
+Windows:
+
+* Unpack the archive somewhere, e.g. to `C:\Program Files`
+* Add `C:\Program Files\phiola-2` to your `PATH` environment
+* Optionally, create a desktop shortcut to `phiola.exe gui`
+
 Android:
 
 * To be able to install .apk you need to enable "Allow installation from unknown sources" option in your phone's settings (you can disable it again after installation)
@@ -69,13 +75,16 @@ Android:
 Just a few quick examples:
 
 ```sh
-# Play files and directories
-phiola play file.mp3 *.flac "My Music"
+# Play files, directories and URLs
+phiola play file.mp3 *.flac "My Music" http://server/music.m3u
 # or just
-phiola file.mp3 *.flac "My Music"
+phiola file.mp3 *.flac "My Music" http://server/music.m3u
 
 # Record from the default audio device until stopped
 phiola record -o audio.flac
+
+# Record for 1 minute, then stop automatically
+phiola record -o audio.flac -until 1:0
 
 # Record and set meta data
 phiola record -meta "artist=Great Artist" -o audio.flac
@@ -126,7 +135,7 @@ First time start:
 
 ## Libraries
 
-phiola uses modified versions of these third party libraries: libALAC, libfdk-aac, libFLAC, libMAC, libmpg123, libmpc, libogg, libopus, libvorbisenc, libvorbis, libwavpack, libsoxr, libzstd.  Many thanks to their creators for the great work!!!  Please consider their licenses before commercial use.  See contents of `alib3/` for more info.
+phiola uses modified versions of these third party libraries: libALAC, libfdk-aac, libFLAC, libMAC, libmpg123, libmpc, libogg, libopus, libvorbisenc, libvorbis, libwavpack, libsoxr, libzstd, libDynamicAudioNormalizer.  Many thanks to their creators for the great work!!!  Please consider their licenses before commercial use.  See contents of `alib3/` for more info.
 
 
 ## Build

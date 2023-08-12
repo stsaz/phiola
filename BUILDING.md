@@ -6,25 +6,44 @@
 
 	```sh
 	sudo apt install \
-		git make cmake gcc g++ patch dos2unix curl \
+		git \
+		make gcc g++ \
+		libasound2-dev libpulse-dev libjack-dev \
 		libdbus-1-dev \
-		libasound2-dev libpulse-dev libjack-dev
+		libgtk-3-dev \
+		zstd unzip cmake patch dos2unix curl
 	```
 
 * Fedora
 
 	```sh
 	sudo dnf install \
-		git make cmake gcc gcc-c++ patch dos2unix curl \
+		git \
+		make gcc gcc-c++ \
+		alsa-lib-devel pulseaudio-libs-devel pipewire-jack-audio-connection-kit-devel \
 		dbus-devel \
-		alsa-lib-devel pulseaudio-libs-devel pipewire-jack-audio-connection-kit-devel
+		gtk3-devel \
+		zstd unzip cmake patch dos2unix curl
 	```
+
+* Windows
+
+	* `git`
+	* msys2 packages: `mingw-w64-clang-x86_64-clang`
+
+	Environment:
+
+	```
+	set PATH=c:\clang64\bin;%PATH%
+	````
 
 * macOS
 
 	```sh
 	brew install \
-		git make cmake llvm dos2unix
+		git \
+		make llvm \
+		cmake dos2unix
 	```
 
 
@@ -54,20 +73,56 @@ cd phiola
 	make -j8
 	```
 
-* Build on Linux for Windows:
+* Cross-Build on Linux for Debian-buster:
+
+```sh
+cat >builder_debian_buster.Dockerfile <<EOF
+FROM debian:buster-slim AS debian_buster_cxx_builder
+RUN apt update && \
+ apt install -y make gcc g++
+
+FROM debian_buster_cxx_builder
+RUN apt install -y \
+ libasound2-dev libpulse-dev libjack-dev \
+ libdbus-1-dev \
+ libgtk-3-dev \
+ zstd unzip cmake patch dos2unix curl
+EOF
+podman build -t phiola_builder_debian_buster -f builder_debian_buster.Dockerfile .
+podman create -a -i -t \
+ -v `pwd`/phiola-src:/src \
+ --name phiola_build_debian_buster \
+ phiola_builder_debian_buster
+
+podman start -a -i phiola_build_debian_buster
+# Inside the container:
+make -j8 -C /src/ffpack libzstd
+make -j8 -C /src/phiola/alib3
+make -j8 -C /src/phiola
+```
+
+* Cross-Build on Linux for Windows:
 
 	```sh
-	make -j8 -C ../ffpack libzstd OS=windows
-	make -j8 -C alib3 OS=windows
-	make -j8 OS=windows
+	make -j8 OS=windows COMPILER=gcc CROSS_PREFIX=x86_64-w64-mingw32- -C ../ffpack libzstd
+	make -j8 OS=windows COMPILER=gcc CROSS_PREFIX=x86_64-w64-mingw32- -C alib3
+	make -j8 OS=windows COMPILER=gcc CROSS_PREFIX=x86_64-w64-mingw32-
 	```
 
-* Build on Linux for Android/ARM64:
+* Cross-Build on Linux for Android/ARM64:
 
 	```sh
-	make -j8 -C ../ffpack libzstd NDK_DIR=$SDK_DIR/ndk/YOUR_NDK_VERSION SYS=android CPU=arm64
-	make -j8 -C alib3 NDK_DIR=$SDK_DIR/ndk/YOUR_NDK_VERSION SYS=android CPU=arm64
+	make -j8 SYS=android CPU=arm64 NDK_DIR=$SDK_DIR/ndk/YOUR_NDK_VERSION -C ../ffpack libzstd
+	make -j8 SYS=android CPU=arm64 NDK_DIR=$SDK_DIR/ndk/YOUR_NDK_VERSION -C alib3
 	make -j8 -C android SDK_DIR=$SDK_DIR
+	```
+
+* Build on Windows:
+
+	```sh
+	mingw32-make -j8 -C ../ffpack libzstd
+	mingw32-make -j8 -C alib3
+	mingw32-make -j8
 	```
 
 * Build on FreeBSD & macOS:
@@ -83,6 +138,12 @@ cd phiola
 	* `DEBUG=1` - developer build
 	* `PHI_CODECS=0` - disable all codecs
 
+For security, ensure that the original 3rd party libs were used:
+
+```sh
+make -j8 -C ../ffpack md5check
+make -j8 -C alib3 md5check
+```
 
 ## Step 4. Use
 

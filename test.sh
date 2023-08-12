@@ -166,12 +166,18 @@ test_copy() {
 }
 
 test_info() {
+	if ! test -f pl.wav ; then
+		./phiola rec -o pl.wav -f -u 2
+	fi
 	./phiola i pl.wav
 	./phiola i pl.wav -tags
 
 	./phiola i pl.wav -peaks
 	./phiola i pl.wav -peaks -peaks-crc
 
+	if ! test -f fm-wv.wv ; then
+		ffmpeg_encode co.wav
+	fi
 	./phiola i fm-* -peaks
 }
 
@@ -254,9 +260,13 @@ test_meta() {
 
 test_http() {
 	./phiola pl "http://localhost:1/" || true # no connection
-	netmill -l 8080 -w "$HTTP_DIR" &
+	netmill -l 8080 -w . &
+	sleep .5
+	cp -au $HTTP_DIR/$HTTP_FILE ./$HTTP_FILE
+	echo "http://localhost:8080/$HTTP_FILE" >./http.m3u
 	./phiola pl "http://localhost:8080/404" || true # http error
 	./phiola pl "http://localhost:8080/$HTTP_FILE"
+	./phiola pl "http://localhost:8080/http.m3u"
 	kill $!
 }
 

@@ -24,15 +24,23 @@ CFLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-for-loop-analysis -Wno-multic
 CFLAGS += -g
 CFLAGS += -fPIC
 ifeq "$(DEBUG)" "1"
-	CFLAGS += -DFF_DEBUG -O0 -Werror
+	CFLAGS += -DFF_DEBUG -O0 -Werror -Wno-deprecated-declarations
 else
 	CFLAGS += -O3 -fno-strict-aliasing -fvisibility=hidden
+endif
+ifeq "$(ASAN)" "1"
+	CFLAGS += -fsanitize=address
+	LINKFLAGS += -fsanitize=address
 endif
 CFLAGS_BASE := $(CFLAGS)
 CFLAGS += -I$(PHIOLA)/src -I$(FFOS)
 CXXFLAGS := $(CFLAGS) -fno-exceptions -fno-rtti -Wno-c++11-narrowing
 ifeq "$(OS)" "windows"
 	LINKFLAGS += -lws2_32
+endif
+LINK_DL :=
+ifeq "$(OS)" "linux"
+	LINK_DL := -ldl
 endif
 
 # MODULES
@@ -67,7 +75,7 @@ exe.coff: $(PHIOLA)/src/gui/res/exe.rc \
 phiola$(DOTEXE): main.o \
 		$(EXE_OBJ) \
 		core.$(SO)
-	$(LINK) $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -o $@
+	$(LINK) $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) $(LINK_DL) -o $@
 
 # CORE
 %.o: $(PHIOLA)/src/core/%.c $(DEPS) \
@@ -87,7 +95,7 @@ ifeq "$(OS)" "windows"
 	CORE_O += sys-sleep-win.o
 endif
 core.$(SO): $(CORE_O)
-	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_PTHREAD) -o $@
+	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_PTHREAD) $(LINK_DL) -o $@
 
 # AUDIO IO
 
@@ -365,7 +373,7 @@ gui.$(SO): gui-mod.o \
 		gui-main.o \
 		gui-dialogs.o \
 		$(FFGUI_OBJ)
-	$(LINKXX) -shared $+ $(LINKFLAGS_GUI) -o $@
+	$(LINKXX) -shared $+ $(LINKFLAGS_GUI) $(LINK_DL) -o $@
 
 MODS += http.$(SO)
 CFLAGS_NETMILL := $(CFLAGS_BASE) -I$(NETMILL)/src
@@ -388,7 +396,7 @@ http.$(SO): http.o \
 		icy.o \
 		netmill-http-client.o \
 		netmill-http-filters.o
-	$(LINK) -shared $+ $(LINKFLAGS) -o $@
+	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_PTHREAD) -o $@
 
 MODS += zstd.$(SO)
 LIBS3 += $(FFPACK_BIN)/libzstd-ffpack.$(SO)

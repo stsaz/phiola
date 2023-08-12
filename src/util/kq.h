@@ -235,7 +235,12 @@ static inline int zzkq_run(struct zzkq *k)
 				_zzkq_kev_call(k, kev, ev);
 		}
 
-		if (r < 0 && fferr_last() != EINTR) {
+#ifdef FF_WIN
+		if (r < 0)
+#else
+		if (r < 0 && fferr_last() != EINTR)
+#endif
+		{
 			zzkq_syserrlog(k, "ffkq_wait");
 			return -1;
 		}

@@ -410,9 +410,8 @@ static void color_init(struct tui_mod *c)
 	}
 }
 
-static int tui_create()
+static void tui_create(void *param)
 {
-	mod = ffmem_new(struct tui_mod);
 	mod->vol = 100;
 	mod->queue = core->mod("core.queue");
 	mod->phi_metaif = core->mod("format.meta");
@@ -422,7 +421,6 @@ static int tui_create()
 	mod->progress_dots = term_wnd_size - FFS_LEN("[] 00:00 / 00:00");
 
 	core->task(&mod->task_init, tui_stdin_prepare, NULL);
-	return 0;
 }
 
 static void tui_destroy()
@@ -450,7 +448,7 @@ static const phi_mod phi_tui_mod = {
 FF_EXPORT const phi_mod* phi_mod_init(const phi_core *_core)
 {
 	core = _core;
-	if (!!tui_create())
-		return NULL;
+	mod = ffmem_new(struct tui_mod);
+	core->task(&mod->task_init, tui_create, NULL);
 	return &phi_tui_mod;
 }

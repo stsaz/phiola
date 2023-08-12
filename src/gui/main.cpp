@@ -344,7 +344,7 @@ static void list_display(ffui_view_disp *disp)
 }
 
 /** Thread: worker */
-static void q_on_change(struct phi_queue *q, uint flags, uint pos)
+static void q_on_change(phi_queue_id q, uint flags, uint pos)
 {
 	gui_wmain *m = gg->wmain;
 	uint n = gd->queue->count(q);

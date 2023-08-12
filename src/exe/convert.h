@@ -251,9 +251,16 @@ static const struct ffarg cmd_conv[] = {
 };
 #undef O
 
+static void cmd_conv_free()
+{
+	struct cmd_conv *v = x->cmd_data;
+	ffmem_free(v);
+}
+
 static struct ffarg_ctx cmd_conv_init(void *obj)
 {
 	x->cmd_data = ffmem_new(struct cmd_conv);
+	x->cmd_free = cmd_conv_free;
 	struct ffarg_ctx cx = {
 		cmd_conv, x->cmd_data
 	};

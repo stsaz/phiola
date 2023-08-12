@@ -84,6 +84,7 @@ struct cmd_rec {
 	ffbyte loopback;
 	const char *danorm;
 	ffvec meta;
+	char *audio_module;
 };
 
 static int rec_action()
@@ -124,8 +125,8 @@ static int rec_action()
 
 	const char *input = "core.auto-rec";
 	if (r->audio) {
-		char *amod = ffsz_allocfmt("%s.rec%Z", r->audio);
-		input = amod;
+		r->audio_module = ffsz_allocfmt("%s.rec%Z", r->audio);
+		input = r->audio_module;
 	}
 
 	const char *output = (x->stdout_busy) ? "core.stdout" : "core.file-write";
@@ -212,9 +213,17 @@ static const struct ffarg cmd_rec[] = {
 };
 #undef O
 
+static void cmd_rec_free()
+{
+	struct cmd_rec *r = x->cmd_data;
+	ffmem_free(r->audio_module);
+	ffmem_free(r);
+}
+
 static struct ffarg_ctx cmd_rec_init(void *obj)
 {
 	x->cmd_data = ffmem_new(struct cmd_rec);
+	x->cmd_free = cmd_rec_free;
 	struct ffarg_ctx cx = {
 		cmd_rec, x->cmd_data
 	};

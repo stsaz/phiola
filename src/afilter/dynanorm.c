@@ -5,6 +5,7 @@
 #include <util/util.h>
 #include <DynamicAudioNormalizer/DynamicAudioNormalizer-ff.h>
 #include <FFOS/std.h>
+#include <FFOS/ffos-extern.h>
 #include <ffbase/args.h>
 
 static const phi_core *core;

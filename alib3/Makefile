@@ -26,12 +26,12 @@ build: $(addprefix $(TGT_DIR)/lib,$(addsuffix -phi.$(SO),$(LIBS)))
 
 $(TGT_DIR)/lib%-phi.$(SO): %
 	$(MAKE) -I.. -C $<
-	mv $</*.$(SO) $(TGT_DIR)
+	cp $</*.$(SO) $(TGT_DIR)
 
 $(TGT_DIR)/libvorbis-phi.$(SO): vorbis $(TGT_DIR)/libogg-phi.$(SO)
-	mv $(TGT_DIR)/libogg-phi.$(SO) $<
+	cp $(TGT_DIR)/libogg-phi.$(SO) $<
 	$(MAKE) -I.. -C $<
-	mv $</*.$(SO) $(TGT_DIR)
+	cp $</*.$(SO) $(TGT_DIR)
 
 clean:
 	$(MAKE) -I.. -C ALAC clean

@@ -35,6 +35,7 @@ struct exe {
 	struct ffargs cmd;
 	void *cmd_data;
 	int (*action)();
+	void (*cmd_free)();
 
 	char *dump_file_dir;
 	struct crash_info ci;
@@ -169,6 +170,8 @@ static void phi_grd_close(void *f, phi_track *t)
 	x->exit_code = t->error & 0xff;
 
 	if (x->mode_record) {
+		ffmem_free(t->conf.ofile.name);  t->conf.ofile.name = NULL;
+		x->metaif->destroy(&t->meta);
 		x->core->sig(PHI_CORE_STOP);
 		return;
 	}
@@ -287,6 +290,8 @@ static void cleanup()
 {
 	ffmem_free(x->dump_file_dir);
 	phi_core_destroy();
+	if (x->cmd_free)
+		x->cmd_free();
 }
 
 int main(int argc, char **argv, char **env)

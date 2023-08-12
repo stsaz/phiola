@@ -170,9 +170,17 @@ static const struct ffarg cmd_play[] = {
 };
 #undef O
 
+static void cmd_play_free()
+{
+	struct cmd_play *p = x->cmd_data;
+	ffmem_free(p->audio_module);
+	ffmem_free(p);
+}
+
 static struct ffarg_ctx cmd_play_init(void *obj)
 {
 	x->cmd_data = ffmem_new(struct cmd_play);
+	x->cmd_free = cmd_play_free;
 	struct ffarg_ctx cx = {
 		cmd_play, x->cmd_data
 	};

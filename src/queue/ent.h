@@ -71,7 +71,12 @@ static void qe_close(void *f, phi_track *t)
 			e->pub.conf.meta = t->meta; // Remember the tags we read from file in this track
 			ffvec_null(&t->meta);
 		}
+
+		if (e->expand)
+			core->track->stop(t);
 	}
+
+	meta_destroy(&t->meta);
 	e->q->active_n--;
 	if (!(t->chain_flags & PHI_FSTOP)
 		&& (!e->expand || e->play_next_on_close))
@@ -188,7 +193,7 @@ static int qe_expand(struct q_entry *e)
 			goto err;
 	} else {
 		if (!core->track->filter(t, &phi_queue_guard, 0)
-			|| !core->track->filter(t, core->mod("core.file-read"), 0)
+			|| !core->track->filter(t, core->mod("core.auto-input"), 0)
 			|| (decompress
 				&& !core->track->filter(t, core->mod("zstd.decompress"), 0))
 			|| !core->track->filter(t, core->mod("format.m3u"), 0))

@@ -86,6 +86,7 @@ static int meta_find(const ffvec *meta, ffstr name, ffstr *val, uint flags)
 	ffstr n, v;
 	while (meta_list(meta, &i, &n, &v, flags)) {
 		if (ffstr_eq2(&n, &name)) {
+			phi_dbglog(core, NULL, NULL, "meta requested: %S = %S", &n, &v);
 			*val = v;
 			return 0;
 		}
