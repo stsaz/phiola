@@ -11,7 +11,7 @@ ffconf_parse_file
 */
 
 #pragma once
-#include "ltconf-obj.h"
+#include "conf-obj.h"
 #include <FFOS/file.h> // optional
 #include <FFOS/error.h>
 #include <ffbase/stringz.h>
@@ -196,10 +196,10 @@ static ffuint _ffconf_sizesfx(int suffix)
 }
 
 #define _FFCONF_ERR(c, msg) \
-	(c)->errmsg = msg,  LTCONF_ERROR
+	(c)->errmsg = msg,  FFCONF_ERROR
 
 /** Process 1 element
-r: parser's return code: enum LTCONF_
+r: parser's return code: enum FFCONF_
 Return 0 on success */
 static inline int ffconf_scheme_process(ffconf_scheme *cs, int r, ffstr val)
 {
@@ -232,10 +232,10 @@ static inline int ffconf_scheme_process(ffconf_scheme *cs, int r, ffstr val)
 	if (ctx->args == (void*)-1 && ctx->obj == (void*)-1) {
 		// skip this object
 		switch (r) {
-		case LTCONF_OBJ_OPEN:
+		case FFCONF_OBJ_OPEN:
 			ffconf_scheme_skipctx(cs);
 			break;
-		case LTCONF_OBJ_CLOSE:
+		case FFCONF_OBJ_CLOSE:
 			cs->ctxs.len--;
 			break;
 		}
@@ -253,7 +253,7 @@ static inline int ffconf_scheme_process(ffconf_scheme *cs, int r, ffstr val)
 	}
 
 	switch (r) {
-	case LTCONF_OBJ_OPEN: {
+	case FFCONF_OBJ_OPEN: {
 		if (t != FFCONF_TOBJ)
 			return _FFCONF_ERR(cs, "got object, expected something else");
 
@@ -267,7 +267,7 @@ static inline int ffconf_scheme_process(ffconf_scheme *cs, int r, ffstr val)
 		break;
 	}
 
-	case LTCONF_OBJ_CLOSE: {
+	case FFCONF_OBJ_CLOSE: {
 		ffuint i;
 		for (i = 0;  ctx->args[i].name != NULL;  i++) {}
 
@@ -282,7 +282,7 @@ static inline int ffconf_scheme_process(ffconf_scheme *cs, int r, ffstr val)
 		break;
 	}
 
-	case LTCONF_KEY: {
+	case FFCONF_KEY: {
 		if (cs->flags & FFCONF_SCF_ICASE)
 			cs->arg = _ffconf_arg_ifind(ctx->args, &val);
 		else
@@ -303,12 +303,12 @@ static inline int ffconf_scheme_process(ffconf_scheme *cs, int r, ffstr val)
 		break;
 	}
 
-	case LTCONF_VAL_NEXT:
+	case FFCONF_VAL_NEXT:
 		if (!(flags & FFCONF_FLIST))
 			return _FFCONF_ERR(cs, "the key doesn't expect multiple values");
 		// fallthrough
 
-	case LTCONF_VAL:
+	case FFCONF_VAL:
 		switch (t) {
 		case FFCONF_TSTR:
 			if ((flags & FFCONF_FNOTEMPTY) && val.len == 0)
@@ -429,7 +429,7 @@ static inline int ffconf_scheme_process(ffconf_scheme *cs, int r, ffstr val)
 		}
 
 		case FFCONF_TOBJ:
-			if (r == LTCONF_VAL_NEXT)
+			if (r == FFCONF_VAL_NEXT)
 				return _FFCONF_ERR(cs, "only 1 object value is supported");
 
 			if ((flags & FFCONF_FNOTEMPTY) && val.len == 0)
@@ -445,7 +445,7 @@ static inline int ffconf_scheme_process(ffconf_scheme *cs, int r, ffstr val)
 		}
 		break;
 
-	case LTCONF_MORE: break;
+	case FFCONF_MORE: break;
 
 	default:
 		FF_ASSERT(0);
@@ -464,7 +464,7 @@ Return 0 on success */
 static inline int ffconf_parse_object(const ffconf_arg *args, void *obj, ffstr *data, ffuint scheme_flags, ffstr *errmsg)
 {
 	int r, r2 = 0;
-	struct ltconf_obj c = {};
+	struct ffconf_obj c = {};
 
 	ffconf_scheme cs = {
 		.flags = scheme_flags,
@@ -473,7 +473,7 @@ static inline int ffconf_parse_object(const ffconf_arg *args, void *obj, ffstr *
 
 	ffstr val = {};
 	while (data->len) {
-		if (LTCONF_ERROR == (r = ltconf_obj_read(&c, data, &val)))
+		if (FFCONF_ERROR == (r = ffconf_obj_read(&c, data, &val)))
 			goto end;
 
 		if (0 != (r2 = ffconf_scheme_process(&cs, r, val))) {
@@ -487,22 +487,22 @@ static inline int ffconf_parse_object(const ffconf_arg *args, void *obj, ffstr *
 
 end:
 	ffconf_scheme_destroy(&cs);
-	if (!!ltconf_obj_fin(&c) && r == 0)
-		r = LTCONF_ERROR;
+	if (!!ffconf_obj_fin(&c) && r == 0)
+		r = FFCONF_ERROR;
 
 	if (r != 0 && errmsg != NULL) {
 		char errbuf[100];
-		const char *err = ltconf_error(&c.lt);
+		const char *err = ffconf_error(&c.lt);
 		if (r2 != 0) {
 			err = cs.errmsg;
-			if (r2 != LTCONF_ERROR) {
+			if (r2 != FFCONF_ERROR) {
 				ffsz_format(errbuf, sizeof(errbuf), "%d", r2);
 				err = errbuf;
 			}
 		}
 		ffsize cap = 0;
 		ffstr_growfmt(errmsg, &cap, "%u:%u: near \"%S\": %s"
-			, (int)ltconf_line(&c.lt), (int)ltconf_col(&c.lt)
+			, (int)ffconf_line(&c.lt), (int)ffconf_col(&c.lt)
 			, &val
 			, err);
 	}

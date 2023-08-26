@@ -2,7 +2,7 @@
 2022, Simon Zolin */
 
 #include <ffbase/map.h>
-#include "ltconf.h"
+#include <ffbase/conf.h>
 
 struct guivar {
 	ffstr name, val;
@@ -65,17 +65,17 @@ static inline void vars_set(ffmap *vs, ffstr name, ffstr val)
 */
 static inline int vars_load(ffmap *vs, ffstr data)
 {
-	struct ltconf c = {};
+	struct ffconf c = {};
 	ffstr s, key = {};
 	while (data.len) {
-		int r = ltconf_read(&c, &data, &s);
+		int r = ffconf_read(&c, &data, &s);
 		switch (r) {
-		case LTCONF_MORE: break;
+		case FFCONF_MORE: break;
 
-		case LTCONF_KEY:
+		case FFCONF_KEY:
 			key = s;  break;
 
-		case LTCONF_VAL:
+		case FFCONF_VAL:
 			vars_set(vs, key, s);
 			break;
 
