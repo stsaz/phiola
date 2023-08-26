@@ -33,15 +33,15 @@ Options:\n\
 }
 
 struct cmd_info {
-	ffvec input; // ffstr[]
-	ffvec include, exclude; // ffstr[]
-	uint64 seek;
-	uint64 until;
-	ffbyte pcm_crc;
-	ffbyte pcm_peaks;
-	ffbyte tags;
-	ffbyte perf;
-	ffvec tracks; // uint[]
+	u_char	pcm_crc;
+	u_char	pcm_peaks;
+	u_char	perf;
+	u_char	tags;
+	ffvec	include, exclude; // ffstr[]
+	ffvec	input; // ffstr[]
+	ffvec	tracks; // uint[]
+	uint64	seek;
+	uint64	until;
 };
 
 static int info_seek(struct cmd_info *p, ffstr s) { return cmd_time_value(&p->seek, s); }

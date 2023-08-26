@@ -74,25 +74,25 @@ Options:\n\
 }
 
 struct cmd_conv {
-	ffvec input; // ffstr[]
-	ffvec include, exclude; // ffstr[]
-	ffvec meta;
-	uint aformat;
-	uint channels;
-	uint rate;
-	uint64 seek;
-	uint64 until;
-	int gain;
-	ffbyte copy;
-	const char *danorm;
-	char *aac_profile;
-	uint aac_q;
-	uint opus_q;
-	uint vorbis_q;
-	char *output;
-	uint force;
-	uint preserve_date;
-	ffvec tracks; // uint[]
+	const char*	aac_profile;
+	const char*	danorm;
+	const char*	output;
+	ffvec	include, exclude; // ffstr[]
+	ffvec	input; // ffstr[]
+	ffvec	meta;
+	ffvec	tracks; // uint[]
+	int		gain;
+	u_char	copy;
+	uint	aac_q;
+	uint	aformat;
+	uint	channels;
+	uint	force;
+	uint	opus_q;
+	uint	preserve_date;
+	uint	rate;
+	uint	vorbis_q;
+	uint64	seek;
+	uint64	until;
 };
 
 static int conv_include(struct cmd_conv *v, ffstr s)

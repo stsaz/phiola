@@ -68,26 +68,26 @@ Options:\n\
 }
 
 struct cmd_rec {
-	const char *audio;
-	uint device;
-	uint buffer;
-	uint aformat;
-	uint rate;
-	uint channels;
-	int gain;
-	uint64 until;
-	char *aac_profile;
-	uint aac_q;
-	uint opus_q;
-	uint vorbis_q;
-	char *output;
-	ffbyte force;
-	ffbyte exclusive;
-	ffbyte loopback;
-	ffbyte remote;
-	const char *danorm;
-	ffvec meta;
-	char *audio_module;
+	char*	audio_module;
+	const char*	aac_profile;
+	const char*	audio;
+	const char*	danorm;
+	const char*	output;
+	ffvec	meta;
+	int		gain;
+	u_char	exclusive;
+	u_char	force;
+	u_char	loopback;
+	u_char	remote;
+	uint	aac_q;
+	uint	aformat;
+	uint	buffer;
+	uint	channels;
+	uint	device;
+	uint	opus_q;
+	uint	rate;
+	uint	vorbis_q;
+	uint64	until;
 };
 
 static int rec_action()

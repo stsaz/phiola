@@ -275,7 +275,7 @@ static void tui_help(uint cmd)
 {
 	ffvec buf = {};
 	char *fn = ffsz_allocfmt("%S/mod/tui-help.txt", &core->conf.root);
-	if (!!fffile_readwhole(fn, &buf, 64*1024))
+	if (fffile_readwhole(fn, &buf, 64*1024))
 		goto end;
 	userlog(NULL, "%S", &buf);
 end:
@@ -327,7 +327,7 @@ static void tui_stdin_prepare(void *param)
 	ffstd_attr(ffstdin, attr, 0);
 
 #ifdef FF_WIN
-	if (0 != core->woeh(ffstdin, &mod->task_read, tui_cmd_read, NULL)) {
+	if (core->woeh(ffstdin, &mod->task_read, tui_cmd_read, NULL)) {
 		warnlog(NULL, "can't start stdin reader");
 		return;
 	}
@@ -337,11 +337,9 @@ static void tui_stdin_prepare(void *param)
 	mod->kev->rhandler = tui_cmd_read;
 	mod->kev->obj = mod;
 	mod->kev->rtask.active = 1;
-	if (0 != core->kq_attach(mod->kev, ffstdin, 1)) {
-		syswarnlog(NULL, "ffkev_attach()");
+	if (core->kq_attach(mod->kev, ffstdin, 1))
 		return;
-	}
-	if (!!fffile_nonblock(ffstdin, 1))
+	if (fffile_nonblock(ffstdin, 1))
 		syswarnlog(NULL, "fffile_nonblock()");
 #endif
 

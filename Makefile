@@ -333,11 +333,11 @@ ifeq "$(OS)" "windows"
 else
 	FFGUI_HDR := $(wildcard $(PHIOLA)/src/util/gui-gtk/*.h)
 	CFLAGS_GUI := -Wno-free-nonheap-object -Wno-deprecated-declarations `pkg-config --cflags gtk+-3.0`
-	ifeq "$(DEBUG)" "1"
-		CFLAGS_GUI += -DFFGUI_DEBUG
-	endif
 	LINKFLAGS_GUI := `pkg-config --libs gtk+-3.0` $(LINK_PTHREAD) -lm
 	FFGUI_OBJ := ffgui-gtk.o ffgui-gtk-loader.o
+endif
+ifeq "$(DEBUG_GUI)" "1"
+	CFLAGS_GUI += -DFFGUI_DEBUG
 endif
 CFLAGS_GUI := $(CFLAGS) $(CFLAGS_GUI)
 CXXFLAGS_GUI := $(CXXFLAGS) $(CFLAGS_GUI)

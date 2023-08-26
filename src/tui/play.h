@@ -1,7 +1,7 @@
 /** phiola: tui: play/convert mode filter
 2015, Simon Zolin */
 
-static int tui_setvol(tui_track *u, uint vol);
+static double tui_setvol(tui_track *u, uint vol);
 
 
 static void* tuiplay_open(phi_track *t)
@@ -126,7 +126,7 @@ static void tuiplay_seek(tui_track *u, uint cmd, void *udata)
 	core->track->wake(u->t);
 }
 
-static int tui_setvol(tui_track *u, uint vol)
+static double tui_setvol(tui_track *u, uint vol)
 {
 	double db;
 	if (vol <= 100)
@@ -158,8 +158,8 @@ static void tuiplay_vol(tui_track *u, uint cmd)
 		break;
 	}
 
-	int db = tui_setvol(u, vol);
-	userlog(u->t, "Volume: %.02FdB", (double)db / 100);
+	double db = tui_setvol(u, vol);
+	userlog(u->t, "Volume: %.02FdB", db);
 }
 
 static int tuiplay_process(void *ctx, phi_track *t)
@@ -167,6 +167,9 @@ static int tuiplay_process(void *ctx, phi_track *t)
 	tui_track *u = ctx;
 	uint64 playpos;
 	uint playtime;
+
+	if (t->chain_flags & PHI_FSTOP)
+		return PHI_FIN;
 
 	if (u->show_info || t->meta_changed) {
 		u->show_info = 0;

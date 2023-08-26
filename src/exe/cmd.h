@@ -153,12 +153,12 @@ static int cmd_input(ffvec *input, ffstr s)
 	return 0;
 }
 
-#include <exe/record.h>
-#include <exe/play.h>
-#include <exe/info.h>
 #include <exe/convert.h>
 #include <exe/device.h>
 #include <exe/gui.h>
+#include <exe/info.h>
+#include <exe/play.h>
+#include <exe/record.h>
 #include <exe/remote.h>
 
 static int root_help()

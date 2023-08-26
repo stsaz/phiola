@@ -44,21 +44,21 @@ Options:\n\
 }
 
 struct cmd_play {
-	ffvec input; // ffstr[]
-	ffvec include, exclude; // ffstr[]
-	ffstr audio;
-	char *audio_module;
-	uint buffer;
-	uint device;
-	uint64 seek;
-	uint64 until;
-	const char *danorm;
-	ffbyte random;
-	ffbyte repeat_all;
-	ffbyte perf;
-	ffbyte exclusive;
-	ffbyte remote;
-	ffvec tracks; // uint[]
+	char*	audio_module;
+	const char*	danorm;
+	ffstr	audio;
+	ffvec	include, exclude; // ffstr[]
+	ffvec	input; // ffstr[]
+	ffvec	tracks; // uint[]
+	u_char	exclusive;
+	u_char	perf;
+	u_char	random;
+	u_char	remote;
+	u_char	repeat_all;
+	uint	buffer;
+	uint	device;
+	uint64	seek;
+	uint64	until;
 };
 
 static int play_seek(struct cmd_play *p, ffstr s) { return cmd_time_value(&p->seek, s); }
