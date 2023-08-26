@@ -382,3 +382,16 @@ struct phi_queue_if {
 	*/
 	void (*on_change)(void (*cb)(phi_queue_id q, uint flags, uint pos));
 };
+
+
+/** Remote control */
+
+typedef struct phi_remote_sv_if phi_remote_sv_if;
+struct phi_remote_sv_if {
+	int (*start)(const char *name);
+};
+
+typedef struct phi_remote_cl_if phi_remote_cl_if;
+struct phi_remote_cl_if {
+	int (*cmd)(const char *name, ffstr cmd);
+};

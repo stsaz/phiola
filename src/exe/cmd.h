@@ -159,6 +159,7 @@ static int cmd_input(ffvec *input, ffstr s)
 #include <exe/convert.h>
 #include <exe/device.h>
 #include <exe/gui.h>
+#include <exe/remote.h>
 
 static int root_help()
 {
@@ -178,6 +179,7 @@ Commands:\n\
   info      Show file meta data\n\
   play      Play audio [Default command]\n\
   record    Record audio\n\
+  remote    Send remote command\n\
 \n\
 'phiola COMMAND -help' will print information on a particular command.\n\
 ";
@@ -231,6 +233,7 @@ static const struct ffarg cmd_root[] = {
 	{ "info",		'{',		cmd_info_init },
 	{ "play",		'{',		cmd_play_init },
 	{ "record",		'{',		cmd_rec_init },
+	{ "remote",		'{',		cmd_remote_init },
 	{ "\0\1",		'{',		cmd_play_init },
 	{ "",			0,			usage },
 };

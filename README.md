@@ -92,6 +92,12 @@ phiola record -meta "artist=Great Artist" -o audio.flac
 # Record to the automatically named output file
 phiola record -o @nowdate-@nowtime.flac
 
+# Start recording, then stop recording from another process:
+#   Step 1: start recording and listen for system-wide commands
+phiola record -o audio.flac -remote
+#   Step 2: send 'stop' signal to the phiola instance that is recording audio
+phiola remote stop
+
 # Convert
 phiola convert audio.flac -o audio.m4a
 
@@ -117,6 +123,7 @@ Currently supported commands:
 * [info](src/exe/info.h)       - Show file meta data
 * [play](src/exe/play.h)       - Play audio
 * [record](src/exe/record.h)   - Record audio
+* [remote](src/exe/remote.h)   - Send remote command
 
 > For the details on each command you can click on the links above or execute `phiola COMMAND -h` on your PC.
 

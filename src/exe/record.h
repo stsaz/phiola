@@ -59,6 +59,8 @@ Options:\n\
                           @nowtime   Current time\n\
                           @counter   Sequentially incremented number\n\
   -force                Overwrite output file\n\
+\n\
+  -remote               Listen for incoming remote commands\n\
 ";
 	ffstdout_write(s, FFS_LEN(s));
 	x->exit_code = 0;
@@ -82,6 +84,7 @@ struct cmd_rec {
 	ffbyte force;
 	ffbyte exclusive;
 	ffbyte loopback;
+	ffbyte remote;
 	const char *danorm;
 	ffvec meta;
 	char *audio_module;
@@ -151,6 +154,12 @@ static int rec_action()
 
 	x->mode_record = 1;
 	track->start(t);
+
+	if (r->remote) {
+		const phi_remote_sv_if *rsv = x->core->mod("remote.server");
+		if (rsv->start(NULL))
+			return -1;
+	}
 	return 0;
 }
 
@@ -207,6 +216,7 @@ static const struct ffarg cmd_rec[] = {
 	{ "-opus-quality",	'u',	O(opus_q) },
 	{ "-out",			's',	O(output) },
 	{ "-rate",			'u',	O(rate) },
+	{ "-remote",		'1',	O(remote) },
 	{ "-until",			'S',	rec_until },
 	{ "-vorbis-quality",'u',	O(vorbis_q) },
 	{ "",				0,		rec_check },

@@ -36,6 +36,7 @@ Options:\n\
   -buffer NUMBER        Length (in msec) of the playback buffer\n\
 \n\
   -perf                 Print performance counters\n\
+  -remote               Listen for incoming remote commands\n\
 ";
 	ffstdout_write(s, FFS_LEN(s));
 	x->exit_code = 0;
@@ -56,6 +57,7 @@ struct cmd_play {
 	ffbyte repeat_all;
 	ffbyte perf;
 	ffbyte exclusive;
+	ffbyte remote;
 	ffvec tracks; // uint[]
 };
 
@@ -137,6 +139,12 @@ static int play_action()
 	ffvec_free(&p->input);
 
 	x->queue->play(NULL, NULL);
+
+	if (p->remote) {
+		const phi_remote_sv_if *rsv = x->core->mod("remote.server");
+		if (rsv->start(NULL))
+			return -1;
+	}
 	return 0;
 }
 
@@ -161,6 +169,7 @@ static const struct ffarg cmd_play[] = {
 	{ "-include",	'S',	play_include },
 	{ "-perf",		'1',	O(perf) },
 	{ "-random",	'1',	O(random) },
+	{ "-remote",	'1',	O(remote) },
 	{ "-repeat-all",'1',	O(repeat_all) },
 	{ "-seek",		'S',	play_seek },
 	{ "-tracks",	'S',	play_tracks },

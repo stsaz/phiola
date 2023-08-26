@@ -282,6 +282,14 @@ test_ofile_vars() {
 	./phiola co ofv/ofv.ogg -copy -f -o ofv/@nowdate-@nowtime-@counter.ogg ; ./phiola i ofv/*-1.ogg
 }
 
+test_remote() {
+	./phiola rec -f -o rec-remote.flac -remote &
+	sleep 5
+	./phiola remote stop
+	wait $!
+	./phiola i rec-remote.flac
+}
+
 test_clean() {
 	rm -f *.wav *.flac *.m4a *.ogg *.opus *.mp3 fm-* ofv/*.ogg *.cue
 	rmdir ofv
@@ -300,6 +308,7 @@ TESTS=(
 	list
 	cue
 	ofile_vars
+	remote
 	# http
 	clean
 	# wasapi_exclusive

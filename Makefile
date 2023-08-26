@@ -311,6 +311,12 @@ dbus.$(SO): sys-sleep-dbus.o
 	$(LINK) -shared $+ $(LINKFLAGS) -ldbus-1 -o $@
 endif
 
+MODS += remote.$(SO)
+remote-ctl.o: $(PHIOLA)/src/remote-ctl.c $(DEPS)
+	$(C) $(CFLAGS) $< -o $@
+remote.$(SO): remote-ctl.o
+	$(LINK) -shared $+ $(LINKFLAGS) -o $@
+
 MODS += tui.$(SO)
 %.o: $(PHIOLA)/src/tui/%.c $(DEPS) \
 		$(wildcard $(PHIOLA)/src/tui/*.h)
