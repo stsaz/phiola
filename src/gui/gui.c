@@ -70,6 +70,7 @@ static void* gui_getctl(void *udata, const ffstr *name)
 		FFUI_LDR_CTL(struct gui, mplay),
 		FFUI_LDR_CTL(struct gui, mconvert),
 		FFUI_LDR_CTL(struct gui, mhelp),
+		FFUI_LDR_CTL(struct gui, mpopup),
 		FFUI_LDR_CTL3_PTR(struct gui, wmain, wmain_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, wconvert, wconvert_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, winfo, winfo_ctls),

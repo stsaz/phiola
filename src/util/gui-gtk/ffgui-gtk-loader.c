@@ -607,17 +607,27 @@ static int view_style(ffconf_scheme *cs, ffui_loader *g, const ffstr *val)
 	return 0;
 }
 
-static int view_dblclick(ffconf_scheme *cs, ffui_loader *g, const ffstr *val)
+static int view_double_click(ffconf_scheme *cs, ffui_loader *g, const ffstr *val)
 {
 	if (0 == (g->vi->dblclick_id = g->getcmd(g->udata, val)))
 		return FFUI_EINVAL;
 	return 0;
 }
 
+static int view_popup_menu(ffconf_scheme *cs, ffui_loader *g, const ffstr *val)
+{
+	ffui_menu *m = g->getctl(g->udata, val);
+	if (m == NULL)
+		return FFUI_EINVAL;
+	ffui_view_popupmenu(g->vi, m);
+	return 0;
+}
+
 static const ffconf_arg view_args[] = {
 	{ "style",		T_STRLIST,	_F(view_style) },
-	{ "dblclick",	T_STR,		_F(view_dblclick) },
+	{ "double_click",T_STR,		_F(view_double_click) },
 	{ "column",		T_OBJMULTI,	_F(viewcol_new) },
+	{ "popup_menu",	T_STR,		_F(view_popup_menu) },
 	{}
 };
 

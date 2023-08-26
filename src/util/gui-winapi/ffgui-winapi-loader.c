@@ -511,7 +511,7 @@ static int tray_done(ffconf_scheme *cs, ffui_loader *g)
 static const ffconf_arg tray_args[] = {
 	{ "style",		T_STRLIST,	_F(tray_style) },
 	{ "icon",		T_OBJ,		_F(tray_icon) },
-	{ "popupmenu",	T_STR,		_F(tray_pmenu) },
+	{ "popup_menu",	T_STR,		_F(tray_pmenu) },
 	{ "lclick",		T_STR,		_F(tray_lclick) },
 	{ NULL,			T_CLOSE,	_F(tray_done) },
 };
@@ -1102,7 +1102,7 @@ static int view_color(ffconf_scheme *cs, ffui_loader *g, const ffstr *val)
 	return 0;
 }
 
-static int view_pmenu(ffconf_scheme *cs, ffui_loader *g, const ffstr *val)
+static int view_popup_menu(ffconf_scheme *cs, ffui_loader *g, const ffstr *val)
 {
 	ffui_menu *m = g->getctl(g->udata, val);
 	if (m == NULL)
@@ -1130,7 +1130,7 @@ static int view_lclick(ffconf_scheme *cs, ffui_loader *g, const ffstr *val)
 	return 0;
 }
 
-static int view_dblclick(ffconf_scheme *cs, ffui_loader *g, const ffstr *val)
+static int view_double_click(ffconf_scheme *cs, ffui_loader *g, const ffstr *val)
 {
 	if (0 == (g->vi->dblclick_id = g->getcmd(g->udata, val)))
 		return FFUI_EINVAL;
@@ -1196,11 +1196,11 @@ static const ffconf_arg view_args[] = {
 	{ "resize",		T_STRLIST,	_F(ctl_resize) },
 	{ "color",		T_STR,		_F(view_color) },
 	{ "bgcolor",	T_STR,		_F(view_color) },
-	{ "popupmenu",	T_STR,		_F(view_pmenu) },
+	{ "popup_menu",	T_STR,		_F(view_popup_menu) },
 
 	{ "chsel",		T_STR,		_F(view_chsel) },
 	{ "lclick",		T_STR,		_F(view_lclick) },
-	{ "dblclick",	T_STR,		_F(view_dblclick) },
+	{ "double_click",T_STR,		_F(view_double_click) },
 	{ "oncheck",	T_STR,		_F(view_lclick) },
 
 	{ "column",		T_OBJMULTI,	_F(view_column) },
@@ -1226,7 +1226,7 @@ static const ffconf_arg tview_args[] = {
 	{ "size",		T_INTLIST,	_F(ctl_size) },
 	{ "color",		T_STR,		_F(view_color) },
 	{ "bgcolor",	T_STR,		_F(view_color) },
-	{ "popupmenu",	T_STR,		_F(view_pmenu) },
+	{ "popup_menu",	T_STR,		_F(view_popup_menu) },
 
 	{ "chsel",		T_STR,		_F(view_chsel) },
 	{ NULL,			T_CLOSE,	_F(ctl_done) },

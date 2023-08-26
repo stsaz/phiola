@@ -101,6 +101,21 @@ menu mhelp {
 	}
 }
 
+menu mpopup {
+	item $MFInfo {
+		action A_FILE_INFO
+	}
+	item $MFShowDir {
+		action A_FILE_SHOWDIR
+	}
+	item $MFDelete {
+		action A_FILE_DEL
+	}
+	item $MLRemove {
+		action A_LIST_REMOVE
+	}
+}
+
 window wmain {
 	title "phiola"
 	position 100 100 600 600
@@ -212,7 +227,8 @@ window wmain {
 		size 360 175
 		resize cx cy
 		style explorer_theme grid_lines multi_select
-		dblclick A_PLAY
+		double_click A_PLAY
+		popup_menu mpopup
 
 		column "#" {
 			width 35

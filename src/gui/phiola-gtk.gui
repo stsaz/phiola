@@ -101,6 +101,21 @@ menu mhelp {
 	}
 }
 
+menu mpopup {
+	item $MFInfo {
+		action A_FILE_INFO
+	}
+	item $MFShowDir {
+		action A_FILE_SHOWDIR
+	}
+	item $MFDelete {
+		action A_FILE_DEL
+	}
+	item $MLRemove {
+		action A_LIST_REMOVE
+	}
+}
+
 window wmain {
 	title "phiola"
 	position 0 0 600 600
@@ -180,7 +195,8 @@ window wmain {
 
 	listview vlist {
 		style grid_lines multi_select
-		dblclick A_PLAY
+		double_click A_PLAY
+		popup_menu mpopup
 
 		column "#" {
 			width 35
