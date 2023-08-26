@@ -17,6 +17,7 @@ static inline void gui_core_task_slice(void (*func)(ffstr), ffslice d) {
 	gui_core_task_data(func, *(ffstr*)&d);
 }
 
+FF_EXTERN void file_dir_show(ffstr data);
 FF_EXTERN void list_add(ffstr fn);
 FF_EXTERN void list_add_sz(void *sz);
 FF_EXTERN void list_remove(ffstr data);

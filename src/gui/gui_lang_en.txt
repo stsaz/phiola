@@ -4,6 +4,7 @@ MMFile					"_File"
 	MFInfo					"Show _Info"
 		FIName					"Name"
 		FIValue					"Value"
+	MFShowDir				"Show Di_rectory"
 	MFDelete				"_Delete (Trash)"
 	MFExit					"E_xit"
 

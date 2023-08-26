@@ -10,6 +10,9 @@ menu mfile {
 		action A_FILE_INFO
 		hotkey "I"
 	}
+	item $MFShowDir {
+		action A_FILE_SHOWDIR
+	}
 	item $MFDelete {
 		action A_FILE_DEL
 		hotkey "Shift+Delete"

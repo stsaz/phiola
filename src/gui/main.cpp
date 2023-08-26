@@ -467,6 +467,9 @@ static void wmain_action(ffui_wnd *wnd, int id)
 			winfo_show(1, i);
 		break;
 
+	case A_FILE_SHOWDIR:
+		gui_core_task_slice(file_dir_show, m->vlist.selected());  break;
+
 	case A_FILE_DEL:
 		if (!gd->tab_conversion)
 			gui_core_task_slice(file_del, m->vlist.selected());

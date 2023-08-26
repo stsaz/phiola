@@ -74,6 +74,46 @@ void file_del(ffstr data)
 	ffslice_free(&indexes);
 }
 
+#ifdef FF_LINUX
+static void dir_show(const char *dir)
+{
+	const char *argv[] = { "xdg-open", dir, NULL };
+	ffps ps = ffps_exec("/usr/bin/xdg-open", argv, (const char**)environ);
+	if (ps == FFPS_NULL) {
+		syserrlog("ffps_exec", 0);
+		return;
+	}
+
+	dbglog("spawned file manager: %u", (int)ffps_id(ps));
+	ffps_close(ps);
+}
+#endif
+
+/** Open/explore directory in UI for the first selected file */
+void file_dir_show(ffstr data)
+{
+	ffslice indexes = *(ffslice*)&data;
+	uint *it;
+	FFSLICE_WALK(&indexes, it) {
+		const struct phi_queue_entry *qe = gd->queue->at(NULL, *it);
+
+#ifdef FF_WIN
+		const char *const names[] = { qe->conf.ifile.name };
+		ffui_openfolder(names, 1);
+
+#else
+		ffstr dir;
+		ffpath_splitpath_str(FFSTR_Z(qe->conf.ifile.name), &dir, NULL);
+		char *dirz = ffsz_dupstr(&dir);
+		dir_show(dirz);
+		ffmem_free(dirz);
+#endif
+
+		break;
+	}
+	ffslice_free(&indexes);
+}
+
 void ctl_play(uint i)
 {
 	gd->queue->play(NULL, gd->queue->at(NULL, i));
