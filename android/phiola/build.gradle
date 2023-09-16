@@ -13,6 +13,10 @@ android {
 		testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 	}
 
+	buildFeatures {
+		viewBinding true
+	}
+
 	sourceSets.main {
 		jni.srcDirs = []
 		jniLibs.srcDir 'libs'

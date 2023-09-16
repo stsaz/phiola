@@ -15,7 +15,7 @@
 			android:textColor="@color/text" />
 
 		<EditText
-			android:id="@+id/conv_tiname"
+			android:id="@+id/tiname"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="10dp"
@@ -28,7 +28,7 @@
 			android:text="@string/conv_out_dir"
 			android:textColor="@color/text" />
 		<EditText
-			android:id="@+id/conv_todir"
+			android:id="@+id/todir"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="10dp"
@@ -41,7 +41,7 @@
 			android:text="@string/conv_out_name"
 			android:textColor="@color/text" />
 		<EditText
-			android:id="@+id/conv_toname"
+			android:id="@+id/toname"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="10dp"
@@ -54,7 +54,7 @@
 			android:text="@string/conv_out_fmt"
 			android:textColor="@color/text" />
 		<EditText
-			android:id="@+id/conv_toext"
+			android:id="@+id/toext"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="10dp"
@@ -67,14 +67,14 @@
 			android:text="@string/conv_apos_start"
 			android:textColor="@color/text" />
 		<EditText
-			android:id="@+id/conv_tfrom"
+			android:id="@+id/tfrom"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="10dp"
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
 		<Button
-			android:id="@+id/conv_bfrom_set_cur"
+			android:id="@+id/bfrom_set_cur"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:text="@string/conv_from_set_cur" />
@@ -85,13 +85,13 @@
 			android:text="@string/conv_apos_end"
 			android:textColor="@color/text" />
 		<EditText
-			android:id="@+id/conv_tuntil"
+			android:id="@+id/tuntil"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="10dp"
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
-		<Button android:id="@+id/conv_until_set_cur"
+		<Button android:id="@+id/until_set_cur"
 			android:layout_width="wrap_content" android:layout_height="wrap_content"
 			android:text="@string/conv_from_set_cur" />
 
@@ -99,7 +99,7 @@
 			android:layout_width="match_parent" android:layout_height="wrap_content"
 			android:text="@string/conv_sample_rate"
 			android:textColor="@color/text" />
-		<EditText android:id="@+id/conv_tsample_rate"
+		<EditText android:id="@+id/tsample_rate"
 			android:layout_width="match_parent" android:layout_height="wrap_content"
 			android:layout_marginHorizontal="10dp"
 			android:inputType="text"
@@ -111,7 +111,7 @@
 			android:text="@string/conv_aac_q"
 			android:textColor="@color/text" />
 		<EditText
-			android:id="@+id/conv_taac_q"
+			android:id="@+id/taac_q"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="10dp"
@@ -119,28 +119,28 @@
 			android:textSize="@dimen/text_editbox" />
 
 		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/conv_bcopy"
+			android:id="@+id/bcopy"
 			android:layout_width="match_parent"
 			android:layout_height="match_parent"
 			android:layout_margin="10dp"
 			android:text="@string/conv_copy" />
 
 		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/conv_bpreserve_date"
+			android:id="@+id/bpreserve_date"
 			android:layout_width="match_parent"
 			android:layout_height="match_parent"
 			android:layout_margin="10dp"
 			android:text="@string/conv_preserve_date" />
 
 		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/conv_btrash_orig"
+			android:id="@+id/btrash_orig"
 			android:layout_width="match_parent"
 			android:layout_height="match_parent"
 			android:layout_margin="10dp"
 			android:text="@string/conv_trash_orig" />
 
 		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/conv_bpl_add"
+			android:id="@+id/bpl_add"
 			android:layout_width="match_parent"
 			android:layout_height="match_parent"
 			android:layout_margin="10dp"
@@ -152,13 +152,13 @@
 			android:text="Note: the process may take up to a minute! Be patient."
 			android:textColor="@color/text" />
 		<Button
-			android:id="@+id/conv_bstart"
+			android:id="@+id/bstart"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:text="@string/conv_go" />
 
 		<TextView
-			android:id="@+id/conv_lresult"
+			android:id="@+id/lresult"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:text=""

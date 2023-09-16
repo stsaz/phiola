@@ -11,25 +11,23 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.File;
 
+import com.github.stsaz.phiola.databinding.ListSaveBinding;
+
 public class ListSaveActivity extends AppCompatActivity {
 	private static final String TAG = "phiola.ListSaveActivity";
 	Core core;
-	private EditText tdir, tname;
-	private Button bsave;
+	private ListSaveBinding b;
 
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.list_save);
+		b = ListSaveBinding.inflate(getLayoutInflater());
+		setContentView(b.getRoot());
 
 		core = Core.getInstance();
 
-		tdir = findViewById(R.id.lssv_tdir);
-		tname = findViewById(R.id.lssv_tname);
-		bsave = findViewById(R.id.lssv_bsave);
-		bsave.setOnClickListener((v) -> save());
-
-		tdir.setText(core.setts.plist_save_dir);
-		tname.setText("Playlist1");
+		b.bsave.setOnClickListener((v) -> save());
+		b.tdir.setText(core.setts.plist_save_dir);
+		b.tname.setText("Playlist1");
 	}
 
 	protected void onDestroy() {
@@ -38,8 +36,8 @@ public class ListSaveActivity extends AppCompatActivity {
 	}
 
 	private void save() {
-		core.setts.plist_save_dir = tdir.getText().toString();
-		String fn = String.format("%s/%s.m3u8", core.setts.plist_save_dir, tname.getText().toString());
+		core.setts.plist_save_dir = b.tdir.getText().toString();
+		String fn = String.format("%s/%s.m3u8", core.setts.plist_save_dir, b.tname.getText().toString());
 		File f = new File(fn);
 		if (f.exists()) {
 			core.errlog(TAG, "File already exists.  Please specify a different name.");

@@ -36,6 +36,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
+import com.github.stsaz.phiola.databinding.MainBinding;
+
 public class MainActivity extends AppCompatActivity {
 	private static final String TAG = "phiola.MainActivity";
 	private static final int REQUEST_PERM_READ_STORAGE = 1;
@@ -56,28 +58,20 @@ public class MainActivity extends AppCompatActivity {
 
 	private boolean view_explorer;
 	private Explorer explorer;
-	private RecyclerView list;
 	private PlaylistAdapter pl_adapter;
 
-	private TextView lbl_name;
-	private ImageButton brec;
-	private ImageButton bplay;
-	private TextView lbl_pos;
-	private SeekBar progs;
-	private ToggleButton bexplorer;
-	private ToggleButton bplist;
-	private SearchView tfilter;
-	private Toolbar toolbar;
+	private MainBinding b;
 
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
 		if (0 != init_mods())
 			return;
+		b = MainBinding.inflate(getLayoutInflater());
 		init_ui();
 		init_system();
 
-		list.setAdapter(pl_adapter);
+		b.list.setAdapter(pl_adapter);
 		plist_show();
 
 		if (gui.cur_path.isEmpty())
@@ -127,8 +121,8 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	public boolean onCreateOptionsMenu(Menu menu) {
-		toolbar.inflateMenu(R.menu.menu);
-		toolbar.setOnMenuItemClickListener(this::onOptionsItemSelected);
+		b.toolbar.inflateMenu(R.menu.menu);
+		b.toolbar.setOnMenuItemClickListener(this::onOptionsItemSelected);
 		return true;
 	}
 
@@ -176,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
 				plist_click();
 				int pos = queue.cur();
 				if (pos >= 0)
-					list.scrollToPosition(queue.cur());
+					b.list.scrollToPosition(queue.cur());
 				return true;
 			}
 
@@ -293,37 +287,28 @@ public class MainActivity extends AppCompatActivity {
 	 * Set UI objects and register event handlers
 	 */
 	private void init_ui() {
-		setContentView(R.layout.main);
+		setContentView(b.getRoot());
 
-		toolbar = findViewById(R.id.toolbar);
-		setSupportActionBar(toolbar);
+		setSupportActionBar(b.toolbar);
 
 		explorer = new Explorer(core, this);
-		brec = findViewById(R.id.brec);
-		brec.setOnClickListener((v) -> rec_click());
+		b.brec.setOnClickListener((v) -> rec_click());
 
-		bplay = findViewById(R.id.bplay);
-		bplay.setOnClickListener((v) -> play_pause_click());
+		b.bplay.setOnClickListener((v) -> play_pause_click());
 
-		findViewById(R.id.bnext).setOnClickListener((v) -> trackctl.next());
+		b.bnext.setOnClickListener((v) -> trackctl.next());
 
-		findViewById(R.id.bprev).setOnClickListener((v) -> trackctl.prev());
+		b.bprev.setOnClickListener((v) -> trackctl.prev());
 
-		bexplorer = findViewById(R.id.bexplorer);
-		bexplorer.setOnClickListener((v) -> explorer_click());
+		b.bexplorer.setOnClickListener((v) -> explorer_click());
 
-		bplist = findViewById(R.id.bplaylist);
-		bplist.setOnClickListener((v) -> plist_click());
-		bplist.setChecked(true);
-		bplist.setText("Playlist 1");
-		bplist.setTextOn("Playlist 1");
-		bplist.setTextOff("Playlist 1");
+		b.bplaylist.setOnClickListener((v) -> plist_click());
+		b.bplaylist.setChecked(true);
+		b.bplaylist.setText("Playlist 1");
+		b.bplaylist.setTextOn("Playlist 1");
+		b.bplaylist.setTextOff("Playlist 1");
 
-		lbl_name = findViewById(R.id.lname);
-		lbl_pos = findViewById(R.id.lpos);
-
-		progs = findViewById(R.id.seekbar);
-		progs.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+		b.seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 			int val; // last value
 
 			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -341,8 +326,7 @@ public class MainActivity extends AppCompatActivity {
 			}
 		});
 
-		tfilter = findViewById(R.id.tfilter);
-		tfilter.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+		b.tfilter.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
 			public boolean onQueryTextSubmit(String query) {
 				return true;
 			}
@@ -353,8 +337,7 @@ public class MainActivity extends AppCompatActivity {
 			}
 		});
 
-		list = findViewById(R.id.list);
-		list.setLayoutManager(new LinearLayoutManager(this));
+		b.list.setLayoutManager(new LinearLayoutManager(this));
 		pl_adapter = new PlaylistAdapter(this, explorer);
 
 		gui.cur_activity = this;
@@ -369,12 +352,12 @@ public class MainActivity extends AppCompatActivity {
 		int v = View.VISIBLE;
 		if (gui.record_hide)
 			v = View.INVISIBLE;
-		brec.setVisibility(v);
+		b.brec.setVisibility(v);
 
 		v = View.VISIBLE;
 		if (gui.filter_hide)
 			v = View.INVISIBLE;
-		tfilter.setVisibility(v);
+		b.tfilter.setVisibility(v);
 
 		if (trec != null) {
 			rec_state_set(true);
@@ -388,8 +371,8 @@ public class MainActivity extends AppCompatActivity {
 			res = R.color.recording;
 		int color = getResources().getColor(res);
 		if (Build.VERSION.SDK_INT >= 21) {
-			brec.setImageTintMode(PorterDuff.Mode.SRC_IN);
-			brec.setImageTintList(ColorStateList.valueOf(color));
+			b.brec.setImageTintMode(PorterDuff.Mode.SRC_IN);
+			b.brec.setImageTintList(ColorStateList.valueOf(color));
 		}
 	}
 
@@ -414,13 +397,13 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	void explorer_click() {
-		bexplorer.setChecked(true);
+		b.bexplorer.setChecked(true);
 		if (view_explorer) return;
 
 		pl_leave();
 		view_explorer = true;
-		bplist.setChecked(false);
-		tfilter.setVisibility(View.INVISIBLE);
+		b.bplaylist.setChecked(false);
+		b.tfilter.setVisibility(View.INVISIBLE);
 
 		explorer.fill();
 		pl_adapter.view_explorer = true;
@@ -428,16 +411,16 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	void plist_click() {
-		bplist.setChecked(true);
+		b.bplaylist.setChecked(true);
 		if (!view_explorer) {
 			list_switch();
 			return;
 		}
 
 		view_explorer = false;
-		bexplorer.setChecked(false);
+		b.bexplorer.setChecked(false);
 		if (!gui.filter_hide)
-			tfilter.setVisibility(View.VISIBLE);
+			b.tfilter.setVisibility(View.VISIBLE);
 
 		pl_adapter.view_explorer = false;
 		list_update();
@@ -511,7 +494,7 @@ public class MainActivity extends AppCompatActivity {
 
 	void explorer_event(String fn, int flags) {
 		if (fn == null) {
-			list.setAdapter(pl_adapter);
+			b.list.setAdapter(pl_adapter);
 			return;
 		}
 
@@ -539,7 +522,7 @@ public class MainActivity extends AppCompatActivity {
 		}
 		int pos = explorer.file_idx(fn);
 		if (pos >= 0)
-			list.scrollToPosition(pos);
+			b.list.scrollToPosition(pos);
 	}
 
 	private void list_update() {
@@ -547,12 +530,12 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void plist_show() {
-		list.scrollToPosition(gui.list_pos);
+		b.list.scrollToPosition(gui.list_pos);
 	}
 
 	/** Called when we're leaving the playlist tab */
 	void pl_leave() {
-		LinearLayoutManager llm = (LinearLayoutManager) list.getLayoutManager();
+		LinearLayoutManager llm = (LinearLayoutManager)b.list.getLayoutManager();
 		gui.list_pos = llm.findLastCompletelyVisibleItemPosition();
 	}
 
@@ -586,9 +569,9 @@ public class MainActivity extends AppCompatActivity {
 			plist_click();
 		else
 			list_update();
-		bplist.setText(String.format("Playlist %d", qi+1));
-		bplist.setTextOn(String.format("Playlist %d", qi+1));
-		bplist.setTextOff(String.format("Playlist %d", qi+1));
+		b.bplaylist.setText(String.format("Playlist %d", qi+1));
+		b.bplaylist.setTextOn(String.format("Playlist %d", qi+1));
+		b.bplaylist.setTextOff(String.format("Playlist %d", qi+1));
 	}
 
 	/**
@@ -642,17 +625,17 @@ public class MainActivity extends AppCompatActivity {
 		switch (st) {
 			case STATE_DEF:
 				getSupportActionBar().setTitle(fm);
-				bplay.setImageResource(R.drawable.ic_play);
+				b.bplay.setImageResource(R.drawable.ic_play);
 				break;
 
 			case STATE_PLAYING:
 				getSupportActionBar().setTitle(String.format("%s [Playing]", fm));
-				bplay.setImageResource(R.drawable.ic_pause);
+				b.bplay.setImageResource(R.drawable.ic_pause);
 				break;
 
 			case STATE_PAUSED:
 				getSupportActionBar().setTitle(String.format("%s [Paused]", fm));
-				bplay.setImageResource(R.drawable.ic_play);
+				b.bplay.setImageResource(R.drawable.ic_play);
 				break;
 		}
 		core.dbglog(TAG, "state: %d -> %d", state, st);
@@ -666,9 +649,9 @@ public class MainActivity extends AppCompatActivity {
 		String title = t.name;
 		if (core.gui().ainfo_in_title && !t.info.isEmpty())
 			title = String.format("%s [%s]", t.name, t.info);
-		lbl_name.setText(title);
+		b.lname.setText(title);
 
-		progs.setProgress(0);
+		b.seekbar.setProgress(0);
 		if (t.state == Track.STATE_PAUSED) {
 			state(STATE_PAUSED);
 		} else {
@@ -681,9 +664,9 @@ public class MainActivity extends AppCompatActivity {
 	 * Called by Track after a track is finished
 	 */
 	private void close_track(TrackHandle t) {
-		lbl_name.setText("");
-		lbl_pos.setText("");
-		progs.setProgress(0);
+		b.lname.setText("");
+		b.lpos.setText("");
+		b.seekbar.setProgress(0);
 		state(STATE_DEF);
 	}
 
@@ -708,10 +691,10 @@ public class MainActivity extends AppCompatActivity {
 		int progress = 0;
 		if (dur != 0)
 			progress = pos * 100 / dur;
-		progs.setProgress(progress);
+		b.seekbar.setProgress(progress);
 		String s = String.format("%d:%02d / %d:%02d"
 				, pos / 60, pos % 60, dur / 60, dur % 60);
-		lbl_pos.setText(s);
+		b.lpos.setText(s);
 		return 0;
 	}
 }
