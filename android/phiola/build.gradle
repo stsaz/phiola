@@ -8,8 +8,8 @@ android {
 		applicationId "com.github.stsaz.phiola"
 		minSdkVersion 16
 		targetSdk 33
-		versionCode 20003
-		versionName '2.0-beta3'
+		versionCode 20004
+		versionName '2.0-beta4'
 		testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 	}
 
