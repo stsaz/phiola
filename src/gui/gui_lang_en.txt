@@ -1,4 +1,4 @@
-# phiola v2.0-beta2 GUI English
+# phiola v2.0-beta4 GUI English
 
 MMFile					"_File"
 	MFInfo					"Show _Info"
@@ -13,6 +13,7 @@ MMList					"_List"
 		WTListAdd				"Add to List"
 		LAAdd					"Add"
 		LAName					"File Path or URL:"
+	MLSavePlaylist			"_Save Playlist..."
 	MLRemove				"_Remove"
 	MLClear					"_Clear"
 

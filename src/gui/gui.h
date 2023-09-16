@@ -41,6 +41,7 @@ struct gui {
 	ffui_menu mconvert;
 	ffui_menu mhelp;
 	ffui_menu mpopup;
+	ffui_dialog dlg;
 	struct gui_wmain *wmain;
 	struct gui_wconvert *wconvert;
 	struct gui_winfo *winfo;

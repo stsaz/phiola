@@ -21,6 +21,7 @@ FF_EXTERN void file_dir_show(ffstr data);
 FF_EXTERN void list_add(ffstr fn);
 FF_EXTERN void list_add_sz(void *sz);
 FF_EXTERN void list_remove(ffstr data);
+FF_EXTERN void list_save(void *sz);
 FF_EXTERN void lists_save();
 FF_EXTERN void ctl_play(uint i);
 FF_EXTERN void ctl_volume();

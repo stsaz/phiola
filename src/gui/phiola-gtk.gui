@@ -1,4 +1,4 @@
-# phiola v2.0-beta2 GUI
+# phiola v2.0-beta4 GUI
 
 include_language {
 	# <LANG> "gui_lang_<LANG>.txt"
@@ -29,6 +29,10 @@ menu mlist {
 	item $MLAdd {
 		action A_LIST_ADD
 		hotkey "Insert"
+	}
+	item $MLSavePlaylist {
+		action A_LIST_SAVE
+		hotkey "Ctrl+S"
 	}
 	item - {
 	}
@@ -122,6 +126,9 @@ menu mpopup {
 	item $MLRemove {
 		action A_LIST_REMOVE
 	}
+}
+
+dialog dlg {
 }
 
 window wmain {

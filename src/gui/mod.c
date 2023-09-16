@@ -210,6 +210,13 @@ void userconf_save(ffstr data)
 	ffstr_free(&data);
 }
 
+void list_save(void *sz)
+{
+	char *fn = sz;
+	gd->queue->save(NULL, fn);
+	ffmem_free(fn);
+}
+
 /** Save playlists to disk */
 void lists_save()
 {

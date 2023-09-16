@@ -455,6 +455,19 @@ static void list_changed(uint i)
 #endif
 }
 
+/** Get the output file name from user */
+static void list_save_choose_filename()
+{
+	gui_wmain *m = gg->wmain;
+	char *fn;
+	ffstr name = FFSTR_INITZ("Playlist.m3u8");
+	if (!(fn = ffui_dlg_save(&gg->dlg, &m->wnd, name.ptr, name.len)))
+		return;
+
+	char *fn2 = ffsz_dup(fn);
+	gui_core_task_ptr(list_save, fn2);
+}
+
 static void wmain_action(ffui_wnd *wnd, int id)
 {
 	gui_wmain *m = gg->wmain;
@@ -483,6 +496,9 @@ static void wmain_action(ffui_wnd *wnd, int id)
 
 	case A_LIST_ADD:
 		wlistadd_show(1);  break;
+
+	case A_LIST_SAVE:
+		list_save_choose_filename();  break;
 
 	case A_LIST_REMOVE:
 		gui_core_task_slice(list_remove, m->vlist.selected());  break;
