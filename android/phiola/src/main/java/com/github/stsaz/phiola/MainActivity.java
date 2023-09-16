@@ -180,38 +180,14 @@ public class MainActivity extends AppCompatActivity {
 				return true;
 			}
 
-			case R.id.action_list_switch: {
-				int qi = queue.switch_list();
-				if (view_explorer)
-					plist_click();
-				else
-					list_update();
-				core.gui().msg_show(this, "Switched to L%d", qi+1);
-				return true;
-			}
-
 			case R.id.action_list_l2add:
 				if (queue.l2_add_cur())
 					core.gui().msg_show(this, "Added 1 item to L2");
 				return true;
 
-			case R.id.action_file_showcur: {
-				String fn = track.cur_url();
-				if (fn.isEmpty())
-					return true;
-				gui.cur_path = new File(fn).getParent();
-				if (!view_explorer) {
-					explorer_click();
-				} else {
-					explorer.fill();
-					pl_adapter.view_explorer = true;
-					list_update();
-				}
-				int pos = explorer.file_idx(fn);
-				if (pos >= 0)
-					list.scrollToPosition(pos);
+			case R.id.action_file_showcur:
+				explorer_file_current_show();
 				return true;
-			}
 
 			case R.id.action_about:
 				startActivity(new Intent(this, AboutActivity.class));
@@ -339,6 +315,9 @@ public class MainActivity extends AppCompatActivity {
 		bplist = findViewById(R.id.bplaylist);
 		bplist.setOnClickListener((v) -> plist_click());
 		bplist.setChecked(true);
+		bplist.setText("Playlist 1");
+		bplist.setTextOn("Playlist 1");
+		bplist.setTextOff("Playlist 1");
 
 		lbl_name = findViewById(R.id.lname);
 		lbl_pos = findViewById(R.id.lpos);
@@ -450,7 +429,10 @@ public class MainActivity extends AppCompatActivity {
 
 	void plist_click() {
 		bplist.setChecked(true);
-		if (!view_explorer) return;
+		if (!view_explorer) {
+			list_switch();
+			return;
+		}
 
 		view_explorer = false;
 		bexplorer.setChecked(false);
@@ -543,6 +525,23 @@ public class MainActivity extends AppCompatActivity {
 			queue.play(n);
 	}
 
+	private void explorer_file_current_show() {
+		String fn = track.cur_url();
+		if (fn.isEmpty())
+			return;
+		gui.cur_path = new File(fn).getParent();
+		if (!view_explorer) {
+			explorer_click();
+		} else {
+			explorer.fill();
+			pl_adapter.view_explorer = true;
+			list_update();
+		}
+		int pos = explorer.file_idx(fn);
+		if (pos >= 0)
+			list.scrollToPosition(pos);
+	}
+
 	private void list_update() {
 		pl_adapter.on_change(0, -1);
 	}
@@ -579,6 +578,17 @@ public class MainActivity extends AppCompatActivity {
 	 */
 	private void list_save() {
 		startActivity(new Intent(this, ListSaveActivity.class));
+	}
+
+	private void list_switch() {
+		int qi = queue.switch_list();
+		if (view_explorer)
+			plist_click();
+		else
+			list_update();
+		bplist.setText(String.format("Playlist %d", qi+1));
+		bplist.setTextOn(String.format("Playlist %d", qi+1));
+		bplist.setTextOff(String.format("Playlist %d", qi+1));
 	}
 
 	/**

@@ -33,9 +33,6 @@
 		android:id="@+id/action_list_showcur"
 		android:title="@string/mlist_show_track" />
 	<item
-		android:id="@+id/action_list_switch"
-		android:title="@string/mlist_switch" />
-	<item
 		android:id="@+id/action_list_l2add"
 		android:title="@string/mlist_l2add" />
 	<item
