@@ -76,6 +76,14 @@ menu mplay {
 		action A_LEAP_BACK
 		hotkey "Ctrl+Left"
 	}
+	item $MPSetMarker {
+		action A_MARKER_SET
+		hotkey "Shift+G"
+	}
+	item $MPJumpToMarker {
+		action A_MARKER_JUMP
+		hotkey "G"
+	}
 	item - {
 	}
 	item $MPVolumeUp {

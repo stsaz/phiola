@@ -51,6 +51,7 @@ struct gui_data {
 	struct gtrk *playing_track;
 	uint cursor;
 	uint seek_pos_sec;
+	uint marker_sec;
 
 	uint volume;
 	double gain_db;

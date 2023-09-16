@@ -145,6 +145,12 @@ static void ctl_seek(uint cmd)
 
 	case A_LEAP_BACK:
 		delta = -(int)gd->conf.seek_leap_delta;  break;
+
+	case A_MARKER_JUMP:
+		if (gd->marker_sec == ~0U)
+			return;
+		seek = gd->marker_sec;
+		break;
 	}
 
 	if (delta)
@@ -177,11 +183,19 @@ void ctl_action(uint cmd)
 	case A_PREV:
 		gd->queue->play_previous(NULL);  break;
 
+	case A_MARKER_SET:
+		if (gd->playing_track) {
+			gd->marker_sec = gd->playing_track->last_pos_sec;
+			wmain_status("Marker: %u:%02u", gd->marker_sec / 60, gd->marker_sec % 60);
+		}
+		break;
+
 	case A_SEEK:
 	case A_STEP_FWD:
 	case A_STEP_BACK:
 	case A_LEAP_FWD:
 	case A_LEAP_BACK:
+	case A_MARKER_JUMP:
 		ctl_seek(cmd);  break;
 	}
 }
@@ -361,6 +375,7 @@ static void gui_start(void *param)
 {
 	gd->conf.seek_step_delta = 10;
 	gd->conf.seek_leap_delta = 60;
+	gd->marker_sec = ~0;
 	gd->volume = 100;
 	gd->queue = core->mod("core.queue");
 	gd->metaif = core->mod("format.meta");

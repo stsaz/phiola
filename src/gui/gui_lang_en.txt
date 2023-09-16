@@ -25,6 +25,8 @@ MMPlayback				"_Playback"
 	MPSeekBack				"Seek _Back"
 	MPLeapForward			"Leap Forward"
 	MPLeapBack				"Leap Back"
+	MPSetMarker				"Set Marker"
+	MPJumpToMarker			"Jump To Marker"
 	MPVolumeUp				"Volume _Up"
 	MPVolumeDown			"Volume _Down"
 
