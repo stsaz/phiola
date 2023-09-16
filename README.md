@@ -4,6 +4,7 @@
 
 phiola *beta* - fast audio player, recorder, converter for Windows, Linux & Android.
 Its low CPU consumption conserves the notebook/phone battery.
+You can issue commands to phiola via its CLI, TUI, GUI, system pipe and SDK interfaces.
 Its fast startup time allows using it from custom scripts on a "play-and-exit" or "record-and-exit" basis.
 It's completely portable (all codecs are bundled) - you can run it directly from a read-only flash drive.
 It's a free and open-source project, and you can use it as a standalone application or as a library for your own software.
@@ -14,9 +15,11 @@ Contents:
 
 * [Features](#features)
 * [Install](#install)
-* [How to Use](#how-to-use)
+* [How to Use CLI](#how-to-use-cli)
+* [How to Use GUI](#how-to-use-gui)
 * [How to Use on Android](#how-to-use-on-android)
-* [Libraries](#libraries)
+* [How to Use SDK](#how-to-use-sdk)
+* [External Libraries](#external-libraries)
 * [Build](#build)
 
 
@@ -68,11 +71,11 @@ Android:
 * Or you can install .apk file from PC with `adb install`
 
 
-## How to Use
+## How to Use CLI
 
 > Important: enclose in quotes the file names containing spaces or special characters, e.g.: `phiola play "My Music"`; `phiola play "My Recordings" -include "*.wav"`.
 
-Just a few quick examples:
+Play:
 
 ```sh
 # Play files, directories and URLs
@@ -80,6 +83,15 @@ phiola play file.mp3 *.flac "My Music" http://server/music.m3u
 # or just
 phiola file.mp3 *.flac "My Music" http://server/music.m3u
 
+# Play all files within directory in random order and auto-skip the first 20 seconds from each track
+phiola "My Music" -random -seek 0:20
+```
+
+> While audio is playing, you can control phiola via keyboard, e.g. press `Right Arrow` to seek forward; press `Space` to pause/unpause the current track; `n` to start playing the next track; `q` to exit; `h` to see all supported TUI commands.
+
+Record:
+
+```sh
 # Record from the default audio device until stopped
 phiola record -o audio.flac
 
@@ -97,7 +109,11 @@ phiola record -o @nowdate-@nowtime.flac
 phiola record -o audio.flac -remote
 #   Step 2: send 'stop' signal to the phiola instance that is recording audio
 phiola remote stop
+```
 
+Convert:
+
+```sh
 # Convert
 phiola convert audio.flac -o audio.m4a
 
@@ -107,7 +123,11 @@ phiola convert *.wav -o .flac
 # Convert all .wav files inside a directory,
 #  preserving the original file names and file modification time
 phiola convert "My Recordings" -include "*.wav" -o @filepath/@filename.flac -preserve-date
+```
 
+Other use-cases:
+
+```sh
 # List audio devices
 phiola device list
 
@@ -128,6 +148,19 @@ Currently supported commands:
 > For the details on each command you can click on the links above or execute `phiola COMMAND -h` on your PC.
 
 
+## How to Use GUI
+
+Start phiola GUI with:
+
+```sh
+phiola gui
+```
+
+then add some files to playlist via drag-n-drop from your File Manager, or via `List->Add` menu command.
+
+**Bonus:** you can modify the appearance by editing the GUI source file: `phiola-2/mod/gui/ui.conf`.  You can also modify the text by editing language files, e.g. `phiola-2/mod/gui/lang_en.conf`.  Restart phiola GUI after you make changes to those files.
+
+
 ## How to Use on Android
 
 First time start:
@@ -140,7 +173,16 @@ First time start:
 * Tap on `Playlist` tab to switch the view to your playlist
 
 
-## Libraries
+## How to Use SDK
+
+The best example how to use phiola software interface is to see the source code of phiola executor in `src/exe`, e.g. `src/exe/play.h` contains the code that adds input files into a playlist and starts the playback.
+
+* `src/phiola.h` describes all interfaces implemented either by phiola Core (`core.so`) or any dynamic module
+* `android/phiola/src/main/java/com/github/stsaz/phiola/Phiola.java` is a Java interface
+* `src/track.h` is needed if you want to write your own module
+
+
+## External Libraries
 
 phiola uses modified versions of these third party libraries: libALAC, libfdk-aac, libFLAC, libMAC, libmpg123, libmpc, libogg, libopus, libvorbisenc, libvorbis, libwavpack, libsoxr, libzstd, libDynamicAudioNormalizer.  Many thanks to their creators for the great work!!!  Please consider their licenses before commercial use.  See contents of `alib3/` for more info.
 

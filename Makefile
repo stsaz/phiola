@@ -2,12 +2,11 @@
 
 ROOT_DIR := ..
 PHIOLA := $(ROOT_DIR)/phiola
-FFAUDIO := $(ROOT_DIR)/ffaudio
 AVPACK := $(ROOT_DIR)/avpack
 FFPACK := $(ROOT_DIR)/ffpack
-NETMILL := $(ROOT_DIR)/netmill
 FFOS := $(ROOT_DIR)/ffos
 FFBASE := $(ROOT_DIR)/ffbase
+APP_DIR := phiola-2
 
 include $(FFBASE)/test/makeconf
 
@@ -97,64 +96,7 @@ endif
 core.$(SO): $(CORE_O)
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_PTHREAD) $(LINK_DL) -o $@
 
-# AUDIO IO
-
-_:=
-ifeq "$(OS)" "windows"
-	MODS += wasapi.$(SO) direct-sound.$(SO)
-else ifeq "$(OS)" "apple"
-	MODS += coreaudio.$(SO)
-else ifeq "$(OS)" "freebsd"
-	MODS += oss.$(SO)
-else ifeq "$(SYS)" "android"
-	MODS += aaudio.$(SO)
-else ifeq "$(OS)" "linux"
-	MODS += alsa.$(SO) pulse.$(SO) jack.$(SO)
-endif
-
-%.o: $(PHIOLA)/src/adev/%.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/adev/*.h)
-	$(C) $(CFLAGS) -I$(FFAUDIO) $< -o $@
-
-ffaudio-wasapi.o: $(FFAUDIO)/ffaudio/wasapi.c
-	$(C) -I$(FFAUDIO) $(CFLAGS_BASE) $< -o $@
-wasapi.$(SO): wasapi.o ffaudio-wasapi.o
-	$(LINK) -shared $+ $(LINKFLAGS) -lole32 -o $@
-
-ffaudio-dsound.o: $(FFAUDIO)/ffaudio/dsound.c
-	$(C) -I$(FFAUDIO) $(CFLAGS_BASE) $< -o $@
-direct-sound.$(SO): directsound.o ffaudio-dsound.o
-	$(LINK) -shared $+ $(LINKFLAGS) -ldsound -ldxguid -o $@
-
-ffaudio-alsa.o: $(FFAUDIO)/ffaudio/alsa.c
-	$(C) -I$(FFAUDIO) $(CFLAGS_BASE) $< -o $@
-alsa.$(SO): alsa.o ffaudio-alsa.o
-	$(LINK) -shared $+ $(LINKFLAGS) -lasound -o $@
-
-ffaudio-pulse.o: $(FFAUDIO)/ffaudio/pulse.c
-	$(C) -I$(FFAUDIO) $(CFLAGS_BASE) $< -o $@
-pulse.$(SO): pulse.o ffaudio-pulse.o
-	$(LINK) -shared $+ $(LINKFLAGS) -lpulse -o $@
-
-ffaudio-jack.o: $(FFAUDIO)/ffaudio/jack.c
-	$(C) -I$(FFAUDIO) $(CFLAGS_BASE) $< -o $@
-jack.$(SO): jack.o ffaudio-jack.o
-	$(LINK) -shared $+ $(LINKFLAGS) -L/usr/lib64/pipewire-0.3/jack -ljack -o $@
-
-ffaudio-aaudio.o: $(FFAUDIO)/ffaudio/aaudio.c
-	$(C) -I$(FFAUDIO) $(CFLAGS_BASE) $< -o $@
-aaudio.$(SO): aaudio.o ffaudio-aaudio.o
-	$(LINK) -shared $+ $(LINKFLAGS) -laaudio -o $@
-
-ffaudio-coreaudio.o: $(FFAUDIO)/ffaudio/coreaudio.c
-	$(C) -I$(FFAUDIO) $(CFLAGS_BASE) $< -o $@
-coreaudio.$(SO): coreaudio.o ffaudio-coreaudio.o
-	$(LINK) -shared $+ $(LINKFLAGS) -o $@
-
-ffaudio-oss.o: $(FFAUDIO)/ffaudio/oss.c
-	$(C) -I$(FFAUDIO) $(CFLAGS_BASE) $< -o $@
-oss.$(SO): oss.o ffaudio-oss.o
-	$(LINK) -shared $+ $(LINKFLAGS) -o $@
+include $(PHIOLA)/src/adev/Makefile
 
 # AFILTERS
 
@@ -324,85 +266,8 @@ MODS += tui.$(SO)
 tui.$(SO): tui.o
 	$(LINK) -shared $+ $(LINKFLAGS) -lm -o $@
 
-MODS += gui.$(SO)
-ifeq "$(OS)" "windows"
-	FFGUI_HDR := $(wildcard $(PHIOLA)/src/util/gui-winapi/*.h)
-	CFLAGS_GUI := -Wno-missing-field-initializers
-	LINKFLAGS_GUI := -lshell32 -luxtheme -lcomctl32 -lcomdlg32 -lgdi32 -lole32 -luuid
-	FFGUI_OBJ := ffgui-winapi.o ffgui-winapi-loader.o
-else
-	FFGUI_HDR := $(wildcard $(PHIOLA)/src/util/gui-gtk/*.h)
-	CFLAGS_GUI := -Wno-free-nonheap-object -Wno-deprecated-declarations `pkg-config --cflags gtk+-3.0`
-	LINKFLAGS_GUI := `pkg-config --libs gtk+-3.0` $(LINK_PTHREAD) -lm
-	FFGUI_OBJ := ffgui-gtk.o ffgui-gtk-loader.o
-endif
-ifeq "$(DEBUG_GUI)" "1"
-	CFLAGS_GUI += -DFFGUI_DEBUG
-endif
-CFLAGS_GUI := $(CFLAGS) $(CFLAGS_GUI)
-CXXFLAGS_GUI := $(CXXFLAGS) $(CFLAGS_GUI)
-LINKFLAGS_GUI := $(LINKFLAGS) $(LINKFLAGS_GUI)
-gui-mod.o: $(PHIOLA)/src/gui/mod.c $(DEPS) \
-		$(PHIOLA)/src/gui/mod.h \
-		$(PHIOLA)/src/gui/track.h \
-		$(PHIOLA)/src/gui/track-convert.h
-	$(C) $(CFLAGS) $< -o $@
-gui.o: $(PHIOLA)/src/gui/gui.c $(DEPS) $(FFGUI_HDR) \
-		$(PHIOLA)/src/gui/gui.h \
-		$(PHIOLA)/src/gui/mod.h \
-		$(PHIOLA)/src/gui/actions.h
-	$(C) $(CFLAGS_GUI) $< -o $@
-gui-main.o: $(PHIOLA)/src/gui/main.cpp $(DEPS) $(FFGUI_HDR) \
-		$(PHIOLA)/src/gui/gui.h \
-		$(PHIOLA)/src/gui/mod.h \
-		$(PHIOLA)/src/gui/actions.h
-	$(CXX) $(CXXFLAGS_GUI) $< -o $@
-gui-dialogs.o: $(PHIOLA)/src/gui/dialogs.cpp $(DEPS) $(FFGUI_HDR) \
-		$(PHIOLA)/src/gui/gui.h \
-		$(PHIOLA)/src/gui/mod.h \
-		$(wildcard $(PHIOLA)/src/gui/*.hpp)
-	$(CXX) $(CXXFLAGS_GUI) $< -o $@
-ffgui-gtk.o: $(PHIOLA)/src/util/gui-gtk/ffgui-gtk.c $(DEPS) $(FFGUI_HDR)
-	$(C) $(CFLAGS_GUI) $< -o $@
-ffgui-gtk-loader.o: $(PHIOLA)/src/util/gui-gtk/ffgui-gtk-loader.c $(DEPS) $(FFGUI_HDR) \
-		$(PHIOLA)/src/util/conf-scheme.h \
-		$(wildcard $(PHIOLA)/src/util/ltconf*.h)
-	$(C) $(CFLAGS_GUI) $< -o $@
-ffgui-winapi.o: $(PHIOLA)/src/util/gui-winapi/ffgui-winapi.c $(DEPS) $(FFGUI_HDR)
-	$(C) $(CFLAGS_GUI) $< -o $@
-ffgui-winapi-loader.o: $(PHIOLA)/src/util/gui-winapi/ffgui-winapi-loader.c $(DEPS) $(FFGUI_HDR) \
-		$(PHIOLA)/src/util/conf-scheme.h \
-		$(wildcard $(PHIOLA)/src/util/ltconf*.h)
-	$(C) $(CFLAGS_GUI) $< -o $@
-gui.$(SO): gui-mod.o \
-		gui.o \
-		gui-main.o \
-		gui-dialogs.o \
-		$(FFGUI_OBJ)
-	$(LINKXX) -shared $+ $(LINKFLAGS_GUI) $(LINK_DL) -o $@
-
-MODS += http.$(SO)
-CFLAGS_NETMILL := $(CFLAGS_BASE) -I$(NETMILL)/src
-ifeq "$(DEBUG)" "1"
-	CFLAGS_NETMILL += -DNML_ENABLE_LOG_EXTRA
-endif
-%.o: $(PHIOLA)/src/net/%.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/net/*.h)
-	$(C) $(CFLAGS) -I$(NETMILL)/src $< -o $@
-icy.o: $(PHIOLA)/src/net/icy.c $(DEPS)
-	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
-netmill-http-filters.o: $(PHIOLA)/src/net/http-filters.c \
-		$(PHIOLA)/src/net/http-bridge.h \
-		$(wildcard $(NETMILL)/src/http-client/*.h)
-	$(C) $(CFLAGS_NETMILL) -I$(PHIOLA)/src -I$(FFOS) $< -o $@
-netmill-http-client.o: $(NETMILL)/src/http-client/oclient.c \
-		$(wildcard $(NETMILL)/src/http-client/*.h)
-	$(C) $(CFLAGS_NETMILL) -I$(FFOS) $< -o $@
-http.$(SO): http.o \
-		icy.o \
-		netmill-http-client.o \
-		netmill-http-filters.o
-	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_PTHREAD) -o $@
+include $(PHIOLA)/src/gui/Makefile
+include $(PHIOLA)/src/net/Makefile
 
 MODS += zstd.$(SO)
 LIBS3 += $(FFPACK_BIN)/libzstd-ffpack.$(SO)
@@ -426,7 +291,6 @@ strip-debug: core.$(SO).debug \
 	$(OBJCOPY) --add-gnu-debuglink=$@ $<
 	touch $@
 
-APP_DIR := phiola-2
 app:
 	$(MKDIR) $(APP_DIR) $(APP_DIR)/mod
 	$(CP) phiola$(DOTEXE) core.$(SO) $(APP_DIR)/
@@ -442,20 +306,7 @@ endif
 	$(CP) $(PHIOLA)/src/tui/help.txt $(APP_DIR)/mod/tui-help.txt
 	chmod 644 $(APP_DIR)/mod/*.$(SO)
 
-	$(MKDIR) $(APP_DIR)/mod/gui
-ifeq "$(OS)" "windows"
-	$(CP) $(PHIOLA)/src/gui/ui-winapi.conf $(APP_DIR)/mod/gui/ui.conf
-	$(CP) $(PHIOLA)/src/gui/lang_*.conf \
-		$(APP_DIR)/mod/gui/
-	sed -i 's/_/\&/' $(APP_DIR)/mod/gui/lang_*.conf
-	unix2dos $(APP_DIR)/mod/gui/*.conf
-else
-	$(CP) $(PHIOLA)/src/gui/ui-gtk.conf $(APP_DIR)/mod/gui/ui.conf
-	$(CP) $(PHIOLA)/src/gui/lang_*.conf \
-		$(PHIOLA)/src/gui/res/*.ico $(PHIOLA)/src/gui/res/phiola.desktop \
-		$(APP_DIR)/mod/gui/
-endif
-	chmod 644 $(APP_DIR)/mod/gui/*
+	$(SUBMAKE) app-gui
 
 ifeq "$(OS)" "windows"
 	mv $(APP_DIR)/README.md $(APP_DIR)/README.txt
