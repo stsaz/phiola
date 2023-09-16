@@ -97,6 +97,9 @@
 				<action android:name="android.intent.action.MEDIA_BUTTON" />
 			</intent-filter>
 		</receiver>
-	</application>
 
+		<service android:name=".RecSvc"
+			android:enabled="true">
+		</service>
+	</application>
 </manifest>

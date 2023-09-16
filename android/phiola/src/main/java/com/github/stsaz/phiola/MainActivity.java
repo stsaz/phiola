@@ -422,6 +422,7 @@ public class MainActivity extends AppCompatActivity {
 			trec = null;
 			rec_state_set(false);
 			core.gui().msg_show(this, "Finished recording");
+			stopService(new Intent(this, RecSvc.class));
 		}
 	}
 
@@ -610,6 +611,7 @@ public class MainActivity extends AppCompatActivity {
 			return;
 		rec_state_set(true);
 		core.gui().msg_show(this, "Started recording");
+		startService(new Intent(this, RecSvc.class));
 	}
 
 	/**
