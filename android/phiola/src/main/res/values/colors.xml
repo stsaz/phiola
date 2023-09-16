@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#ffaa00</color>
-    <color name="colorPrimaryDark">#ffaa00</color>
-    <color name="colorAccent">#ffaa00</color>
-    <color name="list_text">#000000</color>
-    <color name="list_row_pressed">#fcda96</color>
-    <color name="text">#000000</color>
-    <color name="recording">#ff4444</color>
-    <color name="sett_group">#805500</color>
-    <color name="track_header">#009900</color>
-    <color name="time_pos">#000000</color>
+	<color name="colorPrimary">#ffaa00</color>
+	<color name="colorPrimaryDark">#ffaa00</color>
+	<color name="colorAccent">#ffaa00</color>
+	<color name="background">#ffffff</color>
+	<color name="list_text">#000000</color>
+	<color name="list_row_pressed">#fcda96</color>
+	<color name="text">#000000</color>
+	<color name="recording">#ff4444</color>
+	<color name="sett_group">#805500</color>
+	<color name="track_header">#009900</color>
+	<color name="time_pos">#000000</color>
 </resources>
