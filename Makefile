@@ -444,14 +444,14 @@ endif
 
 	$(MKDIR) $(APP_DIR)/mod/gui
 ifeq "$(OS)" "windows"
-	$(CP) $(PHIOLA)/src/gui/phiola-winapi.gui $(APP_DIR)/mod/gui/phiola.gui
-	$(CP) $(PHIOLA)/src/gui/gui_lang*.txt \
+	$(CP) $(PHIOLA)/src/gui/ui-winapi.conf $(APP_DIR)/mod/gui/ui.conf
+	$(CP) $(PHIOLA)/src/gui/lang_*.conf \
 		$(APP_DIR)/mod/gui/
-	sed -i 's/_/\&/' $(APP_DIR)/mod/gui/gui_lang*.txt
-	unix2dos $(APP_DIR)/mod/gui/phiola.gui $(APP_DIR)/mod/gui/*.txt
+	sed -i 's/_/\&/' $(APP_DIR)/mod/gui/lang_*.conf
+	unix2dos $(APP_DIR)/mod/gui/*.conf
 else
-	$(CP) $(PHIOLA)/src/gui/phiola-gtk.gui $(APP_DIR)/mod/gui/phiola.gui
-	$(CP) $(PHIOLA)/src/gui/gui_lang*.txt \
+	$(CP) $(PHIOLA)/src/gui/ui-gtk.conf $(APP_DIR)/mod/gui/ui.conf
+	$(CP) $(PHIOLA)/src/gui/lang_*.conf \
 		$(PHIOLA)/src/gui/res/*.ico $(PHIOLA)/src/gui/res/phiola.desktop \
 		$(APP_DIR)/mod/gui/
 endif

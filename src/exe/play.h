@@ -124,7 +124,6 @@ static int play_action()
 		p->audio_module = ffsz_allocfmt("%S.play", &p->audio);
 
 	struct phi_queue_conf qc = {
-		.name = "play",
 		.first_filter = &phi_guard,
 		.audio_module = p->audio_module,
 		.ui_module = "tui.play",

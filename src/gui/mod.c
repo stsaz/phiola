@@ -11,6 +11,7 @@
 #include <gui/track-convert.h>
 #include <FFOS/dir.h>
 #include <FFOS/ffos-extern.h>
+#include <ffbase/args.h>
 
 const phi_core *core;
 struct gui_data *gd;
@@ -22,6 +23,20 @@ struct gui_data *gd;
 	#define USER_CONF_DIR  "$HOME/.config/phiola/"
 #endif
 #define USER_CONF_NAME  "gui.conf"
+
+static void list_filter_close();
+
+#define O(m)  (void*)FF_OFF(struct gui_data, m)
+const struct ffarg guimod_args[] = {
+	{ "play.cursor",	'u',	O(cursor) },
+	{}
+};
+#undef O
+
+void mod_userconf_write(ffvec *buf)
+{
+	ffvec_addfmt(buf, "\tplay.cursor %u\n", gd->cursor);
+}
 
 #ifdef FF_LINUX
 static int file_del_trash(const char **names, ffsize n)
@@ -42,9 +57,10 @@ static int file_del_trash(const char **names, ffsize n)
 #endif
 
 /** Trash all selected files */
-void file_del(ffstr data)
+void file_del(ffslice indexes)
 {
-	ffslice indexes = *(ffslice*)&data;
+	if (gd->q_filtered) goto end;
+
 	ffvec names = {};
 	struct phi_queue_entry *qe;
 	uint *it;
@@ -71,6 +87,7 @@ void file_del(ffstr data)
 		wmain_status("Couldn't delete some files");
 
 	ffvec_free(&names);
+end:
 	ffslice_free(&indexes);
 }
 
@@ -90,12 +107,11 @@ static void dir_show(const char *dir)
 #endif
 
 /** Open/explore directory in UI for the first selected file */
-void file_dir_show(ffstr data)
+void file_dir_show(ffslice indexes)
 {
-	ffslice indexes = *(ffslice*)&data;
 	uint *it;
 	FFSLICE_WALK(&indexes, it) {
-		const struct phi_queue_entry *qe = gd->queue->at(NULL, *it);
+		const struct phi_queue_entry *qe = gd->queue->at(list_id_visible(), *it);
 
 #ifdef FF_WIN
 		const char *const names[] = { qe->conf.ifile.name };
@@ -114,9 +130,146 @@ void file_dir_show(ffstr data)
 	ffslice_free(&indexes);
 }
 
+/** Create a new queue */
+static phi_queue_id list_new()
+{
+	list_filter_close();
+	struct phi_queue_conf qc = {
+		.name = ffsz_allocfmt("Playlist %u", ++gd->playlist_counter),
+		.first_filter = gd->playback_first_filter,
+		.ui_module = "gui.track",
+	};
+	gd->tab_conversion = 0;
+	phi_queue_id q = gd->queue->create(&qc);
+	return q;
+}
+
+/** Remember the current vertical scroll position */
+static void list_scroll_store(phi_queue_id q, uint vpos)
+{
+	struct list_info *li;
+	FFSLICE_WALK(&gd->lists, li) {
+		if (li->q == q) {
+			li->scroll_vpos = vpos;
+			break;
+		}
+	}
+}
+
+/** A queue is created */
+void list_created(phi_queue_id q)
+{
+	struct list_info *li = ffvec_zpushT(&gd->lists, struct list_info);
+	li->q = q;
+	phi_queue_id old = gd->q_selected;
+	gd->q_selected = q;
+
+	uint scroll_vpos = wmain_list_add(gd->queue->conf(q)->name, gd->lists.len - 1);
+
+	list_scroll_store(old, scroll_vpos);
+}
+
+/** Close current list */
+static void list_close()
+{
+	list_filter_close();
+	uint play_lists_n = gd->lists.len - !!(gd->q_convert);
+
+	if (gd->q_selected == gd->q_convert) {
+		gd->queue->destroy(gd->q_selected);
+		gd->q_convert = NULL;
+
+	} else if (play_lists_n > 1) {
+		gd->queue->destroy(gd->q_selected);
+
+	} else {
+		gd->queue->clear(gd->q_selected);
+	}
+}
+
+/** A queue is deleted */
+void list_deleted(phi_queue_id q)
+{
+	uint i = 0;
+	struct list_info *li;
+	FFSLICE_WALK(&gd->lists, li) {
+		if (li->q == q)
+			break;
+		i++;
+	}
+	ffslice_rmT((ffslice*)&gd->lists, i, 1, struct list_info);
+
+	wmain_list_delete(i);
+}
+
+/** Change current list */
+void list_select(uint i)
+{
+	list_filter_close();
+	struct list_info *li = ffslice_itemT(&gd->lists, i, struct list_info);
+	gd->tab_conversion = (gd->q_convert == li->q);
+	phi_queue_id old = gd->q_selected;
+	gd->q_selected = li->q;
+	uint n = gd->queue->count(gd->q_selected);
+
+	list_scroll_store(old, gd->current_scroll_vpos);
+	wmain_list_select(n, li->scroll_vpos);
+}
+
+/** Get currently visible (filtered) queue */
+phi_queue_id list_id_visible()
+{
+	return (gd->q_filtered) ? gd->q_filtered : gd->q_selected;
+}
+
+/** Close filtered queue */
+static void list_filter_close()
+{
+	if (!gd->q_filtered) return;
+
+	gd->queue->destroy(gd->q_filtered);
+	gd->q_filtered = NULL;
+}
+
+/** Filter the listing */
+void list_filter(ffstr filter)
+{
+	if (gd->tab_conversion) goto end;
+
+	phi_queue_id q = gd->q_selected;
+	if (filter.len) {
+		q = (gd->q_filtered && filter.len > gd->filter_len) ? gd->q_filtered : gd->q_selected;
+
+		gd->filtering = 1;
+		q = gd->queue->filter(q, filter, 0);
+		gd->filtering = 0;
+
+		if (gd->q_filtered)
+			gd->queue->destroy(gd->q_filtered);
+		gd->q_filtered = q;
+
+		uint total = gd->queue->count(gd->q_selected);
+		uint n = gd->queue->count(gd->q_filtered);
+		wmain_status("Filter: %u/%u", n, total);
+
+	} else {
+		list_filter_close();
+		wmain_status("");
+	}
+
+	gd->filter_len = filter.len;
+
+	wmain_list_draw(gd->queue->count(q), 1);
+
+end:
+	ffstr_free(&filter);
+}
+
 void ctl_play(uint i)
 {
-	gd->queue->play(NULL, gd->queue->at(NULL, i));
+	if (!gd->q_filtered)
+		gd->queue->qselect(gd->q_selected);
+	gd->queue->play(NULL, gd->queue->at(list_id_visible(), i));
 }
 
 void ctl_volume()
@@ -162,8 +315,17 @@ static void ctl_seek(uint cmd)
 void ctl_action(uint cmd)
 {
 	switch (cmd) {
+
+	case A_LIST_NEW:
+		list_new();  break;
+
+	case A_LIST_CLOSE:
+		list_close();  break;
+
 	case A_LIST_CLEAR:
-		gd->queue->clear(gd->q_selected);  break;
+		if (!gd->q_filtered)
+			gd->queue->clear(gd->q_selected);
+		break;
 
 	case A_PLAYPAUSE:
 		if (gd->playing_track)
@@ -203,17 +365,16 @@ void ctl_action(uint cmd)
 /** Save user-config to disk */
 void userconf_save(ffstr data)
 {
-	char *fn = ffsz_allocfmt("%s%s", gd->user_conf_dir, USER_CONF_NAME);
-	if (!!fffile_writewhole(fn, data.ptr, data.len, 0))
-		syserrlog("file write: %s", fn);
-	ffmem_free(fn);
+	if (fffile_writewhole(gd->user_conf_name, data.ptr, data.len, 0))
+		syserrlog("file write: %s", gd->user_conf_name);
 	ffstr_free(&data);
 }
 
+/** Save the visible (not filtered) list */
 void list_save(void *sz)
 {
 	char *fn = sz;
-	gd->queue->save(NULL, fn);
+	gd->queue->save(gd->q_selected, fn);
 	ffmem_free(fn);
 }
 
@@ -223,43 +384,91 @@ void lists_save()
 	if (!!ffdir_make(gd->user_conf_dir) && !fferr_exist(fferr_last()))
 		syserrlog("dir make: %s", gd->user_conf_dir);
 
-	char *fn = ffsz_allocfmt("%s" AUTO_LIST_FN, gd->user_conf_dir, 1);
-	gd->queue->save(NULL, fn);
+	char *fn = NULL;
+	uint i = 1;
+	struct list_info *li;
+	FFSLICE_WALK(&gd->lists, li) {
+		if (li->q == gd->q_convert)
+			continue;
+
+		ffmem_free(fn);
+		fn = ffsz_allocfmt("%s" AUTO_LIST_FN, gd->user_conf_dir, i++);
+		gd->queue->save(li->q, fn);
+	}
+
+	ffmem_free(fn);
+	fn = ffsz_allocfmt("%s" AUTO_LIST_FN, gd->user_conf_dir, i);
+	fffile_remove(fn);
+
 	ffmem_free(fn);
 }
 
 /** Load playlists from disk */
-static void lists_load()
+void lists_load()
 {
-	struct phi_queue_entry qe = {
-		.conf.ifile.name = ffsz_allocfmt("%s" AUTO_LIST_FN, gd->user_conf_dir, 1),
-	};
-	gd->queue->add(NULL, &qe);
+	char *fn = NULL;
+	for (uint i = 1;;  i++) {
+
+		fn = ffsz_allocfmt("%s" AUTO_LIST_FN, gd->user_conf_dir, i);
+		if (!fffile_exists(fn))
+			break;
+
+		phi_queue_id q = NULL;
+		if (i > 1)
+			q = list_new();
+
+		struct phi_queue_entry qe = {
+			.conf.ifile.name = fn,
+		};
+		fn = NULL;
+		gd->queue->add(q, &qe);
+	}
+
+	ffmem_free(fn);
 }
 
 void list_add(ffstr fn)
 {
+	if (gd->q_filtered) return;
+
 	struct phi_queue_entry qe = {};
 	qe.conf.ifile.name = ffsz_dupstr(&fn);
-	gd->queue->add(NULL, &qe);
+	gd->queue->add(gd->q_selected, &qe);
 }
 
 void list_add_sz(void *sz)
 {
+	if (gd->q_filtered) {
+		ffmem_free(sz);
+		return;
+	}
+
 	struct phi_queue_entry qe = {
 		.conf.ifile.name = sz,
 	};
-	gd->queue->add(NULL, &qe);
+	gd->queue->add(gd->q_selected, &qe);
 }
 
-void list_remove(ffstr data)
+void list_add_multi(ffslice names)
 {
-	ffslice d = *(ffslice*)&data;
+	char **it;
+	FFSLICE_WALK(&names, it) {
+		list_add_sz(*it);
+	}
+	ffslice_free(&names);
+}
+
+void list_remove(ffslice indexes)
+{
+	if (gd->q_filtered) goto end;
+
 	uint *it;
-	FFSLICE_RWALK(&d, it) {
+	FFSLICE_RWALK(&indexes, it) {
 		gd->queue->remove(gd->queue->at(gd->q_selected, *it));
 	}
-	ffslice_free(&d);
+
+end:
+	ffslice_free(&indexes);
 }
 
 
@@ -276,23 +485,24 @@ static const phi_filter phi_gui_convert_guard = {
 };
 
 /** Create conversion queue and add tracks to it */
-void convert_add(ffstr data)
+void convert_add(ffslice indexes)
 {
-	ffslice indexes = *(ffslice*)&data;
+	phi_queue_id q = list_id_visible();
 
 	if (!gd->q_convert) {
 		struct phi_queue_conf qc = {
-			.name = "Conversion",
+			.name = ffsz_dup("Conversion"),
 			.first_filter = &phi_gui_convert_guard,
 			.ui_module = "gui.track-convert",
 			.conversion = 1,
 		};
+		gd->tab_conversion = 1;
 		gd->q_convert = gd->queue->create(&qc); // q_on_change('n') adds a tab
 	}
 
 	uint *it;
 	FFSLICE_WALK(&indexes, it) {
-		const struct phi_queue_entry *iqe = gd->queue->at(NULL, *it);
+		const struct phi_queue_entry *iqe = gd->queue->at(q, *it);
 
 		struct phi_queue_entry qe = {};
 		phi_track_conf_assign(&qe.conf, &iqe->conf);
@@ -308,14 +518,21 @@ void convert_add(ffstr data)
 void convert_begin(void *param)
 {
 	struct phi_track_conf *c = param;
+	uint i = 0;
+	if (!gd->q_convert)
+		goto end;
+
 	struct phi_queue_entry *qe;
-	uint i;
 	for (i = 0;  !!(qe = gd->queue->at(gd->q_convert, i));  i++) {
 		qe->conf.ofile.name = ffsz_dup(c->ofile.name);
+		qe->conf.aac.quality = c->aac.quality;
+		qe->conf.stream_copy = c->stream_copy;
 	}
 	if (i)
 		gd->queue->play(NULL, gd->queue->at(gd->q_convert, 0));
-	else
+
+end:
+	if (!i)
 		wconvert_done();
 	ffmem_free(c->ofile.name);
 	ffmem_free(c);
@@ -388,7 +605,14 @@ static void gui_start(void *param)
 	gd->metaif = core->mod("format.meta");
 	gd->user_conf_dir = core->conf.env_expand(USER_CONF_DIR);
 
-	lists_load();
+	phi_queue_id q = gd->queue->select(0);
+	struct phi_queue_conf *qc = gd->queue->conf(q);
+	gd->playback_first_filter = qc->first_filter;
+	qc->name = ffsz_dup("Playlist 1");
+	struct list_info *li = ffvec_zpushT(&gd->lists, struct list_info);
+	li->q = q;
+	gd->q_selected = q;
+	gd->playlist_counter = 1;
 
 	if (FFTHREAD_NULL == (gd->th = ffthread_create(gui_worker, NULL, 0)))
 		return;
@@ -403,6 +627,7 @@ static void gui_destroy()
 {
 	ffthread_join(gd->th, -1, NULL);
 	ffmem_free(gd->user_conf_dir);
+	ffvec_free(&gd->lists);
 	ffmem_free(gd);
 }
 

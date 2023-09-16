@@ -183,8 +183,7 @@ static void cmd_prev()
 
 static void cmd_random()
 {
-	void *qe = (mod->curtrk) ? mod->curtrk->t->qent : NULL;
-	struct phi_queue_conf *qc = mod->queue->conf(qe);
+	struct phi_queue_conf *qc = mod->queue->conf(NULL);
 	qc->random = !qc->random;
 	infolog(NULL, "Random: %u", (int)qc->random);
 }

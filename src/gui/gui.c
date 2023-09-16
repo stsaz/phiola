@@ -2,9 +2,15 @@
 2023, Simon Zolin */
 
 #include <gui/gui.h>
+#include <util/conf-args.h>
 #include <FFOS/perf.h>
 
 struct gui *gg;
+
+void gui_task_ptr(void (*func)(void*), void *ptr)
+{
+	ffui_thd_post(func, ptr);
+}
 
 #ifdef FF_WIN
 static int _fdrop_next(ffvec *fn, ffstr *dropdata)
@@ -33,26 +39,65 @@ void gui_dragdrop(ffstr data)
 	ffstr_free(&data);
 }
 
-void gui_userconf_load()
+extern const struct ffarg guimod_args[];
+
+static struct ffarg_ctx wconvert_args_f() {
+	struct ffarg_ctx ax = { wconvert_args, gg->wconvert };
+	return ax;
+}
+
+static struct ffarg_ctx wmain_args_f() {
+	struct ffarg_ctx ax = { wmain_args, gg->wmain };
+	return ax;
+}
+
+static struct ffarg_ctx guimod_args_f() {
+	struct ffarg_ctx ax = { guimod_args, gd };
+	return ax;
+}
+
+static const struct ffarg args[] = {
+	{ "convert",	'{',	wconvert_args_f },
+	{ "main",		'{',	wmain_args_f },
+	{ "mod",		'{',	guimod_args_f },
+	{}
+};
+
+static void gui_userconf_load()
 {
-	char *fn = ffsz_allocfmt("%s%s", gd->user_conf_dir, USER_CONF_NAME);
+	gd->user_conf_name = ffsz_allocfmt("%s%s", gd->user_conf_dir, USER_CONF_NAME);
+
 	ffvec buf = {};
-	if (!!fffile_readwhole(fn, &buf, 1*1024*1024))
+	if (!!fffile_readwhole(gd->user_conf_name, &buf, 1*1024*1024))
 		goto end;
 
-	ffstr d = FFSTR_INITSTR(&buf), line, k, v;
-	while (d.len) {
-		ffstr_splitby(&d, '\n', &line, &d);
-		ffstr_splitby(&line, ' ', &k, &v);
-		if (k.len
-			&& (!wmain_userconf_read(k, v)
-				|| !wconvert_userconf_read(k, v)))
-		{}
-	}
+	struct ffargs a = {};
+	ffstr d = FFSTR_INITSTR(&buf);
+	int r = ffargs_process_conf(&a, args, NULL, 0, d);
+	if (r)
+		warnlog("%s:%s", gd->user_conf_name, a.error);
 
 end:
 	ffvec_free(&buf);
-	ffmem_free(fn);
+}
+
+static void gui_userconf_save()
+{
+	ffvec buf = {};
+
+	ffvec_addsz(&buf, "mod {\n");
+		mod_userconf_write(&buf);
+	ffvec_addsz(&buf, "}\n");
+
+	ffvec_addsz(&buf, "main {\n");
+		wmain_userconf_write(&buf);
+	ffvec_addsz(&buf, "}\n");
+
+	ffvec_addsz(&buf, "convert {\n");
+		wconvert_userconf_write(&buf);
+	ffvec_addsz(&buf, "}\n");
+
+	gui_core_task_data(userconf_save, *(ffstr*)&buf);
 }
 
 extern const ffui_ldr_ctl
@@ -60,6 +105,7 @@ extern const ffui_ldr_ctl
 	wconvert_ctls[],
 	winfo_ctls[],
 	wlistadd_ctls[],
+	wlistfilter_ctls[],
 	wabout_ctls[];
 
 static void* gui_getctl(void *udata, const ffstr *name)
@@ -75,6 +121,7 @@ static void* gui_getctl(void *udata, const ffstr *name)
 		FFUI_LDR_CTL3_PTR(struct gui, wmain, wmain_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, wconvert, wconvert_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, winfo, winfo_ctls),
+		FFUI_LDR_CTL3_PTR(struct gui, wlistfilter, wlistfilter_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, wlistadd, wlistadd_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, wabout, wabout_ctls),
 		FFUI_LDR_CTL_END
@@ -102,7 +149,7 @@ static int gui_getcmd(void *udata, const ffstr *name)
 static int load_ui()
 {
 	int r = -1;
-	char *fn = ffsz_allocfmt("%Smod/gui/phiola.gui", &core->conf.root);
+	char *fn = ffsz_allocfmt("%Smod/gui/ui.conf", &core->conf.root);
 	ffui_loader ldr;
 	ffui_ldr_init(&ldr, gui_getctl, gui_getcmd, gg);
 
@@ -111,7 +158,7 @@ static int load_ui()
 		t1 = fftime_monotonic();
 
 	if (!!ffui_ldr_loadfile(&ldr, fn)) {
-		errlog("parsing phiola.gui: %s", ffui_ldr_errstr(&ldr));
+		errlog("parsing ui.conf: %s", ffui_ldr_errstr(&ldr));
 		goto done;
 	}
 	r = 0;
@@ -135,6 +182,7 @@ int FFTHREAD_PROCCALL gui_worker(void *param)
 	wmain_init();
 	winfo_init();
 	wlistadd_init();
+	wlistfilter_init();
 	wconvert_init();
 	wabout_init();
 
@@ -157,11 +205,6 @@ end:
 void gui_quit()
 {
 	gui_core_task(lists_save);
-
-	ffvec buf = {};
-	wmain_userconf_write(&buf);
-	wconvert_userconf_write(&buf);
-	gui_core_task_data(userconf_save, *(ffstr*)&buf);
-
+	gui_userconf_save();
 	ffui_post_quitloop();
 }

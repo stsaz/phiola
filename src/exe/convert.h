@@ -190,7 +190,6 @@ static int conv_action()
 	struct cmd_conv *v = x->cmd_data;
 
 	struct phi_queue_conf qc = {
-		.name = "convert",
 		.first_filter = &phi_guard,
 		.ui_module = "tui.play",
 		.conversion = 1,

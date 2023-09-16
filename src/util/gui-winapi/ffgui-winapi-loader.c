@@ -106,12 +106,16 @@ static int ctl_size(ffconf_scheme *cs, ffui_loader *g, int64 val)
 	g->list_idx++;
 	return 0;
 }
+
+#define F_RESIZE_CX 1
+#define F_RESIZE_CY 2
+
 static int ctl_resize(ffconf_scheme *cs, ffui_loader *g, const ffstr *val)
 {
 	if (ffstr_eqcz(val, "cx"))
-		g->resize_flags |= 1;
+		g->resize_flags |= F_RESIZE_CX;
 	else if (ffstr_eqcz(val, "cy"))
-		g->resize_flags |= 2;
+		g->resize_flags |= F_RESIZE_CY;
 	return 0;
 }
 static void ctl_autoresize(ffui_loader *g)
@@ -121,8 +125,8 @@ static void ctl_autoresize(ffui_loader *g)
 	ffui_paned *pn = ffmem_new(ffui_paned);
 	*ffvec_pushT(&g->paned_array, ffui_paned*) = pn;
 	pn->items[0].it = g->ctl;
-	pn->items[0].cx = !!(g->resize_flags & 1);
-	pn->items[0].cy = !!(g->resize_flags & 2);
+	pn->items[0].cx = !!(g->resize_flags & F_RESIZE_CX);
+	pn->items[0].cy = !!(g->resize_flags & F_RESIZE_CY);
 	ffui_paned_create(pn, g->wnd);
 	g->resize_flags = 0;
 }
@@ -711,6 +715,7 @@ static int new_label(ffconf_scheme *cs, ffui_loader *g)
 		return FFUI_ENOMEM;
 
 	state_reset2(g);
+	g->r.cx = 400;
 	ffconf_scheme_addctx(cs, label_args, g);
 	return 0;
 }
@@ -832,7 +837,7 @@ static int new_checkbox(ffconf_scheme *cs, ffui_loader *g)
 	if (0 != ffui_chbox_create(g->ctl, g->wnd))
 		return FFUI_ENOMEM;
 
-	state_reset(g);
+	state_reset2(g);
 	ffconf_scheme_addctx(cs, chbox_args, g);
 	return 0;
 }
@@ -882,6 +887,7 @@ static int new_editbox(ffconf_scheme *cs, ffui_loader *g)
 		return FFUI_ENOMEM;
 
 	state_reset2(g);
+	g->resize_flags |= F_RESIZE_CX;
 	ffconf_scheme_addctx(cs, editbox_args, g);
 	return 0;
 }
@@ -1489,7 +1495,7 @@ static const ffconf_arg wnd_args[] = {
 	{ "popupfor",	T_STR,		_F(wnd_popupfor) },
 	{ "font",		T_OBJ,		_F(label_font) },
 	{ "bgcolor",	T_STR,		_F(wnd_bgcolor) },
-	{ "onclose",	T_STR,		_F(wnd_onclose) },
+	{ "on_close",	T_STR,		_F(wnd_onclose) },
 
 	{ "mainmenu",	T_OBJ,		_F(new_mmenu) },
 	{ "label",		T_OBJMULTI,	_F(new_label) },

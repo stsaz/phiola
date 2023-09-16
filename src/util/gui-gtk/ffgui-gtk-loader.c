@@ -342,7 +342,8 @@ static int btn_new(ffconf_scheme *cs, ffui_loader *g)
 // CHECKBOX
 static int chbox_text(ffconf_scheme *cs, ffui_loader *g, const ffstr *val)
 {
-	ffui_checkbox_settextstr(g->cb, val);
+	ffstr s = vars_val(&g->vars, *val);
+	ffui_checkbox_settextstr(g->cb, &s);
 	return 0;
 }
 static int chbox_action(ffconf_scheme *cs, ffui_loader *g, const ffstr *val)
@@ -714,6 +715,13 @@ static int wnd_popupfor(ffconf_scheme *cs, ffui_loader *g, const ffstr *val)
 	return 0;
 }
 
+static int wnd_on_close(ffconf_scheme *cs, ffui_loader *g, const ffstr *val)
+{
+	if (0 == (g->wnd->onclose_id = g->getcmd(g->udata, val)))
+		return FFUI_EINVAL;
+	return 0;
+}
+
 static int wnd_position(ffconf_scheme *cs, ffui_loader *g, ffint64 v)
 {
 	int *i = &g->r.x;
@@ -761,6 +769,7 @@ static const ffconf_arg wnd_args[] = {
 	{ "position",	FFCONF_TINT32 | FFCONF_FSIGN | FFCONF_FLIST, _F(wnd_position) },
 	{ "icon",		T_OBJ,		_F(wnd_icon) },
 	{ "popupfor",	T_STR,		_F(wnd_popupfor) },
+	{ "on_close",	T_STR,		_F(wnd_on_close) },
 
 	{ "mainmenu",	T_OBJ,		_F(mmenu_new) },
 	{ "button",		T_OBJMULTI,	_F(btn_new) },

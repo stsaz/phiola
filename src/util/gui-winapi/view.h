@@ -539,5 +539,7 @@ struct ffui_viewxx : ffui_view {
 		return *vc;
 	}
 	void column(int pos, ffui_viewcol &vc) { ffui_view_setcol(this, pos, &vc); }
+	u_int scroll_vert() { return ffui_view_topindex(this); }
+	void scroll_vert(u_int val) { ffui_view_makevisible(this, val); }
 };
 #endif

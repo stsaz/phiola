@@ -177,7 +177,7 @@ typedef struct ffui_checkbox {
 	uint action_id;
 } ffui_checkbox;
 
-void _ffui_checkbox_clicked(GtkWidget *widget, gpointer udata);
+FF_EXTERN void _ffui_checkbox_clicked(GtkWidget *widget, gpointer udata);
 static inline int ffui_checkbox_create(ffui_checkbox *cb, ffui_wnd *parent)
 {
 	cb->h = gtk_check_button_new();
@@ -385,7 +385,14 @@ FF_EXTERN void ffui_tab_ins(ffui_tab *t, int idx, const char *textz);
 
 #define ffui_tab_append(t, textz)  ffui_tab_ins(t, -1, textz)
 
-#define ffui_tab_del(t, idx)  gtk_notebook_remove_page(GTK_NOTEBOOK((t)->h), idx)
+FF_EXTERN void _ffui_tab_switch_page(GtkNotebook *notebook, GtkWidget *page, guint page_num, gpointer udata);
+
+static inline void ffui_tab_del(ffui_tab *t, uint idx)
+{
+	g_signal_handlers_block_by_func(t->h, (gpointer)_ffui_tab_switch_page, t);
+	gtk_notebook_remove_page((GtkNotebook*)t->h, idx);
+	g_signal_handlers_unblock_by_func(t->h, (gpointer)_ffui_tab_switch_page, t);
+}
 
 #define ffui_tab_count(t)  gtk_notebook_get_n_pages(GTK_NOTEBOOK((t)->h))
 
@@ -435,6 +442,7 @@ FF_EXTERN void ffui_thd_post(ffui_handler func, void *udata);
 enum FFUI_MSG {
 	FFUI_QUITLOOP,
 	FFUI_CHECKBOX_SETTEXTZ,
+	FFUI_CHECKBOX_CHECKED,
 	FFUI_CLIP_SETTEXT,
 	FFUI_EDIT_GETTEXT,
 	FFUI_LBL_SETTEXT,
@@ -449,6 +457,7 @@ enum FFUI_MSG {
 	FFUI_TRK_SET,
 	FFUI_TRK_SETRANGE,
 	FFUI_VIEW_CLEAR,
+	FFUI_VIEW_SCROLL,
 	FFUI_VIEW_SCROLLSET,
 	FFUI_VIEW_SETDATA,
 	FFUI_WND_SETTEXT,
@@ -531,9 +540,22 @@ struct ffui_buttonxx : ffui_btn {
 	void enable(uint val) { ffui_post(this, FFUI_CTL_ENABLE, (void*)(ffsize)val); }
 };
 
+struct ffui_checkboxxx : ffui_checkbox {
+	ffui_checkboxxx& check(bool val) {
+		ffui_checkbox_check(this, val);
+		return *this;
+	}
+	bool checked() {
+		ffsize val;
+		ffui_send(this, FFUI_CHECKBOX_CHECKED, &val);
+		return !!val;
+	}
+};
+
 struct ffui_tabxx : ffui_tab {
 	void add(const char *sz) { ffui_send_tab_ins(this, sz); }
-	void select(int i) { ffui_send_tab_setactive(this, i); }
+	void del(uint i) { ffui_tab_del(this, i); }
+	void select(uint i) { ffui_send_tab_setactive(this, i); }
 	uint changed() { return changed_index; }
 	uint count() { return ffui_tab_count(this); }
 };

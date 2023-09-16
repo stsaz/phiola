@@ -29,7 +29,6 @@ static int gui_action()
 	struct cmd_gui *g = x->cmd_data;
 
 	struct phi_queue_conf qc = {
-		.name = "play",
 		.first_filter = &phi_guard_gui,
 		.ui_module = "gui.track",
 	};

@@ -22,7 +22,6 @@ struct gui_wmain {
 	ffui_paned pntop;
 #endif
 	struct phi_queue_entry *qe_active;
-	uint tabs_counter;
 };
 
 FF_EXTERN const ffui_ldr_ctl wmain_ctls[] = {
@@ -67,59 +66,56 @@ static const char list_colname[][10] = {
 	"", // H_FN
 };
 
+static int conf_tvol(void *o, uint n) {
+	gui_wmain *m = gg->wmain;
+	m->tvol.set(n);
+	return 0;
+}
+
+static int conf_vlist_col(void *o, ffstrxx v) {
+	gui_wmain *m = gg->wmain;
+	ffui_viewcolxx vc = {};
+	for (uint i = 0;  i != _H_LAST;  i++) {
+		ffstrxx s;
+		v.split(' ', &s, &v);
+		uint width;
+		if (!s.matchf("%u", &width)) {
+			vc.width(width);
+			m->vlist.column(i, vc);
+		}
+	}
+	return 0;
+}
+
+static int conf_wnd_pos(void *o, ffstrxx s) {
+	gui_wmain *m = gg->wmain;
+	ffui_pos pos;
+	if (!s.matchf("%d %d %u %u", &pos.x, &pos.y, &pos.cx, &pos.cy))
+		m->wnd.place(pos);
+	return 0;
+}
+
+const ffarg wmain_args[] = {
+	{ "tvol",		'u',	(void*)conf_tvol },
+	{ "vlist.col",	'S',	(void*)conf_vlist_col },
+	{ "wmain.pos",	'S',	(void*)conf_wnd_pos },
+	{}
+};
+
 void wmain_userconf_write(ffvec *buf)
 {
 	gui_wmain *m = gg->wmain;
 	ffui_pos pos = m->wnd.pos();
-	ffvec_addfmt(buf, "wmain.pos %d %d %u %u\n", pos.x, pos.y, pos.cx, pos.cy);
-	ffvec_addfmt(buf, "tvol.val %u\n", m->tvol.get());
+	ffvec_addfmt(buf, "\twmain.pos \"%d %d %u %u\"\n", pos.x, pos.y, pos.cx, pos.cy);
+	ffvec_addfmt(buf, "\ttvol %u\n", m->tvol.get());
 
-	ffvec_addsz(buf, "vlist.col");
+	ffvec_addsz(buf, "\tvlist.col \"");
 	ffui_viewcolxx vc = {};
 	vc.width(0);
 	for (uint i = 0;  i != _H_LAST;  i++) {
-		ffvec_addfmt(buf, " %u", m->vlist.column(i, &vc).width());
+		ffvec_addfmt(buf, "%u ", m->vlist.column(i, &vc).width());
 	}
-	ffvec_addsz(buf, "\n");
-
-	ffvec_addfmt(buf, "play.cursor %u\n", gd->cursor);
-}
-
-int wmain_userconf_read(ffstr key, ffstr val)
-{
-	gui_wmain *m = gg->wmain;
-	ffstrxx k = key, v = val;
-
-	if (k == "wmain.pos") {
-		ffui_pos pos;
-		if (!v.matchf("%d %d %u %u", &pos.x, &pos.y, &pos.cx, &pos.cy))
-			m->wnd.place(pos);
-
-	} else if (k == "tvol.val") {
-		uint n;
-		if (!v.matchf("%u", &n))
-			m->tvol.set(n);
-
-	} else if (k == "vlist.col") {
-		ffui_viewcolxx vc = {};
-		for (uint i = 0;  i != _H_LAST;  i++) {
-			ffstrxx s;
-			v.split(' ', &s, &v);
-			uint width;
-			if (!s.matchf("%u", &width)) {
-				vc.width(width);
-				m->vlist.column(i, vc);
-			}
-		}
-
-	} else if (k == "play.cursor") {
-		v.matchf("%u", &gd->cursor);
-
-	} else {
-		return -1;
-	}
-
-	return 0;
+	ffvec_addsz(buf, "\"\n");
 }
 
 /** Set status bar text */
@@ -195,11 +191,12 @@ int wmain_track_new(phi_track *t, uint time_total)
 	m->qe_active = qe;
 
 	int idx;
-	if (qe_active && -1 != (idx = gd->queue->index(qe_active)))
+	if (qe_active && -1 != (idx = gd->queue->index(qe_active)) && !gd->q_filtered)
 		m->vlist.update(idx, 0);
 
 	if (-1 != (idx = gd->queue->index(qe))) {
-		m->vlist.update(idx, 0);
+		if (!gd->q_filtered) // 'idx' is the position within the original list, not filtered list
+			m->vlist.update(idx, 0);
 		gd->cursor = idx;
 	}
 
@@ -248,10 +245,12 @@ void wmain_track_update(uint time_cur, uint time_total)
 }
 
 
+/** Thread: worker */
 void wmain_conv_track_new(phi_track *t, uint time_total)
 {
 }
 
+/** Thread: worker */
 static void conv_track_update(phi_track *t, const char *progress)
 {
 	gui_wmain *m = gg->wmain;
@@ -263,11 +262,13 @@ static void conv_track_update(phi_track *t, const char *progress)
 	}
 }
 
+/** Thread: worker */
 void wmain_conv_track_close(phi_track *t)
 {
 	conv_track_update(t, "Done");
 }
 
+/** Thread: worker */
 void wmain_conv_track_update(phi_track *t, uint time_cur, uint time_total)
 {
 	char buf[256];
@@ -291,7 +292,7 @@ static void list_display(ffui_view_disp *disp)
 	gui_wmain *m = gg->wmain;
 	char buf[1000];
 	ffstr *val = NULL, s;
-	struct phi_queue_entry *qe = gd->queue->ref(gd->q_selected, i);
+	struct phi_queue_entry *qe = gd->queue->ref(list_id_visible(), i);
 	if (!qe)
 		return;
 
@@ -343,14 +344,54 @@ static void list_display(ffui_view_disp *disp)
 	gd->queue->unref(qe);
 }
 
-/** Thread: worker */
+/** A new list at position 'i' is added.
+Thread: worker */
+uint wmain_list_add(const char *name, uint i)
+{
+	gui_wmain *m = gg->wmain;
+	m->tabs.add(name);
+	m->tabs.select(i);
+	uint scroll_vpos = m->vlist.scroll_vert();
+	m->vlist.clear();
+	return scroll_vpos;
+}
+
+/** The list at position 'i' is deleted.
+Thread: worker */
+void wmain_list_delete(uint i)
+{
+	gui_wmain *m = gg->wmain;
+	uint new_index = (!i) ? 0 : i-1;
+	gd->current_scroll_vpos = m->vlist.scroll_vert();
+	list_select(new_index);
+	m->tabs.del(i);
+	m->tabs.select(new_index);
+}
+
+/** A queue is created/deleted/modified.
+Thread: worker */
 static void q_on_change(phi_queue_id q, uint flags, uint pos)
 {
 	gui_wmain *m = gg->wmain;
-	uint n = gd->queue->count(q);
 
-	if ((flags & 0xff) != 'n' && gd->q_selected && q != gd->q_selected)
+	if (q == gd->q_filtered)
 		return;
+
+	switch (flags & 0xff) {
+	case 'a':
+	case 'r':
+	case 'c':
+		if (q != gd->q_selected)
+			return; // an inactive list is changed
+		break;
+
+	case 'n':
+		if (gd->filtering)
+			return; // a filtered list is created
+		break;
+	}
+
+	uint n = gd->queue->count(q);
 
 #ifdef FF_WIN
 	switch (flags & 0xff) {
@@ -376,14 +417,10 @@ static void q_on_change(phi_queue_id q, uint flags, uint pos)
 		m->vlist.clear();  break;
 
 	case 'n':
-		gd->tab_conversion = 1;
-		gd->q_selected = q;
-		m->tabs.add("Conversion");
-		m->tabs.select(1);
-		m->vlist.clear();
-		break;
+		list_created(q);  break;
 
-	// case 'd':
+	case 'd':
+		list_deleted(q);  break;
 	}
 }
 
@@ -428,31 +465,58 @@ static void wmain_on_drop_files(ffui_wnd *wnd, ffui_fdrop *df)
 }
 #endif
 
-/** Create a new tab */
-static void tab_new()
+/** Draw/redraw the listing.
+Thread: gui, worker */
+void wmain_list_draw(uint n, uint flags)
 {
 	gui_wmain *m = gg->wmain;
-	char buf[100];
-	ffsz_format(buf, sizeof(buf), "Playlist %u", ++m->tabs_counter);
-	m->tabs.add(buf);
-}
-
-static void list_changed(uint i)
-{
-	gui_wmain *m = gg->wmain;
-
-	gd->tab_conversion = (gd->q_convert && i+1 == m->tabs.count());
-	if (!gd->tab_conversion)
-		gd->queue->select(i);
-	gd->q_selected = (gd->tab_conversion) ? gd->q_convert : NULL;
-	uint n = gd->queue->count(gd->q_selected);
 
 #ifdef FF_WIN
 	m->vlist.length(n, 1);
 #else
-	m->vlist.clear();
+	if (flags == 1)
+		m->vlist.clear();
 	m->vlist.update(0, n);
 #endif
+}
+
+/** A new tab is selected */
+static void list_changed(uint i)
+{
+	gui_wmain *m = gg->wmain;
+	gd->current_scroll_vpos = m->vlist.scroll_vert();
+	gui_core_task_uint(list_select, i);
+}
+
+static void list_scroll(uint scroll_vpos)
+{
+	struct gui_wmain *m = gg->wmain;
+	m->vlist.scroll_vert(scroll_vpos);
+}
+
+/** Switched to a new list */
+void wmain_list_select(uint n, uint scroll_vpos)
+{
+	wmain_list_draw(n, 1);
+	gui_task_uint(list_scroll, scroll_vpos);
+}
+
+/** Add the files chosen by user */
+static void list_add_choose()
+{
+	struct gui_wmain *m = gg->wmain;
+	char *fn;
+	if (!(fn = ffui_dlg_open(&gg->dlg, &m->wnd)))
+		return;
+
+	ffvecxx names;
+	for (;;) {
+		*names.push<char*>() = ffsz_dup(fn);
+		if (!(fn = ffui_dlg_nextname(&gg->dlg)))
+			break;
+	}
+	gui_core_task_slice(list_add_multi, names.slice());
+	names.reset();
 }
 
 /** Get the output file name from user */
@@ -494,17 +558,20 @@ static void wmain_action(ffui_wnd *wnd, int id)
 	case A_LIST_CHANGE:
 		list_changed(m->tabs.changed());  break;
 
+	case A_LIST_ADD_FILE:
+		list_add_choose();  break;
+
 	case A_LIST_ADD:
 		wlistadd_show(1);  break;
+
+	case A_LIST_FILTER:
+		wlistfilter_show(1);  break;
 
 	case A_LIST_SAVE:
 		list_save_choose_filename();  break;
 
 	case A_LIST_REMOVE:
 		gui_core_task_slice(list_remove, m->vlist.selected());  break;
-
-	case A_LIST_CLEAR:
-		gui_core_task_uint(ctl_action, A_LIST_CLEAR);  break;
 
 	case A_PLAY:
 		if (!gd->tab_conversion && (i = m->vlist.focused()) >= 0)
@@ -573,15 +640,9 @@ void wmain_init()
 void wmain_show()
 {
 	gui_wmain *m = gg->wmain;
-	tab_new();
 	m->wnd.show(1);
-
-	uint n = gd->queue->count(NULL);
-#ifdef FF_WIN
-	ffui_view_setcount_redraw(&m->vlist, n);
-#else
-	m->vlist.update(0, n);
-#endif
+	m->tabs.add("Playlist 1");
+	wmain_list_draw(gd->queue->count(gd->q_selected), 0);
 
 #ifdef FF_WIN
 	m->wnd.on_dropfiles = wmain_on_drop_files;
@@ -591,4 +652,5 @@ void wmain_show()
 #endif
 
 	gd->queue->on_change(q_on_change);
+	gui_core_task(lists_load);
 }

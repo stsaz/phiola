@@ -575,6 +575,14 @@ struct ffui_buttonxx : ffui_btn {
 	void enable(uint val) { EnableWindow(h, val); }
 };
 
+struct ffui_checkboxxx : ffui_checkbox {
+	ffui_checkboxxx& check(bool val) {
+		ffui_checkbox_check(this, val);
+		return *this;
+	}
+	bool checked() { return ffui_checkbox_checked(this); }
+};
+
 struct ffui_trackbarxx : ffui_trkbar {
 	void set(uint value) { ffui_trk_set(this, value); }
 	uint get() { return ffui_trk_val(this); }

@@ -40,10 +40,10 @@ static void* q_insert(struct phi_queue *q, uint pos, struct phi_queue_entry *qe)
 static int q_remove_at(struct phi_queue *q, uint pos, uint n);
 static struct q_entry* q_get(struct phi_queue *q, uint i);
 static int q_find(struct phi_queue *q, struct q_entry *e);
-static void q_on_change(phi_queue_id q, uint flags, uint pos){}
 
 #include <queue/ent.h>
 
+static void q_on_change(phi_queue_id q, uint flags, uint pos){}
 static void q_free(struct phi_queue *q);
 
 void qm_destroy()
@@ -94,7 +94,20 @@ static phi_queue_id qm_select(uint pos)
 	return qm_default();
 }
 
-static void set_on_change(on_change_t cb)
+static void qm_qselect(phi_queue_id q)
+{
+	uint i = 0;
+	struct phi_queue **it;
+	FFSLICE_WALK(&qm->lists, it) {
+		if (*it == q) {
+			qm->selected = i;
+			return;
+		}
+		i++;
+	}
+}
+
+static void qm_set_on_change(on_change_t cb)
 {
 	qm->on_change = cb;
 }
@@ -104,9 +117,10 @@ static void q_free(struct phi_queue *q)
 {
 	struct q_entry **e;
 	FFSLICE_WALK(&q->index, e) {
-		qe_free(*e);
+		qe_unref(*e);
 	}
 	ffvec_free(&q->index);
+	ffmem_free(q->conf.name);
 	ffmem_free(q);
 }
 
@@ -122,9 +136,16 @@ static struct phi_queue* q_create(struct phi_queue_conf *conf)
 
 static void q_destroy(phi_queue_id q)
 {
+	if (!q) q = qm_default();
 	qm_rm(q);
 	qm->on_change(q, 'd', 0);
 	q_free(q);
+}
+
+static struct phi_queue_conf* q_conf(phi_queue_id q)
+{
+	if (!q) q = qm_default();
+	return &q->conf;
 }
 
 static void* q_insert(struct phi_queue *q, uint pos, struct phi_queue_entry *qe)
@@ -371,20 +392,37 @@ static int q_remove_at(struct phi_queue *q, uint pos, uint n)
 	return 0;
 }
 
-struct phi_queue_conf* qe_conf(struct q_entry *e)
+static phi_queue_id q_filter(phi_queue_id q, ffstr filter, uint flags)
 {
-	struct phi_queue *q = (e) ? e->q : NULL;
+	if (!flags) flags = 3;
 	if (!q) q = qm_default();
-	return &q->conf;
+
+	struct phi_queue *qf = ffmem_new(struct phi_queue);
+	qf->conf = q->conf;
+	qf->conf.name = ffsz_dup("Filter");
+	qm_add(qf);
+
+	struct q_entry **it, *e;
+	FFSLICE_WALK(&q->index, it) {
+		e = *it;
+		if (qe_filter(e, filter, flags))
+			*ffvec_pushT(&qf->index, void*) = qe_ref(e);
+	}
+
+	return qf;
 }
 
 const phi_queue_if phi_queueif = {
 	q_create,
 	q_destroy,
 	qm_select,
+	q_conf,
+	qm_qselect,
+
 	q_add,
 	q_clear,
 	q_count,
+	q_filter,
 
 	q_play,
 	q_play_next,
@@ -399,9 +437,8 @@ const phi_queue_if phi_queueif = {
 	(void*)qe_unref,
 
 	(void*)qe_insert,
-	(void*)qe_conf,
 	(void*)qe_index,
 	(void*)qe_remove,
 
-	set_on_change,
+	qm_set_on_change,
 };

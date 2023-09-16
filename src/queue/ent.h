@@ -50,6 +50,12 @@ static struct q_entry* qe_new(struct phi_queue_entry *qe)
 	return e;
 }
 
+struct q_entry* qe_ref(struct q_entry *e)
+{
+	e->used++;
+	return e;
+}
+
 void qe_unref(struct q_entry *e)
 {
 	FF_ASSERT(!!e->used);
@@ -236,4 +242,26 @@ static void* qe_insert(struct q_entry *e, struct phi_queue_entry *qe)
 static int qe_remove(struct q_entry *e)
 {
 	return q_remove_at(e->q, qe_index(e), 1);
+}
+
+/** Check if the item matches the filter */
+int qe_filter(struct q_entry *e, ffstr filter, uint flags)
+{
+	ffstr name, val;
+
+	if (flags & 1) {
+		name = FFSTR_Z(e->pub.conf.ifile.name);
+		if (ffstr_ifindstr(&name, &filter) >= 0)
+			return 1;
+	}
+
+	if (flags & 2) {
+		uint i = 0;
+		while (phi_metaif->list(&e->pub.conf.meta, &i, &name, &val, 0)) {
+			if (ffstr_ifindstr(&val, &filter) >= 0)
+				return 1;
+		}
+	}
+
+	return 0;
 }

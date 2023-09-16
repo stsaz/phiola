@@ -4,9 +4,7 @@
 JNIEXPORT jlong JNICALL
 Java_com_github_stsaz_phiola_Phiola_quNew(JNIEnv *env, jobject thiz)
 {
-	struct phi_queue_conf c = {
-		.name = "playlist",
-	};
+	struct phi_queue_conf c = {};
 	return (ffsize)x->queue->create(&c);
 }
 

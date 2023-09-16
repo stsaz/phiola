@@ -104,8 +104,9 @@ struct ffui_tabxx : ffui_tab {
 		ffui_tab_settextz(&ti, sz);
 		ffui_tab_append(this, &ti);
 	}
-	void select(uint i) { ffui_tab_setactive(this, i); }
-	uint count() { return ffui_tab_count(this); }
-	uint changed() { return ffui_tab_active(this); }
+	void del(u_int i) { ffui_tab_del(this, i); }
+	void select(u_int i) { ffui_tab_setactive(this, i); }
+	u_int count() { return ffui_tab_count(this); }
+	u_int changed() { return ffui_tab_active(this); }
 };
 #endif

@@ -102,7 +102,6 @@ static int info_action()
 	struct cmd_info *p = x->cmd_data;
 
 	struct phi_queue_conf qc = {
-		.name = "info",
 		.first_filter = &phi_guard,
 		.ui_module = "tui.play",
 	};

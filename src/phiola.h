@@ -12,7 +12,7 @@
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20003
+#define PHI_VERSION_CORE  20004
 
 typedef ffuint uint;
 typedef ffushort ushort;
@@ -324,7 +324,7 @@ struct phi_adev_if {
 
 
 struct phi_queue_conf {
-	const char *name;
+	char *name;
 	const phi_filter *first_filter;
 	const char *audio_module;
 	const char *ui_module;
@@ -344,10 +344,15 @@ struct phi_queue_if {
 	phi_queue_id (*create)(struct phi_queue_conf *conf);
 	void (*destroy)(phi_queue_id q);
 	phi_queue_id (*select)(uint pos);
+	struct phi_queue_conf* (*conf)(phi_queue_id q);
+	void (*qselect)(phi_queue_id q);
 
 	int (*add)(phi_queue_id q, struct phi_queue_entry *qe);
 	int (*clear)(phi_queue_id q);
 	int (*count)(phi_queue_id q);
+
+	/** Create a new virtual queue with the items matching a filter */
+	phi_queue_id (*filter)(phi_queue_id q, ffstr filter, uint flags);
 
 	int (*play)(phi_queue_id q, void *e);
 	int (*play_next)(phi_queue_id q);
@@ -368,7 +373,6 @@ struct phi_queue_if {
 	void (*unref)(struct phi_queue_entry *qe);
 
 	void* (*insert)(void *e, struct phi_queue_entry *qe);
-	struct phi_queue_conf* (*conf)(void *e);
 	int (*index)(void *e);
 	int (*remove)(void *e);
 

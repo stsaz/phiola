@@ -343,5 +343,11 @@ struct ffui_viewxx : ffui_view {
 	}
 	void column(int pos, const ffui_viewcolxx &vc) { ffui_view_setcol(this, pos, &vc.vc); }
 	void drag_drop_init(uint action_id) { ffui_view_dragdrop(this, action_id); }
+	uint scroll_vert() {
+		ffsize val;
+		ffui_send(this, FFUI_VIEW_SCROLL, &val);
+		return val;
+	}
+	void scroll_vert(uint val) { ffui_post_view_scroll_set(this, val); }
 };
 #endif

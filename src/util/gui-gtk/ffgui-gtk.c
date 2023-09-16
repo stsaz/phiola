@@ -62,7 +62,7 @@ void _ffui_trk_value_changed(GtkWidget *widget, gpointer udata)
 		t->wnd->on_action(t->wnd, t->scroll_id);
 }
 
-static void _ffui_tab_switch_page(GtkNotebook *notebook, GtkWidget *page, guint page_num, gpointer udata)
+void _ffui_tab_switch_page(GtkNotebook *notebook, GtkWidget *page, guint page_num, gpointer udata)
 {
 	ffui_tab *t = udata;
 	t->changed_index = page_num;
@@ -373,11 +373,11 @@ int ffui_tray_create(ffui_trayicon *t, ffui_wnd *wnd)
 static void _ffui_wnd_onclose(void *a, void *b, gpointer udata)
 {
 	ffui_wnd *wnd = udata;
+	wnd->on_action(wnd, wnd->onclose_id);
 	if (wnd->hide_on_close) {
 		ffui_show(wnd, 0);
 		return;
 	}
-	wnd->on_action(wnd, wnd->onclose_id);
 }
 
 int ffui_wnd_create(ffui_wnd *w)
@@ -612,6 +612,9 @@ static gboolean _ffui_send_handler(gpointer data)
 	case FFUI_CHECKBOX_SETTEXTZ:
 		ffui_checkbox_settextz((ffui_checkbox*)c->ctl, c->udata);  break;
 
+	case FFUI_CHECKBOX_CHECKED:
+		*(ffsize*)c->udata = ffui_checkbox_checked((ffui_checkbox*)c->ctl);  break;
+
 
 	case FFUI_WND_SETTEXT:
 		ffui_wnd_settextz((ffui_wnd*)c->ctl, c->udata);  break;
@@ -625,6 +628,9 @@ static gboolean _ffui_send_handler(gpointer data)
 
 	case FFUI_VIEW_SCROLLSET:
 		ffui_view_scroll_setvert((ffui_view*)c->ctl, (ffsize)c->udata);  break;
+
+	case FFUI_VIEW_SCROLL:
+		*(ffsize*)c->udata = ffui_view_scroll_vert((ffui_view*)c->ctl);  break;
 
 	case FFUI_VIEW_SETDATA: {
 		uint first = (ffsize)c->udata >> 16;
@@ -718,7 +724,7 @@ void ffui_post(void *ctl, uint id, void *udata)
 		return;
 	}
 
-	if (ffthread_curid() == _ffui_thd_id) {
+	if (ffthread_curid() == _ffui_thd_id && id != FFUI_VIEW_SCROLLSET) {
 		_ffui_send_handler(c);
 		return;
 	}
