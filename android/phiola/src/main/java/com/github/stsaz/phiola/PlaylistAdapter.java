@@ -48,7 +48,7 @@ class PlaylistAdapter extends RecyclerView.Adapter<PlaylistViewHolder> {
 	private final Explorer explorer;
 
 	PlaylistAdapter(Context ctx, Explorer explorer) {
-		core = Core.init_once(null);
+		core = Core.getInstance();
 		queue = core.queue();
 		this.explorer = explorer;
 		inflater = LayoutInflater.from(ctx);
@@ -62,7 +62,7 @@ class PlaylistAdapter extends RecyclerView.Adapter<PlaylistViewHolder> {
 	public void onBindViewHolder(@NonNull PlaylistViewHolder holder, int position) {
 		String s;
 		if (!view_explorer) {
-			QueueItemInfo qi = queue.getInfo(position);
+			QueueItemInfo qi = queue.info(position);
 			if (!qi.title.isEmpty()) {
 				s = String.format("%d. %s - %s [%d:%02d]"
 					, position + 1, qi.artist, qi.title
@@ -80,7 +80,7 @@ class PlaylistAdapter extends RecyclerView.Adapter<PlaylistViewHolder> {
 		if (view_explorer)
 			return explorer.count();
 
-		return queue.count();
+		return queue.visiblelist_itemcount();
 	}
 
 	static final int EV_LONGCLICK = 1;
@@ -94,7 +94,7 @@ class PlaylistAdapter extends RecyclerView.Adapter<PlaylistViewHolder> {
 		if (ev == EV_LONGCLICK)
 			return;
 
-		queue.play(i);
+		queue.visiblelist_play(i);
 	}
 
 	void on_change(int how, int pos) {

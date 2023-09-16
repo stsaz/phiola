@@ -11,7 +11,7 @@ Java_com_github_stsaz_phiola_Phiola_quNew(JNIEnv *env, jobject thiz)
 JNIEXPORT void JNICALL
 Java_com_github_stsaz_phiola_Phiola_quDestroy(JNIEnv *env, jobject thiz, jlong q)
 {
-	x->queue->destroy((void*)q);
+	x->queue->destroy((phi_queue_id)q);
 }
 
 #define QUADD_RECURSE  1
@@ -31,7 +31,7 @@ Java_com_github_stsaz_phiola_Phiola_quAdd(JNIEnv *env, jobject thiz, jlong q, jo
 		struct phi_queue_entry qe = {
 			.conf.ifile.name = ffsz_dup(fn),
 		};
-		x->queue->add((void*)q, &qe);
+		x->queue->add((phi_queue_id)q, &qe);
 	}
 
 	jni_sz_free(fn, js);
@@ -41,7 +41,7 @@ Java_com_github_stsaz_phiola_Phiola_quAdd(JNIEnv *env, jobject thiz, jlong q, jo
 JNIEXPORT jstring JNICALL
 Java_com_github_stsaz_phiola_Phiola_quEntry(JNIEnv *env, jobject thiz, jlong q, jint i)
 {
-	struct phi_queue_entry *qe = x->queue->ref((void*)q, i);
+	struct phi_queue_entry *qe = x->queue->ref((phi_queue_id)q, i);
 	const char *url = qe->conf.ifile.name;
 	jstring s = jni_js_sz(url);
 	x->queue->unref(qe);
@@ -51,11 +51,12 @@ Java_com_github_stsaz_phiola_Phiola_quEntry(JNIEnv *env, jobject thiz, jlong q, 
 #define QUCOM_CLEAR  1
 #define QUCOM_REMOVE_I  2
 #define QUCOM_COUNT  3
+#define QUCOM_INDEX  4
 
 JNIEXPORT jint JNICALL
 Java_com_github_stsaz_phiola_Phiola_quCmd(JNIEnv *env, jobject thiz, jlong jq, jint cmd, jint i)
 {
-	phi_queue_id q = (void*)jq;
+	phi_queue_id q = (phi_queue_id)jq;
 
 	switch (cmd) {
 	case QUCOM_CLEAR:
@@ -68,6 +69,9 @@ Java_com_github_stsaz_phiola_Phiola_quCmd(JNIEnv *env, jobject thiz, jlong jq, j
 
 	case QUCOM_COUNT:
 		return x->queue->count(q);
+
+	case QUCOM_INDEX:
+		return x->queue->index(x->queue->at(q, i));
 	}
 	return 0;
 }
@@ -75,7 +79,7 @@ Java_com_github_stsaz_phiola_Phiola_quCmd(JNIEnv *env, jobject thiz, jlong jq, j
 JNIEXPORT jobject JNICALL
 Java_com_github_stsaz_phiola_Phiola_quMeta(JNIEnv *env, jobject thiz, jlong jq, jint i)
 {
-	phi_queue_id q = (void*)jq;
+	phi_queue_id q = (phi_queue_id)jq;
 	struct phi_queue_entry *qe = x->queue->ref(q, i);
 	jobject jmeta = meta_create(env, &qe->conf.meta, qe->conf.ifile.name, qe->length_msec);
 	x->queue->unref(qe);
@@ -87,10 +91,15 @@ enum {
 	QUFILTER_META = 2,
 };
 
-JNIEXPORT jint JNICALL
+JNIEXPORT jlong JNICALL
 Java_com_github_stsaz_phiola_Phiola_quFilter(JNIEnv *env, jobject thiz, jlong q, jstring jfilter, jint flags)
 {
-	return 0;
+	dbglog("%s: enter", __func__);
+	const char *filter = jni_sz_js(jfilter);
+	phi_queue_id qf = x->queue->filter((phi_queue_id)q, FFSTR_Z(filter), flags);
+	jni_sz_free(filter, jfilter);
+	dbglog("%s: exit", __func__);
+	return (jlong)qf;
 }
 
 JNIEXPORT jint JNICALL
@@ -101,7 +110,7 @@ Java_com_github_stsaz_phiola_Phiola_quLoad(JNIEnv *env, jobject thiz, jlong q, j
 	struct phi_queue_entry qe = {
 		.conf.ifile.name = ffsz_dup(fn),
 	};
-	x->queue->add((void*)q, &qe);
+	x->queue->add((phi_queue_id)q, &qe);
 	jni_sz_free(fn, jfilepath);
 	dbglog("%s: exit", __func__);
 	return 0;
@@ -112,7 +121,7 @@ Java_com_github_stsaz_phiola_Phiola_quSave(JNIEnv *env, jobject thiz, jlong q, j
 {
 	dbglog("%s: enter", __func__);
 	const char *fn = jni_sz_js(jfilepath);
-	x->queue->save((void*)q, fn);
+	x->queue->save((phi_queue_id)q, fn);
 	jni_sz_free(fn, jfilepath);
 	dbglog("%s: exit", __func__);
 	return 1;

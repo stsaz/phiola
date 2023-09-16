@@ -15,8 +15,16 @@
 	<item
 		android:id="@+id/action_file_del"
 		android:title="@string/mfile_del" />
+
 	<item android:id="@+id/action_file_move"
 		android:title="@string/mfile_move" />
+
+	<item android:id="@+id/action_list_new"
+		android:title="@string/mlist_new" />
+
+	<item android:id="@+id/action_list_close"
+		android:title="@string/mlist_close" />
+
 	<item
 		android:id="@+id/action_list_save"
 		android:title="@string/mlist_save" />
@@ -32,9 +40,10 @@
 	<item
 		android:id="@+id/action_list_showcur"
 		android:title="@string/mlist_show_track" />
-	<item
-		android:id="@+id/action_list_l2add"
-		android:title="@string/mlist_l2add" />
+
+	<item android:id="@+id/action_list_next_add_cur"
+		android:title="@string/mlist_next_add" />
+
 	<item
 		android:id="@+id/action_about"
 		android:title="@string/menu_about" />

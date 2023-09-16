@@ -8,12 +8,16 @@
 	<string name="menu_show_expl">File: Show Current Track</string>
 	<string name="mfile_del">File: Delete from Storage</string>
 	<string name="mfile_move">File: Quick Move!</string>
+
+	<string name="mlist_new">List: New</string>
+	<string name="mlist_close">List: Close</string>
 	<string name="mlist_save">List: Save...</string>
 	<string name="mlist_add">List: Add...</string>
 	<string name="mlist_remove">List: Remove Current Track</string>
 	<string name="mlist_clear">List: Clear</string>
 	<string name="mlist_show_track">List: Show Current Track</string>
-	<string name="mlist_l2add">List: Add Current to L2</string>
+	<string name="mlist_next_add">List: Add Current to Next</string>
+
 	<string name="menu_about">About...</string>
 
 	<string name="sett_interface">Interface</string>

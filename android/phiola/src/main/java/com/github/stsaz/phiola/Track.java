@@ -320,7 +320,7 @@ class Track {
 		tplay.info = "";
 
 		if (!core.setts.no_tags) {
-			core.phiola.meta(core.queue().cur_q(), list_item, url,
+			core.phiola.meta(core.queue().q_active_id(), list_item, url,
 				(meta) -> {
 					Handler mloop = new Handler(Looper.getMainLooper());
 					mloop.post(() -> {

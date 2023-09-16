@@ -191,7 +191,7 @@ Java_com_github_stsaz_phiola_Phiola_meta(JNIEnv *env, jobject thiz, jlong q, jin
 		|| !track->filter(t, x->core->mod("format.detect"), 0))
 		goto end;
 
-	t->qent = x->queue->ref((void*)q, list_item);
+	t->qent = x->queue->ref((phi_queue_id)q, list_item);
 
 	x->Phiola_MetaCallback_on_finish = jni_func(jni_class_obj(jcb), "on_finish", "(" PJT_META ")V");
 	t->udata = jni_global_ref(jcb);

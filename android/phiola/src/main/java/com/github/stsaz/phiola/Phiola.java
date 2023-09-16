@@ -80,15 +80,22 @@ class Phiola {
 	static final int QUCOM_CLEAR = 1;
 	static final int QUCOM_REMOVE_I = 2;
 	static final int QUCOM_COUNT = 3;
+
+	/** Convert track index in the currently visible (filtered) list
+	 to the index within its parent (not filtered) list */
+	static final int QUCOM_INDEX = 4;
+
 	native int quCmd(long q, int cmd, int i);
 
 	native Meta quMeta(long q, int i);
 
 	static final int QUFILTER_URL = 1;
 	static final int QUFILTER_META = 2;
-	native int quFilter(long q, String filter, int flags);
+	native long quFilter(long q, String filter, int flags);
 
+	/** Load playlist from a file on disk */
 	native int quLoad(long q, String filepath);
+
 	native boolean quSave(long q, String filepath);
 
 	String[] storage_paths;

@@ -154,6 +154,14 @@ public class MainActivity extends AppCompatActivity {
 						.putExtra("length", total_dur_msec / 1000 + 1));
 				return true;
 
+			case R.id.action_list_new:
+				list_new();
+				return true;
+
+			case R.id.action_list_close:
+				list_close();
+				return true;
+
 			case R.id.action_list_add:
 				startActivity(new Intent(this, AddURLActivity.class));
 				return true;
@@ -167,17 +175,20 @@ public class MainActivity extends AppCompatActivity {
 				return true;
 
 			case R.id.action_list_showcur: {
-				plist_click();
+				if (view_explorer)
+					plist_click();
 				int pos = queue.cur();
 				if (pos >= 0)
-					b.list.scrollToPosition(queue.cur());
+					b.list.scrollToPosition(pos);
 				return true;
 			}
 
-			case R.id.action_list_l2add:
-				if (queue.l2_add_cur())
-					core.gui().msg_show(this, "Added 1 item to L2");
+			case R.id.action_list_next_add_cur: {
+				int qi = queue.next_list_add_cur();
+				if (qi >= 0)
+					core.gui().msg_show(this, String.format("Added track to Playlist %d", qi+1));
 				return true;
+			}
 
 			case R.id.action_file_showcur:
 				explorer_file_current_show();
@@ -190,9 +201,7 @@ public class MainActivity extends AppCompatActivity {
 		return super.onOptionsItemSelected(item);
 	}
 
-	/**
-	 * Called by OS with the result of requestPermissions().
-	 */
+	/** Called by OS with the result of requestPermissions(). */
 	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
 		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 		if (grantResults.length != 0)
@@ -216,9 +225,7 @@ public class MainActivity extends AppCompatActivity {
 		}
 	}
 
-	/**
-	 * Request system permissions
-	 */
+	/** Request system permissions */
 	private void init_system() {
 		String[] perms = new String[]{
 				Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -243,9 +250,7 @@ public class MainActivity extends AppCompatActivity {
 		return true;
 	}
 
-	/**
-	 * Initialize core and modules
-	 */
+	/** Initialize core and modules */
 	private int init_mods() {
 		core = Core.init_once(getApplicationContext());
 		if (core == null)
@@ -283,9 +288,7 @@ public class MainActivity extends AppCompatActivity {
 		return 0;
 	}
 
-	/**
-	 * Set UI objects and register event handlers
-	 */
+	/** Set UI objects and register event handlers */
 	private void init_ui() {
 		setContentView(b.getRoot());
 
@@ -304,9 +307,7 @@ public class MainActivity extends AppCompatActivity {
 
 		b.bplaylist.setOnClickListener((v) -> plist_click());
 		b.bplaylist.setChecked(true);
-		b.bplaylist.setText("Playlist 1");
-		b.bplaylist.setTextOn("Playlist 1");
-		b.bplaylist.setTextOff("Playlist 1");
+		bplaylist_text(queue.current_list_index());
 
 		b.seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 			int val; // last value
@@ -427,9 +428,7 @@ public class MainActivity extends AppCompatActivity {
 		plist_show();
 	}
 
-	/**
-	 * Delete file and update view
-	 */
+	/** Delete file and update view */
 	private void file_del(int pos, String fn) {
 		if (!core.setts.file_del) {
 			String e = core.phiola.trash(core.setts.trash_dir, fn);
@@ -446,9 +445,7 @@ public class MainActivity extends AppCompatActivity {
 		queue.remove(pos);
 	}
 
-	/**
-	 * Ask confirmation before deleting the currently playing file from storage
-	 */
+	/** Ask confirmation before deleting the currently playing file from storage */
 	private void file_del_cur() {
 		int pos = queue.cur();
 		if (pos < 0)
@@ -535,6 +532,7 @@ public class MainActivity extends AppCompatActivity {
 
 	/** Called when we're leaving the playlist tab */
 	void pl_leave() {
+		queue.filter("");
 		LinearLayoutManager llm = (LinearLayoutManager)b.list.getLayoutManager();
 		gui.list_pos = llm.findLastCompletelyVisibleItemPosition();
 	}
@@ -545,38 +543,61 @@ public class MainActivity extends AppCompatActivity {
 		list_update();
 	}
 
-	/**
-	 * Remove currently playing track from playlist
-	 */
+	private void bplaylist_text(int qi) {
+		String s = String.format("Playlist %d", qi + 1);
+		b.bplaylist.setText(s);
+		b.bplaylist.setTextOn(s);
+		b.bplaylist.setTextOff(s);
+	}
+
+	private void list_new() {
+		int qi = queue.new_list();
+		if (qi < 0)
+			return;
+
+		gui.msg_show(this, String.format("Created Playlist %d", qi+1));
+		queue.switch_list(qi);
+		if (view_explorer)
+			plist_click();
+		else
+			list_update();
+		bplaylist_text(qi);
+	}
+
+	private void list_close() {
+		if (view_explorer) return;
+
+		queue.close_current_list();
+		gui.msg_show(this, "Closed playlist");
+		list_update();
+		bplaylist_text(queue.current_list_index());
+	}
+
+	/** Remove currently playing track from playlist */
 	private void list_rm() {
 		int pos = queue.cur();
 		if (pos < 0)
 			return;
+
 		queue.remove(pos);
 		gui.msg_show(this, "Removed 1 entry");
 	}
 
-	/**
-	 * Show dialog for saving playlist file
-	 */
+	/** Show dialog for saving playlist file */
 	private void list_save() {
 		startActivity(new Intent(this, ListSaveActivity.class));
 	}
 
 	private void list_switch() {
-		int qi = queue.switch_list();
+		int qi = queue.next_list_select();
 		if (view_explorer)
 			plist_click();
 		else
 			list_update();
-		b.bplaylist.setText(String.format("Playlist %d", qi+1));
-		b.bplaylist.setTextOn(String.format("Playlist %d", qi+1));
-		b.bplaylist.setTextOff(String.format("Playlist %d", qi+1));
+		bplaylist_text(qi);
 	}
 
-	/**
-	 * Start recording
-	 */
+	/** Start recording */
 	private void rec_start() {
 		if (!user_ask_record())
 			return;
@@ -607,9 +628,7 @@ public class MainActivity extends AppCompatActivity {
 		startService(new Intent(this, RecSvc.class));
 	}
 
-	/**
-	 * UI event from seek bar
-	 */
+	/** UI event from seek bar */
 	private void seek(int percent) {
 		trackctl.seek(percent * total_dur_msec / 100);
 	}
@@ -642,9 +661,7 @@ public class MainActivity extends AppCompatActivity {
 		state = st;
 	}
 
-	/**
-	 * Called by Track when a new track is initialized
-	 */
+	/** Called by Track when a new track is initialized */
 	private int new_track(TrackHandle t) {
 		String title = t.name;
 		if (core.gui().ainfo_in_title && !t.info.isEmpty())
@@ -660,9 +677,7 @@ public class MainActivity extends AppCompatActivity {
 		return 0;
 	}
 
-	/**
-	 * Called by Track after a track is finished
-	 */
+	/** Called by Track after a track is finished */
 	private void close_track(TrackHandle t) {
 		b.lname.setText("");
 		b.lpos.setText("");
@@ -670,9 +685,7 @@ public class MainActivity extends AppCompatActivity {
 		state(STATE_DEF);
 	}
 
-	/**
-	 * Called by Track during playback
-	 */
+	/** Called by Track during playback */
 	private int update_track(TrackHandle t) {
 		core.dbglog(TAG, "update_track: state:%d pos:%d", t.state, t.pos_msec);
 		switch (t.state) {
