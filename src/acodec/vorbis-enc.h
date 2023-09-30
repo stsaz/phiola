@@ -64,8 +64,8 @@ static int vorbis_out_encode(void *ctx, phi_track *t)
 		t->data_type = "Vorbis";
 
 		v->fmt = t->oaudio.format;
-		uint q = (t->conf.vorbis.quality) ? t->conf.vorbis.quality : 5*10 + 10;
-		if (0 != (r = ffvorbis_create(&v->vorbis, &v->fmt, q - 10))) {
+		uint q_x10 = (t->conf.vorbis.quality) ? (t->conf.vorbis.quality - 10) : 5*10;
+		if (0 != (r = ffvorbis_create(&v->vorbis, &v->fmt, q_x10))) {
 			errlog(t, "ffvorbis_create(): %s", ffvorbis_enc_errstr(&v->vorbis));
 			return PHI_ERR;
 		}

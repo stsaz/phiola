@@ -43,7 +43,7 @@ Options:\n\
                           6..510 (VBR)\n\
   -vorbis-quality NUMBER\n\
                         Vorbis encoding quality:\n\
-                          -1..10\n\
+                          0..10\n\
 \n\
   -meta STRING=STRING   Meta data\n\
 \n\
@@ -165,7 +165,7 @@ static void conv_qu_add(struct cmd_conv *v, ffstr *fn)
 			.profile = v->aac_profile[0],
 			.quality = v->aac_q,
 		},
-		.vorbis.quality = v->vorbis_q,
+		.vorbis.quality = (v->vorbis_q + 1) * 10,
 		.opus = {
 			.bitrate = v->opus_q,
 		},

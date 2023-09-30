@@ -42,7 +42,7 @@ Options:\n\
                           6..510 (VBR)\n\
   -vorbis-quality NUMBER\n\
                         Vorbis encoding quality:\n\
-                          -1.0 .. 10.0\n\
+                          0..10\n\
 \n\
   -meta STRING=STRING   Meta data\n\
 \n\
@@ -114,7 +114,7 @@ static int rec_action()
 			.profile = r->aac_profile[0],
 			.quality = r->aac_q,
 		},
-		.vorbis.quality = r->vorbis_q,
+		.vorbis.quality = (r->vorbis_q + 1) * 10,
 		.opus = {
 			.bitrate = r->opus_q,
 		},

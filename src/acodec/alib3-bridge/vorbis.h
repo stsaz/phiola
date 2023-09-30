@@ -257,7 +257,6 @@ typedef struct ffvorbis_enc {
 	vorbis_ctx *vctx;
 	uint channels;
 	uint sample_rate;
-	uint quality;
 	int err;
 	ffstr pkt_hdr;
 	ffstr pkt_book;
@@ -287,9 +286,9 @@ static inline int ffvorbis_addtag(ffvorbis_enc *v, const char *name, const char 
 #define ffvorbis_enc_pos(v)  ((v)->granulepos)
 
 /**
-@quality: q*10
+quality_x10: q*10
 */
-int ffvorbis_create(ffvorbis_enc *v, const struct phi_af *fmt, int quality)
+int ffvorbis_create(ffvorbis_enc *v, const struct phi_af *fmt, int quality_x10)
 {
 	int r;
 
@@ -299,7 +298,7 @@ int ffvorbis_create(ffvorbis_enc *v, const struct phi_af *fmt, int quality)
 	vorbis_encode_params params = {0};
 	params.channels = fmt->channels;
 	params.rate = fmt->rate;
-	params.quality = (float)quality / 100;
+	params.quality = (float)quality_x10 / 10;
 	ogg_packet pkt[2];
 	if (0 != (r = vorbis_encode_create(&v->vctx, &params, &pkt[0], &pkt[1])))
 		return ERR(v, r);
@@ -310,7 +309,6 @@ int ffvorbis_create(ffvorbis_enc *v, const struct phi_af *fmt, int quality)
 
 	v->channels = fmt->channels;
 	v->sample_rate = fmt->rate;
-	v->quality = quality;
 	ffstr_set(&v->pkt_hdr, pkt[0].packet, pkt[0].bytes);
 	ffstr_set(&v->pkt_book, pkt[1].packet, pkt[1].bytes);
 	v->min_tagsize = 1000;
@@ -325,23 +323,6 @@ void ffvorbis_enc_close(ffvorbis_enc *v)
 		vorbis_encode_free(v->vctx);
 		v->vctx = NULL;
 	}
-}
-
-static const ffbyte _ffvorbis_brates[] = {
-	45/2, 64/2, 80/2, 96/2, 112/2, 128/2, 160/2, 192/2, 224/2, 256/2, 320/2, 500/2 //q=-1..10 for 44.1kHz mono
-};
-
-/** Get bitrate from quality. */
-uint ffvorbis_enc_bitrate(ffvorbis_enc *v, int quality)
-{
-	uint q = quality / 10 + 1;
-	return _ffvorbis_brates[q] * 1000 * v->channels;
-}
-
-/** Get approximate output file size. */
-uint64 ffvorbis_enc_size(ffvorbis_enc *v, uint64 total_samples)
-{
-	return (total_samples / v->sample_rate + 1) * (ffvorbis_enc_bitrate(v, v->quality) / 8);
 }
 
 /** Get complete packet with Vorbis comments and padding. */
