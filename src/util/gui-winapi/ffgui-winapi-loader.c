@@ -171,16 +171,16 @@ static int ico_done(ffconf_scheme *cs,	_ffui_ldr_icon_t *ico)
 		ffs_format(fn, sizeof(fn), "#%u%Z", ico->resource);
 		size_t wname_len = FF_COUNT(wname);
 		ffs_utow(wname, &wname_len, fn, -1);
-		if (0 != ffui_icon_loadres(&ico->icon, wname, ico->cx, ico->cy)) {
+		if (0 != ffui_icon_load_res(&ico->icon, ico->ldr->hmod_resource, wname, ico->cx, ico->cy)) {
 			if (ico->cx == 0)
 				return FFUI_ESYS;
-			if (0 != ffui_icon_loadres(&ico->icon, wname, 0, 0))
+			if (0 != ffui_icon_load_res(&ico->icon, ico->ldr->hmod_resource, wname, 0, 0))
 				return FFUI_ESYS;
 		}
 		if (ico->load_small
-			&& 0 != ffui_icon_loadres(&ico->icon_small, wname, 16, 16)) {
+			&& 0 != ffui_icon_load_res(&ico->icon_small, ico->ldr->hmod_resource, wname, 16, 16)) {
 
-			if (0 != ffui_icon_loadres(&ico->icon_small, wname, 0, 0))
+			if (0 != ffui_icon_load_res(&ico->icon_small, ico->ldr->hmod_resource, wname, 0, 0))
 				return FFUI_ESYS;
 		}
 		return 0;

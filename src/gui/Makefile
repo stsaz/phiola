@@ -17,6 +17,7 @@
 # OS
 # PHIOLA
 # SO
+# WINDRES
 
 # Modify:
 # MODS
@@ -69,10 +70,20 @@ ffgui-winapi.o: $(PHIOLA)/src/util/gui-winapi/ffgui-winapi.c $(DEPS) $(FFGUI_HDR
 ffgui-winapi-loader.o: $(PHIOLA)/src/util/gui-winapi/ffgui-winapi-loader.c $(DEPS) $(FFGUI_HDR) \
 		$(PHIOLA)/src/util/conf-*.h
 	$(C) $(CFLAGS_GUI) $< -o $@
+
+GUI_RES :=
+ifeq "$(OS)" "windows"
+	GUI_RES := gui.coff
+endif
+gui.coff: $(PHIOLA)/src/gui/res/dll.rc \
+		$(wildcard $(PHIOLA)/src/gui/res/*.ico)
+	$(WINDRES) $< $@
+
 gui.$(SO): gui-mod.o \
 		gui.o \
 		gui-main.o \
 		gui-dialogs.o \
+		$(GUI_RES) \
 		$(FFGUI_OBJ)
 	$(LINKXX) -shared $+ $(LINKFLAGS_GUI) $(LINK_DL) -o $@
 
@@ -87,7 +98,9 @@ ifeq "$(OS)" "windows"
 else
 	$(CP) $(PHIOLA)/src/gui/ui-gtk.conf $(APP_DIR)/mod/gui/ui.conf
 	$(CP) $(PHIOLA)/src/gui/lang_*.conf \
-		$(PHIOLA)/src/gui/res/*.ico $(PHIOLA)/src/gui/res/phiola.desktop \
+		$(PHIOLA)/res/phiola.ico \
+		$(PHIOLA)/src/gui/res/*.ico \
+		$(PHIOLA)/src/gui/res/phiola.desktop \
 		$(APP_DIR)/mod/gui/
 endif
 	chmod 644 $(APP_DIR)/mod/gui/*

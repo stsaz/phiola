@@ -46,6 +46,9 @@ struct ffui_loader {
 	ffvec lang_data_def, lang_data;
 	ffmap vars; // hash(name) -> struct var*
 
+	/** Module handle to load resource objects from */
+	HMODULE hmod_resource;
+
 	ffvec paned_array; // ffui_paned*[].  User must free the controls and vector manually.
 	ffvec accels; //ffui_wnd_hotkey[]
 	ffstr path;

@@ -59,20 +59,22 @@ DEPS := $(PHIOLA)/src/phiola.h \
 	$(C) $(CFLAGS) $< -o $@
 
 # EXE
-_:=
-ifeq "$(OS)" "windows"
-	EXE_OBJ := exe.coff
-endif
 %.o: $(PHIOLA)/src/exe/%.c $(DEPS) \
 		$(wildcard $(PHIOLA)/src/exe/*.h) \
 		$(wildcard $(PHIOLA)/src/util/*.h)
 	$(C) $(CFLAGS) $< -o $@
-exe.coff: $(PHIOLA)/src/gui/res/exe.rc \
-		$(PHIOLA)/src/gui/res/exe.manifest \
-		$(wildcard $(PHIOLA)/src/gui/res/*.ico)
+
+_:=
+ifeq "$(OS)" "windows"
+	EXE_COFF := exe.coff
+endif
+exe.coff: $(PHIOLA)/res/exe.rc \
+		$(PHIOLA)/res/exe.manifest \
+		$(PHIOLA)/res/phiola.ico
 	$(WINDRES) $< $@
+
 phiola$(DOTEXE): main.o \
-		$(EXE_OBJ) \
+		$(EXE_COFF) \
 		core.$(SO)
 	$(LINK) $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) $(LINK_DL) -o $@
 

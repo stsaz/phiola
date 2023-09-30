@@ -1,0 +1,7 @@
+#include <windows.h>
+
+2 ICON "../../../res/phiola.ico"
+3 ICON "play.ico"
+4 ICON "stop.ico"
+5 ICON "prev.ico"
+6 ICON "next.ico"

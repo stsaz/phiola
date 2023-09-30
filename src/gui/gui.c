@@ -152,6 +152,9 @@ static int load_ui()
 	char *fn = ffsz_allocfmt("%Smod/gui/ui.conf", &core->conf.root);
 	ffui_loader ldr;
 	ffui_ldr_init(&ldr, gui_getctl, gui_getcmd, gg);
+#ifdef FF_WIN
+	ldr.hmod_resource = GetModuleHandleW(L"gui.dll");
+#endif
 
 	fftime t1;
 	if (core->conf.log_level >= PHI_LOG_DEBUG)

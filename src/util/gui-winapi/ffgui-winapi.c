@@ -791,13 +791,6 @@ int ffui_icon_loadstd(ffui_icon *ico, uint tag)
 	return ffui_icon_load_q(ico, fn, n, 0);
 }
 
-int ffui_icon_loadres(ffui_icon *ico, const wchar_t *name, uint cx, uint cy)
-{
-	uint f = (cx == 0 && cy == 0) ? LR_DEFAULTSIZE : 0;
-	ico->h = LoadImageW(GetModuleHandleW(NULL), name, IMAGE_ICON, _ffui_dpi_scale(cx), _ffui_dpi_scale(cy), f);
-	return (ico->h == NULL);
-}
-
 
 static uint tray_id;
 

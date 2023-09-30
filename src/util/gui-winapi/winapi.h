@@ -170,7 +170,12 @@ enum FFUI_ICON {
 FF_EXTERN int ffui_icon_loadstd(ffui_icon *ico, uint tag);
 
 /** Load icon from resource. */
-FF_EXTERN int ffui_icon_loadres(ffui_icon *ico, const wchar_t *name, uint cx, uint cy);
+static inline int ffui_icon_load_res(ffui_icon *ico, HINSTANCE h, const wchar_t *name, uint cx, uint cy)
+{
+	uint f = (cx == 0 && cy == 0) ? LR_DEFAULTSIZE : 0;
+	ico->h = (HICON)LoadImageW(h, name, IMAGE_ICON, _ffui_dpi_scale(cx), _ffui_dpi_scale(cy), f);
+	return (ico->h == NULL);
+}
 
 
 // ICON LIST
