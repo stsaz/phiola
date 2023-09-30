@@ -46,6 +46,9 @@ FF_EXTERN void mod_userconf_write(ffvec *buf);
 FF_EXTERN void userconf_save(ffstr data);
 FF_EXTERN void gui_stop();
 
+FF_EXTERN void record_begin(void *param);
+FF_EXTERN int record_stop();
+
 FF_EXTERN void convert_add(ffslice indexes);
 FF_EXTERN void convert_begin(void *param);
 
@@ -61,6 +64,8 @@ FF_EXTERN uint wmain_list_add(const char *name, uint i);
 FF_EXTERN void wmain_list_delete(uint i);
 FF_EXTERN void wmain_list_select(uint n, uint scroll_vpos);
 FF_EXTERN void wmain_list_draw(uint n, uint flags);
+
+FF_EXTERN void wrecord_done();
 
 FF_EXTERN void wconvert_done();
 
@@ -83,6 +88,8 @@ struct gui_data {
 	uint seek_pos_sec;
 	uint marker_sec;
 
+	phi_track *recording_track;
+
 	uint volume;
 	double gain_db;
 
@@ -103,6 +110,7 @@ struct gui_data {
 	uint current_scroll_vpos;
 	uint tab_conversion :1;
 	uint filtering :1;
+	uint quit :1;
 
 	struct {
 		uint seek_step_delta;

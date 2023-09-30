@@ -93,6 +93,10 @@ static inline void ffui_show(void *c, uint show)
 		gtk_widget_hide(((ffui_ctl*)c)->h);
 }
 
+#define ffui_ctl_focus(c)  gtk_widget_grab_focus((c)->h)
+
+#define ffui_ctl_enable(c, val)  ffui_post(c, FFUI_CTL_ENABLE, (void*)(ffsize)val)
+
 #define ffui_ctl_destroy(c)  gtk_widget_destroy(((ffui_ctl*)c)->h)
 
 #define ffui_setposrect(ctl, r) \
@@ -207,6 +211,32 @@ static inline void ffui_checkbox_check(ffui_checkbox *cb, int val)
 }
 
 
+// COMBOBOX
+typedef struct ffui_combobox {
+	_FFUI_CTL_MEMBERS
+} ffui_combobox;
+
+static inline void ffui_combobox_create(ffui_combobox *cb, ffui_wnd *parent) {
+	cb->h = gtk_combo_box_text_new();
+	cb->wnd = parent;
+}
+
+#define ffui_combobox_set(c, i)  gtk_combo_box_set_active((GtkComboBox*)(c)->h, i)
+#define ffui_combobox_active(c)  gtk_combo_box_get_active((GtkComboBox*)(c)->h)
+
+#define ffui_combobox_add(c, text)  gtk_combo_box_text_append_text((GtkComboBoxText*)(c)->h, text)
+#define ffui_combobox_clear(c)  gtk_combo_box_text_remove_all((GtkComboBoxText*)(c)->h)
+
+static inline ffstr ffui_combobox_text_active(ffui_combobox *c) {
+	gchar *sz = gtk_combo_box_text_get_active_text((GtkComboBoxText*)(c)->h);
+	ffstr s;
+	s.len = ffsz_len(sz);
+	s.ptr = ffsz_dupn(sz, s.len);
+	g_free(sz);
+	return s;
+}
+
+
 // LABEL
 typedef struct ffui_label {
 	_FFUI_CTL_MEMBERS
@@ -276,13 +306,12 @@ static inline void ffui_edit_settext(ffui_edit *e, const char *text, ffsize len)
 }
 #define ffui_edit_settextstr(e, str)  ffui_edit_settext(e, (str)->ptr, (str)->len)
 
-static inline void ffui_edit_textstr(ffui_edit *e, ffstr *s)
-{
+static inline ffstr ffui_edit_text(ffui_edit *e) {
 	const gchar *sz = gtk_entry_get_text(GTK_ENTRY(e->h));
-	ffsize len = ffsz_len(sz);
-	char *p = ffsz_dupn(sz, len);
-	FF_ASSERT(s->ptr == NULL);
-	ffstr_set(s, p, len);
+	ffstr s;
+	s.len = ffsz_len(sz);
+	s.ptr = ffsz_dupn(sz, s.len);
+	return s;
 }
 
 #define ffui_edit_sel(e, start, end) \
@@ -400,8 +429,12 @@ static inline void ffui_tab_del(ffui_tab *t, uint idx)
 
 FF_EXTERN void ffui_tab_setactive(ffui_tab *t, int idx);
 
+#define ffui_tab_changed_index(t)  (t)->changed_index
 
 // STATUSBAR
+typedef struct ffui_stbar {
+	_FFUI_CTL_MEMBERS
+} ffui_stbar;
 
 FF_EXTERN int ffui_stbar_create(ffui_ctl *sb, ffui_wnd *parent);
 
@@ -478,8 +511,21 @@ FF_EXTERN ffsize ffui_send(void *ctl, uint id, void *udata);
 #define ffui_send_wnd_settext(ctl, sz)  ffui_send(ctl, FFUI_WND_SETTEXT, (void*)sz)
 #define ffui_post_wnd_show(ctl, show)  ffui_send(ctl, FFUI_WND_SHOW, (void*)(ffsize)show)
 #define ffui_post_view_clear(ctl)  ffui_post(ctl, FFUI_VIEW_CLEAR, NULL)
+
+#define ffui_send_view_scroll(c) ({ \
+	ffsize val; \
+	ffui_send(c, FFUI_VIEW_SCROLL, &val); \
+	val; \
+})
+
 #define ffui_post_view_scroll_set(ctl, vert_pos)  ffui_post(ctl, FFUI_VIEW_SCROLLSET, (void*)(ffsize)vert_pos)
 #define ffui_clipboard_settextstr(str)  ffui_send(NULL, FFUI_CLIP_SETTEXT, (void*)str)
+
+#define ffui_send_checkbox_checked(c) ({ \
+	ffsize val; \
+	ffui_send(c, FFUI_CHECKBOX_CHECKED, &val); \
+	!!val; \
+})
 
 static inline void ffui_send_view_setdata(ffui_view *v, uint first, int delta)
 {
@@ -510,53 +556,3 @@ static inline int ffui_send_tab_count(ffui_tab *ctl)
 }
 
 #define ffui_send_stbar_settextz(sb, sz)  ffui_send(sb, FFUI_STBAR_SETTEXT, (void*)sz)
-
-
-#ifdef __cplusplus
-struct ffui_trackbarxx : ffui_trkbar {
-	void set(uint value) { ffui_post_trk_set(this, value); }
-	uint get() { return ffui_trk_val(this); }
-	void range(uint range) { ffui_post_trk_setrange(this, range); }
-};
-
-struct ffui_stbarxx : ffui_ctl {
-	void text(const char *sz) { ffui_send_stbar_settextz(this, sz); }
-};
-
-struct ffui_labelxx : ffui_label {
-	void text(const char *sz) { ffui_send_lbl_settext(this, sz); }
-	void markup(const char *sz) { gtk_label_set_markup(GTK_LABEL(h), sz); }
-};
-
-struct ffui_editxx : ffui_edit {
-	ffstr text() { ffstr s = {}; ffui_edit_textstr(this, &s); return s; }
-	void text(const char *sz) { ffui_edit_settextz(this, sz); }
-	void text(ffstr s) { ffui_edit_settextstr(this, &s); }
-	void focus() { gtk_widget_grab_focus(h); }
-};
-
-struct ffui_buttonxx : ffui_btn {
-	void text(const char *sz) { ffui_btn_settextz(this, sz); }
-	void enable(uint val) { ffui_post(this, FFUI_CTL_ENABLE, (void*)(ffsize)val); }
-};
-
-struct ffui_checkboxxx : ffui_checkbox {
-	ffui_checkboxxx& check(bool val) {
-		ffui_checkbox_check(this, val);
-		return *this;
-	}
-	bool checked() {
-		ffsize val;
-		ffui_send(this, FFUI_CHECKBOX_CHECKED, &val);
-		return !!val;
-	}
-};
-
-struct ffui_tabxx : ffui_tab {
-	void add(const char *sz) { ffui_send_tab_ins(this, sz); }
-	void del(uint i) { ffui_tab_del(this, i); }
-	void select(uint i) { ffui_send_tab_setactive(this, i); }
-	uint changed() { return changed_index; }
-	uint count() { return ffui_tab_count(this); }
-};
-#endif

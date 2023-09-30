@@ -21,6 +21,12 @@ struct ffstrxx : ffstr {
 		va_end(va);
 		return r;
 	}
+	short int16(short _default) const {
+		short n;
+		if (!ffstr_toint(this, &n, FFS_INT16 | FFS_INTSIGN))
+			n = _default;
+		return n;
+	}
 	u_short uint16(u_short _default) const {
 		u_short n;
 		if (!ffstr_toint(this, &n, FFS_INT16))
@@ -32,6 +38,18 @@ struct ffstrxx : ffstr {
 		if (!ffstr_toint(this, &n, FFS_INT32))
 			n = _default;
 		return n;
+	}
+};
+
+template<int N> struct ffstrxx_buf : ffstr {
+	char buf[N];
+	ffstrxx_buf() { ptr = buf;  len = 0; }
+	const char* zfmt(const char *fmt, ...) {
+		va_list va;
+		va_start(va, fmt);
+		len = ffsz_formatv(ptr, N, fmt, va);
+		va_end(va);
+		return ptr;
 	}
 };
 

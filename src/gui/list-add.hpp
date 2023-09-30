@@ -2,7 +2,7 @@
 2023, Simon Zolin */
 
 struct gui_wlistadd {
-	ffui_wndxx wnd;
+	ffui_windowxx wnd;
 	ffui_label lname;
 	ffui_editxx turi;
 	ffui_btn badd;

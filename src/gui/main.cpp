@@ -10,38 +10,39 @@
 #define VOLUME_MAX 125
 
 struct gui_wmain {
-	ffui_wndxx wnd;
-	ffui_menu mm;
-	ffui_btn bpause, bstop, bprev, bnext;
-	ffui_labelxx lpos;
-	ffui_trackbarxx tvol, tpos;
-	ffui_tabxx tabs;
-	ffui_viewxx vlist;
-	ffui_stbarxx stbar;
+	ffui_windowxx	wnd;
+	ffui_menu		mm;
+	ffui_btn		bpause, bstop, bprev, bnext;
+	ffui_labelxx	lpos;
+	ffui_trackbarxx	tvol, tpos;
+	ffui_tabxx		tabs;
+	ffui_viewxx		vlist;
+	ffui_statusbarxx stbar;
 #ifdef FF_WIN
 	ffui_paned pntop;
 #endif
 	struct phi_queue_entry *qe_active;
+
+	uint ready;
 };
 
+#define _(m) FFUI_LDR_CTL(gui_wmain, m)
 FF_EXTERN const ffui_ldr_ctl wmain_ctls[] = {
-	FFUI_LDR_CTL(gui_wmain, wnd),
-	FFUI_LDR_CTL(gui_wmain, mm),
-	FFUI_LDR_CTL(gui_wmain, bpause),
-	FFUI_LDR_CTL(gui_wmain, bstop),
-	FFUI_LDR_CTL(gui_wmain, bprev),
-	FFUI_LDR_CTL(gui_wmain, bnext),
-	FFUI_LDR_CTL(gui_wmain, lpos),
-	FFUI_LDR_CTL(gui_wmain, tvol),
-	FFUI_LDR_CTL(gui_wmain, tpos),
-	FFUI_LDR_CTL(gui_wmain, tabs),
-	FFUI_LDR_CTL(gui_wmain, vlist),
-	FFUI_LDR_CTL(gui_wmain, stbar),
+	_(wnd),
+	_(mm),
+	_(bpause), _(bstop), _(bprev), _(bnext),
+	_(lpos),
+	_(tvol),
+	_(tpos),
+	_(tabs),
+	_(vlist),
+	_(stbar),
 #ifdef FF_WIN
-	FFUI_LDR_CTL(gui_wmain, pntop),
+	_(pntop),
 #endif
 	FFUI_LDR_CTL_END
 };
+#undef _
 
 enum LIST_HDR {
 	H_INDEX,
@@ -172,7 +173,7 @@ static const char* pcm_channelstr(uint channels)
 int wmain_track_new(phi_track *t, uint time_total)
 {
 	gui_wmain *m = gg->wmain;
-	if (!m) return -1;
+	if (!m || !m->ready) return -1;
 
 	struct phi_queue_entry *qe = (struct phi_queue_entry*)t->qent;
 	char buf[1000];
@@ -215,7 +216,7 @@ int wmain_track_new(phi_track *t, uint time_total)
 void wmain_track_close()
 {
 	gui_wmain *m = gg->wmain;
-	if (!m) return;
+	if (!m || !m->ready) return;
 
 	if (m->qe_active != NULL) {
 		int idx = gd->queue->index(m->qe_active);
@@ -233,7 +234,7 @@ void wmain_track_close()
 void wmain_track_update(uint time_cur, uint time_total)
 {
 	gui_wmain *m = gg->wmain;
-	if (!m) return;
+	if (!m || !m->ready) return;
 
 	m->tpos.set(time_cur);
 
@@ -393,19 +394,14 @@ static void q_on_change(phi_queue_id q, uint flags, uint pos)
 
 	uint n = gd->queue->count(q);
 
-#ifdef FF_WIN
 	switch (flags & 0xff) {
 	case 'a':
+		m->vlist.length(n, 0);
+		m->vlist.update(pos, 1);
+		break;
+
 	case 'r':
 		m->vlist.length(n, 0);
-	}
-#endif
-
-	switch (flags & 0xff) {
-	case 'a':
-		m->vlist.update(pos, 1);  break;
-
-	case 'r':
 		m->vlist.update(pos, -1);
 #ifdef FF_LINUX
 		if (pos < n)
@@ -453,6 +449,7 @@ apply:
 }
 
 #ifdef FF_WIN
+
 static void wmain_on_drop_files(ffui_wnd *wnd, ffui_fdrop *df)
 {
 	ffvec buf = {};
@@ -463,6 +460,29 @@ static void wmain_on_drop_files(ffui_wnd *wnd, ffui_fdrop *df)
 	gui_core_task_data(gui_dragdrop, *(ffstr*)&buf);
 	ffvec_null(&buf);
 }
+
+static void on_drop_files(){}
+
+static void drag_drop_init()
+{
+	gg->wmain->wnd.on_dropfiles = wmain_on_drop_files;
+	ffui_fdrop_accept(&gg->wmain->wnd, 1);
+}
+
+#else
+
+static void on_drop_files()
+{
+	ffstr d = {};
+	ffstr_dupstr(&d, &gg->wmain->vlist.drop_data);
+	gui_core_task_data(gui_dragdrop, d);
+}
+
+static void drag_drop_init()
+{
+	gg->wmain->vlist.drag_drop_init(A_FILE_DRAGDROP);
+}
+
 #endif
 
 /** Draw/redraw the listing.
@@ -471,9 +491,8 @@ void wmain_list_draw(uint n, uint flags)
 {
 	gui_wmain *m = gg->wmain;
 
-#ifdef FF_WIN
 	m->vlist.length(n, 1);
-#else
+#ifdef FF_LINUX
 	if (flags == 1)
 		m->vlist.clear();
 	m->vlist.update(0, n);
@@ -539,6 +558,7 @@ static void wmain_action(ffui_wnd *wnd, int id)
 	dbglog("%s cmd:%u", __func__, id);
 
 	switch (id) {
+// File:
 	case A_FILE_INFO:
 		if ((i = m->vlist.selected_first()) >= 0)
 			winfo_show(1, i);
@@ -555,6 +575,23 @@ static void wmain_action(ffui_wnd *wnd, int id)
 	case A_QUIT:
 		m->wnd.close();  break;
 
+// Playback:
+	case A_PLAY:
+		if (!gd->tab_conversion && (i = m->vlist.focused()) >= 0)
+			gui_core_task_uint(ctl_play, i);
+		break;
+
+	case A_VOL:
+	case A_VOLUP:
+	case A_VOLDOWN:
+		vol_set(id);  break;
+
+	case A_SEEK:
+		gd->seek_pos_sec = m->tpos.get();
+		gui_core_task_uint(ctl_action, A_SEEK);
+		break;
+
+// List:
 	case A_LIST_CHANGE:
 		list_changed(m->tabs.changed());  break;
 
@@ -573,21 +610,6 @@ static void wmain_action(ffui_wnd *wnd, int id)
 	case A_LIST_REMOVE:
 		gui_core_task_slice(list_remove, m->vlist.selected());  break;
 
-	case A_PLAY:
-		if (!gd->tab_conversion && (i = m->vlist.focused()) >= 0)
-			gui_core_task_uint(ctl_play, i);
-		break;
-
-	case A_VOL:
-	case A_VOLUP:
-	case A_VOLDOWN:
-		vol_set(id);  break;
-
-	case A_SEEK:
-		gd->seek_pos_sec = m->tpos.get();
-		gui_core_task_uint(ctl_action, A_SEEK);
-		break;
-
 	case A_LIST_DISPLAY:
 #ifdef FF_WIN
 		list_display(m->vlist.dispinfo_item);
@@ -596,6 +618,14 @@ static void wmain_action(ffui_wnd *wnd, int id)
 #endif
 		break;
 
+// Record:
+	case A_RECORD_SHOW:
+		wrecord_show(1);  break;
+
+	case A_RECORD_START_STOP:
+		wrecord_start_stop();  break;
+
+// Convert:
 	case A_CONVERT_SHOW: {
 		ffslice items = {};
 		if (!gd->tab_conversion)
@@ -604,20 +634,19 @@ static void wmain_action(ffui_wnd *wnd, int id)
 		break;
 	}
 
+	case A_CONVERT_POS_START:
+	case A_CONVERT_POS_END:
+		wconvert_set(id, m->tpos.get());  break;
+
+// Misc:
 	case A_ABOUT_SHOW:
 		wabout_show(1);  break;
 
 	case A_CLOSE:
 		gui_quit();  break;
 
-	case A_FILE_DRAGDROP: {
-#ifdef FF_LINUX
-		ffstr d = {};
-		ffstr_dupstr(&d, &m->vlist.drop_data);
-		gui_core_task_data(gui_dragdrop, d);
-#endif
-		break;
-	}
+	case A_FILE_DRAGDROP:
+		on_drop_files();  break;
 
 	default:
 		gui_core_task_uint(ctl_action, id);
@@ -643,14 +672,10 @@ void wmain_show()
 	m->wnd.show(1);
 	m->tabs.add("Playlist 1");
 	wmain_list_draw(gd->queue->count(gd->q_selected), 0);
-
-#ifdef FF_WIN
-	m->wnd.on_dropfiles = wmain_on_drop_files;
-	ffui_fdrop_accept(&m->wnd, 1);
-#else
-	m->vlist.drag_drop_init(A_FILE_DRAGDROP);
-#endif
+	drag_drop_init();
 
 	gd->queue->on_change(q_on_change);
 	gui_core_task(lists_load);
+
+	m->ready = 1;
 }

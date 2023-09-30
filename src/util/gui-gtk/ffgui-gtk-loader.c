@@ -338,26 +338,26 @@ static int btn_new(ffconf_scheme *cs, ffui_loader *g)
 }
 
 // CHECKBOX
-static int chbox_text(ffconf_scheme *cs, ffui_loader *g, ffstr val)
+static int checkbox_text(ffconf_scheme *cs, ffui_loader *g, ffstr val)
 {
 	val = vars_val(&g->vars, val);
 	ffui_checkbox_settextstr(g->cb, &val);
 	return 0;
 }
-static int chbox_action(ffconf_scheme *cs, ffui_loader *g, ffstr val)
+static int checkbox_action(ffconf_scheme *cs, ffui_loader *g, ffstr val)
 {
 	if (0 == (g->cb->action_id = g->getcmd(g->udata, &val)))
 		return FFUI_EINVAL;
 	return 0;
 }
-static const ffconf_arg chbox_args[] = {
-	{ "action",	T_STR,		_F(chbox_action) },
+static const ffconf_arg checkbox_args[] = {
+	{ "action",	T_STR,		_F(checkbox_action) },
 	{ "style",	T_STRLIST,	_F(btn_style) },
-	{ "text",	T_STR,		_F(chbox_text) },
+	{ "text",	T_STR,		_F(checkbox_text) },
 	{ NULL,		T_CLOSE,	_F(btn_done) },
 };
 
-static int chbox_new(ffconf_scheme *cs, ffui_loader *g)
+static int checkbox_new(ffconf_scheme *cs, ffui_loader *g)
 {
 	if (NULL == (g->ctl = ldr_getctl(g, ffconf_scheme_objval(cs))))
 		return FFUI_EINVAL;
@@ -365,7 +365,23 @@ static int chbox_new(ffconf_scheme *cs, ffui_loader *g)
 	if (0 != ffui_checkbox_create(g->cb, g->wnd))
 		return FFUI_ENOMEM;
 
-	ffconf_scheme_addctx(cs, chbox_args, g);
+	ffconf_scheme_addctx(cs, checkbox_args, g);
+	g->flags = 0;
+	return 0;
+}
+
+
+// COMBOBOX
+static const ffconf_arg combobox_args[] = {
+	{ "style",	T_STRLIST,	_F(btn_style) },
+	{ NULL,		T_CLOSE,	_F(btn_done) },
+};
+static int combobox_new(ffconf_scheme *cs, ffui_loader *g)
+{
+	if (NULL == (g->ctl = ldr_getctl(g, ffconf_scheme_objval(cs))))
+		return FFUI_EINVAL;
+	ffui_combobox_create(g->combo, g->wnd);
+	ffconf_scheme_addctx(cs, combobox_args, g);
 	g->flags = 0;
 	return 0;
 }
@@ -764,7 +780,8 @@ static int wnd_done(ffconf_scheme *cs, ffui_loader *g)
 
 static const ffconf_arg wnd_args[] = {
 	{ "button",		T_OBJMULTI,	_F(btn_new) },
-	{ "checkbox",	T_OBJMULTI,	_F(chbox_new) },
+	{ "checkbox",	T_OBJMULTI,	_F(checkbox_new) },
+	{ "combobox",	T_OBJMULTI,	_F(combobox_new) },
 	{ "editbox",	T_OBJMULTI,	_F(edit_new) },
 	{ "icon",		T_OBJ,		_F(wnd_icon) },
 	{ "image",		T_OBJMULTI,	_F(img_new) },

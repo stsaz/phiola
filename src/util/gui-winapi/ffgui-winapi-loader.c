@@ -908,10 +908,11 @@ static int new_combobox(ffconf_scheme *cs, ffui_loader *g)
 	if (NULL == (g->ctl = ldr_getctl(g, &cs->objval)))
 		return FFUI_EINVAL;
 
-	if (0 != ffui_combx_create(g->ctl, g->wnd))
+	if (0 != ffui_combobox_createlist(g->ctl, g->wnd))
 		return FFUI_ENOMEM;
 
-	state_reset(g);
+	state_reset2(g);
+	g->resize_flags |= F_RESIZE_CX;
 	ffconf_scheme_addctx(cs, combx_args, g);
 	return 0;
 }

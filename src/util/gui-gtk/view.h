@@ -86,10 +86,11 @@ static inline void ffui_view_setcol(ffui_view *v, int pos, const ffui_viewcol *v
 		gtk_tree_view_column_set_fixed_width(col, vc->width);
 }
 
-static inline void ffui_view_col(ffui_view *v, int pos, ffui_viewcol *vc)
+static inline ffui_viewcol* ffui_view_col(ffui_view *v, int pos, ffui_viewcol *vc)
 {
 	GtkTreeViewColumn *col = gtk_tree_view_get_column(GTK_TREE_VIEW(v->h), pos);
 	vc->width = gtk_tree_view_column_get_width(col);
+	return vc;
 }
 
 /** Get the number of columns. */
@@ -158,6 +159,7 @@ static inline void ffui_view_style(ffui_view *v, uint flags, uint set)
 }
 
 #define ffui_view_nitems(v)  gtk_tree_model_iter_n_children((void*)(v)->store, NULL)
+#define ffui_view_setcount(v, n, redraw)
 
 /**
 first: first index to add or redraw
@@ -248,7 +250,7 @@ static inline int ffui_view_focused(ffui_view *v)
 	return i[0];
 }
 
-FF_EXTERN void ffui_view_ins(ffui_view *v, int pos, ffui_viewitem *it);
+FF_EXTERN int ffui_view_ins(ffui_view *v, int pos, ffui_viewitem *it);
 
 #define ffui_view_append(v, it)  ffui_view_ins(v, -1, it)
 
@@ -306,48 +308,3 @@ static inline void ffui_view_popupmenu(ffui_view *v, ffui_menu *m)
 		gtk_widget_show_all(m->h);
 	}
 }
-
-
-#ifdef __cplusplus
-struct ffui_viewitemxx : ffui_viewitem {
-	ffui_viewitemxx(ffstr s) { ffmem_zero_obj(this); ffui_view_settextstr(this, &s); }
-};
-
-struct ffui_viewcolxx {
-	ffui_viewcol vc;
-	uint width() { return vc.width; }
-	void width(uint val) { vc.width = val; }
-};
-
-struct ffui_viewxx : ffui_view {
-	int append(ffstr text) {
-		ffui_viewitem vi = {};
-		ffui_view_settextstr(&vi, &text);
-		ffui_view_append(this, &vi);
-		return vi.idx;
-	}
-	void set(int idx, int col, ffstr text) {
-		ffui_viewitem vi = {};
-		vi.idx = idx;
-		ffui_view_settextstr(&vi, &text);
-		ffui_view_set(this, col, &vi);
-	}
-	void update(uint first, int delta) { ffui_post_view_setdata(this, first, delta); }
-	void clear() { ffui_post_view_clear(this); }
-	int focused() { return ffui_view_focused(this); }
-	ffslice selected() { return ffui_view_selected(this); }
-	int selected_first() { return ffui_view_selected_first(this); }
-	ffui_viewcolxx& column(int pos, ffui_viewcolxx *vc) {
-		ffui_view_col(this, pos, &vc->vc);
-		return *vc;
-	}
-	void column(int pos, const ffui_viewcolxx &vc) { ffui_view_setcol(this, pos, &vc.vc); }
-	void drag_drop_init(uint action_id) { ffui_view_dragdrop(this, action_id); }
-	uint scroll_vert() {
-		ffsize val;
-		ffui_send(this, FFUI_VIEW_SCROLL, &val);
-		return val;
-	}
-	void scroll_vert(uint val) { ffui_post_view_scroll_set(this, val); }
-};
-#endif

@@ -2,7 +2,7 @@
 2023, Simon Zolin */
 
 struct gui_wlistfilter {
-	ffui_wndxx wnd;
+	ffui_windowxx wnd;
 	ffui_editxx tfilter;
 };
 

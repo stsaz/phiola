@@ -44,6 +44,7 @@ typedef struct ffui_loader {
 		ffui_label *lbl;
 		ffui_btn *btn;
 		ffui_checkbox *cb;
+		ffui_combobox *combo;
 		ffui_edit *edit;
 		ffui_text *text;
 		ffui_trkbar *trkbar;

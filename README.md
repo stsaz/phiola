@@ -150,13 +150,17 @@ Currently supported commands:
 
 ## How to Use GUI
 
-Start phiola GUI with:
+Start phiola GUI:
 
-```sh
-phiola gui
-```
+* On Windows: via `phiola-gui.exe`
 
-then add some files to playlist via drag-n-drop from your File Manager, or via `List->Add` menu command.
+* On Linux:
+
+	```sh
+	phiola gui
+	```
+
+Then add some files to playlist via drag-n-drop from your File Manager, or via `List->Add` menu command.
 
 **Bonus:** you can modify the appearance by editing the GUI source file: `phiola-2/mod/gui/ui.conf`.  You can also modify the text by editing language files, e.g. `phiola-2/mod/gui/lang_en.conf`.  Restart phiola GUI after you make changes to those files.
 

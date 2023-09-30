@@ -56,6 +56,7 @@ static const struct ctlinfo ctls[] = {
 	{ "editbox",	L"EDIT", ES_AUTOHSCROLL | ES_AUTOVSCROLL | ES_NOHIDESEL/* | WS_TABSTOP*/, WS_EX_CLIENTEDGE },
 	{ "text",		L"EDIT", ES_MULTILINE | ES_AUTOHSCROLL | ES_AUTOVSCROLL | ES_NOHIDESEL | WS_HSCROLL | WS_VSCROLL, WS_EX_CLIENTEDGE },
 	{ "combobox",	L"COMBOBOX", CBS_DROPDOWN | CBS_AUTOHSCROLL, WS_EX_CLIENTEDGE },
+	{ "combobox",	L"COMBOBOX", CBS_DROPDOWNLIST | CBS_AUTOHSCROLL, WS_EX_CLIENTEDGE },
 	{ "button",		L"BUTTON", 0, 0 },
 	{ "checkbox",	L"BUTTON", BS_AUTOCHECKBOX, 0 },
 	{ "radiobutton",L"BUTTON", BS_AUTORADIOBUTTON, 0 },
@@ -520,7 +521,7 @@ int ffui_text_create(ffui_ctl *c, ffui_wnd *parent)
 }
 
 
-int ffui_combx_create(ffui_ctl *c, ffui_wnd *parent)
+int ffui_combobox_create(ffui_ctl *c, ffui_wnd *parent)
 {
 	if (0 != ctl_create(c, FFUI_UID_COMBOBOX, parent->h))
 		return 1;
@@ -531,30 +532,42 @@ int ffui_combx_create(ffui_ctl *c, ffui_wnd *parent)
 	return 0;
 }
 
-int ffui_combx_textstr(ffui_combx *c, uint idx, ffstr *dst)
+int ffui_combobox_createlist(ffui_ctl *c, ffui_wnd *parent)
 {
+	if (0 != ctl_create(c, FFUI_UID_COMBOBOX_LIST, parent->h))
+		return 1;
+
+	if (parent->font != NULL)
+		ffui_ctl_send(c, WM_SETFONT, parent->font, 0);
+
+	return 0;
+}
+
+ffstr ffui_combobox_text(ffui_combobox *c, uint idx)
+{
+	int e = 1;
+	ffstr s = {};
 	ffsize len = ffui_send(c->h, CB_GETLBTEXTLEN, idx, 0);
 	wchar_t ws[255], *w = ws;
 
 	if (len >= FF_COUNT(ws)
 		&& NULL == (w = ffws_alloc(len + 1)))
-		goto fail;
+		goto end;
 	ffui_send(c->h, CB_GETLBTEXT, idx, w);
 
-	dst->len = ff_wtou(NULL, 0, w, len, 0);
-	if (NULL == (dst->ptr = ffmem_alloc(dst->len + 1)))
-		goto fail;
+	s.len = ff_wtou(NULL, 0, w, len, 0);
+	if (NULL == (s.ptr = ffmem_alloc(s.len + 1)))
+		goto end;
 
-	ff_wtou(dst->ptr, dst->len + 1, w, len + 1, 0);
+	ff_wtou(s.ptr, s.len + 1, w, len + 1, 0);
+	e = 0;
+
+end:
 	if (w != ws)
 		ffmem_free(w);
-	return (int)dst->len;
-
-fail:
-	if (w != ws)
-		ffmem_free(w);
-	dst->len = 0;
-	return -1;
+	if (e)
+		s.len = 0;
+	return s;
 }
 
 
@@ -668,7 +681,7 @@ int ffui_view_sel_invert(ffui_view *v)
 		if (0 != ffui_view_get(v, 0, &it))
 			break;
 
-		if (ffui_view_selected(&it)) {
+		if (ffui_viewitem_selected(&it)) {
 			ffui_view_select(&it, 0);
 		} else {
 			ffui_view_select(&it, 1);

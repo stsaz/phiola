@@ -41,6 +41,11 @@ void gui_dragdrop(ffstr data)
 
 extern const struct ffarg guimod_args[];
 
+static struct ffarg_ctx wrecord_args_f() {
+	struct ffarg_ctx ax = { wrecord_args, gg->wrecord };
+	return ax;
+}
+
 static struct ffarg_ctx wconvert_args_f() {
 	struct ffarg_ctx ax = { wconvert_args, gg->wconvert };
 	return ax;
@@ -60,6 +65,7 @@ static const struct ffarg args[] = {
 	{ "convert",	'{',	wconvert_args_f },
 	{ "main",		'{',	wmain_args_f },
 	{ "mod",		'{',	guimod_args_f },
+	{ "record",		'{',	wrecord_args_f },
 	{}
 };
 
@@ -68,7 +74,7 @@ static void gui_userconf_load()
 	gd->user_conf_name = ffsz_allocfmt("%s%s", gd->user_conf_dir, USER_CONF_NAME);
 
 	ffvec buf = {};
-	if (!!fffile_readwhole(gd->user_conf_name, &buf, 1*1024*1024))
+	if (fffile_readwhole(gd->user_conf_name, &buf, 1*1024*1024))
 		goto end;
 
 	struct ffargs a = {};
@@ -93,6 +99,10 @@ static void gui_userconf_save()
 		wmain_userconf_write(&buf);
 	ffvec_addsz(&buf, "}\n");
 
+	ffvec_addsz(&buf, "record {\n");
+		wrecord_userconf_write(&buf);
+	ffvec_addsz(&buf, "}\n");
+
 	ffvec_addsz(&buf, "convert {\n");
 		wconvert_userconf_write(&buf);
 	ffvec_addsz(&buf, "}\n");
@@ -102,10 +112,11 @@ static void gui_userconf_save()
 
 extern const ffui_ldr_ctl
 	wmain_ctls[],
-	wconvert_ctls[],
 	winfo_ctls[],
 	wlistadd_ctls[],
 	wlistfilter_ctls[],
+	wrecord_ctls[],
+	wconvert_ctls[],
 	wabout_ctls[];
 
 static void* gui_getctl(void *udata, const ffstr *name)
@@ -114,15 +125,17 @@ static void* gui_getctl(void *udata, const ffstr *name)
 		FFUI_LDR_CTL(struct gui, mfile),
 		FFUI_LDR_CTL(struct gui, mlist),
 		FFUI_LDR_CTL(struct gui, mplay),
+		FFUI_LDR_CTL(struct gui, mrecord),
 		FFUI_LDR_CTL(struct gui, mconvert),
 		FFUI_LDR_CTL(struct gui, mhelp),
 		FFUI_LDR_CTL(struct gui, mpopup),
 		FFUI_LDR_CTL(struct gui, dlg),
 		FFUI_LDR_CTL3_PTR(struct gui, wmain, wmain_ctls),
-		FFUI_LDR_CTL3_PTR(struct gui, wconvert, wconvert_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, winfo, winfo_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, wlistfilter, wlistfilter_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, wlistadd, wlistadd_ctls),
+		FFUI_LDR_CTL3_PTR(struct gui, wrecord, wrecord_ctls),
+		FFUI_LDR_CTL3_PTR(struct gui, wconvert, wconvert_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, wabout, wabout_ctls),
 		FFUI_LDR_CTL_END
 	};
@@ -160,7 +173,7 @@ static int load_ui()
 	if (core->conf.log_level >= PHI_LOG_DEBUG)
 		t1 = fftime_monotonic();
 
-	if (!!ffui_ldr_loadfile(&ldr, fn)) {
+	if (ffui_ldr_loadfile(&ldr, fn)) {
 		errlog("parsing ui.conf: %s", ffui_ldr_errstr(&ldr));
 		goto done;
 	}
@@ -186,10 +199,11 @@ int FFTHREAD_PROCCALL gui_worker(void *param)
 	winfo_init();
 	wlistadd_init();
 	wlistfilter_init();
+	wrecord_init();
 	wconvert_init();
 	wabout_init();
 
-	if (!!load_ui())
+	if (load_ui())
 		goto end;
 	gui_userconf_load();
 

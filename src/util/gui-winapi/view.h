@@ -70,8 +70,10 @@ static inline int ffui_view_hittest(ffui_view *v, const ffui_point *pt, int *sub
 
 /** Get top visible item index. */
 #define ffui_view_topindex(v)  ffui_ctl_send(v, LVM_GETTOPINDEX, 0, 0)
+#define ffui_send_view_scroll(v)  ffui_ctl_send(v, LVM_GETTOPINDEX, 0, 0)
 
 #define ffui_view_makevisible(v, idx)  ffui_ctl_send(v, LVM_ENSUREVISIBLE, idx, /*partial_ok*/ 0)
+#define ffui_post_view_scroll_set(v, idx)  ffui_ctl_send(v, LVM_ENSUREVISIBLE, idx, /*partial_ok*/ 0)
 #define ffui_view_scroll(v, dx, dy)  ffui_ctl_send(v, LVM_SCROLL, dx, dy)
 
 FF_EXTERN int ffui_view_itempos(ffui_view *v, uint idx, ffui_pos *pos);
@@ -158,9 +160,10 @@ static inline void ffui_view_setcol(ffui_view *v, int i, ffui_viewcol *vc)
 	ffui_viewcol_reset(vc);
 }
 
-static inline void ffui_view_col(ffui_view *v, int i, ffui_viewcol *vc)
+static inline ffui_viewcol* ffui_view_col(ffui_view *v, int i, ffui_viewcol *vc)
 {
 	ffui_ctl_send(v, LVM_GETCOLUMNW, i, &vc->col);
+	return vc;
 }
 
 
@@ -241,14 +244,25 @@ static inline void ffui_view_grp(ffui_view *v, int i, ffui_viewgrp *vg)
 
 
 #define ffui_view_nitems(v)  ListView_GetItemCount((v)->h)
-#define ffui_view_setcount(v, n) \
-	ffui_ctl_send(v, LVM_SETITEMCOUNT, n, LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL)
-#define ffui_view_setcount_redraw(v, n) \
-	ffui_ctl_send(v, LVM_SETITEMCOUNT, n, 0)
+#define ffui_view_setcount(v, n, redraw) \
+	ffui_ctl_send(v, LVM_SETITEMCOUNT, n, (redraw) ? 0 : LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL)
 
 /** Redraw items in range. */
 #define ffui_view_redraw(v, first, last) \
 	ffui_ctl_send(v, LVM_REDRAWITEMS, first, last)
+
+#define _FFUI_VIEW_REDRAW_N  50
+
+static inline void ffui_post_view_setdata(ffui_view *c, uint first, int delta) {
+	uint last = first;
+	if (delta > 0) {
+		last = first + _FFUI_VIEW_REDRAW_N;
+	} else if (delta < 0) {
+		last = first + _FFUI_VIEW_REDRAW_N;
+		first = ffmax((int)first - _FFUI_VIEW_REDRAW_N, 0);
+	}
+	ffui_view_redraw(c, first, last);
+}
 
 typedef struct ffui_viewitem {
 	LVITEMW item;
@@ -307,7 +321,7 @@ do { \
 		(it)->item.state &= ~LVIS_SELECTED; \
 } while (0)
 
-#define ffui_view_selected(it)  !!((it)->item.state & LVIS_SELECTED)
+#define ffui_viewitem_selected(it)  !!((it)->item.state & LVIS_SELECTED)
 
 #define ffui_view_setgroupid(it, grp) \
 do { \
@@ -414,13 +428,25 @@ FF_EXTERN int ffui_view_search(ffui_view *v, ffsize by);
 #define ffui_view_focused(v)  (int)ffui_ctl_send(v, LVM_GETNEXTITEM, -1, LVNI_FOCUSED)
 
 #define ffui_view_clear(v)  ListView_DeleteAllItems((v)->h)
+#define ffui_post_view_clear(v)  ListView_DeleteAllItems((v)->h)
 
 #define ffui_view_rm(v, item)  ListView_DeleteItem((v)->h, item)
 
 #define ffui_view_selcount(v)  ffui_ctl_send(v, LVM_GETSELECTEDCOUNT, 0, 0)
 #define ffui_view_selnext(v, from)  ffui_ctl_send(v, LVM_GETNEXTITEM, from, LVNI_SELECTED)
+#define ffui_view_selected_first(v)  ffui_ctl_send(v, LVM_GETNEXTITEM, -1, LVNI_SELECTED)
 #define ffui_view_sel(v, i)  ListView_SetItemState((v)->h, i, LVIS_SELECTED, LVIS_SELECTED)
 #define ffui_view_unsel(v, i)  ListView_SetItemState((v)->h, i, 0, LVIS_SELECTED)
+
+static inline ffslice ffui_view_selected(ffui_view *c) {
+	ffvec sel = {};
+	int i = -1;
+	while (-1 != (i = ffui_view_selnext(c, i))) {
+		*ffvec_pushT(&sel, uint) = i;
+	}
+	return *(ffslice*)&sel;
+}
+
 #define ffui_view_selall(v)  ffui_view_sel(v, -1)
 #define ffui_view_unselall(v)  ffui_view_unsel(v, -1)
 FF_EXTERN int ffui_view_sel_invert(ffui_view *v);
@@ -485,61 +511,3 @@ static inline void ffui_view_dispinfo_check(LVITEMW *it, int checked)
 	it->state &= ~LVIS_STATEIMAGEMASK;
 	it->state |= (checked) ? _FFUI_VIEW_CHECKED : _FFUI_VIEW_UNCHECKED;
 }
-
-
-#ifdef __cplusplus
-struct ffui_viewitemxx : ffui_viewitem {
-	ffui_viewitemxx(ffstr s) { ffmem_zero_obj(this); ffui_view_settextstr(this, &s); }
-};
-
-struct ffui_viewcolxx : ffui_viewcol {
-	uint width() { return ffui_viewcol_width(this); }
-	void width(uint val) { ffui_viewcol_setwidth(this, val); }
-};
-
-struct ffui_viewxx : ffui_view {
-	int append(ffstr text) {
-		ffui_viewitem vi = {};
-		ffui_view_settextstr(&vi, &text);
-		return ffui_view_append(this, &vi);
-	}
-	void set(int idx, int col, ffstr text) {
-		ffui_viewitem vi = {};
-		ffui_view_setindex(&vi, idx);
-		ffui_view_settextstr(&vi, &text);
-		ffui_view_set(this, col, &vi);
-	}
-	void update(uint first, int delta) {
-		uint last = first;
-		if (delta > 0) {
-			last = first + 50;
-		} else if (delta < 0) {
-			last = first + 50;
-			first = ffmax((int)first - 50, 0);
-		}
-		ffui_view_redraw(this, first, last);
-	}
-	void length(uint n, bool redraw) {
-		uint flags = (redraw) ? 0 : LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL;
-		ffui_ctl_send(this, LVM_SETITEMCOUNT, n, flags);
-	}
-	void clear() { ffui_view_clear(this); }
-	int focused() { return ffui_view_focused(this); }
-	ffslice selected() {
-		ffvec sel = {};
-		int i = -1;
-		while (-1 != (i = ffui_view_selnext(this, i))) {
-			*ffvec_pushT(&sel, uint) = i;
-		}
-		return *(ffslice*)&sel;
-	}
-	int selected_first() { return ffui_view_selnext(this, -1); }
-	ffui_viewcolxx& column(int pos, ffui_viewcolxx *vc) {
-		ffui_view_col(this, pos, vc);
-		return *vc;
-	}
-	void column(int pos, ffui_viewcol &vc) { ffui_view_setcol(this, pos, &vc); }
-	u_int scroll_vert() { return ffui_view_topindex(this); }
-	void scroll_vert(u_int val) { ffui_view_makevisible(this, val); }
-};
-#endif

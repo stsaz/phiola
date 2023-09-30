@@ -16,12 +16,14 @@ typedef struct ffui_edit {
 FF_EXTERN int ffui_edit_create(ffui_ctl *c, ffui_wnd *parent);
 FF_EXTERN int ffui_text_create(ffui_ctl *c, ffui_wnd *parent);
 
-static inline ffstr ffui_edit_text(ffui_edit *e)
-{
+static inline ffstr ffui_edit_text(ffui_edit *e) {
 	ffstr s = {};
 	ffui_textstr(e, &s);
 	return s;
 }
+
+#define ffui_edit_settextz(c, sz)  ffui_settext(c, sz, ffsz_len(sz))
+#define ffui_edit_settextstr(e, str)  ffui_settext(e, (str)->ptr, (str)->len)
 
 #define ffui_edit_password(e, enable) \
 	ffui_ctl_send(e, EM_SETPASSWORDCHAR, (enable) ? (wchar_t)0x25CF : 0, 0)
@@ -63,13 +65,3 @@ enum FFUI_EDIT_SCROLL {
 /*
 type: enum FFUI_EDIT_SCROLL */
 #define ffui_edit_scroll(e, type)  ffui_send((e)->h, EM_SCROLL, type, 0)
-
-
-#ifdef __cplusplus
-struct ffui_editxx : ffui_edit {
-	void text(const char *sz) { ffui_settextz(this, sz); }
-	void text(ffstr s) { ffui_settext(this, s.ptr, s.len); }
-	ffstr text() { ffstr s = {}; ffui_textstr(this, &s); return s; }
-	void focus() { SetFocus(h); }
-};
-#endif

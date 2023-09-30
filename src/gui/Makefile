@@ -20,6 +20,7 @@
 # WINDRES
 
 # Modify:
+# EXES
 # MODS
 
 MODS += gui.$(SO)
@@ -34,6 +35,7 @@ else
 	LINKFLAGS_GUI := `pkg-config --libs gtk+-3.0` $(LINK_PTHREAD) -lm
 	FFGUI_OBJ := ffgui-gtk.o ffgui-gtk-loader.o
 endif
+FFGUI_HDR += $(PHIOLA)/src/util/gui.hpp
 ifeq "$(DEBUG_GUI)" "1"
 	CFLAGS_GUI += -DFFGUI_DEBUG
 endif
@@ -42,8 +44,7 @@ CXXFLAGS_GUI := $(CXXFLAGS) $(CFLAGS_GUI)
 LINKFLAGS_GUI := $(LINKFLAGS) $(LINKFLAGS_GUI)
 gui-mod.o: $(PHIOLA)/src/gui/mod.c $(DEPS) \
 		$(PHIOLA)/src/gui/mod.h \
-		$(PHIOLA)/src/gui/track.h \
-		$(PHIOLA)/src/gui/track-convert.h
+		$(PHIOLA)/src/gui/track-*.h
 	$(C) $(CFLAGS) $< -o $@
 gui.o: $(PHIOLA)/src/gui/gui.c $(DEPS) $(FFGUI_HDR) \
 		$(PHIOLA)/src/gui/gui.h \
@@ -87,9 +88,32 @@ gui.$(SO): gui-mod.o \
 		$(FFGUI_OBJ)
 	$(LINKXX) -shared $+ $(LINKFLAGS_GUI) $(LINK_DL) -o $@
 
+# EXE
+%.o: $(PHIOLA)/src/exe/%.c $(DEPS) \
+		$(wildcard $(PHIOLA)/src/util/*.h)
+	$(C) $(CFLAGS) $< -o $@
+
+_:=
+ifeq "$(OS)" "windows"
+	GUIEXE_O := gui-exe.coff
+	EXES += phiola-gui.exe
+endif
+gui-exe.coff: $(PHIOLA)/res/exe.rc \
+		$(PHIOLA)/res/exe.manifest \
+		$(PHIOLA)/res/phiola.ico
+	$(WINDRES) $< $@
+
+phiola-gui.o: $(PHIOLA)/src/gui/phiola-gui.c $(DEPS)
+	$(C) $(CFLAGS) $< -o $@
+phiola-gui.exe: phiola-gui.o \
+		$(GUIEXE_O) \
+		core.$(SO)
+	$(LINK) $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) $(LINK_DL) -mwindows -o $@
+
 app-gui:
 	$(MKDIR) $(APP_DIR)/mod/gui
 ifeq "$(OS)" "windows"
+	$(CP) phiola-gui.exe $(APP_DIR)/
 	$(CP) $(PHIOLA)/src/gui/ui-winapi.conf $(APP_DIR)/mod/gui/ui.conf
 	$(CP) $(PHIOLA)/src/gui/lang_*.conf \
 		$(APP_DIR)/mod/gui/

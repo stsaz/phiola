@@ -4,7 +4,7 @@
 #pragma once
 #include "winapi.h"
 
-typedef struct ffui_combx {
+typedef struct ffui_combobox {
 	HWND h;
 	enum FFUI_UID uid;
 	const char *name;
@@ -14,13 +14,14 @@ typedef struct ffui_combx {
 	uint closeup_id;
 	uint edit_change_id;
 	uint edit_update_id;
-} ffui_combx;
+} ffui_combobox;
 
-FF_EXTERN int ffui_combx_create(ffui_ctl *c, ffui_wnd *parent);
+FF_EXTERN int ffui_combobox_create(ffui_ctl *c, ffui_wnd *parent);
+FF_EXTERN int ffui_combobox_createlist(ffui_ctl *c, ffui_wnd *parent);
 
 /** Insert an item
 idx: -1: insert to end */
-static inline void ffui_combx_ins(ffui_combx *c, int idx, const char *txt, ffsize len)
+static inline void ffui_combobox_insert(ffui_combobox *c, int idx, const char *txt, ffsize len)
 {
 	wchar_t *w, ws[255];
 	ffsize n = FF_COUNT(ws) - 1;
@@ -36,23 +37,25 @@ static inline void ffui_combx_ins(ffui_combx *c, int idx, const char *txt, ffsiz
 	if (w != ws)
 		ffmem_free(w);
 }
-#define ffui_combx_insz(c, idx, textz)  ffui_combx_ins(c, idx, textz, ffsz_len(textz))
+#define ffui_combobox_insz(c, idx, textz)  ffui_combobox_insert(c, idx, textz, ffsz_len(textz))
+#define ffui_combobox_add(c, textz)  ffui_combobox_insert(c, -1, textz, ffsz_len(textz))
 
 /** Remove item */
-#define ffui_combx_rm(c, idx)  ffui_ctl_send(c, CB_DELETESTRING, idx, 0)
+#define ffui_combobox_remove(c, idx)  ffui_ctl_send(c, CB_DELETESTRING, idx, 0)
 
 /** Remove all items */
-#define ffui_combx_clear(c)  ffui_ctl_send(c, CB_RESETCONTENT, 0, 0)
+#define ffui_combobox_clear(c)  ffui_ctl_send(c, CB_RESETCONTENT, 0, 0)
 
 /** Get number of items */
-#define ffui_combx_count(c)  ((uint)ffui_ctl_send(c, CB_GETCOUNT, 0, 0))
+#define ffui_combobox_count(c)  ((uint)ffui_ctl_send(c, CB_GETCOUNT, 0, 0))
 
 /** Set/get active index */
-#define ffui_combx_set(c, idx)  ffui_ctl_send(c, CB_SETCURSEL, idx, 0)
-#define ffui_combx_active(c)  ((uint)ffui_ctl_send(c, CB_GETCURSEL, 0, 0))
+#define ffui_combobox_set(c, idx)  ffui_ctl_send(c, CB_SETCURSEL, idx, 0)
+#define ffui_combobox_active(c)  ((uint)ffui_ctl_send(c, CB_GETCURSEL, 0, 0))
 
 /** Get text */
-FF_EXTERN int ffui_combx_textstr(ffui_combx *c, uint idx, ffstr *dst);
+FF_EXTERN ffstr ffui_combobox_text(ffui_combobox *c, uint idx);
+#define ffui_combobox_text_active(c)  ffui_combobox_text(c, ffui_combobox_active(c))
 
 /** Show/hide drop down list */
-#define ffui_combx_popup(c, show)  ffui_ctl_send(c, CB_SHOWDROPDOWN, show, 0)
+#define ffui_combobox_popup(c, show)  ffui_ctl_send(c, CB_SHOWDROPDOWN, show, 0)

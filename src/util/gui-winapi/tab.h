@@ -17,7 +17,9 @@ typedef struct ffui_tab {
 FF_EXTERN int ffui_tab_create(ffui_tab *t, ffui_wnd *parent);
 
 #define ffui_tab_active(t)  ffui_ctl_send(t, TCM_GETCURSEL, 0, 0)
+#define ffui_tab_changed_index(t)  ffui_ctl_send(t, TCM_GETCURSEL, 0, 0)
 #define ffui_tab_setactive(t, idx)  ffui_ctl_send(t, TCM_SETCURSEL, idx, 0)
+#define ffui_send_tab_setactive(t, idx)  ffui_ctl_send(t, TCM_SETCURSEL, idx, 0)
 
 #define ffui_tab_count(t)  ffui_ctl_send(t, TCM_GETITEMCOUNT, 0, 0)
 
@@ -82,6 +84,12 @@ static inline int ffui_tab_ins(ffui_tab *t, int idx, ffui_tabitem *it)
 
 #define ffui_tab_append(t, it)  ffui_tab_ins(t, ffui_tab_count(t), it)
 
+static inline void ffui_send_tab_ins(ffui_tab *t, const char *sz) {
+	ffui_tabitem ti = {};
+	ffui_tab_settextz(&ti, sz);
+	ffui_tab_ins(t, ffui_tab_count(t), &ti);
+}
+
 static inline ffbool ffui_tab_set(ffui_tab *t, int idx, ffui_tabitem *it)
 {
 	int r = ffui_ctl_send(t, TCM_SETITEMW, idx, &it->item);
@@ -95,18 +103,3 @@ static inline ffbool ffui_tab_get(ffui_tab *t, int idx, ffui_tabitem *it)
 	ffui_tab_reset(it);
 	return r;
 }
-
-
-#ifdef __cplusplus
-struct ffui_tabxx : ffui_tab {
-	void add(const char *sz) {
-		ffui_tabitem ti = {};
-		ffui_tab_settextz(&ti, sz);
-		ffui_tab_append(this, &ti);
-	}
-	void del(u_int i) { ffui_tab_del(this, i); }
-	void select(u_int i) { ffui_tab_setactive(this, i); }
-	u_int count() { return ffui_tab_count(this); }
-	u_int changed() { return ffui_tab_active(this); }
-};
-#endif

@@ -220,6 +220,7 @@ enum FFUI_UID {
 	FFUI_UID_EDITBOX,
 	FFUI_UID_TEXT,
 	FFUI_UID_COMBOBOX,
+	FFUI_UID_COMBOBOX_LIST,
 	FFUI_UID_BUTTON,
 	FFUI_UID_CHECKBOX,
 	FFUI_UID_RADIO,
@@ -303,7 +304,7 @@ static inline void ffui_ctl_invalidate(void *ctl)
 	InvalidateRect(c->h, NULL, 1);
 }
 
-#define ffui_setfocus(c)  SetFocus((c)->h)
+#define ffui_ctl_focus(c)  SetFocus((c)->h)
 
 /** Enable or disable the control */
 #define ffui_ctl_enable(c, enable)  EnableWindow((c)->h, enable)
@@ -362,6 +363,8 @@ typedef struct ffui_btn {
 
 FF_EXTERN int ffui_btn_create(ffui_ctl *c, ffui_wnd *parent);
 
+#define ffui_btn_settextz(c, sz)  ffui_settextz(c, sz)
+
 static inline void ffui_btn_seticon(ffui_btn *b, ffui_icon *ico)
 {
 	ffui_styleset(b->h, BS_ICON);
@@ -384,6 +387,7 @@ FF_EXTERN int ffui_chbox_create(ffui_ctl *c, ffui_wnd *parent);
 
 #define ffui_checkbox_check(c, val)  ffui_ctl_send(c, BM_SETCHECK, val, 0)
 #define ffui_checkbox_checked(c)  ffui_ctl_send(c, BM_GETCHECK, 0, 0)
+#define ffui_send_checkbox_checked(c)  ffui_ctl_send(c, BM_GETCHECK, 0, 0)
 
 
 // RADIOBUTTON
@@ -411,6 +415,8 @@ typedef struct ffui_label {
 } ffui_label;
 
 FF_EXTERN int ffui_lbl_create(ffui_label *c, ffui_wnd *parent);
+
+#define ffui_send_lbl_settext(c, sz)  ffui_settextz(c, sz)
 
 /**
 type: enum FFUI_CUR */
@@ -472,6 +478,7 @@ static inline void ffui_stbar_settext(ffui_stbar *sb, int idx, const char *text,
 }
 #define ffui_stbar_settextstr(sb, idx, str)  ffui_stbar_settext(sb, idx, (str)->ptr, (str)->len)
 #define ffui_stbar_settextz(sb, idx, sz)  ffui_stbar_settext(sb, idx, sz, ffsz_len(sz))
+#define ffui_send_stbar_settextz(sb, sz)  ffui_settext(sb, sz, ffsz_len(sz))
 
 
 // TRACKBAR
@@ -485,6 +492,7 @@ typedef struct ffui_trkbar {
 FF_EXTERN int ffui_trk_create(ffui_trkbar *t, ffui_wnd *parent);
 
 #define ffui_trk_setrange(t, max)  ffui_ctl_send(t, TBM_SETRANGEMAX, 1, max)
+#define ffui_post_trk_setrange(t, max)  ffui_ctl_send(t, TBM_SETRANGEMAX, 1, max)
 
 #define ffui_trk_setpage(t, pagesize)  ffui_ctl_send(t, TBM_SETPAGESIZE, 0, pagesize)
 
@@ -493,6 +501,7 @@ static inline void ffui_trk_set(ffui_trkbar *t, uint val)
 	if (!t->thumbtrk)
 		ffui_ctl_send(t, TBM_SETPOS, 1, val);
 }
+#define ffui_post_trk_set(t, val)  ffui_trk_set(t, val)
 
 #define ffui_trk_val(t)  ffui_ctl_send(t, TBM_GETPOS, 0, 0)
 
@@ -534,7 +543,7 @@ FF_EXTERN int ffui_pgs_create(ffui_ctl *c, ffui_wnd *parent);
 
 #undef FFUI_CTL
 
-typedef struct ffui_combx ffui_combx;
+typedef struct ffui_combobox ffui_combobox;
 typedef struct ffui_edit ffui_edit;
 typedef struct ffui_menu ffui_menu;
 typedef struct ffui_tab ffui_tab;
@@ -547,7 +556,7 @@ union ffui_anyctl {
 	ffui_btn *btn;
 	ffui_checkbox *cb;
 	ffui_edit *edit;
-	ffui_combx *combx;
+	ffui_combobox *combx;
 	ffui_paned *paned;
 	ffui_trkbar *trkbar;
 	ffui_stbar *stbar;
@@ -572,33 +581,3 @@ typedef void (*ffui_handler)(void *param);
 
 /** Post a task to the thread running GUI message loop. */
 FF_EXTERN void ffui_thd_post(ffui_handler func, void *udata);
-
-
-#ifdef __cplusplus
-struct ffui_buttonxx : ffui_btn {
-	void text(const char *sz) { ffui_settextz(this, sz); }
-	void enable(uint val) { EnableWindow(h, val); }
-};
-
-struct ffui_checkboxxx : ffui_checkbox {
-	ffui_checkboxxx& check(bool val) {
-		ffui_checkbox_check(this, val);
-		return *this;
-	}
-	bool checked() { return ffui_checkbox_checked(this); }
-};
-
-struct ffui_trackbarxx : ffui_trkbar {
-	void set(uint value) { ffui_trk_set(this, value); }
-	uint get() { return ffui_trk_val(this); }
-	void range(uint range) { ffui_trk_setrange(this, range); }
-};
-
-struct ffui_stbarxx : ffui_stbar {
-	void text(const char *sz) { ffui_settextz(this, sz); }
-};
-
-struct ffui_labelxx : ffui_label {
-	void text(const char *sz) { ffui_settextz(this, sz); }
-};
-#endif

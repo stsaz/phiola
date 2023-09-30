@@ -77,6 +77,7 @@ phiola$(DOTEXE): main.o \
 		$(EXE_COFF) \
 		core.$(SO)
 	$(LINK) $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) $(LINK_DL) -o $@
+EXES :=
 
 # CORE
 %.o: $(PHIOLA)/src/core/%.c $(DEPS) \
@@ -282,10 +283,12 @@ zstd.$(SO): zstd.o
 
 build: core.$(SO) \
 		phiola$(DOTEXE) \
+		$(EXES) \
 		$(MODS)
 
 strip-debug: core.$(SO).debug \
 		phiola$(DOTEXE).debug \
+		$(EXES:.exe=.exe.debug) \
 		$(MODS:.$(SO)=.$(SO).debug)
 %.debug: %
 	$(OBJCOPY) --only-keep-debug $< $@
@@ -295,7 +298,8 @@ strip-debug: core.$(SO).debug \
 
 app:
 	$(MKDIR) $(APP_DIR) $(APP_DIR)/mod
-	$(CP) phiola$(DOTEXE) core.$(SO) $(APP_DIR)/
+	$(CP) phiola$(DOTEXE) core.$(SO) \
+		$(APP_DIR)/
 	chmod 644 $(APP_DIR)/core.$(SO)
 	$(CP) $(PHIOLA)/LICENSE \
 		$(PHIOLA)/README.md \

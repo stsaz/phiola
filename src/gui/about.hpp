@@ -4,7 +4,7 @@
 #define HOMEPAGE_URL  "https://github.com/stsaz/phiola/"
 
 struct gui_wabout {
-	ffui_wndxx wnd;
+	ffui_windowxx wnd;
 	ffui_labelxx labout, lurl;
 	ffui_image ico;
 };

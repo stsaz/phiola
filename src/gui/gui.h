@@ -7,6 +7,9 @@
 #else
 #include <util/gui-gtk/loader.h>
 #endif
+#ifdef __cplusplus
+#include <util/gui.hpp>
+#endif
 #include <ffbase/args.h>
 
 #define USER_CONF_NAME  "gui.conf"
@@ -29,9 +32,16 @@ struct gui_wlistfilter;
 FF_EXTERN void wlistfilter_init();
 FF_EXTERN void wlistfilter_show(uint show);
 
+FF_EXTERN void wrecord_init();
+FF_EXTERN void wrecord_show(uint show);
+FF_EXTERN void wrecord_start_stop();
+FF_EXTERN void wrecord_userconf_write(ffvec *buf);
+FF_EXTERN const struct ffarg wrecord_args[];
+
 struct gui_wconvert;
 FF_EXTERN void wconvert_init();
 FF_EXTERN void wconvert_show(uint show, ffslice items);
+FF_EXTERN void wconvert_set(int id, uint pos);
 FF_EXTERN void wconvert_userconf_write(ffvec *buf);
 FF_EXTERN const struct ffarg wconvert_args[];
 
@@ -40,18 +50,20 @@ FF_EXTERN void wabout_init();
 FF_EXTERN void wabout_show(uint show);
 
 struct gui {
-	ffui_menu mfile;
-	ffui_menu mlist;
-	ffui_menu mplay;
-	ffui_menu mconvert;
-	ffui_menu mhelp;
+	ffui_menu mfile
+		, mlist
+		, mplay
+		, mrecord
+		, mconvert
+		, mhelp;
 	ffui_menu mpopup;
 	ffui_dialog dlg;
 	struct gui_wmain *wmain;
-	struct gui_wconvert *wconvert;
 	struct gui_winfo *winfo;
 	struct gui_wlistadd *wlistadd;
 	struct gui_wlistfilter *wlistfilter;
+	struct gui_wrecord *wrecord;
+	struct gui_wconvert *wconvert;
 	struct gui_wabout *wabout;
 };
 FF_EXTERN struct gui *gg;

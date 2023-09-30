@@ -7,7 +7,7 @@
 #include <util/unix-shell.h>
 #endif
 #include <gui/mod.h>
-#include <gui/track.h>
+#include <gui/track-playback.h>
 #include <gui/track-convert.h>
 #include <FFOS/dir.h>
 #include <FFOS/ffos-extern.h>
@@ -472,6 +472,57 @@ end:
 }
 
 
+static void grd_rec_close(void *f, phi_track *t)
+{
+	core->track->stop(t);
+	gd->recording_track = NULL;
+	if (gd->quit) {
+		core->sig(PHI_CORE_STOP);
+		return;
+	}
+	wrecord_done();
+}
+static int grd_rec_process(void *f, phi_track *t) { return PHI_DONE; }
+static const phi_filter phi_gui_record_guard = {
+	NULL, grd_rec_close, grd_rec_process,
+	"record-guard"
+};
+
+void record_begin(void *param)
+{
+	struct phi_track_conf *c = param;
+	phi_track *t = core->track->create(c);
+	int e = 1;
+
+	if (!core->track->filter(t, &phi_gui_record_guard, 0)
+		|| !core->track->filter(t, core->mod("core.auto-rec"), 0)
+		|| !core->track->filter(t, core->mod("afilter.until"), 0)
+		|| !core->track->filter(t, core->mod("afilter.gain"), 0)
+		|| !core->track->filter(t, core->mod("afilter.auto-conv"), 0)
+		|| !core->track->filter(t, core->mod("format.auto-write"), 0)
+		|| !core->track->filter(t, core->mod("core.file-write"), 0))
+		goto end;
+
+	gd->recording_track = t;
+	core->track->start(t);
+	e = 0;
+
+end:
+	if (e) {
+		core->track->close(t);
+	}
+	ffmem_free(c);
+}
+
+int record_stop()
+{
+	if (!gd->recording_track) return -1;
+
+	core->track->stop(gd->recording_track);
+	return 0;
+}
+
+
 static void grd_conv_close(void *f, phi_track *t)
 {
 	core->track->stop(t);
@@ -525,7 +576,11 @@ void convert_begin(void *param)
 	struct phi_queue_entry *qe;
 	for (i = 0;  !!(qe = gd->queue->at(gd->q_convert, i));  i++) {
 		qe->conf.ofile.name = ffsz_dup(c->ofile.name);
+		qe->conf.seek_msec = c->seek_msec;
+		qe->conf.until_msec = c->until_msec;
 		qe->conf.aac.quality = c->aac.quality;
+		qe->conf.vorbis.quality = c->vorbis.quality;
+		qe->conf.opus.bitrate = c->opus.bitrate;
 		qe->conf.stream_copy = c->stream_copy;
 	}
 	if (i)
@@ -620,7 +675,9 @@ static void gui_start(void *param)
 
 void gui_stop()
 {
-	core->sig(PHI_CORE_STOP);
+	gd->quit = 1;
+	if (record_stop())
+		core->sig(PHI_CORE_STOP);
 }
 
 static void gui_destroy()

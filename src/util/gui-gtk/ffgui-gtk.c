@@ -250,7 +250,7 @@ void ffui_view_dragdrop(ffui_view *v, uint action_id)
 	v->dropfile_id = action_id;
 }
 
-void ffui_view_ins(ffui_view *v, int pos, ffui_viewitem *it)
+int ffui_view_ins(ffui_view *v, int pos, ffui_viewitem *it)
 {
 	_ffui_log("pos:%d", pos);
 	if (v->store == NULL)
@@ -266,6 +266,7 @@ void ffui_view_ins(ffui_view *v, int pos, ffui_viewitem *it)
 	}
 	gtk_list_store_set(GTK_LIST_STORE(v->store), &iter, 0, it->text, -1);
 	ffui_view_itemreset(it);
+	return it->idx;
 }
 
 void ffui_view_setdata(ffui_view *v, uint first, int delta)
@@ -594,7 +595,7 @@ static gboolean _ffui_send_handler(gpointer data)
 		ffui_lbl_settextz((ffui_label*)c->ctl, c->udata);  break;
 
 	case FFUI_EDIT_GETTEXT:
-		ffui_edit_textstr((ffui_edit*)c->ctl, c->udata);  break;
+		*(ffstr*)c->udata = ffui_edit_text((ffui_edit*)c->ctl);  break;
 
 	case FFUI_STBAR_SETTEXT:
 		ffui_stbar_settextz((ffui_ctl*)c->ctl, c->udata);  break;
