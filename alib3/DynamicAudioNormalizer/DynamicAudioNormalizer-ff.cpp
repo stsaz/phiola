@@ -82,6 +82,10 @@ ssize_t dynanorm_process(void *cc, const double *const *in, size_t *samples, dou
 const unsigned int DYNAUDNORM_NS::VERSION_MAJOR =  2;
 const unsigned int DYNAUDNORM_NS::VERSION_MINOR = 10;
 const unsigned int DYNAUDNORM_NS::VERSION_PATCH =  0;
+const char *const DYNAUDNORM_NS::BUILD_DATE = "";
+const char *const DYNAUDNORM_NS::BUILD_TIME = "";
+const char *const DYNAUDNORM_NS::BUILD_COMPILER = "";
+const char *const DYNAUDNORM_NS::BUILD_ARCH = "";
 
 #include <Logging.h>
 DYNAUDNORM_NS::LoggingCallback *DYNAUDNORM_NS::setLoggingHandler(LoggingCallback *const callback){return NULL;}

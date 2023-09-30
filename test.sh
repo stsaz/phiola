@@ -260,7 +260,7 @@ test_meta() {
 
 test_http() {
 	./phiola pl "http://localhost:1/" || true # no connection
-	netmill -l 8080 -w . &
+	netmill http l 8080 w . &
 	sleep .5
 	cp -au $HTTP_DIR/$HTTP_FILE ./$HTTP_FILE
 	echo "http://localhost:8080/$HTTP_FILE" >./http.m3u

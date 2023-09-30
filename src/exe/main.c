@@ -195,11 +195,11 @@ static int phi_grd_process(void *f, phi_track *t)
 	return PHI_DONE;
 }
 
-static phi_filter phi_guard = {
+static const phi_filter phi_guard = {
 	NULL, phi_grd_close, phi_grd_process,
 	"guard"
 };
-static phi_filter phi_guard_gui = {
+static const phi_filter phi_guard_gui = {
 	NULL, phi_guigrd_close, phi_grd_process,
 	"gui-guard"
 };

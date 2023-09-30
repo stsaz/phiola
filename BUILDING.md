@@ -75,8 +75,15 @@ cd phiola
 
 * Cross-Build on Linux for Debian-buster:
 
-```sh
-cat >builder_debian_buster.Dockerfile <<EOF
+	```sh
+	cat >build.sh <<EOF
+cd /src/phiola
+make -j8 -C ../ffpack libzstd
+make -j8 -C alib3
+make -j8
+EOF
+
+	cat >builder_debian_buster.Dockerfile <<EOF
 FROM debian:buster-slim AS debian_buster_cxx_builder
 RUN apt update && \
  apt install -y make gcc g++
@@ -88,18 +95,15 @@ RUN apt install -y \
  libgtk-3-dev \
  zstd unzip cmake patch dos2unix curl
 EOF
-podman build -t phiola_builder_debian_buster -f builder_debian_buster.Dockerfile .
-podman create -a -i -t \
- -v `pwd`/phiola-src:/src \
- --name phiola_build_debian_buster \
- phiola_builder_debian_buster
 
-podman start -a -i phiola_build_debian_buster
-# Inside the container:
-make -j8 -C /src/ffpack libzstd
-make -j8 -C /src/phiola/alib3
-make -j8 -C /src/phiola
-```
+	podman build -t phiola_builder_debian_buster -f builder_debian_buster.Dockerfile .
+	podman create -a -i -t \
+	 -v `pwd`/..:/src \
+	 --name phiola_build_debian_buster \
+	 phiola_builder_debian_buster \
+	 bash /src/phiola/build.sh
+	podman start -a -i phiola_build_debian_buster
+	```
 
 * Cross-Build on Linux for Windows:
 

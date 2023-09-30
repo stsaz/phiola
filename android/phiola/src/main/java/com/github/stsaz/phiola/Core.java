@@ -297,8 +297,7 @@ class Core extends Util {
 	}
 
 	void errlog(String mod, String fmt, Object... args) {
-		if (BuildConfig.DEBUG)
-			Log.e(mod, String.format("%s: %s", mod, String.format(fmt, args)));
+		Log.e(mod, String.format("%s: %s", mod, String.format(fmt, args)));
 		if (gui != null)
 			gui.on_error(fmt, args);
 	}

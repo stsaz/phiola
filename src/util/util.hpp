@@ -76,6 +76,13 @@ struct ffvecxx : ffvec {
 		ffvec_addstr(this, &s);
 		return *this;
 	}
+	ffvecxx& addf(const char *fmt, ...) {
+		va_list va;
+		va_start(va, fmt);
+		ffstr_growfmtv((ffstr*)this, &cap, fmt, va);
+		va_end(va);
+		return *this;
+	}
 	template<class T> T* alloc(ffsize n) { return ffvec_allocT(this, n, T); }
 	template<class T> T* push() { return ffvec_pushT(this, T); }
 	const ffstrxx& str() const { return *(ffstrxx*)this; }

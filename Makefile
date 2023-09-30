@@ -3,7 +3,6 @@
 ROOT_DIR := ..
 PHIOLA := $(ROOT_DIR)/phiola
 AVPACK := $(ROOT_DIR)/avpack
-FFPACK := $(ROOT_DIR)/ffpack
 FFOS := $(ROOT_DIR)/ffos
 FFBASE := $(ROOT_DIR)/ffbase
 APP_DIR := phiola-2
@@ -13,7 +12,6 @@ include $(FFBASE)/test/makeconf
 SUBMAKE := $(MAKE) -f $(firstword $(MAKEFILE_LIST))
 ALIB3 := $(PHIOLA)/alib3
 ALIB3_BIN := $(ALIB3)/_$(OS)-$(CPU)
-FFPACK_BIN := $(FFPACK)/_$(OS)-$(CPU)
 
 # COMPILER
 
@@ -58,26 +56,8 @@ DEPS := $(PHIOLA)/src/phiola.h \
 %.o: $(PHIOLA)/src/%.c $(DEPS)
 	$(C) $(CFLAGS) $< -o $@
 
-# EXE
-%.o: $(PHIOLA)/src/exe/%.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/exe/*.h) \
-		$(wildcard $(PHIOLA)/src/util/*.h)
-	$(C) $(CFLAGS) $< -o $@
-
-_:=
-ifeq "$(OS)" "windows"
-	EXE_COFF := exe.coff
-endif
-exe.coff: $(PHIOLA)/res/exe.rc \
-		$(PHIOLA)/res/exe.manifest \
-		$(PHIOLA)/res/phiola.ico
-	$(WINDRES) $< $@
-
-phiola$(DOTEXE): main.o \
-		$(EXE_COFF) \
-		core.$(SO)
-	$(LINK) $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) $(LINK_DL) -o $@
 EXES :=
+MODS :=
 
 # CORE
 %.o: $(PHIOLA)/src/core/%.c $(DEPS) \
@@ -99,6 +79,7 @@ endif
 core.$(SO): $(CORE_O)
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_PTHREAD) $(LINK_DL) -o $@
 
+include $(PHIOLA)/src/exe/Makefile
 include $(PHIOLA)/src/adev/Makefile
 
 # AFILTERS
@@ -167,83 +148,7 @@ format.$(SO): mod-fmt.o \
 	$(LINK) -shared $+ $(LINKFLAGS) -o $@
 
 ifneq "$(PHI_CODECS)" "0"
-
-# CODECS LOSSY
-
-MODS += aac.$(SO)
-LIBS3 += $(ALIB3_BIN)/libfdk-aac-phi.$(SO)
-aac.o: $(PHIOLA)/src/acodec/aac.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/acodec/aac-*.h) $(PHIOLA)/src/acodec/alib3-bridge/aac.h
-	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
-aac.$(SO): aac.o
-	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lfdk-aac-phi -o $@
-
-MODS += mpeg.$(SO)
-LIBS3 += $(ALIB3_BIN)/libmpg123-phi.$(SO)
-mpeg.o: $(PHIOLA)/src/acodec/mpeg.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/acodec/mpeg-*.h)
-	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
-mpeg.$(SO): mpeg.o
-	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lmpg123-phi -o $@
-
-MODS += vorbis.$(SO)
-LIBS3 += $(ALIB3_BIN)/libvorbis-phi.$(SO) $(ALIB3_BIN)/libvorbisenc-phi.$(SO) $(ALIB3_BIN)/libogg-phi.$(SO)
-vorbis.o: $(PHIOLA)/src/acodec/vorbis.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/acodec/vorbis-*.h) $(PHIOLA)/src/acodec/alib3-bridge/vorbis.h
-	$(C) $(CFLAGS) -I$(ALIB3) -I$(AVPACK) $< -o $@
-vorbis.$(SO): vorbis.o
-	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -logg-phi -lvorbis-phi -lvorbisenc-phi -o $@
-
-MODS += opus.$(SO)
-LIBS3 += $(ALIB3_BIN)/libopus-phi.$(SO)
-opus.o: $(PHIOLA)/src/acodec/opus.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/acodec/opus-*.h) $(PHIOLA)/src/acodec/alib3-bridge/opus.h
-	$(C) $(CFLAGS) -I$(ALIB3) -I$(AVPACK) $< -o $@
-opus.$(SO): opus.o
-	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lopus-phi -o $@
-
-MODS += mpc.$(SO)
-LIBS3 += $(ALIB3_BIN)/libmusepack-phi.$(SO)
-mpc.o: $(PHIOLA)/src/acodec/mpc.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/acodec/mpc-*.h) $(PHIOLA)/src/acodec/alib3-bridge/musepack.h
-	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
-mpc.$(SO): mpc.o
-	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lmusepack-phi -o $@
-
-# CODECS LOSSLESS
-
-MODS += alac.$(SO)
-LIBS3 += $(ALIB3_BIN)/libALAC-phi.$(SO)
-alac.o: $(PHIOLA)/src/acodec/alac.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/acodec/alac-*.h) $(PHIOLA)/src/acodec/alib3-bridge/alac.h
-	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
-alac.$(SO): alac.o
-	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lALAC-phi -o $@
-
-MODS += ape.$(SO)
-LIBS3 += $(ALIB3_BIN)/libMAC-phi.$(SO)
-ape.o: $(PHIOLA)/src/acodec/ape.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/acodec/ape-*.h) $(PHIOLA)/src/acodec/alib3-bridge/ape.h
-	$(C) $(CFLAGS) -I$(ALIB3) -I$(AVPACK) $< -o $@
-ape.$(SO): ape.o
-	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lMAC-phi -o $@
-
-MODS += flac.$(SO)
-LIBS3 += $(ALIB3_BIN)/libFLAC-phi.$(SO)
-flac.o: $(PHIOLA)/src/acodec/flac.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/acodec/flac-*.h) $(PHIOLA)/src/acodec/alib3-bridge/flac.h
-	$(C) $(CFLAGS) -I$(ALIB3) -I$(AVPACK) $< -o $@
-flac.$(SO): flac.o
-	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lFLAC-phi -o $@
-
-MODS += wavpack.$(SO)
-LIBS3 += $(ALIB3_BIN)/libwavpack-phi.$(SO)
-wavpack.o: $(PHIOLA)/src/acodec/wavpack.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/acodec/wavpack-*.h) $(PHIOLA)/src/acodec/alib3-bridge/wavpack.h
-	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
-wavpack.$(SO): wavpack.o
-	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lwavpack-phi -o $@
-
+include $(PHIOLA)/src/acodec/Makefile
 endif # PHI_CODECS
 
 # MISC
@@ -271,18 +176,9 @@ tui.$(SO): tui.o
 
 include $(PHIOLA)/src/gui/Makefile
 include $(PHIOLA)/src/net/Makefile
-
-MODS += zstd.$(SO)
-LIBS3 += $(FFPACK_BIN)/libzstd-ffpack.$(SO)
-%.o: $(PHIOLA)/src/dfilter/%.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/dfilter/zstd-*.h)
-	$(C) $(CFLAGS) -I$(FFPACK) $< -o $@
-zstd.$(SO): zstd.o
-	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(FFPACK_BIN) -lzstd-ffpack -o $@
-
+include $(PHIOLA)/src/dfilter/Makefile
 
 build: core.$(SO) \
-		phiola$(DOTEXE) \
 		$(EXES) \
 		$(MODS)
 
