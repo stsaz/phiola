@@ -8,7 +8,7 @@ struct alsar {
 
 static void alsar_close(struct alsar *al, phi_track *t)
 {
-	core->timer(&al->tmr, 0, NULL, NULL);
+	core->timer(t->worker, &al->tmr, 0, NULL, NULL);
 	audio_in_close(&al->in);
 	ffmem_free(al);
 }
@@ -26,7 +26,7 @@ static void* alsar_open(phi_track *t)
 	if (0 != audio_in_open(a, t))
 		goto fail;
 
-	core->timer(&al->tmr, a->buffer_length_msec / 2, audio_oncapt, a);
+	core->timer(t->worker, &al->tmr, a->buffer_length_msec / 2, audio_oncapt, a);
 	return al;
 
 fail:

@@ -19,6 +19,8 @@ phi_core *core;
 	core->conf.log(core->conf.log_obj, PHI_LOG_ERR | PHI_LOG_SYS, "core", NULL, __VA_ARGS__)
 #define errlog(...) \
 	core->conf.log(core->conf.log_obj, PHI_LOG_ERR, "core", NULL, __VA_ARGS__)
+#define infolog(...) \
+	core->conf.log(core->conf.log_obj, PHI_LOG_INFO, "core", NULL, __VA_ARGS__)
 #define dbglog(...) \
 do { \
 	if (core->conf.log_level >= PHI_LOG_DEBUG) \
@@ -245,47 +247,42 @@ static fftime core_time(ffdatetime *dt, uint flags)
 	return t;
 }
 
-static void core_timer(phi_timer *t, int interval_msec, phi_task_func func, void *param)
+static void core_timer(uint worker, phi_timer *t, int interval_msec, phi_task_func func, void *param)
 {
-	struct worker *w = ffslice_itemT(&cc->wx.workers, 0, struct worker);
+	assert(worker < cc->wx.workers.len);
+	struct worker *w = ffslice_itemT(&cc->wx.workers, worker, struct worker);
 	wrk_timer(w, t, interval_msec, func, param);
 }
 
-static void core_task(phi_task *t, phi_task_func func, void *param)
+static void core_task(uint worker, phi_task *t, phi_task_func func, void *param)
 {
-	struct worker *w = ffslice_itemT(&cc->wx.workers, 0, struct worker);
-
-	if (func == NULL) {
-		fftaskqueue_del(&w->tq, t);
-		dbglog("task removed: %p", t);
-		return;
-	}
-
-	t->handler = func;
-	t->param = param;
-	zzkq_tq_post(&w->kq_tq, t);
-	dbglog("task added: %p", t);
+	assert(worker < cc->wx.workers.len);
+	struct worker *w = ffslice_itemT(&cc->wx.workers, worker, struct worker);
+	wrk_task(w, t, func, param);
 }
 
-static phi_kevent* core_kev_alloc()
+static phi_kevent* core_kev_alloc(uint worker)
 {
-	struct worker *w = ffslice_itemT(&cc->wx.workers, 0, struct worker);
+	assert(worker < cc->wx.workers.len);
+	struct worker *w = ffslice_itemT(&cc->wx.workers, worker, struct worker);
 	phi_kevent *kev = (void*)zzkq_kev_alloc(&w->kq);
 	if (!!kev)
 		dbglog("kev alloc: %p", kev);
 	return kev;
 }
 
-static void core_kev_free(phi_kevent *kev)
+static void core_kev_free(uint worker, phi_kevent *kev)
 {
-	struct worker *w = ffslice_itemT(&cc->wx.workers, 0, struct worker);
+	assert(worker < cc->wx.workers.len);
+	struct worker *w = ffslice_itemT(&cc->wx.workers, worker, struct worker);
 	zzkq_kev_free(&w->kq, (void*)kev);
 	dbglog("kev free: %p", kev);
 }
 
-static int core_kq_attach(phi_kevent *kev, fffd fd, uint flags)
+static int core_kq_attach(uint worker, phi_kevent *kev, fffd fd, uint flags)
 {
-	struct worker *w = ffslice_itemT(&cc->wx.workers, 0, struct worker);
+	assert(worker < cc->wx.workers.len);
+	struct worker *w = ffslice_itemT(&cc->wx.workers, worker, struct worker);
 	uint f = FFKQ_READWRITE;
 	if (flags == 1)
 		f = FFKQ_READ;
@@ -298,20 +295,47 @@ static int core_kq_attach(phi_kevent *kev, fffd fd, uint flags)
 }
 
 #ifdef FF_WIN
+
+struct woeh_task {
+	phi_task *t;
+	uint worker;
+};
+
 static void woeh_task(void *param)
 {
-	phi_task *t = param;
-	core_task(t, t->handler, t->param);
+	struct woeh_task *wt = param;
+	core_task(wt->worker, wt->t, wt->t->handler, wt->t->param);
+	ffmem_free(wt);
 }
 
-static int core_woeh(fffd fd, phi_task *t, phi_task_func func, void *param)
+static int core_woeh(uint worker, fffd fd, phi_task *t, phi_task_func func, void *param)
 {
 	cc->woeh_obj = woeh_create();
 	t->handler = func;
 	t->param = param;
-	return woeh_add(cc->woeh_obj, fd, woeh_task, t);
+	struct woeh_task *wt = ffmem_new(struct woeh_task);
+	wt->t = t;
+	wt->worker = worker;
+	return woeh_add(cc->woeh_obj, fd, woeh_task, wt);
 }
+
 #endif
+
+static int core_workers_available()
+{
+	return wrkx_available(&cc->wx);
+}
+
+static uint core_worker_assign(uint flags)
+{
+	return wrkx_assign(&cc->wx, flags);
+}
+
+static void core_worker_release(uint worker)
+{
+	assert(worker < cc->wx.workers.len);
+	wrkx_release(&cc->wx, worker);
+}
 
 
 FF_EXPORT void phi_core_destroy()
@@ -364,12 +388,7 @@ FF_EXPORT phi_core* phi_core_create(struct phi_core_conf *conf)
 
 FF_EXPORT void phi_core_run()
 {
-	struct worker *w = ffslice_itemT(&cc->wx.workers, 0, struct worker);
-	if (core->conf.run_detach) {
-		wrk_start(w);
-		return;
-	}
-	wrk_run(w);
+	wrkx_run(&cc->wx);
 }
 
 extern phi_track_if phi_track_iface;
@@ -387,4 +406,7 @@ static phi_core _core = {
 #ifdef FF_WIN
 	.woeh = core_woeh,
 #endif
+	.workers_available = core_workers_available,
+	.worker_assign = core_worker_assign,
+	.worker_release = core_worker_release,
 };

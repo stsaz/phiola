@@ -29,7 +29,7 @@ static int wasapi_create(audio_out *w, phi_track *t)
 
 	if (mod->out != NULL) {
 
-		core->timer(&mod->tmr, 0, NULL, NULL); // stop 'wasapi_close_tmr' timer
+		core->timer(t->worker, &mod->tmr, 0, NULL, NULL); // stop 'wasapi_close_tmr' timer
 
 		audio_out *cur = mod->usedby;
 		if (cur != NULL) {
@@ -91,9 +91,9 @@ fin:
 		, t->conf.oaudio.exclusive);
 
 	if (!!w->event_h)
-		core->woeh(w->event_h, &w->tsk, audio_out_onplay, w);
+		core->woeh(t->worker, w->event_h, &w->tsk, audio_out_onplay, w);
 	else
-		core->timer(&mod->tmr, mod->buffer_length_msec / 2, audio_out_onplay, w);
+		core->timer(t->worker, &mod->tmr, mod->buffer_length_msec / 2, audio_out_onplay, w);
 	return PHI_DONE;
 }
 
@@ -109,9 +109,9 @@ static void wasapi_close(void *ctx, phi_track *t)
 		if (0 != ffwasapi.stop(mod->out))
 			errlog(w->trk, "stop: %s", ffwasapi.error(mod->out));
 		if (t->chain_flags & PHI_FSTOP) {
-			core->timer(&mod->tmr, -ABUF_CLOSE_WAIT, wasapi_close_tmr, NULL);
+			core->timer(t->worker, &mod->tmr, -ABUF_CLOSE_WAIT, wasapi_close_tmr, NULL);
 		} else {
-			core->timer(&mod->tmr, 0, NULL, NULL);
+			core->timer(t->worker, &mod->tmr, 0, NULL, NULL);
 		}
 
 		mod->usedby = NULL;
@@ -149,7 +149,7 @@ static int wasapi_write(void *ctx, phi_track *t)
 	r = audio_out_write(w, t);
 	if (r == PHI_ERR) {
 		wasapi_buf_close();
-		core->timer(&mod->tmr, 0, NULL, NULL);
+		core->timer(t->worker, &mod->tmr, 0, NULL, NULL);
 		mod->usedby = NULL;
 		if (w->err_code == FFAUDIO_EDEV_OFFLINE && w->dev_idx == 0) {
 			/*

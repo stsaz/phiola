@@ -78,6 +78,8 @@ static void track_close(phi_track *t)
 {
 	if (t == NULL) return;
 
+	core->worker_release(t->worker);
+
 	if (t->sib.next) {
 		fflock_lock(&tx->tracks_lock);
 		fflist_rm(&tx->tracks, &t->sib);
@@ -139,6 +141,7 @@ static phi_track* track_create(struct phi_track_conf *conf)
 	phi_track *t = ffmem_new(phi_track);
 	t->conf = *conf;
 	conveyor_init(&t->conveyor);
+	t->worker = core->worker_assign(conf->cross_worker_assign);
 
 	uint id = ffint_fetch_add(&tx->cur_id, 1);
 	t->id[0] = '*';
@@ -419,14 +422,14 @@ static void track_xstop(phi_track *t)
 {
 	if (ST_FINISHED == ffint_cmpxchg(&t->state, ST_RUNNING, ST_STOP)) {
 		dbglog(t, "stopping");
-		core->task(&t->task_wake, (phi_task_func)track_run, t);
+		core->task(t->worker, &t->task_wake, (phi_task_func)track_run, t);
 	}
 }
 
 static void track_wake(phi_track *t)
 {
 	dbglog(t, "wake up");
-	core->task(&t->task_wake, (phi_task_func)track_run, t);
+	core->task(t->worker, &t->task_wake, (phi_task_func)track_run, t);
 }
 
 /**

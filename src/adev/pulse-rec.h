@@ -8,7 +8,7 @@ struct pulsr {
 
 static void pulsr_close(struct pulsr *p, phi_track *t)
 {
-	core->timer(&p->tmr, 0, NULL, NULL);
+	core->timer(t->worker, &p->tmr, 0, NULL, NULL);
 	audio_in_close(&p->in);
 	ffmem_free(p);
 }
@@ -43,7 +43,7 @@ static void* pulsr_open(phi_track *t)
 		goto fail;
 	}
 
-	core->timer(&p->tmr, a->buffer_length_msec / 2, audio_oncapt, a);
+	core->timer(t->worker, &p->tmr, a->buffer_length_msec / 2, audio_oncapt, a);
 	return p;
 
 fail:

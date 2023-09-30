@@ -110,6 +110,8 @@ static int qe_play(struct q_entry *e)
 	}
 
 	struct phi_track_conf *c = &e->pub.conf;
+	c->cross_worker_assign = e->q->conf.conversion;
+
 	const phi_track_if *track = core->track;
 	phi_track *t = track->create(c);
 

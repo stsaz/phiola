@@ -19,7 +19,7 @@ static void oss_close(void *ctx, phi_track *t)
 	if (a->err_code != 0) {
 		ffoss.free(mod->out);
 		mod->out = NULL;
-		core->timer(&mod->tmr, 0, NULL, NULL);
+		core->timer(t->worker, &mod->tmr, 0, NULL, NULL);
 		if (mod->usedby == a)
 			mod->usedby = NULL;
 
@@ -34,7 +34,7 @@ static void oss_close(void *ctx, phi_track *t)
 			ffoss.clear(mod->out);
 		}
 
-		core->timer(&mod->tmr, 0, NULL, NULL);
+		core->timer(t->worker, &mod->tmr, 0, NULL, NULL);
 		mod->usedby = NULL;
 	}
 
@@ -54,7 +54,7 @@ static int oss_create(audio_out *a, phi_track *t)
 		audio_out *cur = mod->usedby;
 		if (cur != NULL) {
 			mod->usedby = NULL;
-			core->timer(&mod->tmr, 0, NULL, NULL);
+			core->timer(t->worker, &mod->tmr, 0, NULL, NULL);
 			audio_out_onplay(cur);
 		}
 
@@ -99,7 +99,7 @@ fin:
 
 	mod->usedby = a;
 
-	core->timer(&mod->tmr, mod->buffer_length_msec / 2, audio_out_onplay, a);
+	core->timer(t->worker, &mod->tmr, mod->buffer_length_msec / 2, audio_out_onplay, a);
 	return 0;
 }
 

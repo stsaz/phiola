@@ -93,7 +93,7 @@ struct gui_data {
 	uint volume;
 	double gain_db;
 
-	fftask task;
+	phi_task task;
 	ffthread th;
 
 	ffvec lists; // struct list_info[]

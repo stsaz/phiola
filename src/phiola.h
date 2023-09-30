@@ -12,7 +12,7 @@
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20004
+#define PHI_VERSION_CORE  20005
 
 typedef ffuint uint;
 typedef ffushort ushort;
@@ -63,6 +63,10 @@ struct phi_core_conf {
 	uint code_page; // enum FFUNICODE_CP
 	ffstr root; // phiola app directory
 
+	/** Use up to N worker threads
+	0: 1 worker
+	-1: all available CPU */
+	uint workers;
 	uint timer_interval_msec;
 	uint max_tasks; // Max concurrent system tasks
 	uint run_detach :1; // phi_core_run() will detach from parent thread
@@ -94,15 +98,41 @@ struct phi_core {
 	signal: enum PHI_CORE_SIG */
 	void (*sig)(uint signal);
 
-	phi_kevent* (*kev_alloc)();
-	void (*kev_free)(phi_kevent *kev);
-	int (*kq_attach)(phi_kevent *kev, fffd fd, uint flags);
-	void (*timer)(phi_timer *t, int interval_msec, phi_task_func func, void *param);
-	void (*task)(phi_task *t, phi_task_func func, void *param);
+	phi_kevent* (*kev_alloc)(uint worker);
+	void (*kev_free)(uint worker, phi_kevent *kev);
+	int (*kq_attach)(uint worker, phi_kevent *kev, fffd fd, uint flags);
+
+	/** Start/stop a oneshot/periodic timer.
+	worker: worker ID, either returned by worker_assign() or 0 for main worker.
+		The function MUST be called from the same worker.
+	interval_msec:
+		<0: one shot timer;
+		>0: periodic timer;
+		=0: stop timer */
+	void (*timer)(uint worker, phi_timer *t, int interval_msec, phi_task_func func, void *param);
+
+	/** Add/remove an asynchronous task to a worker's queue.
+	func: task handling function;
+		NULL: remove the previously added task from queue */
+	void (*task)(uint worker, phi_task *t, phi_task_func func, void *param);
 
 #ifdef FF_WIN
-	int (*woeh)(fffd fd, phi_task *t, phi_task_func func, void *param);
+	/** Set the function to receive signals from a Windows event handle.
+	Function is called inside the specified worker thread */
+	int (*woeh)(uint worker, fffd fd, phi_task *t, phi_task_func func, void *param);
 #endif
+
+	/** Get the number of available workers */
+	int (*workers_available)();
+
+	/** Assign a new task to a worker.
+	flags:
+		1: cross-worker assignment (for conversion tracks only)
+	Return worker ID */
+	uint (*worker_assign)(uint flags);
+
+	/** Unassign a task from a worker */
+	void (*worker_release)(uint worker);
 };
 
 FF_EXTERN phi_core* phi_core_create(struct phi_core_conf *conf);
@@ -232,6 +262,7 @@ struct phi_track_conf {
 	uint print_tags :1;
 	uint stream_copy :1;
 	uint meta_transient :1;
+	uint cross_worker_assign :1;
 };
 
 enum PHI_TF {

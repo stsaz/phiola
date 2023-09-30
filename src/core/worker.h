@@ -17,12 +17,15 @@
 
 struct wrk_ctx {
 	ffvec workers; // struct worker[]
+	fflock lock;
 };
 
 struct worker {
+	uint initialized;
 	ffthread th;
 	uint64 tid;
 	struct zzkq kq;
+	ffatomic njobs;
 
 	fftaskqueue tq;
 	struct zzkq_tq kq_tq;
@@ -33,6 +36,20 @@ struct worker {
 	uint now_msec;
 	fftimerqueue_node tmr_stop;
 };
+
+void wrk_task(struct worker *w, phi_task *t, phi_task_func func, void *param)
+{
+	if (func == NULL) {
+		fftaskqueue_del(&w->tq, (fftask*)t);
+		dbglog("task removed: %p", t);
+		return;
+	}
+
+	t->handler = func;
+	t->param = param;
+	zzkq_tq_post(&w->kq_tq, (fftask*)t);
+	dbglog("task added: %p", t);
+}
 
 static void timer_suspend(void *param)
 {
@@ -55,7 +72,7 @@ static void on_timer(void *param)
 	}
 }
 
-static void wrk_timer(struct worker *w, phi_timer *t, int interval_msec, phi_task_func func, void *param)
+void wrk_timer(struct worker *w, phi_timer *t, int interval_msec, phi_task_func func, void *param)
 {
 	if (interval_msec == 0) {
 		dbglog("timer:%p stop", t);
@@ -128,6 +145,7 @@ static int wrk_create(struct worker *w)
 		return -1;
 	}
 
+	w->initialized = 1;
 	on_timer(w);
 	return 0;
 }
@@ -144,17 +162,40 @@ static void wrk_destroy(struct worker *w)
 	zzkq_destroy(&w->kq);
 }
 
+/** Normalize workers number */
+static uint wrk_n(uint n)
+{
+	if (n == 0) {
+		n = 1;
+	} else if (n == ~0U) {
+		ffsysconf sc;
+		ffsysconf_init(&sc);
+		n = ffsysconf_get(&sc, FFSYSCONF_NPROCESSORS_ONLN);
+	}
+	return ffmin(n, 100);
+}
+
 int wrkx_init(struct wrk_ctx *wx)
 {
+	core->conf.workers = wrk_n(core->conf.workers);
 	if (core->conf.max_tasks == 0)
 		core->conf.max_tasks = 100;
 
-	ffvec_zallocT(&wx->workers, 1, struct worker);
+	ffvec_zallocT(&wx->workers, core->conf.workers, struct worker);
 
 	struct worker *w = ffslice_pushT(&wx->workers, wx->workers.cap, struct worker);
 	if (!!wrk_create(w))
 		return -1;
 	return 0;
+}
+
+void wrkx_run(struct wrk_ctx *wx)
+{
+	struct worker *w = ffslice_itemT(&wx->workers, 0, struct worker);
+	if (core->conf.run_detach)
+		wrk_start(w);
+	else
+		wrk_run(w);
 }
 
 void wrkx_stop(struct wrk_ctx *wx)
@@ -172,4 +213,71 @@ void wrkx_destroy(struct wrk_ctx *wx)
 		wrk_destroy(w);
 	}
 	ffvec_free(&wx->workers);
+}
+
+static int wrkx_available(struct wrk_ctx *wx)
+{
+	if (wx->workers.len < wx->workers.cap)
+		return 1;
+
+	struct worker *w;
+	FFSLICE_WALK(&wx->workers, w) {
+		if (0 == ffatomic_load(&w->njobs))
+			return 1;
+	}
+	return 0;
+}
+
+/** Find the least busy worker; create thread if not initialized.
+Return worker ID */
+uint wrkx_assign(struct wrk_ctx *wx, uint flags)
+{
+	struct worker *w, *it;
+
+	if (flags == 0) {
+		w = wx->workers.ptr;
+		goto done;
+	}
+
+	uint jobs_min = ~0U;
+	FFSLICE_WALK(&wx->workers, it) {
+		uint nj = ffatomic_load(&it->njobs);
+		if (nj < jobs_min) {
+			jobs_min = nj;
+			w = it;
+			if (nj == 0)
+				break;
+		}
+	}
+
+	if (jobs_min != 0 && wx->workers.len < wx->workers.cap) {
+		// no free workers; activate one from pool
+		fflock_lock(&wx->lock);
+		if (wx->workers.len < wx->workers.cap) {
+			w = &((struct worker*)wx->workers.ptr)[wx->workers.len++];
+			if (wrk_create(w)
+				|| wrk_start(w)) {
+				wrk_destroy(w);
+				wx->workers.len--;
+				w = wx->workers.ptr; // use main worker
+			}
+		}
+		fflock_unlock(&wx->lock);
+	}
+
+done:
+	{
+	uint wid = w - (struct worker*)wx->workers.ptr;
+	uint nj = ffatomic_fetch_add(&w->njobs, 1) + 1;
+	dbglog("worker #%u assign: jobs:%u", wid, nj);
+	return wid;
+	}
+}
+
+static void wrkx_release(struct wrk_ctx *wx, uint wid)
+{
+	struct worker *w = ffslice_itemT(&wx->workers, wid, struct worker);
+	int nj = ffatomic_fetch_add(&w->njobs, -1) - 1;
+	FF_ASSERT(nj >= 0);
+	dbglog("worker #%u release: jobs:%u", wid, nj);
 }

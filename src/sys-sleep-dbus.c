@@ -42,7 +42,7 @@ static void switch_sleep_timer(void *param)
 static void* dbus_sleep_open(phi_track *d)
 {
 	if (ffint_fetch_add(&g->ntracks, 1) == 0) {
-		core->timer(&g->tmr, -SWITCH_TIMEOUT, switch_sleep_timer, NULL);
+		core->timer(0, &g->tmr, -SWITCH_TIMEOUT, switch_sleep_timer, NULL);
 	}
 	return (void*)1;
 }
@@ -50,7 +50,7 @@ static void* dbus_sleep_open(phi_track *d)
 static void dbus_sleep_close(void *ctx, phi_track *t)
 {
 	if (ffint_fetch_add(&g->ntracks, -1) == 1) {
-		core->timer(&g->tmr, -SWITCH_TIMEOUT, switch_sleep_timer, NULL);
+		core->timer(0, &g->tmr, -SWITCH_TIMEOUT, switch_sleep_timer, NULL);
 	}
 }
 

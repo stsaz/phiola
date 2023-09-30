@@ -140,7 +140,7 @@ static int rctl_listen()
 	g->server_kev.rhandler = rctl_accept;
 	g->server_kev.obj = g;
 	g->server_kev.rtask.active = 1;
-	if (g->core->kq_attach(&g->server_kev, g->server_pipe, 1)) {
+	if (g->core->kq_attach(0, &g->server_kev, g->server_pipe, 1)) {
 		ffpipe_close(g->server_pipe);
 		return -1;
 	}

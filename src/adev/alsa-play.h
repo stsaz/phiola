@@ -16,7 +16,7 @@ static void alsa_close(audio_out *a, phi_track *t)
 {
 	if (a->err_code != 0) {
 		alsa_buf_close(NULL);
-		core->timer(&mod->tmr, 0, NULL, NULL);
+		core->timer(t->worker, &mod->tmr, 0, NULL, NULL);
 		if (mod->usedby == a)
 			mod->usedby = NULL;
 
@@ -24,7 +24,7 @@ static void alsa_close(audio_out *a, phi_track *t)
 		dbglog(NULL, "stop");
 		if (0 != ffalsa.stop(mod->out))
 			errlog(t, "stop(): %s", ffalsa.error(mod->out));
-		core->timer(&mod->tmr, -ABUF_CLOSE_WAIT, alsa_buf_close, NULL);
+		core->timer(t->worker, &mod->tmr, -ABUF_CLOSE_WAIT, alsa_buf_close, NULL);
 		mod->usedby = NULL;
 	}
 
@@ -44,7 +44,7 @@ static int alsa_create(audio_out *a, phi_track *t)
 
 	if (mod->out != NULL) {
 
-		core->timer(&mod->tmr, 0, NULL, NULL); // stop 'alsa_buf_close' timer
+		core->timer(t->worker, &mod->tmr, 0, NULL, NULL); // stop 'alsa_buf_close' timer
 
 		audio_out *cur = mod->usedby;
 		if (cur != NULL) {
@@ -103,7 +103,7 @@ fin:
 		, reused ? "reused" : "opened", mod->buffer_length_msec
 		, pcm_format_str(mod->fmt.format), mod->fmt.rate, mod->fmt.channels);
 
-	core->timer(&mod->tmr, mod->buffer_length_msec / 2, audio_out_onplay, a);
+	core->timer(t->worker, &mod->tmr, mod->buffer_length_msec / 2, audio_out_onplay, a);
 	return PHI_DONE;
 }
 

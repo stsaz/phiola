@@ -623,7 +623,7 @@ void gui_core_task(void (*func)())
 {
 	struct cmd *c = ffmem_new(struct cmd);
 	c->func = func;
-	core->task(&c->task, corecmd_handler, c);
+	core->task(0, &c->task, corecmd_handler, c);
 }
 
 void gui_core_task_uint(void (*func)(uint), uint i)
@@ -631,7 +631,7 @@ void gui_core_task_uint(void (*func)(uint), uint i)
 	struct cmd *c = ffmem_new(struct cmd);
 	c->func_uint = func;
 	c->data_uint = i;
-	core->task(&c->task, corecmd_handler, c);
+	core->task(0, &c->task, corecmd_handler, c);
 }
 
 void gui_core_task_ptr(void (*func)(void*), void *ptr)
@@ -639,7 +639,7 @@ void gui_core_task_ptr(void (*func)(void*), void *ptr)
 	struct cmd *c = ffmem_new(struct cmd);
 	c->func_ptr = func;
 	c->data_ptr = ptr;
-	core->task(&c->task, corecmd_handler, c);
+	core->task(0, &c->task, corecmd_handler, c);
 }
 
 void gui_core_task_data(void (*func)(ffstr), ffstr d)
@@ -647,7 +647,7 @@ void gui_core_task_data(void (*func)(ffstr), ffstr d)
 	struct cmd *c = ffmem_new(struct cmd);
 	c->func_ffstr = func;
 	c->data = d;
-	core->task(&c->task, corecmd_handler, c);
+	core->task(0, &c->task, corecmd_handler, c);
 }
 
 static void gui_start(void *param)
@@ -706,6 +706,6 @@ FF_EXPORT const phi_mod* phi_mod_init(const phi_core *_core)
 {
 	core = _core;
 	gd = ffmem_new(struct gui_data);
-	core->task(&gd->task, gui_start, NULL);
+	core->task(0, &gd->task, gui_start, NULL);
 	return &phi_gui_mod;
 }

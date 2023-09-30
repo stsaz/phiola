@@ -8,7 +8,7 @@ struct jack_in {
 
 static void jack_in_close(struct jack_in *ji, phi_track *t)
 {
-	core->timer(&ji->tmr, 0, NULL, NULL);
+	core->timer(t->worker, &ji->tmr, 0, NULL, NULL);
 	audio_in_close(&ji->in);
 	ffmem_free(ji);
 }
@@ -26,7 +26,7 @@ static void* jack_in_open(phi_track *t)
 	if (0 != audio_in_open(a, t))
 		goto fail;
 
-	core->timer(&ji->tmr, a->buffer_length_msec / 2, audio_oncapt, a);
+	core->timer(t->worker, &ji->tmr, a->buffer_length_msec / 2, audio_oncapt, a);
 	return ji;
 
 fail:

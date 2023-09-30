@@ -23,14 +23,14 @@ static void pulse_close(void *ctx, phi_track *t)
 
 	if (a->err_code != 0) {
 		pulse_buf_close();
-		core->timer(&mod->tmr, 0, NULL, NULL);
+		core->timer(t->worker, &mod->tmr, 0, NULL, NULL);
 		if (mod->usedby == a)
 			mod->usedby = NULL;
 
 	} else if (mod->usedby == a) {
 		if (0 != ffpulse.stop(mod->out))
 			errlog(a->trk, "stop: %s", ffpulse.error(mod->out));
-		core->timer(&mod->tmr, -ABUF_CLOSE_WAIT, pulse_close_tmr, NULL);
+		core->timer(t->worker, &mod->tmr, -ABUF_CLOSE_WAIT, pulse_close_tmr, NULL);
 		mod->usedby = NULL;
 	}
 
@@ -49,7 +49,7 @@ static int pulse_create(audio_out *a, phi_track *t)
 
 	if (mod->out != NULL) {
 
-		core->timer(&mod->tmr, 0, NULL, NULL); // stop 'pulse_close_tmr' timer
+		core->timer(t->worker, &mod->tmr, 0, NULL, NULL); // stop 'pulse_close_tmr' timer
 
 		audio_out *cur = mod->usedby;
 		if (cur != NULL) {
@@ -113,7 +113,7 @@ fin:
 
 	mod->usedby = a;
 
-	core->timer(&mod->tmr, mod->buffer_length_msec / 2, audio_out_onplay, a);
+	core->timer(t->worker, &mod->tmr, mod->buffer_length_msec / 2, audio_out_onplay, a);
 	return PHI_DONE;
 }
 

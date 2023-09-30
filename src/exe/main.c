@@ -233,6 +233,7 @@ static int core()
 
 		.env_expand = env_expand,
 		.code_page = x->codepage_id,
+		.workers = ~0U,
 		.root = x->root_dir,
 		.stdin_busy = x->stdin_busy,
 	};

@@ -24,7 +24,7 @@ static void* coraud_open(phi_track *t)
 static void coraud_close(void *ctx, phi_track *t)
 {
 	struct coraud_out *c = ctx;
-	core->timer(&c->tmr, 0, NULL, NULL);
+	core->timer(t->worker, &c->tmr, 0, NULL, NULL);
 	ffcoreaudio.free(c->out.stream);
 	ffcoreaudio.dev_free(c->out.dev);
 	ffmem_free(c);
@@ -51,7 +51,7 @@ static int coraud_create(struct coraud_out *c, phi_track *t)
 		, "opened", a->buffer_length_msec
 		, fmt.rate);
 
-	core->timer(&c->tmr, a->buffer_length_msec / 2, audio_out_onplay, a);
+	core->timer(t->worker, &c->tmr, a->buffer_length_msec / 2, audio_out_onplay, a);
 	return PHI_DONE;
 }
 

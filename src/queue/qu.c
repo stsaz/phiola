@@ -263,6 +263,24 @@ static int q_play(struct phi_queue *q, void *_e)
 		q = e->q;
 	}
 
+	if (e->q->conf.conversion) {
+		for (;;) {
+			q->cursor = e;
+			q->cursor_index = qe_index(e);
+			if (qe_play(e))
+				return -1;
+
+			if (!core->workers_available())
+				break;
+
+			uint i = e->index + 1;
+			if (i >= q->index.len)
+				break;
+			e = q_get(q, i);
+		}
+		return 0;
+	}
+
 	if (q->cursor)
 		qe_stop(q->cursor);
 

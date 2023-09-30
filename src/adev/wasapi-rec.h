@@ -12,7 +12,7 @@ static void wasapi_in_close(void *ctx, phi_track *t)
 {
 	was_in *wi = ctx;
 	audio_in *a = &wi->in;
-	core->timer(&wi->tmr, 0, NULL, NULL);
+	core->timer(t->worker, &wi->tmr, 0, NULL, NULL);
 	audio_in_close(a);
 	ffmem_free(wi);
 }
@@ -33,9 +33,9 @@ static void* wasapi_in_open(phi_track *t)
 		goto fail;
 
 	if (!!a->event_h)
-		core->woeh(a->event_h, &wi->tsk, audio_oncapt, a);
+		core->woeh(t->worker, a->event_h, &wi->tsk, audio_oncapt, a);
 	else
-		core->timer(&wi->tmr, a->buffer_length_msec / 2, audio_oncapt, a);
+		core->timer(t->worker, &wi->tmr, a->buffer_length_msec / 2, audio_oncapt, a);
 	return wi;
 
 fail:

@@ -9,7 +9,7 @@ typedef struct dsnd_in {
 static void dsnd_in_close(void *ctx, phi_track *t)
 {
 	dsnd_in *ds = ctx;
-	core->timer(&ds->tmr, 0, NULL, NULL);
+	core->timer(t->worker, &ds->tmr, 0, NULL, NULL);
 	audio_in_close(&ds->in);
 }
 
@@ -23,7 +23,7 @@ static void* dsnd_in_open(phi_track *t)
 	if (0 != audio_in_open(a, t))
 		goto fail;
 
-	core->timer(&ds->tmr, a->buffer_length_msec / 2, audio_oncapt, a);
+	core->timer(t->worker, &ds->tmr, a->buffer_length_msec / 2, audio_oncapt, a);
 	return ds;
 
 fail:

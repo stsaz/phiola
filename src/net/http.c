@@ -58,31 +58,36 @@ static void nml_log(void *log_obj, uint level, const char *ctx, const char *id, 
 
 static struct zzkevent* nmlcore_kev_new(void *boss)
 {
-	return (struct zzkevent*)core->kev_alloc();
+	struct httpcl *h = boss;
+	return (struct zzkevent*)core->kev_alloc(h->trk->worker);
 }
 
 static void nmlcore_kev_free(void *boss, struct zzkevent *kev)
 {
-	core->kev_free((phi_kevent*)kev);
+	struct httpcl *h = boss;
+	core->kev_free(h->trk->worker, (phi_kevent*)kev);
 }
 
 static int nmlcore_kq_attach(void *boss, ffsock sk, struct zzkevent *kev, void *obj)
 {
+	struct httpcl *h = boss;
 	kev->obj = obj;
-	return core->kq_attach((phi_kevent*)kev, (fffd)sk, 0);
+	return core->kq_attach(h->trk->worker, (phi_kevent*)kev, (fffd)sk, 0);
 }
 
 static void nmlcore_timer(void *boss, nml_timer *tmr, int interval_msec, fftimerqueue_func func, void *param)
 {
-	core->timer(tmr, interval_msec, func, param);
+	struct httpcl *h = boss;
+	core->timer(h->trk->worker, tmr, interval_msec, func, param);
 }
 
 static void nmlcore_task(void *boss, nml_task *t, uint flags)
 {
+	struct httpcl *h = boss;
 	if (flags == 0)
-		core->task(t, NULL, NULL);
+		core->task(h->trk->worker, t, NULL, NULL);
 	else
-		core->task(t, t->handler, t->param);
+		core->task(h->trk->worker, t, t->handler, t->param);
 }
 
 static fftime nmlcore_date(void *boss, ffstr *dts)
@@ -171,7 +176,7 @@ static void conf_prepare(struct httpcl *h, struct nml_http_client_conf *c)
 	c->wake_param = h;
 
 	c->core = nmlcore;
-	c->boss = NULL;
+	c->boss = h;
 
 	struct httpurl_parts p = {};
 	httpurl_split(&p, FFSTR_Z(h->trk->conf.ifile.name));

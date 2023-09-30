@@ -19,7 +19,7 @@ static void* oss_in_open(phi_track *d)
 	if (0 != audio_in_open(a, d))
 		goto fail;
 
-	core->timer(&pi->tmr, a->buffer_length_msec / 2, audio_oncapt, a);
+	core->timer(t->worker, &pi->tmr, a->buffer_length_msec / 2, audio_oncapt, a);
 	return pi;
 
 fail:
@@ -30,7 +30,7 @@ fail:
 static void oss_in_close(void *ctx, phi_track *t)
 {
 	oss_in *pi = ctx;
-	core->timer(&pi->tmr, 0, NULL, NULL);
+	core->timer(t->worker, &pi->tmr, 0, NULL, NULL);
 	audio_in_close(&pi->in);
 	ffmem_free(pi);
 }

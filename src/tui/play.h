@@ -10,11 +10,19 @@ static void* tuiplay_open(phi_track *t)
 	u->seek_msec = -1;
 	u->lastpos = (uint)-1;
 	u->t = t;
-	mod->curtrk = u;
 
-	uint vol = (mod->mute) ? 0 : mod->vol;
-	if (vol != 100)
-		tui_setvol(u, vol);
+	if (!mod->conversion_valid) {
+		mod->conversion_valid = 1;
+		mod->conversion = mod->queue->conf(NULL)->conversion;
+	}
+
+	if (!mod->conversion) {
+		mod->curtrk = u;
+
+		uint vol = (mod->mute) ? 0 : mod->vol;
+		if (vol != 100)
+			tui_setvol(u, vol);
+	}
 
 	u->show_info = 1;
 	return u;

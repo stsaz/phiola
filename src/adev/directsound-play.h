@@ -20,7 +20,7 @@ static void dsnd_close(void *ctx, phi_track *t)
 	dsnd_out *ds = ctx;
 	ffdsound.dev_free(ds->out.dev);
 	ffdsound.free(ds->out.stream);
-	core->timer(&ds->tmr, 0, NULL, NULL);
+	core->timer(t->worker, &ds->tmr, 0, NULL, NULL);
 	ffmem_free(ds);
 }
 
@@ -45,7 +45,7 @@ static int dsnd_create(dsnd_out *ds, phi_track *t)
 		, "opened", a->buffer_length_msec
 		, fmt.rate);
 
-	core->timer(&ds->tmr, a->buffer_length_msec / 2, audio_out_onplay, a);
+	core->timer(t->worker, &ds->tmr, a->buffer_length_msec / 2, audio_out_onplay, a);
 	return PHI_DONE;
 }
 

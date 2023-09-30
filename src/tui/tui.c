@@ -52,7 +52,7 @@ struct tui_mod {
 	struct tui_track *curtrk; // currently playing track
 	struct tui_rec *curtrk_rec; // currently recording track
 	const phi_meta_if *phi_metaif;
-	fftask task_init;
+	phi_task task_init;
 
 	uint vol;
 	uint progress_dots;
@@ -65,6 +65,8 @@ struct tui_mod {
 	} color;
 
 	uint mute :1;
+	uint conversion :1;
+	uint conversion_valid :1;
 };
 
 static struct tui_mod *mod;
@@ -97,7 +99,7 @@ enum CMDS {
 
 	CMD_MASK = 0xff,
 
-	_CMD_CURTRK_REC = 1 << 26,
+	_CMD_PLAYBACK = 1 << 26, // Call handler only if we are in playback mode
 	_CMD_F3 = 1 << 27, //use 'cmdfunc3'
 	_CMD_CURTRK = 1 << 28, // use 'cmdfunc'.  Call handler only if there's an active track
 	_CMD_CORE = 1 << 29,
@@ -227,25 +229,25 @@ struct key {
 	void *func; // cmdfunc | cmdfunc1
 };
 
-static struct key hotkeys[] = {
-	{ ' ',	_CMD_F1 | _CMD_CORE,	cmd_play },
-	{ 'L',	_CMD_F1 | _CMD_CORE,	list_save },
+static const struct key hotkeys[] = {
+	{ ' ', _CMD_PLAYBACK | _CMD_F1 | _CMD_CORE,		cmd_play },
+	{ 'L', _CMD_PLAYBACK | _CMD_F1 | _CMD_CORE,		list_save },
 
-	{ 'd',	_CMD_CURTRK | _CMD_CORE,	tuiplay_rm },
-	{ 'h',	_CMD_F1,	&tui_help },
-	{ 'i',	CMD_SHOWTAGS | _CMD_CURTRK | _CMD_CORE,	&tui_op_trk },
-	{ 'm',	CMD_MUTE | _CMD_CURTRK | _CMD_CORE,	&tuiplay_vol },
-	{ 'n',	_CMD_F1 | _CMD_CORE,	cmd_next },
-	{ 'p',	_CMD_F1 | _CMD_CORE,	cmd_prev },
-	{ 'q',	CMD_QUIT | _CMD_F1 | _CMD_CORE,	&tui_op },
-	{ 'r',	_CMD_F1 | _CMD_CORE,	cmd_random },
-	{ 's',	CMD_STOP | _CMD_F1 | _CMD_CORE,	&tui_op },
-	{ 'x',	_CMD_CURTRK | _CMD_CORE,	tuiplay_rm_playnext },
+	{ 'd', _CMD_CURTRK | _CMD_CORE,					tuiplay_rm },
+	{ 'h', _CMD_F1,									tui_help },
+	{ 'i', CMD_SHOWTAGS | _CMD_CURTRK | _CMD_CORE,	tui_op_trk },
+	{ 'm', CMD_MUTE | _CMD_CURTRK | _CMD_CORE,		tuiplay_vol },
+	{ 'n', _CMD_PLAYBACK | _CMD_F1 | _CMD_CORE,		cmd_next },
+	{ 'p', _CMD_PLAYBACK | _CMD_F1 | _CMD_CORE,		cmd_prev },
+	{ 'q', CMD_QUIT | _CMD_F1 | _CMD_CORE,			tui_op },
+	{ 'r', _CMD_PLAYBACK | _CMD_F1 | _CMD_CORE,		cmd_random },
+	{ 's', CMD_STOP | _CMD_F1 | _CMD_CORE,			tui_op },
+	{ 'x', _CMD_CURTRK | _CMD_CORE,					tuiplay_rm_playnext },
 
-	{ FFKEY_UP,	CMD_VOLUP | _CMD_CURTRK | _CMD_CORE,	&tuiplay_vol },
-	{ FFKEY_DOWN,	CMD_VOLDOWN | _CMD_CURTRK | _CMD_CORE,	&tuiplay_vol },
-	{ FFKEY_RIGHT,	CMD_SEEKRIGHT | _CMD_F3 | _CMD_CORE,	&tuiplay_seek },
-	{ FFKEY_LEFT,	CMD_SEEKLEFT | _CMD_F3 | _CMD_CORE,	&tuiplay_seek },
+	{ FFKEY_UP,		CMD_VOLUP | _CMD_CURTRK | _CMD_CORE,				tuiplay_vol },
+	{ FFKEY_DOWN,	CMD_VOLDOWN | _CMD_CURTRK | _CMD_CORE,				tuiplay_vol },
+	{ FFKEY_RIGHT,	CMD_SEEKRIGHT | _CMD_CURTRK | _CMD_F3 | _CMD_CORE,	tuiplay_seek },
+	{ FFKEY_LEFT,	CMD_SEEKLEFT | _CMD_CURTRK | _CMD_F3 | _CMD_CORE,	tuiplay_seek },
 };
 
 static const struct key* key2cmd(int key)
@@ -265,7 +267,7 @@ static const struct key* key2cmd(int key)
 }
 
 struct corecmd {
-	fftask tsk;
+	phi_task tsk;
 	const struct key *k;
 	void *udata;
 };
@@ -285,25 +287,28 @@ end:
 static void tui_corecmd(void *param)
 {
 	struct corecmd *c = param;
+	uint cmd = c->k->cmd;
 
-	if (c->k->cmd & _CMD_F1) {
+	if ((cmd & _CMD_PLAYBACK)
+		&& (!mod->conversion_valid || mod->conversion))
+		goto done;
+
+	if (cmd & _CMD_F1) {
 		cmdfunc1 func1 = (void*)c->k->func;
-		func1(c->k->cmd & CMD_MASK);
+		func1(cmd & CMD_MASK);
 
-	} else if (c->k->cmd & _CMD_F3) {
+	} else if (cmd & _CMD_CURTRK) {
 		if (mod->curtrk == NULL)
 			goto done;
-		cmdfunc3 func3 = (void*)c->k->func;
-		func3(mod->curtrk, c->k->cmd & CMD_MASK, c->udata);
 
-	} else if (c->k->cmd & (_CMD_CURTRK | _CMD_CURTRK_REC)) {
-		cmdfunc func = (void*)c->k->func;
-		struct tui_track *u = NULL;
-		if ((c->k->cmd & _CMD_CURTRK) && mod->curtrk != NULL)
-			u = mod->curtrk;
-		if (u == NULL)
-			goto done;
-		func(u, c->k->cmd & CMD_MASK);
+		if (cmd & _CMD_F3) {
+			cmdfunc3 func3 = (void*)c->k->func;
+			func3(mod->curtrk, cmd & CMD_MASK, c->udata);
+
+		} else {
+			cmdfunc func = (void*)c->k->func;
+			func(mod->curtrk, cmd & CMD_MASK);
+		}
 	}
 
 done:
@@ -315,7 +320,7 @@ static void tui_corecmd_add(const struct key *k, void *udata)
 	struct corecmd *c = ffmem_new(struct corecmd);
 	c->udata = udata;
 	c->k = k;
-	core->task(&c->tsk, tui_corecmd, c);
+	core->task(0, &c->tsk, tui_corecmd, c);
 }
 
 static void tui_stdin_prepare(void *param)
@@ -326,17 +331,17 @@ static void tui_stdin_prepare(void *param)
 	ffstd_attr(ffstdin, attr, 0);
 
 #ifdef FF_WIN
-	if (core->woeh(ffstdin, &mod->task_read, tui_cmd_read, NULL)) {
+	if (core->woeh(0, ffstdin, &mod->task_read, tui_cmd_read, NULL)) {
 		warnlog(NULL, "can't start stdin reader");
 		return;
 	}
 
 #else
-	mod->kev = core->kev_alloc();
+	mod->kev = core->kev_alloc(0);
 	mod->kev->rhandler = tui_cmd_read;
 	mod->kev->obj = mod;
 	mod->kev->rtask.active = 1;
-	if (core->kq_attach(mod->kev, ffstdin, 1))
+	if (core->kq_attach(0, mod->kev, ffstdin, 1))
 		return;
 	if (fffile_nonblock(ffstdin, 1))
 		syswarnlog(NULL, "fffile_nonblock()");
@@ -417,7 +422,7 @@ static void tui_create(void *param)
 	uint term_wnd_size = 80;
 	mod->progress_dots = term_wnd_size - FFS_LEN("[] 00:00 / 00:00");
 
-	core->task(&mod->task_init, tui_stdin_prepare, NULL);
+	core->task(0, &mod->task_init, tui_stdin_prepare, NULL);
 }
 
 static void tui_destroy()
@@ -446,6 +451,6 @@ FF_EXPORT const phi_mod* phi_mod_init(const phi_core *_core)
 {
 	core = _core;
 	mod = ffmem_new(struct tui_mod);
-	core->task(&mod->task_init, tui_create, NULL);
+	core->task(0, &mod->task_init, tui_create, NULL);
 	return &phi_tui_mod;
 }
