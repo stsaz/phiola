@@ -122,7 +122,7 @@ phiola convert *.wav -o .flac
 
 # Convert all .wav files inside a directory,
 #  preserving the original file names and file modification time
-phiola convert "My Recordings" -include "*.wav" -o @filepath/@filename.flac -preserve-date
+phiola convert "My Recordings" -include "*.wav" -o @filepath/@filename.flac -preserve_date
 ```
 
 Other use-cases:

@@ -102,7 +102,7 @@ test_convert() {
 	./phiola co co.wav -f -o co-wav-i32-96k.wav -af int32 -rate 96000 ; ./phiola i co-wav-i32-96k.wav 2>&1 | grep 'int32 96000Hz' ; ./phiola pl co-wav-i32-96k.wav
 
 	./phiola co co.wav -f -o co-wav-gain6.wav -gain -6 ; ./phiola pl co-wav-gain6.wav
-	./phiola co co.wav -f -o co-wav.wav -preserve-date
+	./phiola co co.wav -f -o co-wav.wav -preserve_date
 
 	convert_from_to wav m4a
 	convert_from_to wav ogg
@@ -173,7 +173,7 @@ test_info() {
 	./phiola i pl.wav -tags
 
 	./phiola i pl.wav -peaks
-	./phiola i pl.wav -peaks -peaks-crc
+	./phiola i pl.wav -peaks -peaks_crc
 
 	if ! test -f fm-wv.wv ; then
 		ffmpeg_encode co.wav

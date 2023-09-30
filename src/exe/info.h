@@ -23,7 +23,7 @@ Options:\n\
   -until TIME           Stop at time\n\
 \n\
   -peaks                Analyze audio and print some details\n\
-  -peaks-crc            Print audio data CRC (use with -peaks)\n\
+  -peaks_crc            Print audio data CRC (use with -peaks)\n\
 \n\
   -perf                 Print performance counters\n\
 ";
@@ -131,7 +131,7 @@ static const struct ffarg cmd_info[] = {
 	{ "-help",		0,		info_help },
 	{ "-include",	'S',	info_include },
 	{ "-peaks",		'1',	O(pcm_peaks) },
-	{ "-peaks-crc",	'1',	O(pcm_crc) },
+	{ "-peaks_crc",	'1',	O(pcm_crc) },
 	{ "-perf",		'1',	O(perf) },
 	{ "-seek",		'S',	info_seek },
 	{ "-tags",		'1',	O(tags) },

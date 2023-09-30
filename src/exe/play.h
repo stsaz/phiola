@@ -14,7 +14,7 @@ Options:\n\
   -include WILDCARD     Only include files matching a wildcard (case-insensitive)\n\
   -exclude WILDCARD     Exclude files & directories matching a wildcard (case-insensitive)\n\
 \n\
-  -repeat-all           Repeat all tracks\n\
+  -repeat_all           Repeat all tracks\n\
   -random               Choose the next track randomly\n\
   -tracks NUMBER[,...]  Select only specific tracks in a .cue list\n\
 \n\
@@ -169,7 +169,7 @@ static const struct ffarg cmd_play[] = {
 	{ "-perf",		'1',	O(perf) },
 	{ "-random",	'1',	O(random) },
 	{ "-remote",	'1',	O(remote) },
-	{ "-repeat-all",'1',	O(repeat_all) },
+	{ "-repeat_all",'1',	O(repeat_all) },
 	{ "-seek",		'S',	play_seek },
 	{ "-tracks",	'S',	play_tracks },
 	{ "-until",		'S',	play_until },

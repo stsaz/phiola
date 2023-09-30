@@ -33,15 +33,15 @@ Options:\n\
   -gain NUMBER          Gain/attenuation in dB\n\
 \n\
   -copy                 Copy audio data without re-encoding\n\
-  -aac-profile CHAR     AAC profile:\n\
+  -aac_profile CHAR     AAC profile:\n\
                           l  AAC-LC\n\
                           h  AAC-HE\n\
                           H  AAC-HEv2\n\
-  -aac-quality NUMBER   AAC encoding quality:\n\
+  -aac_quality NUMBER   AAC encoding quality:\n\
                           1..5 (VBR) or 8..800 (CBR, kbit/s)\n\
-  -opus-quality NUMBER  Opus encoding bitrate:\n\
+  -opus_quality NUMBER  Opus encoding bitrate:\n\
                           6..510 (VBR)\n\
-  -vorbis-quality NUMBER\n\
+  -vorbis_quality NUMBER\n\
                         Vorbis encoding quality:\n\
                           0..10\n\
 \n\
@@ -66,7 +66,7 @@ Options:\n\
                         When file name isn't specified, @filepath is used automatically,\n\
                           e.g. `-o .ogg` == `-o @filename.ogg`\n\
   -force                Overwrite output file\n\
-  -preserve-date        Preserve file modification date\n\
+  -preserve_date        Preserve file modification date\n\
 ";
 	ffstdout_write(s, FFS_LEN(s));
 	x->exit_code = 0;
@@ -224,8 +224,8 @@ static int conv_prepare(struct cmd_conv *v)
 
 #define O(m)  (void*)FF_OFF(struct cmd_conv, m)
 static const struct ffarg cmd_conv[] = {
-	{ "-aac-profile",	's',	O(aac_profile) },
-	{ "-aac-quality",	'u',	O(aac_q) },
+	{ "-aac_profile",	's',	O(aac_profile) },
+	{ "-aac_quality",	'u',	O(aac_q) },
 	{ "-aformat",		'S',	conv_aformat },
 	{ "-channels",		'u',	O(channels) },
 	{ "-copy",			'1',	O(copy) },
@@ -237,14 +237,14 @@ static const struct ffarg cmd_conv[] = {
 	{ "-include",		'S',	conv_include },
 	{ "-meta",			'+S',	conv_meta },
 	{ "-o",				's',	O(output) },
-	{ "-opus-quality",	'u',	O(opus_q) },
+	{ "-opus_quality",	'u',	O(opus_q) },
 	{ "-out",			's',	O(output) },
-	{ "-preserve-date",	'1',	O(preserve_date) },
+	{ "-preserve_date",	'1',	O(preserve_date) },
 	{ "-rate",			'u',	O(rate) },
 	{ "-seek",			'S',	conv_seek },
 	{ "-tracks",		'S',	conv_tracks },
 	{ "-until",			'S',	conv_until },
-	{ "-vorbis-quality",'u',	O(vorbis_q) },
+	{ "-vorbis_quality",'u',	O(vorbis_q) },
 	{ "\0\1",			'S',	conv_input },
 	{ "",				0,		conv_prepare },
 };

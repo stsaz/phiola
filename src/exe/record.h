@@ -32,15 +32,15 @@ Options:\n\
                           compress    Float\n\
   -gain NUMBER          Gain/attenuation in dB\n\
 \n\
-  -aac-profile CHAR     AAC profile:\n\
+  -aac_profile CHAR     AAC profile:\n\
                           l  AAC-LC\n\
                           h  AAC-HE\n\
                           H  AAC-HEv2\n\
-  -aac-quality NUMBER   AAC encoding quality:\n\
+  -aac_quality NUMBER   AAC encoding quality:\n\
                           1..5 (VBR) or 8..800 (CBR, kbit/s)\n\
-  -opus-quality NUMBER  Opus encoding bitrate:\n\
+  -opus_quality NUMBER  Opus encoding bitrate:\n\
                           6..510 (VBR)\n\
-  -vorbis-quality NUMBER\n\
+  -vorbis_quality NUMBER\n\
                         Vorbis encoding quality:\n\
                           0..10\n\
 \n\
@@ -198,8 +198,8 @@ static int rec_until(struct cmd_rec *r, ffstr s) { return cmd_time_value(&r->unt
 
 #define O(m)  (void*)FF_OFF(struct cmd_rec, m)
 static const struct ffarg cmd_rec[] = {
-	{ "-aac-profile",	's',	O(aac_profile) },
-	{ "-aac-quality",	'u',	O(aac_q) },
+	{ "-aac_profile",	's',	O(aac_profile) },
+	{ "-aac_quality",	'u',	O(aac_q) },
 	{ "-aformat",		'S',	rec_aformat },
 	{ "-audio",			's',	O(audio) },
 	{ "-buffer",		'u',	O(buffer) },
@@ -213,12 +213,12 @@ static const struct ffarg cmd_rec[] = {
 	{ "-loopback",		'1',	O(loopback) },
 	{ "-meta",			'+S',	rec_meta },
 	{ "-o",				's',	O(output) },
-	{ "-opus-quality",	'u',	O(opus_q) },
+	{ "-opus_quality",	'u',	O(opus_q) },
 	{ "-out",			's',	O(output) },
 	{ "-rate",			'u',	O(rate) },
 	{ "-remote",		'1',	O(remote) },
 	{ "-until",			'S',	rec_until },
-	{ "-vorbis-quality",'u',	O(vorbis_q) },
+	{ "-vorbis_quality",'u',	O(vorbis_q) },
 	{ "",				0,		rec_check },
 };
 #undef O
