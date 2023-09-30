@@ -222,7 +222,7 @@ static inline int ffconf_scheme_process(ffconf_scheme *cs, int r, ffstr val)
 	union {
 		void *ptr;
 		int (*func)(ffconf_scheme *cs, void *obj);
-		int (*func_str)(ffconf_scheme *cs, void *obj, ffstr *s);
+		int (*func_str)(ffconf_scheme *cs, void *obj, ffstr s);
 		int (*func_sz)(ffconf_scheme *cs, void *obj, char *sz);
 		int (*func_int)(ffconf_scheme *cs, void *obj, ffint64 i);
 		int (*func_float)(ffconf_scheme *cs, void *obj, double d);
@@ -318,7 +318,7 @@ static inline int ffconf_scheme_process(ffconf_scheme *cs, int r, ffstr val)
 				ffstr_free(u.s);
 				if (NULL == ffstr_dupstr(u.s, &val))
 					return _FFCONF_ERR(cs, "no memory");
-			} else if (0 != (r2 = uf.func_str(cs, ctx->obj, &val))) {
+			} else if (0 != (r2 = uf.func_str(cs, ctx->obj, val))) {
 				return -r2; // user error
 			}
 			break;
