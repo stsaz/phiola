@@ -85,6 +85,8 @@ static int wasapi_create(audio_out *w, phi_track *t)
 
 fin:
 	mod->usedby = w;
+	t->adev_ctx = w;
+	t->adev_clear = audio_clear;
 	dbglog(t, "%s buffer %ums, %s/%uHz/%u, exclusive:%u"
 		, reused ? "reused" : "opened", mod->buffer_length_msec
 		, pcm_format_str(mod->fmt.format), mod->fmt.rate, mod->fmt.channels

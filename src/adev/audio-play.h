@@ -221,3 +221,12 @@ static inline int audio_out_write(audio_out *a, phi_track *t)
 	a->state = ST_FEEDING;
 	return PHI_MORE;
 }
+
+static void audio_clear(void *ctx)
+{
+	audio_out *a = ctx;
+	dbglog(a->trk, "stop");
+	if (a->audio->stop(a->stream))
+		warnlog(a->trk, "audio.stop: %s", a->audio->error(a->stream));
+	audio_out_onplay(a);
+}

@@ -99,6 +99,8 @@ static int alsa_create(audio_out *a, phi_track *t)
 
 fin:
 	mod->usedby = a;
+	t->adev_ctx = a;
+	t->adev_clear = audio_clear;
 	dbglog(t, "%s buffer %ums, %s/%uHz/%u"
 		, reused ? "reused" : "opened", mod->buffer_length_msec
 		, pcm_format_str(mod->fmt.format), mod->fmt.rate, mod->fmt.channels);
