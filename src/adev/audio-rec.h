@@ -1,6 +1,8 @@
 /** phiola: audio capture interface
 2020, Simon Zolin */
 
+#include <adev/audio.h>
+
 typedef struct audio_in {
 	// input
 	const ffaudio_interface *audio;

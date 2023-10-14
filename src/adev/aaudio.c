@@ -9,7 +9,7 @@ static const phi_core *core;
 #define warnlog(t, ...)  phi_warnlog(core, "aaudio", t, __VA_ARGS__)
 #define dbglog(t, ...)  phi_dbglog(core, "aaudio", t, __VA_ARGS__)
 
-#include <adev/audio.h>
+#include <adev/audio-rec.h>
 #include <adev/aaudio-rec.h>
 
 static const void* aa_iface(const char *name)

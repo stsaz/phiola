@@ -232,7 +232,7 @@ static int wrkx_available(struct wrk_ctx *wx)
 Return worker ID */
 uint wrkx_assign(struct wrk_ctx *wx, uint flags)
 {
-	struct worker *w, *it;
+	struct worker *w = NULL, *it;
 
 	if (flags == 0) {
 		w = wx->workers.ptr;

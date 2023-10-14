@@ -30,9 +30,9 @@ static const phi_filter phi_android_guard = {
 };
 
 enum {
-	REC_AACLC = 0,
-	REC_AACHE = 1,
-	REC_AACHE2 = 2,
+	REC_AAC_LC = 0,
+	REC_AAC_HE = 1,
+	REC_AAC_HE2 = 2,
 	REC_FLAC = 3,
 	REC_OPUS = 4,
 	REC_OPUS_VOICE = 5,
@@ -57,14 +57,6 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 	jint until_sec = jni_obj_int(jconf, jni_field(jc_conf, "until_sec", JNI_TINT));
 	jint flags = jni_obj_int(jconf, jni_field(jc_conf, "flags", JNI_TINT));
 
-	uint aac_profile = 0;
-	switch (fmt) {
-	case REC_AACHE:
-		aac_profile = 'h'; break;
-	case REC_AACHE2:
-		aac_profile = 'H'; break;
-	}
-
 	struct phi_track_conf c = {
 		.iaudio = {
 			.buf_time = buf_len_msec,
@@ -77,7 +69,9 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 			.danorm = (flags & RECF_DANORM) ? "" : NULL,
 		},
 		.aac = {
-			.profile = aac_profile,
+			.profile = (fmt == REC_AAC_HE) ? 'h'
+				: (fmt == REC_AAC_HE2) ? 'H'
+				: 0,
 			.quality = (uint)q,
 		},
 		.opus = {

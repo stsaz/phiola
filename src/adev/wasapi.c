@@ -9,7 +9,9 @@ static const phi_core *core;
 #define warnlog(t, ...)  phi_warnlog(core, "wasapi", t, __VA_ARGS__)
 #define dbglog(t, ...)  phi_dbglog(core, "wasapi", t, __VA_ARGS__)
 
-#include <adev/audio.h>
+#include <adev/audio-dev.h>
+#include <adev/audio-play.h>
+#include <adev/audio-rec.h>
 
 typedef struct wasapi_mod {
 	ffaudio_buf *out;

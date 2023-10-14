@@ -2,12 +2,15 @@
 2017, Simon Zolin */
 
 #include <track.h>
-#include <adev/audio.h>
 
 static const phi_core *core;
 #define errlog(t, ...)  phi_errlog(core, "oss", t, __VA_ARGS__)
 #define warnlog(t, ...)  phi_warnlog(core, "oss", t, __VA_ARGS__)
 #define dbglog(t, ...)  phi_dbglog(core, "oss", t, __VA_ARGS__)
+
+#include <adev/audio-dev.h>
+#include <adev/audio-play.h>
+#include <adev/audio-rec.h>
 
 typedef struct oss_mod {
 	phi_timer tmr;

@@ -10,7 +10,7 @@ static const phi_core *core;
 #define infolog(t, ...)  phi_infolog(core, "jack", t, __VA_ARGS__)
 #define dbglog(t, ...)  phi_dbglog(core, "jack", t, __VA_ARGS__)
 
-#include <adev/audio.h>
+#include <adev/audio-rec.h>
 
 struct jack_mod {
 	ffbool init_ok;

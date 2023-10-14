@@ -81,12 +81,6 @@ static int action()
 
 	char **it;
 	FFSLICE_WALK(&x->input, it) {
-
-		if (it == x->input.ptr) { // skip first argument (.exe name)
-			ffmem_free(*it);
-			continue;
-		}
-
 		struct phi_queue_entry qe = {
 			.conf.ifile.name = *it,
 		};
@@ -108,8 +102,13 @@ static int cmd()
 {
 	char *cmd_line = ffsz_alloc_wtou(GetCommandLineW());
 	int r;
+
+	ffstr line = FFSTR_INITZ(cmd_line), arg;
+	_ffargs_next(&line, &arg); // skip exe name
+	char *cmd_line1 = line.ptr;
+
 	struct ffargs a = {};
-	if ((r = ffargs_process_line(&a, cmd_args, x, 0, cmd_line)) < 0) {
+	if ((r = ffargs_process_line(&a, cmd_args, x, 0, cmd_line1)) < 0) {
 	}
 	ffmem_free(cmd_line);
 	return r;

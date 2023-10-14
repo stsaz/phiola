@@ -1,6 +1,10 @@
 /** phiola: audio playback interface
 2020, Simon Zolin */
 
+#include <adev/audio.h>
+
+#define ABUF_CLOSE_WAIT  3000
+
 typedef struct audio_out audio_out;
 struct audio_out {
 	// input
@@ -30,7 +34,7 @@ struct audio_out {
 /**
 Return FFAUDIO_E*
 Return FFAUDIO_EFORMAT (if try_open==1): requesting audio conversion */
-static inline int audio_out_open(audio_out *a, phi_track *t, const struct phi_af *fmt)
+static int audio_out_open(audio_out *a, phi_track *t, const struct phi_af *fmt)
 {
 	if (!ffsz_eq(t->data_type, "pcm")) {
 		errlog(t, "input data type not supported: %s", t->data_type);
@@ -132,7 +136,7 @@ end:
 	return rc;
 }
 
-static inline void audio_out_onplay(void *param)
+static void audio_out_onplay(void *param)
 {
 	audio_out *a = param;
 	dbglog(a->trk, "%p state:%u", a, a->state);
@@ -141,7 +145,7 @@ static inline void audio_out_onplay(void *param)
 	core->track->wake(a->trk);
 }
 
-static inline int audio_out_write(audio_out *a, phi_track *t)
+static int audio_out_write(audio_out *a, phi_track *t)
 {
 	int r;
 
