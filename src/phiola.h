@@ -6,7 +6,7 @@
 #include <util/taskqueue.h>
 #include <ffbase/string.h>
 
-#define PHI_VERSION  20005
+#define PHI_VERSION  20006
 
 /** Inter-module compatibility version.
 It must be updated when incompatible changes are made to this file,
