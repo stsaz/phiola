@@ -27,12 +27,27 @@ class CoreSettings {
 
 	String rec_path; // directory for recordings
 	String rec_enc, rec_fmt;
-	int enc_bitrate, rec_buf_len_ms, rec_until_sec, rec_gain_db100;
+	int rec_bitrate, rec_buf_len_ms, rec_until_sec, rec_gain_db100;
 	boolean rec_danorm, rec_exclusive;
+	static final String[] rec_formats = {
+		"AAC-LC",
+		"AAC-HE",
+		"AAC-HEv2",
+		"FLAC",
+		"Opus"
+	};
 
 	String conv_outext;
 	int conv_aac_quality;
+	int conv_opus_quality;
 	boolean conv_copy;
+	static final String[] conv_extensions = {
+		"m4a",
+		"opus",
+		"flac",
+		"wav",
+		"mp3",
+	};
 
 	CoreSettings(Core core) {
 		this.core = core;
@@ -44,12 +59,13 @@ class CoreSettings {
 
 		rec_path = "";
 		rec_enc = "AAC-LC";
-		enc_bitrate = 192;
+		rec_bitrate = 192;
 		rec_buf_len_ms = 500;
 		rec_until_sec = 3600;
 
 		conv_outext = "m4a";
 		conv_aac_quality = 5;
+		conv_opus_quality = 192;
 	}
 
 	@SuppressLint("DefaultLocale")
@@ -67,7 +83,7 @@ class CoreSettings {
 
 				String.format("rec_path %s\n", rec_path) +
 				String.format("rec_enc %s\n", rec_enc) +
-				String.format("rec_bitrate %d\n", enc_bitrate) +
+				String.format("rec_bitrate %d\n", rec_bitrate) +
 				String.format("rec_buf_len %d\n", rec_buf_len_ms) +
 				String.format("rec_until %d\n", rec_until_sec) +
 				String.format("rec_danorm %d\n", core.bool_to_int(rec_danorm)) +
@@ -76,6 +92,7 @@ class CoreSettings {
 
 				String.format("conv_outext %s\n", conv_outext) +
 				String.format("conv_aac_quality %d\n", conv_aac_quality) +
+				String.format("conv_opus_quality %d\n", conv_opus_quality) +
 				String.format("conv_copy %d\n", core.bool_to_int(conv_copy));
 	}
 
@@ -92,13 +109,15 @@ class CoreSettings {
 			rec_fmt = "m4a";
 		} else if (rec_enc.equals("FLAC")) {
 			rec_fmt = "flac";
+		} else if (rec_enc.equals("Opus")) {
+			rec_fmt = "opus";
 		} else {
 			rec_fmt = "m4a";
 			rec_enc = "AAC-LC";
 		}
 
-		if (enc_bitrate <= 0)
-			enc_bitrate = 192;
+		if (rec_bitrate <= 0)
+			rec_bitrate = 192;
 		if (rec_buf_len_ms <= 0)
 			rec_buf_len_ms = 500;
 		if (rec_until_sec < 0)
@@ -132,7 +151,7 @@ class CoreSettings {
 		else if (k.equals("rec_enc"))
 			rec_enc = v;
 		else if (k.equals("rec_bitrate"))
-			enc_bitrate = core.str_to_uint(v, enc_bitrate);
+			rec_bitrate = core.str_to_uint(v, rec_bitrate);
 		else if (k.equals("rec_buf_len"))
 			rec_buf_len_ms = core.str_to_uint(v, rec_buf_len_ms);
 		else if (k.equals("rec_danorm"))
@@ -148,6 +167,8 @@ class CoreSettings {
 			conv_outext = v;
 		else if (k.equals("conv_aac_quality"))
 			conv_aac_quality = core.str_to_uint(v, conv_aac_quality);
+		else if (k.equals("conv_opus_quality"))
+			conv_opus_quality = core.str_to_uint(v, conv_opus_quality);
 		else if (k.equals("conv_copy"))
 			conv_copy = core.str_to_bool(v);
 		else

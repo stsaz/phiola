@@ -208,17 +208,16 @@
 			android:layout_marginHorizontal="10dp"
 			android:text="@string/sett_rec_enc"
 			android:textColor="@color/text" />
-		<EditText android:id="@+id/rec_enc"
+		<Spinner android:id="@+id/rec_enc"
 			android:layout_width="match_parent" android:layout_height="wrap_content"
 			android:layout_marginHorizontal="10dp"
-			android:inputType="text"
-			android:textSize="@dimen/text_editbox" />
+			android:spinnerMode="dropdown" />
 
 		<TextView
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="10dp"
-			android:text="@string/sett_bitrate"
+			android:text="@string/sett_rec_bitrate"
 			android:textColor="@color/text" />
 		<EditText
 			android:id="@+id/rec_bitrate"
@@ -253,7 +252,7 @@
 		<androidx.appcompat.widget.SwitchCompat android:id="@+id/rec_danorm"
 			android:layout_width="match_parent" android:layout_height="wrap_content"
 			android:layout_margin="10dp"
-			android:text="@string/sett_danorm" />
+			android:text="@string/sett_rec_danorm" />
 
 		<TextView android:text="@string/sett_rec_gain"
 			android:layout_width="match_parent" android:layout_height="wrap_content"

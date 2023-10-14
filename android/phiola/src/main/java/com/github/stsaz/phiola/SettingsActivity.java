@@ -5,6 +5,7 @@ package com.github.stsaz.phiola;
 
 import android.os.Build;
 import android.os.Bundle;
+import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import androidx.appcompat.app.ActionBar;
@@ -107,10 +108,27 @@ public class SettingsActivity extends AppCompatActivity {
 		core.setts.normalize();
 	}
 
+	private int rec_format_index(String s) {
+		for (int i = 0;  i < core.setts.rec_formats.length;  i++) {
+			if (core.setts.rec_formats[i].equals(s))
+				return i;
+		}
+		return -1;
+	}
+
 	private void rec_load() {
 		b.trecdir.setText(core.setts.rec_path);
-		b.recEnc.setText(core.setts.rec_enc);
-		b.recBitrate.setText(Integer.toString(core.setts.enc_bitrate));
+
+		ArrayAdapter<String> adapter = new ArrayAdapter<>(
+			this,
+			android.R.layout.simple_spinner_item,
+			core.setts.rec_formats
+		);
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		b.recEnc.setAdapter(adapter);
+		b.recEnc.setSelection(rec_format_index(core.setts.rec_enc));
+
+		b.recBitrate.setText(Integer.toString(core.setts.rec_bitrate));
 		b.recBufLen.setText(core.int_to_str(core.setts.rec_buf_len_ms));
 		b.recUntil.setText(core.int_to_str(core.setts.rec_until_sec));
 		b.recDanorm.setChecked(core.setts.rec_danorm);
@@ -129,8 +147,8 @@ public class SettingsActivity extends AppCompatActivity {
 
 	private void rec_save() {
 		core.setts.rec_path = b.trecdir.getText().toString();
-		core.setts.enc_bitrate = core.str_to_uint(b.recBitrate.getText().toString(), -1);
-		core.setts.rec_enc = b.recEnc.getText().toString();
+		core.setts.rec_bitrate = core.str_to_uint(b.recBitrate.getText().toString(), -1);
+		core.setts.rec_enc = core.setts.rec_formats[b.recEnc.getSelectedItemPosition()];
 		core.setts.rec_buf_len_ms = core.str_to_uint(b.recBufLen.getText().toString(), -1);
 		core.setts.rec_until_sec = core.str_to_uint(b.recUntil.getText().toString(), -1);
 		core.setts.rec_danorm = b.recDanorm.isChecked();

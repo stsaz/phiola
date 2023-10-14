@@ -39,6 +39,7 @@ class Phiola {
 		boolean copy;
 		int sample_rate;
 		int aac_quality;
+		int opus_quality;
 	}
 	interface ConvertCallback {
 		void on_finish(String result);
@@ -50,6 +51,8 @@ class Phiola {
 		static final int REC_AACHE = 1;
 		static final int REC_AACHE2 = 2;
 		static final int REC_FLAC = 3;
+		static final int REC_OPUS = 4;
+		static final int REC_OPUS_VOICE = 5;
 		int format;
 
 		static final int RECF_EXCLUSIVE = 1;

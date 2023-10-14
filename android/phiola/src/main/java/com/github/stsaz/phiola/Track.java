@@ -367,6 +367,8 @@ class Track {
 			p.format = Phiola.RecordParams.REC_AACHE2;
 		else if (core.setts.rec_enc.equals("FLAC"))
 			p.format = Phiola.RecordParams.REC_FLAC;
+		else if (core.setts.rec_enc.equals("Opus"))
+			p.format = Phiola.RecordParams.REC_OPUS;
 
 		if (core.setts.rec_exclusive)
 			p.flags |= Phiola.RecordParams.RECF_EXCLUSIVE;
@@ -375,7 +377,7 @@ class Track {
 		if (core.setts.rec_danorm)
 			p.flags |= Phiola.RecordParams.RECF_DANORM;
 
-		p.quality = core.setts.enc_bitrate;
+		p.quality = core.setts.rec_bitrate;
 		p.buf_len_msec = core.setts.rec_buf_len_ms;
 		p.gain_db100 = core.setts.rec_gain_db100;
 		p.until_sec = core.setts.rec_until_sec;
@@ -400,7 +402,7 @@ class Track {
 			trec.mr.setAudioSource(MediaRecorder.AudioSource.MIC);
 			trec.mr.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
 			trec.mr.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-			trec.mr.setAudioEncodingBitRate(core.setts.enc_bitrate * 1000);
+			trec.mr.setAudioEncodingBitRate(core.setts.rec_bitrate * 1000);
 			trec.mr.setOutputFile(out);
 			trec.mr.prepare();
 			trec.mr.start();

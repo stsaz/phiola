@@ -8,8 +8,14 @@ PKG := $(notdir $(URL))
 DIR := opus-$(VER)
 LIB := libopus-phi.$(SO)
 
+ifeq "$(CPU)" "arm64"
+	CONFIGURE_FLAGS := --host=aarch64
+endif
+ifeq "$(SYS)" "android"
+	CONFIGURE_ENV := CC="$(C_DIR)/clang" CFLAGS="$(A_CFLAGS)"
+endif
 default: $(DIR)
-	cd $(DIR) && ./configure $(CONFIGURE_FLAGS)
+	cd $(DIR) && $(CONFIGURE_ENV) ./configure $(CONFIGURE_FLAGS)
 	cat $(DIR)/config.h
 	$(MAKE) $(LIB)
 

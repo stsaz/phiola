@@ -40,15 +40,15 @@
 	<string name="sett_file_del">Don\'t Move Files to Trash</string>
 	<string name="sett_trash_dir">Trash Directory (relative to storage mount-point):</string>
 	<string name="sett_quick_move_dir">Quick-Move Directory:</string>
+	<string name="sett_data_dir">App Data Directory</string>
 
 	<string name="sett_recording">Recording</string>
-	<string name="sett_data_dir">App Data Directory</string>
 	<string name="sett_rec_dir">Directory for Recordings</string>
-	<string name="sett_rec_enc">Encoder (AAC-LC | AAC-HE | AAC-HEv2 | FLAC):</string>
-	<string name="sett_bitrate">Encoder Bitrate (kbit/sec):</string>
+	<string name="sett_rec_enc">Encoder</string>
+	<string name="sett_rec_bitrate">Encoder Bitrate (kbit/sec):</string>
 	<string name="sett_rec_buf_len">Buffer Length (msec):</string>
 	<string name="sett_rec_until">Auto-Stop After (sec):</string>
-	<string name="sett_danorm">Dynamic Audio Normalizer</string>
+	<string name="sett_rec_danorm">Dynamic Audio Normalizer</string>
 	<string name="sett_rec_gain">Gain/attenuate (dB):</string>
 	<string name="sett_rec_exclusive">Exclusive Mode</string>
 
@@ -59,12 +59,13 @@
 	<string name="conv_input_file">Input file:</string>
 	<string name="conv_out_dir">Output directory:</string>
 	<string name="conv_out_name">Output file name (w/o extension):</string>
-	<string name="conv_out_fmt">Output format (flac | m4a | mp3):</string>
+	<string name="conv_out_fmt">Output format</string>
 	<string name="conv_apos_start">Start Audio Position:</string>
 	<string name="conv_from_set_cur">Set To Current</string>
 	<string name="conv_apos_end">End Audio Position:</string>
 	<string name="conv_sample_rate">Sample rate (Hz)</string>
 	<string name="conv_aac_q">[.m4a] AAC Quality: 1..5 (VBR) or 8..800 (CBR, kbit/s)</string>
+	<string name="conv_opus_q">[.opus] Opus Quality: 6..510 (VBR, kbit/s)</string>
 	<string name="conv_copy">[.mp3/.m4a] Stream Copy</string>
 	<string name="conv_preserve_date">Preserve File Date</string>
 	<string name="conv_trash_orig">Move Input File to Trash</string>

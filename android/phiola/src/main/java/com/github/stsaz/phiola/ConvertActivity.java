@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -51,18 +52,39 @@ public class ConvertActivity extends AppCompatActivity {
 		b.toname.setText(iname.substring(sl, pos));
 	}
 
+	private int conv_extension(String s) {
+		for (int i = 0;  i < core.setts.conv_extensions.length;  i++) {
+			if (core.setts.conv_extensions[i].equals(s))
+				return i;
+		}
+		return -1;
+	}
+
 	private void load() {
-		b.toext.setText(core.setts.conv_outext);
+		ArrayAdapter<String> adapter = new ArrayAdapter<>(
+			this,
+			android.R.layout.simple_spinner_item,
+			core.setts.conv_extensions
+		);
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		b.oext.setAdapter(adapter);
+		b.oext.setSelection(conv_extension(core.setts.conv_outext));
+
 		b.taacQ.setText(core.int_to_str(core.setts.conv_aac_quality));
+		b.topusQ.setText(core.int_to_str(core.setts.conv_opus_quality));
 		b.bcopy.setChecked(core.setts.conv_copy);
 	}
 
 	private void save() {
-		core.setts.conv_outext = b.toext.getText().toString();
+		core.setts.conv_outext = core.setts.conv_extensions[b.oext.getSelectedItemPosition()];
 		core.setts.conv_copy = b.bcopy.isChecked();
 		int v = core.str_to_uint(b.taacQ.getText().toString(), 0);
 		if (v != 0)
 			core.setts.conv_aac_quality = v;
+
+		v = core.str_to_uint(b.topusQ.getText().toString(), 0);
+		if (v != 0)
+			core.setts.conv_opus_quality = v;
 	}
 
 	@Override
@@ -93,6 +115,7 @@ public class ConvertActivity extends AppCompatActivity {
 		p.copy = b.bcopy.isChecked();
 		p.sample_rate = core.str_to_uint(b.tsampleRate.getText().toString(), 0);
 		p.aac_quality = core.str_to_uint(b.taacQ.getText().toString(), 0);
+		p.opus_quality = core.str_to_uint(b.topusQ.getText().toString(), 0);
 
 		if (b.bpreserveDate.isChecked())
 			p.flags |= Phiola.ConvertParams.F_DATE_PRESERVE;
@@ -100,7 +123,10 @@ public class ConvertActivity extends AppCompatActivity {
 			p.flags |= Phiola.ConvertParams.F_OVERWRITE;
 
 		iname = b.tiname.getText().toString();
-		oname = String.format("%s/%s.%s", b.todir.getText().toString(), b.toname.getText().toString(), b.toext.getText().toString());
+		oname = String.format("%s/%s.%s"
+			, b.todir.getText().toString()
+			, b.toname.getText().toString()
+			, core.setts.conv_extensions[b.oext.getSelectedItemPosition()]);
 		core.phiola.convert(iname, oname, p,
 			(result) -> {
 				Handler mloop = new Handler(Looper.getMainLooper());

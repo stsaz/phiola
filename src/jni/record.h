@@ -34,6 +34,8 @@ enum {
 	REC_AACHE = 1,
 	REC_AACHE2 = 2,
 	REC_FLAC = 3,
+	REC_OPUS = 4,
+	REC_OPUS_VOICE = 5,
 };
 
 #define RECF_EXCLUSIVE  1
@@ -77,6 +79,10 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 		.aac = {
 			.profile = aac_profile,
 			.quality = (uint)q,
+		},
+		.opus = {
+			.bitrate = q,
+			.mode = (fmt == REC_OPUS_VOICE) ? 1 : 0,
 		},
 		.ofile = {
 			.name = ffsz_dup(oname),
