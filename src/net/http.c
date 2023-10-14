@@ -11,6 +11,9 @@
 
 const phi_core *core;
 extern const phi_filter phi_icy;
+#ifndef PHI_HTTP_NO_SSL
+static struct nml_ssl_ctx *phi_ssl_ctx;
+#endif
 #define errlog(t, ...)  phi_errlog(core, "http-client", t, __VA_ARGS__)
 #define warnlog(t, ...)  phi_warnlog(core, "http-client", t, __VA_ARGS__)
 
@@ -38,9 +41,9 @@ static void nml_log(void *log_obj, uint level, const char *ctx, const char *id, 
 {
 	struct httpcl *h = log_obj;
 	static const uint levels[] = {
-		/*NML_LOG_SYSFATAL*/	PHI_LOG_ERR | PHI_LOG_SYS,
+		/*NML_LOG_SYSFATAL*/PHI_LOG_ERR | PHI_LOG_SYS,
 		/*NML_LOG_SYSERR*/	PHI_LOG_ERR | PHI_LOG_SYS,
-		/*NML_LOG_ERR*/	PHI_LOG_ERR,
+		/*NML_LOG_ERR*/		PHI_LOG_ERR,
 		/*NML_LOG_SYSWARN*/	PHI_LOG_WARN | PHI_LOG_SYS,
 		/*NML_LOG_WARN*/	PHI_LOG_WARN,
 		/*NML_LOG_INFO*/	PHI_LOG_INFO,
@@ -159,9 +162,37 @@ static void on_complete(void *param)
 		core->track->wake(h->trk);
 }
 
-extern const struct nml_filter *hc_filters[];
+extern const struct nml_filter
+	*hc_filters[],
+	*hc_ssl_filters[];
 
-static void conf_prepare(struct httpcl *h, struct nml_http_client_conf *c)
+#ifndef PHI_HTTP_NO_SSL
+#include <util/ssl.h>
+static struct nml_ssl_ctx* ssl_prepare(struct nml_http_client_conf *c, char *cert_file)
+{
+	struct nml_ssl_ctx *sc = ffmem_new(struct nml_ssl_ctx);
+	struct ffssl_ctx_conf *scc = ffmem_new(struct ffssl_ctx_conf);
+	sc->ctx_conf = scc;
+
+	scc->cert_file = cert_file;
+	scc->pkey_file = cert_file;
+
+	sc->log_level = c->log_level;
+	sc->log_obj = c->log_obj;
+	sc->log = c->log;
+
+	if (nml_ssl_init(sc)) {
+		ffmem_free(cert_file);
+		ffmem_free(scc);
+		ffmem_free(sc);
+		return NULL;
+	}
+
+	return sc;
+}
+#endif
+
+static int conf_prepare(struct httpcl *h, struct nml_http_client_conf *c)
 {
 	nml_http_client_conf(NULL, c);
 	c->opaque = h;
@@ -186,12 +217,33 @@ static void conf_prepare(struct httpcl *h, struct nml_http_client_conf *c)
 	h->path.len = httpurl_escape(h->path.ptr, h->path.cap, p.path);
 	c->path = *(ffstr*)&h->path;
 
-	if (1) {
-		ffsize cap = 0;
-		ffstr_growaddz(&c->headers, &cap, "Icy-MetaData: 1\r\n");
+	c->filters = hc_filters;
+
+	if (ffstr_ieqz(&p.scheme, "https://")) {
+#ifndef PHI_HTTP_NO_SSL
+		if (!phi_ssl_ctx
+			&& !(phi_ssl_ctx = ssl_prepare(c, ffsz_allocfmt("%S/mod/http-client.pem", &core->conf.root)))) {
+			errlog(h->trk, "can't initialize SSL context");
+			return -1;
+		}
+		c->ssl_ctx = phi_ssl_ctx;
+		c->filters = hc_ssl_filters;
+		if (!p.port.len)
+			c->server_port = 443;
+
+#else
+		errlog(h->trk, "SSL support is disabled");
+		return -1;
+#endif
 	}
 
-	c->filters = hc_filters;
+	ffsize headers_cap = 0;
+	ffstr_growaddz(&c->headers, &headers_cap, "User-Agent: phiola/2\r\n");
+
+	if (1)
+		ffstr_growaddz(&c->headers, &headers_cap, "Icy-MetaData: 1\r\n");
+
+	return 0;
 }
 
 static void* httpcl_open(phi_track *t)
@@ -201,7 +253,8 @@ static void* httpcl_open(phi_track *t)
 	h->cl = nml_http_client_new();
 
 	struct nml_http_client_conf *c = &h->conf;
-	conf_prepare(h, c);
+	if (conf_prepare(h, c))
+		return PHI_OPEN_ERR;
 	nml_http_client_conf(h->cl, c);
 	h->state = ST_PROCESSING;
 	return h;
@@ -257,9 +310,21 @@ static const void* net_iface(const char *name)
 	return NULL;
 }
 
+static void net_close()
+{
+#ifndef PHI_HTTP_NO_SSL
+	nml_ssl_uninit(phi_ssl_ctx);
+	if (phi_ssl_ctx) {
+		ffmem_free(phi_ssl_ctx->ctx_conf->cert_file);
+		ffmem_free(phi_ssl_ctx->ctx_conf);
+		ffmem_free(phi_ssl_ctx);
+	}
+#endif
+}
+
 static const phi_mod phi_net_mod = {
 	.ver = PHI_VERSION, .ver_core = PHI_VERSION_CORE,
-	net_iface
+	net_iface, net_close
 };
 
 FF_EXPORT const phi_mod* phi_mod_init(const phi_core *_core)

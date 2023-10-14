@@ -28,7 +28,7 @@ Contents:
 * Play audio: `.mp3`, `.ogg`(Vorbis/Opus), `.mp4`/`.mov`(AAC/ALAC/MPEG), `.mkv`/`.webm`(AAC/ALAC/MPEG/Vorbis/Opus/PCM), `.caf`(AAC/ALAC/PCM), `.avi`(AAC/MPEG/PCM), `.aac`, `.mpc`; `.flac`, `.ape`, `.wv`, `.wav`.  Note: on Android phiola can play only what your Android supports!
 * Record audio: `.m4a`(AAC), `.ogg`, `.opus`; `.flac`, `.wav`
 * Convert audio
-* Input: file, directory, HTTP URL, console (stdin), playlists: `.m3u`, `.pls`, `.cue`
+* Input: file, directory, HTTP/HTTPS URL, console (stdin), playlists: `.m3u`, `.pls`, `.cue`
 * List available audio devices
 * Command Line Interface for Desktop OS
 * Terminal/Console UI for interaction at runtime
@@ -181,14 +181,21 @@ First time start:
 
 The best example how to use phiola software interface is to see the source code of phiola executor in `src/exe`, e.g. `src/exe/play.h` contains the code that adds input files into a playlist and starts the playback.
 
-* `src/phiola.h` describes all interfaces implemented either by phiola Core (`core.so`) or any dynamic module
+* `src/phiola.h` describes all interfaces implemented either by phiola Core or dynamic modules
 * `android/phiola/src/main/java/com/github/stsaz/phiola/Phiola.java` is a Java interface
 * `src/track.h` is needed if you want to write your own module
 
 
 ## External Libraries
 
-phiola uses modified versions of these third party libraries: libALAC, libfdk-aac, libFLAC, libMAC, libmpg123, libmpc, libogg, libopus, libvorbisenc, libvorbis, libwavpack, libsoxr, libzstd, libDynamicAudioNormalizer.  Many thanks to their creators for the great work!!!  Please consider their licenses before commercial use.  See contents of `alib3/` for more info.
+phiola uses modified versions of these third party libraries: libALAC, libfdk-aac, libFLAC, libMAC, libmpg123, libmpc, libogg, libopus, libvorbisenc, libvorbis, libwavpack, libsoxr, libzstd, libDynamicAudioNormalizer.  And unmodified libraries: libssl & libcrypto.  Many thanks to their creators for the great work!!!  Please consider their licenses before commercial use.  See contents of `alib3/` for more info.
+
+Additionally:
+
+* [ffbase](https://github.com/stsaz/ffbase) library and [ffos](https://github.com/stsaz/ffos) interface make it easy to write high level cross-platform code in C language
+* [avpack](https://github.com/stsaz/avpack) library provides multimedia file read/write capabilities
+* [ffaudio](https://github.com/stsaz/ffaudio) interface provides cross-platform audio I/O capabilities
+* [netmill](https://github.com/stsaz/netmill) provides network capabilities
 
 
 ## Build

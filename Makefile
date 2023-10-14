@@ -2,7 +2,6 @@
 
 ROOT_DIR := ..
 PHIOLA := $(ROOT_DIR)/phiola
-AVPACK := $(ROOT_DIR)/avpack
 FFOS := $(ROOT_DIR)/ffos
 FFBASE := $(ROOT_DIR)/ffbase
 APP_DIR := phiola-2
@@ -10,16 +9,15 @@ APP_DIR := phiola-2
 include $(FFBASE)/test/makeconf
 
 SUBMAKE := $(MAKE) -f $(firstword $(MAKEFILE_LIST))
-ALIB3 := $(PHIOLA)/alib3
-ALIB3_BIN := $(ALIB3)/_$(OS)-$(CPU)
 
 # COMPILER
 
 CFLAGS += -DFFBASE_MEM_ASSERT
+CFLAGS += -MMD -MP
 CFLAGS += -I$(FFBASE)
 CFLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-for-loop-analysis -Wno-multichar
-CFLAGS += -g
 CFLAGS += -fPIC
+CFLAGS += -g
 ifeq "$(DEBUG)" "1"
 	CFLAGS += -DFF_DEBUG -O0 -Werror -Wno-deprecated-declarations
 else
@@ -50,126 +48,43 @@ default: build
 	$(SUBMAKE) app
 endif
 
+-include $(wildcard *.d)
+
 DEPS := $(PHIOLA)/src/phiola.h \
 	$(PHIOLA)/src/track.h
 
-%.o: $(PHIOLA)/src/%.c $(DEPS)
+%.o: $(PHIOLA)/src/%.c
 	$(C) $(CFLAGS) $< -o $@
 
 EXES :=
 MODS :=
 
-# CORE
-%.o: $(PHIOLA)/src/core/%.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/core/*.h) \
-		$(wildcard $(PHIOLA)/src/util/*.h)
-	$(C) $(CFLAGS) $< -o $@
-%.o: $(PHIOLA)/src/queue/%.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/queue/*.h)
-	$(C) $(CFLAGS) $< -o $@
-CORE_O := core.o \
-		auto.o \
-		dir-read.o \
-		file.o\
-		qu.o \
-		track.o
-ifeq "$(OS)" "windows"
-	CORE_O += sys-sleep-win.o
-endif
-core.$(SO): $(CORE_O)
-	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_PTHREAD) $(LINK_DL) -o $@
-
+include $(PHIOLA)/src/core/Makefile
 include $(PHIOLA)/src/exe/Makefile
 include $(PHIOLA)/src/adev/Makefile
-
-# AFILTERS
-
-MODS += afilter.$(SO)
-%.o: $(PHIOLA)/src/afilter/%.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/afilter/*.h)
-	$(C) $(CFLAGS) $< -o $@
-crc.o: $(PHIOLA)/3pt/crc/crc.c
-	$(C) $(CFLAGS) $< -o $@
-afilter.$(SO): afilter.o \
-		crc.o \
-		peaks.o \
-		gain.o \
-		rtpeak.o \
-		conv.o
-	$(LINK) -shared $+ $(LINKFLAGS) -lm -o $@
-
-MODS += soxr.$(SO)
-LIBS3 += $(ALIB3_BIN)/libsoxr-phi.$(SO)
-soxr.o: $(PHIOLA)/src/afilter/soxr.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/afilter/soxr*.h)
-	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
-soxr.$(SO): soxr.o
-	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lsoxr-phi -o $@
-
-MODS += danorm.$(SO)
-LIBS3 += $(ALIB3_BIN)/libDynamicAudioNormalizer-phi.$(SO)
-dynanorm.o: $(PHIOLA)/src/afilter/dynanorm.c $(DEPS)
-	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
-danorm.$(SO): dynanorm.o
-	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lDynamicAudioNormalizer-phi -o $@
-
-# FORMAT
-MODS += format.$(SO)
-%.o: $(PHIOLA)/src/format/%.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/format/*.h)
-	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
-cue-read.o: $(PHIOLA)/src/list/cue-read.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/list/entry.h)
-	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
-m3u.o: $(PHIOLA)/src/list/m3u.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/list/m3u-*.h) \
-		$(wildcard $(PHIOLA)/src/list/entry.h)
-	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
-pls-read.o: $(PHIOLA)/src/list/pls-read.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/list/entry.h)
-	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
-format.$(SO): mod-fmt.o \
-		aac-adts.o \
-		ape-read.o \
-		avi.o \
-		caf.o \
-		flac-fmt.o flac-ogg.o \
-		mkv.o \
-		mp3.o \
-		mp4.o \
-		mpc-read.o \
-		ogg.o \
-		wav.o \
-		wv.o \
-		\
-		cue-read.o \
-		m3u.o \
-		pls-read.o
-	$(LINK) -shared $+ $(LINKFLAGS) -o $@
+include $(PHIOLA)/src/afilter/Makefile
+include $(PHIOLA)/src/format/Makefile
 
 ifneq "$(PHI_CODECS)" "0"
 include $(PHIOLA)/src/acodec/Makefile
-endif # PHI_CODECS
+endif
 
 # MISC
 
 ifeq "$(OS)" "linux"
 MODS += dbus.$(SO)
-sys-sleep-dbus.o: $(PHIOLA)/src/sys-sleep-dbus.c $(DEPS)
+sys-sleep-dbus.o: $(PHIOLA)/src/sys-sleep-dbus.c
 	$(C) $(CFLAGS) `pkg-config --cflags dbus-1` $< -o $@
 dbus.$(SO): sys-sleep-dbus.o
 	$(LINK) -shared $+ $(LINKFLAGS) -ldbus-1 -o $@
 endif
 
 MODS += remote.$(SO)
-remote-ctl.o: $(PHIOLA)/src/remote-ctl.c $(DEPS)
-	$(C) $(CFLAGS) $< -o $@
 remote.$(SO): remote-ctl.o
 	$(LINK) -shared $+ $(LINKFLAGS) -o $@
 
 MODS += tui.$(SO)
-%.o: $(PHIOLA)/src/tui/%.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/tui/*.h)
+%.o: $(PHIOLA)/src/tui/%.c
 	$(C) $(CFLAGS) $< -o $@
 tui.$(SO): tui.o
 	$(LINK) -shared $+ $(LINKFLAGS) -lm -o $@
@@ -178,11 +93,11 @@ include $(PHIOLA)/src/gui/Makefile
 include $(PHIOLA)/src/net/Makefile
 include $(PHIOLA)/src/dfilter/Makefile
 
-build: core.$(SO) \
+build: libphiola.$(SO) \
 		$(EXES) \
 		$(MODS)
 
-strip-debug: core.$(SO).debug \
+strip-debug: libphiola.$(SO).debug \
 		phiola$(DOTEXE).debug \
 		$(EXES:.exe=.exe.debug) \
 		$(MODS:.$(SO)=.$(SO).debug)
@@ -194,9 +109,9 @@ strip-debug: core.$(SO).debug \
 
 app:
 	$(MKDIR) $(APP_DIR) $(APP_DIR)/mod
-	$(CP) phiola$(DOTEXE) core.$(SO) \
+	$(CP) phiola$(DOTEXE) libphiola.$(SO) \
 		$(APP_DIR)/
-	chmod 644 $(APP_DIR)/core.$(SO)
+	chmod 644 $(APP_DIR)/libphiola.$(SO)
 	$(CP) $(PHIOLA)/LICENSE \
 		$(PHIOLA)/README.md \
 		$(APP_DIR)/
@@ -208,6 +123,7 @@ endif
 	$(CP) $(PHIOLA)/src/tui/help.txt $(APP_DIR)/mod/tui-help.txt
 	chmod 644 $(APP_DIR)/mod/*.$(SO)
 
+	$(CP) $(PHIOLA)/src/net/client.pem $(APP_DIR)/mod/http-client.pem
 	$(SUBMAKE) app-gui
 
 ifeq "$(OS)" "windows"

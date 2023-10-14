@@ -8,9 +8,9 @@
 # CXX
 # CXXFLAGS
 # DEBUG_GUI
-# DEPS
 # LINK_DL
 # LINK_PTHREAD
+# LINK_RPATH_ORIGIN
 # LINKFLAGS
 # LINKXX
 # MKDIR
@@ -25,51 +25,32 @@
 
 MODS += gui.$(SO)
 ifeq "$(OS)" "windows"
-	FFGUI_HDR := $(wildcard $(PHIOLA)/src/util/gui-winapi/*.h)
 	CFLAGS_GUI := -Wno-missing-field-initializers
 	LINKFLAGS_GUI := -lshell32 -luxtheme -lcomctl32 -lcomdlg32 -lgdi32 -lole32 -luuid
 	FFGUI_OBJ := ffgui-winapi.o ffgui-winapi-loader.o
 else
-	FFGUI_HDR := $(wildcard $(PHIOLA)/src/util/gui-gtk/*.h)
-	CFLAGS_GUI := -Wno-free-nonheap-object -Wno-deprecated-declarations `pkg-config --cflags gtk+-3.0`
-	LINKFLAGS_GUI := `pkg-config --libs gtk+-3.0` $(LINK_PTHREAD) -lm
+	CFLAGS_GUI := -Wno-free-nonheap-object -Wno-deprecated-declarations \
+		`pkg-config --cflags gtk+-3.0`
+	LINKFLAGS_GUI := `pkg-config --libs gtk+-3.0` \
+		$(LINK_PTHREAD) -lm
 	FFGUI_OBJ := ffgui-gtk.o ffgui-gtk-loader.o
 endif
-FFGUI_HDR += $(PHIOLA)/src/util/gui.hpp
 ifeq "$(DEBUG_GUI)" "1"
 	CFLAGS_GUI += -DFFGUI_DEBUG
 endif
 CFLAGS_GUI := $(CFLAGS) $(CFLAGS_GUI)
 CXXFLAGS_GUI := $(CXXFLAGS) $(CFLAGS_GUI)
 LINKFLAGS_GUI := $(LINKFLAGS) $(LINKFLAGS_GUI)
-gui-mod.o: $(PHIOLA)/src/gui/mod.c $(DEPS) \
-		$(PHIOLA)/src/gui/mod.h \
-		$(PHIOLA)/src/gui/track-*.h
+
+gui-mod.o: $(PHIOLA)/src/gui/mod.c
 	$(C) $(CFLAGS) $< -o $@
-gui.o: $(PHIOLA)/src/gui/gui.c $(DEPS) $(FFGUI_HDR) \
-		$(PHIOLA)/src/gui/gui.h \
-		$(PHIOLA)/src/gui/mod.h \
-		$(PHIOLA)/src/gui/actions.h
+gui-%.o: $(PHIOLA)/src/gui/%.c
 	$(C) $(CFLAGS_GUI) $< -o $@
-gui-main.o: $(PHIOLA)/src/gui/main.cpp $(DEPS) $(FFGUI_HDR) \
-		$(PHIOLA)/src/gui/gui.h \
-		$(PHIOLA)/src/gui/mod.h \
-		$(PHIOLA)/src/gui/actions.h
+gui-%.o: $(PHIOLA)/src/gui/%.cpp
 	$(CXX) $(CXXFLAGS_GUI) $< -o $@
-gui-dialogs.o: $(PHIOLA)/src/gui/dialogs.cpp $(DEPS) $(FFGUI_HDR) \
-		$(PHIOLA)/src/gui/gui.h \
-		$(PHIOLA)/src/gui/mod.h \
-		$(wildcard $(PHIOLA)/src/gui/*.hpp)
-	$(CXX) $(CXXFLAGS_GUI) $< -o $@
-ffgui-gtk.o: $(PHIOLA)/src/util/gui-gtk/ffgui-gtk.c $(DEPS) $(FFGUI_HDR)
+%.o: $(PHIOLA)/src/util/gui-gtk/%.c
 	$(C) $(CFLAGS_GUI) $< -o $@
-ffgui-gtk-loader.o: $(PHIOLA)/src/util/gui-gtk/ffgui-gtk-loader.c $(DEPS) $(FFGUI_HDR) \
-		$(PHIOLA)/src/util/conf-*.h
-	$(C) $(CFLAGS_GUI) $< -o $@
-ffgui-winapi.o: $(PHIOLA)/src/util/gui-winapi/ffgui-winapi.c $(DEPS) $(FFGUI_HDR)
-	$(C) $(CFLAGS_GUI) $< -o $@
-ffgui-winapi-loader.o: $(PHIOLA)/src/util/gui-winapi/ffgui-winapi-loader.c $(DEPS) $(FFGUI_HDR) \
-		$(PHIOLA)/src/util/conf-*.h
+%.o: $(PHIOLA)/src/util/gui-winapi/%.c
 	$(C) $(CFLAGS_GUI) $< -o $@
 
 GUI_RES :=
@@ -81,17 +62,12 @@ gui.coff: $(PHIOLA)/src/gui/res/dll.rc \
 	$(WINDRES) $< $@
 
 gui.$(SO): gui-mod.o \
-		gui.o \
+		gui-gui.o \
 		gui-main.o \
 		gui-dialogs.o \
 		$(GUI_RES) \
 		$(FFGUI_OBJ)
 	$(LINKXX) -shared $+ $(LINKFLAGS_GUI) $(LINK_DL) -o $@
-
-# EXE
-%.o: $(PHIOLA)/src/exe/%.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/util/*.h)
-	$(C) $(CFLAGS) $< -o $@
 
 _:=
 ifeq "$(OS)" "windows"
@@ -103,11 +79,9 @@ gui-exe.coff: $(PHIOLA)/res/exe.rc \
 		$(PHIOLA)/res/phiola.ico
 	$(WINDRES) $< $@
 
-phiola-gui.o: $(PHIOLA)/src/gui/phiola-gui.c $(DEPS)
-	$(C) $(CFLAGS) $< -o $@
-phiola-gui.exe: phiola-gui.o \
+phiola-gui.exe: gui-windows.o \
 		$(GUIEXE_O) \
-		core.$(SO)
+		libphiola.$(SO)
 	$(LINK) $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) $(LINK_DL) -mwindows -o $@
 
 app-gui:

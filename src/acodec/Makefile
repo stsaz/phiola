@@ -1,64 +1,64 @@
 # phiola audio codecs
 
 # Inherit:
-# ALIB3
-# ALIB3_BIN
-# AVPACK
 # C
 # CFLAGS
-# DEPS
+# CPU
 # LINK
 # LINK_RPATH_ORIGIN
 # LINKFLAGS
+# OS
 # PHIOLA
+# ROOT_DIR
 # SO
+# SYS
 
 # Modify:
 # MODS
 
+AVPACK := $(ROOT_DIR)/avpack
+
+ALIB3 := $(PHIOLA)/alib3
+ALIB3_BIN := $(ALIB3)/_$(OS)-$(CPU)
+ifeq "$(SYS)" "android"
+	ALIB3_BIN := $(ALIB3)/_android-$(CPU)
+endif
+
 # LOSSY
+
+%.o: $(PHIOLA)/src/acodec/%.c
+	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
 
 MODS += aac.$(SO)
 LIBS3 += $(ALIB3_BIN)/libfdk-aac-phi.$(SO)
-aac.o: $(PHIOLA)/src/acodec/aac.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/acodec/aac-*.h) \
-		$(PHIOLA)/src/acodec/alib3-bridge/aac.h
-	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
 aac.$(SO): aac.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lfdk-aac-phi -o $@
 
 MODS += mpeg.$(SO)
 LIBS3 += $(ALIB3_BIN)/libmpg123-phi.$(SO)
-mpeg.o: $(PHIOLA)/src/acodec/mpeg.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/acodec/mpeg-*.h)
-	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
 mpeg.$(SO): mpeg.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lmpg123-phi -o $@
 
+ifneq "$(SYS)" "android"
 MODS += vorbis.$(SO)
 LIBS3 += $(ALIB3_BIN)/libvorbis-phi.$(SO) $(ALIB3_BIN)/libvorbisenc-phi.$(SO) $(ALIB3_BIN)/libogg-phi.$(SO)
-vorbis.o: $(PHIOLA)/src/acodec/vorbis.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/acodec/vorbis-*.h) \
-		$(PHIOLA)/src/acodec/alib3-bridge/vorbis.h
+endif
+vorbis.o: $(PHIOLA)/src/acodec/vorbis.c
 	$(C) $(CFLAGS) -I$(ALIB3) -I$(AVPACK) $< -o $@
 vorbis.$(SO): vorbis.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -logg-phi -lvorbis-phi -lvorbisenc-phi -o $@
 
 MODS += opus.$(SO)
 LIBS3 += $(ALIB3_BIN)/libopus-phi.$(SO)
-opus.o: $(PHIOLA)/src/acodec/opus.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/acodec/opus-*.h) \
-		$(PHIOLA)/src/acodec/alib3-bridge/opus.h
+opus.o: $(PHIOLA)/src/acodec/opus.c
 	$(C) $(CFLAGS) -I$(ALIB3) -I$(AVPACK) $< -o $@
 opus.$(SO): opus.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lopus-phi -o $@
 
+ifneq "$(SYS)" "android"
 MODS += mpc.$(SO)
 LIBS3 += $(ALIB3_BIN)/libmusepack-phi.$(SO)
-mpc.o: $(PHIOLA)/src/acodec/mpc.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/acodec/mpc-*.h) \
-		$(PHIOLA)/src/acodec/alib3-bridge/musepack.h
-	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
+endif
 mpc.$(SO): mpc.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lmusepack-phi -o $@
 
@@ -66,36 +66,28 @@ mpc.$(SO): mpc.o
 
 MODS += alac.$(SO)
 LIBS3 += $(ALIB3_BIN)/libALAC-phi.$(SO)
-alac.o: $(PHIOLA)/src/acodec/alac.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/acodec/alac-*.h) \
-		$(PHIOLA)/src/acodec/alib3-bridge/alac.h
-	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
 alac.$(SO): alac.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lALAC-phi -o $@
 
+ifneq "$(SYS)" "android"
 MODS += ape.$(SO)
 LIBS3 += $(ALIB3_BIN)/libMAC-phi.$(SO)
-ape.o: $(PHIOLA)/src/acodec/ape.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/acodec/ape-*.h) \
-		$(PHIOLA)/src/acodec/alib3-bridge/ape.h
+endif
+ape.o: $(PHIOLA)/src/acodec/ape.c
 	$(C) $(CFLAGS) -I$(ALIB3) -I$(AVPACK) $< -o $@
 ape.$(SO): ape.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lMAC-phi -o $@
 
 MODS += flac.$(SO)
 LIBS3 += $(ALIB3_BIN)/libFLAC-phi.$(SO)
-flac.o: $(PHIOLA)/src/acodec/flac.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/acodec/flac-*.h) \
-		$(PHIOLA)/src/acodec/alib3-bridge/flac.h
+flac.o: $(PHIOLA)/src/acodec/flac.c
 	$(C) $(CFLAGS) -I$(ALIB3) -I$(AVPACK) $< -o $@
 flac.$(SO): flac.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lFLAC-phi -o $@
 
+ifneq "$(SYS)" "android"
 MODS += wavpack.$(SO)
 LIBS3 += $(ALIB3_BIN)/libwavpack-phi.$(SO)
-wavpack.o: $(PHIOLA)/src/acodec/wavpack.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/acodec/wavpack-*.h) \
-		$(PHIOLA)/src/acodec/alib3-bridge/wavpack.h
-	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
+endif
 wavpack.$(SO): wavpack.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lwavpack-phi -o $@

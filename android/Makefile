@@ -102,18 +102,12 @@ emulator:
 # Directories
 ROOT_DIR := ../..
 PHIOLA := $(ROOT_DIR)/phiola
-FFAUDIO := $(ROOT_DIR)/ffaudio
-AVPACK := $(ROOT_DIR)/avpack
-FFPACK := $(ROOT_DIR)/ffpack
 FFBASE := $(ROOT_DIR)/ffbase
 FFOS := $(ROOT_DIR)/ffos
 
 include $(FFBASE)/test/makeconf
 include andk.mk
-
-ALIB3 := $(PHIOLA)/alib3
-ALIB3_BIN := $(ALIB3)/_android-$(CPU)
-FFPACK_BIN := $(FFPACK)/_android-$(CPU)
+SYS := android
 
 LIB_DIR_AMD64 := $(PHIOLA)/android/phiola/libs/x86_64
 LIB_DIR_ARM64 := $(PHIOLA)/android/phiola/libs/arm64-v8a
@@ -140,6 +134,7 @@ else ifeq "$(CPU)" "arm"
 endif
 CFLAGS := $(A_CFLAGS)
 CFLAGS += -DFFBASE_MEM_ASSERT
+CFLAGS += -MMD -MP
 CFLAGS += -I$(FFBASE)
 CFLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-for-loop-analysis
 CFLAGS += -g
@@ -149,153 +144,17 @@ ifeq "$(DEBUG)" "1"
 else
 	CFLAGS += -O3 -fno-strict-aliasing -fvisibility=hidden
 endif
+CFLAGS_BASE := $(CFLAGS)
 CFLAGS += -I$(PHIOLA)/src -I$(FFOS)
 LINKFLAGS := $(A_LINKFLAGS) \
 	-llog
 
-
-DEPS := $(PHIOLA)/src/phiola.h \
-	$(PHIOLA)/src/track.h
-
-
-%.o: $(PHIOLA)/src/core/%.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/core/*.h) \
-		$(wildcard $(PHIOLA)/src/util/*.h)
-	$(C) $(CFLAGS) $< -o $@
-%.o: $(PHIOLA)/src/queue/%.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/queue/*.h)
-	$(C) $(CFLAGS) $< -o $@
-%.o: $(PHIOLA)/src/jni/%.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/jni/*.h)
-	$(C) $(CFLAGS) $< -o $@
-libphiola.so: \
-		phiola-jni.o \
-		core.o \
-		auto.o \
-		dir-read.o \
-		file.o\
-		qu.o \
-		track.o
-	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_PTHREAD) -o $@
-
-
-MODS += aaudio.so
-%.o: $(PHIOLA)/src/adev/%.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/adev/*.h)
-	$(C) $(CFLAGS) -I$(FFAUDIO) $< -o $@
-ffaudio-aaudio.o: $(FFAUDIO)/ffaudio/aaudio.c
-	$(C) -I$(FFAUDIO) $(CFLAGS) $< -o $@
-aaudio.so: aaudio.o ffaudio-aaudio.o
-	$(LINK) -shared $+ $(LINKFLAGS) -laaudio -o $@
-
-
-MODS += afilter.so
-%.o: $(PHIOLA)/src/afilter/%.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/afilter/*.h)
-	$(C) $(CFLAGS) $< -o $@
-crc.o: $(PHIOLA)/3pt/crc/crc.c
-	$(C) $(CFLAGS) $< -o $@
-afilter.so: afilter.o \
-		crc.o \
-		peaks.o \
-		gain.o \
-		rtpeak.o \
-		conv.o
-	$(LINK) -shared $+ $(LINKFLAGS) -lm -o $@
-
-
-MODS += soxr.so
-LIBS3 += $(ALIB3_BIN)/libsoxr-phi.so
-soxr.o: $(PHIOLA)/src/afilter/soxr.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/afilter/soxr*.h)
-	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
-soxr.so: soxr.o
-	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lsoxr-phi -o $@
-
-
-MODS += danorm.so
-LIBS3 += $(ALIB3_BIN)/libDynamicAudioNormalizer-phi.so
-dynanorm.o: $(PHIOLA)/src/afilter/dynanorm.c $(DEPS)
-	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
-danorm.so: dynanorm.o
-	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lDynamicAudioNormalizer-phi -o $@
-
-
-MODS += format.so
-%.o: $(PHIOLA)/src/format/%.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/format/*.h)
-	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
-cue-read.o: $(PHIOLA)/src/list/cue-read.c $(DEPS)
-	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
-m3u.o: $(PHIOLA)/src/list/m3u.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/list/m3u-*.h)
-	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
-pls-read.o: $(PHIOLA)/src/list/pls-read.c $(DEPS)
-	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
-format.so: mod-fmt.o \
-		aac-adts.o \
-		ape-read.o \
-		avi.o \
-		caf.o \
-		flac-fmt.o flac-ogg.o \
-		mkv.o \
-		mp3.o \
-		mp4.o \
-		mpc-read.o \
-		ogg.o \
-		wav.o \
-		wv.o \
-		\
-		cue-read.o \
-		m3u.o \
-		pls-read.o
-	$(LINK) -shared $+ $(LINKFLAGS) -o $@
-
-# CODECS LOSSY
-
-MODS += aac.so
-LIBS3 += $(ALIB3_BIN)/libfdk-aac-phi.so
-aac.o: $(PHIOLA)/src/acodec/aac.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/acodec/aac-*.h) $(PHIOLA)/src/acodec/alib3-bridge/aac.h
-	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
-aac.so: aac.o
-	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lfdk-aac-phi -o $@
-
-MODS += mpeg.so
-LIBS3 += $(ALIB3_BIN)/libmpg123-phi.so
-mpeg.o: $(PHIOLA)/src/acodec/mpeg.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/acodec/mpeg-*.h)
-	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
-mpeg.so: mpeg.o
-	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lmpg123-phi -o $@
-
-# CODECS LOSSLESS
-
-MODS +=  alac.so
-LIBS3 += $(ALIB3_BIN)/libALAC-phi.so
-alac.o: $(PHIOLA)/src/acodec/alac.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/acodec/alac-*.h) $(PHIOLA)/src/acodec/alib3-bridge/alac.h
-	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
-alac.so: alac.o
-	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lALAC-phi -o $@
-
-MODS += flac.so
-LIBS3 += $(ALIB3_BIN)/libFLAC-phi.so
-flac.o: $(PHIOLA)/src/acodec/flac.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/acodec/flac-*.h) $(PHIOLA)/src/acodec/alib3-bridge/flac.h
-	$(C) $(CFLAGS) -I$(ALIB3) -I$(AVPACK) $< -o $@
-flac.so: flac.o
-	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lFLAC-phi -o $@
-
-
-MODS += zstd.so
-LIBS3 += $(FFPACK_BIN)/libzstd-ffpack.so
-%.o: $(PHIOLA)/src/dfilter/%.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/dfilter/zstd-*.h)
-	$(C) $(CFLAGS) -I$(FFPACK) $< -o $@
-zstd.so: zstd.o
-	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(FFPACK_BIN) -lzstd-ffpack -o $@
-
+include $(PHIOLA)/src/core/Makefile
+include $(PHIOLA)/src/adev/Makefile
+include $(PHIOLA)/src/afilter/Makefile
+include $(PHIOLA)/src/format/Makefile
+include $(PHIOLA)/src/acodec/Makefile
+include $(PHIOLA)/src/dfilter/Makefile
 
 libs: libphiola.so.debug \
 		$(MODS:.so=.so.debug)

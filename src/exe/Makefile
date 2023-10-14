@@ -3,7 +3,6 @@
 # Inherit:
 # C
 # CFLAGS
-# DEPS
 # DOTEXE
 # LINK
 # LINK_DL
@@ -19,9 +18,7 @@
 
 EXES += phiola$(DOTEXE)
 
-%.o: $(PHIOLA)/src/exe/%.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/exe/*.h) \
-		$(wildcard $(PHIOLA)/src/util/*.h)
+%.o: $(PHIOLA)/src/exe/%.c
 	$(C) $(CFLAGS) $< -o $@
 
 _:=
@@ -35,5 +32,5 @@ exe.coff: $(PHIOLA)/res/exe.rc \
 
 phiola$(DOTEXE): main.o \
 		$(EXE_COFF) \
-		core.$(SO)
+		libphiola.$(SO)
 	$(LINK) $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) $(LINK_DL) -o $@

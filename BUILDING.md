@@ -11,6 +11,7 @@
 		libasound2-dev libpulse-dev libjack-dev \
 		libdbus-1-dev \
 		libgtk-3-dev \
+		libssl-dev \
 		zstd unzip cmake patch dos2unix curl
 	```
 
@@ -23,6 +24,7 @@
 		alsa-lib-devel pulseaudio-libs-devel pipewire-jack-audio-connection-kit-devel \
 		dbus-devel \
 		gtk3-devel \
+		openssl-devel \
 		zstd unzip cmake patch dos2unix curl
 	```
 
@@ -75,9 +77,13 @@ cd phiola
 
 * Cross-Build on Linux for Debian-buster:
 
+> Note that openssl-3 must be built from source.
+
 ```sh
 cat >build.sh <<EOF
+set -e
 cd /src/phiola
+make -j8 -C ../netmill/3pt openssl
 make -j8 -C ../ffpack libzstd
 make -j8 -C alib3
 make -j8
@@ -110,7 +116,7 @@ podman start -a -i phiola_build_debian_buster
 	```sh
 	make -j8 OS=windows COMPILER=gcc CROSS_PREFIX=x86_64-w64-mingw32- -C ../ffpack libzstd
 	make -j8 OS=windows COMPILER=gcc CROSS_PREFIX=x86_64-w64-mingw32- -C alib3
-	make -j8 OS=windows COMPILER=gcc CROSS_PREFIX=x86_64-w64-mingw32-
+	make -j8 OS=windows COMPILER=gcc CROSS_PREFIX=x86_64-w64-mingw32- PHI_HTTP_SSL=0
 	```
 
 * Cross-Build on Linux for Android/ARM64:
@@ -126,7 +132,7 @@ podman start -a -i phiola_build_debian_buster
 	```sh
 	mingw32-make -j8 -C ../ffpack libzstd
 	mingw32-make -j8 -C alib3
-	mingw32-make -j8
+	mingw32-make -j8 PHI_HTTP_SSL=0
 	```
 
 * Build on FreeBSD & macOS:
@@ -134,21 +140,28 @@ podman start -a -i phiola_build_debian_buster
 	```sh
 	gmake -j8 -C ../ffpack libzstd
 	gmake -j8 -C alib3
-	gmake -j8
+	gmake -j8 PHI_HTTP_SSL=0
 	```
 
 * Build parameters
 
-	* `DEBUG=1` - developer build
+	* `DEBUG=1` - developer build (no optimization; no strip; all assertions)
+	* `ASAN=1` - enable ASAN
 	* `PHI_CODECS=0` - disable all codecs
+	* `PHI_HTTP_SSL=0` - disable SSL
+
+
+## Step 4. Check
 
 For security, ensure that the original 3rd party libs were used:
 
 ```sh
-make -j8 -C ../ffpack md5check
-make -j8 -C alib3 md5check
+make -C ../netmill/3pt hash-check
+make -C ../ffpack md5check
+make -C alib3 md5check
 ```
 
-## Step 4. Use
+
+## Step 5. Use
 
 Directory `phiola-2` is the application directory.  Copy it anywhere you want.

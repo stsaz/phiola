@@ -4,7 +4,6 @@
 # C
 # CFLAGS
 # CPU
-# DEPS
 # LINK
 # LINK_RPATH_ORIGIN
 # LINKFLAGS
@@ -12,6 +11,7 @@
 # PHIOLA
 # ROOT_DIR
 # SO
+# SYS
 
 # Modify:
 # LIBS3
@@ -19,12 +19,14 @@
 
 FFPACK := $(ROOT_DIR)/ffpack
 FFPACK_BIN := $(FFPACK)/_$(OS)-$(CPU)
+ifeq "$(SYS)" "android"
+	FFPACK_BIN := $(FFPACK)/_android-$(CPU)
+endif
 
 MODS += zstd.$(SO)
 LIBS3 += $(FFPACK_BIN)/libzstd-ffpack.$(SO)
 
-%.o: $(PHIOLA)/src/dfilter/%.c $(DEPS) \
-		$(wildcard $(PHIOLA)/src/dfilter/zstd-*.h)
+%.o: $(PHIOLA)/src/dfilter/%.c
 	$(C) $(CFLAGS) -I$(FFPACK) $< -o $@
 
 zstd.$(SO): zstd.o
