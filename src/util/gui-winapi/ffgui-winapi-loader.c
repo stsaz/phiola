@@ -4,6 +4,7 @@
 #include "loader.h"
 #include <FFOS/path.h>
 #include <FFOS/file.h>
+#include <FFOS/dylib.h>
 
 
 static void* ldr_getctl(ffui_loader *g, const ffstr *name);
@@ -1428,6 +1429,15 @@ static int wnd_bgcolor(ffconf_scheme *cs, ffui_loader *g, ffstr val)
 	return 0;
 }
 
+static int wnd_color(ffconf_scheme *cs, ffui_loader *g, ffstr val)
+{
+	uint clr;
+	 if ((uint)-1 == (clr = ffpic_color3(val.ptr, val.len, ffpic_clr_a)))
+		return FFUI_EINVAL;
+	g->wnd->color = clr;
+	return 0;
+}
+
 static int wnd_onclose(ffconf_scheme *cs, ffui_loader *g, ffstr val)
 {
 	if (0 == (g->wnd->onclose_id = g->getcmd(g->udata, &val)))
@@ -1487,6 +1497,7 @@ static const ffconf_arg wnd_args[] = {
 	{ "borderstick",FFCONF_TINT8,_F(wnd_borderstick) },
 	{ "button",		T_OBJMULTI,	_F(new_button) },
 	{ "checkbox",	T_OBJMULTI,	_F(new_checkbox) },
+	{ "color",		T_STR,		_F(wnd_color) },
 	{ "combobox",	T_OBJMULTI,	_F(new_combobox) },
 	{ "editbox",	T_OBJMULTI,	_F(new_editbox) },
 	{ "font",		T_OBJ,		_F(label_font) },
@@ -1526,6 +1537,23 @@ static int new_wnd(ffconf_scheme *cs, ffui_loader *g)
 	g->ctl = (ffui_ctl*)wnd;
 	if (0 != ffui_wnd_create(wnd))
 		return FFUI_ENOMEM;
+
+	if (g->dark_mode && !g->dark_title_set) {
+		g->dark_title_set = 1;
+
+		ffdl dl;
+		if (FFDL_NULL != (dl = ffdl_open("dwmapi.dll", 0))) {
+			typedef void (*DwmSetWindowAttribute_t)(void*, DWORD, void*, DWORD);
+			DwmSetWindowAttribute_t _DwmSetWindowAttribute;
+			if (NULL != (_DwmSetWindowAttribute = ffdl_addr(dl, "DwmSetWindowAttribute"))) {
+				const uint _DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+				BOOL value = 1;
+				_DwmSetWindowAttribute(g->wnd->h, _DWMWA_USE_IMMERSIVE_DARK_MODE, &value, sizeof(value));
+			}
+			ffdl_close(dl);
+		}
+	}
+
 	state_reset(g);
 	ffconf_scheme_addctx(cs, wnd_args, g);
 	return 0;
@@ -1631,32 +1659,85 @@ int ffui_ldr_loadfile(ffui_loader *g, const char *fn)
 	return r;
 }
 
-void* ffui_ldr_findctl(const ffui_ldr_ctl *ctx, void *ctl, const ffstr *name)
+void ffui_ldr_loadconf(ffui_loader *g, ffstr data)
 {
-	uint i;
-	ffstr s = *name, sctl;
+	struct ffconf_obj conf = {};
+	ffconf_scheme cs = {};
+	ffstr line, ctx;
 
-	while (s.len != 0) {
-		ffstr_splitby(&s, '.', &sctl, &s);
+	while (data.len != 0) {
+		ffstr_splitby(&data, '\n', &line, &data);
+		ffstr_trimwhite(&line);
+		if (line.len == 0)
+			continue;
 
-		for (i = 0; ; i++) {
-			if (ctx[i].name == NULL)
-				return NULL;
+		// "ctx0[.ctx1].key val" -> [ "ctx0[.ctx1]", "key val" ]
+		ffssize spc, dot;
+		if ((spc = ffstr_findanyz(&line, " \t")) < 0)
+			continue;
+		if ((dot = ffs_rfindchar(line.ptr, spc, '.')) < 0)
+			continue;
+		ffstr_set(&ctx, line.ptr, dot);
+		ffstr_shift(&line, dot + 1);
+		if (ctx.len == 0 || line.len == 0)
+			continue;
 
-			if (ffstr_eqz(&sctl, ctx[i].name)) {
-				uint off = ctx[i].flags & ~0x80000000;
-				ctl = (char*)ctl + off;
-				if (ctx[i].flags & 0x80000000)
-					ctl = *(void**)ctl;
-				if (s.len == 0)
-					return ctl;
+		if (NULL == (g->ctl = g->getctl(g->udata, &ctx)))
+			continue; // couldn't find the control by path "ctx0[.ctx1]"
 
-				if (ctx[i].children == NULL)
-					return NULL;
-				ctx = ctx[i].children;
-				break;
-			}
+		state_reset(g);
+
+		switch (g->ctl->uid) {
+		case FFUI_UID_WINDOW:
+			g->wnd = (void*)g->ctl;
+			ffconf_scheme_addctx(&cs, wnd_args, g);  break;
+
+		case FFUI_UID_EDITBOX:
+			ffconf_scheme_addctx(&cs, editbox_args, g);  break;
+
+		case FFUI_UID_LABEL:
+			ffconf_scheme_addctx(&cs, label_args, g);  break;
+
+		case FFUI_UID_COMBOBOX:
+			ffconf_scheme_addctx(&cs, combx_args, g);  break;
+
+		case FFUI_UID_TRACKBAR:
+			ffconf_scheme_addctx(&cs, trkbar_args, g);  break;
+
+		case FFUI_UID_LISTVIEW:
+			ffconf_scheme_addctx(&cs, view_args, g);  break;
+
+		default:
+			continue;
 		}
+
+		ffbool lf = 0;
+		for (;;) {
+			ffstr val;
+			int r = ffconf_obj_read(&conf, &line, &val);
+			if (r == FFCONF_ERROR) {
+				goto end;
+			} else if (r == FFCONF_MORE && !lf) {
+				// on the next iteration the parser will validate the input line
+				ffstr_setcz(&line, "\n");
+				lf = 1;
+				continue;
+			}
+
+			r = ffconf_scheme_process(&cs, r, val);
+			if (r != 0)
+				goto end;
+			if (lf)
+				break;
+		}
+
+		ffconf_scheme_destroy(&cs);
+		ffmem_zero_obj(&cs);
+		ffconf_obj_fin(&conf);
+		ffmem_zero_obj(&conf);
 	}
-	return NULL;
+
+end:
+	ffconf_scheme_destroy(&cs);
+	ffconf_obj_fin(&conf);
 }

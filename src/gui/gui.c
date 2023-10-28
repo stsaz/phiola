@@ -6,6 +6,7 @@
 #include <FFOS/perf.h>
 
 struct gui *gg;
+static void theme_apply(const char *theme);
 
 void gui_task_ptr(void (*func)(void*), void *ptr)
 {
@@ -167,6 +168,7 @@ static int load_ui()
 	ffui_ldr_init(&ldr, gui_getctl, gui_getcmd, gg);
 #ifdef FF_WIN
 	ldr.hmod_resource = GetModuleHandleW(L"gui.dll");
+	ldr.dark_mode = (gd->theme && ffsz_eq(gd->theme, "dark"));
 #endif
 
 	fftime t1;
@@ -177,6 +179,8 @@ static int load_ui()
 		errlog("parsing ui.conf: %s", ffui_ldr_errstr(&ldr));
 		goto done;
 	}
+
+	theme_apply(gd->theme);
 	r = 0;
 
 done:
@@ -191,6 +195,43 @@ done:
 	return r;
 }
 
+static void theme_apply(const char *theme)
+{
+	if (!theme) return;
+
+	dbglog("applying theme %s", gd->theme);
+
+	ffui_loader ldr;
+	ffui_ldr_init(&ldr, gui_getctl, NULL, gg);
+
+	char *fn = ffsz_allocfmt("%Smod/gui/theme-%s.conf"
+		, &core->conf.root, theme);
+	ffvec buf = {};
+	if (fffile_readwhole(fn, &buf, 1*1024*1024)) {
+		syserrlog("file read: %s", fn);
+		goto end;
+	}
+
+	ffui_ldr_loadconf(&ldr, *(ffstr*)&buf);
+
+end:
+	ffmem_free(fn);
+	ffvec_free(&buf);
+	ffui_ldr_fin(&ldr);
+}
+
+void theme_switch()
+{
+	if (!gd->theme) {
+		gd->theme = ffsz_dup("dark");
+		theme_apply(gd->theme);
+	} else {
+		ffmem_free(gd->theme);
+		gd->theme = NULL;
+	}
+	wmain_status("Please restart phiola to apply the theme");
+}
+
 int FFTHREAD_PROCCALL gui_worker(void *param)
 {
 	gg = ffmem_new(struct gui);
@@ -203,9 +244,9 @@ int FFTHREAD_PROCCALL gui_worker(void *param)
 	wconvert_init();
 	wabout_init();
 
+	gui_userconf_load();
 	if (load_ui())
 		goto end;
-	gui_userconf_load();
 
 	ffui_thd_post((void(*)(void*))wmain_show, NULL);
 

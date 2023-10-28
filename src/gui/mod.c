@@ -29,6 +29,7 @@ static void list_filter_close();
 #define O(m)  (void*)FF_OFF(struct gui_data, m)
 const struct ffarg guimod_args[] = {
 	{ "play.cursor",	'u',	O(cursor) },
+	{ "theme",			'=s',	O(theme) },
 	{}
 };
 #undef O

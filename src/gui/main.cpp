@@ -639,6 +639,9 @@ static void wmain_action(ffui_wnd *wnd, int id)
 		wconvert_set(id, m->tpos.get());  break;
 
 // Misc:
+	case A_ABOUT_THEME_SWITCH:
+		theme_switch();  break;
+
 	case A_ABOUT_SHOW:
 		wabout_show(1);  break;
 

@@ -81,24 +81,7 @@ FF_EXTERN void ffui_ldr_fin(ffui_loader *g);
 /** Load GUI from file. */
 FF_EXTERN int ffui_ldr_loadfile(ffui_loader *g, const char *fn);
 
-
-typedef struct ffui_ldr_ctl ffui_ldr_ctl;
-struct ffui_ldr_ctl {
-	const char *name;
-	uint flags; //=offset
-	const ffui_ldr_ctl *children;
-};
-
-#define FFUI_LDR_CTL(struct_name, ctl) \
-	{ #ctl, (ffuint)FF_OFF(struct_name, ctl), NULL }
-
-#define FFUI_LDR_CTL3(struct_name, ctl, children) \
-	{ #ctl, (ffuint)FF_OFF(struct_name, ctl), children }
-#define FFUI_LDR_CTL3_PTR(struct_name, ctl, children) \
-	{ #ctl, 0x80000000 | (ffuint)FF_OFF(struct_name, ctl), children }
-
-#define FFUI_LDR_CTL_END  {NULL, 0, NULL}
-
-/** Find control by its name in structured hierarchy.
-@name: e.g. "window.control" */
-FF_EXTERN void* ffui_ldr_findctl(const ffui_ldr_ctl *ctx, void *ctl, const ffstr *name);
+/** Apply config data.
+Format:
+	(ctx.key val CRLF)... */
+FF_EXTERN void ffui_ldr_loadconf(ffui_loader *g, ffstr data);

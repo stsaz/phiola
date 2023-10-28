@@ -90,6 +90,7 @@ ifeq "$(OS)" "windows"
 	$(CP) phiola-gui.exe $(APP_DIR)/
 	$(CP) $(PHIOLA)/src/gui/ui-winapi.conf $(APP_DIR)/mod/gui/ui.conf
 	$(CP) $(PHIOLA)/src/gui/lang_*.conf \
+		$(PHIOLA)/src/gui/res/theme-*.conf \
 		$(APP_DIR)/mod/gui/
 	sed -i 's/_/\&/' $(APP_DIR)/mod/gui/lang_*.conf
 	unix2dos $(APP_DIR)/mod/gui/*.conf

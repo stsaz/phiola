@@ -25,33 +25,6 @@ enum {
 #define T_STRLIST  (FFCONF_TSTR | FFCONF_FLIST)
 #define T_OBJMULTI (FFCONF_TOBJ | FFCONF_FMULTI)
 
-void* ffui_ldr_findctl(const ffui_ldr_ctl *ctx, void *ctl, const ffstr *name)
-{
-	ffstr s = *name, sctl;
-
-	while (s.len != 0) {
-		ffstr_splitby(&s, '.', &sctl, &s);
-		for (uint i = 0; ; i++) {
-			if (ctx[i].name == NULL)
-				return NULL;
-
-			if (ffstr_eqz(&sctl, ctx[i].name)) {
-				uint off = ctx[i].flags & ~0x80000000;
-				ctl = (char*)ctl + off;
-				if (ctx[i].flags & 0x80000000)
-					ctl = *(void**)ctl;
-				if (s.len == 0)
-					return ctl;
-
-				if (ctx[i].children == NULL)
-					return NULL;
-				ctx = ctx[i].children;
-				break;
-			}
-		}
-	}
-	return NULL;
-}
 
 static void* ldr_getctl(ffui_loader *g, const ffstr *name)
 {
@@ -906,4 +879,73 @@ int ffui_ldr_loadfile(ffui_loader *g, const char *fn)
 
 	ffstr_free(&errstr);
 	return r;
+}
+
+void ffui_ldr_loadconf(ffui_loader *g, ffstr data)
+{
+	struct ffconf_obj conf = {};
+	ffconf_scheme cs = {};
+	ffstr line, ctx;
+
+	while (data.len != 0) {
+		ffstr_splitby(&data, '\n', &line, &data);
+		ffstr_trimwhite(&line);
+		if (line.len == 0)
+			continue;
+
+		// "ctx0[.ctx1].key val" -> [ "ctx0[.ctx1]", "key val" ]
+		ffssize spc, dot;
+		if ((spc = ffstr_findanyz(&line, " \t")) < 0)
+			continue;
+		if ((dot = ffs_rfindchar(line.ptr, spc, '.')) < 0)
+			continue;
+		ffstr_set(&ctx, line.ptr, dot);
+		ffstr_shift(&line, dot + 1);
+		if (ctx.len == 0 || line.len == 0)
+			continue;
+
+		if (NULL == (g->ctl = g->getctl(g->udata, &ctx)))
+			continue; // couldn't find the control by path "ctx0[.ctx1]"
+
+		switch (g->ctl->uid) {
+		case FFUI_UID_WINDOW:
+			g->wnd = (void*)g->ctl;
+			ffconf_scheme_addctx(&cs, wnd_args, g);  break;
+
+		case FFUI_UID_TRACKBAR:
+			ffconf_scheme_addctx(&cs, trkbar_args, g);  break;
+
+		default:
+			continue;
+		}
+
+		ffbool lf = 0;
+		for (;;) {
+			ffstr val;
+			int r = ffconf_obj_read(&conf, &line, &val);
+			if (r == FFCONF_ERROR) {
+				goto end;
+			} else if (r == FFCONF_MORE && !lf) {
+				// on the next iteration the parser will validate the input line
+				ffstr_setcz(&line, "\n");
+				lf = 1;
+				continue;
+			}
+
+			r = ffconf_scheme_process(&cs, r, val);
+			if (r != 0)
+				goto end;
+			if (lf)
+				break;
+		}
+
+		ffconf_scheme_destroy(&cs);
+		ffmem_zero_obj(&cs);
+		ffconf_obj_fin(&conf);
+		ffmem_zero_obj(&conf);
+	}
+
+end:
+	ffconf_scheme_destroy(&cs);
+	ffconf_obj_fin(&conf);
 }

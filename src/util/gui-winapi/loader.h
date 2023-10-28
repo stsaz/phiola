@@ -49,6 +49,8 @@ struct ffui_loader {
 	/** Module handle to load resource objects from */
 	HMODULE hmod_resource;
 
+	uint dark_mode :1;
+
 	ffvec paned_array; // ffui_paned*[].  User must free the controls and vector manually.
 	ffvec accels; //ffui_wnd_hotkey[]
 	ffstr path;
@@ -94,6 +96,7 @@ struct ffui_loader {
 	uint auto_pos :1;
 	uint man_pos :1;
 	uint style_reset :1;
+	uint dark_title_set :1;
 };
 
 /** Initialize GUI loader.
@@ -110,24 +113,7 @@ FF_EXTERN void ffui_ldr_fin(ffui_loader *g);
 /** Load GUI from file. */
 FF_EXTERN int ffui_ldr_loadfile(ffui_loader *g, const char *fn);
 
-
-typedef struct ffui_ldr_ctl ffui_ldr_ctl;
-struct ffui_ldr_ctl {
-	const char *name;
-	uint flags; //=offset
-	const ffui_ldr_ctl *children;
-};
-
-#define FFUI_LDR_CTL(struct_name, ctl) \
-	{ #ctl, FF_OFF(struct_name, ctl), NULL }
-
-#define FFUI_LDR_CTL3(struct_name, ctl, children) \
-	{ #ctl, FF_OFF(struct_name, ctl), children }
-#define FFUI_LDR_CTL3_PTR(struct_name, ctl, children) \
-	{ #ctl, 0x80000000 | FF_OFF(struct_name, ctl), children }
-
-#define FFUI_LDR_CTL_END  {NULL, 0, NULL}
-
-/** Find control by its name in structured hierarchy.
-@name: e.g. "window.control" */
-FF_EXTERN void* ffui_ldr_findctl(const ffui_ldr_ctl *ctx, void *ctl, const ffstr *name);
+/** Apply config data.
+Format:
+	(ctx.key val CRLF)... */
+FF_EXTERN void ffui_ldr_loadconf(ffui_loader *g, ffstr data);

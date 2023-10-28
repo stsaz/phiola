@@ -82,6 +82,7 @@ struct gui_data {
 	char *user_conf_dir;
 	char *user_conf_name;
 	const phi_filter *playback_first_filter;
+	char *theme;
 
 	struct gtrk *playing_track;
 	uint cursor;

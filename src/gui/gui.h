@@ -10,6 +10,7 @@
 #ifdef __cplusplus
 #include <util/gui.hpp>
 #endif
+#include <util/gui-loader.h>
 #include <ffbase/args.h>
 
 #define USER_CONF_NAME  "gui.conf"
@@ -68,6 +69,7 @@ struct gui {
 };
 FF_EXTERN struct gui *gg;
 
+FF_EXTERN void theme_switch();
 FF_EXTERN void gui_dragdrop(ffstr data);
 FF_EXTERN void file_del(ffslice indexes);
 FF_EXTERN void gui_quit();

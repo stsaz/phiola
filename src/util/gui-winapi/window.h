@@ -10,6 +10,7 @@ struct ffui_wnd {
 	const char *name;
 	HFONT font;
 	HBRUSH bgcolor;
+	uint color; // default color for child controls
 	uint top :1 //quit message loop if the window is closed
 		, hide_on_close :1 //window doesn't get destroyed when it's closed
 		, manual_close :1 //don't automatically close window on X button press

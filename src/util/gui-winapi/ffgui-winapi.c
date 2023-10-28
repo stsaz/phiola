@@ -894,6 +894,7 @@ int ffui_wnd_create(ffui_wnd *w)
 {
 	ffui_pos r = { 0, 0, CW_USEDEFAULT, CW_USEDEFAULT };
 	w->uid = FFUI_UID_WINDOW;
+	w->color = ~0U;
 	if (w->on_action == NULL)
 		w->on_action = &wnd_onaction;
 	return 0 == create(FFUI_UID_WINDOW, L"", NULL, &r
@@ -1386,6 +1387,27 @@ static void _ffui_trkbar_scroll(ffui_trkbar *tb, ffui_wnd *wnd, uint w)
 		wnd->on_action(wnd, action_id);
 }
 
+static int _ffui_wnd_ctlcolor(ffui_wnd *wnd, void *ctl, HDC hdc, ffsize *code)
+{
+	union ffui_anyctl c;
+	c.ctl = ctl;
+	HBRUSH br = wnd->bgcolor;
+	uint color = wnd->color;
+	if (c.ctl != NULL && c.ctl->uid == FFUI_UID_LABEL && c.lbl->color != 0)
+		color = c.lbl->color;
+	if (color != ~0U)
+		SetTextColor(hdc, color);
+
+	if (color != ~0U || br != NULL) {
+		SetBkMode(hdc, TRANSPARENT);
+		if (br == NULL)
+			br = GetSysColorBrush(COLOR_BTNFACE);
+		*code = (size_t)br;
+		return 1;
+	}
+	return 0;
+}
+
 /*
 exit
   via Close button: WM_SYSCOMMAND(SC_CLOSE) -> WM_CLOSE -> WM_DESTROY
@@ -1530,25 +1552,10 @@ int ffui_wndproc(ffui_wnd *wnd, size_t *code, HWND h, uint msg, size_t w, size_t
 	case WM_CTLCOLORBTN:
 	case WM_CTLCOLORLISTBOX:
 	case WM_CTLCOLORSCROLLBAR:
-	case WM_CTLCOLORSTATIC: {
-		c.ctl = ffui_getctl((HWND)l);
-		HDC hdc = (HDC)w;
-		HBRUSH br = wnd->bgcolor;
-		ffbool result = 0;
-		if (c.ctl != NULL && c.ctl->uid == FFUI_UID_LABEL && c.lbl->color != 0) {
-			SetTextColor(hdc, c.lbl->color);
-			result = 1;
-		}
-
-		if (result || br != NULL) {
-			SetBkMode(hdc, TRANSPARENT);
-			if (br == NULL)
-				br = GetSysColorBrush(COLOR_BTNFACE);
-			*code = (size_t)br;
+	case WM_CTLCOLORSTATIC:
+		if (_ffui_wnd_ctlcolor(wnd, ffui_getctl((HWND)l), (HDC)w, code))
 			return 1;
-		}
 		break;
-	}
 
 	case WM_DROPFILES:
 		print("WM_DROPFILES", h, w, l);
