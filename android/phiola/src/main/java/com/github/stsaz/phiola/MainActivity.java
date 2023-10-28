@@ -367,7 +367,7 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void rec_state_set(boolean active) {
-		int res = R.color.text;
+		int res = R.color.control_button;
 		if (active)
 			res = R.color.recording;
 		int color = getResources().getColor(res);

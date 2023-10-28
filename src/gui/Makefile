@@ -97,7 +97,7 @@ else
 	$(CP) $(PHIOLA)/src/gui/ui-gtk.conf $(APP_DIR)/mod/gui/ui.conf
 	$(CP) $(PHIOLA)/src/gui/lang_*.conf \
 		$(PHIOLA)/res/phiola.ico \
-		$(PHIOLA)/src/gui/res/*.ico \
+		$(PHIOLA)/src/gui/res/*.png \
 		$(PHIOLA)/src/gui/res/phiola.desktop \
 		$(APP_DIR)/mod/gui/
 endif

@@ -83,7 +83,7 @@
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:src="@drawable/ic_rec"
-		android:tint="@color/text"
+		android:tint="@color/control_button"
 		app:layout_constraintBottom_toBottomOf="parent"
 		app:layout_constraintStart_toStartOf="parent" />
 
@@ -92,7 +92,7 @@
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:src="@drawable/ic_play"
-		android:tint="@color/text"
+		android:tint="@color/control_button"
 		app:layout_constraintBottom_toBottomOf="parent"
 		app:layout_constraintStart_toEndOf="@+id/brec" />
 
@@ -101,7 +101,7 @@
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:src="@drawable/ic_prev"
-		android:tint="@color/text"
+		android:tint="@color/control_button"
 		app:layout_constraintBottom_toBottomOf="parent"
 		app:layout_constraintStart_toEndOf="@+id/bplay" />
 
@@ -110,7 +110,7 @@
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:src="@drawable/ic_next"
-		android:tint="@color/text"
+		android:tint="@color/control_button"
 		app:layout_constraintBottom_toBottomOf="parent"
 		app:layout_constraintStart_toEndOf="@+id/bprev" />
 

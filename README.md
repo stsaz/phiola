@@ -214,3 +214,4 @@ Additionally:
 
 phiola is licensed under BSD-2.
 But consider licenses of the third party libraries before commercial use.
+Playback control icons by [Icons8](https://icons8.com).
