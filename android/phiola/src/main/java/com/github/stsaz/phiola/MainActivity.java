@@ -664,8 +664,10 @@ public class MainActivity extends AppCompatActivity {
 	/** Called by Track when a new track is initialized */
 	private int new_track(TrackHandle t) {
 		String title = t.name;
+		if (!t.date.isEmpty())
+			title = String.format("%s [%s]", title, t.date);
 		if (core.gui().ainfo_in_title && !t.info.isEmpty())
-			title = String.format("%s [%s]", t.name, t.info);
+			title = String.format("%s [%s]", title, t.info);
 		b.lname.setText(title);
 
 		b.seekbar.setProgress(0);
