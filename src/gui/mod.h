@@ -65,6 +65,8 @@ FF_EXTERN void wmain_list_delete(uint i);
 FF_EXTERN void wmain_list_select(uint n, uint scroll_vpos);
 FF_EXTERN void wmain_list_draw(uint n, uint flags);
 
+FF_EXTERN void wgoto_show(uint pos);
+
 FF_EXTERN void wrecord_done();
 
 FF_EXTERN void wconvert_done();

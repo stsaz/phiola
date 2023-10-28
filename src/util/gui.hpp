@@ -13,6 +13,8 @@ struct ffui_editxx : ffui_edit {
 	void	text(const char *sz) { ffui_edit_settextz(this, sz); }
 	void	text(ffstr s) { ffui_edit_settextstr(this, &s); }
 
+	void	sel_all() { ffui_edit_selall(this); }
+
 	void	focus() { ffui_ctl_focus(this); }
 };
 

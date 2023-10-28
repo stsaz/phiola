@@ -6,6 +6,7 @@
 #include <util/util.hpp>
 #include <gui/gui.h>
 #include <gui/meta-info.hpp>
+#include <gui/goto.hpp>
 #include <gui/list-add.hpp>
 #include <gui/list-filter.hpp>
 #include <gui/record.hpp>

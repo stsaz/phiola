@@ -25,6 +25,9 @@ struct gui_winfo;
 FF_EXTERN void winfo_init();
 FF_EXTERN void winfo_show(uint show, uint idx);
 
+struct gui_wgoto;
+FF_EXTERN void wgoto_init();
+
 struct gui_wlistadd;
 FF_EXTERN void wlistadd_init();
 FF_EXTERN void wlistadd_show(uint show);
@@ -61,6 +64,7 @@ struct gui {
 	ffui_dialog dlg;
 	struct gui_wmain *wmain;
 	struct gui_winfo *winfo;
+	struct gui_wgoto *wgoto;
 	struct gui_wlistadd *wlistadd;
 	struct gui_wlistfilter *wlistfilter;
 	struct gui_wrecord *wrecord;

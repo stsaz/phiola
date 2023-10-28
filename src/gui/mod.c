@@ -360,6 +360,11 @@ void ctl_action(uint cmd)
 	case A_LEAP_BACK:
 	case A_MARKER_JUMP:
 		ctl_seek(cmd);  break;
+
+	case A_GOTO_SHOW:
+		if (gd->playing_track)
+			gui_task_uint(wgoto_show, gd->playing_track->last_pos_sec);
+		break;
 	}
 }
 

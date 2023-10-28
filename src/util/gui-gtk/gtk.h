@@ -317,6 +317,9 @@ static inline ffstr ffui_edit_text(ffui_edit *e) {
 #define ffui_edit_sel(e, start, end) \
 	gtk_editable_select_region(GTK_EDITABLE((e)->h), start, end);
 
+#define ffui_edit_selall(e) \
+	gtk_editable_select_region(GTK_EDITABLE((e)->h), 0, -1);
+
 
 // TEXT
 typedef struct ffui_text {

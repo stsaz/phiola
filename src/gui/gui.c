@@ -114,6 +114,7 @@ static void gui_userconf_save()
 extern const ffui_ldr_ctl
 	wmain_ctls[],
 	winfo_ctls[],
+	wgoto_ctls[],
 	wlistadd_ctls[],
 	wlistfilter_ctls[],
 	wrecord_ctls[],
@@ -133,6 +134,7 @@ static void* gui_getctl(void *udata, const ffstr *name)
 		FFUI_LDR_CTL(struct gui, dlg),
 		FFUI_LDR_CTL3_PTR(struct gui, wmain, wmain_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, winfo, winfo_ctls),
+		FFUI_LDR_CTL3_PTR(struct gui, wgoto, wgoto_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, wlistfilter, wlistfilter_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, wlistadd, wlistadd_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, wrecord, wrecord_ctls),
@@ -238,6 +240,7 @@ int FFTHREAD_PROCCALL gui_worker(void *param)
 	ffui_init();
 	wmain_init();
 	winfo_init();
+	wgoto_init();
 	wlistadd_init();
 	wlistfilter_init();
 	wrecord_init();

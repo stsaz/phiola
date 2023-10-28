@@ -33,6 +33,8 @@
 	X(A_LEAP_BACK),
 	X(A_MARKER_SET),
 	X(A_MARKER_JUMP),
+	X(A_GOTO_SHOW),
+		X(A_GOTO),
 
 	X(A_VOL),
 	X(A_VOLUP),
