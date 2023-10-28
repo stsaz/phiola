@@ -136,6 +136,9 @@ phiola info "My Recordings" -include "*.wav"
 
 # Create a playlist from all .mp3 files in the directory
 phiola list create "My Music" -include "*.mp3" -o my-music.m3u
+
+# Sort entries (by file name) in all playlists in the current directory
+phiola list sort *.m3u
 ```
 
 Currently supported commands:

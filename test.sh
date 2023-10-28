@@ -196,15 +196,11 @@ test_list() {
 	./phiola list create . -include "list*.ogg" -o test.m3u
 	./phiola info test.m3u | grep '#1 "A2 - T2" "./list2.ogg"'
 
-	echo "!!! PRESS Shift+L at the 3rd track !!!"
-	./phiola `pwd`/list*
-	cat /tmp/phiola-*.m3u8 | grep 'A2 - T2'
-	# cat /tmp/phiola-*.m3u8 | grep 'A3 - T3'
-	./phiola i /tmp/phiola-*.m3u8 2>&1 | grep 'A2 - T2'
-
-	LIST=`ls -1 /tmp/phiola-*.m3u8 | head -1`
-	zstd $LIST -o $LIST.m3uz
-	./phiola i $LIST.m3uz
+	./phiola list create list3.ogg list2.ogg -o test-sort.m3u
+	./phiola list create list3.ogg list2.ogg -o test-sort2.m3u
+	./phiola list sort test-sort.m3u test-sort2.m3u
+	./phiola info test-sort.m3u | grep '#1 "A2 - T2" "list2.ogg"'
+	./phiola info test-sort2.m3u | grep '#1 "A2 - T2" "list2.ogg"'
 
 	cat <<EOF >/tmp/phiola-test.pls
 [playlist]
@@ -216,6 +212,18 @@ Title2=TITLE2
 Length2=2
 EOF
 	./phiola i /tmp/phiola-test.pls
+}
+
+test_list_manual() {
+	echo "!!! PRESS Shift+L at the 3rd track !!!"
+	./phiola `pwd`/list*
+	cat /tmp/phiola-*.m3u8 | grep 'A2 - T2'
+	# cat /tmp/phiola-*.m3u8 | grep 'A3 - T3'
+	./phiola i /tmp/phiola-*.m3u8 | grep 'A2 - T2'
+
+	LIST=`ls -1 /tmp/phiola-*.m3u8 | head -1`
+	zstd $LIST -o $LIST.m3uz
+	./phiola i $LIST.m3uz
 }
 
 test_cue() {
@@ -310,6 +318,7 @@ TESTS=(
 	meta
 	dir_read
 	list
+	# list_manual
 	cue
 	ofile_vars
 	remote

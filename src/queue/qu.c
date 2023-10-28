@@ -435,6 +435,20 @@ static phi_queue_id q_filter(phi_queue_id q, ffstr filter, uint flags)
 	return qf;
 }
 
+static int q_sort_cmp(const void *_a, const void *_b, void *udata)
+{
+	// uint flags = (ffsize)udata;
+	const struct q_entry *a = *(struct q_entry**)_a, *b = *(struct q_entry**)_b;
+	return ffsz_icmp(a->pub.conf.ifile.name, b->pub.conf.ifile.name);
+}
+
+static void q_sort(phi_queue_id q, uint flags)
+{
+	if (!q) q = qm_default();
+
+	ffsort(q->index.ptr, q->index.len, sizeof(void*), q_sort_cmp, (void*)(ffsize)flags);
+}
+
 const phi_queue_if phi_queueif = {
 	q_create,
 	q_destroy,
@@ -464,4 +478,5 @@ const phi_queue_if phi_queueif = {
 	(void*)qe_remove,
 
 	qm_set_on_change,
+	q_sort,
 };

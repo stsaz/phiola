@@ -416,6 +416,8 @@ struct phi_queue_if {
 		'd': deleted
 	*/
 	void (*on_change)(void (*cb)(phi_queue_id q, uint flags, uint pos));
+
+	void (*sort)(phi_queue_id q, uint flags);
 };
 
 
