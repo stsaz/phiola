@@ -236,6 +236,7 @@ static int core()
 		.workers = ~0U,
 		.root = x->root_dir,
 		.stdin_busy = x->stdin_busy,
+		.stdout_busy = x->stdout_busy,
 	};
 	if (NULL == (x->core = phi_core_create(&conf)))
 		return -1;

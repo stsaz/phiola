@@ -96,10 +96,10 @@ test_convert() {
 	./phiola co co.wav -f -o co-wav-s1-u2.wav -s 1 -u 2 ; ./phiola pl co-wav-s1-u2.wav
 
 	# audio format
-	./phiola co co.wav -f -o co-wav-i24.wav -af int24 ; ./phiola i co-wav-i24.wav 2>&1 | grep 'int24' ; ./phiola pl co-wav-i24.wav
-	./phiola co co.wav -f -o co-wav-mono.wav -ch 1 ; ./phiola i co-wav-mono.wav 2>&1 | grep 'mono' ; ./phiola pl co-wav-mono.wav
-	./phiola co co.wav -f -o co-wav-96k.wav -rate 96000 ; ./phiola i co-wav-96k.wav 2>&1 | grep '96000Hz' ; ./phiola pl co-wav-96k.wav
-	./phiola co co.wav -f -o co-wav-i32-96k.wav -af int32 -rate 96000 ; ./phiola i co-wav-i32-96k.wav 2>&1 | grep 'int32 96000Hz' ; ./phiola pl co-wav-i32-96k.wav
+	./phiola co co.wav -f -o co-wav-i24.wav -af int24 ; ./phiola i co-wav-i24.wav | grep 'int24' ; ./phiola pl co-wav-i24.wav
+	./phiola co co.wav -f -o co-wav-mono.wav -ch 1 ; ./phiola i co-wav-mono.wav | grep 'mono' ; ./phiola pl co-wav-mono.wav
+	./phiola co co.wav -f -o co-wav-96k.wav -rate 96000 ; ./phiola i co-wav-96k.wav | grep '96000Hz' ; ./phiola pl co-wav-96k.wav
+	./phiola co co.wav -f -o co-wav-i32-96k.wav -af int32 -rate 96000 ; ./phiola i co-wav-i32-96k.wav | grep 'int32 96000Hz' ; ./phiola pl co-wav-i32-96k.wav
 
 	./phiola co co.wav -f -o co-wav-gain6.wav -gain -6 ; ./phiola pl co-wav-gain6.wav
 	./phiola co co.wav -f -o co-wav.wav -preserve_date
@@ -115,10 +115,10 @@ test_danorm() {
 		./phiola rec -u 10 -f -o dani.wav
 	fi
 	./phiola co -danorm "frame 500 size 15" dani.wav -f -o dan-co.wav ; ./phiola dan-co.wav
-	./phiola co -danorm "" dani.wav -f -o dan-co.flac -af int24 ; ./phiola i dan-co.flac 2>&1 | grep 'int24' ; ./phiola dan-co.flac
+	./phiola co -danorm "" dani.wav -f -o dan-co.flac -af int24 ; ./phiola i dan-co.flac | grep 'int24' ; ./phiola dan-co.flac
 	# ./phiola co -danorm "" dani.wav -f -o dan-co96k.flac -af int24 -rate 96000 ; ./phiola dan-co96k.flac
 	./phiola rec -danorm "frame 500 size 15" -f -o dan-rec.wav     -u 10 ; ./phiola dan-rec.wav
-	./phiola rec -danorm "" -f -o dan-rec96k.flac -u 10 -af int24 -rate 96000 ; ./phiola i dan-rec96k.flac 2>&1 | grep 'int24 96000Hz' ; ./phiola dan-rec96k.flac
+	./phiola rec -danorm "" -f -o dan-rec96k.flac -u 10 -af int24 -rate 96000 ; ./phiola i dan-rec96k.flac | grep 'int24 96000Hz' ; ./phiola dan-rec96k.flac
 }
 
 ffmpeg_encode() {
@@ -244,30 +244,30 @@ FILE "rec6.wav" WAVE
   TITLE T3
   INDEX 01 00:04:00
 EOF
-	./phiola i cue.cue 2>&1 | grep 'A1 - T1'
-	./phiola i cue.cue 2>&1 | grep 'Artist - T2'
-	./phiola i cue.cue 2>&1 | grep 'Artist - T3'
+	./phiola i cue.cue | grep 'A1 - T1'
+	./phiola i cue.cue | grep 'Artist - T2'
+	./phiola i cue.cue | grep 'Artist - T3'
 	./phiola cue.cue
-	if ./phiola i cue.cue -tracks 2,3 2>&1 | grep 'A1 - T1' ; then
+	if ./phiola i cue.cue -tracks 2,3 | grep 'A1 - T1' ; then
 		false
 	fi
-	./phiola i cue.cue -tracks 2,3 2>&1 | grep 'Artist - T2'
-	./phiola i cue.cue -tracks 2,3 2>&1 | grep 'Artist - T3'
+	./phiola i cue.cue -tracks 2,3 | grep 'Artist - T2'
+	./phiola i cue.cue -tracks 2,3 | grep 'Artist - T3'
 }
 
 test_meta() {
 	# Recording
-	./phiola rec -u 1 -m artist='Great Artist' -m title='Cool Song' -f -o meta.flac && ./phiola i meta.flac 2>&1 | grep 'Great Artist - Cool Song' || false
-	./phiola rec -u 1 -m artist='Great Artist' -m title='Cool Song' -f -o meta.m4a && ./phiola i meta.m4a 2>&1 | grep 'Great Artist - Cool Song' || false
-	./phiola rec -u 1 -m artist='Great Artist' -m title='Cool Song' -f -o meta.ogg && ./phiola i meta.ogg 2>&1 | grep 'Great Artist - Cool Song' || false
-	./phiola rec -u 1 -m artist='Great Artist' -m title='Cool Song' -ra 48000 -f -o meta.opus && ./phiola i meta.opus 2>&1 | grep 'Great Artist - Cool Song' || false
+	./phiola rec -u 1 -m artist='Great Artist' -m title='Cool Song' -f -o meta.flac && ./phiola i meta.flac | grep 'Great Artist - Cool Song' || false
+	./phiola rec -u 1 -m artist='Great Artist' -m title='Cool Song' -f -o meta.m4a && ./phiola i meta.m4a | grep 'Great Artist - Cool Song' || false
+	./phiola rec -u 1 -m artist='Great Artist' -m title='Cool Song' -f -o meta.ogg && ./phiola i meta.ogg | grep 'Great Artist - Cool Song' || false
+	./phiola rec -u 1 -m artist='Great Artist' -m title='Cool Song' -ra 48000 -f -o meta.opus && ./phiola i meta.opus | grep 'Great Artist - Cool Song' || false
 
 	# Conversion
-	./phiola co -m artist='AA' meta.flac -f -o meta2.flac && ./phiola i meta2.flac 2>&1 | grep 'AA - Cool Song' || false
-	./phiola co -copy -m artist='AA' meta.m4a -f -o meta2.m4a && ./phiola i meta2.m4a 2>&1 | grep 'AA - Cool Song' || false
-	./phiola co -m artist='AA' meta.ogg -f -o meta2.ogg && ./phiola i meta2.ogg 2>&1 | grep 'AA - Cool Song' || false
+	./phiola co -m artist='AA' meta.flac -f -o meta2.flac && ./phiola i meta2.flac | grep 'AA - Cool Song' || false
+	./phiola co -copy -m artist='AA' meta.m4a -f -o meta2.m4a && ./phiola i meta2.m4a | grep 'AA - Cool Song' || false
+	./phiola co -m artist='AA' meta.ogg -f -o meta2.ogg && ./phiola i meta2.ogg | grep 'AA - Cool Song' || false
 	ffmpeg -y -i meta.ogg -metadata artist='Great Artist' -metadata title='Cool Song' meta.mp3
-	./phiola co -copy -m artist='AA' meta.mp3 -f -o meta2.mp3 && ./phiola i meta2.mp3 2>&1 | grep 'AA - Cool Song' || false
+	./phiola co -copy -m artist='AA' meta.mp3 -f -o meta2.mp3 && ./phiola i meta2.mp3 | grep 'AA - Cool Song' || false
 }
 
 test_http() {

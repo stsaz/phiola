@@ -101,7 +101,7 @@ static void tui_info(tui_track *u)
 		tui_addtags(u, &u->buf);
 	}
 
-	ffstderr_write(u->buf.ptr, u->buf.len);
+	tui_print(u->buf.ptr, u->buf.len);
 	u->buf.len = 0;
 }
 
@@ -238,7 +238,7 @@ static int tuiplay_process(void *ctx, phi_track *t)
 		, u->total_time_sec / 60, u->total_time_sec % 60);
 
 print:
-	fffile_write(ffstderr, u->buf.ptr, u->buf.len);
+	tui_print(u->buf.ptr, u->buf.len);
 	u->nback = 1;
 	if (core->conf.log_level >= PHI_LOG_DEBUG)
 		u->nback = 0;
@@ -255,7 +255,7 @@ done:
 	t->data_out = t->data_in;
 
 	if (t->chain_flags & PHI_FFIRST) {
-		fffile_write(ffstderr, "\n", 1);
+		tui_print("\n", 1);
 		return PHI_DONE;
 	}
 	return PHI_DATA;
@@ -267,7 +267,7 @@ static void tui_op_trk(struct tui_track *u, uint cmd)
 	case CMD_SHOWTAGS:
 		u->buf.len = 0;
 		tui_addtags(u, &u->buf);
-		ffstderr_write(u->buf.ptr, u->buf.len);
+		tui_print(u->buf.ptr, u->buf.len);
 		u->buf.len = 0;
 		break;
 	}

@@ -64,6 +64,7 @@ struct tui_mod {
 			*reset;
 	} color;
 
+	uint use_stderr :1;
 	uint mute :1;
 	uint conversion :1;
 	uint conversion_valid :1;
@@ -153,6 +154,15 @@ static const char *const _pcm_channelstr[] = {
 static const char* pcm_channelstr(uint channels)
 {
 	return _pcm_channelstr[ffmin(channels - 1, FF_COUNT(_pcm_channelstr) - 1)];
+}
+
+static void tui_print(const void *d, ffsize n)
+{
+	if (mod->use_stderr) {
+		ffstderr_write(d, n);
+		return;
+	}
+	ffstdout_write(d, n);
 }
 
 #include <tui/play.h>
@@ -403,8 +413,9 @@ static void color_init(struct tui_mod *c)
 	c->color.filename = "";
 	c->color.index = "";
 	c->color.reset = "";
-	uint stderr_color = !ffstd_attr(ffstderr, FFSTD_VTERM, FFSTD_VTERM);
-	if (stderr_color) {
+	fffd fd = (core->conf.stdout_busy) ? ffstderr : ffstdout;
+	uint color = !ffstd_attr(fd, FFSTD_VTERM, FFSTD_VTERM);
+	if (color) {
 		c->color.progress = CLR_PROGRESS;
 		c->color.filename = CLR_FILENAME;
 		c->color.index = CLR_INDEX;
@@ -417,6 +428,7 @@ static void tui_create(void *param)
 	mod->vol = 100;
 	mod->queue = core->mod("core.queue");
 	mod->phi_metaif = core->mod("format.meta");
+	mod->use_stderr = core->conf.stdout_busy;
 	color_init(mod);
 
 	uint term_wnd_size = 80;

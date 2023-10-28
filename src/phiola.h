@@ -71,6 +71,7 @@ struct phi_core_conf {
 	uint max_tasks; // Max concurrent system tasks
 	uint run_detach :1; // phi_core_run() will detach from parent thread
 	uint stdin_busy :1; // Prevent TUI module from using stdin
+	uint stdout_busy :1; // Prevent TUI module from using stdout
 };
 
 enum PHI_CORE_SIG {
