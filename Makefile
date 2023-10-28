@@ -27,6 +27,7 @@ ifeq "$(ASAN)" "1"
 	CFLAGS += -fsanitize=address
 	LINKFLAGS += -fsanitize=address
 endif
+CFLAGS += $(CFLAGS_USER)
 CFLAGS_BASE := $(CFLAGS)
 CFLAGS += -I$(PHIOLA)/src -I$(FFOS)
 CXXFLAGS := $(CFLAGS) -fno-exceptions -fno-rtti -Wno-c++11-narrowing
