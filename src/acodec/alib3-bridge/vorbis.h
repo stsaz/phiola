@@ -298,7 +298,7 @@ int ffvorbis_create(ffvorbis_enc *v, const struct phi_af *fmt, int quality_x10)
 	vorbis_encode_params params = {0};
 	params.channels = fmt->channels;
 	params.rate = fmt->rate;
-	params.quality = (float)quality_x10 / 10;
+	params.quality = (float)quality_x10 / 100;
 	ogg_packet pkt[2];
 	if (0 != (r = vorbis_encode_create(&v->vctx, &params, &pkt[0], &pkt[1])))
 		return ERR(v, r);
