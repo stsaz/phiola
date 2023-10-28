@@ -40,10 +40,12 @@ class CoreSettings {
 	String conv_outext;
 	int conv_aac_quality;
 	int conv_opus_quality;
+	int conv_vorbis_quality;
 	boolean conv_copy;
 	static final String[] conv_extensions = {
 		"m4a",
 		"opus",
+		"ogg",
 		"flac",
 		"wav",
 		"mp3",
@@ -66,6 +68,7 @@ class CoreSettings {
 		conv_outext = "m4a";
 		conv_aac_quality = 5;
 		conv_opus_quality = 192;
+		conv_vorbis_quality = 7;
 	}
 
 	@SuppressLint("DefaultLocale")
@@ -93,6 +96,7 @@ class CoreSettings {
 				String.format("conv_outext %s\n", conv_outext) +
 				String.format("conv_aac_quality %d\n", conv_aac_quality) +
 				String.format("conv_opus_quality %d\n", conv_opus_quality) +
+				String.format("conv_vorbis_quality %d\n", conv_vorbis_quality) +
 				String.format("conv_copy %d\n", core.bool_to_int(conv_copy));
 	}
 
@@ -169,6 +173,8 @@ class CoreSettings {
 			conv_aac_quality = core.str_to_uint(v, conv_aac_quality);
 		else if (k.equals("conv_opus_quality"))
 			conv_opus_quality = core.str_to_uint(v, conv_opus_quality);
+		else if (k.equals("conv_vorbis_quality"))
+			conv_vorbis_quality = core.str_to_uint(v, conv_vorbis_quality);
 		else if (k.equals("conv_copy"))
 			conv_copy = core.str_to_bool(v);
 		else

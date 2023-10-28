@@ -120,6 +120,9 @@ Java_com_github_stsaz_phiola_Phiola_convert(JNIEnv *env, jobject thiz, jstring j
 		.opus = {
 			.bitrate = jni_obj_int(jconf, jni_field(jc_conf, "opus_quality", JNI_TINT)),
 		},
+		.vorbis = {
+			.quality = jni_obj_int(jconf, jni_field(jc_conf, "vorbis_quality", JNI_TINT)),
+		},
 		.oaudio.format.rate = jni_obj_int(jconf, jni_field(jc_conf, "sample_rate", JNI_TINT)),
 		.ofile = {
 			.name = ffsz_dup(ofn),

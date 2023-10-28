@@ -125,6 +125,16 @@
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
 
+		<TextView
+			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:text="@string/conv_vorbis_q"
+			android:textColor="@color/text" />
+		<EditText android:id="@+id/tvorbis_q"
+			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:inputType="text"
+			android:textSize="@dimen/text_editbox" />
+
 		<androidx.appcompat.widget.SwitchCompat
 			android:id="@+id/bcopy"
 			android:layout_width="match_parent"

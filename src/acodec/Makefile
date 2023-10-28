@@ -39,10 +39,8 @@ LIBS3 += $(ALIB3_BIN)/libmpg123-phi.$(SO)
 mpeg.$(SO): mpeg.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lmpg123-phi -o $@
 
-ifneq "$(SYS)" "android"
 MODS += vorbis.$(SO)
 LIBS3 += $(ALIB3_BIN)/libvorbis-phi.$(SO) $(ALIB3_BIN)/libvorbisenc-phi.$(SO) $(ALIB3_BIN)/libogg-phi.$(SO)
-endif
 vorbis.o: $(PHIOLA)/src/acodec/vorbis.c
 	$(C) $(CFLAGS) -I$(ALIB3) -I$(AVPACK) $< -o $@
 vorbis.$(SO): vorbis.o

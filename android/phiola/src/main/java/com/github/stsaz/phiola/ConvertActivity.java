@@ -72,6 +72,7 @@ public class ConvertActivity extends AppCompatActivity {
 
 		b.taacQ.setText(core.int_to_str(core.setts.conv_aac_quality));
 		b.topusQ.setText(core.int_to_str(core.setts.conv_opus_quality));
+		b.tvorbisQ.setText(core.int_to_str(core.setts.conv_vorbis_quality));
 		b.bcopy.setChecked(core.setts.conv_copy);
 	}
 
@@ -85,6 +86,10 @@ public class ConvertActivity extends AppCompatActivity {
 		v = core.str_to_uint(b.topusQ.getText().toString(), 0);
 		if (v != 0)
 			core.setts.conv_opus_quality = v;
+
+		v = core.str_to_uint(b.tvorbisQ.getText().toString(), 0);
+		if (v != 0)
+			core.setts.conv_vorbis_quality = v;
 	}
 
 	@Override
@@ -116,6 +121,9 @@ public class ConvertActivity extends AppCompatActivity {
 		p.sample_rate = core.str_to_uint(b.tsampleRate.getText().toString(), 0);
 		p.aac_quality = core.str_to_uint(b.taacQ.getText().toString(), 0);
 		p.opus_quality = core.str_to_uint(b.topusQ.getText().toString(), 0);
+		p.vorbis_quality = core.str_to_uint(b.tvorbisQ.getText().toString(), 0);
+		if (p.vorbis_quality != 0)
+			p.vorbis_quality = (p.vorbis_quality + 1) * 10;
 
 		if (b.bpreserveDate.isChecked())
 			p.flags |= Phiola.ConvertParams.F_DATE_PRESERVE;

@@ -40,6 +40,7 @@ class Phiola {
 		int sample_rate;
 		int aac_quality;
 		int opus_quality;
+		int vorbis_quality;
 	}
 	interface ConvertCallback {
 		void on_finish(String result);

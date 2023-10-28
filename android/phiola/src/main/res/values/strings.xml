@@ -66,7 +66,8 @@
 	<string name="conv_sample_rate">Sample rate (Hz)</string>
 	<string name="conv_aac_q">[.m4a] AAC Quality: 1..5 (VBR) or 8..800 (CBR, kbit/s)</string>
 	<string name="conv_opus_q">[.opus] Opus Quality: 6..510 (VBR, kbit/s)</string>
-	<string name="conv_copy">[.mp3/.m4a] Stream Copy</string>
+	<string name="conv_vorbis_q">[.ogg] Vorbis Quality: 1..10</string>
+	<string name="conv_copy">[.mp3/.m4a/.ogg] Stream Copy</string>
 	<string name="conv_preserve_date">Preserve File Date</string>
 	<string name="conv_trash_orig">Move Input File to Trash</string>
 	<string name="conv_pl_add">Add New File to Playlist</string>
