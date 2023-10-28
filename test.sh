@@ -192,6 +192,10 @@ test_list() {
 		./phiola co list1.wav -m artist=A2 -m title=T2 -f -o list2.ogg
 		./phiola co list1.wav -m artist=A3 -m title=T3 -f -o list3.ogg
 	fi
+
+	./phiola list create . -include "list*.ogg" -o test.m3u
+	./phiola info test.m3u | grep '#1 "A2 - T2" "./list2.ogg"'
+
 	echo "!!! PRESS Shift+L at the 3rd track !!!"
 	./phiola `pwd`/list*
 	cat /tmp/phiola-*.m3u8 | grep 'A2 - T2'
@@ -291,7 +295,7 @@ test_remote() {
 }
 
 test_clean() {
-	rm -f *.wav *.flac *.m4a *.ogg *.opus *.mp3 fm-* ofv/*.ogg *.cue
+	rm -f *.wav *.flac *.m4a *.ogg *.opus *.mp3 fm-* ofv/*.ogg *.cue *.m3u
 	rmdir ofv
 }
 

@@ -389,7 +389,7 @@ struct phi_queue_if {
 	int (*play_next)(phi_queue_id q);
 	int (*play_previous)(phi_queue_id q);
 
-	int (*save)(phi_queue_id q, const char *filename);
+	int (*save)(phi_queue_id q, const char *filename, void (*on_complete)(void*, phi_track*), void *param);
 	int (*status)(phi_queue_id q);
 
 	struct phi_queue_entry* (*at)(phi_queue_id q, uint pos);

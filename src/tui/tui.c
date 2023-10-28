@@ -214,7 +214,7 @@ static void list_save()
 	fftime_now(&t);
 	fn = ffsz_allocfmt("%s/phiola-%U.m3u8", tmpdir, t.sec);
 
-	mod->queue->save(NULL, fn);
+	mod->queue->save(NULL, fn, NULL, NULL);
 	infolog(NULL, "Saved playlist to %s", fn);
 
 	ffmem_free(fn);

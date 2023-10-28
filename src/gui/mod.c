@@ -374,7 +374,7 @@ void userconf_save(ffstr data)
 void list_save(void *sz)
 {
 	char *fn = sz;
-	gd->queue->save(gd->q_selected, fn);
+	gd->queue->save(gd->q_selected, fn, NULL, NULL);
 	ffmem_free(fn);
 }
 
@@ -393,7 +393,7 @@ void lists_save()
 
 		ffmem_free(fn);
 		fn = ffsz_allocfmt("%s" AUTO_LIST_FN, gd->user_conf_dir, i++);
-		gd->queue->save(li->q, fn);
+		gd->queue->save(li->q, fn, NULL, NULL);
 	}
 
 	ffmem_free(fn);

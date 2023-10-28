@@ -157,6 +157,7 @@ static int cmd_input(ffvec *input, ffstr s)
 #include <exe/device.h>
 #include <exe/gui.h>
 #include <exe/info.h>
+#include <exe/list.h>
 #include <exe/play.h>
 #include <exe/record.h>
 #include <exe/remote.h>
@@ -231,6 +232,7 @@ static const struct ffarg cmd_root[] = {
 	{ "device",		'>',		cmd_dev },
 	{ "gui",		'{',		cmd_gui_init },
 	{ "info",		'{',		cmd_info_init },
+	{ "list",		'>',		cmd_list_args },
 	{ "play",		'{',		cmd_play_init },
 	{ "record",		'{',		cmd_rec_init },
 	{ "remote",		'{',		cmd_remote_init },

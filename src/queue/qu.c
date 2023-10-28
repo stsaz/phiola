@@ -332,6 +332,8 @@ static void q_save_close(void *f, phi_track *t)
 {
 	ffmem_free(t->conf.ofile.name);  t->conf.ofile.name = NULL;
 	core->track->stop(t);
+	if (t->q_save.on_complete)
+		t->q_save.on_complete(t->q_save.param, t);
 }
 
 static int q_save_process(void *f, phi_track *t) { return PHI_DONE; }
@@ -340,7 +342,7 @@ static const phi_filter phi_qsave_guard = {
 	NULL, q_save_close, q_save_process, "qsave-guard"
 };
 
-static int q_save(struct phi_queue *q, const char *filename)
+static int q_save(struct phi_queue *q, const char *filename, void (*on_complete)(void*, phi_track*), void *param)
 {
 	if (!q) q = qm_default();
 
@@ -366,6 +368,9 @@ static int q_save(struct phi_queue *q, const char *filename)
 		core->track->close(t);
 		return -1;
 	}
+
+	t->q_save.on_complete = on_complete;
+	t->q_save.param = param;
 	core->track->start(t);
 	return 0;
 }

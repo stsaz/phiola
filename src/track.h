@@ -198,30 +198,37 @@ struct phi_track {
 		struct phi_af in, out;
 	} aconv;
 
-	struct {
-		struct phi_af format;
-		struct phi_af conv_format;
+	union {
+		struct {
+			struct phi_af format;
+			struct phi_af conv_format;
 
-		// for mp4.write
-		uint mp4_delay;
-		uint mp4_bitrate;
-		uint mp4_frame_samples;
+			// for mp4.write
+			uint mp4_delay;
+			uint mp4_bitrate;
+			uint mp4_frame_samples;
 
-		// flac.enc -> flac.write
-		const char *flac_vendor;
-		uint flac_frame_samples;
+			// flac.enc -> flac.write
+			const char *flac_vendor;
+			uint flac_frame_samples;
 
-		// for ogg.write
-		uint64 ogg_granule_pos; // stream_copy=1: granule-position value from source
-		uint ogg_flush :1;
-		uint ogg_gen_opus_tag :1; // ogg.write must generate Opus-tag packet
+			// for ogg.write
+			uint64 ogg_granule_pos; // stream_copy=1: granule-position value from source
+			uint ogg_flush :1;
+			uint ogg_gen_opus_tag :1; // ogg.write must generate Opus-tag packet
 
-		/** Order AO filter to pause playing, then just wait until the track is woken up.
-		After the flag is set, at some point AO will see it and reset. */
-		uint pause :1;
+			/** Order AO filter to pause playing, then just wait until the track is woken up.
+			After the flag is set, at some point AO will see it and reset. */
+			uint pause :1;
 
-		uint clear :1;
-	} oaudio;
+			uint clear :1;
+		} oaudio;
+
+		struct {
+			void (*on_complete)(void*, phi_track*);
+			void *param;
+		} q_save;
+	};
 
 	struct {
 		uint64 seek; // Seek to offset and reset. -1:unset

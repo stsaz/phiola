@@ -121,7 +121,7 @@ Java_com_github_stsaz_phiola_Phiola_quSave(JNIEnv *env, jobject thiz, jlong q, j
 {
 	dbglog("%s: enter", __func__);
 	const char *fn = jni_sz_js(jfilepath);
-	x->queue->save((phi_queue_id)q, fn);
+	x->queue->save((phi_queue_id)q, fn, NULL, NULL);
 	jni_sz_free(fn, jfilepath);
 	dbglog("%s: exit", __func__);
 	return 1;

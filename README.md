@@ -133,6 +133,9 @@ phiola device list
 
 # Show meta info on all .wav files inside a directory
 phiola info "My Recordings" -include "*.wav"
+
+# Create a playlist from all .mp3 files in the directory
+phiola list create "My Music" -include "*.mp3" -o my-music.m3u
 ```
 
 Currently supported commands:
@@ -141,6 +144,7 @@ Currently supported commands:
 * [device](src/exe/device.h)   - List audio devices
 * [gui](src/exe/gui.h)         - Start graphical interface
 * [info](src/exe/info.h)       - Show file meta data
+* [list](src/exe/list.h)       - Process playlist files
 * [play](src/exe/play.h)       - Play audio
 * [record](src/exe/record.h)   - Record audio
 * [remote](src/exe/remote.h)   - Send remote command
