@@ -298,7 +298,7 @@ static int q_play_next(struct phi_queue *q)
 
 	struct q_entry *e = q->cursor;
 	if (!!e) {
-		uint i = (e->index != ~0U) ? e->index + 1 : q->cursor_index;
+		uint i = (e->index != ~0U) ? (uint)qe_index(e) + 1 : q->cursor_index;
 		if (!(e = q_get(q, q_get_index(q, i))))
 			return -1;
 	}
@@ -408,6 +408,13 @@ static int q_remove_at(struct phi_queue *q, uint pos, uint n)
 	e->index = ~0;
 	dbglog("removed '%s' @%u", e->pub.conf.ifile.name, pos);
 	fflock_lock(&q->lock); // after q_ref() has read the item @pos, but before 'used++', the item must not be destroyed
+
+	if (q->cursor_index > 0
+		&& (pos < q->cursor_index
+			|| (pos == q->cursor_index
+				&& pos == q->index.len - 1)))
+		q->cursor_index--;
+
 	ffslice_rmT((ffslice*)&q->index, pos, 1, void*);
 	qe_unref(e);
 	fflock_unlock(&q->lock);
