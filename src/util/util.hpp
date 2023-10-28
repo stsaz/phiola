@@ -27,14 +27,14 @@ struct ffstrxx : ffstr {
 			n = _default;
 		return n;
 	}
-	u_short uint16(u_short _default) const {
-		u_short n;
+	ushort uint16(ushort _default) const {
+		ushort n;
 		if (!ffstr_toint(this, &n, FFS_INT16))
 			n = _default;
 		return n;
 	}
-	u_int uint32(u_int _default) const {
-		u_int n;
+	uint uint32(uint _default) const {
+		uint n;
 		if (!ffstr_toint(this, &n, FFS_INT32))
 			n = _default;
 		return n;

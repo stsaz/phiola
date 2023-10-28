@@ -92,9 +92,17 @@ static const struct ffarg list_create_args[] = {
 };
 #undef O
 
+static void list_create_free(struct list_create *lc)
+{
+	ffvec_free(&lc->include);
+	ffvec_free(&lc->exclude);
+	ffmem_free(lc);
+}
+
 static struct ffarg_ctx list_create_init(void *obj)
 {
 	x->cmd_data = ffmem_new(struct list_create);
+	x->cmd_free = (void(*)(void*))list_create_free;
 	struct ffarg_ctx ac = {
 		list_create_args, x->cmd_data
 	};

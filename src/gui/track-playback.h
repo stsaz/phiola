@@ -53,8 +53,8 @@ void gtrk_seek(struct gtrk *gt, uint pos_sec)
 	gt->t->audio.seek_req = 1;
 	gt->t->oaudio.clear = 1;
 
-	if (gt->t->adev_ctx)
-		gt->t->adev_clear(gt->t->adev_ctx);
+	if (gt->t->oaudio.adev_ctx)
+		gt->t->oaudio.adev_clear(gt->t->oaudio.adev_ctx);
 
 	dbglog1(gt->t, "seek: %U", gt->seek_msec);
 }

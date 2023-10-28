@@ -38,18 +38,18 @@ struct ffui_comboboxxx : ffui_combobox {
 };
 
 struct ffui_trackbarxx : ffui_trkbar {
-	void	set(u_int value) { ffui_post_trk_set(this, value); }
-	u_int	get() { return ffui_trk_val(this); }
+	void	set(uint value) { ffui_post_trk_set(this, value); }
+	uint	get() { return ffui_trk_val(this); }
 
-	void	range(u_int range) { ffui_post_trk_setrange(this, range); }
+	void	range(uint range) { ffui_post_trk_setrange(this, range); }
 };
 
 struct ffui_tabxx : ffui_tab {
 	void	add(const char *sz) { ffui_send_tab_ins(this, sz); }
-	void	del(u_int i) { ffui_tab_del(this, i); }
-	void	select(u_int i) { ffui_send_tab_setactive(this, i); }
-	u_int	changed() { return ffui_tab_changed_index(this); }
-	u_int	count() { return ffui_tab_count(this); }
+	void	del(uint i) { ffui_tab_del(this, i); }
+	void	select(uint i) { ffui_send_tab_setactive(this, i); }
+	uint	changed() { return ffui_tab_changed_index(this); }
+	uint	count() { return ffui_tab_count(this); }
 };
 
 struct ffui_statusbarxx : ffui_stbar {
@@ -63,8 +63,8 @@ struct ffui_viewitemxx : ffui_viewitem {
 struct ffui_viewcolxx {
 	ffui_viewcol vc;
 
-	u_int	width() { return ffui_viewcol_width(&vc); }
-	void	width(u_int val) { ffui_viewcol_setwidth(&vc, val); }
+	uint	width() { return ffui_viewcol_width(&vc); }
+	void	width(uint val) { ffui_viewcol_setwidth(&vc, val); }
 };
 
 struct ffui_viewxx : ffui_view {
@@ -79,8 +79,8 @@ struct ffui_viewxx : ffui_view {
 		ffui_view_settextstr(&vi, &text);
 		ffui_view_set(this, col, &vi);
 	}
-	void	update(u_int first, int delta) { ffui_post_view_setdata(this, first, delta); }
-	void	length(u_int n, bool redraw) { ffui_view_setcount(this, n, redraw); }
+	void	update(uint first, int delta) { ffui_post_view_setdata(this, first, delta); }
+	void	length(uint n, bool redraw) { ffui_view_setcount(this, n, redraw); }
 	void	clear() { ffui_post_view_clear(this); }
 	int		focused() { return ffui_view_focused(this); }
 
@@ -88,13 +88,13 @@ struct ffui_viewxx : ffui_view {
 	int		selected_first() { return ffui_view_selected_first(this); }
 
 	ffui_viewcolxx& column(int pos, ffui_viewcolxx *vc) { ffui_view_col(this, pos, &vc->vc); return *vc; }
-	void	column(u_int pos, ffui_viewcolxx &vc) { ffui_view_setcol(this, pos, &vc.vc); }
+	void	column(uint pos, ffui_viewcolxx &vc) { ffui_view_setcol(this, pos, &vc.vc); }
 
-	u_int	scroll_vert() { return ffui_send_view_scroll(this); }
-	void	scroll_vert(u_int val) { ffui_post_view_scroll_set(this, val); }
+	uint	scroll_vert() { return ffui_send_view_scroll(this); }
+	void	scroll_vert(uint val) { ffui_post_view_scroll_set(this, val); }
 
 #ifdef FF_LINUX
-	void	drag_drop_init(u_int action_id) { ffui_view_dragdrop(this, action_id); }
+	void	drag_drop_init(uint action_id) { ffui_view_dragdrop(this, action_id); }
 #endif
 };
 

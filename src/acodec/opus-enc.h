@@ -12,6 +12,8 @@ struct opus_enc {
 static void* opus_enc_create(phi_track *t)
 {
 	struct opus_enc *o = ffmem_new(struct opus_enc);
+	if (!phi_metaif)
+		phi_metaif = core->mod("format.meta");
 	return o;
 }
 

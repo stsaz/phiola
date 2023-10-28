@@ -102,13 +102,8 @@ static int cmd()
 {
 	char *cmd_line = ffsz_alloc_wtou(GetCommandLineW());
 	int r;
-
-	ffstr line = FFSTR_INITZ(cmd_line), arg;
-	_ffargs_next(&line, &arg); // skip exe name
-	char *cmd_line1 = line.ptr;
-
 	struct ffargs a = {};
-	if ((r = ffargs_process_line(&a, cmd_args, x, 0, cmd_line1)) < 0) {
+	if ((r = ffargs_process_line(&a, cmd_args, x, FFARGS_O_SKIP_FIRST, cmd_line)) < 0) {
 	}
 	ffmem_free(cmd_line);
 	return r;

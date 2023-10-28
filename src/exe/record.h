@@ -90,9 +90,8 @@ struct cmd_rec {
 	uint64	until;
 };
 
-static int rec_action()
+static int rec_action(struct cmd_rec *r)
 {
-	struct cmd_rec *r = x->cmd_data;
 	struct phi_track_conf c = {
 		.iaudio = {
 			.format = {
@@ -174,7 +173,7 @@ static int rec_check(struct cmd_rec *r)
 	ffpath_splitname_str(FFSTR_Z(r->output), &name, NULL);
 	x->stdout_busy = ffstr_eqz(&name, "@stdout");
 
-	x->action = rec_action;
+	x->action = (int(*)(void*))rec_action;
 	return 0;
 }
 
@@ -223,9 +222,8 @@ static const struct ffarg cmd_rec[] = {
 };
 #undef O
 
-static void cmd_rec_free()
+static void cmd_rec_free(struct cmd_rec *r)
 {
-	struct cmd_rec *r = x->cmd_data;
 	ffmem_free(r->audio_module);
 	ffmem_free(r);
 }
@@ -233,7 +231,7 @@ static void cmd_rec_free()
 static struct ffarg_ctx cmd_rec_init(void *obj)
 {
 	x->cmd_data = ffmem_new(struct cmd_rec);
-	x->cmd_free = cmd_rec_free;
+	x->cmd_free = (void(*)(void*))cmd_rec_free;
 	struct ffarg_ctx cx = {
 		cmd_rec, x->cmd_data
 	};

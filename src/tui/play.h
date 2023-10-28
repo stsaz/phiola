@@ -131,8 +131,8 @@ static void tuiplay_seek(tui_track *u, uint cmd, void *udata)
 	u->t->audio.seek_req = 1;
 	u->t->oaudio.clear = 1;
 
-	if (u->t->adev_ctx)
-		u->t->adev_clear(u->t->adev_ctx);
+	if (u->t->oaudio.adev_ctx)
+		u->t->oaudio.adev_clear(u->t->oaudio.adev_ctx);
 
 	dbglog(u->t, "seeking: %U", pos);
 	core->track->wake(u->t);

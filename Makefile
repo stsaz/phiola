@@ -6,7 +6,7 @@ FFOS := $(ROOT_DIR)/ffos
 FFBASE := $(ROOT_DIR)/ffbase
 APP_DIR := phiola-2
 
-include $(FFBASE)/test/makeconf
+include $(FFBASE)/conf.mk
 
 SUBMAKE := $(MAKE) -f $(firstword $(MAKEFILE_LIST))
 

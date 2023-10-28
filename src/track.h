@@ -202,6 +202,8 @@ struct phi_track {
 		struct {
 			struct phi_af format;
 			struct phi_af conv_format;
+			void *adev_ctx;
+			void (*adev_clear)(void *adev_ctx);
 
 			// for mp4.write
 			uint mp4_delay;
@@ -234,9 +236,6 @@ struct phi_track {
 		uint64 seek; // Seek to offset and reset. -1:unset
 		uint cant_seek :1;
 	} output;
-
-	void *adev_ctx;
-	void (*adev_clear)(void *adev_ctx);
 };
 
 static inline void phi_track_conf_assign(struct phi_track_conf *dst, const struct phi_track_conf *src)

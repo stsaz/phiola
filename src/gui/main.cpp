@@ -5,7 +5,6 @@
 #include <track.h>
 #include <util/util.h>
 #include <util/util.hpp>
-#include <afilter/pcm.h>
 
 #define VOLUME_MAX 125
 
@@ -23,6 +22,9 @@ struct gui_wmain {
 #endif
 	struct phi_queue_entry *qe_active;
 
+	char *vlist_col;
+	char *wnd_pos;
+	uint tvol_val;
 	uint ready;
 };
 
@@ -67,56 +69,45 @@ static const char list_colname[][10] = {
 	"", // H_FN
 };
 
-static int conf_tvol(void *o, uint n) {
-	gui_wmain *m = gg->wmain;
-	m->tvol.set(n);
-	return 0;
-}
-
-static int conf_vlist_col(void *o, ffstrxx v) {
-	gui_wmain *m = gg->wmain;
+static void conf_vlist_col(ffui_viewxx &v, ffstrxx val)
+{
 	ffui_viewcolxx vc = {};
-	for (uint i = 0;  i != _H_LAST;  i++) {
+	uint i = 0;
+	while (val.len) {
 		ffstrxx s;
-		v.split(' ', &s, &v);
+		val.split(' ', &s, &val);
 		uint width;
 		if (!s.matchf("%u", &width)) {
 			vc.width(width);
-			m->vlist.column(i, vc);
+			v.column(i, vc);
 		}
+		i++;
 	}
-	return 0;
 }
 
-static int conf_wnd_pos(void *o, ffstrxx s) {
-	gui_wmain *m = gg->wmain;
-	ffui_pos pos;
-	if (!s.matchf("%d %d %u %u", &pos.x, &pos.y, &pos.cx, &pos.cy))
-		m->wnd.place(pos);
-	return 0;
-}
-
+#define O(m)  (void*)FF_OFF(struct gui_wmain, m)
 const ffarg wmain_args[] = {
-	{ "tvol",		'u',	(void*)conf_tvol },
-	{ "vlist.col",	'S',	(void*)conf_vlist_col },
-	{ "wmain.pos",	'S',	(void*)conf_wnd_pos },
+	{ "tvol",		'u',	O(tvol_val) },
+	{ "vlist.col",	'=s',	O(vlist_col) },
+	{ "wmain.pos",	'=s',	O(wnd_pos) },
 	{}
 };
+#undef O
 
-void wmain_userconf_write(ffvec *buf)
+void wmain_userconf_write(ffconfw *cw)
 {
 	gui_wmain *m = gg->wmain;
-	ffui_pos pos = m->wnd.pos();
-	ffvec_addfmt(buf, "\twmain.pos \"%d %d %u %u\"\n", pos.x, pos.y, pos.cx, pos.cy);
-	ffvec_addfmt(buf, "\ttvol %u\n", m->tvol.get());
+	ffconfw_add2u(cw, "tvol", m->tvol.get());
 
-	ffvec_addsz(buf, "\tvlist.col \"");
+	ffvecxx v = {};
 	ffui_viewcolxx vc = {};
 	vc.width(0);
 	for (uint i = 0;  i != _H_LAST;  i++) {
-		ffvec_addfmt(buf, "%u ", m->vlist.column(i, &vc).width());
+		v.addf("%u ", m->vlist.column(i, &vc).width());
 	}
-	ffvec_addsz(buf, "\"\n");
+	ffconfw_add2s(cw, "vlist.col", v.str());
+
+	conf_wnd_pos_write(cw, "wmain.pos", &m->wnd);
 }
 
 /** Set status bar text */
@@ -439,11 +430,7 @@ static void vol_set(uint id)
 	m->tvol.set(v);
 
 apply:
-	if (v <= 100)
-		gd->gain_db = vol2db(v, 48);
-	else
-		gd->gain_db = vol2db_inc(v - 100, 25, 6);
-	gd->volume = v;
+	volume_set(v);
 	wmain_status("Volume: %.02FdB", gd->gain_db);
 	gui_core_task(ctl_volume);
 }
@@ -672,13 +659,24 @@ void wmain_init()
 void wmain_show()
 {
 	gui_wmain *m = gg->wmain;
-	m->wnd.show(1);
+
+	if (m->vlist_col)
+		conf_vlist_col(m->vlist, m->vlist_col);
+	ffmem_free(m->vlist_col);
+
+	if (m->wnd_pos)
+		conf_wnd_pos_read(&m->wnd, FFSTR_Z(m->wnd_pos));
+	ffmem_free(m->wnd_pos);
+
+	m->tvol.set(m->tvol_val);
 	m->tabs.add("Playlist 1");
+	m->wnd.show(1);
 	wmain_list_draw(gd->queue->count(gd->q_selected), 0);
 	drag_drop_init();
 
 	gd->queue->on_change(q_on_change);
 	gui_core_task(lists_load);
+	volume_set(m->tvol_val);
 
 	m->ready = 1;
 }

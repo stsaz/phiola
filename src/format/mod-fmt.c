@@ -8,7 +8,7 @@ const struct phi_core *core;
 #define warnlog(t, ...)  phi_warnlog(core, NULL, t, __VA_ARGS__)
 #define dbglog(t, ...)  phi_dbglog(core, NULL, t, __VA_ARGS__)
 
-static const void* fmt_mod_iface(const char *name);
+static const void* fmt_mod_iface_input(const char *name);
 
 #include <format/meta.h>
 #include <format/detector.h>
@@ -79,6 +79,33 @@ static const struct phi_filter phi_auto_write = {
 	phi_autow_open, NULL, (void*)phi_autow_process,
 	"auto-write"
 };
+
+static const void* fmt_mod_iface_input(const char *name)
+{
+	static const struct map_sz_vptr mods[] = {
+		{ "aac",	&phi_aac_adts_read },
+		{ "ape",	&phi_ape_read },
+		{ "avi",	&phi_avi_read },
+		{ "caf",	&phi_caf_read },
+		{ "cue",	&phi_cue_read },
+		{ "flac",	&phi_flac_read },
+		{ "m3u",	&phi_m3u_read },
+		{ "m3u8",	&phi_m3u_read },
+		{ "m4a",	&phi_mp4_read },
+		{ "mka",	&phi_mkv_read },
+		{ "mkv",	&phi_mkv_read },
+		{ "mp3",	&phi_mp3_read },
+		{ "mp4",	&phi_mp4_read },
+		{ "mpc",	&phi_mpc_read },
+		{ "ogg",	&phi_ogg_read },
+		{ "opus",	&phi_ogg_read },
+		{ "pls",	&phi_pls_read },
+		{ "wav",	&phi_wav_read },
+		{ "wv",		&phi_wv_read },
+		{}
+	};
+	return map_sz_vptr_find(mods, name);
+}
 
 static const void* fmt_mod_iface(const char *name)
 {

@@ -13,6 +13,8 @@ struct vorbis_enc {
 static void* vorbis_out_create(phi_track *t)
 {
 	struct vorbis_enc *v = ffmem_new(struct vorbis_enc);
+	if (!phi_metaif)
+		phi_metaif = core->mod("format.meta");
 	return v;
 }
 

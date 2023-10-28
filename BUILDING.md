@@ -1,5 +1,22 @@
 # phiola Build Instructions
 
+1. Install dependencies.
+2. Download code.
+3. Build.
+
+	Supported targets:
+
+	* Build on Linux
+	* Cross-Build on Linux for Debian-buster
+	* Cross-Build on Linux for Windows/AMD64
+	* Cross-Build on Linux for Android/ARM64
+
+	Targets that should work after minor tweaking:
+
+	* Build on Windows
+	* Build on FreeBSD & macOS
+
+
 ## Step 1. Install dependencies
 
 * Debian/Ubuntu
@@ -80,7 +97,7 @@ cd phiola
 > Note that openssl-3 must be built from source.
 
 ```sh
-cat >build.sh <<EOF
+cat >build_linux.sh <<EOF
 set -e
 cd /src/phiola
 make -j8 -C ../netmill/3pt openssl
@@ -90,11 +107,12 @@ make -j8
 EOF
 
 cat >builder_debian_buster.Dockerfile <<EOF
-FROM debian:buster-slim AS debian_buster_cxx_builder
+FROM debian:buster-slim AS cxx_debian_buster
 RUN apt update && \
- apt install -y make gcc g++
+ apt install -y \
+  gcc g++ make
 
-FROM debian_buster_cxx_builder
+FROM cxx_debian_buster
 RUN apt install -y \
  libasound2-dev libpulse-dev libjack-dev \
  libdbus-1-dev \
@@ -102,12 +120,14 @@ RUN apt install -y \
  zstd unzip cmake patch dos2unix curl
 EOF
 
-podman build -t phiola_builder_debian_buster -f builder_debian_buster.Dockerfile .
+podman build \
+ -t phiola_builder_debian_buster \
+ -f builder_debian_buster.Dockerfile .
 podman create -a -i -t \
  -v `pwd`/..:/src \
  --name phiola_build_debian_buster \
  phiola_builder_debian_buster \
- bash /src/phiola/build.sh
+ bash /src/phiola/build_linux.sh
 podman start -a -i phiola_build_debian_buster
 ```
 

@@ -82,9 +82,17 @@ static const struct ffarg list_sort_args[] = {
 };
 #undef O
 
+static void list_sort_free(struct list_sort *ls)
+{
+	ffvec_free(&ls->input);
+	ffvec_free(&ls->tasks);
+	ffmem_free(ls);
+}
+
 struct ffarg_ctx list_sort_init(void *obj)
 {
 	x->cmd_data = ffmem_new(struct list_sort);
+	x->cmd_free = (void(*)(void*))list_sort_free;
 	struct ffarg_ctx ac = {
 		list_sort_args, x->cmd_data
 	};

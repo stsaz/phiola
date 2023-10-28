@@ -98,8 +98,8 @@ fin:
 		, fmt.rate);
 
 	mod->usedby = a;
-	t->adev_ctx = a;
-	t->adev_clear = audio_clear;
+	t->oaudio.adev_ctx = a;
+	t->oaudio.adev_clear = audio_clear;
 
 	core->timer(t->worker, &mod->tmr, mod->buffer_length_msec / 2, audio_out_onplay, a);
 	return 0;

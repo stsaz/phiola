@@ -1,9 +1,11 @@
 # Base settings for Makefile-s
 
-include ../../ffbase/test/makeconf
+include ../../ffbase/conf.mk
 
 CFLAGS := -fpic -fvisibility=hidden
-CFLAGS += -O3
+ifneq "$(DEBUG)" "1"
+	CFLAGS += -O3
+endif
 CXXFLAGS := $(CFLAGS)
 
 LINKFLAGS = -fpic $(LINK_INSTALLNAME_LOADERPATH) -lm

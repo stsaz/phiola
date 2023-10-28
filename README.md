@@ -62,7 +62,7 @@ Windows:
 
 * Unpack the archive somewhere, e.g. to `C:\Program Files`
 * Add `C:\Program Files\phiola-2` to your `PATH` environment
-* Optionally, create a desktop shortcut to `phiola.exe gui`
+* Optionally, create a desktop shortcut to `phiola-gui.exe`
 
 Android:
 
@@ -85,6 +85,9 @@ phiola file.mp3 *.flac "My Music" http://server/music.m3u
 
 # Play all files within directory in random order and auto-skip the first 20 seconds from each track
 phiola "My Music" -random -seek 0:20
+
+# Play on Linux directly via ALSA (and not PulseAudio)
+phiola file.mp3 -audio alsa
 ```
 
 > While audio is playing, you can control phiola via keyboard, e.g. press `Right Arrow` to seek forward; press `Space` to pause/unpause the current track; `n` to start playing the next track; `q` to exit; `h` to see all supported TUI commands.
@@ -104,12 +107,23 @@ phiola record -meta "artist=Great Artist" -o audio.flac
 # Record to the automatically named output file
 phiola record -o @nowdate-@nowtime.flac
 
+# Record with a specific audio format
+phiola record -aformat int16 -rate 48000 -channels 2 -o audio.flac
+
 # Start recording, then stop recording from another process:
 #   Step 1: start recording and listen for system-wide commands
 phiola record -o audio.flac -remote
 #   Step 2: send 'stop' signal to the phiola instance that is recording audio
 phiola remote stop
+
+# Record and pass the audio through Dynamic Audio Normalizer filter
+phiola record -danorm 'frame 500 size 15' -o audio.flac
+
+# Record and pass the audio to another program
+phiola record -o @stdout.wav | your_program
 ```
+
+> Note: the output audio format is chosen automatically by the file extension you specify.
 
 Convert:
 
@@ -123,12 +137,17 @@ phiola convert *.wav -o .flac
 # Convert all .wav files inside a directory,
 #  preserving the original file names and file modification time
 phiola convert "My Recordings" -include "*.wav" -o @filepath/@filename.flac -preserve_date
+
+# Split (100% accurately) the tracks from a .cue file to multiple files
+phiola convert input.cue -o "@tracknumber. @artist - @title.flac"
 ```
+
+> Note: the output audio format is chosen automatically by the file extension you specify.
 
 Other use-cases:
 
 ```sh
-# List audio devices
+# List all available audio playback and recording devices
 phiola device list
 
 # Show meta info on all .wav files inside a directory
@@ -190,12 +209,12 @@ The best example how to use phiola software interface is to see the source code 
 
 * `src/phiola.h` describes all interfaces implemented either by phiola Core or dynamic modules
 * `android/phiola/src/main/java/com/github/stsaz/phiola/Phiola.java` is a Java interface
-* `src/track.h` is needed if you want to write your own module
+* `src/track.h` contains internal declarations for a phiola track, and you'll need it only if you want to write your own filter
 
 
 ## External Libraries
 
-phiola uses modified versions of these third party libraries: libALAC, libfdk-aac, libFLAC, libMAC, libmpg123, libmpc, libogg, libopus, libvorbisenc, libvorbis, libwavpack, libsoxr, libzstd, libDynamicAudioNormalizer.  And unmodified libraries: libssl & libcrypto.  Many thanks to their creators for the great work!!!  Please consider their licenses before commercial use.  See contents of `alib3/` for more info.
+phiola uses modified versions of these third party libraries: [libALAC](https://github.com/macosforge/alac), [libfdk-aac](https://github.com/mstorsjo/fdk-aac), [libFLAC](https://github.com/xiph/flac), libMAC, libmpg123, libmpc, libogg, libopus, libvorbisenc, libvorbis, libwavpack, libsoxr, [libzstd](https://github.com/facebook/zstd), [libDynamicAudioNormalizer](https://github.com/lordmulder/DynamicAudioNormalizer).  And unmodified libraries: libssl & libcrypto.  Many thanks to their creators for the great work!!!  Please consider their licenses before commercial use.  See contents of `alib3/` for more info.
 
 Additionally:
 

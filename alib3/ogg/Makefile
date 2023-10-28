@@ -6,9 +6,10 @@ VER := 1.3.3
 URL := http://downloads.xiph.org/releases/ogg/libogg-$(VER).tar.xz
 PKG := $(notdir $(URL))
 DIR := libogg-$(VER)
-LIB := libogg-phi.$(SO)
+LIB := libogg.a
 
 default: $(DIR)
+	cd $(DIR) && ./configure
 	$(MAKE) $(LIB)
 
 # download
@@ -21,7 +22,7 @@ $(DIR): $(PKG)
 	touch $(DIR)
 
 # build
-CFLAGS += -I.. -I$(DIR)/include \
+CFLAGS += -I$(DIR)/include \
 	-fvisibility=default
 
 SRC := $(DIR)/src/bitwise.c
@@ -31,7 +32,7 @@ OBJ := $(SRC:.c=.o)
 	$(C) $(CFLAGS) $< -o $@
 
 $(LIB): $(OBJ)
-	$(LINK) -shared $+ $(LINKFLAGS) -o $@
+	$(AR) rcs $@ $+
 
 clean:
 	$(RM) $(OBJ) $(DIR)

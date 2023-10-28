@@ -1,6 +1,7 @@
 
 // File
 	X(A_FILE_INFO),
+		X(A_INFO_EDIT),
 	X(A_FILE_SHOWDIR),
 	X(A_FILE_DEL),
 	X(A_QUIT),

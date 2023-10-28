@@ -3,6 +3,7 @@
 
 #include <FFOS/error.h>
 #include <phiola.h>
+#include <util/conf-write.h>
 #include <FFOS/thread.h>
 
 FF_EXTERN const phi_core *core;
@@ -40,9 +41,10 @@ FF_EXTERN void list_filter(ffstr filter);
 FF_EXTERN phi_queue_id list_id_visible();
 
 FF_EXTERN void ctl_play(uint i);
+FF_EXTERN void volume_set(uint vol);
 FF_EXTERN void ctl_volume();
 FF_EXTERN void ctl_action(uint id);
-FF_EXTERN void mod_userconf_write(ffvec *buf);
+FF_EXTERN void mod_userconf_write(ffconfw *cw);
 FF_EXTERN void userconf_save(ffstr data);
 FF_EXTERN void gui_stop();
 

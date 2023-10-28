@@ -185,10 +185,8 @@ static void conv_qu_add(struct cmd_conv *v, ffstr *fn)
 	x->queue->add(NULL, &qe);
 }
 
-static int conv_action()
+static int conv_action(struct cmd_conv *v)
 {
-	struct cmd_conv *v = x->cmd_data;
-
 	struct phi_queue_conf qc = {
 		.first_filter = &phi_guard,
 		.ui_module = "tui.play",
@@ -218,7 +216,7 @@ static int conv_prepare(struct cmd_conv *v)
 	ffpath_splitname_str(FFSTR_Z(v->output), &name, NULL);
 	x->stdout_busy = ffstr_eqz(&name, "@stdout");
 
-	x->action = conv_action;
+	x->action = (int(*)(void*))conv_action;
 	return 0;
 }
 
@@ -250,16 +248,17 @@ static const struct ffarg cmd_conv[] = {
 };
 #undef O
 
-static void cmd_conv_free()
+static void cmd_conv_free(struct cmd_conv *v)
 {
-	struct cmd_conv *v = x->cmd_data;
+	ffvec_free(&v->include);
+	ffvec_free(&v->exclude);
 	ffmem_free(v);
 }
 
 static struct ffarg_ctx cmd_conv_init(void *obj)
 {
 	x->cmd_data = ffmem_new(struct cmd_conv);
-	x->cmd_free = cmd_conv_free;
+	x->cmd_free = (void(*)(void*))cmd_conv_free;
 	struct ffarg_ctx cx = {
 		cmd_conv, x->cmd_data
 	};

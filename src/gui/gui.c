@@ -40,7 +40,19 @@ void gui_dragdrop(ffstr data)
 	ffstr_free(&data);
 }
 
+void conf_wnd_pos_read(ffui_wnd *w, ffstr val)
+{
+	ffui_pos pos;
+	if (!ffstr_matchfmt(&val, "%d %d %u %u", &pos.x, &pos.y, &pos.cx, &pos.cy))
+		ffui_wnd_setplacement(w, SW_SHOWNORMAL, &pos);
+}
+
 extern const struct ffarg guimod_args[];
+
+static struct ffarg_ctx winfo_args_f() {
+	struct ffarg_ctx ax = { winfo_args, gg->winfo };
+	return ax;
+}
 
 static struct ffarg_ctx wrecord_args_f() {
 	struct ffarg_ctx ax = { wrecord_args, gg->wrecord };
@@ -64,6 +76,7 @@ static struct ffarg_ctx guimod_args_f() {
 
 static const struct ffarg args[] = {
 	{ "convert",	'{',	wconvert_args_f },
+	{ "info",		'{',	winfo_args_f },
 	{ "main",		'{',	wmain_args_f },
 	{ "mod",		'{',	guimod_args_f },
 	{ "record",		'{',	wrecord_args_f },
@@ -90,25 +103,36 @@ end:
 
 static void gui_userconf_save()
 {
-	ffvec buf = {};
+	ffconfw cw;
+	uint flags = FFCONFW_FINDENT | FFCONFW_FKVTAB;
+#ifdef FF_WIN
+	flags |= FFCONFW_FCRLF;
+#endif
+	ffconfw_init(&cw, flags);
 
-	ffvec_addsz(&buf, "mod {\n");
-		mod_userconf_write(&buf);
-	ffvec_addsz(&buf, "}\n");
+	ffconfw_add2obj(&cw, "mod", 1);
+		mod_userconf_write(&cw);
+	ffconfw_add_obj(&cw, 0);
 
-	ffvec_addsz(&buf, "main {\n");
-		wmain_userconf_write(&buf);
-	ffvec_addsz(&buf, "}\n");
+	ffconfw_add2obj(&cw, "main", 1);
+		wmain_userconf_write(&cw);
+	ffconfw_add_obj(&cw, 0);
 
-	ffvec_addsz(&buf, "record {\n");
-		wrecord_userconf_write(&buf);
-	ffvec_addsz(&buf, "}\n");
+	ffconfw_add2obj(&cw, "record", 1);
+		wrecord_userconf_write(&cw);
+	ffconfw_add_obj(&cw, 0);
 
-	ffvec_addsz(&buf, "convert {\n");
-		wconvert_userconf_write(&buf);
-	ffvec_addsz(&buf, "}\n");
+	ffconfw_add2obj(&cw, "convert", 1);
+		wconvert_userconf_write(&cw);
+	ffconfw_add_obj(&cw, 0);
 
-	gui_core_task_data(userconf_save, *(ffstr*)&buf);
+	ffconfw_add2obj(&cw, "info", 1);
+		winfo_userconf_write(&cw);
+	ffconfw_add_obj(&cw, 0);
+
+	ffconfw_fin(&cw);
+
+	gui_core_task_data(userconf_save, *(ffstr*)&cw.buf);
 }
 
 extern const ffui_ldr_ctl
@@ -149,7 +173,7 @@ static void* gui_getctl(void *udata, const ffstr *name)
 
 static int gui_getcmd(void *udata, const ffstr *name)
 {
-	static const char action_str[][20] = {
+	static const char action_str[][24] = {
 		#define X(id)  #id
 		#include "actions.h"
 		#undef X

@@ -8,6 +8,7 @@ ffconf_obj_fin
 
 #pragma once
 #include <ffbase/conf.h>
+#include <ffbase/vector.h>
 
 struct ffconf_obj {
 	struct ffconf lt;

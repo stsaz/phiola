@@ -22,14 +22,13 @@ $(DIR): $(PKG)
 
 # build
 CFLAGS += \
-	-I$(DIR)/lib -I$(DIR)/include -I.. \
+	-I$(DIR)/lib -I$(DIR)/include -I../ogg/libogg-1.3.3/include \
 	-DUSE_MEMORY_H -DVORB_EXP
 ifeq ($(OS),linux)
 	CFLAGS += -DHAVE_ALLOCA_H=1 -ffast-math
 else ifeq ($(OS),freebsd)
 	CFLAGS += -ffast-math
 endif
-LINKFLAGS += libogg-phi.$(SO)
 
 SRC := \
 	$(DIR)/lib/mdct.c \
@@ -60,8 +59,12 @@ OBJ_ENC := vorbisenc-ff.o $(SRC_ENC:.c=.o)
 %.o: %.c
 	$(C) $(CFLAGS) $< -o $@
 
+_:=
+ifeq "$(OS)" "linux"
+	LINKFLAGS_VORBIS := -Wl,--exclude-libs,ALL
+endif
 libvorbis-phi.$(SO): $(OBJ)
-	$(LINK) -shared $+ $(LINKFLAGS) -o $@
+	$(LINK) -shared $+ $(LINKFLAGS) $(LINKFLAGS_VORBIS) ../ogg/libogg.a -o $@
 
 libvorbisenc-phi.$(SO): $(OBJ_ENC) libvorbis-phi.$(SO)
 	$(LINK) -shared $(OBJ_ENC) $(LINKFLAGS) -L. -lvorbis-phi -o $@

@@ -14,8 +14,9 @@ It must be updated when incompatible changes are made to this file,
 The core will refuse to load modules built for any other core version. */
 #define PHI_VERSION_CORE  20005
 
-typedef ffuint uint;
-typedef ffushort ushort;
+typedef unsigned int uint;
+typedef unsigned short ushort;
+typedef unsigned char u_char;
 
 struct phi_track_if;
 typedef struct phi_filter phi_filter;

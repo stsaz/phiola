@@ -51,8 +51,8 @@ static int coraud_create(struct coraud_out *c, phi_track *t)
 		, "opened", a->buffer_length_msec
 		, fmt.rate);
 
-	t->adev_ctx = a;
-	t->adev_clear = audio_clear;
+	t->oaudio.adev_ctx = a;
+	t->oaudio.adev_clear = audio_clear;
 
 	core->timer(t->worker, &c->tmr, a->buffer_length_msec / 2, audio_out_onplay, a);
 	return PHI_DONE;

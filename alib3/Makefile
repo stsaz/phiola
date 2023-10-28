@@ -12,7 +12,6 @@ LIBS := \
 	MAC \
 	mpg123 \
 	musepack \
-	ogg \
 	opus \
 	soxr \
 	vorbis \
@@ -24,12 +23,12 @@ default:
 
 build: $(addprefix $(TGT_DIR)/lib,$(addsuffix -phi.$(SO),$(LIBS)))
 
-$(TGT_DIR)/lib%-phi.$(SO): %
-	$(MAKE) -I.. -C $<
-	cp $</*.$(SO) $(TGT_DIR)
+ogg/libogg.a:
+	$(MAKE) -I.. -C ogg
 
-$(TGT_DIR)/libvorbis-phi.$(SO): vorbis $(TGT_DIR)/libogg-phi.$(SO)
-	cp $(TGT_DIR)/libogg-phi.$(SO) $<
+$(TGT_DIR)/libvorbis-phi.$(SO): ogg/libogg.a
+
+$(TGT_DIR)/lib%-phi.$(SO): %
 	$(MAKE) -I.. -C $<
 	cp $</*.$(SO) $(TGT_DIR)
 

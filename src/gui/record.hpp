@@ -11,6 +11,7 @@ struct gui_wrecord {
 	ffstrxx conf_dir, conf_name, conf_ext;
 	uint conf_aacq, conf_vorbisq, conf_opusq;
 	uint conf_until;
+	char *wnd_pos;
 
 	uint initialized;
 };
@@ -38,6 +39,7 @@ const ffarg wrecord_args[] = {
 	{ "name",	'=S',	O(conf_name) },
 	{ "opusq",	'u',	O(conf_opusq) },
 	{ "vorbisq",'u',	O(conf_vorbisq) },
+	{ "wrecord.pos",	'=s',	O(wnd_pos) },
 	{}
 };
 #undef O
@@ -79,22 +81,27 @@ static void wrecord_ui_to_conf()
 
 	c->conf_until = wrec_time_value(ffvecxx(c->euntil.text()).str());
 
-	c->conf_aacq = ffvecxx(c->eaacq.text()).str().uint16(0);
+	c->conf_aacq = ffvecxx(c->eaacq.text()).str().uint32(0);
 	c->conf_vorbisq = wrec_vorbisq_conf(ffvecxx(c->evorbisq.text()).str());
-	c->conf_opusq = ffvecxx(c->eopusq.text()).str().uint16(0);
+	c->conf_opusq = ffvecxx(c->eopusq.text()).str().uint32(0);
 }
 
-void wrecord_userconf_write(ffvec *buf)
+void wrecord_userconf_write(ffconfw *cw)
 {
 	gui_wrecord *w = gg->wrecord;
 	if (w->initialized)
 		wrecord_ui_to_conf();
-	ffvec_addfmt(buf, "\tdir \"%S\"\n", &w->conf_dir);
-	ffvec_addfmt(buf, "\tname \"%S\"\n", &w->conf_name);
-	ffvec_addfmt(buf, "\text \"%S\"\n", &w->conf_ext);
-	ffvec_addfmt(buf, "\taacq %u\n", w->conf_aacq);
-	ffvec_addfmt(buf, "\tvorbisq %u\n", w->conf_vorbisq);
-	ffvec_addfmt(buf, "\topusq %u\n", w->conf_opusq);
+	ffconfw_add2s(cw, "dir", w->conf_dir);
+	ffconfw_add2s(cw, "name", w->conf_name);
+	ffconfw_add2s(cw, "ext", w->conf_ext);
+	ffconfw_add2u(cw, "aacq", w->conf_aacq);
+	ffconfw_add2u(cw, "vorbisq", w->conf_vorbisq);
+	ffconfw_add2u(cw, "opusq", w->conf_opusq);
+
+	if (w->initialized)
+		conf_wnd_pos_write(cw, "wrecord.pos", &w->wnd);
+	else if (w->wnd_pos)
+		ffconfw_add2z(cw, "wrecord.pos", w->wnd_pos);
 }
 
 static void wrecord_ui_from_conf()
@@ -198,6 +205,11 @@ void wrecord_show(uint show)
 
 	if (!w->initialized) {
 		w->initialized = 1;
+
+		if (w->wnd_pos)
+			conf_wnd_pos_read(&w->wnd, FFSTR_Z(w->wnd_pos));
+		ffmem_free(w->wnd_pos);
+		
 		wrecord_ui_from_conf();
 	}
 

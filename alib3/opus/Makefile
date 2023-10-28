@@ -10,6 +10,8 @@ LIB := libopus-phi.$(SO)
 
 ifeq "$(CPU)" "arm64"
 	CONFIGURE_FLAGS := --host=aarch64
+else ifeq "$(CPU)" "arm"
+	CONFIGURE_FLAGS := --host=armv7
 endif
 ifeq "$(SYS)" "android"
 	CONFIGURE_ENV := CC="$(C_DIR)/clang" CFLAGS="$(A_CFLAGS)"
@@ -182,6 +184,8 @@ OPUS_SOURCES_FLOAT := \
 
 CPUFAM := x86
 ifeq "$(CPU)" "arm64"
+	CPUFAM := arm
+else ifeq "$(CPU)" "arm"
 	CPUFAM := arm
 endif
 

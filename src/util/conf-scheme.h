@@ -466,9 +466,8 @@ static inline int ffconf_parse_object(const ffconf_arg *args, void *obj, ffstr *
 	int r, r2 = 0;
 	struct ffconf_obj c = {};
 
-	ffconf_scheme cs = {
-		.flags = scheme_flags,
-	};
+	ffconf_scheme cs = {};
+	cs.flags = scheme_flags;
 	ffconf_scheme_addctx(&cs, args, obj);
 
 	ffstr val = {};

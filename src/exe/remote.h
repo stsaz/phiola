@@ -39,9 +39,8 @@ static int remote_cmd(struct cmd_remote *r, ffstr s)
 	return 0;
 }
 
-static int remote_action()
+static int remote_action(struct cmd_remote *r)
 {
-	struct cmd_remote *r = x->cmd_data;
 	const phi_remote_cl_if *rcl = x->core->mod("remote.client");
 	if (rcl->cmd(NULL, *(ffstr*)&r->cmd))
 		return 1;
@@ -53,7 +52,7 @@ static int remote_action()
 
 static int remote_fin(struct cmd_remote *r)
 {
-	x->action = remote_action;
+	x->action = (int(*)(void*))remote_action;
 	return 0;
 }
 
@@ -65,9 +64,16 @@ static const struct ffarg cmd_remote[] = {
 };
 #undef O
 
+static void cmd_remote_free(struct cmd_remote *r)
+{
+	ffvec_free(&r->cmd);
+	ffmem_free(r);
+}
+
 struct ffarg_ctx cmd_remote_init(void *obj)
 {
 	x->cmd_data = ffmem_new(struct cmd_remote);
+	x->cmd_free = (void(*)(void*))cmd_remote_free;
 	struct ffarg_ctx cx = {
 		cmd_remote, x->cmd_data
 	};

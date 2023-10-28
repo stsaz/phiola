@@ -10,6 +10,7 @@ struct gui_wconvert {
 	ffui_buttonxx		bstart;
 
 	ffstrxx conf_dir, conf_name, conf_ext;
+	char *wnd_pos;
 	uint conf_copy;
 	uint conf_aacq, conf_vorbisq, conf_opusq;
 	uint initialized :1;
@@ -41,6 +42,7 @@ const ffarg wconvert_args[] = {
 	{ "name",	'=S',	O(conf_name) },
 	{ "opusq",	'u',	O(conf_opusq) },
 	{ "vorbisq",'u',	O(conf_vorbisq) },
+	{ "wconvert.pos",	'=s',	O(wnd_pos) },
 	{}
 };
 #undef O
@@ -69,23 +71,28 @@ static void wconvert_ui_to_conf()
 
 	c->conf_copy = c->cbcopy.checked();
 
-	c->conf_aacq = ffvecxx(c->eaacq.text()).str().uint16(0);
+	c->conf_aacq = ffvecxx(c->eaacq.text()).str().uint32(0);
 	c->conf_vorbisq = vorbisq_conf(ffvecxx(c->evorbisq.text()).str());
-	c->conf_opusq = ffvecxx(c->eopusq.text()).str().uint16(0);
+	c->conf_opusq = ffvecxx(c->eopusq.text()).str().uint32(0);
 }
 
-void wconvert_userconf_write(ffvec *buf)
+void wconvert_userconf_write(ffconfw *cw)
 {
 	gui_wconvert *c = gg->wconvert;
 	if (c->initialized)
 		wconvert_ui_to_conf();
-	ffvec_addfmt(buf, "\tdir \"%S\"\n", &c->conf_dir);
-	ffvec_addfmt(buf, "\tname \"%S\"\n", &c->conf_name);
-	ffvec_addfmt(buf, "\text \"%S\"\n", &c->conf_ext);
-	ffvec_addfmt(buf, "\tcopy %u\n", c->conf_copy);
-	ffvec_addfmt(buf, "\taacq %u\n", c->conf_aacq);
-	ffvec_addfmt(buf, "\tvorbisq %u\n", c->conf_vorbisq);
-	ffvec_addfmt(buf, "\topusq %u\n", c->conf_opusq);
+	ffconfw_add2s(cw, "dir", c->conf_dir);
+	ffconfw_add2s(cw, "name", c->conf_name);
+	ffconfw_add2s(cw, "ext", c->conf_ext);
+	ffconfw_add2u(cw, "copy", c->conf_copy);
+	ffconfw_add2u(cw, "aacq", c->conf_aacq);
+	ffconfw_add2u(cw, "vorbisq", c->conf_vorbisq);
+	ffconfw_add2u(cw, "opusq", c->conf_opusq);
+
+	if (c->initialized)
+		conf_wnd_pos_write(cw, "wconvert.pos", &c->wnd);
+	else if (c->wnd_pos)
+		ffconfw_add2z(cw, "wconvert.pos", c->wnd_pos);
 }
 
 static void wconvert_ui_from_conf()
@@ -211,6 +218,11 @@ void wconvert_show(uint show, ffslice items)
 
 	if (!c->initialized) {
 		c->initialized = 1;
+
+		if (c->wnd_pos)
+			conf_wnd_pos_read(&c->wnd, FFSTR_Z(c->wnd_pos));
+		ffmem_free(c->wnd_pos);
+
 		wconvert_ui_from_conf();
 	}
 

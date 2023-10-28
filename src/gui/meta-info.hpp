@@ -4,6 +4,9 @@
 struct gui_winfo {
 	ffui_windowxx wnd;
 	ffui_viewxx vinfo;
+
+	char *wnd_pos;
+	uint initialized :1;
 };
 
 FF_EXTERN const ffui_ldr_ctl winfo_ctls[] = {
@@ -11,6 +14,22 @@ FF_EXTERN const ffui_ldr_ctl winfo_ctls[] = {
 	FFUI_LDR_CTL(gui_winfo, vinfo),
 	FFUI_LDR_CTL_END
 };
+
+#define O(m)  (void*)FF_OFF(gui_winfo, m)
+const ffarg winfo_args[] = {
+	{ "winfo.pos",	'=s',	O(wnd_pos) },
+	{}
+};
+#undef O
+
+void winfo_userconf_write(ffconfw *cw)
+{
+	gui_winfo *w = gg->winfo;
+	if (w->initialized)
+		conf_wnd_pos_write(cw, "winfo.pos", &w->wnd);
+	else if (w->wnd_pos)
+		ffconfw_add2z(cw, "winfo.pos", w->wnd_pos);
+}
 
 static void winfo_addpair(ffstrxx name, ffstrxx val)
 {
@@ -57,6 +76,20 @@ static void winfo_display(struct phi_queue_entry *qe)
 	}
 }
 
+static void winfo_edit()
+{
+#ifdef FF_WIN
+	gui_winfo *w = gg->winfo;
+	int i, isub;
+	ffui_point pt;
+	ffui_cur_pos(&pt);
+	if (-1 == (i = ffui_view_hittest(&w->vinfo, &pt, &isub))
+		|| isub != 1)
+		return;
+	ffui_view_edit(&w->vinfo, i, 1);
+#endif
+}
+
 void winfo_show(uint show, uint idx)
 {
 	gui_winfo *w = gg->winfo;
@@ -69,6 +102,14 @@ void winfo_show(uint show, uint idx)
 	struct phi_queue_entry *qe = gd->queue->ref(list_id_visible(), idx);
 	if (qe == NULL) return;
 
+	if (!w->initialized) {
+		w->initialized = 1;
+
+		if (w->wnd_pos)
+			conf_wnd_pos_read(&w->wnd, FFSTR_Z(w->wnd_pos));
+		ffmem_free(w->wnd_pos);
+	}
+
 	w->wnd.title(qe->conf.ifile.name);
 	winfo_display(qe);
 	gd->queue->unref(qe);
@@ -78,6 +119,10 @@ void winfo_show(uint show, uint idx)
 
 static void winfo_action(ffui_wnd *wnd, int id)
 {
+	switch (id) {
+	case A_INFO_EDIT:
+		winfo_edit();  break;
+	}
 }
 
 void winfo_init()

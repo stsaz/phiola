@@ -69,8 +69,9 @@ static inline void zzlog_printv(struct zzlog *l, ffuint flags, const char *ctx, 
 	r += r2;
 
 	if (flags & ZZLOG_SYS_ERROR) {
+		int e = fferr_last();
 		r += ffs_format_r0(&d[r], cap - r, ": (%u) %s"
-			, fferr_last(), fferr_strptr(fferr_last()));
+			, e, fferr_strptr(e));
 	}
 
 	r += _ffs_copyz(&d[r], cap - r, color_end);

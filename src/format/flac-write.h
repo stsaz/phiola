@@ -142,7 +142,7 @@ static int flac_out_encode(void *ctx, phi_track *t)
 		}
 
 		ffuint64 total_samples = 0;
-		if (t->audio.total != ~0ULL && !t->output.cant_seek)
+		if (t->audio.total != ~0ULL && t->audio.total != 0 && !t->output.cant_seek)
 			total_samples = (t->audio.total - t->audio.pos) * t->oaudio.format.rate / t->audio.format.rate;
 
 		struct flac_info *info = (void*)t->data_in.ptr;

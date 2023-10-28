@@ -18,12 +18,14 @@
 struct gui_wmain;
 FF_EXTERN void wmain_init();
 FF_EXTERN void wmain_show();
-FF_EXTERN void wmain_userconf_write(ffvec *buf);
+FF_EXTERN void wmain_userconf_write(ffconfw *cw);
 FF_EXTERN const struct ffarg wmain_args[];
 
 struct gui_winfo;
 FF_EXTERN void winfo_init();
 FF_EXTERN void winfo_show(uint show, uint idx);
+FF_EXTERN void winfo_userconf_write(ffconfw *cw);
+FF_EXTERN const struct ffarg winfo_args[];
 
 struct gui_wgoto;
 FF_EXTERN void wgoto_init();
@@ -39,14 +41,14 @@ FF_EXTERN void wlistfilter_show(uint show);
 FF_EXTERN void wrecord_init();
 FF_EXTERN void wrecord_show(uint show);
 FF_EXTERN void wrecord_start_stop();
-FF_EXTERN void wrecord_userconf_write(ffvec *buf);
+FF_EXTERN void wrecord_userconf_write(ffconfw *cw);
 FF_EXTERN const struct ffarg wrecord_args[];
 
 struct gui_wconvert;
 FF_EXTERN void wconvert_init();
 FF_EXTERN void wconvert_show(uint show, ffslice items);
 FF_EXTERN void wconvert_set(int id, uint pos);
-FF_EXTERN void wconvert_userconf_write(ffvec *buf);
+FF_EXTERN void wconvert_userconf_write(ffconfw *cw);
 FF_EXTERN const struct ffarg wconvert_args[];
 
 struct gui_wabout;
@@ -73,6 +75,13 @@ struct gui {
 };
 FF_EXTERN struct gui *gg;
 
+FF_EXTERN void conf_wnd_pos_read(ffui_wnd *w, ffstr val);
+static inline void conf_wnd_pos_write(ffconfw *cw, const char *name, ffui_wnd *w)
+{
+	ffui_pos pos;
+	ffui_wnd_placement(w, &pos);
+	ffconfw_addf(cw, "%s \"%d %d %u %u\"", name, pos.x, pos.y, pos.cx, pos.cy);
+}
 FF_EXTERN void theme_switch();
 FF_EXTERN void gui_dragdrop(ffstr data);
 FF_EXTERN void file_del(ffslice indexes);

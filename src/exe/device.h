@@ -74,9 +74,8 @@ static const void* dev_find_mod()
 	return NULL;
 }
 
-static int dev_list_action()
+static int dev_list_action(struct cmd_dev_list *l)
 {
-	struct cmd_dev_list *l = x->cmd_data;
 	char sbuf[1000];
 	ffvec buf = {};
 
@@ -111,7 +110,7 @@ static int dev_list_action()
 
 static int dev_list_prepare()
 {
-	x->action = dev_list_action;
+	x->action = (int(*)(void*))dev_list_action;
 	return 0;
 }
 
@@ -125,9 +124,15 @@ static const struct ffarg cmd_dev_list[] = {
 };
 #undef O
 
+static void cmd_dev_list_free(struct cmd_dev_list *l)
+{
+	ffmem_free(l);
+}
+
 static struct ffarg_ctx cmd_dev_list_init()
 {
 	x->cmd_data = ffmem_new(struct cmd_dev_list);
+	x->cmd_free = (void(*)(void*))cmd_dev_list_free;
 	struct ffarg_ctx cx = {
 		cmd_dev_list, x->cmd_data
 	};

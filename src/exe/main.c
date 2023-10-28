@@ -23,6 +23,7 @@ struct exe {
 	fftime time_last;
 	char fn[4*1024];
 	ffstr root_dir;
+	char *cmd_line;
 
 	ffbyte debug;
 	ffbyte verbose;
@@ -34,8 +35,8 @@ struct exe {
 	ffstr codepage;
 	struct ffargs cmd;
 	void *cmd_data;
-	int (*action)();
-	void (*cmd_free)();
+	int (*action)(void*);
+	void (*cmd_free)(void*);
 
 	char *dump_file_dir;
 	struct crash_info ci;
@@ -285,15 +286,22 @@ static void signals()
 
 static int jobs()
 {
-	return x->action();
+	return x->action(x->cmd_data);
 }
 
 static void cleanup()
 {
-	ffmem_free(x->dump_file_dir);
-	phi_core_destroy();
+#ifdef FF_DEBUG
 	if (x->cmd_free)
-		x->cmd_free();
+		x->cmd_free(x->cmd_data);
+#endif
+	phi_core_destroy();
+#ifdef FF_DEBUG
+	ffmem_free(x->dump_file_dir);
+	ffmem_free(x->cmd_line);
+	ffmem_free((char*)x->ci.full_name);
+	ffmem_free(x);
+#endif
 }
 
 int main(int argc, char **argv, char **env)
@@ -314,6 +322,7 @@ int main(int argc, char **argv, char **env)
 
 end:
 	dbglog("exit code: %d", x->exit_code);
+	int ec = x->exit_code;
 	cleanup();
-	return x->exit_code;
+	return ec;
 }

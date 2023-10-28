@@ -52,7 +52,7 @@ _EXPORT int vorbis_decode(vorbis_ctx *v, ogg_packet *pkt, const float ***pcm);
 typedef struct vorbis_encode_params {
 	unsigned int channels;
 	unsigned int rate;
-	float quality;
+	float quality; // -0.1 .. 1.0
 } vorbis_encode_params;
 
 /** Initialize encoder. */

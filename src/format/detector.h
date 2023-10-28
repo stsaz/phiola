@@ -161,7 +161,9 @@ static void* fdetcr_open(phi_track *t)
 		dbglog(t, "detected format: %S", &ext);
 	}
 
-	const void *f = fmt_mod_iface(ext.ptr);
+	const void *f = NULL;
+	if (ext.len)
+		f = fmt_mod_iface_input(ext.ptr);
 	if (f == NULL) {
 		errlog(t, "%s: file format not supported", fn);
 		t->error = PHI_E_UNKIFMT;

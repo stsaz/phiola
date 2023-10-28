@@ -59,6 +59,7 @@ struct core_mod {
 struct core_ctx {
 	fftime_zone tz;
 	struct wrk_ctx wx;
+	fflock mods_lock;
 	ffvec mods; // struct core_mod[]
 #ifdef FF_WIN
 	woeh *woeh_obj;
@@ -125,11 +126,11 @@ static void mod_destroy(struct core_mod *m)
 	if (m == NULL) return;
 
 	if (m->mod != NULL && m->mod->close != NULL) {
-		dbglog("%s: closing module", m->name);
+		dbglog("'%s': closing module", m->name);
 		m->mod->close();
 	}
 	if (m->dl != FFDL_NULL) {
-		dbglog("%s: ffdl_close", m->name);
+		dbglog("'%s': ffdl_close", m->name);
 		ffdl_close(m->dl);
 	}
 	ffmem_free(m->name);
@@ -203,6 +204,7 @@ static const void* core_mod(const char *name)
 {
 	const void *mi = NULL;
 	struct core_mod *m = NULL;
+	int locked = 0;
 
 	ffstr s = FFSTR_INITZ(name), file, iface;
 	ffstr_splitby(&s, '.', &file, &iface);
@@ -217,6 +219,8 @@ static const void* core_mod(const char *name)
 		return mi;
 	}
 
+	fflock_lock(&cc->mods_lock);
+	locked = 1;
 	if (NULL == (m = mod_find(file)))
 		m = mod_create(file);
 
@@ -224,6 +228,8 @@ static const void* core_mod(const char *name)
 		if (FFDL_NULL == (m->dl = mod_load(m, file)))
 			goto end;
 	}
+	fflock_unlock(&cc->mods_lock);
+	locked = 0;
 
 	if (!iface.len)
 		goto end;
@@ -234,6 +240,8 @@ static const void* core_mod(const char *name)
 	}
 
 end:
+	if (locked)
+		fflock_unlock(&cc->mods_lock);
 	return mi;
 }
 

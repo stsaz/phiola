@@ -97,10 +97,8 @@ static void info_qu_add(struct cmd_info *p, ffstr *fn)
 	x->queue->add(NULL, &qe);
 }
 
-static int info_action()
+static int info_action(struct cmd_info *p)
 {
-	struct cmd_info *p = x->cmd_data;
-
 	struct phi_queue_conf qc = {
 		.first_filter = &phi_guard,
 		.ui_module = "tui.play",
@@ -121,7 +119,7 @@ static int info_check(struct cmd_info *p)
 	if (!p->input.len)
 		return _ffargs_err(&x->cmd, 1, "please specify input file");
 
-	x->action = info_action;
+	x->action = (int(*)(void*))info_action;
 	return 0;
 }
 
@@ -142,9 +140,17 @@ static const struct ffarg cmd_info[] = {
 };
 #undef O
 
+static void cmd_info_free(struct cmd_info *p)
+{
+	ffvec_free(&p->include);
+	ffvec_free(&p->exclude);
+	ffmem_free(p);
+}
+
 static struct ffarg_ctx cmd_info_init(void *obj)
 {
 	x->cmd_data = ffmem_new(struct cmd_info);
+	x->cmd_free = (void(*)(void*))cmd_info_free;
 	struct ffarg_ctx cx = {
 		cmd_info, x->cmd_data
 	};

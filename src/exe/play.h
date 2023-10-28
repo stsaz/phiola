@@ -116,10 +116,8 @@ static void play_qu_add(struct cmd_play *p, ffstr *fn)
 	x->queue->add(NULL, &qe);
 }
 
-static int play_action()
+static int play_action(struct cmd_play *p)
 {
-	struct cmd_play *p = x->cmd_data;
-
 	if (p->audio.len)
 		p->audio_module = ffsz_allocfmt("%S.play", &p->audio);
 
@@ -152,7 +150,7 @@ static int play_check(struct cmd_play *p)
 	if (!p->input.len)
 		return _ffargs_err(&x->cmd, 1, "please specify input file");
 
-	x->action = play_action;
+	x->action = (int(*)(void*))play_action;
 	return 0;
 }
 
@@ -178,9 +176,10 @@ static const struct ffarg cmd_play[] = {
 };
 #undef O
 
-static void cmd_play_free()
+static void cmd_play_free(struct cmd_play *p)
 {
-	struct cmd_play *p = x->cmd_data;
+	ffvec_free(&p->include);
+	ffvec_free(&p->exclude);
 	ffmem_free(p->audio_module);
 	ffmem_free(p);
 }
@@ -188,7 +187,7 @@ static void cmd_play_free()
 static struct ffarg_ctx cmd_play_init(void *obj)
 {
 	x->cmd_data = ffmem_new(struct cmd_play);
-	x->cmd_free = cmd_play_free;
+	x->cmd_free = (void(*)(void*))cmd_play_free;
 	struct ffarg_ctx cx = {
 		cmd_play, x->cmd_data
 	};

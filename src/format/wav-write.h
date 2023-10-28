@@ -57,7 +57,7 @@ static int wavw_process(struct wav_w *w, phi_track *t)
 			.sample_rate = of->rate,
 			.channels = of->channels,
 		};
-		if (t->audio.total != ~0ULL)
+		if (t->audio.total != ~0ULL && t->audio.total != 0)
 			info.total_samples = ((t->audio.total - t->audio.pos) * of->rate / t->audio.format.rate);
 		wavwrite_create(&w->wav, &info);
 		w->samp_size = pcm_size1(of);

@@ -24,10 +24,8 @@ static int gui_input(struct cmd_gui *g, ffstr s)
 	return 0;
 }
 
-static int gui_action()
+static int gui_action(struct cmd_gui *g)
 {
-	struct cmd_gui *g = x->cmd_data;
-
 	struct phi_queue_conf qc = {
 		.first_filter = &phi_guard_gui,
 		.ui_module = "gui.track",
@@ -50,7 +48,7 @@ static int gui_action()
 
 static int gui_open()
 {
-	x->action = gui_action;
+	x->action = (int(*)(void*))gui_action;
 	return 0;
 }
 
@@ -60,9 +58,15 @@ static const struct ffarg cmd_gui[] = {
 	{ "",			0,		gui_open },
 };
 
+static void cmd_gui_free(struct cmd_gui *g)
+{
+	ffmem_free(g);
+}
+
 static struct ffarg_ctx cmd_gui_init(void *obj)
 {
 	x->cmd_data = ffmem_new(struct cmd_gui);
+	x->cmd_free = (void(*)(void*))cmd_gui_free;
 	struct ffarg_ctx cx = {
 		cmd_gui, x->cmd_data
 	};

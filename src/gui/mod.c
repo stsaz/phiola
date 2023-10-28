@@ -9,6 +9,7 @@
 #include <gui/mod.h>
 #include <gui/track-playback.h>
 #include <gui/track-convert.h>
+#include <afilter/pcm.h>
 #include <FFOS/dir.h>
 #include <FFOS/ffos-extern.h>
 #include <ffbase/args.h>
@@ -34,9 +35,11 @@ const struct ffarg guimod_args[] = {
 };
 #undef O
 
-void mod_userconf_write(ffvec *buf)
+void mod_userconf_write(ffconfw *cw)
 {
-	ffvec_addfmt(buf, "\tplay.cursor %u\n", gd->cursor);
+	ffconfw_add2u(cw, "play.cursor", gd->cursor);
+	if (gd->theme)
+		ffconfw_add2z(cw, "theme", gd->theme);
 }
 
 #ifdef FF_LINUX
@@ -271,6 +274,15 @@ void ctl_play(uint i)
 	if (!gd->q_filtered)
 		gd->queue->qselect(gd->q_selected);
 	gd->queue->play(NULL, gd->queue->at(list_id_visible(), i));
+}
+
+void volume_set(uint vol)
+{
+	if (vol <= 100)
+		gd->gain_db = vol2db(vol, 48);
+	else
+		gd->gain_db = vol2db_inc(vol - 100, 25, 6);
+	gd->volume = vol;
 }
 
 void ctl_volume()

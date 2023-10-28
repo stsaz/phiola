@@ -243,10 +243,19 @@ static const struct ffarg cmd_root[] = {
 
 static int cmd(char **argv, uint argc)
 {
+	uint f = FFARGS_O_PARTIAL | FFARGS_O_DUPLICATES | FFARGS_O_SKIP_FIRST;
 	int r;
-	if ((r = ffargs_process_argv(&x->cmd, cmd_root, x, FFARGS_O_PARTIAL | FFARGS_O_DUPLICATES, argv + 1, argc -1)) < 0) {
+
+#ifdef FF_WIN
+	x->cmd_line = ffsz_alloc_wtou(GetCommandLineW());
+	r = ffargs_process_line(&x->cmd, cmd_root, x, f, x->cmd_line);
+
+#else
+	r = ffargs_process_argv(&x->cmd, cmd_root, x, f, argv, argc);
+#endif
+
+	if (r < 0)
 		errlog("%s", x->cmd.error);
-	}
 
 	return r;
 }

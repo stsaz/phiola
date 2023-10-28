@@ -105,7 +105,7 @@ PHIOLA := $(ROOT_DIR)/phiola
 FFBASE := $(ROOT_DIR)/ffbase
 FFOS := $(ROOT_DIR)/ffos
 
-include $(FFBASE)/test/makeconf
+include $(FFBASE)/conf.mk
 include andk.mk
 SYS := android
 
@@ -114,18 +114,25 @@ LIB_DIR_ARM64 := $(PHIOLA)/android/phiola/libs/arm64-v8a
 LIB_DIR_ARM := $(PHIOLA)/android/phiola/libs/armeabi-v7a
 
 lib-amd64:
-	$(MKDIR) obj-amd64 $(LIB_DIR_AMD64)
-	$(SUBMAKE) -C obj-amd64 CPU=amd64 A_API=26 libs
+	$(MKDIR) ../_android-amd64 $(LIB_DIR_AMD64)
+	$(MAKE) libs \
+		-C ../_android-amd64 \
+		-f $(PHIOLA)/android/Makefile \
+		-I $(PHIOLA)/android \
+		CPU=amd64 A_API=26
 
 lib-arm64:
-	$(MKDIR) obj-arm64 $(LIB_DIR_ARM64)
-	$(SUBMAKE) -C obj-arm64 CPU=arm64 A_API=26 libs
+	$(MKDIR) ../_android-arm64 $(LIB_DIR_ARM64)
+	$(MAKE) libs \
+		-C ../_android-arm64 \
+		-f $(PHIOLA)/android/Makefile \
+		-I $(PHIOLA)/android \
+		CPU=arm64 A_API=26
 
 clean-lib:
-	$(RM) obj-arm64 obj-amd64 $(LIB_DIR_AMD64) $(LIB_DIR_ARM64)
+	$(RM) ../_android-arm64 ../_android-amd64 $(LIB_DIR_AMD64) $(LIB_DIR_ARM64)
 
 
-OBJ_DIR := obj-$(CPU)
 LIB_DIR := $(LIB_DIR_AMD64)
 ifeq "$(CPU)" "arm64"
 	LIB_DIR := $(LIB_DIR_ARM64)
@@ -148,6 +155,8 @@ CFLAGS_BASE := $(CFLAGS)
 CFLAGS += -I$(PHIOLA)/src -I$(FFOS)
 LINKFLAGS := $(A_LINKFLAGS) \
 	-llog
+
+-include $(wildcard *.d)
 
 include $(PHIOLA)/src/core/Makefile
 include $(PHIOLA)/src/adev/Makefile

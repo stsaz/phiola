@@ -31,6 +31,5 @@ static const phi_mod phi_opus_mod = {
 FF_EXPORT const phi_mod* phi_mod_init(const phi_core *_core)
 {
 	core = _core;
-	phi_metaif = core->mod("format.meta");
 	return &phi_opus_mod;
 }

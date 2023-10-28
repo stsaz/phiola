@@ -10,6 +10,7 @@ extern const phi_core *core;
 extern const phi_track_if phi_track_iface;
 static const phi_meta_if *phi_metaif;
 #define dbglog(...)  phi_dbglog(core, "queue", NULL, __VA_ARGS__)
+#define errlog(...)  phi_errlog(core, "queue", NULL, __VA_ARGS__)
 
 typedef void (*on_change_t)(phi_queue_id, uint, uint);
 struct queue_mgr {
