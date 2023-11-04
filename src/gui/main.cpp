@@ -588,6 +588,9 @@ static void wmain_action(ffui_wnd *wnd, int id)
 	case A_LIST_ADD:
 		wlistadd_show(1);  break;
 
+	case A_LIST_ADDTONEXT:
+		gui_core_task_slice(list_add_to_next, m->vlist.selected());  break;
+
 	case A_LIST_FILTER:
 		wlistfilter_show(1);  break;
 

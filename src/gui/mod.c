@@ -477,6 +477,51 @@ void list_add_multi(ffslice names)
 	ffslice_free(&names);
 }
 
+/** Get next playback list (skip conversion list) */
+static phi_queue_id list_next_playback()
+{
+	uint i = 0;
+	struct list_info *li;
+	FFSLICE_WALK(&gd->lists, li) {
+		if (li->q == gd->q_selected)
+			break;
+		i++;
+	}
+
+	i++;
+	if (i == gd->lists.len)
+		return NULL;
+	li = ffslice_itemT(&gd->lists, i, struct list_info);
+
+	if (li->q == gd->q_convert) {
+		i++;
+		if (i == gd->lists.len)
+			return NULL;
+		li = ffslice_itemT(&gd->lists, i, struct list_info);
+	}
+
+	return li->q;
+}
+
+/** Add selected tracks to the next playback list */
+void list_add_to_next(ffslice indexes)
+{
+	phi_queue_id q_target = list_next_playback();
+	if (!q_target)
+		goto end;
+
+	phi_queue_id q_src = list_id_visible();
+	uint *it;
+	FFSLICE_WALK(&indexes, it) {
+		struct phi_queue_entry *qe = gd->queue->at(q_src, *it), nqe = {};
+		nqe.conf.ifile.name = ffsz_dup(qe->conf.ifile.name);
+		gd->queue->add(q_target, &nqe);
+	}
+
+end:
+	ffslice_free(&indexes);
+}
+
 void list_remove(ffslice indexes)
 {
 	if (gd->q_filtered) goto end;

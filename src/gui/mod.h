@@ -31,6 +31,7 @@ FF_EXTERN void list_created(phi_queue_id q);
 FF_EXTERN void list_add(ffstr fn);
 FF_EXTERN void list_add_sz(void *sz);
 FF_EXTERN void list_add_multi(ffslice names);
+FF_EXTERN void list_add_to_next(ffslice indexes);
 FF_EXTERN void list_remove(ffslice indexes);
 FF_EXTERN void list_save(void *sz);
 FF_EXTERN void lists_save();
