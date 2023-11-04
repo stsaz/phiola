@@ -226,7 +226,7 @@ static int audio_out_write(audio_out *a, phi_track *t)
 	return PHI_MORE;
 }
 
-static void audio_clear(void *ctx)
+static void audio_stop(void *ctx)
 {
 	audio_out *a = ctx;
 	dbglog(a->trk, "stop");

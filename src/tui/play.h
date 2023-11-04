@@ -132,7 +132,7 @@ static void tuiplay_seek(tui_track *u, uint cmd, void *udata)
 	u->t->oaudio.clear = 1;
 
 	if (u->t->oaudio.adev_ctx)
-		u->t->oaudio.adev_clear(u->t->oaudio.adev_ctx);
+		u->t->oaudio.adev_stop(u->t->oaudio.adev_ctx);
 
 	dbglog(u->t, "seeking: %U", pos);
 	core->track->wake(u->t);
@@ -287,6 +287,10 @@ static void tuiplay_pause_resume(tui_track *u)
 
 	u->t->oaudio.pause = 1;
 	u->paused = 1;
+
+	if (u->t->oaudio.adev_ctx)
+		u->t->oaudio.adev_stop(u->t->oaudio.adev_ctx);
+
 	dbglog(u->t, "pausing");
 }
 

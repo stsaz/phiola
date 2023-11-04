@@ -203,7 +203,7 @@ struct phi_track {
 			struct phi_af format;
 			struct phi_af conv_format;
 			void *adev_ctx;
-			void (*adev_clear)(void *adev_ctx);
+			void (*adev_stop)(void *adev_ctx);
 
 			// for mp4.write
 			uint mp4_delay;

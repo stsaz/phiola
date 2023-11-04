@@ -43,6 +43,10 @@ void gtrk_play_pause(struct gtrk *gt)
 	gt->t->oaudio.pause = 1;
 	gt->paused = 1;
 	dbglog1(gt->t, "pausing");
+
+	if (gt->t->oaudio.adev_ctx)
+		gt->t->oaudio.adev_stop(gt->t->oaudio.adev_ctx);
+
 	wmain_status("Paused");
 }
 
@@ -54,7 +58,7 @@ void gtrk_seek(struct gtrk *gt, uint pos_sec)
 	gt->t->oaudio.clear = 1;
 
 	if (gt->t->oaudio.adev_ctx)
-		gt->t->oaudio.adev_clear(gt->t->oaudio.adev_ctx);
+		gt->t->oaudio.adev_stop(gt->t->oaudio.adev_ctx);
 
 	dbglog1(gt->t, "seek: %U", gt->seek_msec);
 }

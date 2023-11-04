@@ -113,7 +113,7 @@ fin:
 
 	mod->usedby = a;
 	t->oaudio.adev_ctx = a;
-	t->oaudio.adev_clear = audio_clear;
+	t->oaudio.adev_stop = audio_stop;
 
 	core->timer(t->worker, &mod->tmr, mod->buffer_length_msec / 2, audio_out_onplay, a);
 	return PHI_DONE;
