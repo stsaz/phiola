@@ -17,7 +17,7 @@ FF_EXTERN const ffui_ldr_ctl wabout_ctls[] = {
 	FFUI_LDR_CTL_END
 };
 
-static void wabout_action(ffui_wnd *wnd, int id)
+static void wabout_action(ffui_window *wnd, int id)
 {
 	switch (id) {
 	case A_ABOUT_HOMEPAGE:

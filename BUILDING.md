@@ -72,10 +72,11 @@
 mkdir phiola-src
 cd phiola-src
 git clone https://github.com/stsaz/phiola
+git clone https://github.com/stsaz/netmill
 git clone https://github.com/stsaz/avpack
 git clone https://github.com/stsaz/ffaudio
 git clone https://github.com/stsaz/ffpack
-git clone https://github.com/stsaz/netmill
+git clone https://github.com/stsaz/ffgui
 git clone https://github.com/stsaz/ffos
 git clone https://github.com/stsaz/ffbase
 cd phiola

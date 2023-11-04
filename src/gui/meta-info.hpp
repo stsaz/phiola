@@ -117,7 +117,7 @@ void winfo_show(uint show, uint idx)
 	w->wnd.show(1);
 }
 
-static void winfo_action(ffui_wnd *wnd, int id)
+static void winfo_action(ffui_window *wnd, int id)
 {
 	switch (id) {
 	case A_INFO_EDIT:

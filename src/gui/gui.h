@@ -3,14 +3,15 @@
 
 #include <gui/mod.h>
 #ifdef FF_WIN
-#include <util/gui-winapi/loader.h>
+#include <ffgui/winapi/loader.h>
 #else
-#include <util/gui-gtk/loader.h>
+#include <ffgui/gtk/loader.h>
 #endif
 #ifdef __cplusplus
-#include <util/gui.hpp>
+#include <ffgui/gui.hpp>
 #endif
-#include <util/gui-loader.h>
+#include <ffgui/loader.h>
+#include <util/conf-write.h>
 #include <ffbase/args.h>
 
 #define USER_CONF_NAME  "gui.conf"
@@ -75,8 +76,8 @@ struct gui {
 };
 FF_EXTERN struct gui *gg;
 
-FF_EXTERN void conf_wnd_pos_read(ffui_wnd *w, ffstr val);
-static inline void conf_wnd_pos_write(ffconfw *cw, const char *name, ffui_wnd *w)
+FF_EXTERN void conf_wnd_pos_read(ffui_window *w, ffstr val);
+static inline void conf_wnd_pos_write(ffconfw *cw, const char *name, ffui_window *w)
 {
 	ffui_pos pos;
 	ffui_wnd_placement(w, &pos);

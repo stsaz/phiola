@@ -177,7 +177,7 @@ void wrecord_done()
 	wmain_status("Recording complete");
 }
 
-static void wrecord_action(ffui_wnd *wnd, int id)
+static void wrecord_action(ffui_window *wnd, int id)
 {
 	// gui_wrecord *w = gg->wrecord;
 	switch (id) {

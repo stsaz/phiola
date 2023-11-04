@@ -11,7 +11,7 @@
 struct gui_wmain {
 	ffui_windowxx	wnd;
 	ffui_menu		mm;
-	ffui_btn		bpause, bstop, bprev, bnext;
+	ffui_buttonxx	bpause, bstop, bprev, bnext;
 	ffui_labelxx	lpos;
 	ffui_trackbarxx	tvol, tpos;
 	ffui_tabxx		tabs;
@@ -437,7 +437,7 @@ apply:
 
 #ifdef FF_WIN
 
-static void wmain_on_drop_files(ffui_wnd *wnd, ffui_fdrop *df)
+static void wmain_on_drop_files(ffui_window *wnd, ffui_fdrop *df)
 {
 	ffvec buf = {};
 	const char *fn;
@@ -538,7 +538,7 @@ static void list_save_choose_filename()
 	gui_core_task_ptr(list_save, fn2);
 }
 
-static void wmain_action(ffui_wnd *wnd, int id)
+static void wmain_action(ffui_window *wnd, int id)
 {
 	gui_wmain *m = gg->wmain;
 	int i;

@@ -2,10 +2,10 @@
 2023, Simon Zolin */
 
 struct gui_wlistadd {
-	ffui_windowxx wnd;
-	ffui_label lname;
-	ffui_editxx turi;
-	ffui_btn badd;
+	ffui_windowxx	wnd;
+	ffui_label		lname;
+	ffui_editxx		turi;
+	ffui_buttonxx	badd;
 };
 
 FF_EXTERN const ffui_ldr_ctl wlistadd_ctls[] = {
@@ -16,7 +16,7 @@ FF_EXTERN const ffui_ldr_ctl wlistadd_ctls[] = {
 	FFUI_LDR_CTL_END
 };
 
-static void wlistadd_action(ffui_wnd *wnd, int id)
+static void wlistadd_action(ffui_window *wnd, int id)
 {
 	gui_wlistadd *w = gg->wlistadd;
 

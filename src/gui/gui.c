@@ -40,7 +40,7 @@ void gui_dragdrop(ffstr data)
 	ffstr_free(&data);
 }
 
-void conf_wnd_pos_read(ffui_wnd *w, ffstr val)
+void conf_wnd_pos_read(ffui_window *w, ffstr val)
 {
 	ffui_pos pos;
 	if (!ffstr_matchfmt(&val, "%d %d %u %u", &pos.x, &pos.y, &pos.cx, &pos.cy))

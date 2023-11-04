@@ -183,7 +183,7 @@ static struct phi_track_conf* conv_conf_create()
 	return tc;
 }
 
-static void wconvert_action(ffui_wnd *wnd, int id)
+static void wconvert_action(ffui_window *wnd, int id)
 {
 	gui_wconvert *c = gg->wconvert;
 	switch (id) {

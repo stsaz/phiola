@@ -12,7 +12,7 @@ FF_EXTERN const ffui_ldr_ctl wlistfilter_ctls[] = {
 	FFUI_LDR_CTL_END
 };
 
-static void wlistfilter_action(ffui_wnd *wnd, int id)
+static void wlistfilter_action(ffui_window *wnd, int id)
 {
 	gui_wlistfilter *w = gg->wlistfilter;
 

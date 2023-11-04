@@ -16,6 +16,7 @@
 # MKDIR
 # OS
 # PHIOLA
+# ROOT_DIR
 # SO
 # WINDRES
 
@@ -23,21 +24,28 @@
 # EXES
 # MODS
 
+FFGUI := $(ROOT_DIR)/ffgui
+
 MODS += gui.$(SO)
 ifeq "$(OS)" "windows"
 	CFLAGS_GUI := -Wno-missing-field-initializers
 	LINKFLAGS_GUI := -lshell32 -luxtheme -lcomctl32 -lcomdlg32 -lgdi32 -lole32 -luuid
-	FFGUI_OBJ := ffgui-winapi.o ffgui-winapi-loader.o
+	FFGUI_OBJ := \
+		ffgui-winapi.o \
+		ffgui-winapi-loader.o
 else
 	CFLAGS_GUI := -Wno-free-nonheap-object -Wno-deprecated-declarations \
 		`pkg-config --cflags gtk+-3.0`
 	LINKFLAGS_GUI := `pkg-config --libs gtk+-3.0` \
 		$(LINK_PTHREAD) -lm
-	FFGUI_OBJ := ffgui-gtk.o ffgui-gtk-loader.o
+	FFGUI_OBJ := \
+		ffgui-gtk.o \
+		ffgui-gtk-loader.o
 endif
 ifeq "$(DEBUG_GUI)" "1"
 	CFLAGS_GUI += -DFFGUI_DEBUG
 endif
+CFLAGS_GUI += -I$(FFGUI)
 CFLAGS_GUI := $(CFLAGS) $(CFLAGS_GUI)
 CXXFLAGS_GUI := $(CXXFLAGS) $(CFLAGS_GUI)
 LINKFLAGS_GUI := $(LINKFLAGS) $(LINKFLAGS_GUI)
@@ -48,9 +56,9 @@ gui-%.o: $(PHIOLA)/src/gui/%.c
 	$(C) $(CFLAGS_GUI) $< -o $@
 gui-%.o: $(PHIOLA)/src/gui/%.cpp
 	$(CXX) $(CXXFLAGS_GUI) $< -o $@
-%.o: $(PHIOLA)/src/util/gui-gtk/%.c
+%.o: $(FFGUI)/ffgui/gtk/%.c
 	$(C) $(CFLAGS_GUI) $< -o $@
-%.o: $(PHIOLA)/src/util/gui-winapi/%.c
+%.o: $(FFGUI)/ffgui/winapi/%.c
 	$(C) $(CFLAGS_GUI) $< -o $@
 
 GUI_RES :=

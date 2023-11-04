@@ -29,7 +29,7 @@ static void play_goto(ffstrxx s)
 	gui_core_task_uint(ctl_action, A_SEEK);
 }
 
-static void wgoto_action(ffui_wnd *wnd, int id)
+static void wgoto_action(ffui_window *wnd, int id)
 {
 	gui_wgoto *g = gg->wgoto;
 
