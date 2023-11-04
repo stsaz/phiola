@@ -329,6 +329,7 @@ TESTS=(
 	# wasapi_exclusive
 	# wasapi_loopback
 	)
+
 if test "$#" -gt "0" ; then
 	TESTS=("$@")
 fi

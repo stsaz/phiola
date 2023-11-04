@@ -110,25 +110,25 @@ static void gui_userconf_save()
 #endif
 	ffconfw_init(&cw, flags);
 
-	ffconfw_add2obj(&cw, "mod", 1);
+	ffconfw_add2obj(&cw, "mod", '{');
 		mod_userconf_write(&cw);
-	ffconfw_add_obj(&cw, 0);
+	ffconfw_add_obj(&cw, '}');
 
-	ffconfw_add2obj(&cw, "main", 1);
+	ffconfw_add2obj(&cw, "main", '{');
 		wmain_userconf_write(&cw);
-	ffconfw_add_obj(&cw, 0);
+	ffconfw_add_obj(&cw, '}');
 
-	ffconfw_add2obj(&cw, "record", 1);
+	ffconfw_add2obj(&cw, "record", '{');
 		wrecord_userconf_write(&cw);
-	ffconfw_add_obj(&cw, 0);
+	ffconfw_add_obj(&cw, '}');
 
-	ffconfw_add2obj(&cw, "convert", 1);
+	ffconfw_add2obj(&cw, "convert", '{');
 		wconvert_userconf_write(&cw);
-	ffconfw_add_obj(&cw, 0);
+	ffconfw_add_obj(&cw, '}');
 
-	ffconfw_add2obj(&cw, "info", 1);
+	ffconfw_add2obj(&cw, "info", '{');
 		winfo_userconf_write(&cw);
-	ffconfw_add_obj(&cw, 0);
+	ffconfw_add_obj(&cw, '}');
 
 	ffconfw_fin(&cw);
 

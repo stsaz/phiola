@@ -87,8 +87,14 @@ log-error:
 log-clear:
 	$(SDK_DIR)/platform-tools/adb $(ADB_FLAGS) logcat -c
 
+LIB_DIR_CPU := x86_64
+ifeq "$(CPU)" "arm64"
+	LIB_DIR_CPU := arm64-v8a
+else ifeq "$(CPU)" "arm"
+	LIB_DIR_CPU := armeabi-v7a
+endif
 log-bt:
-	$(SDK_DIR)/platform-tools/adb $(ADB_FLAGS) logcat -v time | $(NDK_DIR)/ndk-stack -sym phiola/libs/x86_64
+	$(SDK_DIR)/platform-tools/adb $(ADB_FLAGS) logcat -v time | $(NDK_DIR)/ndk-stack -sym phiola/libs/$(LIB_DIR_CPU)
 
 
 # Start Android emulator
@@ -151,6 +157,7 @@ ifeq "$(DEBUG)" "1"
 else
 	CFLAGS += -O3 -fno-strict-aliasing -fvisibility=hidden
 endif
+CFLAGS += $(CFLAGS_USER)
 CFLAGS_BASE := $(CFLAGS)
 CFLAGS += -I$(PHIOLA)/src -I$(FFSYS)
 LINKFLAGS := $(A_LINKFLAGS) \

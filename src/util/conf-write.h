@@ -16,7 +16,7 @@ ffconfw_clear
 */
 
 #pragma once
-#include "conf-scheme.h"
+#include <ffbase/vector.h>
 
 typedef struct ffconfw {
 	ffvec buf;
@@ -110,10 +110,10 @@ static inline int ffconfw_size(ffconfw *c, ffuint type_flags, const void *src, i
 	ffsize cap = 0;
 	*complex = 0;
 
-	switch (type_flags & 0x8000000f) {
+	switch (type_flags & 0xff) {
 
-	case FFCONF_TSTR:
-	case 1U<<31: {
+	case 'S':
+	case 'K': {
 		ffstr s = *(ffstr*)src;
 		ffsize r = s.len;
 		if (!(type_flags & FFCONFW_FDONTESCAPE))
@@ -125,15 +125,12 @@ static inline int ffconfw_size(ffconfw *c, ffuint type_flags, const void *src, i
 		break;
 	}
 
-	case _FFCONF_TINT:
-		cap = 1 + FFS_INTCAP;
-		break;
-
-	case FFCONF_TOBJ | (1U<<31):
-	case FFCONF_TOBJ:
+	case '{':
+	case '}':
 		cap = FFS_LEN("\r\n}");
 		break;
 	}
+
 	return cap + c->level;
 }
 
@@ -145,7 +142,7 @@ Return N of bytes written;
  <0 on error */
 static inline int ffconfw_add(ffconfw *c, ffuint type_flags, const void *src)
 {
-	int t = type_flags & 0x8000000f;
+	int t = type_flags & 0xff;
 	int complex;
 	type_flags |= c->flags;
 	int kv_delim = (type_flags & FFCONFW_FKVTAB) ? '\t' : ' ';
@@ -156,11 +153,11 @@ static inline int ffconfw_add(ffconfw *c, ffuint type_flags, const void *src)
 
 	switch (t) {
 
-	case FFCONF_TSTR:
-	case 1<<31: {
+	case 'S':
+	case 'K': {
 		ffstr s = *(ffstr*)src;
 
-		if (t == FFCONF_TSTR) {
+		if (t == 'S') {
 			// key1 (+ val1)
 			// key1 val1 (+ val2)
 			*ffstr_push(&c->buf) = kv_delim;
@@ -191,15 +188,7 @@ static inline int ffconfw_add(ffconfw *c, ffuint type_flags, const void *src)
 		break;
 	}
 
-	case _FFCONF_TINT: {
-		ffint64 i = *(ffint64*)src;
-		// key1 (+ 1234)
-		*ffstr_push(&c->buf) = kv_delim;
-		c->buf.len += ffs_fromint(i, ffstr_end(&c->buf), ffvec_unused(&c->buf), FFS_INTSIGN);
-		break;
-	}
-
-	case FFCONF_TOBJ | (1<<31):
+	case '{':
 		// key {
 		*ffstr_push(&c->buf) = ' ';
 		*ffstr_push(&c->buf) = '{';
@@ -207,7 +196,7 @@ static inline int ffconfw_add(ffconfw *c, ffuint type_flags, const void *src)
 			c->level++;
 		break;
 
-	case FFCONF_TOBJ:
+	case '}':
 		// [\t] }
 		if (type_flags & FFCONFW_FINDENT) {
 			FF_ASSERT(c->level > 0);
@@ -252,20 +241,20 @@ static inline int ffconfw_addf(ffconfw *c, const char *format, ...)
 /** Add line */
 static inline int ffconfw_add_line(ffconfw *c, ffstr s)
 {
-	return ffconfw_add(c, (1<<31) | FFCONFW_FLINE | FFCONFW_FDONTESCAPE, &s);
+	return ffconfw_add(c, 'K' | FFCONFW_FLINE | FFCONFW_FDONTESCAPE, &s);
 }
 
 /** Add line */
 static inline int ffconfw_add_linez(ffconfw *c, const char *sz)
 {
 	ffstr s = FFSTR_INITZ(sz);
-	return ffconfw_add(c, (1<<31) | FFCONFW_FLINE | FFCONFW_FDONTESCAPE, &s);
+	return ffconfw_add(c, 'K' | FFCONFW_FLINE | FFCONFW_FDONTESCAPE, &s);
 }
 
 /** Add string */
 static inline int ffconfw_add_str(ffconfw *c, ffstr s)
 {
-	return ffconfw_add(c, FFCONF_TSTR, &s);
+	return ffconfw_add(c, 'S', &s);
 }
 
 /** Add NULL-terminated string */
@@ -273,20 +262,20 @@ static inline int ffconfw_add_strz(ffconfw *c, const char *sz)
 {
 	ffstr s;
 	ffstr_setz(&s, sz);
-	return ffconfw_add(c, FFCONF_TSTR, &s);
+	return ffconfw_add(c, 'S', &s);
 }
 
 /** Add NULL-terminated string */
 static inline int ffconfw_add_key(ffconfw *c, ffstr s)
 {
-	return ffconfw_add(c, 1<<31, &s);
+	return ffconfw_add(c, 'K', &s);
 }
 
 /** Add NULL-terminated string */
 static inline int ffconfw_add_keyz(ffconfw *c, const char *sz)
 {
 	ffstr s = FFSTR_INITZ(sz);
-	return ffconfw_add(c, 1<<31, &s);
+	return ffconfw_add(c, 'K', &s);
 }
 
 /** Add integer */
@@ -296,7 +285,7 @@ static inline int ffconfw_add_intf(ffconfw *c, ffint64 val, ffuint int_flags)
 	int r = ffs_fromint(val, buf, sizeof(buf), FFS_INTSIGN | int_flags);
 	ffstr s;
 	ffstr_set(&s, buf, r);
-	return ffconfw_add(c, FFCONF_TSTR, &s);
+	return ffconfw_add(c, 'S', &s);
 }
 
 /** Add integer */
@@ -313,13 +302,13 @@ static inline ffsize ffconfw_add_float(ffconfw *c, double val, ffuint float_flag
 	uint n = ffs_fromfloat(val, buf, sizeof(buf), float_flags);
 	ffstr s;
 	ffstr_set(&s, buf, n);
-	return ffconfw_add(c, FFCONF_TSTR, &s);
+	return ffconfw_add(c, 'S', &s);
 }
 
 /** Add object */
-static inline int ffconfw_add_obj(ffconfw *c, ffuint open)
+static inline int ffconfw_add_obj(ffconfw *c, int open_close)
 {
-	return ffconfw_add(c, FFCONF_TOBJ | ((open) ? 1<<31 : 0), NULL);
+	return ffconfw_add(c, open_close, NULL);
 }
 
 /** Add key and value */
@@ -328,7 +317,7 @@ static inline int ffconfw_add2(ffconfw *c, ffstr key, ffstr val)
 	int n, r;
 	if ((n = ffconfw_add_key(c, key)) < 0)
 		return n;
-	if ((r = ffconfw_add(c, FFCONF_TSTR, &val)) < 0)
+	if ((r = ffconfw_add(c, 'S', &val)) < 0)
 		return r;
 	return n + r;
 }
@@ -355,12 +344,12 @@ static inline int ffconfw_add2u(ffconfw *c, const char *key, ffuint64 val)
 	return n + r;
 }
 
-static inline int ffconfw_add2obj(ffconfw *c, const char *key, ffuint obj_open)
+static inline int ffconfw_add2obj(ffconfw *c, const char *key, int open_close)
 {
 	int n, r;
 	if ((n = ffconfw_add_keyz(c, key)) < 0)
 		return n;
-	if ((r = ffconfw_add_obj(c, obj_open)) < 0)
+	if ((r = ffconfw_add_obj(c, open_close)) < 0)
 		return r;
 	return n + r;
 }

@@ -20,6 +20,7 @@ struct gui_wmain {
 #ifdef FF_WIN
 	ffui_paned pntop;
 #endif
+
 	struct phi_queue_entry *qe_active;
 
 	char *vlist_col;
@@ -282,7 +283,7 @@ static void list_display(ffui_view_disp *disp)
 #endif
 
 	gui_wmain *m = gg->wmain;
-	char buf[1000];
+	ffstrxx_buf<1000> buf;
 	ffstr *val = NULL, s;
 	struct phi_queue_entry *qe = gd->queue->ref(list_id_visible(), i);
 	if (!qe)
@@ -290,10 +291,8 @@ static void list_display(ffui_view_disp *disp)
 
 	switch (sub) {
 	case H_INDEX:
-		ffsz_format(buf, sizeof(buf), "%s%u"
-			, (qe == m->qe_active) ? "> " : "", i + 1);
-		ffstr_setz(&s, buf);
-		val = &s;
+		buf.zfmt("%s%u", (qe == m->qe_active) ? "> " : "", i + 1);
+		val = &buf;
 		break;
 
 	case H_FN:
@@ -317,10 +316,9 @@ static void list_display(ffui_view_disp *disp)
 	case H_DUR:
 		if (!val && qe->length_msec != 0) {
 			uint sec = qe->length_msec / 1000;
-			ffsz_format(buf, sizeof(buf), "%u:%02u", sec / 60, sec % 60);
-			ffstr_setz(&s, buf);
-			gd->metaif->set(&qe->conf.meta, FFSTR_Z("_phi_dur"), s, 0);
-			val = &s;
+			buf.zfmt("%u:%02u", sec / 60, sec % 60);
+			gd->metaif->set(&qe->conf.meta, FFSTR_Z("_phi_dur"), buf, 0);
+			val = &buf;
 		}
 		break;
 	}

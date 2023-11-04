@@ -317,14 +317,14 @@ int main(int argc, char **argv, char **env)
 	x = ffmem_new(struct exe);
 	x->exit_code = 1;
 	logs(&x->log);
-	if (!!cmd(argv, argc)) goto end;
-	if (!!conf(argv[0])) goto end;
+	if (cmd(argv, argc)) goto end;
+	if (conf(argv[0])) goto end;
 	if (x->stdout_busy)
 		logs(&x->log);
-	if (!!core()) goto end;
+	if (core()) goto end;
 	version_print();
 	signals();
-	if (!!jobs()) goto end;
+	if (jobs()) goto end;
 	phi_core_run();
 
 end:

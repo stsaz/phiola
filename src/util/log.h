@@ -27,7 +27,7 @@ static inline void zzlog_printv(struct zzlog *l, ffuint flags, const char *ctx, 
 	ffuint level = flags & 0x0f;
 	char buffer[4*1024];
 	char *d = buffer;
-	ffsize r = 0, cap = sizeof(buffer) - 2;
+	ffsize r = 0, cap = sizeof(buffer) - 10;
 
 	const char *color_end = "";
 	if (l->use_color) {

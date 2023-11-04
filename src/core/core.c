@@ -92,18 +92,18 @@ extern const phi_queue_if phi_queueif;
 static const void* core_iface(const char *name)
 {
 	static const struct map_sz_vptr map[] = {
-		{ "auto-input", &phi_auto_input },
-		{ "auto-output", &phi_auto_output },
-		{ "auto-play", &phi_autoplay },
-		{ "auto-rec", &phi_autorec },
-		{ "dir-read", &phi_dir_r },
-		{ "file-read", &phi_file_r },
-		{ "file-write", &phi_file_w },
-		{ "queue", &phi_queueif },
-		{ "stdin", &phi_stdin },
-		{ "stdout", &phi_stdout },
+		{ "auto-input",	&phi_auto_input },
+		{ "auto-output",&phi_auto_output },
+		{ "auto-play",	&phi_autoplay },
+		{ "auto-rec",	&phi_autorec },
+		{ "dir-read",	&phi_dir_r },
+		{ "file-read",	&phi_file_r },
+		{ "file-write",	&phi_file_w },
+		{ "queue",		&phi_queueif },
+		{ "stdin",		&phi_stdin },
+		{ "stdout",		&phi_stdout },
 #ifdef FF_WIN
-		{ "win-sleep", &phi_winsleep },
+		{ "win-sleep",	&phi_winsleep },
 #endif
 		{}
 	};

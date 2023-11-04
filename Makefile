@@ -84,12 +84,7 @@ MODS += remote.$(SO)
 remote.$(SO): remote-ctl.o
 	$(LINK) -shared $+ $(LINKFLAGS) -o $@
 
-MODS += tui.$(SO)
-%.o: $(PHIOLA)/src/tui/%.c
-	$(C) $(CFLAGS) $< -o $@
-tui.$(SO): tui.o
-	$(LINK) -shared $+ $(LINKFLAGS) -lm -o $@
-
+include $(PHIOLA)/src/tui/Makefile
 include $(PHIOLA)/src/gui/Makefile
 include $(PHIOLA)/src/net/Makefile
 include $(PHIOLA)/src/dfilter/Makefile

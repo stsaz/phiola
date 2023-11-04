@@ -82,7 +82,7 @@ static int action()
 	char **it;
 	FFSLICE_WALK(&x->input, it) {
 		struct phi_queue_entry qe = {
-			.conf.ifile.name = *it,
+			.conf.ifile.name = ffsz_dup(*it),
 		};
 		if (0 == x->queue->add(NULL, &qe))
 			x->queue->play(NULL, x->queue->at(NULL, 0));
@@ -94,7 +94,7 @@ static int action()
 }
 
 static const struct ffarg cmd_args[] = {
-	{ "\0\1",		'=s',	input },
+	{ "\0\1",		's',	input },
 	{ "",			0,		action },
 };
 

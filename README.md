@@ -11,6 +11,9 @@ It's a free and open-source project, and you can use it as a standalone applicat
 
 *beta* note: still need to port some stuff from fmedia and re-test everything.
 
+Screenshots of phiola GUI on Android, KDE/Linux and Windows 10:
+![phiola GUI on Android, KDE/Linux and Windows 10](../screenshots/phiola-gui-screenshot-android-kdelinux-windows.png)
+
 Contents:
 
 * [Features](#features)
