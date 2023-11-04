@@ -38,8 +38,6 @@ static LRESULT __stdcall _ffui_ctl_proc(HWND h, uint msg, WPARAM w, LPARAM l);
 static void wnd_onaction(ffui_wnd *wnd, int id);
 static LRESULT __stdcall wnd_proc(HWND h, uint msg, WPARAM w, LPARAM l);
 
-static int process_accels(MSG *m);
-
 
 struct ctlinfo {
 	const char *stype;
@@ -49,25 +47,25 @@ struct ctlinfo {
 };
 
 static const struct ctlinfo ctls[] = {
-	{ "",			L"", 0, 0 },
-	{ "window",		L"FF_WNDCLASS", WS_CLIPCHILDREN | WS_CLIPSIBLINGS, 0 },
-	{ "label",		L"STATIC", SS_NOTIFY, 0 },
-	{ "image",		L"STATIC", SS_ICON | SS_NOTIFY, 0 },
-	{ "editbox",	L"EDIT", ES_AUTOHSCROLL | ES_AUTOVSCROLL | ES_NOHIDESEL/* | WS_TABSTOP*/, WS_EX_CLIENTEDGE },
-	{ "text",		L"EDIT", ES_MULTILINE | ES_AUTOHSCROLL | ES_AUTOVSCROLL | ES_NOHIDESEL | WS_HSCROLL | WS_VSCROLL, WS_EX_CLIENTEDGE },
-	{ "combobox",	L"COMBOBOX", CBS_DROPDOWN | CBS_AUTOHSCROLL, WS_EX_CLIENTEDGE },
-	{ "combobox",	L"COMBOBOX", CBS_DROPDOWNLIST | CBS_AUTOHSCROLL, WS_EX_CLIENTEDGE },
-	{ "button",		L"BUTTON", 0, 0 },
-	{ "checkbox",	L"BUTTON", BS_AUTOCHECKBOX, 0 },
-	{ "radiobutton",L"BUTTON", BS_AUTORADIOBUTTON, 0 },
+	{ "",			L"",			0, 0 },
+	{ "window",		L"FF_WNDCLASS",	WS_CLIPCHILDREN | WS_CLIPSIBLINGS, 0 },
+	{ "label",		L"STATIC",		SS_NOTIFY, 0 },
+	{ "image",		L"STATIC",		SS_ICON | SS_NOTIFY, 0 },
+	{ "editbox",	L"EDIT",		ES_AUTOHSCROLL | ES_AUTOVSCROLL | ES_NOHIDESEL | WS_TABSTOP, WS_EX_CLIENTEDGE },
+	{ "text",		L"EDIT",		ES_MULTILINE | ES_AUTOHSCROLL | ES_AUTOVSCROLL | ES_NOHIDESEL | WS_HSCROLL | WS_VSCROLL | WS_TABSTOP, WS_EX_CLIENTEDGE },
+	{ "combobox",	L"COMBOBOX",	CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_TABSTOP, WS_EX_CLIENTEDGE },
+	{ "combobox",	L"COMBOBOX",	CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_TABSTOP, WS_EX_CLIENTEDGE },
+	{ "button",		L"BUTTON",		WS_TABSTOP, 0 },
+	{ "checkbox",	L"BUTTON",		BS_AUTOCHECKBOX | WS_TABSTOP, 0 },
+	{ "radiobutton",L"BUTTON",		BS_AUTORADIOBUTTON | WS_TABSTOP, 0 },
 
-	{ "trackbar",	L"msctls_trackbar32", 0, 0 },
-	{ "progressbar",L"msctls_progress32", 0, 0 },
-	{ "status_bar",	L"msctls_statusbar32", SBARS_SIZEGRIP, 0 },
+	{ "trackbar",	L"msctls_trackbar32",	WS_TABSTOP, 0 },
+	{ "progressbar",L"msctls_progress32",	0, 0 },
+	{ "status_bar",	L"msctls_statusbar32",	SBARS_SIZEGRIP, 0 },
 
-	{ "tab",		L"SysTabControl32", TCS_FOCUSNEVER, 0 },
-	{ "listview",	L"SysListView32", WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_AUTOARRANGE | LVS_SHAREIMAGELISTS, 0 },
-	{ "treeview",	L"SysTreeView32", WS_BORDER | TVS_SHOWSELALWAYS | TVS_INFOTIP, 0 },
+	{ "tab",		L"SysTabControl32",	TCS_FOCUSNEVER, 0 },
+	{ "listview",	L"SysListView32",	WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_AUTOARRANGE | LVS_SHAREIMAGELISTS | WS_TABSTOP, 0 },
+	{ "treeview",	L"SysTreeView32",	WS_BORDER | TVS_SHOWSELALWAYS | TVS_INFOTIP | WS_TABSTOP, 0 },
 };
 
 
@@ -1051,6 +1049,12 @@ static int process_accels(MSG *m)
 			&& 0 != TranslateAccelerator(h, w->acceltbl, m))
 			return 1;
 	}
+
+	if (IsDialogMessage(h, m)) {
+		_ffui_log("IsDialogMessage: 0x%xu %p %p", m->message, m->wParam, m->lParam);
+		return 1;
+	}
+
 	return 0;
 }
 
