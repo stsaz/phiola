@@ -169,7 +169,8 @@ Usage:\n\
     phiola [GLOBAL-OPTIONS] COMMAND [OPTIONS]\n\
 \n\
 Global options:\n\
-  -codepage     Codepage for non-Unicode text:\n\
+  -Background   Create new process running in background\n\
+  -Codepage     Codepage for non-Unicode text:\n\
                   win1251 | win1252\n\
   -Debug        Print debug log messages\n\
 \n\
@@ -223,11 +224,144 @@ static int cmd_codepage(void *obj, ffstr s)
 	return 0;
 }
 
+#ifdef FF_WIN
+
+static inline int ffterm_detach() { return !FreeConsole(); }
+
+// "exe" ARGS -> "exe" arg ARGS
+static inline ffps ffps_fork_bg(const char *arg)
+{
+	ffsize cap, arg_len = ffsz_len(arg), psargs_len, fn_len;
+	wchar_t *args, *p, *ps_args, fn[4*1024];
+
+	int r = GetModuleFileNameW(NULL, fn, FF_COUNT(fn));
+	if (r == 0 || r == FF_COUNT(fn))
+		return FFPS_NULL;
+	fn_len = ffwsz_len(fn);
+
+	ps_args = GetCommandLineW();
+	psargs_len = ffwsz_len(ps_args);
+	if (psargs_len != 0) {
+		int i;
+		if (ps_args[0] == '"') {
+			// '"exe with space" ARGS' -> 'ARGS'
+			i = ffs_findstr((char*)(ps_args+1), (psargs_len-1) * sizeof(wchar_t), "\"\0", 2);
+			p = ps_args + i/sizeof(wchar_t) + 3;
+		} else {
+			// 'exe ARGS' -> 'ARGS'
+			i = ffs_findstr((char*)ps_args, psargs_len, " \0", 2);
+			p = ps_args + i/sizeof(wchar_t) + 1;
+		}
+
+		if (i < 0)
+			p = ps_args + psargs_len; // incorrect command line
+
+		psargs_len = ps_args + psargs_len - p;
+		ps_args = p;
+	}
+
+	cap = fn_len+3 + arg_len+1 + psargs_len+1;
+	if (NULL == (args = (wchar_t*)ffmem_alloc(cap * sizeof(wchar_t))))
+		return FFPS_NULL;
+	p = args;
+
+	*p++ = '\"';
+	p = ffmem_copy(p, fn, fn_len * sizeof(wchar_t));
+	*p++ = '\"';
+	*p++ = ' ';
+
+	p += ff_utow(p, args + cap - p, arg, arg_len, 0);
+	*p++ = ' ';
+
+	p = ffmem_copy(p, ps_args, psargs_len * sizeof(wchar_t));
+	*p++ = '\0';
+
+	ffps_execinfo info = {};
+	info.in = info.out = info.err = INVALID_HANDLE_VALUE;
+	ffps ps = _ffps_exec_cmdln(fn, args, &info);
+
+	ffmem_free(args);
+	return ps;
+}
+
+#else
+
+static inline int ffterm_detach()
+{
+	int f;
+	if (-1 == (f = open("/dev/null", O_RDWR)))
+		return -1;
+	dup2(f, 0);
+	dup2(f, 1);
+	dup2(f, 2);
+	if (f > 2)
+		close(f);
+	return 0;
+}
+
+static inline ffps ffps_fork_bg(const char *arg)
+{
+	(void)arg;
+
+	ffps ps = fork();
+	if (ps != 0)
+		return ps;
+
+	setsid();
+	umask(0);
+	return 0;
+}
+
+#endif
+
+/** Detach from console */
+static int ffterm_detach();
+
+/** Create a copy of the current process in background.
+* UNIX: fork; detach from console
+* Windows: create new process with 'arg' prepended to its command line
+Return
+  * child process descriptor (parent);
+  * 0 (child);
+  * -1 on error */
+static ffps ffps_fork_bg(const char *arg);
+
+static int cmd_background()
+{
+#ifdef FF_WIN
+	if (x->background_child)
+		goto done;
+#endif
+
+	ffps ps = ffps_fork_bg("__bgchild");
+	if (ps == FFPS_NULL) {
+		syserrlog("spawning background process");
+		return 1;
+
+	} else if (ps != 0) {
+		ffstdout_fmt("%u\n", ffps_id(ps));
+		ffps_close(ps);
+		x->exit_code = 0;
+		return 1;
+	}
+
+#ifdef FF_WIN
+done:
+#endif
+	ffterm_detach();
+	return 0;
+}
+
 #define O(m)  (void*)FF_OFF(struct exe, m)
 static const struct ffarg cmd_root[] = {
+	{ "-Background",'1',		O(background) },
+	{ "-Codepage",	's',		cmd_codepage },
 	{ "-Debug",		'1',		O(debug) },
-	{ "-codepage",	's',		cmd_codepage },
+
 	{ "-help",		0,			root_help },
+
+	{ "__bgchild",	'1',		O(background_child) },
+
 	{ "convert",	'{',		cmd_conv_init },
 	{ "device",		'>',		cmd_dev },
 	{ "gui",		'{',		cmd_gui_init },
@@ -256,6 +390,11 @@ static int cmd(char **argv, uint argc)
 
 	if (r < 0)
 		errlog("%s", x->cmd.error);
+
+	if (r == 0
+		&& x->background
+		&& cmd_background())
+		return 1;
 
 	return r;
 }

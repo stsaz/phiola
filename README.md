@@ -110,9 +110,9 @@ phiola record -o @nowdate-@nowtime.flac
 # Record with a specific audio format
 phiola record -aformat int16 -rate 48000 -channels 2 -o audio.flac
 
-# Start recording, then stop recording from another process:
-#   Step 1: start recording and listen for system-wide commands
-phiola record -o audio.flac -remote
+# Start recording in background, then stop recording from another process:
+#   Step 1: record while listening for system-wide commands
+phiola -Background record -o audio.flac -remote
 #   Step 2: send 'stop' signal to the phiola instance that is recording audio
 phiola remote stop
 

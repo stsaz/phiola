@@ -25,8 +25,9 @@ struct exe {
 	ffstr root_dir;
 	char *cmd_line;
 
-	ffbyte debug;
-	ffbyte verbose;
+	u_char	background, background_child;
+	u_char	debug;
+	u_char	verbose;
 	uint codepage_id;
 	uint mode_record :1;
 	uint stdin_busy :1;
@@ -108,8 +109,14 @@ static void exe_log(void *log_obj, uint flags, const char *module, phi_track *t,
 	va_end(va);
 }
 
+#define syserrlog(...) \
+	exe_log(&x->log, PHI_LOG_ERR | PHI_LOG_SYS, NULL, NULL, __VA_ARGS__)
+
 #define errlog(...) \
 	exe_log(&x->log, PHI_LOG_ERR, NULL, NULL, __VA_ARGS__)
+
+#define infolog(...) \
+	exe_log(&x->log, PHI_LOG_INFO, NULL, NULL, __VA_ARGS__)
 
 #define dbglog(...) \
 do { \

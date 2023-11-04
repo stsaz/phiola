@@ -295,10 +295,12 @@ test_ofile_vars() {
 }
 
 test_remote() {
-	./phiola rec -f -o rec-remote.flac -remote &
+	CHILD=$(./phiola -Background rec -f -o rec-remote.flac -remote)
 	sleep 5
 	./phiola remote stop
-	wait $!
+	sleep 1
+	ps -q $CHILD && exit 1 # subprocess must exit
+	./phiola remote stop || true
 	./phiola i rec-remote.flac
 }
 
