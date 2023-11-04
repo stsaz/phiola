@@ -1,8 +1,8 @@
 /** phiola: stdin file-read filter
 2019, Simon Zolin */
 
-#include <FFOS/std.h>
-#include <FFOS/pipe.h>
+#include <ffsys/std.h>
+#include <ffsys/pipe.h>
 
 struct std_in {
 	fffd fd;

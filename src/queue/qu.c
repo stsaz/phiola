@@ -4,7 +4,7 @@
 #include <track.h>
 #include <util/util.h>
 #include <ffbase/lock.h>
-#include <FFOS/random.h>
+#include <ffsys/random.h>
 
 extern const phi_core *core;
 extern const phi_track_if phi_track_iface;

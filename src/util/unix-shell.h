@@ -7,12 +7,12 @@ ffui_exec
 */
 
 #pragma once
-#include <FFOS/base.h>
+#include <ffsys/base.h>
 
 #ifdef FF_LINUX
 
-#include <FFOS/process.h>
-#include <FFOS/dylib.h>
+#include <ffsys/process.h>
+#include <ffsys/dylib.h>
 
 #define LIBGIO_PATH  "/lib64/libgio-2.0.so"
 #define LIBGOBJECT_PATH  "/lib64/libgobject-2.0.so"

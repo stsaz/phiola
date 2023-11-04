@@ -5,7 +5,7 @@
 # CFLAGS
 # CFLAGS_BASE
 # DEBUG
-# FFOS
+# FFSYS
 # LINK
 # LINK_PTHREAD
 # LINKFLAGS
@@ -61,8 +61,8 @@ icy.o: $(PHIOLA)/src/net/icy.c
 	$(C) $(CFLAGS) -I$(NETMILL)/src $< -o $@
 
 netmill-http-filters.o: $(PHIOLA)/src/net/http-filters.c
-	$(C) $(CFLAGS_NETMILL) -I$(PHIOLA)/src -I$(FFOS) $< -o $@
+	$(C) $(CFLAGS_NETMILL) -I$(PHIOLA)/src -I$(FFSYS) $< -o $@
 netmill-http-client.o: $(NETMILL)/src/http-client/client.c
-	$(C) $(CFLAGS_NETMILL) -I$(FFOS) $< -o $@
+	$(C) $(CFLAGS_NETMILL) -I$(FFSYS) $< -o $@
 ffssl.o: $(NETMILL)/src/util/ffssl.c
-	$(C) $(CFLAGS_NETMILL) -I$(FFOS) $< -o $@
+	$(C) $(CFLAGS_NETMILL) -I$(FFSYS) $< -o $@

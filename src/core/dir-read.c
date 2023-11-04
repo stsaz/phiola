@@ -3,7 +3,7 @@
 
 #include <track.h>
 #include <util/fntree.h>
-#include <FFOS/dirscan.h>
+#include <ffsys/dirscan.h>
 
 extern const phi_core *core;
 extern const phi_queue_if phi_queueif;

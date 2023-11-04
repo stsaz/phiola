@@ -6,10 +6,10 @@
 #include <util/woeh.h>
 #endif
 #include <util/util.h>
-#include <FFOS/dylib.h>
-#include <FFOS/path.h>
-#include <FFOS/process.h>
-#include <FFOS/ffos-extern.h>
+#include <ffsys/dylib.h>
+#include <ffsys/path.h>
+#include <ffsys/process.h>
+#include <ffsys/globals.h>
 #include <ffbase/vector.h>
 
 static phi_core _core;

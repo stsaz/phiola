@@ -2,7 +2,7 @@
 2023, Simon Zolin */
 
 #include <track.h>
-#include <FFOS/pipe.h>
+#include <ffsys/pipe.h>
 #include <ffbase/args.h>
 
 #define syserrlog(c, ...)  phi_syserrlog(c->core, "remote-ctl", NULL, __VA_ARGS__)

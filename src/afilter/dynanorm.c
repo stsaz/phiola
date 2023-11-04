@@ -4,8 +4,8 @@
 #include <track.h>
 #include <util/util.h>
 #include <DynamicAudioNormalizer/DynamicAudioNormalizer-ff.h>
-#include <FFOS/std.h>
-#include <FFOS/ffos-extern.h>
+#include <ffsys/std.h>
+#include <ffsys/globals.h>
 #include <ffbase/args.h>
 
 static const phi_core *core;

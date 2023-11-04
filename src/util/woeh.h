@@ -14,8 +14,8 @@ KERNEL -------> WOEH-thread -> user_function()
 */
 
 #pragma once
-#include <FFOS/thread.h>
-#include <FFOS/error.h>
+#include <ffsys/thread.h>
+#include <ffsys/error.h>
 #include <ffbase/lock.h>
 #include <ffbase/atomic.h>
 

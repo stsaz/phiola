@@ -9,10 +9,10 @@
 #include <util/kq.h>
 #include <util/kq-tq.h>
 #include <util/kq-timer.h>
-#include <FFOS/sysconf.h>
-#include <FFOS/thread.h>
-#include <FFOS/perf.h>
-#include <FFOS/timerqueue.h>
+#include <ffsys/sysconf.h>
+#include <ffsys/thread.h>
+#include <ffsys/perf.h>
+#include <ffsys/timerqueue.h>
 #include <ffbase/vector.h>
 
 struct wrk_ctx {

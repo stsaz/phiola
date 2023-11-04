@@ -1,7 +1,7 @@
 /** phiola: queue entry
 2023, Simon Zolin */
 
-#include <FFOS/path.h>
+#include <ffsys/path.h>
 
 struct q_entry {
 	struct phi_queue_entry pub;

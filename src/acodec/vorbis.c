@@ -5,7 +5,7 @@
 #include <util/util.h>
 #include <acodec/alib3-bridge/vorbis.h>
 #include <format/mmtag.h>
-#include <FFOS/ffos-extern.h>
+#include <ffsys/globals.h>
 
 static const phi_core *core;
 static const phi_meta_if *phi_metaif;

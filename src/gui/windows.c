@@ -3,10 +3,10 @@
 
 #include <phiola.h>
 #include <track.h>
-#include <FFOS/process.h>
-#include <FFOS/path.h>
-#include <FFOS/environ.h>
-#include <FFOS/ffos-extern.h>
+#include <ffsys/process.h>
+#include <ffsys/path.h>
+#include <ffsys/environ.h>
+#include <ffsys/globals.h>
 #include <ffbase/vector.h>
 #include <ffbase/args.h>
 

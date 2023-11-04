@@ -7,9 +7,9 @@ zzkcq_start
 */
 
 #pragma once
-#include <FFOS/kcall.h>
-#include <FFOS/semaphore.h>
-#include <FFOS/thread.h>
+#include <ffsys/kcall.h>
+#include <ffsys/semaphore.h>
+#include <ffsys/thread.h>
 #include <ffbase/vector.h>
 #include <ffbase/ringqueue.h>
 

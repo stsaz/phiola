@@ -3,7 +3,7 @@
 
 #include <gui/gui.h>
 #include <util/conf-args.h>
-#include <FFOS/perf.h>
+#include <ffsys/perf.h>
 
 struct gui *gg;
 static void theme_apply(const char *theme);

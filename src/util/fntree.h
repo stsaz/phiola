@@ -32,7 +32,7 @@ block   path="/"
 
 #pragma once
 #include <ffbase/string.h>
-#include <FFOS/dirscan.h> // optional
+#include <ffsys/dirscan.h> // optional
 
 typedef struct fntree_block fntree_block;
 
@@ -144,7 +144,7 @@ static inline fntree_entry* fntree_addz(fntree_block **pb, const char *namez, ff
 	return fntree_add(pb, name, data_len);
 }
 
-#ifdef _FFOS_DIRSCAN_H
+#ifdef _FFSYS_DIRSCAN_H
 
 /** Fill entries from ffdirscan object. */
 static inline fntree_block* fntree_from_dirscan(ffstr path, ffdirscan *ds, ffuint data_len)

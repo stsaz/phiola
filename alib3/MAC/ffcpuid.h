@@ -1,4 +1,4 @@
-/** ffos: CPUID
+/** ffsys: CPUID
 2018, Simon Zolin
 */
 

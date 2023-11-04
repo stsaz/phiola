@@ -218,7 +218,7 @@ phiola uses modified versions of these third party libraries: [libALAC](https://
 
 Additionally:
 
-* [ffbase](https://github.com/stsaz/ffbase) library and [ffos](https://github.com/stsaz/ffos) interface make it easy to write high level cross-platform code in C language
+* [ffbase](https://github.com/stsaz/ffbase) library and [ffsys](https://github.com/stsaz/ffsys) interface make it easy to write high level cross-platform code in C language
 * [avpack](https://github.com/stsaz/avpack) library provides multimedia file read/write capabilities
 * [ffaudio](https://github.com/stsaz/ffaudio) interface provides cross-platform audio I/O capabilities
 * [ffgui](https://github.com/stsaz/ffgui) - cross-platform GUI

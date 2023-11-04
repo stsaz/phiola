@@ -2,7 +2,7 @@
 2015,2021, Simon Zolin */
 
 #include <avpack/ogg-write.h>
-#include <FFOS/random.h>
+#include <ffsys/random.h>
 
 struct ogg_w {
 	oggwrite og;

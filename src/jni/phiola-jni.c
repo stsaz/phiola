@@ -4,7 +4,7 @@
 #include <phiola.h>
 #include <track.h>
 #include <util/jni-helper.h>
-#include <FFOS/process.h>
+#include <ffsys/process.h>
 #include <android/log.h>
 
 #define PJC_META  "com/github/stsaz/phiola/Phiola$Meta"

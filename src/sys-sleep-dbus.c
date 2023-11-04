@@ -2,7 +2,7 @@
 2020, Simon Zolin */
 
 #include <track.h>
-#include <FFOS/process.h>
+#include <ffsys/process.h>
 #include <util/linux-systimer.h>
 
 static const phi_core *core;

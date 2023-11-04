@@ -1,8 +1,8 @@
 /** phiola: public interface */
 
 #pragma once
-#include <FFOS/file.h>
-#include <FFOS/timerqueue.h>
+#include <ffsys/file.h>
+#include <ffsys/timerqueue.h>
 #include <util/taskqueue.h>
 #include <ffbase/string.h>
 

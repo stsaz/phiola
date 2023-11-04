@@ -1,7 +1,7 @@
 /** phiola: playlist entry
 2023, Simon Zolin */
 
-#include <FFOS/path.h>
+#include <ffsys/path.h>
 #include <ffbase/vector.h>
 
 typedef struct pls_entry {

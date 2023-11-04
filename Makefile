@@ -2,7 +2,7 @@
 
 ROOT_DIR := ..
 PHIOLA := $(ROOT_DIR)/phiola
-FFOS := $(ROOT_DIR)/ffos
+FFSYS := $(ROOT_DIR)/ffsys
 FFBASE := $(ROOT_DIR)/ffbase
 APP_DIR := phiola-2
 
@@ -29,7 +29,7 @@ ifeq "$(ASAN)" "1"
 endif
 CFLAGS += $(CFLAGS_USER)
 CFLAGS_BASE := $(CFLAGS)
-CFLAGS += -I$(PHIOLA)/src -I$(FFOS)
+CFLAGS += -I$(PHIOLA)/src -I$(FFSYS)
 CXXFLAGS := $(CFLAGS) -fno-exceptions -fno-rtti -Wno-c++11-narrowing
 ifeq "$(OS)" "windows"
 	LINKFLAGS += -lws2_32

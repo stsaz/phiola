@@ -1,8 +1,8 @@
 /** phiola/Android: utils
 2023, Simon Zolin */
 
-#include <FFOS/path.h>
-#include <FFOS/dir.h>
+#include <ffsys/path.h>
+#include <ffsys/dir.h>
 
 static inline ffsize ffstr_charcount(ffstr s, int ch)
 {

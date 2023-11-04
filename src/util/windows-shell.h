@@ -16,9 +16,9 @@ ffui_clipbd_set ffui_clipbd_setfile
 #ifndef CINTERFACE
 	#define CINTERFACE
 #endif
-#include <FFOS/path.h>
-#include <FFOS/dir.h>
-#include <FFOS/error.h>
+#include <ffsys/path.h>
+#include <ffsys/dir.h>
+#include <ffsys/error.h>
 #include <ffbase/vector.h>
 #include <shlobj.h>
 #include <objidl.h>

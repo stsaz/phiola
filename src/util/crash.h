@@ -1,13 +1,13 @@
 /** Crash handler.
 2018, Simon Zolin */
 
-#include <FFOS/backtrace.h>
-#include <FFOS/file.h>
-#include <FFOS/path.h>
-#include <FFOS/process.h>
-#include <FFOS/signal.h>
-#include <FFOS/thread.h>
-#include <FFOS/time.h>
+#include <ffsys/backtrace.h>
+#include <ffsys/file.h>
+#include <ffsys/path.h>
+#include <ffsys/process.h>
+#include <ffsys/signal.h>
+#include <ffsys/thread.h>
+#include <ffsys/time.h>
 
 struct crash_info {
 	const char *app_name, *full_name;

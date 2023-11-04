@@ -5,9 +5,9 @@
 #include <track.h>
 #include <util/log.h>
 #include <util/crash.h>
-#include <FFOS/std.h>
-#include <FFOS/environ.h>
-#include <FFOS/ffos-extern.h>
+#include <ffsys/std.h>
+#include <ffsys/environ.h>
+#include <ffsys/globals.h>
 #include <ffbase/args.h>
 
 #ifndef FF_DEBUG

@@ -3,8 +3,8 @@
 #pragma once
 #include <phiola.h>
 #include <util/taskqueue.h>
-#include <FFOS/time.h>
-#include <FFOS/kcall.h>
+#include <ffsys/time.h>
+#include <ffsys/kcall.h>
 #include <ffbase/list.h>
 
 

@@ -103,7 +103,7 @@ emulator:
 ROOT_DIR := ../..
 PHIOLA := $(ROOT_DIR)/phiola
 FFBASE := $(ROOT_DIR)/ffbase
-FFOS := $(ROOT_DIR)/ffos
+FFSYS := $(ROOT_DIR)/ffsys
 
 include $(FFBASE)/conf.mk
 include andk.mk
@@ -152,7 +152,7 @@ else
 	CFLAGS += -O3 -fno-strict-aliasing -fvisibility=hidden
 endif
 CFLAGS_BASE := $(CFLAGS)
-CFLAGS += -I$(PHIOLA)/src -I$(FFOS)
+CFLAGS += -I$(PHIOLA)/src -I$(FFSYS)
 LINKFLAGS := $(A_LINKFLAGS) \
 	-llog
 

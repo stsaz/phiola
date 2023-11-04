@@ -1,10 +1,10 @@
 /** phiola: GUI
 2023, Simon Zolin */
 
-#include <FFOS/error.h>
+#include <ffsys/error.h>
 #include <phiola.h>
 #include <util/conf-write.h>
-#include <FFOS/thread.h>
+#include <ffsys/thread.h>
 
 FF_EXTERN const phi_core *core;
 

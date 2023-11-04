@@ -2,7 +2,7 @@
 2023, Simon Zolin */
 
 #include <track.h>
-#include <FFOS/ffos-extern.h>
+#include <ffsys/globals.h>
 
 static const phi_core *core;
 #define errlog(t, ...)  phi_errlog(core, "aaudio", t, __VA_ARGS__)

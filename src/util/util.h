@@ -54,7 +54,7 @@ static inline const void* map_sz_vptr_findstr(const struct map_sz_vptr *m, ffstr
 }
 
 
-#include <FFOS/path.h>
+#include <ffsys/path.h>
 static inline void ffpath_split3_str(ffstr fullname, ffstr *path, ffstr *name, ffstr *ext)
 {
 	ffstr nm;

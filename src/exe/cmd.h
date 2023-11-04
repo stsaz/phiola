@@ -1,9 +1,9 @@
 /** phiola: executor
 2023, Simon Zolin */
 
-#include <FFOS/std.h>
-#include <FFOS/path.h>
-#include <FFOS/dirscan.h>
+#include <ffsys/std.h>
+#include <ffsys/path.h>
+#include <ffsys/dirscan.h>
 
 static const char pcm_fmtstr[][8] = {
 	"float32",

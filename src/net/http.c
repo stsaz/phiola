@@ -7,7 +7,7 @@
 #include <util/kq.h>
 #include <util/util.h>
 #include <net/http-bridge.h>
-#include <FFOS/ffos-extern.h>
+#include <ffsys/globals.h>
 
 const phi_core *core;
 extern const phi_filter phi_icy;

@@ -4,7 +4,7 @@
 #include <track.h>
 #include <util/util.h>
 #include <acodec/alib3-bridge/aac.h>
-#include <FFOS/ffos-extern.h>
+#include <ffsys/globals.h>
 
 const phi_core *core;
 #define errlog(t, ...)  phi_errlog(core, NULL, t, __VA_ARGS__)

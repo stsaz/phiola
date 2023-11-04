@@ -9,7 +9,7 @@ zzkq_timer_active
 */
 
 #pragma once
-#include <FFOS/timer.h>
+#include <ffsys/timer.h>
 
 struct zzkq_timer {
 	fftimer timer;

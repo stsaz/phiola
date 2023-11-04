@@ -10,8 +10,8 @@
 #include <gui/track-playback.h>
 #include <gui/track-convert.h>
 #include <afilter/pcm.h>
-#include <FFOS/dir.h>
-#include <FFOS/ffos-extern.h>
+#include <ffsys/dir.h>
+#include <ffsys/globals.h>
 #include <ffbase/args.h>
 
 const phi_core *core;

@@ -4,9 +4,9 @@
 #include <track.h>
 #include <util/util.h>
 #include <afilter/pcm.h>
-#include <FFOS/std.h>
-#include <FFOS/pipe.h>
-#include <FFOS/ffos-extern.h>
+#include <ffsys/std.h>
+#include <ffsys/pipe.h>
+#include <ffsys/globals.h>
 
 static const phi_core *core;
 #define syserrlog(t, ...)  phi_syserrlog(core, "tui", t, __VA_ARGS__)

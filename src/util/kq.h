@@ -11,8 +11,8 @@ zzkq_attach
 */
 
 #pragma once
-#include <FFOS/queue.h>
-#include <FFOS/kcall.h>
+#include <ffsys/queue.h>
+#include <ffsys/kcall.h>
 
 typedef void (*zzkevent_func)(void *obj);
 struct zzkevent {

@@ -7,8 +7,8 @@ ffps_systimer_open ffps_systimer_close
 ffps_systimer
 */
 
-#include <FFOS/process.h>
-#include <FFOS/error.h>
+#include <ffsys/process.h>
+#include <ffsys/error.h>
 #include <dbus/dbus.h>
 
 struct ffps_systimer {
