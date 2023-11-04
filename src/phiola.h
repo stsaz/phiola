@@ -371,6 +371,10 @@ struct phi_queue_entry {
 	uint length_msec;
 };
 
+enum PHI_Q_SORT {
+	PHI_Q_SORT_RANDOM = 1,
+};
+
 typedef struct phi_queue* phi_queue_id;
 typedef struct phi_queue_if phi_queue_if;
 struct phi_queue_if {
@@ -419,6 +423,8 @@ struct phi_queue_if {
 	*/
 	void (*on_change)(void (*cb)(phi_queue_id q, uint flags, uint pos));
 
+	/**
+	flags: enum PHI_Q_SORT */
 	void (*sort)(phi_queue_id q, uint flags);
 };
 

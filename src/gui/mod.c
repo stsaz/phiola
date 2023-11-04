@@ -341,6 +341,13 @@ void ctl_action(uint cmd)
 			gd->queue->clear(gd->q_selected);
 		break;
 
+	case A_LIST_SHUFFLE:
+		if (!gd->q_filtered) {
+			gd->queue->sort(gd->q_selected, PHI_Q_SORT_RANDOM);
+			wmain_list_draw(gd->queue->count(gd->q_selected), 1);
+		}
+		break;
+
 	case A_PLAYPAUSE:
 		if (gd->playing_track)
 			gtrk_play_pause(gd->playing_track);

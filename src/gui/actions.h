@@ -20,6 +20,7 @@
 	X(A_LIST_SAVE),
 	X(A_LIST_REMOVE),
 	X(A_LIST_CLEAR),
+	X(A_LIST_SHUFFLE),
 
 // Playback
 	X(A_PLAY),

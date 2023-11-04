@@ -443,6 +443,20 @@ static phi_queue_id q_filter(phi_queue_id q, ffstr filter, uint flags)
 	return qf;
 }
 
+/** Sort the index randomly */
+static void sort_random(phi_queue_id q)
+{
+	qm_rand_init();
+	struct q_entry **it, **e = (struct q_entry**)q->index.ptr;
+	FFSLICE_WALK(&q->index, it) {
+		ffsize n = ffrand_get() % q->index.len;
+		void *tmp = *it;
+		*it = e[n];
+		e[n] = tmp;
+	}
+	dbglog("sorted (random) %L entries", q->index.len);
+}
+
 static int q_sort_cmp(const void *_a, const void *_b, void *udata)
 {
 	// uint flags = (ffsize)udata;
@@ -454,7 +468,13 @@ static void q_sort(phi_queue_id q, uint flags)
 {
 	if (!q) q = qm_default();
 
+	if (flags & PHI_Q_SORT_RANDOM) {
+		sort_random(q);
+		return;
+	}
+
 	ffsort(q->index.ptr, q->index.len, sizeof(void*), q_sort_cmp, (void*)(ffsize)flags);
+	dbglog("sorted %L entries", q->index.len);
 }
 
 const phi_queue_if phi_queueif = {
