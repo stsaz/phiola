@@ -271,9 +271,10 @@ end:
 
 void ctl_play(uint i)
 {
-	if (!gd->q_filtered)
-		gd->queue->qselect(gd->q_selected);
-	gd->queue->play(NULL, gd->queue->at(list_id_visible(), i));
+	if (!gd->q_filtered && !gd->tab_conversion)
+		gd->queue->qselect(gd->q_selected); // set the visible list as default
+	phi_queue_id q = (gd->q_filtered) ? gd->q_filtered : NULL;
+	gd->queue->play(NULL, gd->queue->at(q, i));
 }
 
 void volume_set(uint vol)
