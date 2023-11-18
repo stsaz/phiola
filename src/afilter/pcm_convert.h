@@ -179,9 +179,6 @@ static int _pcm_chan_mix(uint ochan, void *odata, const struct phi_af *inpcm, co
 	if (0 != chan_fill_gain_levels(level, imask, omask))
 		return -1;
 
-	if (samples == 0)
-		return 0;
-
 	// set non-interleaved input array
 	istep = 1;
 	in.pb = (void*)idata;
@@ -213,6 +210,26 @@ static int _pcm_chan_mix(uint ochan, void *odata, const struct phi_af *inpcm, co
 					icstm++;
 				}
 				out.f[ocstm + i * ostep] = pcm_limf(sum);
+			}
+
+			if (++ocstm == ochan)
+				break;
+		}
+		break;
+
+	case PHI_PCM_24:
+		for (uint oc = 0;  oc != 8;  oc++) {
+			if (ffbit_test32(&omask, oc)) {
+				for (uint i = 0;  i != samples;  i++) {
+					double sum = 0;
+					uint icstm = 0;
+					for (uint ic = 0;  ic != 8;  ic++) {
+						if (ffbit_test32(&imask, ic)) {
+							sum += pcm_24_flt(int_ltoh24s(&in.pb[icstm++][i * istep * 3])) * level[oc][ic];
+						}
+					}
+					out.f[ocstm + i * ostep] = pcm_limf(sum);
+				}
 			}
 
 			if (++ocstm == ochan)

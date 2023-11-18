@@ -93,24 +93,28 @@ static int aconv_prepare(struct aconv *c, phi_track *t)
 	c->fi = t->aconv.in;
 	c->fo = t->aconv.out;
 
-	ffsize cap;
-	const struct phi_af *in = &c->fi;
-	const struct phi_af *out = &c->fo;
-
-	if (in->rate != out->rate) {
+	if (c->fi.rate != c->fo.rate) {
 		if (!core->track->filter(t, core->mod("soxr.conv"), 0))
 			return PHI_ERR;
 
-		if (in->channels != out->channels) {
-			return PHI_ERR;
+		if (c->fi.channels == c->fo.channels
+			&& c->fi.format != PHI_PCM_24) {
+			// Next module is converting format and sample rate
+			t->data_out = t->data_in;
+			return PHI_DONE;
 		}
 
-		t->data_out = t->data_in;
-		return PHI_DONE;
-	}
+		// We convert channels, the next module converts format and sample rate, e.g.:
+		// [... --(int24/44.1/1)-> conv --(float/44.1/2)-> soxr --(int16/48/2)-> ... ]
 
-	if (c->fi.channels > 8)
-		return PHI_ERR;
+		// our output format:
+		c->fo.format = PHI_PCM_FLOAT32;
+		c->fo.rate = c->fi.rate;
+
+		// next module's input format:
+		t->aconv.in.format = c->fo.format;
+		t->aconv.in.channels = c->fo.channels;
+	}
 
 	int r = pcm_convert(&c->fo, NULL, &c->fi, NULL, 0);
 	log_pcmconv(r, &c->fi, &c->fo, t);
@@ -119,7 +123,7 @@ static int aconv_prepare(struct aconv *c, phi_track *t)
 
 	uint out_ch = c->fo.channels & PHI_PCM_CHMASK;
 	c->out_samp_size = pcm_size(c->fo.format, out_ch);
-	cap = msec_to_samples(CONV_OUTBUF_MSEC, c->fo.rate) * c->out_samp_size;
+	size_t cap = msec_to_samples(CONV_OUTBUF_MSEC, c->fo.rate) * c->out_samp_size;
 	uint n = cap;
 	if (!c->fo.interleaved)
 		n = sizeof(void*) * out_ch + cap;

@@ -80,6 +80,15 @@ convert_from_to() {
 	./phiola co co.$1 -f -o co-$1.$2 ; ./phiola pl co-$1.$2
 }
 
+test_convert_af() {
+	./phiola co co.wav -af int24                   -f -o co-wav-i24.wav ; ./phiola i co-wav-i24.wav | grep 'int24' ; ./phiola pl co-wav-i24.wav
+	./phiola co co.wav                       -ch 1 -f -o co-wav-mono.wav ; ./phiola i co-wav-mono.wav | grep 'mono' ; ./phiola pl co-wav-mono.wav
+	./phiola co co.wav -af int24             -ch 1 -f -o co-wav-i24-mono.wav ; ./phiola i co-wav-i24-mono.wav | grep 'int24 44100Hz mono' ; ./phiola pl co-wav-i24-mono.wav
+	./phiola co co.wav           -rate 96000       -f -o co-wav-96k.wav ; ./phiola i co-wav-96k.wav | grep '96000Hz' ; ./phiola pl co-wav-96k.wav
+	./phiola co co.wav -af int32 -rate 96000       -f -o co-wav-i32-96k.wav ; ./phiola i co-wav-i32-96k.wav | grep 'int32 96000Hz' ; ./phiola pl co-wav-i32-96k.wav
+	./phiola co co.wav -af int32 -rate 96000 -ch 1 -f -o co-wav-i32-96k-mono.wav ; ./phiola i co-wav-i32-96k-mono.wav | grep 'int32 96000Hz mono' ; ./phiola pl co-wav-i32-96k-mono.wav
+}
+
 test_convert() {
 	./phiola co || true
 
@@ -95,11 +104,7 @@ test_convert() {
 	# seek/until
 	./phiola co co.wav -f -o co-wav-s1-u2.wav -s 1 -u 2 ; ./phiola pl co-wav-s1-u2.wav
 
-	# audio format
-	./phiola co co.wav -f -o co-wav-i24.wav -af int24 ; ./phiola i co-wav-i24.wav | grep 'int24' ; ./phiola pl co-wav-i24.wav
-	./phiola co co.wav -f -o co-wav-mono.wav -ch 1 ; ./phiola i co-wav-mono.wav | grep 'mono' ; ./phiola pl co-wav-mono.wav
-	./phiola co co.wav -f -o co-wav-96k.wav -rate 96000 ; ./phiola i co-wav-96k.wav | grep '96000Hz' ; ./phiola pl co-wav-96k.wav
-	./phiola co co.wav -f -o co-wav-i32-96k.wav -af int32 -rate 96000 ; ./phiola i co-wav-i32-96k.wav | grep 'int32 96000Hz' ; ./phiola pl co-wav-i32-96k.wav
+	test_convert_af
 
 	./phiola co co.wav -f -o co-wav-gain6.wav -gain -6 ; ./phiola pl co-wav-gain6.wav
 	./phiola co co.wav -f -o co-wav.wav -preserve_date
