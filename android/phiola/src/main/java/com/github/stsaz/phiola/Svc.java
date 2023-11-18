@@ -157,7 +157,7 @@ public class Svc extends MediaBrowserServiceCompat {
 
 			public void onSkipToPrevious() {
 				core.dbglog(TAG, "MediaSessionCompat.onSkipToPrevious");
-				queue.prev();
+				queue.order_prev();
 			}
 
 			public void onSeekTo(long pos) {

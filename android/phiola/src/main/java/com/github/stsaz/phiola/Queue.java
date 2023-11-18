@@ -109,7 +109,7 @@ class Queue {
 	private Random rnd;
 	boolean random_split;
 	int autoskip_msec;
-	private boolean b_order_next;
+	private boolean b_order_prev, b_order_next;
 	private Handler mloop;
 
 	Queue(Core core) {
@@ -312,6 +312,22 @@ class Queue {
 		_play(q_active, i);
 	}
 
+	/** Play previous track */
+	void prev() {
+		int n = queues.get(q_active).count();
+		if (n == 0)
+			return;
+
+		int i = curpos - 1;
+		if (random) {
+			i = next_random(n);
+		} else if (repeat) {
+			if (i == 0)
+				i = n - 1;
+		}
+		_play(q_active, i);
+	}
+
 	/** Next track by user command */
 	void order_next() {
 		if (active) {
@@ -321,14 +337,21 @@ class Queue {
 		next();
 	}
 
-	/** Play previous track */
-	void prev() {
-		_play(q_active, curpos - 1);
+	/** Previous track by user command */
+	void order_prev() {
+		if (active) {
+			if (core.setts.list_add_rm_on_prev)
+				next_list_add_cur();
+			b_order_prev = true;
+			track.stop();
+		}
+		prev();
 	}
 
 	private void on_open(TrackHandle t) {
 		active = true;
 		b_order_next = false;
+		b_order_prev = false;
 		if (autoskip_msec != 0)
 			t.seek_msec = autoskip_msec;
 
@@ -345,7 +368,8 @@ class Queue {
 
 		if (trk_idx >= 0
 			&& ((t.error && core.setts.qu_rm_on_err)
-				|| (b_order_next && core.setts.list_rm_on_next))) {
+				|| (b_order_next && core.setts.list_rm_on_next)
+				|| (b_order_prev && core.setts.list_add_rm_on_prev))) {
 			String url = queues.get(q_active).url(trk_idx);
 			if (url.equals(t.url))
 				remove(trk_idx);

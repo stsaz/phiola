@@ -18,7 +18,7 @@ class CoreSettings {
 	String trash_dir;
 	boolean file_del;
 	boolean no_tags;
-	boolean list_rm_on_next;
+	boolean list_add_rm_on_prev, list_rm_on_next;
 	boolean qu_rm_on_err;
 	String codepage;
 	String pub_data_dir;
@@ -76,6 +76,7 @@ class CoreSettings {
 		return String.format("svc_notification_disable %d\n", core.bool_to_int(svc_notification_disable)) +
 				String.format("file_delete %d\n", core.bool_to_int(file_del)) +
 				String.format("no_tags %d\n", core.bool_to_int(no_tags)) +
+				String.format("list_add_rm_on_prev %d\n", core.bool_to_int(list_add_rm_on_prev)) +
 				String.format("list_rm_on_next %d\n", core.bool_to_int(list_rm_on_next)) +
 				String.format("qu_rm_on_err %d\n", core.bool_to_int(qu_rm_on_err)) +
 				String.format("codepage %s\n", codepage) +
@@ -143,6 +144,8 @@ class CoreSettings {
 			trash_dir = v;
 		else if (k.equals("no_tags"))
 			no_tags = core.str_to_bool(v);
+		else if (k.equals("list_add_rm_on_prev"))
+			list_add_rm_on_prev = core.str_to_bool(v);
 		else if (k.equals("list_rm_on_next"))
 			list_rm_on_next = core.str_to_bool(v);
 		else if (k.equals("qu_rm_on_err"))

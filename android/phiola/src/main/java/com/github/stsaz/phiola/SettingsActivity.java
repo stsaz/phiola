@@ -59,6 +59,7 @@ public class SettingsActivity extends AppCompatActivity {
 		b.brandom.setChecked(core.queue().is_random());
 		b.brepeat.setChecked(core.queue().is_repeat());
 		b.bnotags.setChecked(core.setts.no_tags);
+		b.blistAddRmOnPrev.setChecked(core.setts.list_add_rm_on_prev);
 		b.blistRmOnNext.setChecked(core.setts.list_rm_on_next);
 		b.tcodepage.setText(core.setts.codepage);
 		b.tautoskip.setText(Integer.toString(core.queue().autoskip_msec / 1000));
@@ -87,6 +88,7 @@ public class SettingsActivity extends AppCompatActivity {
 		core.queue().random(b.brandom.isChecked());
 		core.queue().repeat(b.brepeat.isChecked());
 		core.setts.no_tags = b.bnotags.isChecked();
+		core.setts.list_add_rm_on_prev = b.blistAddRmOnPrev.isChecked();
 		core.setts.list_rm_on_next = b.blistRmOnNext.isChecked();
 		core.setts.qu_rm_on_err = b.blistRmOnErr.isChecked();
 		core.setts.set_codepage(b.tcodepage.getText().toString());
