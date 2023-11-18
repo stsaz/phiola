@@ -183,12 +183,9 @@ public class MainActivity extends AppCompatActivity {
 				return true;
 			}
 
-			case R.id.action_list_next_add_cur: {
-				int qi = queue.next_list_add_cur();
-				if (qi >= 0)
-					core.gui().msg_show(this, String.format("Added track to Playlist %d", qi+1));
+			case R.id.action_list_next_add_cur:
+				list_next_add_cur();
 				return true;
-			}
 
 			case R.id.action_file_showcur:
 				explorer_file_current_show();
@@ -595,6 +592,12 @@ public class MainActivity extends AppCompatActivity {
 		else
 			list_update();
 		bplaylist_text(qi);
+	}
+
+	private void list_next_add_cur() {
+		int qi = queue.next_list_add_cur();
+		if (qi >= 0)
+			core.gui().msg_show(this, String.format("Added track to Playlist %d", qi+1));
 	}
 
 	/** Start recording */

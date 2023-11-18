@@ -32,7 +32,9 @@ test_record() {
 	sleep 5 # let PulseAudio unlock devices
 	./phiola rec -o rec.wav -f -u 2 -au alsa
 	./phiola rec -o rec.wav -f -u 2 -au alsa -dev 1
+}
 
+test_record_manual() {
 	echo "!!! PRESS CTRL+C MANUALLY !!!"
 	./phiola rec -o rec.wav -f
 }
@@ -317,6 +319,7 @@ test_clean() {
 TESTS=(
 	device
 	record
+	# record_manual
 	play
 	convert
 	danorm

@@ -95,75 +95,15 @@ cd phiola
 
 * Cross-Build on Linux for Debian-buster:
 
-> Note that openssl-3 must be built from source.
-
-```sh
-cat >build_linux.sh <<EOF
-set -e
-cd /src/phiola
-make -j8 -C ../netmill/3pt openssl
-make -j8 -C ../ffpack libzstd
-make -j8 -C alib3
-make -j8
-EOF
-
-cat >builder_debian_buster.Dockerfile <<EOF
-FROM debian:buster-slim AS cxx_debian_buster
-RUN apt update && \
- apt install -y \
-  gcc g++ make
-
-FROM cxx_debian_buster
-RUN apt install -y \
- libasound2-dev libpulse-dev libjack-dev \
- libdbus-1-dev \
- libgtk-3-dev \
- zstd unzip cmake patch dos2unix curl
-EOF
-
-podman build \
- -t phiola_builder_debian_buster \
- -f builder_debian_buster.Dockerfile .
-podman create -a -i -t \
- -v `pwd`/..:/src \
- --name phiola_build_debian_buster \
- phiola_builder_debian_buster \
- bash /src/phiola/build_linux.sh
-podman start -a -i phiola_build_debian_buster
-```
+	```sh
+	bash xbuild-debianbuster.sh
+	```
 
 * Cross-Build on Linux for Windows/AMD64:
 
-```sh
-cat >build_mingw64.sh <<EOF
-set -e
-cd /src/phiola
-make -j8 OS=windows -C ../netmill/3pt openssl
-make -j8 OS=windows COMPILER=gcc CROSS_PREFIX=x86_64-w64-mingw32- -C ../ffpack libzstd
-make -j8 OS=windows COMPILER=gcc CROSS_PREFIX=x86_64-w64-mingw32- -C alib3
-make -j8 OS=windows COMPILER=gcc CROSS_PREFIX=x86_64-w64-mingw32-
-EOF
-
-cat >builder_mingw64_debian_bookworm.Dockerfile <<EOF
-FROM debian:bookworm-slim AS cxx_mingw64_debian_bookworm
-RUN apt update && \
- apt install -y \
-  gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 make
-
-FROM cxx_mingw64_debian_bookworm
-RUN apt install -y \
- perl \
- zstd unzip cmake patch dos2unix curl
-EOF
-
-podman build -t phiola_builder_windows64_debian_bookworm -f builder_mingw64_debian_bookworm.Dockerfile .
-podman create -a -i -t \
- -v `pwd`/..:/src \
- --name phiola_build_windows64_debian_bookworm \
- phiola_builder_windows64_debian_bookworm \
- bash /src/phiola/build_mingw64.sh
-podman start -a -i phiola_build_windows64_debian_bookworm
-```
+	```sh
+	bash xbuild-win64.sh
+	```
 
 * Cross-Build on Linux for Android/ARM64:
 

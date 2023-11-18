@@ -246,7 +246,7 @@ print:
 
 done:
 	{
-	uint n = FFINT_DIVSAFE(t->data_in.len, u->sampsize);
+	size_t n = FFINT_DIVSAFE(t->data_in.len, u->sampsize);
 	u->played_samples += n;
 	dbglog(u->t, "samples: +%L [%U] @%U"
 		, n, u->played_samples, t->audio.pos);

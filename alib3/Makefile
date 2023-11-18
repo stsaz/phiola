@@ -23,28 +23,62 @@ default:
 
 build: $(addprefix $(TGT_DIR)/lib,$(addsuffix -phi.$(SO),$(LIBS)))
 
+$(TGT_DIR)/libALAC-phi.$(SO):
+	$(MAKE) -C ALAC -I..
+	cp ALAC/*.$(SO) $(TGT_DIR)
+
+$(TGT_DIR)/libDynamicAudioNormalizer-phi.$(SO):
+	$(MAKE) -C DynamicAudioNormalizer -I..
+	cp DynamicAudioNormalizer/*.$(SO) $(TGT_DIR)
+
+$(TGT_DIR)/libfdk-aac-phi.$(SO):
+	$(MAKE) -C fdk-aac -I..
+	cp fdk-aac/*.$(SO) $(TGT_DIR)
+
+$(TGT_DIR)/libFLAC-phi.$(SO):
+	$(MAKE) -C FLAC -I..
+	cp FLAC/*.$(SO) $(TGT_DIR)
+
+$(TGT_DIR)/libMAC-phi.$(SO):
+	$(MAKE) -C MAC -I..
+	cp MAC/*.$(SO) $(TGT_DIR)
+
+$(TGT_DIR)/libmpg123-phi.$(SO):
+	$(MAKE) -C mpg123 -I..
+	cp mpg123/*.$(SO) $(TGT_DIR)
+
+$(TGT_DIR)/libmusepack-phi.$(SO):
+	$(MAKE) -C musepack -I..
+	cp musepack/*.$(SO) $(TGT_DIR)
+
+$(TGT_DIR)/libsoxr-phi.$(SO):
+	$(MAKE) -C soxr -I..
+	cp soxr/*.$(SO) $(TGT_DIR)
+
 ogg/libogg.a:
-	$(MAKE) -I.. -C ogg
+	$(MAKE) -C ogg -I..
+$(TGT_DIR)/libvorbis-phi.$(SO):
+	$(MAKE) ogg/libogg.a
+	$(MAKE) -C vorbis -I..
+	cp vorbis/*.$(SO) $(TGT_DIR)
 
-$(TGT_DIR)/libvorbis-phi.$(SO): ogg/libogg.a
-
-$(TGT_DIR)/lib%-phi.$(SO): %
-	$(MAKE) -I.. -C $<
-	cp $</*.$(SO) $(TGT_DIR)
+$(TGT_DIR)/libwavpack-phi.$(SO):
+	$(MAKE) -C wavpack -I..
+	cp wavpack/*.$(SO) $(TGT_DIR)
 
 clean:
-	$(MAKE) -I.. -C ALAC clean
-	$(MAKE) -I.. -C DynamicAudioNormalizer clean
-	$(MAKE) -I.. -C fdk-aac clean
-	$(MAKE) -I.. -C FLAC clean
-	$(MAKE) -I.. -C MAC clean
-	$(MAKE) -I.. -C mpg123 clean
-	$(MAKE) -I.. -C musepack clean
-	$(MAKE) -I.. -C ogg clean
-	$(MAKE) -I.. -C opus clean
-	$(MAKE) -I.. -C soxr clean
-	$(MAKE) -I.. -C vorbis clean
-	$(MAKE) -I.. -C wavpack clean
+	$(MAKE) clean -C ALAC -I..
+	$(MAKE) clean -C DynamicAudioNormalizer -I..
+	$(MAKE) clean -C fdk-aac -I..
+	$(MAKE) clean -C FLAC -I..
+	$(MAKE) clean -C MAC -I..
+	$(MAKE) clean -C mpg123 -I..
+	$(MAKE) clean -C musepack -I..
+	$(MAKE) clean -C ogg -I..
+	$(MAKE) clean -C opus -I..
+	$(MAKE) clean -C soxr -I..
+	$(MAKE) clean -C vorbis -I..
+	$(MAKE) clean -C wavpack -I..
 
 md5:
 	md5sum -b \

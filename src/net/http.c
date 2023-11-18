@@ -162,9 +162,9 @@ static void on_complete(void *param)
 		core->track->wake(h->trk);
 }
 
-extern const struct nml_filter
-	*hc_filters[],
-	*hc_ssl_filters[];
+extern const nml_http_cl_component
+	*hc_chain[],
+	*hc_ssl_chain[];
 
 #ifndef PHI_HTTP_NO_SSL
 #include <util/ssl.h>
@@ -217,7 +217,7 @@ static int conf_prepare(struct httpcl *h, struct nml_http_client_conf *c)
 	h->path.len = httpurl_escape(h->path.ptr, h->path.cap, p.path);
 	c->path = *(ffstr*)&h->path;
 
-	c->filters = hc_filters;
+	c->chain = hc_chain;
 
 	if (ffstr_ieqz(&p.scheme, "https://")) {
 #ifndef PHI_HTTP_NO_SSL
@@ -227,7 +227,7 @@ static int conf_prepare(struct httpcl *h, struct nml_http_client_conf *c)
 			return -1;
 		}
 		c->ssl_ctx = phi_ssl_ctx;
-		c->filters = hc_ssl_filters;
+		c->chain = hc_ssl_chain;
 		if (!p.port.len)
 			c->server_port = 443;
 

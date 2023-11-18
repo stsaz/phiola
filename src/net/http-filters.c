@@ -39,42 +39,42 @@ static int phi_output_process(nml_http_client *c)
 	return phi_hc_data(c->conf->opaque, c->input, c->resp_complete);
 }
 
-static const struct nml_filter nml_phi_bridge = {
-	(void*)phi_output_open, NULL, (void*)phi_output_process,
+static const nml_http_cl_component nml_http_cl_phi_bridge = {
+	phi_output_open, NULL, phi_output_process,
 	"phiola-output"
 };
 
 
-const struct nml_filter *hc_filters[] = {
-	&nml_filter_resolve,
-	&nml_filter_connect,
-	&nml_filter_http_cl_request,
-	&nml_filter_http_cl_send,
-	&nml_filter_recv,
-	&nml_filter_resp,
-	&nml_filter_http_cl_transfer,
-	&nml_filter_redir,
-	&nml_phi_bridge,
+const nml_http_cl_component *hc_chain[] = {
+	&nml_http_cl_resolve,
+	&nml_http_cl_connect,
+	&nml_http_cl_request,
+	&nml_http_cl_send,
+	&nml_http_cl_recv,
+	&nml_http_cl_response,
+	&nml_http_cl_transfer,
+	&nml_http_cl_redir,
+	&nml_http_cl_phi_bridge,
 	NULL
 };
 
 #ifndef PHI_HTTP_NO_SSL
 #include <http-client/ssl.h>
-const struct nml_filter *hc_ssl_filters[] = {
-	&nml_filter_resolve,
-	&nml_filter_connect,
-	&nml_filter_ssl_recv,
-	&nml_filter_ssl_handshake,
-	&nml_filter_ssl_send,
-	&nml_filter_http_cl_request,
-	&nml_filter_ssl_req,
-	&nml_filter_ssl_send,
-	&nml_filter_ssl_recv,
-	&nml_filter_ssl_resp,
-	&nml_filter_resp,
-	&nml_filter_http_cl_transfer,
-	&nml_filter_redir,
-	&nml_phi_bridge,
+const nml_http_cl_component *hc_ssl_chain[] = {
+	&nml_http_cl_resolve,
+	&nml_http_cl_connect,
+	&nml_http_cl_ssl_recv,
+	&nml_http_cl_ssl_handshake,
+	&nml_http_cl_ssl_send,
+	&nml_http_cl_request,
+	&nml_http_cl_ssl_req,
+	&nml_http_cl_ssl_send,
+	&nml_http_cl_ssl_recv,
+	&nml_http_cl_ssl_resp,
+	&nml_http_cl_response,
+	&nml_http_cl_transfer,
+	&nml_http_cl_redir,
+	&nml_http_cl_phi_bridge,
 	NULL
 };
 #endif
