@@ -96,3 +96,13 @@ static inline ffsize ffpath_makefn(char *dst, ffsize dstcap, ffstr src, char rep
 /** Get size of 1 sample (in bytes). */
 #define pcm_size(format, channels)  (pcm_bits(format) / 8 * (channels))
 #define pcm_size1(f)  pcm_size((f)->format, (f)->channels)
+
+static inline void phi_af_update(struct phi_af *dst, const struct phi_af *src)
+{
+	if (src->format)
+		dst->format = src->format;
+	if (src->rate)
+		dst->rate = src->rate;
+	if (src->channels)
+		dst->channels = src->channels;
+}

@@ -23,16 +23,6 @@ static void autoconv_close(void *ctx, phi_track *t)
 	ffmem_free(ctx);
 }
 
-static void phi_af_update(struct phi_af *dst, const struct phi_af *src)
-{
-	if (src->format)
-		dst->format = src->format;
-	if (src->rate)
-		dst->rate = src->rate;
-	if (src->channels)
-		dst->channels = src->channels;
-}
-
 static int autoconv_process(struct autoconv *c, phi_track *t)
 {
 	const struct phi_af *iaf = &t->audio.format;

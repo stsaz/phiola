@@ -69,7 +69,9 @@ static int wasapi_create(audio_out *w, phi_track *t)
 	w->aflags |= FFAUDIO_O_UNSYNC_NOTIFY;
 	r = audio_out_open(w, t, &fmt);
 	if (r == FFAUDIO_EFORMAT) {
-		fmt_conv_add(&mod->fmts, &fmt, &t->oaudio.format);
+		struct phi_af req_fmt = t->oaudio.format;
+		phi_af_update(&req_fmt, &t->oaudio.conv_format);
+		fmt_conv_add(&mod->fmts, &fmt, &req_fmt);
 		return PHI_MORE;
 	} else if (r != 0)
 		return PHI_ERR;

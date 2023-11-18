@@ -82,7 +82,9 @@ static int alsa_create(audio_out *a, phi_track *t)
 
 	r = audio_out_open(a, t, &fmt);
 	if (r == FFAUDIO_EFORMAT) {
-		fmt_conv_add(&mod->fmts, &fmt, &t->oaudio.format);
+		struct phi_af req_fmt = t->oaudio.format;
+		phi_af_update(&req_fmt, &t->oaudio.conv_format);
+		fmt_conv_add(&mod->fmts, &fmt, &req_fmt);
 		return PHI_MORE;
 	} else if (r != 0) {
 		a->err_code = r;
