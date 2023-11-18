@@ -41,6 +41,8 @@ Contents:
 
 **Bonus:** Convenient API with plugin support which allows using all the above features from any C/C++/Java app!
 
+See also: [phiola Architecture](doc/arch/arch.md).
+
 
 ## Install
 
