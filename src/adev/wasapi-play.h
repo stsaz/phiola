@@ -94,8 +94,8 @@ fin:
 		, pcm_format_str(mod->fmt.format), mod->fmt.rate, mod->fmt.channels
 		, t->conf.oaudio.exclusive);
 
-	if (!!w->event_h)
-		core->woeh(t->worker, w->event_h, &w->tsk, audio_out_onplay, w);
+	if (w->event_h)
+		core->woeh(t->worker, w->event_h, &w->task, audio_out_onplay, w);
 	else
 		core->timer(t->worker, &mod->tmr, mod->buffer_length_msec / 2, audio_out_onplay, w);
 	return PHI_DONE;

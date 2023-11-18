@@ -304,25 +304,22 @@ static int core_kq_attach(uint worker, phi_kevent *kev, fffd fd, uint flags)
 
 #ifdef FF_WIN
 
-struct woeh_task {
-	phi_task *t;
-	uint worker;
-};
-
 static void woeh_task(void *param)
 {
-	struct woeh_task *wt = param;
-	core_task(wt->worker, wt->t, wt->t->handler, wt->t->param);
-	ffmem_free(wt);
+	struct phi_woeh_task *wt = param;
+	core_task(wt->worker, &wt->task, wt->task.handler, wt->task.param);
 }
 
-static int core_woeh(uint worker, fffd fd, phi_task *t, phi_task_func func, void *param)
+static int core_woeh(uint worker, fffd fd, struct phi_woeh_task *wt, phi_task_func func, void *param)
 {
-	cc->woeh_obj = woeh_create();
-	t->handler = func;
-	t->param = param;
-	struct woeh_task *wt = ffmem_new(struct woeh_task);
-	wt->t = t;
+	if (!cc->woeh_obj
+		&& !(cc->woeh_obj = woeh_create())) {
+		syserrlog("woeh create");
+		return -1;
+	}
+
+	wt->task.handler = func;
+	wt->task.param = param;
 	wt->worker = worker;
 	return woeh_add(cc->woeh_obj, fd, woeh_task, wt);
 }

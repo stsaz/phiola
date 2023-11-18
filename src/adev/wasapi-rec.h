@@ -4,7 +4,7 @@
 typedef struct was_in {
 	audio_in in;
 	phi_timer tmr;
-	phi_task tsk;
+	struct phi_woeh_task task;
 	uint latcorr;
 } was_in;
 
@@ -32,8 +32,8 @@ static void* wasapi_in_open(phi_track *t)
 	if (0 != audio_in_open(a, t))
 		goto fail;
 
-	if (!!a->event_h)
-		core->woeh(t->worker, a->event_h, &wi->tsk, audio_oncapt, a);
+	if (a->event_h)
+		core->woeh(t->worker, a->event_h, &wi->task, audio_oncapt, a);
 	else
 		core->timer(t->worker, &wi->tmr, a->buffer_length_msec / 2, audio_oncapt, a);
 	return wi;

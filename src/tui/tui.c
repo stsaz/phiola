@@ -47,7 +47,7 @@ struct tui_rec {
 struct tui_mod {
 	const phi_queue_if *queue;
 	phi_kevent *kev;
-	fftask task_read;
+	struct phi_woeh_task task_read;
 
 	struct tui_track *curtrk; // currently playing track
 	struct tui_rec *curtrk_rec; // currently recording track

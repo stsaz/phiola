@@ -24,9 +24,9 @@ struct audio_out {
 	uint clear :1;
 
 	// user's
-	phi_task tsk;
 	uint reconnect :1;
 #ifdef FF_WIN
+	struct phi_woeh_task task;
 	HANDLE event_h;
 #endif
 };

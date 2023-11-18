@@ -83,6 +83,11 @@ typedef void (*phi_task_func)(void *param);
 
 typedef struct phi_kevent phi_kevent;
 
+struct phi_woeh_task {
+	phi_task task;
+	uint worker;
+};
+
 typedef struct phi_core phi_core;
 struct phi_core {
 	const char *version_str;
@@ -121,7 +126,7 @@ struct phi_core {
 #ifdef FF_WIN
 	/** Set the function to receive signals from a Windows event handle.
 	Function is called inside the specified worker thread */
-	int (*woeh)(uint worker, fffd fd, phi_task *t, phi_task_func func, void *param);
+	int (*woeh)(uint worker, fffd fd, struct phi_woeh_task *t, phi_task_func func, void *param);
 #endif
 
 	/** Get the number of available workers */
