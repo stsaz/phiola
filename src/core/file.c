@@ -9,6 +9,15 @@ extern phi_core *core;
 #define infolog(t, ...)  phi_infolog(core, NULL, t, __VA_ARGS__)
 #define dbglog(t, ...)  phi_dbglog(core, NULL, t, __VA_ARGS__)
 
+static inline int frw_benchmark(fftime *t)
+{
+	if (core->conf.log_level >= PHI_LOG_DEBUG) {
+		*t = core->time(NULL, PHI_CORE_TIME_MONOTONIC);
+		return 1;
+	}
+	return 0;
+}
+
 #include <core/file-read.h>
 #include <core/file-write.h>
 #include <core/file-stdin.h>

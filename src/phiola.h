@@ -75,6 +75,11 @@ struct phi_core_conf {
 	uint stdout_busy :1; // Prevent TUI module from using stdout
 };
 
+enum PHI_CORE_TIME {
+	PHI_CORE_TIME_LOCAL,
+	PHI_CORE_TIME_MONOTONIC,
+};
+
 enum PHI_CORE_SIG {
 	PHI_CORE_STOP,
 };
@@ -94,6 +99,8 @@ struct phi_core {
 	struct phi_core_conf conf;
 	const struct phi_track_if* track; // track manager interface
 
+	/**
+	flags: enum PHI_CORE_TIME */
 	fftime (*time)(ffdatetime *dt, uint flags);
 
 	/** Get interface from a module.

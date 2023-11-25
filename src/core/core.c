@@ -151,7 +151,7 @@ static ffdl mod_load(struct core_mod *m, ffstr file)
 
 	fftime t1;
 	if (core->conf.log_level >= PHI_LOG_DEBUG)
-		t1 = fftime_monotonic();
+		t1 = core->time(NULL, PHI_CORE_TIME_MONOTONIC);
 
 	char *fn;
 	if (core->conf.root.len)
@@ -176,7 +176,7 @@ static ffdl mod_load(struct core_mod *m, ffstr file)
 		goto end;
 
 	if (core->conf.log_level >= PHI_LOG_DEBUG) {
-		fftime t2 = fftime_monotonic();
+		fftime t2 = core->time(NULL, PHI_CORE_TIME_MONOTONIC);
 		fftime_sub(&t2, &t1);
 
 		uint ma = m->mod->ver/10000
@@ -247,11 +247,20 @@ end:
 
 static fftime core_time(ffdatetime *dt, uint flags)
 {
-	fftime t;
-	fftime_now(&t);
-	t.sec += FFTIME_1970_SECONDS + cc->tz.real_offset;
-	if (dt)
-		fftime_split1(dt, &t);
+	fftime t = {};
+
+	switch (flags) {
+	case PHI_CORE_TIME_LOCAL:
+		fftime_now(&t);
+		t.sec += FFTIME_1970_SECONDS + cc->tz.real_offset;
+		if (dt)
+			fftime_split1(dt, &t);
+		break;
+
+	case PHI_CORE_TIME_MONOTONIC:
+		t = fftime_monotonic();  break;
+	}
+
 	return t;
 }
 

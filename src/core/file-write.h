@@ -17,6 +17,11 @@ struct file_w {
 	const char *name;
 	char *filename_tmp;
 	uint fin;
+
+	struct {
+		fftime t_open, t_io;
+		uint64 writes, cached_writes;
+	} stats;
 };
 
 static void fw_close(void *ctx, phi_track *t)
@@ -32,6 +37,11 @@ static void fw_close(void *ctx, phi_track *t)
 		syserrlog(t, "file close: %s", f->name);
 		goto end;
 	}
+
+	dbglog(t, "open:%Ums  io:%Ums/%U  cache-writes:%U"
+		, fftime_to_msec(&f->stats.t_open)
+		, fftime_to_msec(&f->stats.t_io), f->stats.writes
+		, f->stats.cached_writes);
 
 	if (!f->fin) {
 		if (0 == fffile_remove(f->name))
@@ -196,6 +206,9 @@ static void* fw_open(phi_track *t)
 		fn = f->filename_tmp;
 	}
 
+	fftime t1;
+	frw_benchmark(&t1);
+
 	uint flags = FFFILE_WRITEONLY;
 	if (t->conf.ofile.overwrite)
 		flags |= FFFILE_CREATE;
@@ -209,6 +222,9 @@ static void* fw_open(phi_track *t)
 		goto end;
 	}
 
+	if (frw_benchmark(&f->stats.t_open))
+		fftime_sub(&f->stats.t_open, &t1);
+
 	dbglog(t, "%s: opened", f->name);
 	return f;
 
@@ -220,6 +236,9 @@ end:
 /** Pass data to kernel */
 static int fw_write(struct file_w *f, ffstr d, uint64 off)
 {
+	fftime t1, t2;
+	frw_benchmark(&t1);
+
 	ffssize r = fffile_writeat(f->fd, d.ptr, d.len, off);
 	if (r < 0) {
 		syserrlog(f->trk, "file write: %s %L @%U", f->name, d.len, off);
@@ -228,6 +247,13 @@ static int fw_write(struct file_w *f, ffstr d, uint64 off)
 	dbglog(f->trk, "%s: written %L @%U", f->name, d.len, off);
 	if (off + d.len > f->size)
 		f->size = off + d.len;
+
+	if (frw_benchmark(&t2)) {
+		fftime_sub(&t2, &t1);
+		fftime_add(&f->stats.t_io, &t2);
+		f->stats.writes++;
+	}
+
 	return 0;
 }
 
@@ -249,6 +275,7 @@ static int fw_process(void *ctx, phi_track *t)
 		int64 woff = fbuf_write(&f->wbuf, f->buf_cap, &in, off, &d);
 		off += n - in.len;
 		if (n != in.len) {
+			f->stats.cached_writes++;
 			dbglog(t, "%s: write: bufferred %L bytes @%U+%L"
 				, f->name, n - in.len, f->wbuf.off, f->wbuf.len);
 		}

@@ -52,7 +52,7 @@ static int track_conf(struct phi_track_conf *conf)
 /** Print the time we spent inside each filter */
 static void track_busytime_print(phi_track *t)
 {
-	fftime total = fftime_monotonic();
+	fftime total = core->time(NULL, PHI_CORE_TIME_MONOTONIC);
 	fftime_sub(&total, &t->t_start);
 
 	ffvec buf = {};
@@ -147,7 +147,7 @@ static phi_track* track_create(struct phi_track_conf *conf)
 	t->id[0] = '*';
 	ffs_fromint(id, t->id+1, sizeof(t->id)-1, 0);
 
-	t->t_start = fftime_monotonic();
+	t->t_start = core->time(NULL, PHI_CORE_TIME_MONOTONIC);
 
 	t->audio.seek = t->conf.seek_msec;
 	t->audio.seek_req = (t->audio.seek > 0);
@@ -348,13 +348,13 @@ static void track_run(phi_track *t)
 
 		fftime t1, t2;
 		if (t->conf.print_time)
-			t1 = fftime_monotonic();
+			t1 = core->time(NULL, PHI_CORE_TIME_MONOTONIC);
 
 		struct filter *f = *ffslice_itemT(&t->conveyor.filters, t->conveyor.cur, struct filter*);
 		r = trk_filter_run(t, f);
 
 		if (t->conf.print_time) {
-			t2 = fftime_monotonic();
+			t2 = core->time(NULL, PHI_CORE_TIME_MONOTONIC);
 			fftime_sub(&t2, &t1);
 			fftime_add(&f->busytime, &t2);
 		}

@@ -199,7 +199,7 @@ static int load_ui()
 
 	fftime t1;
 	if (core->conf.log_level >= PHI_LOG_DEBUG)
-		t1 = fftime_monotonic();
+		t1 = core->time(NULL, PHI_CORE_TIME_MONOTONIC);
 
 	if (ffui_ldr_loadfile(&ldr, fn)) {
 		errlog("parsing ui.conf: %s", ffui_ldr_errstr(&ldr));
@@ -211,7 +211,7 @@ static int load_ui()
 
 done:
 	if (core->conf.log_level >= PHI_LOG_DEBUG) {
-		fftime t2 = fftime_monotonic();
+		fftime t2 = core->time(NULL, PHI_CORE_TIME_MONOTONIC);
 		fftime_sub(&t2, &t1);
 		dbglog("loaded GUI in %Ums", (int64)fftime_to_msec(&t2));
 	}
