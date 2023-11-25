@@ -21,6 +21,7 @@
 	X(A_LIST_REMOVE),
 	X(A_LIST_CLEAR),
 	X(A_LIST_SHUFFLE),
+	X(A_LIST_SCROLL_TO_CUR),
 
 // Playback
 	X(A_PLAY),

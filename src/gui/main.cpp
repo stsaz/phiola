@@ -598,6 +598,11 @@ static void wmain_action(ffui_window *wnd, int id)
 	case A_LIST_REMOVE:
 		gui_core_task_slice(list_remove, m->vlist.selected());  break;
 
+	case A_LIST_SCROLL_TO_CUR:
+		if (!gd->q_filtered)
+			m->vlist.scroll_index(gd->cursor);
+		break;
+
 	case A_LIST_DISPLAY:
 #ifdef FF_WIN
 		list_display(m->vlist.dispinfo_item);
