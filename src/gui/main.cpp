@@ -24,6 +24,9 @@ struct gui_wmain {
 	ffui_icon ico_play, ico_pause;
 	struct phi_queue_entry *qe_active;
 
+	phi_timer tmr_redraw;
+	uint redraw_n, redraw_offset;
+
 	char *vlist_col;
 	char *wnd_pos;
 	uint tvol_val;
@@ -395,32 +398,10 @@ void wmain_list_delete(uint i)
 	m->tabs.select(new_index);
 }
 
-/** A queue is created/deleted/modified.
-Thread: worker */
-static void q_on_change(phi_queue_id q, uint flags, uint pos)
+static void list_update(uint cmd, uint n, uint pos)
 {
 	gui_wmain *m = gg->wmain;
-
-	if (q == gd->q_filtered)
-		return;
-
-	switch (flags & 0xff) {
-	case 'a':
-	case 'r':
-	case 'c':
-		if (q != gd->q_selected)
-			return; // an inactive list is changed
-		break;
-
-	case 'n':
-		if (gd->filtering)
-			return; // a filtered list is created
-		break;
-	}
-
-	uint n = gd->queue->count(q);
-
-	switch (flags & 0xff) {
+	switch (cmd) {
 	case 'a':
 		m->vlist.length(n, 0);
 		m->vlist.update(pos, 1);
@@ -434,7 +415,71 @@ static void q_on_change(phi_queue_id q, uint flags, uint pos)
 			m->vlist.update(pos, 0);
 #endif
 		break;
+	}
+}
 
+#ifdef FF_WIN
+
+static void list_update_delayed(void *param)
+{
+	gui_wmain *m = gg->wmain;
+	list_update((size_t)param, m->redraw_n, m->redraw_offset);
+}
+
+static void list_update_schedule(uint cmd, uint n, uint pos)
+{
+	gui_wmain *m = gg->wmain;
+	switch (cmd) {
+	case 'a':
+	case 'r':
+		// Note: view.length() here is very slow
+		m->redraw_n = n;
+		m->redraw_offset = pos;
+		core->timer(0, &m->tmr_redraw, -50, list_update_delayed, (void*)(size_t)cmd);
+		break;
+
+	default:
+		core->timer(0, &m->tmr_redraw, 0, NULL, NULL);
+	}
+}
+
+#else // linux:
+
+#define list_update_schedule  list_update
+
+#endif
+
+/** A queue is created/deleted/modified.
+Thread: worker */
+static void q_on_change(phi_queue_id q, uint flags, uint pos)
+{
+	gui_wmain *m = gg->wmain;
+
+	if (q == gd->q_filtered)
+		return;
+
+	uint q_len = 0;
+
+	switch (flags & 0xff) {
+	case 'a':
+	case 'r':
+		q_len = gd->queue->count(q);
+		// fallthrough
+
+	case 'c':
+		if (q != gd->q_selected)
+			return; // an inactive list is changed
+		break;
+
+	case 'n':
+		if (gd->filtering)
+			return; // a filtered list is created
+		break;
+	}
+
+	list_update_schedule(flags & 0xff, q_len, pos);
+
+	switch (flags & 0xff) {
 	case 'c':
 		m->vlist.clear();  break;
 
@@ -727,4 +772,10 @@ void wmain_show()
 	volume_set(m->tvol_val);
 
 	m->ready = 1;
+}
+
+void wmain_fin()
+{
+	gui_wmain *m = gg->wmain;
+	core->timer(0, &m->tmr_redraw, 0, NULL, NULL);
 }

@@ -291,5 +291,6 @@ void gui_quit()
 {
 	gui_core_task(lists_save);
 	gui_userconf_save();
+	wmain_fin();
 	ffui_post_quitloop();
 }

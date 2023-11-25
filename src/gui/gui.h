@@ -21,6 +21,7 @@ FF_EXTERN void wmain_init();
 FF_EXTERN void wmain_show();
 FF_EXTERN void wmain_userconf_write(ffconfw *cw);
 FF_EXTERN const struct ffarg wmain_args[];
+FF_EXTERN void wmain_fin();
 
 struct gui_winfo;
 FF_EXTERN void winfo_init();
