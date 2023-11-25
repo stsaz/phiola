@@ -188,8 +188,11 @@ int wmain_track_new(phi_track *t, uint time_total)
 		m->vlist.update(idx, 0);
 
 	if (-1 != (idx = gd->queue->index(qe))) {
-		if (!gd->q_filtered) // 'idx' is the position within the original list, not filtered list
+		if (!gd->q_filtered) { // 'idx' is the position within the original list, not filtered list
 			m->vlist.update(idx, 0);
+			if (gd->auto_select)
+				m->vlist.select(idx);
+		}
 		gd->cursor = idx;
 	}
 
@@ -601,6 +604,11 @@ static void wmain_action(ffui_window *wnd, int id)
 	case A_LIST_SCROLL_TO_CUR:
 		if (!gd->q_filtered)
 			m->vlist.scroll_index(gd->cursor);
+		break;
+
+	case A_LIST_AUTOSELECT:
+		gd->auto_select = !gd->auto_select;
+		wmain_status("Auto Select Current: %s", (gd->auto_select) ? "On" : "Off");
 		break;
 
 	case A_LIST_DISPLAY:

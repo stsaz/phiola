@@ -116,6 +116,7 @@ struct gui_data {
 
 	uint filter_len; // Length of the current filter text
 	uint current_scroll_vpos;
+	uint auto_select;
 	uint tab_conversion :1;
 	uint filtering :1;
 	uint quit :1;
