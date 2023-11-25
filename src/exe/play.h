@@ -13,6 +13,7 @@ INPUT                   File name, directory or URL\n\
 Options:\n\
   -include WILDCARD     Only include files matching a wildcard (case-insensitive)\n\
   -exclude WILDCARD     Exclude files & directories matching a wildcard (case-insensitive)\n\
+  -rbuffer SIZE         Read-buffer size (in KB units)\n\
 \n\
   -repeat_all           Repeat all tracks\n\
   -random               Choose the next track randomly\n\
@@ -57,6 +58,7 @@ struct cmd_play {
 	u_char	repeat_all;
 	uint	buffer;
 	uint	device;
+	uint	rbuffer_kb;
 	uint64	seek;
 	uint64	until;
 };
@@ -93,6 +95,7 @@ static void play_qu_add(struct cmd_play *p, ffstr *fn)
 	struct phi_track_conf c = {
 		.ifile = {
 			.name = ffsz_dupstr(fn),
+			.buf_size = p->rbuffer_kb * 1024,
 			.include = *(ffslice*)&p->include,
 			.exclude = *(ffslice*)&p->exclude,
 		},
@@ -166,6 +169,7 @@ static const struct ffarg cmd_play[] = {
 	{ "-include",	'S',	play_include },
 	{ "-perf",		'1',	O(perf) },
 	{ "-random",	'1',	O(random) },
+	{ "-rbuffer",	'u',	O(rbuffer_kb) },
 	{ "-remote",	'1',	O(remote) },
 	{ "-repeat_all",'1',	O(repeat_all) },
 	{ "-seek",		'S',	play_seek },

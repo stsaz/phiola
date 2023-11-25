@@ -13,7 +13,7 @@ struct std_in {
 static void stdin_close(void *ctx, phi_track *t)
 {
 	struct std_in *f = ctx;
-	ffvec_free(&f->buf);
+	ffmem_alignfree(f->buf.ptr);
 	ffmem_free(f);
 }
 
@@ -23,7 +23,8 @@ static void* stdin_open(phi_track *t)
 	t->input.size = ~0ULL;
 	t->input.seek = ~0ULL;
 	f->fd = ffstdin;
-	ffvec_alloc(&f->buf, 64*1024, 1);
+	f->buf.cap = (t->conf.ifile.buf_size) ? t->conf.ifile.buf_size : 64*1024;
+	f->buf.ptr = ffmem_align(f->buf.cap, 4*1024);
 	return f;
 }
 
