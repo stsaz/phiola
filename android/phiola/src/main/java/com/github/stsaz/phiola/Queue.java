@@ -67,6 +67,8 @@ class PhiolaQueue {
 
 	Phiola.Meta meta(int i) { return phi.quMeta(q, i); }
 
+	void sort(int flags) { phi.quCmd(q, Phiola.QUCOM_SORT, flags); }
+
 	PhiolaQueue filter(String filter, int flags) {
 		return new PhiolaQueue(phi, phi.quFilter(q, filter, flags));
 	}
@@ -496,6 +498,13 @@ class Queue {
 		if (selected != q_active)
 			return -1;
 		return trk_idx;
+	}
+
+	void sort(int flags) {
+		if (q_filtered != null) return;
+
+		q_selected().sort(flags);
+		nfy_all(QueueNotify.UPDATE, -1);
 	}
 
 	long q_active_id() { return queues.get(q_active).q; }

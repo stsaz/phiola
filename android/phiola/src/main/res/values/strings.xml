@@ -17,6 +17,8 @@
 	<string name="mlist_clear">List: Clear</string>
 	<string name="mlist_show_track">List: Show Current Track</string>
 	<string name="mlist_next_add">List: Add Current to Next</string>
+	<string name="mlist_sort">List: Sort</string>
+	<string name="mlist_shuffle">List: Shuffle</string>
 
 	<string name="menu_about">About...</string>
 

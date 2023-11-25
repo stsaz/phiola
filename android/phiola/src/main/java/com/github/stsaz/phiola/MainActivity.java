@@ -187,6 +187,14 @@ public class MainActivity extends AppCompatActivity {
 				list_next_add_cur();
 				return true;
 
+			case R.id.action_list_sort:
+				queue.sort(Phiola.QU_SORT_FILENAME);
+				return true;
+
+			case R.id.action_list_shuffle:
+				queue.sort(Phiola.QU_SORT_RANDOM);
+				return true;
+
 			case R.id.action_file_showcur:
 				explorer_file_current_show();
 				return true;

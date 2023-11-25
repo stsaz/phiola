@@ -52,6 +52,7 @@ Java_com_github_stsaz_phiola_Phiola_quEntry(JNIEnv *env, jobject thiz, jlong q, 
 #define QUCOM_REMOVE_I  2
 #define QUCOM_COUNT  3
 #define QUCOM_INDEX  4
+#define QUCOM_SORT  5
 
 JNIEXPORT jint JNICALL
 Java_com_github_stsaz_phiola_Phiola_quCmd(JNIEnv *env, jobject thiz, jlong jq, jint cmd, jint i)
@@ -60,18 +61,19 @@ Java_com_github_stsaz_phiola_Phiola_quCmd(JNIEnv *env, jobject thiz, jlong jq, j
 
 	switch (cmd) {
 	case QUCOM_CLEAR:
-		x->queue->clear(q);
-		break;
+		x->queue->clear(q);  break;
 
 	case QUCOM_REMOVE_I:
-		x->queue->remove_at(q, i, 1);
-		break;
+		x->queue->remove_at(q, i, 1);  break;
 
 	case QUCOM_COUNT:
 		return x->queue->count(q);
 
 	case QUCOM_INDEX:
 		return x->queue->index(x->queue->at(q, i));
+
+	case QUCOM_SORT:
+		x->queue->sort(q, i);  break;
 	}
 	return 0;
 }

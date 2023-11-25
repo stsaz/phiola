@@ -44,6 +44,12 @@
 	<item android:id="@+id/action_list_next_add_cur"
 		android:title="@string/mlist_next_add" />
 
+	<item android:id="@+id/action_list_sort"
+		android:title="@string/mlist_sort" />
+
+	<item android:id="@+id/action_list_shuffle"
+		android:title="@string/mlist_shuffle" />
+
 	<item
 		android:id="@+id/action_about"
 		android:title="@string/menu_about" />

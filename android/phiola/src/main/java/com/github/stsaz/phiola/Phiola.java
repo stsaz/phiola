@@ -89,6 +89,10 @@ class Phiola {
 	 to the index within its parent (not filtered) list */
 	static final int QUCOM_INDEX = 4;
 
+	static final int QUCOM_SORT = 5;
+	static final int QU_SORT_FILENAME = 0;
+	static final int QU_SORT_RANDOM = 1;
+
 	native int quCmd(long q, int cmd, int i);
 
 	native Meta quMeta(long q, int i);
