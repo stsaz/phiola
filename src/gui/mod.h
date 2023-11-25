@@ -56,6 +56,14 @@ FF_EXTERN void convert_add(ffslice indexes);
 FF_EXTERN void convert_begin(void *param);
 
 FF_EXTERN void wmain_status(const char *fmt, ...);
+enum STATUS_ID {
+	ST_STOPPED,
+	ST_PAUSED,
+	ST_UNPAUSED,
+};
+/**
+id: enum STATUS_ID */
+FF_EXTERN void wmain_status_id(uint id);
 FF_EXTERN int wmain_track_new(phi_track *t, uint time_total);
 FF_EXTERN void wmain_track_close();
 FF_EXTERN void wmain_track_update(uint time_cur, uint time_total);

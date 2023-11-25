@@ -21,6 +21,7 @@ struct gui_wmain {
 	ffui_paned pntop;
 #endif
 
+	ffui_icon ico_play, ico_pause;
 	struct phi_queue_entry *qe_active;
 
 	char *vlist_col;
@@ -123,6 +124,36 @@ void wmain_status(const char *fmt, ...)
 	va_end(va);
 }
 
+static ffui_icon& res_icon_load(ffui_icon *ico, const char *name, uint resource_id)
+{
+	if (!ffui_icon_valid(ico)) {
+#ifdef FF_WIN
+		ffui_icon_load_res(ico, GetModuleHandleW(L"gui.dll"), ffwstrxx_buf<100>().utow(ffstrxx_buf<100>().zfmt("#%u", resource_id)), 0, 0);
+#else
+		ffui_icon_load(ico, ffstrxx_buf<4096>().zfmt("%S/mod/gui/%s.png", &core->conf.root, name));
+#endif
+		PHI_ASSERT(ffui_icon_valid(ico));
+	}
+	return *ico;
+}
+
+void wmain_status_id(uint id)
+{
+	gui_wmain *m = gg->wmain;
+	ffui_icon *ico = NULL;
+	switch (id) {
+	case ST_STOPPED:
+	case ST_PAUSED:
+		ico = &res_icon_load(&m->ico_play, "play", 3);  break;
+
+	case ST_UNPAUSED:
+		ico = &res_icon_load(&m->ico_pause, "pause", 7);  break;
+	}
+
+	m->bpause.icon(*ico);
+	wmain_status((id == ST_PAUSED) ? "Paused" : "");
+}
+
 static const char pcm_fmtstr[][8] = {
 	"float32",
 	"float64",
@@ -166,6 +197,8 @@ int wmain_track_new(phi_track *t, uint time_total)
 {
 	gui_wmain *m = gg->wmain;
 	if (!m || !m->ready) return -1;
+
+	wmain_status_id(ST_UNPAUSED);
 
 	struct phi_queue_entry *qe = (struct phi_queue_entry*)t->qent;
 	char buf[1000];
@@ -223,6 +256,7 @@ void wmain_track_close()
 	m->wnd.title("phiola");
 	m->lpos.text("");
 	m->tpos.range(0);
+	wmain_status_id(ST_STOPPED);
 }
 
 /** Thread: worker */

@@ -34,7 +34,7 @@ void gtrk_play_pause(struct gtrk *gt)
 		uint p = gt->t->oaudio.pause;
 		gt->t->oaudio.pause = 0;
 		dbglog1(gt->t, "unpausing");
-		wmain_status("");
+		wmain_status_id(ST_UNPAUSED);
 		if (!p)
 			core->track->wake(gt->t);
 		return;
@@ -47,7 +47,7 @@ void gtrk_play_pause(struct gtrk *gt)
 	if (gt->t->oaudio.adev_ctx)
 		gt->t->oaudio.adev_stop(gt->t->oaudio.adev_ctx);
 
-	wmain_status("Paused");
+	wmain_status_id(ST_PAUSED);
 }
 
 /** Set seek position */

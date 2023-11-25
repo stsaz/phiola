@@ -18,6 +18,8 @@ typedef unsigned int uint;
 typedef unsigned short ushort;
 typedef unsigned char u_char;
 
+#define PHI_ASSERT  assert
+
 struct phi_track_if;
 typedef struct phi_filter phi_filter;
 typedef struct phi_track phi_track;

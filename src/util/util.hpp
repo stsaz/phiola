@@ -41,7 +41,7 @@ struct ffstrxx : ffstr {
 	}
 };
 
-template<int N> struct ffstrxx_buf : ffstr {
+template<uint N> struct ffstrxx_buf : ffstr {
 	char buf[N];
 	ffstrxx_buf() { ptr = buf;  len = 0; }
 	const char* zfmt(const char *fmt, ...) {
@@ -50,6 +50,17 @@ template<int N> struct ffstrxx_buf : ffstr {
 		len = ffsz_formatv(ptr, N, fmt, va);
 		va_end(va);
 		return ptr;
+	}
+};
+
+template<uint N> struct ffwstrxx_buf {
+	size_t len;
+	wchar_t *ptr;
+	wchar_t buf[N];
+	ffwstrxx_buf() { ptr = buf;  len = 0; }
+	const wchar_t* utow(const char *s) {
+		len = N;
+		return (ptr = ffs_utow(buf, &len, s, -1));
 	}
 };
 
@@ -87,4 +98,9 @@ struct ffvecxx : ffvec {
 	template<class T> T* push() { return ffvec_pushT(this, T); }
 	const ffstrxx& str() const { return *(ffstrxx*)this; }
 	const ffslice& slice() const { return *(ffslice*)this; }
+	char* strz() {
+		if (len && ((char*)ptr)[len-1] != '\0')
+			ffvec_addchar(this, '\0');
+		return (char*)ptr;
+	}
 };
