@@ -127,7 +127,7 @@ static int ogg_decode(void *ctx, phi_track *t)
 		r = oggread_process(&o->og, &o->in, &t->data_out);
 		switch (r) {
 		case OGGREAD_MORE:
-			if ((t->chain_flags & (PHI_FFWD | PHI_FFIRST)) == (PHI_FFWD | PHI_FFIRST)) {
+			if (t->chain_flags & PHI_FFIRST) {
 				dbglog(t, "no eos page");
 				return PHI_LASTOUT;
 			}

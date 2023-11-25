@@ -278,14 +278,20 @@ test_meta() {
 }
 
 test_http() {
+	if ! test -f ht.ogg ; then
+		./phiola rec -o ht.ogg -f -u 2
+	fi
+
 	./phiola pl "http://localhost:1/" || true # no connection
 	netmill http l 8080 w . &
 	sleep .5
-	cp -au $HTTP_DIR/$HTTP_FILE ./$HTTP_FILE
-	echo "http://localhost:8080/$HTTP_FILE" >./http.m3u
+
 	./phiola pl "http://localhost:8080/404" || true # http error
-	./phiola pl "http://localhost:8080/$HTTP_FILE"
+	./phiola pl "http://localhost:8080/ht.ogg"
+
+	echo "http://localhost:8080/ht.ogg" >./http.m3u
 	./phiola pl "http://localhost:8080/http.m3u"
+
 	kill $!
 }
 

@@ -257,6 +257,10 @@ static void* httpcl_open(phi_track *t)
 		return PHI_OPEN_ERR;
 	nml_http_client_conf(h->cl, c);
 	h->state = ST_PROCESSING;
+
+	if (!t->input.seek)
+		t->input.seek = ~0ULL;
+
 	return h;
 }
 
