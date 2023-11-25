@@ -71,9 +71,16 @@ Windows:
 
 Android:
 
+Install from IzzyOnDroid:
+
+<p><a href="https://apt.izzysoft.de/packages/com.github.stsaz.phiola"><img src="https://github.com/stsaz/phiola/raw/resources/IzzyOnDroid.png" height="117px"></a></p>
+
+Or install .apk manually:
+
 * To be able to install .apk you need to enable "Allow installation from unknown sources" option in your phone's settings (you can disable it again after installation)
 * Tap on .apk file to install it on your phone
-* Or you can install .apk file from PC with `adb install`
+
+Or you can install .apk file from the PC connected to your phone with `adb install`.
 
 
 ## How to Use CLI
