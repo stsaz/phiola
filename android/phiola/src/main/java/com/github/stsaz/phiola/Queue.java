@@ -183,6 +183,8 @@ class Queue {
 
 		if (q_active >= queues.size())
 			q_active = 0;
+		if (selected >= queues.size())
+			selected = 0;
 	}
 
 	void saveconf() {
@@ -478,6 +480,7 @@ class Queue {
 
 		} else if (k.equals("list_active")) {
 			q_active = core.str_to_uint(v, 0);
+			selected = q_active;
 
 		} else if (k.equals("random")) {
 			int val = core.str_to_uint(v, 0);
