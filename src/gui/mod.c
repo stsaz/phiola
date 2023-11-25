@@ -30,6 +30,8 @@ static void list_filter_close();
 #define O(m)  (void*)FF_OFF(struct gui_data, m)
 const struct ffarg guimod_args[] = {
 	{ "play.cursor",	'u',	O(cursor) },
+	{ "play.random",	'u',	O(random) },
+	{ "play.repeat",	'u',	O(repeat) },
 	{ "theme",			'=s',	O(theme) },
 	{}
 };
@@ -38,6 +40,8 @@ const struct ffarg guimod_args[] = {
 void mod_userconf_write(ffconfw *cw)
 {
 	ffconfw_add2u(cw, "play.cursor", gd->cursor);
+	ffconfw_add2u(cw, "play.random", gd->random);
+	ffconfw_add2u(cw, "play.repeat", gd->repeat);
 	if (gd->theme)
 		ffconfw_add2z(cw, "theme", gd->theme);
 }
@@ -271,8 +275,12 @@ end:
 
 void ctl_play(uint i)
 {
-	if (!gd->q_filtered && !gd->tab_conversion)
+	if (!gd->q_filtered && !gd->tab_conversion) {
 		gd->queue->qselect(gd->q_selected); // set the visible list as default
+		struct phi_queue_conf *qc = gd->queue->conf(NULL);
+		qc->repeat_all = gd->repeat;
+		qc->random = gd->random;
+	}
 	phi_queue_id q = (gd->q_filtered) ? gd->q_filtered : NULL;
 	gd->queue->play(NULL, gd->queue->at(q, i));
 }
@@ -324,6 +332,24 @@ static void ctl_seek(uint cmd)
 		seek = ffmax((int)gd->playing_track->last_pos_sec + delta, 0);
 
 	gtrk_seek(gd->playing_track, seek);
+}
+
+/** Toggle 'repeat all/none' setting for the default playlist */
+static void list_repeat_toggle()
+{
+	struct phi_queue_conf *qc = gd->queue->conf(NULL);
+	gd->repeat = !gd->repeat;
+	qc->repeat_all = gd->repeat;
+	wmain_status("Repeat: %s", (gd->repeat) ? "All" : "None");
+}
+
+/** Toggle 'random on/off' setting for the default playlist */
+static void list_random_toggle()
+{
+	struct phi_queue_conf *qc = gd->queue->conf(NULL);
+	gd->random = !gd->random;
+	qc->random = gd->random;
+	wmain_status("Random: %s", (gd->random) ? "On" : "Off");
 }
 
 void ctl_action(uint cmd)
@@ -385,6 +411,12 @@ void ctl_action(uint cmd)
 		if (gd->playing_track)
 			gui_task_uint(wgoto_show, gd->playing_track->last_pos_sec);
 		break;
+
+	case A_REPEAT_TOGGLE:
+		list_repeat_toggle();  break;
+
+	case A_RANDOM_TOGGLE:
+		list_random_toggle();  break;
 	}
 }
 
