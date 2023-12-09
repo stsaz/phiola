@@ -24,6 +24,7 @@ struct gui_data *gd;
 	#define USER_CONF_DIR  "$HOME/.config/phiola/"
 #endif
 #define USER_CONF_NAME  "gui.conf"
+#define USER_CONF_NAME_ALT  "user.conf"
 
 static void list_filter_close();
 
@@ -764,7 +765,16 @@ static void gui_start(void *param)
 	gd->volume = 100;
 	gd->queue = core->mod("core.queue");
 	gd->metaif = core->mod("format.meta");
-	gd->user_conf_dir = core->conf.env_expand(USER_CONF_DIR);
+
+	char *user_conf_fn = ffsz_allocfmt("%Smod/gui/%s", &core->conf.root, USER_CONF_NAME_ALT);
+	if (fffile_exists(user_conf_fn)) {
+		gd->user_conf_dir = ffsz_allocfmt("%Smod/gui/", &core->conf.root);
+		gd->user_conf_name = user_conf_fn;
+	} else {
+		ffmem_free(user_conf_fn);
+		gd->user_conf_dir = core->conf.env_expand(USER_CONF_DIR);
+		gd->user_conf_name = ffsz_allocfmt("%s%s", gd->user_conf_dir, USER_CONF_NAME);
+	}
 
 	phi_queue_id q = gd->queue->select(0);
 	struct phi_queue_conf *qc = gd->queue->conf(q);

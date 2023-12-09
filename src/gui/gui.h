@@ -14,8 +14,6 @@
 #include <util/conf-write.h>
 #include <ffbase/args.h>
 
-#define USER_CONF_NAME  "gui.conf"
-
 struct gui_wmain;
 FF_EXTERN void wmain_init();
 FF_EXTERN void wmain_show();

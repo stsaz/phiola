@@ -85,8 +85,6 @@ static const struct ffarg args[] = {
 
 static void gui_userconf_load()
 {
-	gd->user_conf_name = ffsz_allocfmt("%s%s", gd->user_conf_dir, USER_CONF_NAME);
-
 	ffvec buf = {};
 	if (fffile_readwhole(gd->user_conf_name, &buf, 1*1024*1024))
 		goto end;

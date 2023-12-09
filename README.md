@@ -202,6 +202,15 @@ Then add some files to playlist via drag-n-drop from your File Manager, or via `
 
 **Bonus:** you can modify the appearance by editing the GUI source file: `phiola-2/mod/gui/ui.conf`.  You can also modify the text by editing language files, e.g. `phiola-2/mod/gui/lang_en.conf`.  Restart phiola GUI after you make changes to those files.
 
+### 100% Portable Mode
+
+By default, phiola GUI saves and restores its state (including your playlists) on each restart at these locations:
+
+* Windows: `%APPDATA%\phiola`
+* Linux: `$HOME/.config/phiola`
+
+But in case you don't want this, then just create an empty `[phiola directory]/mod/gui/user.conf` file.  As long as this file is present, phiola GUI will store its state there, and it won't touch anything inside your user directory.
+
 
 ## How to Use on Android
 
