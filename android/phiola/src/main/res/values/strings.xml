@@ -37,7 +37,8 @@
 	<string name="sett_list_rm_on_next">After Tap on \'Next\': Remove Track from Playlist</string>
 	<string name="sett_list_rm_on_err">Remove Track from Playlist on Error</string>
 	<string name="sett_codepage">Codepage for Non-Unicode Tags</string>
-	<string name="sett_autoskip">Auto-Skip Audio (sec):</string>
+	<string name="sett_auto_skip">Auto-Skip Audio (sec or %):</string>
+	<string name="sett_auto_skip_tail">Auto-Skip Audio Tail (sec or %):</string>
 
 	<string name="sett_operation">Operation</string>
 	<string name="sett_file_del">Don\'t Move Files to Trash</string>

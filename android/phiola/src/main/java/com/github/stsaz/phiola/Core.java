@@ -290,7 +290,7 @@ class Core extends Util {
 		sb.append(this.setts.writeconf());
 		sb.append(qu.writeconf());
 		sb.append(gui.writeconf());
-		dbglog(TAG, sb.toString());
+		dbglog(TAG, "%s", sb.toString());
 		if (!phiola.confWrite(fn, sb.toString().getBytes()))
 			errlog(TAG, "saveconf: %s", fn);
 		else

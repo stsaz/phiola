@@ -52,6 +52,7 @@ class TrackHandle {
 	int pos_msec; // current progress (msec)
 	int prev_pos_msec; // previous progress position (msec)
 	int seek_msec; // default:-1
+	int skip_tail_msec;
 	int time_total_msec; // track duration (msec)
 }
 
@@ -124,13 +125,21 @@ class MP {
 		if (t.seek_msec != -1) {
 			if (t.state == Track.STATE_PLAYING)
 				t.state = Track.STATE_SEEKING;
+
+			if (t.seek_msec >= t.time_total_msec - t.skip_tail_msec)
+				t.skip_tail_msec = 0; // disable auto-skip after manual seek in tail area
+
 			mp.seekTo(t.seek_msec);
 			t.seek_msec = -1;
 		}
 
-		if (t.state == Track.STATE_PAUSED)
+		if (t.skip_tail_msec > 0
+			&& t.pos_msec >= t.time_total_msec - t.skip_tail_msec) {
+			on_complete(t);
+
+		} else if (t.state == Track.STATE_PAUSED) {
 			mp.pause();
-		else if (t.state == Track.STATE_UNPAUSE) {
+		} else if (t.state == Track.STATE_UNPAUSE) {
 			t.state = Track.STATE_PLAYING;
 			mp.start();
 		}

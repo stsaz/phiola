@@ -110,7 +110,8 @@ class Queue {
 	private boolean active;
 	private Random rnd;
 	boolean random_split;
-	int autoskip_msec;
+	int autoskip_msec, autoskip_percent;
+	int autoskip_tail_msec, autoskip_tail_percent;
 	private boolean b_order_prev, b_order_next;
 	private Handler mloop;
 
@@ -356,8 +357,14 @@ class Queue {
 		active = true;
 		b_order_next = false;
 		b_order_prev = false;
-		if (autoskip_msec != 0)
-			t.seek_msec = autoskip_msec;
+
+		t.seek_msec = autoskip_msec;
+		if (autoskip_percent != 0)
+			t.seek_msec = t.time_total_msec * autoskip_percent / 100;
+
+		t.skip_tail_msec = autoskip_tail_msec;
+		if (autoskip_tail_percent != 0)
+			t.skip_tail_msec = t.time_total_msec * autoskip_tail_percent / 100;
 
 		if (!core.setts.no_tags) {
 			queues.get(q_active).modified = true;
@@ -469,7 +476,8 @@ class Queue {
 		s.append(String.format("list_active %d\n", q_active));
 		s.append(String.format("random %d\n", core.bool_to_int(random)));
 		s.append(String.format("repeat %d\n", core.bool_to_int(repeat)));
-		s.append(String.format("autoskip_msec %d\n", autoskip_msec));
+		s.append(String.format("auto_skip %s\n", auto_skip_to_str()));
+		s.append(String.format("auto_skip_tail %s\n", auto_skip_tail_to_str()));
 
 		return s.toString();
 	}
@@ -487,13 +495,54 @@ class Queue {
 			if (val == 1)
 				random(true);
 
-		} else if (k.equals("autoskip_msec")) {
-			autoskip_msec = core.str_to_uint(v, 0);
+		} else if (k.equals("auto_skip")) {
+			auto_skip(v);
+
+		} else if (k.equals("auto_skip_tail")) {
+			auto_skip_tail(v);
 
 		} else {
 			return 1;
 		}
 		return 0;
+	}
+
+	private int[] auto_skip_convert(String s) {
+		int[] a = new int[2];
+		if (!s.isEmpty() && s.charAt(s.length() - 1) == '%') {
+			a[0] = core.str_to_uint(s.substring(0, s.length() - 1), 0);
+			if (a[0] >= 100)
+				a[0] = 0;
+			a[1] = 0;
+		} else {
+			a[0] = 0;
+			a[1] = core.str_to_uint(s, 0) * 1000;
+		}
+		return a;
+	}
+
+	void auto_skip(String s) {
+		int[] a = auto_skip_convert(s);
+		autoskip_percent = a[0];
+		autoskip_msec = a[1];
+	}
+	String auto_skip_to_str() {
+		String s = Integer.toString(autoskip_msec / 1000);
+		if (autoskip_percent != 0)
+			s = String.format("%d%%", autoskip_percent);
+		return s;
+	}
+
+	void auto_skip_tail(String s) {
+		int[] a = auto_skip_convert(s);
+		autoskip_tail_percent = a[0];
+		autoskip_tail_msec = a[1];
+	}
+	String auto_skip_tail_to_str() {
+		String s = Integer.toString(autoskip_tail_msec / 1000);
+		if (autoskip_tail_percent != 0)
+			s = String.format("%d%%", autoskip_tail_percent);
+		return s;
 	}
 
 	/** Get currently playing track index */

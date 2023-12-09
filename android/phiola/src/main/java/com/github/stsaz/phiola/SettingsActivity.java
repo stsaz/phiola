@@ -62,7 +62,8 @@ public class SettingsActivity extends AppCompatActivity {
 		b.blistAddRmOnPrev.setChecked(core.setts.list_add_rm_on_prev);
 		b.blistRmOnNext.setChecked(core.setts.list_rm_on_next);
 		b.tcodepage.setText(core.setts.codepage);
-		b.tautoskip.setText(Integer.toString(core.queue().autoskip_msec / 1000));
+		b.tAutoSkip.setText(core.queue().auto_skip_to_str());
+		b.tAutoSkipTail.setText(core.queue().auto_skip_tail_to_str());
 
 		// Operation
 		b.tdataDir.setText(core.setts.pub_data_dir);
@@ -93,7 +94,8 @@ public class SettingsActivity extends AppCompatActivity {
 		core.setts.qu_rm_on_err = b.blistRmOnErr.isChecked();
 		core.setts.set_codepage(b.tcodepage.getText().toString());
 		core.phiola.setCodepage(core.setts.codepage);
-		core.queue().autoskip_msec = core.str_to_uint(b.tautoskip.getText().toString(), 0) * 1000;
+		core.queue().auto_skip(b.tAutoSkip.getText().toString());
+		core.queue().auto_skip_tail(b.tAutoSkipTail.getText().toString());
 
 		// Operation
 		String s = b.tdataDir.getText().toString();
