@@ -24,6 +24,7 @@ Contents:
 * [How to Use SDK](#how-to-use-sdk)
 * [External Libraries](#external-libraries)
 * [Build](#build)
+* [Why use phiola](#why-use-phiola)
 
 
 ## Features
@@ -246,7 +247,7 @@ The best example how to use phiola software interface is to see the source code 
 
 ## External Libraries
 
-phiola uses modified versions of these third party libraries: [libALAC](https://github.com/macosforge/alac), [libfdk-aac](https://github.com/mstorsjo/fdk-aac), [libFLAC](https://github.com/xiph/flac), libMAC, libmpg123, libmpc, libogg, libopus, libvorbisenc, libvorbis, libwavpack, libsoxr, [libzstd](https://github.com/facebook/zstd), [libDynamicAudioNormalizer](https://github.com/lordmulder/DynamicAudioNormalizer).  And unmodified libraries: libssl & libcrypto.  Many thanks to their creators for the great work!!!  Please consider their licenses before commercial use.  See contents of `alib3/` for more info.
+phiola uses modified versions of these third party libraries: [libALAC](https://github.com/macosforge/alac), [libfdk-aac](https://github.com/mstorsjo/fdk-aac), [libFLAC](https://github.com/xiph/flac), libMAC, libmpg123, libmpc, [libogg](https://github.com/xiph/ogg), [libopus](https://github.com/xiph/opus), [libvorbis](https://github.com/xiph/vorbis), libwavpack, libsoxr, [libzstd](https://github.com/facebook/zstd), [libDynamicAudioNormalizer](https://github.com/lordmulder/DynamicAudioNormalizer).  And unmodified libraries: libssl & libcrypto.  Many thanks to their creators for the great work!!!  Please consider their licenses before commercial use.  See contents of `alib3/` for more info.
 
 Additionally:
 
@@ -260,6 +261,17 @@ Additionally:
 ## Build
 
 [Build Instructions](BUILDING.md)
+
+
+## Why use phiola
+
+phiola is not (and most likely will never be) a competitor to large commercial projects such as Winamp, but there are a few points where phiola is better:
+
+* phiola and all its dependencies are 100% open-source.  This means that you don't run some private and potentially insecure code on your electronic hardware, especially when a music player is running on your computer/phone for 8-14 hours a day.
+
+* phiola is very flexible, it can easily accommodate hundreds of different functions, it can even be included as a module into another project.  If someone decides to make a coffee machine that should also be able to play music, I'm sure phiola would be the best choice for this job :)
+
+* phiola uses the minimum possible resources, but at the same time it's powerful and user-friendly.  Please check your CPU, memory and storage device usage and compare with popular audio software to see whether it's true.  I hope phiola can play its small role in preserving our environment by decreasing power consumption.
 
 
 ## License

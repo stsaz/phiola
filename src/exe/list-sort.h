@@ -1,6 +1,18 @@
 /** phiola: executor: 'list sort' command
 2023, Simon Zolin */
 
+static int ls_help()
+{
+	static const char s[] = "\
+Sort entries in playlist\n\
+\n\
+    phiola list sort [M3U...]\n\
+";
+	ffstdout_write(s, FFS_LEN(s));
+	x->exit_code = 0;
+	return 1;
+}
+
 struct list_sort {
 	ffvec	input; // char*[]
 
@@ -60,18 +72,6 @@ static int ls_fin(struct list_sort *ls)
 {
 	x->action = (int(*)(void*))ls_action;
 	return 0;
-}
-
-static int ls_help()
-{
-	static const char s[] = "\
-Sort playlist\n\
-\n\
-    phiola list sort [M3U...]\n\
-";
-	ffstdout_write(s, FFS_LEN(s));
-	x->exit_code = 0;
-	return 1;
 }
 
 #define O(m)  (void*)FF_OFF(struct list_sort, m)

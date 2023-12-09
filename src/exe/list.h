@@ -1,6 +1,26 @@
 /** phiola: executor: 'list' command
 2023, Simon Zolin */
 
+static int lc_help()
+{
+	static const char s[] = "\
+Create playlist file\n\
+\n\
+    phiola list create [INPUT...] -o file.m3u\n\
+\n\
+  INPUT             File name, directory or URL\n\
+\n\
+Options:\n\
+\n\
+  -include WILDCARD     Only include files matching a wildcard (case-insensitive)\n\
+  -exclude WILDCARD     Exclude files & directories matching a wildcard (case-insensitive)\n\
+  -out FILE             Output file name\n\
+";
+	ffstdout_write(s, FFS_LEN(s));
+	x->exit_code = 0;
+	return 1;
+}
+
 struct list_create {
 	ffvec	include, exclude; // ffstr[]
 	ffvec	input; // char*[]
@@ -59,26 +79,6 @@ static int lc_fin(struct list_create *lc)
 {
 	x->action = (int(*)(void*))lc_action;
 	return 0;
-}
-
-static int lc_help()
-{
-	static const char s[] = "\
-Create playlist file\n\
-\n\
-    phiola list create [INPUT...] -o file.m3u\n\
-\n\
-  INPUT             File name, directory or URL\n\
-\n\
-Options:\n\
-\n\
-  -include WILDCARD     Only include files matching a wildcard (case-insensitive)\n\
-  -exclude WILDCARD     Exclude files & directories matching a wildcard (case-insensitive)\n\
-  -out FILE             Output file name\n\
-";
-	ffstdout_write(s, FFS_LEN(s));
-	x->exit_code = 0;
-	return 1;
 }
 
 #define O(m)  (void*)FF_OFF(struct list_create, m)

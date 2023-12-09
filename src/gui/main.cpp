@@ -747,6 +747,7 @@ void wmain_init()
 	m->wnd.on_action = wmain_action;
 	m->wnd.onclose_id = A_CLOSE;
 	m->vlist.dispinfo_id = A_LIST_DISPLAY;
+	m->tvol_val = 100;
 }
 
 void wmain_show()

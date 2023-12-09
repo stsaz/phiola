@@ -5,7 +5,7 @@ static int conv_help()
 {
 	static const char s[] = "\
 Convert audio:\n\
-    phiola convert INPUT... -o OUTPUT\n\
+    phiola convert INPUT... -o OUTPUT [OPTIONS]\n\
 \n\
 INPUT                   File name, directory or URL\n\
                           @stdin  Read from standard input\n\
@@ -45,7 +45,10 @@ Options:\n\
                         Vorbis encoding quality:\n\
                           0..10\n\
 \n\
-  -meta STRING=STRING   Meta data\n\
+  -meta NAME=VALUE      Meta data\n\
+                          .mp3 supports: album, albumartist, artist, comment, date, genre, picture, publisher, title, tracknumber, tracktotal.\n\
+                          .mp4 supports: album, albumartist, artist, comment, composer, copyright, date, discnumber, genre, lyrics, title, tracknumber.\n\
+                          .flac, .ogg support tags of any name, but the use of MP3/MP4-compatible names is recommended.\n\
 \n\
   -out FILE             Output file name.\n\
                           @stdout    Write to standard output\n\
@@ -63,7 +66,7 @@ Options:\n\
                           @counter   Sequentially incremented number\n\
                           @STRING    Expands to file meta data,\n\
                                        e.g. `-o \"@tracknumber. @artist - @title.flac\"`\n\
-                        When file name isn't specified, @filepath is used automatically,\n\
+                        When file name isn't specified, @filename is used automatically,\n\
                           e.g. `-o .ogg` == `-o @filename.ogg`\n\
   -force                Overwrite output file\n\
   -preserve_date        Preserve file modification date\n\
