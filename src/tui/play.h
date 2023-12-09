@@ -43,7 +43,7 @@ static void tui_addtags(tui_track *u, ffvec *buf)
 {
 	uint i = 0;
 	ffstr name, val;
-	while (mod->phi_metaif->list(&u->t->meta, &i, &name, &val, PHI_META_UNIQUE)) {
+	while (mod->phi_metaif->list(&u->t->meta, &i, &name, &val, 0)) {
 		ffsize nt = (name.len < 8) ? 2 : 1;
 		if (ffs_skip_ranges(val.ptr, val.len, "\x20\x7e\x80\xff", 4) >= 0)
 			ffstr_setz(&val, "<binary data>");
