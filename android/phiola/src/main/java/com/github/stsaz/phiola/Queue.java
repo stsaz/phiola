@@ -112,7 +112,6 @@ class Queue {
 	boolean random_split;
 	int autoskip_msec, autoskip_percent;
 	int autoskip_tail_msec, autoskip_tail_percent;
-	private boolean b_order_prev, b_order_next;
 	private Handler mloop;
 
 	Queue(Core core) {
@@ -301,62 +300,53 @@ class Queue {
 		return i;
 	}
 
-	/** Play next track */
-	void next() {
+	/** Play next or previous track */
+	private void play_delta(int delta) {
 		int n = queues.get(q_active).count();
 		if (n == 0)
 			return;
 
-		int i = curpos + 1;
+		int i = curpos + delta;
 		if (random) {
 			i = next_random(n);
 		} else if (repeat) {
-			if (i == n)
+			if (i > n)
 				i = 0;
-		}
-		_play(q_active, i);
-	}
-
-	/** Play previous track */
-	void prev() {
-		int n = queues.get(q_active).count();
-		if (n == 0)
-			return;
-
-		int i = curpos - 1;
-		if (random) {
-			i = next_random(n);
-		} else if (repeat) {
-			if (i == 0)
+			else if (i <= 0)
 				i = n - 1;
 		}
 		_play(q_active, i);
 	}
 
+	private void next() { play_delta(1); }
+
 	/** Next track by user command */
 	void order_next() {
+		int delta = 1;
 		if (active) {
-			b_order_next = true;
-			track.stop();
+			if (trk_idx < 0) {
+				delta = 0; // user pressed Next after the currently playing track has been removed
+			} else if (core.setts.list_rm_on_next) {
+				remove(trk_idx);
+				delta = 0;
+			}
 		}
-		next();
+		play_delta(delta);
 	}
 
 	/** Previous track by user command */
 	void order_prev() {
-		if (active) {
-			if (core.setts.list_add_rm_on_prev)
-				next_list_add_cur();
-			b_order_prev = true;
-			track.stop();
+		int delta = -1;
+		if (active && core.setts.list_add_rm_on_prev) {
+			next_list_add_cur();
+			remove(trk_idx);
+			delta = 0; // play next track
 		}
-		prev();
+		play_delta(delta);
 	}
 
 	private void on_open(TrackHandle t) {
 		active = true;
-		b_order_next = false;
-		b_order_prev = false;
 
 		t.seek_msec = autoskip_msec;
 		if (autoskip_percent != 0)
@@ -377,19 +367,20 @@ class Queue {
 		active = false;
 		boolean play_next = !t.stopped;
 
-		if (trk_idx >= 0
-			&& ((t.error && core.setts.qu_rm_on_err)
-				|| (b_order_next && core.setts.list_rm_on_next)
-				|| (b_order_prev && core.setts.list_add_rm_on_prev))) {
+		if (trk_idx >= 0 && t.error && core.setts.qu_rm_on_err) {
 			String url = queues.get(q_active).url(trk_idx);
 			if (url.equals(t.url))
 				remove(trk_idx);
 		}
-		trk_idx = -1;
 
 		if (play_next) {
-			mloop.post(this::next);
+			if (trk_idx < 0)
+				mloop.post(this::playcur); // play at current position after the track has been removed
+			else
+				mloop.post(this::next);
 		}
+
+		trk_idx = -1;
 	}
 
 	/** Set Random switch */
@@ -422,7 +413,7 @@ class Queue {
 		core.dbglog(TAG, "remove: %d:%d", q_active, pos);
 		filter_close();
 		queues.get(q_active).remove(pos);
-		if (pos <= curpos)
+		if (pos < curpos)
 			curpos--;
 		if (pos == trk_idx)
 			trk_idx = -1;
