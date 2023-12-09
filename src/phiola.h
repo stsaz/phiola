@@ -454,3 +454,18 @@ typedef struct phi_remote_cl_if phi_remote_cl_if;
 struct phi_remote_cl_if {
 	int (*cmd)(const char *name, ffstr cmd);
 };
+
+
+/** Modify meta tags */
+
+struct phi_tag_conf {
+	const char *filename;
+	ffvec meta; // ffstr[]
+	uint clear :1;
+	uint preserve_date :1;
+};
+
+typedef struct phi_tag_if phi_tag_if;
+struct phi_tag_if {
+	int (*edit)(struct phi_tag_conf *conf);
+};

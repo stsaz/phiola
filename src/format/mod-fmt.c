@@ -40,6 +40,7 @@ extern const phi_filter
 	phi_cue_read, phi_cue_hook,
 	phi_m3u_read, phi_m3u_write,
 	phi_pls_read;
+extern const phi_tag_if phi_tag;
 
 static void* phi_autow_open(phi_track *t) { return (void*)1; }
 
@@ -130,6 +131,7 @@ static const void* fmt_mod_iface(const char *name)
 		{ "ogg", &phi_ogg_read },
 		{ "opusmeta", &phi_opusmeta_read },
 		{ "pls", &phi_pls_read },
+		{ "tag", &phi_tag },
 		{ "vorbismeta", &phi_vorbismeta_read },
 		{ "wav", &phi_wav_read },
 		{ "wv", &phi_wv_read },

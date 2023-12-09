@@ -34,6 +34,15 @@ const char file_ext[][5] = {
 	"",
 };
 
+const char* file_ext_str(uint i)
+{
+	if (i == FILE_ID3)
+		i = FILE_MP3;
+	if (i >= FF_COUNT(file_ext))
+		return "";
+	return file_ext[i-1];
+}
+
 /** Detect file format by first several bytes
 len: >=12
 Return enum FILE_FORMAT */

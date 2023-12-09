@@ -31,8 +31,9 @@ Contents:
 * Play audio: `.mp3`, `.ogg`(Vorbis/Opus), `.mp4`/`.mov`(AAC/ALAC/MPEG), `.mkv`/`.webm`(AAC/ALAC/MPEG/Vorbis/Opus/PCM), `.caf`(AAC/ALAC/PCM), `.avi`(AAC/MPEG/PCM), `.aac`, `.mpc`; `.flac`, `.ape`, `.wv`, `.wav`.  Note: on Android phiola can play only what your Android supports!
 * Record audio: `.m4a`(AAC), `.ogg`, `.opus`; `.flac`, `.wav`
 * Convert audio
-* Input: file, directory, HTTP/HTTPS URL, console (stdin), playlists: `.m3u`, `.pls`, `.cue`
+* List/search file meta tags; edit MP3 tags
 * List available audio devices
+* Input: file, directory, HTTP/HTTPS URL, console (stdin), playlists: `.m3u`, `.pls`, `.cue`
 * Command Line Interface for Desktop OS
 * Terminal/Console UI for interaction at runtime
 * GUI for Windows, Linux, Android
@@ -165,6 +166,13 @@ phiola device list
 # Show meta info on all .wav files inside a directory
 phiola info "My Recordings" -include "*.wav"
 
+# Search for the .mp3 files containing a specific tag
+phiola info -tags -inc "*.mp3" . | grep -B10 "Purple Haze"
+
+# Replace/add MP3 tags in-place
+# WARNING: please test first before actually using on real files (or at least make backups)!
+phiola tag -m "artist=Great Artist" -m "title=Cool Song" file.mp3
+
 # Create a playlist from all .mp3 files in the directory
 phiola list create "My Music" -include "*.mp3" -o my-music.m3u
 
@@ -174,14 +182,17 @@ phiola list sort *.m3u
 
 Currently supported commands:
 
-* [convert](src/exe/convert.h) - Convert audio
-* [device](src/exe/device.h)   - List audio devices
-* [gui](src/exe/gui.h)         - Start graphical interface
-* [info](src/exe/info.h)       - Show file meta data
-* [list](src/exe/list.h)       - Process playlist files
-* [play](src/exe/play.h)       - Play audio
-* [record](src/exe/record.h)   - Record audio
-* [remote](src/exe/remote.h)   - Send remote command
+| Command | Description |
+| --- | --- |
+| [convert](src/exe/convert.h) | Convert audio |
+| [device](src/exe/device.h)   | List audio devices |
+| [gui](src/exe/gui.h)         | Start graphical interface |
+| [info](src/exe/info.h)       | Show file meta data |
+| [list](src/exe/list.h)       | Process playlist files |
+| [play](src/exe/play.h)       | Play audio |
+| [record](src/exe/record.h)   | Record audio |
+| [remote](src/exe/remote.h)   | Send remote command |
+| [tag](src/exe/tag.h)         | Edit .mp3 file tags |
 
 > For the details on each command you can click on the links above or execute `phiola COMMAND -h` on your PC.
 

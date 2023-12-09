@@ -35,6 +35,8 @@ format.$(SO): mod-fmt.o \
 		wav.o \
 		wv.o \
 		\
+		tag.o \
+		\
 		cue-read.o \
 		m3u.o \
 		pls-read.o

@@ -317,6 +317,29 @@ test_remote() {
 	./phiola i rec-remote.flac
 }
 
+test_tag() {
+	if ! test -f tag.mp3 ; then
+		./phiola rec -o tag.wav -f -u 2
+		ffmpeg -i tag.wav -y -c:a libmp3lame tag.mp3 2>/dev/null
+		./phiola co tag.wav -o .ogg
+	fi
+
+	# unsupported format
+	./phiola tag -m 'artist=Great Artist' tag.ogg || true
+
+	cp tag.mp3 tag-a.mp3
+	./phiola tag -m 'artist=Great Artist' tag-a.mp3 ; ./phiola i tag-a.mp3 | grep "Great Artist - "
+
+	cp tag-a.mp3 tag-at.mp3
+	./phiola tag -m 'title=Cool Song' tag-at.mp3 ; ./phiola i tag-at.mp3 | grep "Great Artist - Cool Song"
+
+	cp tag.mp3 tag-at2.mp3
+	./phiola tag -m 'artist=Great Artist' -m 'title=Cool Song' tag-at2.mp3 ; ./phiola i tag-at2.mp3 | grep "Great Artist - Cool Song"
+
+	cp tag-at.mp3 tag-t.mp3
+	./phiola tag -clear -m 'title=T2' tag-t.mp3 ; ./phiola i tag-t.mp3 | grep " - T2"
+}
+
 test_clean() {
 	rm -f *.wav *.flac *.m4a *.ogg *.opus *.mp3 fm-* ofv/*.ogg *.cue *.m3u
 	rmdir ofv
@@ -338,6 +361,7 @@ TESTS=(
 	cue
 	ofile_vars
 	remote
+	tag
 	# http
 	clean
 	# wasapi_exclusive
