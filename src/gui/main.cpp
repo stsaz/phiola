@@ -639,6 +639,9 @@ static void wmain_action(ffui_window *wnd, int id)
 			gui_core_task_slice(file_del, m->vlist.selected());
 		break;
 
+	case A_SETTINGS_SHOW:
+		wsettings_show(1);  break;
+
 	case A_QUIT:
 		m->wnd.close();  break;
 

@@ -27,6 +27,12 @@ FF_EXTERN void winfo_show(uint show, uint idx);
 FF_EXTERN void winfo_userconf_write(ffconfw *cw);
 FF_EXTERN const struct ffarg winfo_args[];
 
+struct gui_wsettings;
+FF_EXTERN void wsettings_init();
+FF_EXTERN void wsettings_show(uint show);
+FF_EXTERN void wsettings_userconf_write(ffconfw *cw);
+FF_EXTERN const struct ffarg wsettings_args[];
+
 struct gui_wgoto;
 FF_EXTERN void wgoto_init();
 
@@ -69,6 +75,7 @@ struct gui {
 	ffui_dialog dlg;
 	struct gui_wmain*		wmain;
 	struct gui_winfo*		winfo;
+	struct gui_wsettings*	wsettings;
 	struct gui_wgoto*		wgoto;
 	struct gui_wlistadd*	wlistadd;
 	struct gui_wlistfilter*	wlistfilter;

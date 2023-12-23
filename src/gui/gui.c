@@ -64,6 +64,11 @@ static struct ffarg_ctx wconvert_args_f() {
 	return ax;
 }
 
+static struct ffarg_ctx wsettings_args_f() {
+	struct ffarg_ctx ax = { wsettings_args, gg->wsettings };
+	return ax;
+}
+
 static struct ffarg_ctx wmain_args_f() {
 	struct ffarg_ctx ax = { wmain_args, gg->wmain };
 	return ax;
@@ -80,6 +85,7 @@ static const struct ffarg args[] = {
 	{ "main",		'{',	wmain_args_f },
 	{ "mod",		'{',	guimod_args_f },
 	{ "record",		'{',	wrecord_args_f },
+	{ "settings",	'{',	wsettings_args_f },
 	{}
 };
 
@@ -128,6 +134,10 @@ static void gui_userconf_save()
 		winfo_userconf_write(&cw);
 	ffconfw_add_obj(&cw, '}');
 
+	ffconfw_add2obj(&cw, "settings", '{');
+		wsettings_userconf_write(&cw);
+	ffconfw_add_obj(&cw, '}');
+
 	ffconfw_fin(&cw);
 
 	gui_core_task_data(userconf_save, *(ffstr*)&cw.buf);
@@ -136,6 +146,7 @@ static void gui_userconf_save()
 extern const ffui_ldr_ctl
 	wmain_ctls[],
 	winfo_ctls[],
+	wsettings_ctls[],
 	wgoto_ctls[],
 	wlistadd_ctls[],
 	wlistfilter_ctls[],
@@ -157,6 +168,7 @@ static void* gui_getctl(void *udata, const ffstr *name)
 		FFUI_LDR_CTL(struct gui, dlg),
 		FFUI_LDR_CTL3_PTR(struct gui, wmain, wmain_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, winfo, winfo_ctls),
+		FFUI_LDR_CTL3_PTR(struct gui, wsettings, wsettings_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, wgoto, wgoto_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, wlistfilter, wlistfilter_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, wlistadd, wlistadd_ctls),
@@ -265,6 +277,7 @@ int FFTHREAD_PROCCALL gui_worker(void *param)
 	ffui_init();
 	wmain_init();
 	winfo_init();
+	wsettings_init();
 	wgoto_init();
 	wlistadd_init();
 	wlistfilter_init();
