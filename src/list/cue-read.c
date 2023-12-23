@@ -12,32 +12,13 @@ static const phi_meta_if *metaif;
 #define dbglog(t, ...)  phi_dbglog(core, NULL, t, __VA_ARGS__)
 #define errlog(t, ...)  phi_errlog(core, NULL, t, __VA_ARGS__)
 
-enum FFCUE_GAP {
-	/* Gap is added to the end of the previous track:
-	track01.index01 .. track02.index01 */
-	FFCUE_GAPPREV,
-
-	/* Gap is added to the end of the previous track (but track01's pregap is preserved):
-	track01.index00 .. track02.index01
-	track02.index01 .. track03.index01 */
-	FFCUE_GAPPREV1,
-
-	/* Gap is added to the beginning of the current track:
-	track01.index00 .. track02.index00 */
-	FFCUE_GAPCURR,
-
-	/* Skip pregaps:
-	track01.index01 .. track02.index00 */
-	FFCUE_GAPSKIP,
-};
-
 struct ffcuetrk {
 	uint from,
 		to;
 };
 
 struct ffcue {
-	uint options; // enum FFCUE_GAP
+	uint options; // enum PHI_CUE_GAP
 	uint from;
 	struct ffcuetrk trk;
 	uint first :1;
@@ -83,7 +64,7 @@ static void* cue_open(phi_track *t)
 	ffarrint32_sort((uint*)t->conf.tracks.ptr, t->conf.tracks.len);
 	cueread_open(&c->cue);
 	c->qu_cur = t->qent;
-	c->cu.options = FFCUE_GAPPREV;
+	c->cu.options = t->conf.cue_gaps;
 	c->utf8 = 1;
 	return c;
 }
@@ -119,14 +100,14 @@ static struct ffcuetrk* ffcue_index(struct ffcue *c, uint type, uint val)
 
 	case CUEREAD_TRK_INDEX00:
 		if (c->first) {
-			if (c->options == FFCUE_GAPPREV1 || c->options == FFCUE_GAPCURR)
+			if (c->options == PHI_CUE_GAP_PREV1 || c->options == PHI_CUE_GAP_CURR)
 				c->from = val;
 			break;
 		}
 
-		if (c->options == FFCUE_GAPSKIP)
+		if (c->options == PHI_CUE_GAP_SKIP)
 			c->trk.to = val;
-		else if (c->options == FFCUE_GAPCURR) {
+		else if (c->options == PHI_CUE_GAP_CURR) {
 			c->trk.to = val;
 			c->trk.from = c->from;
 			c->from = val;

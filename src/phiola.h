@@ -208,6 +208,25 @@ struct phi_af {
 	uint rate;
 };
 
+enum PHI_CUE_GAP {
+	/** Add gap to the end of the previous track:
+	track01.index01 .. track02.index01 */
+	PHI_CUE_GAP_PREV,
+
+	/** Add gap to the end of the previous track (but track01's pregap is preserved):
+	track01.index00 .. track02.index01
+	track02.index01 .. track03.index01 */
+	PHI_CUE_GAP_PREV1,
+
+	/** Add gap to the beginning of the current track:
+	track01.index00 .. track02.index00 */
+	PHI_CUE_GAP_CURR,
+
+	/** Skip pregaps:
+	track01.index01 .. track02.index00 */
+	PHI_CUE_GAP_SKIP,
+};
+
 /** Track configuration */
 struct phi_track_conf {
 	struct {
@@ -276,12 +295,13 @@ struct phi_track_conf {
 		uint	name_tmp :1; // Write data to ".tmp" file, then rename file on completion
 	} ofile;
 
-	uint print_time :1;
-	uint info_only :1;
-	uint print_tags :1;
-	uint stream_copy :1;
-	uint meta_transient :1;
-	uint cross_worker_assign :1;
+	u_char	cue_gaps; // enum PHI_CUE_GAP
+	uint	print_time :1;
+	uint	info_only :1;
+	uint	print_tags :1;
+	uint	stream_copy :1;
+	uint	meta_transient :1;
+	uint	cross_worker_assign :1;
 };
 
 enum PHI_TF {

@@ -16,6 +16,18 @@ Options:\n\
 \n\
   -tracks NUMBER[,...]  Select only specific tracks in a .cue list\n\
 \n\
+  -cue_gaps=STRING      Control track pregaps:\n\
+                          skip      Skip pregaps, e.g.:\n\
+                                      track01.index01 .. track02.index00\n\
+                          current   Add gap to the beginning of the current track, e.g.:\n\
+                                      track01.index00 .. track02.index00\n\
+                          previous  Add gap to the previous track,\n\
+                                     but track01's pregap is preserved, e.g.:\n\
+                                      track01.index00 .. track02.index01\n\
+                                      track02.index01 .. track03.index01\n\
+                        By default, adds gap to the previous track, e.g.:\n\
+                                      track01.index01 .. track02.index01\n\
+\n\
   -seek TIME            Seek to time: [[HH:]MM:]SS[.MSC]\n\
   -until TIME           Stop at time\n\
 \n\
@@ -86,6 +98,7 @@ struct cmd_conv {
 	ffvec	tracks; // uint[]
 	int		gain;
 	u_char	copy;
+	u_char	cue_gaps;
 	uint	aac_q;
 	uint	aformat;
 	uint	channels;
@@ -137,6 +150,25 @@ static int conv_input(struct cmd_conv *v, ffstr s)
 	return cmd_input(&v->input, s);
 }
 
+static int conv_cue_gaps(struct cmd_conv *v, ffstr s)
+{
+	static const char values[][8] = {
+		"current",
+		"previous",
+		"skip",
+	};
+	static const u_char numbers[] = {
+		PHI_CUE_GAP_CURR,
+		PHI_CUE_GAP_PREV1,
+		PHI_CUE_GAP_SKIP,
+	};
+	int r = ffcharr_findsorted(values, FF_COUNT(values), sizeof(values[0]), s.ptr, s.len);
+	if (r < 0)
+		return _ffargs_err(&x->cmd, 1, "-cue_gaps: value '%S' is not recognized", &s);
+	v->cue_gaps = numbers[r];
+	return 0;
+}
+
 static int conv_seek(struct cmd_conv *v, ffstr s) { return cmd_time_value(&v->seek, s); }
 
 static int conv_until(struct cmd_conv *v, ffstr s) { return cmd_time_value(&v->until, s); }
@@ -150,6 +182,7 @@ static void conv_qu_add(struct cmd_conv *v, ffstr *fn)
 			.exclude = *(ffslice*)&v->exclude,
 			.preserve_date = v->preserve_date,
 		},
+		.cue_gaps = v->cue_gaps,
 		.tracks = *(ffslice*)&v->tracks,
 		.seek_msec = v->seek,
 		.until_msec = v->until,
@@ -230,6 +263,7 @@ static const struct ffarg cmd_conv[] = {
 	{ "-aformat",		'S',	conv_aformat },
 	{ "-channels",		'u',	O(channels) },
 	{ "-copy",			'1',	O(copy) },
+	{ "-cue_gaps",		'S',	conv_cue_gaps },
 	{ "-danorm",		's',	O(danorm) },
 	{ "-exclude",		'S',	conv_exclude },
 	{ "-force",			'1',	O(force) },

@@ -260,6 +260,28 @@ EOF
 	fi
 	./phiola i cue.cue -tracks 2,3 | grep 'Artist - T2'
 	./phiola i cue.cue -tracks 2,3 | grep 'Artist - T3'
+
+	cat <<EOF >cue.cue
+PERFORMER Artist
+FILE "rec6.wav" WAVE
+ TRACK 01 AUDIO
+  PERFORMER A1
+  TITLE T1
+  INDEX 00 00:00:00
+  INDEX 01 00:01:00
+ TRACK 02 AUDIO
+  TITLE T2
+  INDEX 00 00:02:00
+  INDEX 01 00:03:00
+ TRACK 03 AUDIO
+  TITLE T3
+  INDEX 00 00:04:00
+  INDEX 01 00:05:00
+EOF
+	./phiola co cue.cue                    -o cue-@tracknumber.wav -f ; ./phiola i cue-01.wav | grep '0:02.000' ; ./phiola i cue-02.wav | grep '0:02.000' ; ./phiola i cue-03.wav | grep '0:01.000'
+	./phiola co cue.cue -cue_gaps previous -o cue-@tracknumber.wav -f ; ./phiola i cue-01.wav | grep '0:03.000' ; ./phiola i cue-02.wav | grep '0:02.000' ; ./phiola i cue-03.wav | grep '0:01.000'
+	./phiola co cue.cue -cue_gaps current  -o cue-@tracknumber.wav -f ; ./phiola i cue-01.wav | grep '0:02.000' ; ./phiola i cue-02.wav | grep '0:02.000' ; ./phiola i cue-03.wav | grep '0:02.000'
+	./phiola co cue.cue -cue_gaps skip     -o cue-@tracknumber.wav -f ; ./phiola i cue-01.wav | grep '0:01.000' ; ./phiola i cue-02.wav | grep '0:01.000' ; ./phiola i cue-03.wav | grep '0:01.000'
 }
 
 test_meta() {
