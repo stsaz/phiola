@@ -20,4 +20,8 @@
 		android:text="@string/about"
 		android:textAlignment="center" />
 
+	<Button android:id="@+id/b_save_logs"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:text="@string/about_save_logs" />
+
 </LinearLayout>

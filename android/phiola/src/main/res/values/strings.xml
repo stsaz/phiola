@@ -77,5 +77,7 @@
 	<string name="conv_pl_add">Add New File to Playlist</string>
 	<string name="conv_go">Convert!</string>
 
+	<string name="about_save_logs">Save system logs to file</string>
+
 	<string name="about">phiola v2.0-beta11\n\nhttps://github.com/stsaz/phiola/</string>
 </resources>
