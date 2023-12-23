@@ -13,3 +13,4 @@
 #include <gui/record.hpp>
 #include <gui/convert.hpp>
 #include <gui/about.hpp>
+#include <gui/log.hpp>

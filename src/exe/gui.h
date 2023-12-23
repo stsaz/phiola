@@ -43,6 +43,13 @@ static int gui_action(struct cmd_gui *g)
 	ffvec_free(&g->input);
 
 	x->core->mod("gui");
+
+	if (!x->debug) {
+		// show logs inside Logs window
+		x->log.use_color = 0;
+		x->log.func = x->core->mod("gui.log");
+	}
+
 	return 0;
 }
 

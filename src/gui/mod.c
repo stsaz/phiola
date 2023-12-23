@@ -805,10 +805,12 @@ static void gui_destroy()
 }
 
 extern const phi_filter phi_gui_track;
+extern void phi_gui_log(ffstr s);
 static const void* gui_iface(const char *name)
 {
 	if (ffsz_eq(name, "track")) return &phi_gui_track;
 	else if (ffsz_eq(name, "track-convert")) return &phi_gui_conv;
+	else if (ffsz_eq(name, "log")) return &phi_gui_log;
 	return NULL;
 }
 

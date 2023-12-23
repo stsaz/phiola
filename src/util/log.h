@@ -6,13 +6,17 @@
 #include <ffsys/std.h>
 #include <ffsys/thread.h> // optional
 
+typedef void (*zzlog_func)(ffstr s);
+
 struct zzlog {
+	zzlog_func func;
 	fffd fd;
+
 	char date[32];
 	char levels[10][8];
 	char colors[10][8];
 	ffuint use_color :1;
-	ffuint fd_file :1;
+	ffuint fd_file :1; // Windows: fd is a regular file, not console
 };
 
 #define ZZLOG_SYS_ERROR  0x10
@@ -80,6 +84,12 @@ static inline void zzlog_printv(struct zzlog *l, ffuint flags, const char *ctx, 
 	d[r++] = '\r';
 #endif
 	d[r++] = '\n';
+
+	if (l->func) {
+		ffstr s = FFSTR_INITN(d, r);
+		l->func(s);
+		return;
+	}
 
 #ifdef FF_WIN
 	if (!l->fd_file) {

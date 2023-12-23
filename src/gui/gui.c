@@ -141,7 +141,8 @@ extern const ffui_ldr_ctl
 	wlistfilter_ctls[],
 	wrecord_ctls[],
 	wconvert_ctls[],
-	wabout_ctls[];
+	wabout_ctls[],
+	wlog_ctls[];
 
 static void* gui_getctl(void *udata, const ffstr *name)
 {
@@ -162,6 +163,7 @@ static void* gui_getctl(void *udata, const ffstr *name)
 		FFUI_LDR_CTL3_PTR(struct gui, wrecord, wrecord_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, wconvert, wconvert_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, wabout, wabout_ctls),
+		FFUI_LDR_CTL3_PTR(struct gui, wlog, wlog_ctls),
 		FFUI_LDR_CTL_END
 	};
 
@@ -269,6 +271,7 @@ int FFTHREAD_PROCCALL gui_worker(void *param)
 	wrecord_init();
 	wconvert_init();
 	wabout_init();
+	wlog_init();
 
 	gui_userconf_load();
 	if (load_ui())

@@ -55,6 +55,9 @@ struct gui_wabout;
 FF_EXTERN void wabout_init();
 FF_EXTERN void wabout_show(uint show);
 
+struct gui_wlog;
+FF_EXTERN void wlog_init();
+
 struct gui {
 	ffui_menu mfile
 		, mlist
@@ -64,14 +67,15 @@ struct gui {
 		, mhelp;
 	ffui_menu mpopup;
 	ffui_dialog dlg;
-	struct gui_wmain *wmain;
-	struct gui_winfo *winfo;
-	struct gui_wgoto *wgoto;
-	struct gui_wlistadd *wlistadd;
-	struct gui_wlistfilter *wlistfilter;
-	struct gui_wrecord *wrecord;
-	struct gui_wconvert *wconvert;
-	struct gui_wabout *wabout;
+	struct gui_wmain*		wmain;
+	struct gui_winfo*		winfo;
+	struct gui_wgoto*		wgoto;
+	struct gui_wlistadd*	wlistadd;
+	struct gui_wlistfilter*	wlistfilter;
+	struct gui_wrecord*		wrecord;
+	struct gui_wconvert*	wconvert;
+	struct gui_wabout*		wabout;
+	struct gui_wlog*		wlog;
 };
 FF_EXTERN struct gui *gg;
 

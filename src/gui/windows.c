@@ -3,6 +3,7 @@
 
 #include <phiola.h>
 #include <track.h>
+#include <util/log.h>
 #include <ffsys/process.h>
 #include <ffsys/path.h>
 #include <ffsys/environ.h>
@@ -13,6 +14,9 @@
 struct ctx {
 	const phi_core *core;
 	const phi_queue_if *queue;
+
+	struct zzlog log;
+	fftime time_last;
 
 	char fn[4*1024];
 	ffstr root_dir;
@@ -32,6 +36,31 @@ static int conf()
 	return 0;
 }
 
+static void exe_logv(void *log_obj, uint flags, const char *module, phi_track *t, const char *fmt, va_list va)
+{
+	const char *id = (t) ? t->id : NULL;
+	const char *ctx = (module || !t) ? module : (char*)x->core->track->cmd(t, PHI_TRACK_CUR_FILTER_NAME);
+
+	if (x->core) {
+		ffdatetime dt;
+		fftime tm = x->core->time(&dt, 0);
+		if (fftime_cmp(&tm, &x->time_last)) {
+			x->time_last = tm;
+			fftime_tostr1(&dt, x->log.date, sizeof(x->log.date), FFTIME_HMS_MSEC);
+		}
+	}
+
+	zzlog_printv(log_obj, flags, ctx, id, fmt, va);
+}
+
+static void exe_log(void *log_obj, uint flags, const char *module, phi_track *t, const char *fmt, ...)
+{
+	va_list va;
+	va_start(va, fmt);
+	exe_logv(log_obj, flags, module, t, fmt, va);
+	va_end(va);
+}
+
 static char* env_expand(const char *s)
 {
 	return ffenv_expand(NULL, NULL, 0, s);
@@ -40,6 +69,11 @@ static char* env_expand(const char *s)
 static int core()
 {
 	struct phi_core_conf conf = {
+		.log_level = PHI_LOG_INFO,
+		.log = exe_log,
+		.logv = exe_logv,
+		.log_obj = &x->log,
+
 		.env_expand = env_expand,
 		.root = x->root_dir,
 	};
@@ -47,6 +81,21 @@ static int core()
 		return -1;
 	x->queue = x->core->mod("core.queue");
 	return 0;
+}
+
+static void logs()
+{
+	static const char levels[][8] = {
+		"ERROR ",
+		"WARN  ",
+		"INFO  ",
+		"INFO  ",
+		"INFO  ",
+		"DEBUG ",
+		"DEBUG+",
+	};
+	ffmem_copy(x->log.levels, levels, sizeof(levels));
+	x->log.func = x->core->mod("gui.log");
 }
 
 static int input(struct ctx *x, char *s)
@@ -120,6 +169,7 @@ int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 	x = ffmem_new(struct ctx);
 	if (conf()) goto end;
 	if (core()) goto end;
+	logs();
 	if (cmd()) goto end;
 	phi_core_run();
 
