@@ -3,7 +3,6 @@
 #pragma once
 #include <ffsys/file.h>
 #include <ffsys/timerqueue.h>
-#include <util/taskqueue.h>
 #include <ffbase/string.h>
 
 #define PHI_VERSION  20011
@@ -37,6 +36,11 @@ enum PHI_LOG {
 
 	PHI_LOG_SYS = 0x10,
 };
+
+#define FFTASKQUEUE_LOG_DEBUG  PHI_LOG_DEBUG
+#define FFTASKQUEUE_LOG_EXTRA  PHI_LOG_EXTRA
+
+#include <util/taskqueue.h>
 
 /** phiola Core.
 Usage:

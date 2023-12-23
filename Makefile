@@ -12,16 +12,16 @@ SUBMAKE := $(MAKE) -f $(firstword $(MAKEFILE_LIST))
 
 # COMPILER
 
-CFLAGS += -DFFBASE_MEM_ASSERT
-CFLAGS += -MMD -MP
-CFLAGS += -I$(FFBASE)
-CFLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-for-loop-analysis -Wno-multichar
-CFLAGS += -fPIC
-CFLAGS += -g
+CFLAGS += -DFFBASE_MEM_ASSERT \
+	-MMD -MP \
+	-I$(FFBASE) \
+	-Wall -Wextra -Wno-unused-parameter -Wno-multichar \
+	-fPIC \
+	-g
 ifeq "$(DEBUG)" "1"
 	CFLAGS += -DFF_DEBUG -O0 -Werror -Wno-deprecated-declarations
 else
-	CFLAGS += -O3 -fno-strict-aliasing -fvisibility=hidden
+	CFLAGS += -O3 -fno-strict-aliasing -fvisibility=hidden -Wno-for-loop-analysis
 endif
 ifeq "$(ASAN)" "1"
 	CFLAGS += -fsanitize=address

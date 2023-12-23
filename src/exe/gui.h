@@ -55,7 +55,6 @@ static int gui_action(struct cmd_gui *g)
 
 static int gui_open()
 {
-	x->action = (int(*)(void*))gui_action;
 	return 0;
 }
 
@@ -72,10 +71,5 @@ static void cmd_gui_free(struct cmd_gui *g)
 
 static struct ffarg_ctx cmd_gui_init(void *obj)
 {
-	x->cmd_data = ffmem_new(struct cmd_gui);
-	x->cmd_free = (void(*)(void*))cmd_gui_free;
-	struct ffarg_ctx cx = {
-		cmd_gui, x->cmd_data
-	};
-	return cx;
+	return SUBCMD_INIT(ffmem_new(struct cmd_gui), cmd_gui_free, gui_action, cmd_gui);
 }

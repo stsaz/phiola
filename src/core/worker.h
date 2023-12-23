@@ -123,10 +123,12 @@ static int wrk_create(struct worker *w)
 	zzkq_timer_init(&w->kq_timer);
 
 	struct zzkq_conf kc = {
-		.log_level = core->conf.log_level,
-		.log = core->conf.log,
-		.log_obj = core->conf.log_obj,
-		.log_ctx = "core",
+		.log = {
+			.level = core->conf.log_level,
+			.func = core->conf.log,
+			.obj = core->conf.log_obj,
+			.ctx = "core",
+		},
 
 		.max_objects = core->conf.max_tasks,
 		.events_wait = 64,
@@ -135,6 +137,10 @@ static int wrk_create(struct worker *w)
 		return -1;
 
 	fftaskqueue_init(&w->tq);
+	w->tq.log.level = core->conf.log_level;
+	w->tq.log.func = core->conf.log;
+	w->tq.log.obj = core->conf.log_obj;
+	w->tq.log.ctx = "core";
 	if (!!zzkq_tq_attach(&w->kq_tq, w->kq.kq, &w->tq)) {
 		syserrlog("zzkq_tq_attach");
 		return -1;

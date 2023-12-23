@@ -40,7 +40,7 @@ static void ls_ready(void *param)
 {
 	phi_queue_id q = param;
 	x->queue->sort(q, 0);
-	x->queue->save(q, x->queue->conf(q)->name, ls_save_complete, x->cmd_data);
+	x->queue->save(q, x->queue->conf(q)->name, ls_save_complete, x->subcmd.obj);
 }
 
 static int ls_action(struct list_sort *ls)
@@ -70,7 +70,6 @@ static int ls_action(struct list_sort *ls)
 
 static int ls_fin(struct list_sort *ls)
 {
-	x->action = (int(*)(void*))ls_action;
 	return 0;
 }
 
@@ -91,10 +90,5 @@ static void list_sort_free(struct list_sort *ls)
 
 struct ffarg_ctx list_sort_init(void *obj)
 {
-	x->cmd_data = ffmem_new(struct list_sort);
-	x->cmd_free = (void(*)(void*))list_sort_free;
-	struct ffarg_ctx ac = {
-		list_sort_args, x->cmd_data
-	};
-	return ac;
+	return SUBCMD_INIT(ffmem_new(struct list_sort), list_sort_free, ls_action, list_sort_args);
 }

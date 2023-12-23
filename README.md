@@ -3,6 +3,7 @@
 ![](res/phiola.svg)
 
 phiola *beta* - fast audio player, recorder, converter for Windows, Linux & Android.
+It can play audio files from your device or remote server, record audio from your microphone or Internet radio stream, process and convert audio into another format, and more.
 Its low CPU consumption conserves the notebook/phone battery.
 You can issue commands to phiola via its CLI, TUI, GUI, system pipe and SDK interfaces.
 Its fast startup time allows using it from custom scripts on a "play-and-exit" or "record-and-exit" basis.
@@ -42,6 +43,25 @@ Contents:
 * Fast (low footprint): keeps your CPU, memory & disk I/O at absolute minimum; spends 99% of time inside codec algorithms
 
 **Bonus:** Convenient API with plugin support which allows using all the above features from any C/C++/Java app!
+
+Features and notes by platform:
+
+| Feature              | Linux | Windows | Android |
+| --- | --- | --- | --- |
+| GUI                  | ✅ | ✅ | ✅ |
+| Dark themed GUI      | ✅ (GTK default) | incomplete | ✅ |
+| Powerful CLI         | ✅ | ✅ | ❌ |
+| Simple TUI           | ✅ | ✅ | ❌ |
+| Playback formats     | ✅ all supported | ✅ all supported | only those supported by OS |
+| Conversion formats   | ✅ all supported | ✅ all supported | all supported except `.mpc`, `.ape`, `.wv` |
+| Batch conversion     | ✅ | ✅ | ❌ |
+| Record from mic      | ✅ | ✅ | ✅ |
+| Record from Internet | ✅ | ✅ | ❌ |
+| Record what you hear | ❌ | ✅ | ❌ |
+| Requirements         | glibc-2.28 | Windows 7 | Android 6 |
+| HW Requirements      | AMD64 | AMD64 | ARM64, ARM(incomplete) |
+
+> Although not officially supported, phiola should build fine for **macOS**, **FreeBSD** and **Windows XP** after tweaking the build script.
 
 See also: [phiola Architecture](doc/arch/arch.md).
 
@@ -158,6 +178,9 @@ phiola convert *.wav -o .flac
 # Convert all .wav files inside a directory,
 #  preserving the original file names and file modification time
 phiola convert "My Recordings" -include "*.wav" -o @filepath/@filename.flac -preserve_date
+
+# Copy (without re-encoding) MP3 audio region from 1:00 to 2:00 to another file
+phiola convert -copy -seek 1:0 -until 2:0 input.mp3 -o output.mp3
 
 # Split (100% accurately) the tracks from a .cue file to multiple files
 phiola convert input.cue -o "@tracknumber. @artist - @title.flac"

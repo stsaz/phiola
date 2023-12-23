@@ -113,7 +113,7 @@ static int conf()
 static int core()
 {
 	struct phi_core_conf conf = {
-		.log_level = (x->debug) ? PHI_LOG_DEBUG : PHI_LOG_VERBOSE,
+		.log_level = (x->debug) ? PHI_LOG_EXTRA : PHI_LOG_VERBOSE,
 		.log = exe_log,
 		.logv = exe_logv,
 

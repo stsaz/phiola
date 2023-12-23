@@ -118,8 +118,6 @@ static int info_check(struct cmd_info *p)
 {
 	if (!p->input.len)
 		return _ffargs_err(&x->cmd, 1, "please specify input file");
-
-	x->action = (int(*)(void*))info_action;
 	return 0;
 }
 
@@ -149,10 +147,5 @@ static void cmd_info_free(struct cmd_info *p)
 
 static struct ffarg_ctx cmd_info_init(void *obj)
 {
-	x->cmd_data = ffmem_new(struct cmd_info);
-	x->cmd_free = (void(*)(void*))cmd_info_free;
-	struct ffarg_ctx cx = {
-		cmd_info, x->cmd_data
-	};
-	return cx;
+	return SUBCMD_INIT(ffmem_new(struct cmd_info), cmd_info_free, info_action, cmd_info);
 }

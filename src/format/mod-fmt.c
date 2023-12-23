@@ -54,14 +54,14 @@ static int phi_autow_process(void *obj, phi_track *t)
 	}
 
 	static const struct map_sz_vptr mods[] = {
-		{ "aac", &phi_aac_adts_write },
-		{ "flac", &phi_flac_write },
-		{ "m4a", &phi_mp4_write },
-		{ "mp3", &phi_mp3_write },
-		{ "mp4", &phi_mp4_write },
-		{ "ogg", &phi_ogg_write },
-		{ "opus", &phi_ogg_write },
-		{ "wav", &phi_wav_write },
+		{ "aac",	&phi_aac_adts_write },
+		{ "flac",	&phi_flac_write },
+		{ "m4a",	&phi_mp4_write },
+		{ "mp3",	&phi_mp3_write },
+		{ "mp4",	&phi_mp4_write },
+		{ "ogg",	&phi_ogg_write },
+		{ "opus",	&phi_ogg_write },
+		{ "wav",	&phi_wav_write },
 		{}
 	};
 	const void *f;

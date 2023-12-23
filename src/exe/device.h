@@ -110,7 +110,6 @@ static int dev_list_action(struct cmd_dev_list *l)
 
 static int dev_list_prepare()
 {
-	x->action = (int(*)(void*))dev_list_action;
 	return 0;
 }
 
@@ -131,12 +130,7 @@ static void cmd_dev_list_free(struct cmd_dev_list *l)
 
 static struct ffarg_ctx cmd_dev_list_init()
 {
-	x->cmd_data = ffmem_new(struct cmd_dev_list);
-	x->cmd_free = (void(*)(void*))cmd_dev_list_free;
-	struct ffarg_ctx cx = {
-		cmd_dev_list, x->cmd_data
-	};
-	return cx;
+	return SUBCMD_INIT(ffmem_new(struct cmd_dev_list), cmd_dev_list_free, dev_list_action, cmd_dev_list);
 }
 
 static const struct ffarg cmd_dev[] = {

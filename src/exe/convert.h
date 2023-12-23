@@ -251,8 +251,6 @@ static int conv_prepare(struct cmd_conv *v)
 	ffstr name;
 	ffpath_splitname_str(FFSTR_Z(v->output), &name, NULL);
 	x->stdout_busy = ffstr_eqz(&name, "@stdout");
-
-	x->action = (int(*)(void*))conv_action;
 	return 0;
 }
 
@@ -294,10 +292,5 @@ static void cmd_conv_free(struct cmd_conv *v)
 
 static struct ffarg_ctx cmd_conv_init(void *obj)
 {
-	x->cmd_data = ffmem_new(struct cmd_conv);
-	x->cmd_free = (void(*)(void*))cmd_conv_free;
-	struct ffarg_ctx cx = {
-		cmd_conv, x->cmd_data
-	};
-	return cx;
+	return SUBCMD_INIT(ffmem_new(struct cmd_conv), cmd_conv_free, conv_action, cmd_conv);
 }

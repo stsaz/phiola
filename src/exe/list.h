@@ -77,7 +77,6 @@ static int lc_action(struct list_create *lc)
 
 static int lc_fin(struct list_create *lc)
 {
-	x->action = (int(*)(void*))lc_action;
 	return 0;
 }
 
@@ -101,12 +100,7 @@ static void list_create_free(struct list_create *lc)
 
 static struct ffarg_ctx list_create_init(void *obj)
 {
-	x->cmd_data = ffmem_new(struct list_create);
-	x->cmd_free = (void(*)(void*))list_create_free;
-	struct ffarg_ctx ac = {
-		list_create_args, x->cmd_data
-	};
-	return ac;
+	return SUBCMD_INIT(ffmem_new(struct list_create), list_create_free, lc_action, list_create_args);
 }
 
 #include <exe/list-sort.h>

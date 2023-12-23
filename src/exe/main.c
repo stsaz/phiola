@@ -14,6 +14,12 @@
 #define PHI_CRASH_HANDLER
 #endif
 
+struct exe_subcmd {
+	void (*cmd_free)(void*);
+	int (*action)(void*);
+	void *obj;
+};
+
 struct exe {
 	uint exit_code;
 	struct zzlog log;
@@ -35,9 +41,7 @@ struct exe {
 
 	ffstr codepage;
 	struct ffargs cmd;
-	void *cmd_data;
-	int (*action)(void*);
-	void (*cmd_free)(void*);
+	struct exe_subcmd subcmd;
 
 	char *dump_file_dir;
 	struct crash_info ci;
@@ -194,14 +198,14 @@ static void signals()
 
 static int jobs()
 {
-	return x->action(x->cmd_data);
+	return x->subcmd.action(x->subcmd.obj);
 }
 
 static void cleanup()
 {
 #ifdef FF_DEBUG
-	if (x->cmd_free)
-		x->cmd_free(x->cmd_data);
+	if (x->subcmd.cmd_free)
+		x->subcmd.cmd_free(x->subcmd.obj);
 #endif
 	phi_core_destroy();
 #ifdef FF_DEBUG

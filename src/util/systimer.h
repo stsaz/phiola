@@ -1,11 +1,36 @@
-/** Disable system sleep timer on Linux via D-BUS.
-2020, Simon Zolin
-*/
+/** Disable system sleep timer on Windows and Linux via D-BUS.
+2020, Simon Zolin */
 
 /*
 ffps_systimer_open ffps_systimer_close
 ffps_systimer
 */
+
+#ifdef FF_WIN
+
+struct ffps_systimer {
+	char dummy;
+};
+
+enum FFPS_SYSTIMER {
+	FFPS_SYSTIMER_DEFAULT = ES_CONTINUOUS,
+	FFPS_SYSTIMER_NOSLEEP = ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED,
+};
+
+/** Reset or disable a system timer.
+flags:
+ ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED: don't put the system to sleep
+ ES_DISPLAY_REQUIRED: don't switch off display
+ ES_CONTINUOUS:
+  0: reset once
+  1 + flags: disable
+  1 + no flags: restore default behaviour
+*/
+static inline int ffps_systimer(struct ffps_systimer *c, ffuint flags) { return !SetThreadExecutionState(flags); }
+
+#define ffps_systimer_close(c)
+
+#else // Linux:
 
 #include <ffsys/process.h>
 #include <ffsys/error.h>
@@ -53,14 +78,17 @@ static inline void ffps_systimer_close(struct ffps_systimer *c)
 	}
 }
 
-/**
-flags: 1:inhibit screen saver;  0:uninhibit screen saver */
+enum FFPS_SYSTIMER {
+	FFPS_SYSTIMER_DEFAULT,
+	FFPS_SYSTIMER_NOSLEEP,
+};
+
 static inline int ffps_systimer(struct ffps_systimer *c, uint flags)
 {
 	int rc = -1;
 	DBusMessage *m = NULL, *mreply = NULL;
 
-	const char *method = (flags == 1) ? FDSS_INHIBIT : FDSS_UNINHIBIT;
+	const char *method = (flags == FFPS_SYSTIMER_NOSLEEP) ? FDSS_INHIBIT : FDSS_UNINHIBIT;
 	m = dbus_message_new_method_call(FDSS_DEST, FDSS_PATH, FDSS_DEST, method);
 	if (m == NULL)
 		goto end;
@@ -70,7 +98,7 @@ static inline int ffps_systimer(struct ffps_systimer *c, uint flags)
 			goto end;
 	}
 
-	if (flags == 0) {
+	if (flags == FFPS_SYSTIMER_DEFAULT) {
 		if (c->reply == NULL) {
 			rc = 0;
 			goto end;
@@ -118,3 +146,5 @@ end:
 		dbus_message_unref(mreply);
 	return rc;
 }
+
+#endif

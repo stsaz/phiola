@@ -184,6 +184,11 @@ static int tuiplay_process(void *ctx, phi_track *t)
 		return PHI_FIN;
 
 	if (u->show_info || t->meta_changed) {
+		if (!t->audio.format.rate) {
+			errlog(t, "audio sample rate is not set");
+			return PHI_ERR;
+		}
+
 		u->show_info = 0;
 		t->meta_changed = 0;
 		u->total_samples = t->audio.total;

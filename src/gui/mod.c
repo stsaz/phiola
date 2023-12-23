@@ -32,8 +32,8 @@ static void list_filter_close();
 const struct ffarg guimod_args[] = {
 	{ "list.auto_sel",	'u',	O(auto_select) },
 	{ "play.cursor",	'u',	O(cursor) },
-	{ "play.random",	'u',	O(random) },
-	{ "play.repeat",	'u',	O(repeat) },
+	{ "play.random",	'u',	O(conf.random) },
+	{ "play.repeat",	'u',	O(conf.repeat) },
 	{ "play.seek_leap",	'u',	O(conf.seek_leap_delta) },
 	{ "play.seek_step",	'u',	O(conf.seek_step_delta) },
 	{ "theme",			'=s',	O(theme) },
@@ -45,8 +45,8 @@ void mod_userconf_write(ffconfw *cw)
 {
 	ffconfw_add2u(cw, "list.auto_sel", gd->auto_select);
 	ffconfw_add2u(cw, "play.cursor", gd->cursor);
-	ffconfw_add2u(cw, "play.random", gd->random);
-	ffconfw_add2u(cw, "play.repeat", gd->repeat);
+	ffconfw_add2u(cw, "play.random", gd->conf.random);
+	ffconfw_add2u(cw, "play.repeat", gd->conf.repeat);
 	ffconfw_add2u(cw, "play.seek_leap", gd->conf.seek_leap_delta);
 	ffconfw_add2u(cw, "play.seek_step", gd->conf.seek_step_delta);
 	if (gd->theme)
@@ -285,8 +285,8 @@ void ctl_play(uint i)
 	if (!gd->q_filtered && !gd->tab_conversion) {
 		gd->queue->qselect(gd->q_selected); // set the visible list as default
 		struct phi_queue_conf *qc = gd->queue->conf(NULL);
-		qc->repeat_all = gd->repeat;
-		qc->random = gd->random;
+		qc->repeat_all = gd->conf.repeat;
+		qc->random = gd->conf.random;
 	}
 	phi_queue_id q = (gd->q_filtered) ? gd->q_filtered : NULL;
 	gd->queue->play(NULL, gd->queue->at(q, i));
@@ -345,18 +345,18 @@ static void ctl_seek(uint cmd)
 static void list_repeat_toggle()
 {
 	struct phi_queue_conf *qc = gd->queue->conf(NULL);
-	gd->repeat = !gd->repeat;
-	qc->repeat_all = gd->repeat;
-	wmain_status("Repeat: %s", (gd->repeat) ? "All" : "None");
+	gd->conf.repeat = !gd->conf.repeat;
+	qc->repeat_all = gd->conf.repeat;
+	wmain_status("Repeat: %s", (gd->conf.repeat) ? "All" : "None");
 }
 
 /** Toggle 'random on/off' setting for the default playlist */
 static void list_random_toggle()
 {
 	struct phi_queue_conf *qc = gd->queue->conf(NULL);
-	gd->random = !gd->random;
-	qc->random = gd->random;
-	wmain_status("Random: %s", (gd->random) ? "On" : "Off");
+	gd->conf.random = !gd->conf.random;
+	qc->random = gd->conf.random;
+	wmain_status("Random: %s", (gd->conf.random) ? "On" : "Off");
 }
 
 void ctl_action(uint cmd)

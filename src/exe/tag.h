@@ -90,11 +90,5 @@ static void cmd_tag_free(struct cmd_tag *t)
 
 struct ffarg_ctx cmd_tag_init(void *obj)
 {
-	x->cmd_data = ffmem_new(struct cmd_tag);
-	x->cmd_free = (void(*)(void*))cmd_tag_free;
-	x->action = (int(*)(void*))tag_action;
-	struct ffarg_ctx cx = {
-		cmd_tag_args, x->cmd_data
-	};
-	return cx;
+	return SUBCMD_INIT(ffmem_new(struct cmd_tag), cmd_tag_free, tag_action, cmd_tag_args);
 }

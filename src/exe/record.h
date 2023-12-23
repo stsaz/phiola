@@ -175,8 +175,6 @@ static int rec_check(struct cmd_rec *r)
 	ffstr name;
 	ffpath_splitname_str(FFSTR_Z(r->output), &name, NULL);
 	x->stdout_busy = ffstr_eqz(&name, "@stdout");
-
-	x->action = (int(*)(void*))rec_action;
 	return 0;
 }
 
@@ -233,10 +231,5 @@ static void cmd_rec_free(struct cmd_rec *r)
 
 static struct ffarg_ctx cmd_rec_init(void *obj)
 {
-	x->cmd_data = ffmem_new(struct cmd_rec);
-	x->cmd_free = (void(*)(void*))cmd_rec_free;
-	struct ffarg_ctx cx = {
-		cmd_rec, x->cmd_data
-	};
-	return cx;
+	return SUBCMD_INIT(ffmem_new(struct cmd_rec), cmd_rec_free, rec_action, cmd_rec);
 }

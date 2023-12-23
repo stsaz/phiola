@@ -178,7 +178,6 @@ static int play_check(struct cmd_play *p)
 		x->stdout_busy = ffstr_eqz(&name, "@stdout");
 	}
 
-	x->action = (int(*)(void*))play_action;
 	return 0;
 }
 
@@ -217,10 +216,5 @@ static void cmd_play_free(struct cmd_play *p)
 
 static struct ffarg_ctx cmd_play_init(void *obj)
 {
-	x->cmd_data = ffmem_new(struct cmd_play);
-	x->cmd_free = (void(*)(void*))cmd_play_free;
-	struct ffarg_ctx cx = {
-		cmd_play, x->cmd_data
-	};
-	return cx;
+	return SUBCMD_INIT(ffmem_new(struct cmd_play), cmd_play_free, play_action, cmd_play);
 }

@@ -153,6 +153,17 @@ static int cmd_input(ffvec *input, ffstr s)
 	return 0;
 }
 
+#define SUBCMD_INIT(ptr, f_free, f_action, args) \
+({ \
+	x->subcmd.obj = ptr; \
+	x->subcmd.cmd_free = (void(*)(void*))f_free; \
+	x->subcmd.action = (int(*)(void*))f_action; \
+	struct ffarg_ctx cx = { \
+		args, x->subcmd.obj \
+	}; \
+	cx; \
+})
+
 #include <exe/convert.h>
 #include <exe/device.h>
 #include <exe/gui.h>
@@ -204,12 +215,12 @@ Run 'phiola -help' for complete help info.\n\
 
 static int ffu_coding(ffstr s)
 {
-	static const char *const codestr[] = {
+	static const char codestr[][8] = {
 		"win866", // FFUNICODE_WIN866
 		"win1251", // FFUNICODE_WIN1251
 		"win1252", // FFUNICODE_WIN1252
 	};
-	int r = ffszarr_ifindsorted(codestr, FF_COUNT(codestr), s.ptr, s.len);
+	int r = ffcharr_findsorted(codestr, FF_COUNT(codestr), sizeof(codestr[0]), s.ptr, s.len);
 	if (r < 0)
 		return -1;
 	return _FFUNICODE_CP_BEGIN + r;

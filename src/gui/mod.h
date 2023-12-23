@@ -99,8 +99,6 @@ struct gui_data {
 
 	struct gtrk *playing_track;
 	uint cursor;
-	uint repeat;
-	uint random;
 	uint seek_pos_sec;
 	uint marker_sec;
 
@@ -130,8 +128,10 @@ struct gui_data {
 	uint quit :1;
 
 	struct {
-		uint seek_step_delta;
-		uint seek_leap_delta;
+		uint	repeat;
+		uint	random;
+		uint	seek_step_delta;
+		uint	seek_leap_delta;
 	} conf;
 };
 FF_EXTERN struct gui_data *gd;

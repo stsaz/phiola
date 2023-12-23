@@ -52,7 +52,6 @@ static int remote_action(struct cmd_remote *r)
 
 static int remote_fin(struct cmd_remote *r)
 {
-	x->action = (int(*)(void*))remote_action;
 	return 0;
 }
 
@@ -72,10 +71,5 @@ static void cmd_remote_free(struct cmd_remote *r)
 
 struct ffarg_ctx cmd_remote_init(void *obj)
 {
-	x->cmd_data = ffmem_new(struct cmd_remote);
-	x->cmd_free = (void(*)(void*))cmd_remote_free;
-	struct ffarg_ctx cx = {
-		cmd_remote, x->cmd_data
-	};
-	return cx;
+	return SUBCMD_INIT(ffmem_new(struct cmd_remote), cmd_remote_free, remote_action, cmd_remote);
 }
