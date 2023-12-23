@@ -60,6 +60,7 @@ class CoreSettings {
 		trash_dir = "Trash";
 
 		rec_path = "";
+		rec_fmt = "m4a";
 		rec_enc = "AAC-LC";
 		rec_bitrate = 192;
 		rec_buf_len_ms = 500;
