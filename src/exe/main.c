@@ -246,6 +246,7 @@ static int core()
 		.stdin_busy = x->stdin_busy,
 		.stdout_busy = x->stdout_busy,
 	};
+	ffenv_locale(conf.language, sizeof(conf.language), FFENV_LANGUAGE);
 	if (NULL == (x->core = phi_core_create(&conf)))
 		return -1;
 	x->queue = x->core->mod("core.queue");

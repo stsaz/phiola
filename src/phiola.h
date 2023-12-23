@@ -63,6 +63,7 @@ struct phi_core_conf {
 	Return newly allocated string; must free with ffmem_free() */
 	char* (*env_expand)(const char *s);
 
+	char language[2];
 	uint code_page; // enum FFUNICODE_CP
 	ffstr root; // phiola app directory
 

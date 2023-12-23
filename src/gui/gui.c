@@ -190,6 +190,7 @@ static int load_ui()
 	char *fn = ffsz_allocfmt("%Smod/gui/ui.conf", &core->conf.root);
 	ffui_loader ldr;
 	ffui_ldr_init(&ldr, gui_getctl, gui_getcmd, gg);
+	ffmem_copy(ldr.language, core->conf.language, sizeof(ldr.language));
 #ifdef FF_WIN
 	ldr.hmod_resource = GetModuleHandleW(L"gui.dll");
 	ldr.dark_mode = (gd->theme && ffsz_eq(gd->theme, "dark"));
