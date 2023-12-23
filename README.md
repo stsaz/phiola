@@ -102,6 +102,13 @@ phiola "My Music" -random -seek 0:20
 
 # Play on Linux directly via ALSA (and not PulseAudio)
 phiola file.mp3 -audio alsa
+
+# Play Internet radio and save the tracks as local files.
+# These files will be named automatically using the meta data sent by server.
+phiola http://server/stream -tee "@artist - @title.mp3"
+
+# Play MP3 audio via HTTP and convert to a local 64-kbit/sec AAC file
+phiola http://server/music.mp3 -dup @stdout.wav | phiola convert @stdin -aac_q 64 -o output.m4a
 ```
 
 > While audio is playing, you can control phiola via keyboard, e.g. press `Right Arrow` to seek forward; press `Space` to pause/unpause the current track; `n` to start playing the next track; `q` to exit; `h` to see all supported TUI commands.

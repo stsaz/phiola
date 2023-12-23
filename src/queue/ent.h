@@ -147,6 +147,8 @@ static int qe_play(struct q_entry *e)
 	} else {
 		if (!track->filter(t, &phi_queue_guard, 0)
 			|| !track->filter(t, core->mod("core.auto-input"), 0)
+			|| (c->tee
+				&& !track->filter(t, core->mod("core.tee"), 0))
 			|| !track->filter(t, core->mod("format.detect"), 0)
 			|| !track->filter(t, core->mod("afilter.until"), 0)
 			|| (c->afilter.danorm
@@ -154,6 +156,8 @@ static int qe_play(struct q_entry *e)
 			|| !track->filter(t, core->mod(e->q->conf.ui_module), 0)
 			|| !track->filter(t, core->mod("afilter.gain"), 0)
 			|| !track->filter(t, core->mod("afilter.auto-conv"), 0)
+			|| (c->tee_output
+				&& !track->filter(t, core->mod("core.tee"), 0))
 			|| !track->filter(t, core->mod(e->q->conf.audio_module), 0))
 			goto err;
 	}

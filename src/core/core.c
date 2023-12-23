@@ -84,6 +84,7 @@ extern const phi_filter
 	, phi_dir_r
 	, phi_file_r, phi_file_w
 	, phi_stdin, phi_stdout
+	, phi_tee
 #ifdef FF_WIN
 	, phi_winsleep
 #endif
@@ -102,6 +103,7 @@ static const void* core_iface(const char *name)
 		{ "queue",		&phi_queueif },
 		{ "stdin",		&phi_stdin },
 		{ "stdout",		&phi_stdout },
+		{ "tee",		&phi_tee },
 #ifdef FF_WIN
 		{ "win-sleep",	&phi_winsleep },
 #endif

@@ -12,7 +12,7 @@
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20007
+#define PHI_VERSION_CORE  20012
 
 typedef unsigned int uint;
 typedef unsigned short ushort;
@@ -225,6 +225,9 @@ struct phi_track_conf {
 	uint64	until_cdframes;
 
 	ffvec	meta; // char*[]
+
+	const char*	tee;
+	const char*	tee_output;
 
 	struct {
 		struct phi_af format;

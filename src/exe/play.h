@@ -14,6 +14,18 @@ Options:\n\
   -include WILDCARD     Only include files matching a wildcard (case-insensitive)\n\
   -exclude WILDCARD     Exclude files & directories matching a wildcard (case-insensitive)\n\
   -rbuffer SIZE         Read-buffer size (in KB units)\n\
+  -tee FILE             Copy input data to a file.\n\
+                          @stdout    Write to standard output\n\
+                        File extension should match input data; audio conversion is never performed.\n\
+                        Supports runtime variable expansion:\n\
+                          @nowdate   Current date\n\
+                          @nowtime   Current time\n\
+                          @counter   Sequentially incremented number\n\
+                          @STRING    Expands to file meta data,\n\
+                                       e.g. `-tee \"@artist - @title.mp3\"`\n\
+  -dup FILE.wav         Copy output data to a file.\n\
+                          @stdout    Write to standard output\n\
+                        Supports runtime variable expansion (see `-tee`)\n\
 \n\
   -repeat_all           Repeat all tracks\n\
   -random               Choose the next track randomly\n\
@@ -47,6 +59,8 @@ Options:\n\
 struct cmd_play {
 	char*	audio_module;
 	const char*	danorm;
+	const char*	dup;
+	const char*	tee;
 	ffstr	audio;
 	ffvec	include, exclude; // ffstr[]
 	ffvec	input; // ffstr[]
@@ -99,6 +113,8 @@ static void play_qu_add(struct cmd_play *p, ffstr *fn)
 			.include = *(ffslice*)&p->include,
 			.exclude = *(ffslice*)&p->exclude,
 		},
+		.tee = p->tee,
+		.tee_output = p->dup,
 		.tracks = *(ffslice*)&p->tracks,
 		.seek_msec = p->seek,
 		.until_msec = p->until,
@@ -153,6 +169,15 @@ static int play_check(struct cmd_play *p)
 	if (!p->input.len)
 		return _ffargs_err(&x->cmd, 1, "please specify input file");
 
+	if (p->tee && p->dup)
+		return _ffargs_err(&x->cmd, 1, "-tee and -dup can not be used together");
+
+	if (p->tee || p->dup) {
+		ffstr name;
+		ffpath_splitname_str(FFSTR_Z((p->tee) ? p->tee : p->dup), &name, NULL);
+		x->stdout_busy = ffstr_eqz(&name, "@stdout");
+	}
+
 	x->action = (int(*)(void*))play_action;
 	return 0;
 }
@@ -163,6 +188,7 @@ static const struct ffarg cmd_play[] = {
 	{ "-buffer",	'u',	O(buffer) },
 	{ "-danorm",	's',	O(danorm) },
 	{ "-device",	'u',	O(device) },
+	{ "-dup",		's',	O(dup) },
 	{ "-exclude",	'S',	play_exclude },
 	{ "-exclusive",	'1',	O(exclusive) },
 	{ "-help",		0,		play_help },
@@ -173,6 +199,7 @@ static const struct ffarg cmd_play[] = {
 	{ "-remote",	'1',	O(remote) },
 	{ "-repeat_all",'1',	O(repeat_all) },
 	{ "-seek",		'S',	play_seek },
+	{ "-tee",		's',	O(tee) },
 	{ "-tracks",	'S',	play_tracks },
 	{ "-until",		'S',	play_until },
 	{ "\0\1",		'S',	play_input },

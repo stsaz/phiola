@@ -56,6 +56,7 @@ static int stdout_write(void *ctx, phi_track *t)
 		return PHI_ERR;
 	}
 
+	t->data_out = t->data_in;
 	for (;;) {
 
 		r = ffstr_gather((ffstr*)&f->buf, &f->buf.cap, t->data_in.ptr, t->data_in.len, f->buf.cap, &dst);

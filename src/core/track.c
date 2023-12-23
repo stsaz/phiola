@@ -18,9 +18,16 @@ static void conveyor_close(struct phi_conveyor *v, phi_track *t);
 static void track_wake(phi_track *t);
 
 enum STATE {
+	/** Track is running normally */
 	ST_RUNNING, // ->(ST_FINISHED || ST_STOP)
+
+	/** Track has finished the work before user calls stop() */
 	ST_FINISHED,
+
+	/** User calls stop() on an active track */
 	ST_STOP, // ->ST_STOPPING
+
+	/** User's stop-signal is being processed by the track filters */
 	ST_STOPPING,
 };
 
@@ -78,6 +85,7 @@ static void track_close(phi_track *t)
 {
 	if (t == NULL) return;
 
+	core->task(t->worker, &t->task_wake, NULL, NULL);
 	core->worker_release(t->worker);
 
 	if (t->sib.next) {
@@ -415,15 +423,17 @@ static void track_start(phi_track *t)
 	fflock_unlock(&tx->tracks_lock);
 
 	dbglog(t, "starting");
-	track_wake(t);
+	core->task(t->worker, &t->task_wake, (phi_task_func)track_run, t);
 }
 
 static void track_xstop(phi_track *t)
 {
-	if (ST_FINISHED == ffint_cmpxchg(&t->state, ST_RUNNING, ST_STOP)) {
-		dbglog(t, "stopping");
+	dbglog(t, "stop");
+	int st = ffint_cmpxchg(&t->state, ST_RUNNING, ST_STOP);
+	// ST_RUNNING: track filters will stop their work, then the track will be closed
+	// ST_FINISHED: just close the track
+	if (st == ST_RUNNING || st == ST_FINISHED)
 		core->task(t->worker, &t->task_wake, (phi_task_func)track_run, t);
-	}
 }
 
 static void track_wake(phi_track *t)
