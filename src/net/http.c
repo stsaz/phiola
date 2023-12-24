@@ -124,9 +124,8 @@ int phi_hc_resp(void *ctx, struct phi_http_data *d)
 		{ "audio/aacp",	"aac" },
 		{ "audio/mpeg",	"mp3" },
 		{ "audio/ogg",	"ogg" },
-		{}
 	};
-	h->trk->data_type = map_sz_vptr_findstr(ct_ext, d->ct); // help format.detector in case it didn't detect format
+	h->trk->data_type = map_sz_vptr_findstr(ct_ext, FF_COUNT(ct_ext), d->ct); // help format.detector in case it didn't detect format
 
 	h->trk->icy_meta_interval = d->icy_meta_interval;
 	h->icy = !!d->icy_meta_interval;

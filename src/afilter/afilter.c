@@ -23,12 +23,12 @@ extern const phi_filter
 static const void* af_iface(const char *name)
 {
 	static const struct map_sz_vptr mods[] = {
-		{ "conv", &phi_aconv },
-		{ "auto-conv", &phi_autoconv },
-		{ "gain", &phi_gain },
-		{ "until", &phi_until },
-		{ "peaks", &phi_peaks },
-		{ "rtpeak", &phi_rtpeak },
+		{ "auto-conv",	&phi_autoconv },
+		{ "conv",		&phi_aconv },
+		{ "gain",		&phi_gain },
+		{ "peaks",		&phi_peaks },
+		{ "rtpeak",		&phi_rtpeak },
+		{ "until",		&phi_until },
 		{}
 	};
 	return map_sz_vptr_find(mods, name);

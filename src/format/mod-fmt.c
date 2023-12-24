@@ -62,10 +62,9 @@ static int phi_autow_process(void *obj, phi_track *t)
 		{ "ogg",	&phi_ogg_write },
 		{ "opus",	&phi_ogg_write },
 		{ "wav",	&phi_wav_write },
-		{}
 	};
 	const void *f;
-	if (NULL == (f = map_sz_vptr_find(mods, ext.ptr))) {
+	if (NULL == (f = map_sz_vptr_findstr(mods, FF_COUNT(mods), ext))) {
 		errlog(t, "%s: output file extension isn't supported", ext.ptr);
 		return PHI_ERR;
 	}
@@ -103,9 +102,8 @@ static const void* fmt_mod_iface_input(const char *name)
 		{ "pls",	&phi_pls_read },
 		{ "wav",	&phi_wav_read },
 		{ "wv",		&phi_wv_read },
-		{}
 	};
-	return map_sz_vptr_find(mods, name);
+	return map_sz_vptr_findz2(mods, FF_COUNT(mods), name);
 }
 
 static const void* fmt_mod_iface(const char *name)
@@ -136,9 +134,8 @@ static const void* fmt_mod_iface(const char *name)
 		{ "wav",		&phi_wav_read },
 		{ "wav-write",	&phi_wav_write },
 		{ "wv",			&phi_wv_read },
-		{}
 	};
-	return map_sz_vptr_find(mods, name);
+	return map_sz_vptr_findz2(mods, FF_COUNT(mods), name);
 }
 
 static const phi_mod phi_mod_fmt = {

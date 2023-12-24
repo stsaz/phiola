@@ -86,9 +86,9 @@ const phi_adev_if phi_wasapi_adev = {
 static const void* wasapi_iface(const char *name)
 {
 	static const struct map_sz_vptr m[] = {
-		{ "play", &phi_wasapi_play },
-		{ "rec", &phi_wasapi_rec },
-		{ "dev", &phi_wasapi_adev },
+		{ "dev",	&phi_wasapi_adev },
+		{ "play",	&phi_wasapi_play },
+		{ "rec",	&phi_wasapi_rec },
 		{}
 	};
 	return map_sz_vptr_find(m, name);

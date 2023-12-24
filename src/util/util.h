@@ -32,25 +32,57 @@ static inline int ffstr_var_next(ffstr *in, ffstr *out, char c)
 }
 
 
+static inline ffssize ffcharr_findsorted_padding(const void *ar, ffsize n, ffsize elsize, ffsize padding, const char *search, ffsize search_len)
+{
+	if (search_len > elsize)
+		return -1; // the string's too large for this array
+
+	ffsize start = 0;
+	while (start != n) {
+		ffsize i = start + (n - start) / 2;
+		const char *ptr = (char*)ar + i * (elsize + padding);
+		int r = ffmem_cmp(search, ptr, search_len);
+
+		if (r == 0
+			&& search_len != elsize
+			&& ptr[search_len] != '\0')
+			r = -1; // found "01" in {0,1,2}
+
+		if (r == 0)
+			return i;
+		else if (r < 0)
+			n = i;
+		else
+			start = i + 1;
+	}
+	return -1;
+}
+
 struct map_sz_vptr {
-	const char *key;
+	char key[16];
 	const void *val;
 };
 static inline const void* map_sz_vptr_find(const struct map_sz_vptr *m, const char *name)
 {
-	for (uint i = 0;  m[i].key != NULL;  i++) {
+	for (ffsize i = 0;  m[i].key[0] != '\0';  i++) {
 		if (ffsz_eq(m[i].key, name))
 			return m[i].val;
 	}
 	return NULL;
 }
-static inline const void* map_sz_vptr_findstr(const struct map_sz_vptr *m, ffstr name)
+static inline const void* map_sz_vptr_findz2(const struct map_sz_vptr *m, ffsize n, const char *name)
 {
-	for (uint i = 0;  m[i].key != NULL;  i++) {
-		if (ffstr_eqz(&name, m[i].key))
-			return m[i].val;
-	}
-	return NULL;
+	ffssize i = ffcharr_findsorted_padding(m, n, sizeof(m->key), sizeof(m->val), name, ffsz_len(name));
+	if (i < 0)
+		return NULL;
+	return m[i].val;
+}
+static inline const void* map_sz_vptr_findstr(const struct map_sz_vptr *m, ffsize n, ffstr name)
+{
+	ffssize i = ffcharr_findsorted_padding(m, n, sizeof(m->key), sizeof(m->val), name.ptr, name.len);
+	if (i < 0)
+		return NULL;
+	return m[i].val;
 }
 
 

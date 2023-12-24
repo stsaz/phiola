@@ -135,7 +135,7 @@ static char* mod_loading(ffstr name)
 		{ "zstd",	"libzstd-ffpack" },
 		{}
 	};
-	const char *dep = map_sz_vptr_findstr(mod_deps, name);
+	const char *dep = map_sz_vptr_findstr(mod_deps, FF_COUNT(mod_deps), name);
 	znames[0] = ffsz_allocfmt("%S/lib%S.so", &x->dir_libs, &name);
 	if (dep) {
 		znames[1] = ffsz_allocfmt("%S/%s.so", &x->dir_libs, dep);

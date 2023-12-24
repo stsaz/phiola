@@ -107,9 +107,8 @@ static const void* core_iface(const char *name)
 #ifdef FF_WIN
 		{ "win-sleep",	&phi_winsleep },
 #endif
-		{}
 	};
-	return map_sz_vptr_find(map, name);
+	return map_sz_vptr_findz2(map, FF_COUNT(map), name);
 }
 
 /** Find module */
