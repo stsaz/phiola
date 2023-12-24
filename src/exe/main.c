@@ -6,6 +6,7 @@
 #include <util/log.h>
 #include <util/crash.h>
 #include <ffsys/std.h>
+#include <ffsys/dylib.h>
 #include <ffsys/environ.h>
 #include <ffsys/globals.h>
 #include <ffbase/args.h>
@@ -135,6 +136,12 @@ static char* env_expand(const char *s)
 	return ffenv_expand(NULL, NULL, 0, s);
 }
 
+static char* mod_loading(ffstr name)
+{
+	return ffsz_allocfmt("%Smod%c%S.%s"
+		, &x->root_dir, FFPATH_SLASH, &name, FFDL_EXT);
+}
+
 static int core()
 {
 	struct phi_core_conf conf = {
@@ -144,6 +151,7 @@ static int core()
 		.log_obj = &x->log,
 
 		.env_expand = env_expand,
+		.mod_loading = mod_loading,
 		.code_page = x->codepage_id,
 		.workers = ~0U,
 		.root = x->root_dir,

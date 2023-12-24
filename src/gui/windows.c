@@ -66,6 +66,12 @@ static char* env_expand(const char *s)
 	return ffenv_expand(NULL, NULL, 0, s);
 }
 
+static char* mod_loading(ffstr name)
+{
+	return ffsz_allocfmt("%Smod%c%S.%s"
+		, &x->root_dir, FFPATH_SLASH, &name, FFDL_EXT);
+}
+
 static int core()
 {
 	struct phi_core_conf conf = {
@@ -75,6 +81,7 @@ static int core()
 		.log_obj = &x->log,
 
 		.env_expand = env_expand,
+		.mod_loading = mod_loading,
 		.root = x->root_dir,
 	};
 	if (!(x->core = phi_core_create(&conf)))

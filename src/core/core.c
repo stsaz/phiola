@@ -156,11 +156,10 @@ static ffdl mod_load(struct core_mod *m, ffstr file)
 		t1 = core->time(NULL, PHI_CORE_TIME_MONOTONIC);
 
 	char *fn;
-	if (core->conf.root.len)
-		fn = ffsz_allocfmt("%Smod%c%S.%s"
-			, &core->conf.root, FFPATH_SLASH, &file, FFDL_EXT);
-	else
-		fn = ffsz_allocfmt("%S.%s", &file, FFDL_EXT);
+	if (NULL == (fn = core->conf.mod_loading(file))) {
+		errlog("%S: module load", &file);
+		goto end;
+	}
 
 	if (FFDL_NULL == (dl = ffdl_open(fn, FFDL_SELFDIR))) {
 		errlog("%s: ffdl_open: %s", fn, ffdl_errstr());

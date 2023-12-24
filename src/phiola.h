@@ -11,7 +11,7 @@
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20012
+#define PHI_VERSION_CORE  20013
 
 typedef unsigned int uint;
 typedef unsigned short ushort;
@@ -66,6 +66,10 @@ struct phi_core_conf {
 	* Windows: "text %VAR% text"
 	Return newly allocated string; must free with ffmem_free() */
 	char* (*env_expand)(const char *s);
+
+	/** Called before loading a module.
+	Return newly allocated file name or NULL */
+	char* (*mod_loading)(ffstr name);
 
 	char language[2];
 	uint code_page; // enum FFUNICODE_CP
