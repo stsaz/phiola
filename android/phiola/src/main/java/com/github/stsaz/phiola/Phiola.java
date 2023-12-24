@@ -18,6 +18,7 @@ class Phiola {
 	native String[] confRead(String filepath);
 	native boolean confWrite(String filepath, byte[] data);
 
+	native String version();
 	native void setCodepage(String codepage);
 
 	static class Meta {

@@ -228,6 +228,12 @@ Java_com_github_stsaz_phiola_Phiola_destroy(JNIEnv *env, jobject thiz)
 	ffmem_free(x);  x = NULL;
 }
 
+JNIEXPORT jstring JNICALL
+Java_com_github_stsaz_phiola_Phiola_version(JNIEnv *env, jobject thiz)
+{
+	return jni_js_sz(x->core->version_str);
+}
+
 JNIEXPORT void JNICALL
 Java_com_github_stsaz_phiola_Phiola_setCodepage(JNIEnv *env, jobject thiz, jstring jcodepage)
 {
