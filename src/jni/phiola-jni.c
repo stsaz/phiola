@@ -4,9 +4,11 @@
 #include <phiola.h>
 #include <track.h>
 #include <util/jni-helper.h>
+#include <util/util.h>
 #include <ffsys/process.h>
 #include <android/log.h>
 
+#define PJC_PHIOLA  "com/github/stsaz/phiola/Phiola"
 #define PJC_META  "com/github/stsaz/phiola/Phiola$Meta"
 #define PJT_META  "Lcom/github/stsaz/phiola/Phiola$Meta;"
 
@@ -14,10 +16,14 @@ struct phiola_jni {
 	phi_core *core;
 	const phi_queue_if *queue;
 	const phi_meta_if *metaif;
-	jclass Phiola_Meta;
 
+	ffstr dir_libs;
 	ffbyte debug;
 
+	jclass Phiola_class;
+	jclass Phiola_Meta;
+
+	jmethodID Phiola_lib_load;
 	jmethodID Phiola_RecordCallback_on_finish;
 	jmethodID Phiola_ConvertCallback_on_finish;
 	jmethodID Phiola_MetaCallback_on_finish;
@@ -110,6 +116,64 @@ static int conf()
 	return 0;
 }
 
+/** Load modules via Java before dlopen().
+Some modules also have the dependencies - load them too. */
+static char* mod_loading(ffstr name)
+{
+	int e = -1;
+	char* znames[3] = {};
+
+	static const struct map_sz_vptr mod_deps[] = {
+		{ "aac",	"libfdk-aac-phi" },
+		{ "alac",	"libALAC-phi" },
+		{ "danorm",	"libDynamicAudioNormalizer-phi" },
+		{ "flac",	"libFLAC-phi" },
+		{ "mpeg",	"libmpg123-phi" },
+		{ "opus",	"libopus-phi" },
+		{ "soxr",	"libsoxr-phi" },
+		{ "vorbis",	"libvorbis-phi" },
+		{ "zstd",	"libzstd-ffpack" },
+		{}
+	};
+	const char *dep = map_sz_vptr_findstr(mod_deps, name);
+	znames[0] = ffsz_allocfmt("%S/lib%S.so", &x->dir_libs, &name);
+	if (dep) {
+		znames[1] = ffsz_allocfmt("%S/%s.so", &x->dir_libs, dep);
+		if (ffstr_eqz(&name, "vorbis"))
+			znames[2] = ffsz_allocfmt("%S/libvorbisenc-phi.so", &x->dir_libs);
+	}
+
+	JNIEnv *env;
+	int r, attached;
+	if ((r = jni_vm_attach_once(jvm, &env, &attached, JNI_VERSION_1_6))) {
+		errlog("jni_vm_attach: %d", r);
+		goto end;
+	}
+
+	char **it;
+	FF_FOREACH(znames, it) {
+		if (!*it) break;
+
+		if (!jni_scall_bool(x->Phiola_class, x->Phiola_lib_load, jni_js_sz(*it)))
+			goto end;
+		dbglog("loaded library %s", *it);
+	}
+
+	e = 0;
+
+end:
+	if (attached)
+		jni_vm_detach(jvm);
+
+	ffmem_free(znames[1]);
+	ffmem_free(znames[2]);
+	if (e) {
+		ffmem_free(znames[0]);
+		return NULL;
+	}
+	return znames[0];
+}
+
 static int core()
 {
 	struct phi_core_conf conf = {
@@ -117,24 +181,36 @@ static int core()
 		.log = exe_log,
 		.logv = exe_logv,
 
+		.mod_loading = mod_loading,
 		.run_detach = 1,
 	};
 	if (NULL == (x->core = phi_core_create(&conf)))
 		return -1;
 	x->queue = x->core->mod("core.queue");
-	x->metaif = x->core->mod("format.meta");
+	if (!(x->metaif = x->core->mod("format.meta")))
+		return -1;
 	return 0;
 }
 
 JNIEXPORT void JNICALL
-Java_com_github_stsaz_phiola_Phiola_init(JNIEnv *env, jobject thiz)
+Java_com_github_stsaz_phiola_Phiola_init(JNIEnv *env, jobject thiz, jstring jlibdir)
 {
 	if (x != NULL) return;
 
 	x = ffmem_new(struct phiola_jni);
 	if (!!conf()) return;
+
+	const char *libdir = jni_sz_js(jlibdir);
+	x->dir_libs.ptr = ffsz_dup(libdir);
+	jni_sz_free(libdir, jlibdir);
+	x->dir_libs.len = ffsz_len(x->dir_libs.ptr);
+
+	x->Phiola_class = jni_global_ref(jni_class(PJC_PHIOLA));
+	x->Phiola_lib_load = jni_sfunc(x->Phiola_class, "lib_load", "(" JNI_TSTR ")" JNI_TBOOL);
 	x->Phiola_Meta = jni_global_ref(jni_class(PJC_META));
-	core();
+	FF_ASSERT(x->Phiola_class && x->Phiola_Meta && x->Phiola_lib_load);
+
+	if (core()) return;
 	phi_core_run();
 	dbglog("%s: exit", __func__);
 }
@@ -147,6 +223,8 @@ Java_com_github_stsaz_phiola_Phiola_destroy(JNIEnv *env, jobject thiz)
 	dbglog("%s: enter", __func__);
 	phi_core_destroy();
 	jni_global_unref(x->Phiola_Meta);
+	jni_global_unref(x->Phiola_class);
+	ffstr_free(&x->dir_libs);
 	ffmem_free(x);  x = NULL;
 }
 

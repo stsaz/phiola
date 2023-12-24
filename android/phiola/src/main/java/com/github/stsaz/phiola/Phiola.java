@@ -4,11 +4,16 @@
 package com.github.stsaz.phiola;
 
 class Phiola {
-	Phiola() {
-		init();
+	Phiola(String libdir) {
+		System.load(String.format("%s/libphiola.so", libdir));
+		init(libdir);
 	}
-	private native void init();
+	private native void init(String libdir);
 	native void destroy();
+	private static boolean lib_load(String filename) {
+		System.load(filename);
+		return true;
+	}
 
 	native String[] confRead(String filepath);
 	native boolean confWrite(String filepath, byte[] data);
@@ -109,8 +114,4 @@ class Phiola {
 	String[] storage_paths;
 	native String trash(String trash_dir, String filepath);
 	native String fileMove(String filepath, String target_dir);
-
-	static {
-		System.loadLibrary("phiola");
-	}
 }

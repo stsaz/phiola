@@ -52,9 +52,9 @@ static void conv_finish(JNIEnv *env, jobject jo, const char *error)
 static void convtrk_close(void *ctx, phi_track *t)
 {
 	JNIEnv *env;
-	int r = jni_attach(jvm, &env);
+	int r = jni_vm_attach(jvm, &env);
 	if (r != 0) {
-		errlog("jni_attach: %d", r);
+		errlog("jni_vm_attach: %d", r);
 		goto end;
 	}
 
@@ -64,7 +64,7 @@ static void convtrk_close(void *ctx, phi_track *t)
 
 end:
 	jni_global_unref(t->udata);
-	jni_detach(jvm);
+	jni_vm_detach(jvm);
 	x->core->track->stop(t);
 }
 

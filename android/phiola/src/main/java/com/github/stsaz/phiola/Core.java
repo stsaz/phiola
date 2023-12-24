@@ -235,7 +235,7 @@ class Core extends Util {
 		storage_path = Environment.getExternalStorageDirectory().getPath();
 		storage_paths = system_storage_dirs(ctx);
 
-		phiola = new Phiola();
+		phiola = new Phiola(ctx.getApplicationInfo().nativeLibraryDir);
 		phiola.storage_paths = storage_paths;
 		setts = new CoreSettings(this);
 		gui = new GUI(this);

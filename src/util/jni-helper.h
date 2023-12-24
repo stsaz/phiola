@@ -2,7 +2,8 @@
 2022, Simon Zolin */
 
 /*
-jni_attach jni_detach
+jni_vm_attach jni_vm_attach_once jni_vm_detach
+jni_vm_env
 jni_local_unref
 jni_global_ref jni_global_unref
 Meta:
@@ -27,7 +28,7 @@ Object:
 	jni_obj_bool
 Functions:
 	jni_func jni_call_void
-	jni_sfunc jni_scall_void
+	jni_sfunc jni_scall_void jni_scall_bool
 Notes:
 	sz	char*
 	js	jstring
@@ -49,11 +50,24 @@ Notes:
 #define JNI_TBOOL "Z"
 #define JNI_TARR "["
 
-#define jni_attach(jvm, envp) \
+#define jni_vm_attach(jvm, envp) \
 	(*jvm)->AttachCurrentThread(jvm, envp, NULL)
 
-#define jni_detach(jvm) \
+static inline int jni_vm_attach_once(JavaVM *jvm, JNIEnv **env, int *attached, int version)
+{
+	int r = (*jvm)->GetEnv(jvm, (void**)env, version);
+	*attached = 0;
+	if (r == JNI_EDETACHED
+		&& 0 == (r = (*jvm)->AttachCurrentThread(jvm, env, NULL)))
+		*attached = 1;
+	return r;
+}
+
+#define jni_vm_detach(jvm) \
 	(*jvm)->DetachCurrentThread(jvm)
+
+#define jni_vm_env(jvm, envp, ver) \
+	(*jvm)->GetEnv(jvm, (void**)(envp), ver)
 
 #define jni_local_unref(jobj) \
 	(*env)->DeleteLocalRef(env, jobj)
@@ -220,5 +234,8 @@ class C {
 #define jni_call_void(jobj, jfunc, ...) \
 	(*env)->CallVoidMethod(env, jobj, jfunc, ##__VA_ARGS__)
 
-#define jni_scall_void(jobj, jfunc, ...) \
-	(*env)->CallVoidMethod(env, jobj, jfunc, ##__VA_ARGS__)
+#define jni_scall_void(jclazz, jfunc, ...) \
+	(*env)->CallStaticVoidMethod(env, jclazz, jfunc, ##__VA_ARGS__)
+
+#define jni_scall_bool(jclazz, jfunc, ...) \
+	(*env)->CallStaticBooleanMethod(env, jclazz, jfunc, ##__VA_ARGS__)

@@ -174,7 +174,9 @@ include $(PHIOLA)/src/dfilter/Makefile
 
 libs: libphiola.so.debug \
 		$(MODS:.so=.so.debug)
-	cp -u $(LIBS3) *.so *.debug $(LIB_DIR)
+	cp -u $(LIBS3) *.so *.debug \
+		$(LIB_DIR)
+	bash ../android/build-rename-libs.sh $(LIB_DIR) $(MODS)
 
 
 OBJCOPY := $(C_DIR)/llvm-objcopy
