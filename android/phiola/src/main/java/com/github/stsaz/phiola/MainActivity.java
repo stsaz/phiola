@@ -17,6 +17,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.PopupMenu;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.ToggleButton;
@@ -59,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
 	private boolean view_explorer;
 	private Explorer explorer;
 	private PlaylistAdapter pl_adapter;
+	private PopupMenu mlist;
 
 	private MainBinding b;
 
@@ -158,45 +160,13 @@ public class MainActivity extends AppCompatActivity {
 				play_auto_stop();
 				return true;
 
-			case R.id.action_list_new:
-				list_new();
-				return true;
-
-			case R.id.action_list_close:
-				list_close();
-				return true;
-
-			case R.id.action_list_add:
-				startActivity(new Intent(this, AddURLActivity.class));
-				return true;
-
-			case R.id.action_list_clear:
-				queue.clear();
-				return true;
-
-			case R.id.action_list_save:
-				list_save();
-				return true;
-
-			case R.id.action_list_showcur: {
-				if (view_explorer)
-					plist_click();
-				int pos = queue.cur();
-				if (pos >= 0)
-					b.list.scrollToPosition(pos);
-				return true;
-			}
-
-			case R.id.action_list_next_add_cur:
-				list_next_add_cur();
-				return true;
-
-			case R.id.action_list_sort:
-				queue.sort(Phiola.QU_SORT_FILENAME);
-				return true;
-
-			case R.id.action_list_shuffle:
-				queue.sort(Phiola.QU_SORT_RANDOM);
+			case R.id.action_list_menu_show:
+				if (mlist == null) {
+					mlist = new PopupMenu(this, findViewById(R.id.action_list_menu_show));
+					mlist.getMenuInflater().inflate(R.menu.list, mlist.getMenu());
+					mlist.setOnMenuItemClickListener((it) -> list_menu_click(it));
+				}
+				mlist.show();
 				return true;
 
 			case R.id.action_file_showcur:
@@ -208,6 +178,47 @@ public class MainActivity extends AppCompatActivity {
 				return true;
 		}
 		return super.onOptionsItemSelected(item);
+	}
+
+	private boolean list_menu_click(MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.action_list_new:
+			list_new();  break;
+
+		case R.id.action_list_close:
+			list_close();  break;
+
+		case R.id.action_list_add:
+			startActivity(new Intent(this, AddURLActivity.class));  break;
+
+		case R.id.action_list_clear:
+			queue.clear();  break;
+
+		case R.id.action_list_save:
+			list_save();  break;
+
+		case R.id.action_list_showcur: {
+			if (view_explorer)
+				plist_click();
+			int pos = queue.cur();
+			if (pos >= 0)
+				b.list.scrollToPosition(pos);
+			break;
+		}
+
+		case R.id.action_list_next_add_cur:
+			list_next_add_cur();  break;
+
+		case R.id.action_list_sort:
+			queue.sort(Phiola.QU_SORT_FILENAME);  break;
+
+		case R.id.action_list_shuffle:
+			queue.sort(Phiola.QU_SORT_RANDOM);  break;
+
+		default:
+			return false;
+		}
+		return true;
 	}
 
 	/** Called by OS with the result of requestPermissions(). */

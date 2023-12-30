@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto">
+
+	<item android:id="@+id/action_list_new"
+		android:title="@string/mlist_new" />
+
+	<item android:id="@+id/action_list_close"
+		android:title="@string/mlist_close" />
+
+	<item android:id="@+id/action_list_save"
+		android:title="@string/mlist_save" />
+
+	<item android:id="@+id/action_list_add"
+		android:title="@string/mlist_add" />
+
+	<item android:id="@+id/action_list_rm"
+		android:title="@string/mlist_remove" />
+
+	<item android:id="@+id/action_list_clear"
+		android:title="@string/mlist_clear" />
+
+	<item android:id="@+id/action_list_showcur"
+		android:title="@string/mlist_show_track" />
+
+	<item android:id="@+id/action_list_next_add_cur"
+		android:title="@string/mlist_next_add" />
+
+	<item android:id="@+id/action_list_sort"
+		android:title="@string/mlist_sort" />
+
+	<item android:id="@+id/action_list_shuffle"
+		android:title="@string/mlist_shuffle" />
+</menu>
