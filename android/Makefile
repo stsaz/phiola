@@ -135,8 +135,19 @@ lib-arm64:
 		-I $(PHIOLA)/android \
 		CPU=arm64
 
+lib-arm:
+	$(MKDIR) ../_android-arm $(LIB_DIR_ARM)
+	$(MAKE) libs \
+		-C ../_android-arm \
+		-f $(PHIOLA)/android/Makefile \
+		-I $(PHIOLA)/android \
+		CPU=arm
+
 clean-lib:
-	$(RM) ../_android-arm64 ../_android-amd64 $(LIB_DIR_AMD64) $(LIB_DIR_ARM64)
+	$(RM) \
+		../_android-arm64 $(LIB_DIR_ARM64) \
+		../_android-amd64 $(LIB_DIR_AMD64) \
+		../_android-arm $(LIB_DIR_ARM)
 
 
 LIB_DIR := $(LIB_DIR_AMD64)
@@ -152,10 +163,18 @@ CFLAGS += -I$(FFBASE)
 CFLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-for-loop-analysis
 CFLAGS += -g
 CFLAGS += -fPIC
+CFLAGS_OPT :=
 ifeq "$(DEBUG)" "1"
 	CFLAGS += -DFF_DEBUG -O0 -Werror
 else
-	CFLAGS += -O3 -fno-strict-aliasing -fvisibility=hidden
+	ifeq "$(CPU)" "arm"
+		# Disable optimization on ARM for all modules by default.
+		# This prevents the compiler from generating the instructions that can lead to a crash due to unaligned memory access.
+		CFLAGS += -O0 -fvisibility=hidden
+		CFLAGS_OPT := -O3 -fno-strict-aliasing -fvisibility=hidden
+	else
+		CFLAGS += -O3 -fno-strict-aliasing -fvisibility=hidden
+	endif
 endif
 CFLAGS += $(CFLAGS_USER)
 CFLAGS_BASE := $(CFLAGS)
