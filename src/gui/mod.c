@@ -36,7 +36,7 @@ const struct ffarg guimod_args[] = {
 	{ "play.repeat",	'u',	O(conf.repeat) },
 	{ "play.seek_leap",	'u',	O(conf.seek_leap_delta) },
 	{ "play.seek_step",	'u',	O(conf.seek_step_delta) },
-	{ "theme",			'=s',	O(theme) },
+	{ "theme",			'=s',	O(conf.theme) },
 	{}
 };
 #undef O
@@ -49,8 +49,8 @@ void mod_userconf_write(ffconfw *cw)
 	ffconfw_add2u(cw, "play.repeat", gd->conf.repeat);
 	ffconfw_add2u(cw, "play.seek_leap", gd->conf.seek_leap_delta);
 	ffconfw_add2u(cw, "play.seek_step", gd->conf.seek_step_delta);
-	if (gd->theme)
-		ffconfw_add2z(cw, "theme", gd->theme);
+	if (gd->conf.theme)
+		ffconfw_add2z(cw, "theme", gd->conf.theme);
 }
 
 #ifdef FF_LINUX

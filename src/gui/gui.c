@@ -207,7 +207,7 @@ static int load_ui()
 	ffmem_copy(ldr.language, core->conf.language, sizeof(ldr.language));
 #ifdef FF_WIN
 	ldr.hmod_resource = GetModuleHandleW(L"gui.dll");
-	ldr.dark_mode = (gd->theme && ffsz_eq(gd->theme, "dark"));
+	ldr.dark_mode = (gd->conf.theme && ffsz_eq(gd->conf.theme, "dark"));
 #endif
 
 	fftime t1;
@@ -219,7 +219,7 @@ static int load_ui()
 		goto done;
 	}
 
-	theme_apply(gd->theme);
+	theme_apply(gd->conf.theme);
 	r = 0;
 
 done:
@@ -238,7 +238,7 @@ static void theme_apply(const char *theme)
 {
 	if (!theme) return;
 
-	dbglog("applying theme %s", gd->theme);
+	dbglog("applying theme %s", theme);
 
 	ffui_loader ldr;
 	ffui_ldr_init(&ldr, gui_getctl, NULL, gg);
@@ -259,16 +259,15 @@ end:
 	ffui_ldr_fin(&ldr);
 }
 
-void theme_switch()
+void theme_switch(uint i)
 {
-	if (!gd->theme) {
-		gd->theme = ffsz_dup("dark");
-		theme_apply(gd->theme);
+	if (i) {
+		gd->conf.theme = ffsz_dup("dark");
+		theme_apply(gd->conf.theme);
 	} else {
-		ffmem_free(gd->theme);
-		gd->theme = NULL;
+		ffmem_free(gd->conf.theme);
+		gd->conf.theme = NULL;
 	}
-	wmain_status("Please restart phiola to apply the theme");
 }
 
 int FFTHREAD_PROCCALL gui_worker(void *param)

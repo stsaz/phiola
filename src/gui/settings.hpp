@@ -5,6 +5,7 @@ struct gui_wsettings {
 	ffui_windowxx	wnd;
 	ffui_label		lseek_by, lleap_by;
 	ffui_editxx		eseek_by, eleap_by;
+	ffui_checkboxxx	cbdarktheme;
 
 	char*	wnd_pos;
 	uint	initialized :1;
@@ -13,6 +14,7 @@ struct gui_wsettings {
 #define _(m)  FFUI_LDR_CTL(gui_wsettings, m)
 FF_EXTERN const ffui_ldr_ctl wsettings_ctls[] = {
 	_(wnd),
+	_(cbdarktheme),
 	_(lseek_by),	_(eseek_by),
 	_(lleap_by),	_(eleap_by),
 	FFUI_LDR_CTL_END
@@ -29,6 +31,10 @@ const ffarg wsettings_args[] = {
 static void wsettings_ui_to_conf()
 {
 	gui_wsettings *w = gg->wsettings;
+
+	if (w->cbdarktheme.h)
+		theme_switch(w->cbdarktheme.checked());
+
 	gd->conf.seek_step_delta = ffvecxx(w->eseek_by.text()).str().uint32(10);
 	gd->conf.seek_leap_delta = ffvecxx(w->eleap_by.text()).str().uint32(60);
 }
@@ -36,6 +42,10 @@ static void wsettings_ui_to_conf()
 static void wsettings_ui_from_conf()
 {
 	gui_wsettings *w = gg->wsettings;
+
+	if (w->cbdarktheme.h)
+		w->cbdarktheme.check(!!gd->conf.theme);
+
 	ffstrxx_buf<100> s;
 	w->eseek_by.text(s.zfmt("%u", gd->conf.seek_step_delta));
 	w->eleap_by.text(s.zfmt("%u", gd->conf.seek_leap_delta));

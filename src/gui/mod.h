@@ -97,7 +97,6 @@ struct gui_data {
 	char *user_conf_dir;
 	char *user_conf_name;
 	const phi_filter *playback_first_filter;
-	char *theme;
 	const phi_adev_if *adev_if;
 
 	struct gtrk *playing_track;
@@ -131,6 +130,7 @@ struct gui_data {
 	uint quit :1;
 
 	struct {
+		char*	theme;
 		uint	repeat;
 		uint	random;
 		uint	seek_step_delta;
