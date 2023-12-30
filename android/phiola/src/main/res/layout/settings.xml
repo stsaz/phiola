@@ -21,6 +21,11 @@
 			android:layout_margin="10dp"
 			android:text="@string/sett_dark" />
 
+		<androidx.appcompat.widget.SwitchCompat android:id="@+id/b_state_hide"
+			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:layout_margin="10dp"
+			android:text="@string/sett_ui_state_hide" />
+
 		<androidx.appcompat.widget.SwitchCompat
 			android:id="@+id/bshowfilter"
 			android:layout_width="match_parent"

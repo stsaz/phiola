@@ -49,6 +49,7 @@ public class SettingsActivity extends AppCompatActivity {
 	private void load() {
 		// Interface
 		b.bdark.setChecked(core.gui().theme == GUI.THM_DARK);
+		b.bStateHide.setChecked(core.gui().state_hide);
 		b.bshowfilter.setChecked(core.gui().filter_hide);
 		b.bshowrec.setChecked(core.gui().record_hide);
 		b.bsvcNotifDisable.setChecked(core.setts.svc_notification_disable);
@@ -82,6 +83,7 @@ public class SettingsActivity extends AppCompatActivity {
 			i = GUI.THM_DARK;
 		core.gui().theme = i;
 
+		core.gui().state_hide = b.bStateHide.isChecked();
 		core.gui().filter_hide = b.bshowfilter.isChecked();
 		core.gui().record_hide = b.bshowrec.isChecked();
 		core.gui().ainfo_in_title = b.uiInfoInTitle.isChecked();

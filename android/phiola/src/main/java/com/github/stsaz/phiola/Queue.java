@@ -557,6 +557,7 @@ class Queue {
 		return s;
 	}
 
+	boolean auto_stop_armed() { return (auto_stop_timer != null); }
 	boolean auto_stop() {
 		if (auto_stop_timer != null) {
 			auto_stop_active = false;

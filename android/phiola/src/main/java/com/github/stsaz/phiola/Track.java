@@ -31,6 +31,10 @@ abstract class Filter {
 	public void close(TrackHandle t) {
 	}
 
+	/** Called after all filters have been closed */
+	public void closed(TrackHandle t) {
+	}
+
 	/**
 	 * Update track progress.  Called periodically by timer.
 	 */
@@ -450,6 +454,12 @@ class Track {
 			core.dbglog(TAG, "closing filter %s", f);
 			f.close(t);
 		}
+
+		for (int i = filters.size() - 1; i >= 0; i--) {
+			Filter f = filters.get(i);
+			f.closed(t);
+		}
+
 		t.meta = new String[0];
 		t.error = false;
 	}

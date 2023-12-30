@@ -10,6 +10,7 @@ import android.widget.Toast;
 class GUI {
 	private Core core;
 	Context cur_activity;
+	boolean state_hide;
 	boolean filter_hide;
 	boolean record_hide;
 	boolean ainfo_in_title;
@@ -27,6 +28,7 @@ class GUI {
 	@SuppressLint("DefaultLocale")
 	String writeconf() {
 		return String.format("curpath %s\n", cur_path) +
+				String.format("state_hide %d\n", core.bool_to_int(state_hide)) +
 				String.format("filter_hide %d\n", core.bool_to_int(filter_hide)) +
 				String.format("record_hide %d\n", core.bool_to_int(record_hide)) +
 				String.format("list_pos %d\n", list_pos) +
@@ -37,6 +39,8 @@ class GUI {
 	int readconf(String k, String v) {
 		if (k.equals("curpath"))
 			cur_path = v;
+		else if (k.equals("state_hide"))
+			state_hide = core.str_to_bool(v);
 		else if (k.equals("filter_hide"))
 			filter_hide = core.str_to_bool(v);
 		else if (k.equals("record_hide"))
