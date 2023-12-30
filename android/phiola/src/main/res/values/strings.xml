@@ -1,6 +1,10 @@
 <resources>
 	<string name="app_name">phiola</string>
 	<string name="bexplorer">Explorer</string>
+	<string name="brec">Start/Stop Recording</string>
+	<string name="bplay">Play/Pause</string>
+	<string name="bprev">Previous</string>
+	<string name="bnext">Next</string>
 
 	<string name="menu_settings">Settings...</string>
 	<string name="mfile_tags_show">File: Show Tags</string>

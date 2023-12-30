@@ -237,12 +237,12 @@ public class MainActivity extends AppCompatActivity {
 			return;
 		}
 
-		switch (requestCode) {
+		/*switch (requestCode) {
 			case REQUEST_STORAGE_ACCESS:
 				if (Environment.isExternalStorageManager()) {
 				}
 				break;
-		}
+		}*/
 	}
 
 	/** Request system permissions */
@@ -289,19 +289,10 @@ public class MainActivity extends AppCompatActivity {
 		queue.nfy_add(quenfy);
 		track = core.track();
 		trk_nfy = new Filter() {
-			public int open(TrackHandle t) {
-				return new_track(t);
-			}
-
-			public void close(TrackHandle t) {
-				close_track(t);
-			}
-
+			public int open(TrackHandle t) { return track_opening(t); }
+			public void close(TrackHandle t) { track_closing(t); }
 			public void closed(TrackHandle t) { track_closed(t); }
-
-			public int process(TrackHandle t) {
-				return update_track(t);
-			}
+			public int process(TrackHandle t) { return track_update(t); }
 		};
 		track.filter_add(trk_nfy);
 		trackctl = new TrackCtl(core, this);
@@ -742,7 +733,7 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	/** Called by Track when a new track is initialized */
-	private int new_track(TrackHandle t) {
+	private int track_opening(TrackHandle t) {
 		String title = t.name;
 		if (!t.date.isEmpty())
 			title = String.format("%s [%s]", title, t.date);
@@ -760,7 +751,7 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	/** Called by Track after a track is finished */
-	private void close_track(TrackHandle t) {
+	private void track_closing(TrackHandle t) {
 		b.lname.setText("");
 		b.lpos.setText("");
 		b.seekbar.setProgress(0);
@@ -774,8 +765,8 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	/** Called by Track during playback */
-	private int update_track(TrackHandle t) {
-		core.dbglog(TAG, "update_track: state:%d pos:%d", t.state, t.pos_msec);
+	private int track_update(TrackHandle t) {
+		core.dbglog(TAG, "track_update: state:%d pos:%d", t.state, t.pos_msec);
 		switch (t.state) {
 			case Track.STATE_PAUSED:
 				state(STATE_PAUSED);
@@ -789,10 +780,12 @@ public class MainActivity extends AppCompatActivity {
 		int pos = t.pos_msec / 1000;
 		total_dur_msec = t.time_total_msec;
 		int dur = t.time_total_msec / 1000;
+
 		int progress = 0;
 		if (dur != 0)
 			progress = pos * 100 / dur;
 		b.seekbar.setProgress(progress);
+
 		String s = String.format("%d:%02d / %d:%02d"
 				, pos / 60, pos % 60, dur / 60, dur % 60);
 		b.lpos.setText(s);

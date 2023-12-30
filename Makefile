@@ -21,7 +21,7 @@ CFLAGS += -DFFBASE_MEM_ASSERT \
 ifeq "$(DEBUG)" "1"
 	CFLAGS += -DFF_DEBUG -O0 -Werror -Wno-deprecated-declarations
 else
-	CFLAGS += -O3 -fno-strict-aliasing -fvisibility=hidden -Wno-for-loop-analysis
+	CFLAGS += -O3 -fno-strict-aliasing -fvisibility=hidden
 endif
 ifeq "$(ASAN)" "1"
 	CFLAGS += -fsanitize=address

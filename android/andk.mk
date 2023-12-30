@@ -7,7 +7,7 @@ LINK := $(C_DIR)/clang
 LINKXX := $(C_DIR)/clang++
 
 # Set target
-A_API := 21
+A_API := 26
 A_API32 := $(A_API)
 ifeq "$(CPU)" "amd64"
 	A_CFLAGS := -target x86_64-none-linux-android$(A_API)

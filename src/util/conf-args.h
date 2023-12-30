@@ -17,7 +17,7 @@ static inline int ffargs_process_conf(struct ffargs *as, const struct ffarg *sch
 
 	struct ffconf_obj c = {};
 
-	const struct ffarg *a;
+	const struct ffarg *a = NULL;
 	int expecting_value = 0;
 	ffstr arg, key = {};
 	int r;

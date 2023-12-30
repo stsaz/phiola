@@ -1,7 +1,7 @@
 /** phiola: GUI: about
 2023, Simon Zolin */
 
-#define HOMEPAGE_URL  "https://github.com/stsaz/phiola/"
+#define HOMEPAGE_URL  "https://github.com/stsaz/phiola"
 
 struct gui_wabout {
 	ffui_windowxx wnd;

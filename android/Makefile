@@ -125,7 +125,7 @@ lib-amd64:
 		-C ../_android-amd64 \
 		-f $(PHIOLA)/android/Makefile \
 		-I $(PHIOLA)/android \
-		CPU=amd64 A_API=26
+		CPU=amd64
 
 lib-arm64:
 	$(MKDIR) ../_android-arm64 $(LIB_DIR_ARM64)
@@ -133,7 +133,7 @@ lib-arm64:
 		-C ../_android-arm64 \
 		-f $(PHIOLA)/android/Makefile \
 		-I $(PHIOLA)/android \
-		CPU=arm64 A_API=26
+		CPU=arm64
 
 clean-lib:
 	$(RM) ../_android-arm64 ../_android-amd64 $(LIB_DIR_AMD64) $(LIB_DIR_ARM64)
