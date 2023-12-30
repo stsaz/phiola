@@ -3,14 +3,15 @@
 
 struct gui_wrecord {
 	ffui_windowxx		wnd;
-	ffui_labelxx		ldir, lname, lext, luntil, laacq, lvorbisq, lopusq;
+	ffui_labelxx		ldir, lname, lext, ldev, luntil, laacq, lvorbisq, lopusq;
 	ffui_editxx			edir, ename, euntil, eaacq, evorbisq, eopusq;
-	ffui_comboboxxx		cbext;
+	ffui_comboboxxx		cbext, cbdev;
 	ffui_buttonxx		bstart;
 
 	ffstrxx conf_dir, conf_name, conf_ext;
 	uint conf_aacq, conf_vorbisq, conf_opusq;
 	uint conf_until;
+	uint conf_idev;
 	char *wnd_pos;
 
 	uint initialized;
@@ -22,6 +23,7 @@ FF_EXTERN const ffui_ldr_ctl wrecord_ctls[] = {
 	_(ldir),	_(edir),
 	_(lname),	_(ename),
 	_(lext),	_(cbext),
+	_(ldev),	_(cbdev),
 	_(luntil),	_(euntil),
 	_(laacq),	_(eaacq),
 	_(lvorbisq),_(evorbisq),
@@ -36,6 +38,7 @@ const ffarg wrecord_args[] = {
 	{ "aacq",	'u',	O(conf_aacq) },
 	{ "dir",	'=S',	O(conf_dir) },
 	{ "ext",	'=S',	O(conf_ext) },
+	{ "idev",	'u',	O(conf_idev) },
 	{ "name",	'=S',	O(conf_name) },
 	{ "opusq",	'u',	O(conf_opusq) },
 	{ "vorbisq",'u',	O(conf_vorbisq) },
@@ -79,6 +82,7 @@ static void wrecord_ui_to_conf()
 	c->conf_name = c->ename.text();
 	c->conf_ext = c->cbext.text();
 
+	c->conf_idev = c->cbdev.get();
 	c->conf_until = wrec_time_value(ffvecxx(c->euntil.text()).str());
 
 	c->conf_aacq = ffvecxx(c->eaacq.text()).str().uint32(0);
@@ -94,6 +98,7 @@ void wrecord_userconf_write(ffconfw *cw)
 	ffconfw_add2s(cw, "dir", w->conf_dir);
 	ffconfw_add2s(cw, "name", w->conf_name);
 	ffconfw_add2s(cw, "ext", w->conf_ext);
+	ffconfw_add2u(cw, "idev", w->conf_idev);
 	ffconfw_add2u(cw, "aacq", w->conf_aacq);
 	ffconfw_add2u(cw, "vorbisq", w->conf_vorbisq);
 	ffconfw_add2u(cw, "opusq", w->conf_opusq);
@@ -104,6 +109,26 @@ void wrecord_userconf_write(ffconfw *cw)
 		ffconfw_add2z(cw, "wrecord.pos", w->wnd_pos);
 }
 
+uint adevices_fill(uint flags, ffui_comboboxxx &cb, uint index)
+{
+	if (!adev_find_mod()) return 0;
+
+	struct phi_adev_ent *ents;
+	uint ndev = gd->adev_if->list(&ents, flags);
+
+	cb.add("Default");
+	for (uint i = 0;  i != ndev;  i++) {
+		cb.add(ents[i].name);
+	}
+
+	if (index >= ndev + 1)
+		index = 0;
+	cb.set(index);
+
+	gd->adev_if->list_free(ents);
+	return index;
+}
+
 static void wrecord_ui_from_conf()
 {
 	gui_wrecord *w = gg->wrecord;
@@ -111,6 +136,8 @@ static void wrecord_ui_from_conf()
 	w->ename.text((w->conf_name.len) ? w->conf_name : "rec-@nowdate-@nowtime");
 	w->conf_dir.free();
 	w->conf_name.free();
+
+	w->conf_idev = adevices_fill(PHI_ADEV_CAPTURE, w->cbdev, w->conf_idev);
 
 	uint cbext_index = 0 /*m4a*/;
 	static const char oext[][5] = {
@@ -139,6 +166,7 @@ static struct phi_track_conf* record_conf_create()
 	gui_wrecord *w = gg->wrecord;
 	struct phi_track_conf *c = ffmem_new(struct phi_track_conf);
 
+	c->iaudio.device_index = w->conf_idev;
 	// .iaudio.buf_time =
 	c->until_msec = w->conf_until;
 	// .afilter.gain_db =

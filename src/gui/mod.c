@@ -705,6 +705,30 @@ end:
 }
 
 
+const phi_adev_if* adev_find_mod()
+{
+	if (gd->adev_if) return gd->adev_if;
+
+	static const char mods[][20] = {
+#if defined FF_WIN
+		"wasapi.dev",
+		"direct-sound.dev",
+#else
+		"pulse.dev",
+		"alsa.dev",
+#endif
+	};
+	for (uint i = 0;  i < FF_COUNT(mods);  i++) {
+		const void *f;
+		if ((f = core->mod(mods[i]))) {
+			gd->adev_if = f;
+			return f;
+		}
+	}
+	return NULL;
+}
+
+
 struct cmd {
 	phi_task task;
 	void (*func)();

@@ -55,6 +55,8 @@ FF_EXTERN int record_stop();
 FF_EXTERN void convert_add(ffslice indexes);
 FF_EXTERN void convert_begin(void *param);
 
+FF_EXTERN const phi_adev_if* adev_find_mod();
+
 FF_EXTERN void wmain_status(const char *fmt, ...);
 enum STATUS_ID {
 	ST_STOPPED,
@@ -96,6 +98,7 @@ struct gui_data {
 	char *user_conf_name;
 	const phi_filter *playback_first_filter;
 	char *theme;
+	const phi_adev_if *adev_if;
 
 	struct gtrk *playing_track;
 	uint cursor;
