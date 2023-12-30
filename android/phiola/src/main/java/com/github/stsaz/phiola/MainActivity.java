@@ -134,10 +134,6 @@ public class MainActivity extends AppCompatActivity {
 				startActivity(new Intent(this, SettingsActivity.class));
 				return true;
 
-			case R.id.action_list_rm:
-				list_rm();
-				return true;
-
 			case R.id.action_file_del:
 				file_del_cur();
 				return true;
@@ -190,6 +186,9 @@ public class MainActivity extends AppCompatActivity {
 
 		case R.id.action_list_add:
 			startActivity(new Intent(this, AddURLActivity.class));  break;
+
+		case R.id.action_list_rm:
+			list_rm();  break;
 
 		case R.id.action_list_clear:
 			queue.clear();  break;
