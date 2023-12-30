@@ -317,6 +317,7 @@ class Core extends Util {
 		}
 
 		setts.normalize();
+		qu.conf_normalize();
 		phiola.setCodepage(setts.codepage);
 		dbglog(TAG, "loadconf: %s", fn);
 	}

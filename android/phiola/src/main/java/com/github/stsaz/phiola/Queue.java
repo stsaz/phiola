@@ -9,6 +9,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 
 class QueueItemInfo {
 	QueueItemInfo() {
@@ -113,6 +115,10 @@ class Queue {
 	int autoskip_msec, autoskip_percent;
 	int autoskip_tail_msec, autoskip_tail_percent;
 	private Handler mloop;
+
+	int				auto_stop_min;
+	private Timer	auto_stop_timer;
+	private boolean	auto_stop_active;
 
 	Queue(Core core) {
 		this.core = core;
@@ -373,6 +379,12 @@ class Queue {
 				remove(trk_idx);
 		}
 
+		if (auto_stop_active) {
+			core.dbglog(TAG, "auto-stop timer: Stopping playback");
+			play_next = false;
+			auto_stop();
+		}
+
 		if (play_next) {
 			if (trk_idx < 0)
 				mloop.post(this::playcur); // play at current position after the track has been removed
@@ -469,6 +481,7 @@ class Queue {
 		s.append(String.format("repeat %d\n", core.bool_to_int(repeat)));
 		s.append(String.format("auto_skip %s\n", auto_skip_to_str()));
 		s.append(String.format("auto_skip_tail %s\n", auto_skip_tail_to_str()));
+		s.append(String.format("play_auto_stop %d\n", auto_stop_min));
 
 		return s.toString();
 	}
@@ -492,10 +505,18 @@ class Queue {
 		} else if (k.equals("auto_skip_tail")) {
 			auto_skip_tail(v);
 
+		} else if (k.equals("play_auto_stop")) {
+			auto_stop_min = core.str_to_uint(v, 0);
+
 		} else {
 			return 1;
 		}
 		return 0;
+	}
+
+	void conf_normalize() {
+		if (auto_stop_min == 0)
+			auto_stop_min = 60;
 	}
 
 	private int[] auto_skip_convert(String s) {
@@ -534,6 +555,24 @@ class Queue {
 		if (autoskip_tail_percent != 0)
 			s = String.format("%d%%", autoskip_tail_percent);
 		return s;
+	}
+
+	boolean auto_stop() {
+		if (auto_stop_timer != null) {
+			auto_stop_active = false;
+			auto_stop_timer.cancel();
+			auto_stop_timer = null;
+			return false;
+		}
+
+		auto_stop_timer = new Timer();
+		auto_stop_timer.schedule(new TimerTask() {
+			public void run() {
+				core.dbglog(TAG, "auto-stop timer: expired");
+				auto_stop_active = true;
+			}
+		}, auto_stop_min*60*1000);
+		return true;
 	}
 
 	/** Get currently playing track index */

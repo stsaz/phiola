@@ -9,6 +9,8 @@
 	<string name="mfile_del">File: Delete from Storage</string>
 	<string name="mfile_move">File: Quick Move!</string>
 
+	<string name="mplay_auto_stop">Auto-Stop Timer: Toggle</string>
+
 	<string name="mlist_new">List: New</string>
 	<string name="mlist_close">List: Close</string>
 	<string name="mlist_save">List: Save...</string>
@@ -39,6 +41,7 @@
 	<string name="sett_codepage">Codepage for Non-Unicode Tags</string>
 	<string name="sett_auto_skip">Auto-Skip Audio (sec or %):</string>
 	<string name="sett_auto_skip_tail">Auto-Skip Audio Tail (sec or %):</string>
+	<string name="sett_auto_stop">Auto-Stop Timer (min):</string>
 
 	<string name="sett_operation">Operation</string>
 	<string name="sett_file_del">Don\'t Move Files to Trash</string>

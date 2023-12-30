@@ -64,6 +64,7 @@ public class SettingsActivity extends AppCompatActivity {
 		b.tcodepage.setText(core.setts.codepage);
 		b.tAutoSkip.setText(core.queue().auto_skip_to_str());
 		b.tAutoSkipTail.setText(core.queue().auto_skip_tail_to_str());
+		b.tAutoStop.setText(core.int_to_str(core.queue().auto_stop_min));
 
 		// Operation
 		b.tdataDir.setText(core.setts.pub_data_dir);
@@ -96,6 +97,7 @@ public class SettingsActivity extends AppCompatActivity {
 		core.phiola.setCodepage(core.setts.codepage);
 		core.queue().auto_skip(b.tAutoSkip.getText().toString());
 		core.queue().auto_skip_tail(b.tAutoSkipTail.getText().toString());
+		core.queue().auto_stop_min = core.str_to_uint(b.tAutoStop.getText().toString(), 0);
 
 		// Operation
 		String s = b.tdataDir.getText().toString();
@@ -109,6 +111,7 @@ public class SettingsActivity extends AppCompatActivity {
 		core.setts.quick_move_dir = b.tquickMoveDir.getText().toString();
 
 		rec_save();
+		core.queue().conf_normalize();
 		core.setts.normalize();
 	}
 

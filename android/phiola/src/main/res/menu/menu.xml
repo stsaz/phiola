@@ -19,6 +19,9 @@
 	<item android:id="@+id/action_file_move"
 		android:title="@string/mfile_move" />
 
+	<item android:id="@+id/action_play_auto_stop"
+		android:title="@string/mplay_auto_stop" />
+
 	<item android:id="@+id/action_list_new"
 		android:title="@string/mlist_new" />
 

@@ -154,6 +154,10 @@ public class MainActivity extends AppCompatActivity {
 						.putExtra("length", total_dur_msec / 1000 + 1));
 				return true;
 
+			case R.id.action_play_auto_stop:
+				play_auto_stop();
+				return true;
+
 			case R.id.action_list_new:
 				list_new();
 				return true;
@@ -553,6 +557,15 @@ public class MainActivity extends AppCompatActivity {
 		b.bplaylist.setText(s);
 		b.bplaylist.setTextOn(s);
 		b.bplaylist.setTextOff(s);
+	}
+
+	/** Toggle playback auto-stop timer */
+	private void play_auto_stop() {
+		boolean b = queue.auto_stop();
+		String s = "Disabled auto-stop timer";
+		if (b)
+			s = String.format("Will stop playing after %d min", queue.auto_stop_min);
+		gui.msg_show(this, s);
 	}
 
 	private void list_new() {

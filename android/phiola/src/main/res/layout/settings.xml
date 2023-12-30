@@ -135,6 +135,19 @@
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
 
+		<TextView android:text="@string/sett_auto_stop"
+			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:layout_marginTop="10dp"
+			android:textColor="@color/text" />
+		<EditText android:id="@+id/t_auto_stop"
+			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:layout_marginHorizontal="10dp"
+			android:autofillHints=""
+			android:hint=""
+			android:inputType="text"
+			android:textSize="@dimen/text_editbox" />
+
 		<TextView
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
