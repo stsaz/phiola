@@ -1,2 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<resources>
+    <string name="conv_input_file">Inndatafil:</string>
+    <string name="conv_out_fmt">Utdataformat</string>
+    <string name="bplay">Spill/pause</string>
+    <string name="mfile_tags_show">Fil: Vis tagger</string>
+    <string name="menu_settings">Innstillinger …</string>
+    <string name="brec">Start/stopp opptak</string>
+    <string name="lssv_bsave">Lagre</string>
+    <string name="mfile_convert">Fil: Konverter …</string>
+    <string name="mfile_del">Fil: Slett fra lagring</string>
+    <string name="lssv_lname">Spillelistenavn:</string>
+    <string name="bnext">Neste</string>
+    <string name="menu_show_expl">Fil: Vis nåværende spor</string>
+    <string name="bexplorer">Utforsker</string>
+    <string name="conv_out_dir">Utdatamappe:</string>
+    <string name="bprev">Forrige</string>
+</resources>
