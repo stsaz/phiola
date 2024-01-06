@@ -11,6 +11,8 @@ Options:\n\
   -audio STRING     Audio library name (e.g. alsa)\n\
   -capture          Show capture devices only\n\
   -playback         Show playback devices only\n\
+  -filter STRING    Filter devices by name\n\
+  -number           Show only device number\n\
 ";
 	ffstdout_write(s, FFS_LEN(s));
 	x->exit_code = 0;
@@ -19,20 +21,39 @@ Options:\n\
 
 struct cmd_dev_list {
 	const char *audio;
-	ffbyte capture;
-	ffbyte playback;
+	const char *filter;
+	u_char capture;
+	u_char number;
+	u_char playback;
 };
 
-static int dev_list_once(ffvec *buf, const phi_adev_if *adev, uint flags)
+static int dev_list_once(struct cmd_dev_list *l, ffvec *buf, const phi_adev_if *adev, uint flags)
 {
 	struct phi_adev_ent *ents;
 	uint ndev = adev->list(&ents, flags);
 	if (ndev == ~0U)
 		return -1;
 
-	const char *title = (flags == PHI_ADEV_PLAYBACK) ? "Playback/Loopback" : "Capture";
-	ffvec_addfmt(buf, "%s:\n", title);
+	if (!l->number) {
+		const char *title = (flags == PHI_ADEV_PLAYBACK) ? "Playback/Loopback" : "Capture";
+		ffvec_addfmt(buf, "%s:\n", title);
+	}
+
+	uint n = 0;
 	for (uint i = 0;  i != ndev;  i++) {
+
+		if (l->filter) {
+			ffstr name = FFSTR_INITZ(ents[i].name);
+			if (ffstr_ifindz(&name, l->filter) < 0)
+				continue;
+		}
+
+		n++;
+
+		if (l->number) {
+			ffvec_addfmt(buf, "%u\n", i + 1);
+			continue;
+		}
 
 		ffstr def = {};
 		if (ents[i].default_device)
@@ -41,7 +62,7 @@ static int dev_list_once(ffvec *buf, const phi_adev_if *adev, uint flags)
 	}
 
 	adev->list_free(ents);
-	return 0;
+	return n;
 }
 
 static const void* dev_find_mod()
@@ -95,16 +116,21 @@ static int dev_list_action(struct cmd_dev_list *l)
 	else if (l->capture)
 		f = 2;
 
+	int rp = 1, rc = 1;
 	if (f & 1)
-		dev_list_once(&buf, adev, PHI_ADEV_PLAYBACK);
+		rp = dev_list_once(l, &buf, adev, PHI_ADEV_PLAYBACK);
 	if (f & 2)
-		dev_list_once(&buf, adev, PHI_ADEV_CAPTURE);
+		rc = dev_list_once(l, &buf, adev, PHI_ADEV_CAPTURE);
 
 	ffstdout_write(buf.ptr, buf.len);
 	ffvec_free(&buf);
 
 	x->core->sig(PHI_CORE_STOP);
+
 	x->exit_code = 0;
+	if (l->filter && rp <= 0 && rc <= 0)
+		x->exit_code = 1;
+
 	return 0;
 }
 
@@ -117,7 +143,9 @@ static int dev_list_prepare()
 static const struct ffarg cmd_dev_list[] = {
 	{ "-audio",		's',	O(audio) },
 	{ "-capture",	'1',	O(capture) },
+	{ "-filter",	's',	O(filter) },
 	{ "-help",		'1',	dev_help },
+	{ "-number",	'1',	O(number) },
 	{ "-playback",	'1',	O(playback) },
 	{ "",			0,		dev_list_prepare },
 };

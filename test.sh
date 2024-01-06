@@ -7,6 +7,10 @@ set -xe
 test_device() {
 	./phiola dev
 	./phiola dev list
+	./phiola dev list -play
+	./phiola dev list -cap
+	./phiola dev list -filter Monitor -num
+	./phiola dev list -filter test || true
 	./phiola dev list -au alsa
 	./phiola dev list -au unknown || true
 }
