@@ -340,13 +340,7 @@ static void tui_stdin_prepare(void *param)
 	uint attr = FFSTD_LINEINPUT;
 	ffstd_attr(ffstdin, attr, 0);
 
-#ifdef FF_WIN
-	if (core->woeh(0, ffstdin, &mod->task_read, tui_cmd_read, NULL)) {
-		warnlog(NULL, "can't start stdin reader");
-		return;
-	}
-
-#else
+#ifdef FF_UNIX
 	mod->kev = core->kev_alloc(0);
 	mod->kev->rhandler = tui_cmd_read;
 	mod->kev->obj = mod;
@@ -400,6 +394,12 @@ static void tui_cmd_read(void *param)
 			func1(k->cmd & ~_CMD_F1);
 		}
 	}
+
+#ifdef FF_WIN
+	if (core->woeh(0, ffstdin, &mod->task_read, tui_cmd_read, NULL, 1)) {
+		syswarnlog(NULL, "establishing stdin event receiver");
+	}
+#endif
 }
 
 

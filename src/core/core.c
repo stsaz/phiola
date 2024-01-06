@@ -319,7 +319,7 @@ static void woeh_task(void *param)
 	core_task(wt->worker, &wt->task, wt->task.handler, wt->task.param);
 }
 
-static int core_woeh(uint worker, fffd fd, struct phi_woeh_task *wt, phi_task_func func, void *param)
+static int core_woeh(uint worker, fffd fd, struct phi_woeh_task *wt, phi_task_func func, void *param, uint flags)
 {
 	if (!cc->woeh_obj
 		&& !(cc->woeh_obj = woeh_create())) {
@@ -330,7 +330,7 @@ static int core_woeh(uint worker, fffd fd, struct phi_woeh_task *wt, phi_task_fu
 	wt->task.handler = func;
 	wt->task.param = param;
 	wt->worker = worker;
-	return woeh_add(cc->woeh_obj, fd, woeh_task, wt);
+	return woeh_add(cc->woeh_obj, fd, woeh_task, wt, flags);
 }
 
 #endif
@@ -355,6 +355,10 @@ static void core_worker_release(uint worker)
 FF_EXPORT void phi_core_destroy()
 {
 	if (cc == NULL) return;
+
+#ifdef FF_WIN
+	woeh_free(cc->woeh_obj);
+#endif
 
 	wrkx_destroy(&cc->wx);
 

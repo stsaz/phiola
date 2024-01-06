@@ -33,7 +33,7 @@ static void* wasapi_in_open(phi_track *t)
 		goto fail;
 
 	if (a->event_h)
-		core->woeh(t->worker, a->event_h, &wi->task, audio_oncapt, a);
+		core->woeh(t->worker, a->event_h, &wi->task, audio_oncapt, a, 0);
 	else
 		core->timer(t->worker, &wi->tmr, a->buffer_length_msec / 2, audio_oncapt, a);
 	return wi;

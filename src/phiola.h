@@ -143,8 +143,9 @@ struct phi_core {
 
 #ifdef FF_WIN
 	/** Set the function to receive signals from a Windows event handle.
-	Function is called inside the specified worker thread */
-	int (*woeh)(uint worker, fffd fd, struct phi_woeh_task *t, phi_task_func func, void *param);
+	User function is called inside the specified worker thread.
+	flags: 1:one-shot */
+	int (*woeh)(uint worker, fffd fd, struct phi_woeh_task *t, phi_task_func func, void *param, uint flags);
 #endif
 
 	/** Get the number of available workers */

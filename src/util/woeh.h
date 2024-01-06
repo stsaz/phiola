@@ -23,7 +23,7 @@ typedef void (*woeh_handler_t)(void *udata);
 
 struct woeh_item {
 	woeh_handler_t handler;
-	void *udata;
+	void *udata; // bit[0]: one-shot
 };
 
 typedef struct woeh {
@@ -47,6 +47,8 @@ enum WOEH_CMD {
 
 static inline void woeh_free(woeh *oh)
 {
+	if (!oh) return;
+
 	if (oh->wake_evt != NULL) {
 		FFINT_WRITEONCE(oh->cmd, WOEH_CMD_QUIT);
 		SetEvent(oh->wake_evt);
@@ -61,6 +63,16 @@ static inline void woeh_free(woeh *oh)
 		CloseHandle(oh->wait_evt);
 
 	ffmem_free(oh);
+}
+
+static void _woeh_rm(woeh *oh, uint i)
+{
+	oh->count--;
+	if (i != oh->count) {
+		//move the last element into a hole
+		ffmem_move(oh->items + i, oh->items + oh->count, sizeof(struct woeh_item));
+		ffmem_move(oh->hdls + i, oh->hdls + oh->count, sizeof(HANDLE));
+	}
 }
 
 static int FFTHREAD_PROCCALL woeh_evt_handler(void *param)
@@ -96,7 +108,16 @@ static int FFTHREAD_PROCCALL woeh_evt_handler(void *param)
 			continue;
 		}
 
-		oh->items[i].handler(oh->items[i].udata);
+		struct woeh_item h = oh->items[i];
+
+		if ((size_t)h.udata & 1) {
+			h.udata = (void*)((size_t)h.udata & ~1);
+			fflock_lock(&oh->lk);
+			_woeh_rm(oh, i);
+			fflock_unlock(&oh->lk);
+		}
+
+		h.handler(h.udata);
 	}
 
 	return 0;
@@ -125,10 +146,16 @@ fail:
 	return NULL;
 }
 
+enum WOEH_FLAGS {
+	/** Unregister user handle after the first signal (before calling user function) */
+	WOEH_F_ONESHOT = 1,
+};
+
 /** Associate HANDLE with user-function.
 Can be called safely from a user-function.
+flags: enum WOEH_FLAGS
 Return 0 on success.  On failure, 'errno' may be set to an error from WOH-thread. */
-static inline int woeh_add(woeh *oh, HANDLE h, woeh_handler_t handler, void *udata)
+static inline int woeh_add(woeh *oh, HANDLE h, woeh_handler_t handler, void *udata, uint flags)
 {
 	fflock_lock(&oh->lk);
 	if (oh->count == MAXIMUM_WAIT_OBJECTS || oh->count == (uint)-1) {
@@ -140,43 +167,53 @@ static inline int woeh_add(woeh *oh, HANDLE h, woeh_handler_t handler, void *uda
 		return 1;
 	}
 	oh->items[oh->count].handler = handler;
+
+	FF_ASSERT(((size_t)udata & 1) == 0);
+	if (flags & WOEH_F_ONESHOT)
+		udata = (void*)((size_t)udata | 1);
 	oh->items[oh->count].udata = udata;
+
 	oh->hdls[oh->count++] = h;
 	fflock_unlock(&oh->lk);
+
 	SetEvent(oh->wake_evt);
 	return 0;
 }
 
+static int _woeh_find(woeh *oh, HANDLE h)
+{
+	for (uint i = 1 /*skip wake_evt*/;  i < oh->count;  i++) {
+		if (oh->hdls[i] == h)
+			return i;
+	}
+	return -1;
+}
+
 /** Unregister HANDLE.
 Can be called safely from a user-function. */
-static inline void woeh_rm(woeh *oh, HANDLE h)
+static inline int woeh_rm(woeh *oh, HANDLE h)
 {
-	uint i;
-	ffbool is_wrker;
+	int rc = -1;
+	ffbool is_worker = (ffthread_curid() == oh->tid);
 
-	for (i = 1 /*skip wake_evt*/;  i < oh->count;  i++) {
-		if (oh->hdls[i] != h)
-			continue;
+	fflock_lock(&oh->lk);
+	int i = _woeh_find(oh, h);
+	if (i < 0)
+		goto end;
 
-		is_wrker = (ffthread_curid() == oh->tid);
+	if (!is_worker) {
+		FFINT_WRITEONCE(oh->cmd, WOEH_CMD_WAIT);
+		SetEvent(oh->wake_evt);
 
-		fflock_lock(&oh->lk);
-		if (!is_wrker) {
-			FFINT_WRITEONCE(oh->cmd, WOEH_CMD_WAIT);
-			SetEvent(oh->wake_evt);
-
-			//wait until the worker thread returns from the kernel
-			WaitForSingleObject(oh->wait_evt, INFINITE);
-			//now the worker thread waits until oh->lk is unlocked
-		}
-
-		oh->count--;
-		if (i != oh->count) {
-			//move the last element into a hole
-			ffmem_copy(oh->items + i, oh->items + oh->count, sizeof(struct woeh_item));
-			ffmem_copy(oh->hdls + i, oh->hdls + oh->count, sizeof(oh->hdls[0]));
-		}
-		fflock_unlock(&oh->lk);
-		break;
+		//wait until the worker thread returns from the kernel
+		WaitForSingleObject(oh->wait_evt, INFINITE);
+		//now the worker thread waits until oh->lk is unlocked
 	}
+
+	_woeh_rm(oh, i);
+	rc = 0;
+
+end:
+	fflock_unlock(&oh->lk);
+	return rc;
 }

@@ -95,7 +95,7 @@ fin:
 		, t->conf.oaudio.exclusive);
 
 	if (w->event_h)
-		core->woeh(t->worker, w->event_h, &w->task, audio_out_onplay, w);
+		core->woeh(t->worker, w->event_h, &w->task, audio_out_onplay, w, 0);
 	else
 		core->timer(t->worker, &mod->tmr, mod->buffer_length_msec / 2, audio_out_onplay, w);
 	return PHI_DONE;
