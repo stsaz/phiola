@@ -3,8 +3,8 @@
 
 struct gui_wrecord {
 	ffui_windowxx		wnd;
-	ffui_labelxx		ldir, lname, lext, ldev, lchan, luntil, laacq, lvorbisq, lopusq;
-	ffui_editxx			edir, ename, euntil, eaacq, evorbisq, eopusq;
+	ffui_labelxx		ldir, lname, lext, ldev, lchan, l_rate, luntil, laacq, lvorbisq, lopusq;
+	ffui_editxx			edir, ename, e_rate, euntil, eaacq, evorbisq, eopusq;
 	ffui_comboboxxx		cbext, cbdev, cbchan;
 	ffui_buttonxx		bstart;
 
@@ -12,6 +12,7 @@ struct gui_wrecord {
 	uint conf_aacq, conf_vorbisq, conf_opusq;
 	uint conf_until;
 	uint conf_idev;
+	uint conf_rate;
 	uint conf_channels;
 	char *wnd_pos;
 
@@ -26,6 +27,7 @@ FF_EXTERN const ffui_ldr_ctl wrecord_ctls[] = {
 	_(lext),	_(cbext),
 	_(ldev),	_(cbdev),
 	_(lchan),	_(cbchan),
+	_(l_rate),	_(e_rate),
 	_(luntil),	_(euntil),
 	_(laacq),	_(eaacq),
 	_(lvorbisq),_(evorbisq),
@@ -37,14 +39,16 @@ FF_EXTERN const ffui_ldr_ctl wrecord_ctls[] = {
 
 #define O(m)  (void*)FF_OFF(gui_wrecord, m)
 const ffarg wrecord_args[] = {
-	{ "aacq",	'u',	O(conf_aacq) },
+	{ "aacq",		'u',	O(conf_aacq) },
+	{ "auto_stop",	'u',	O(conf_until) },
 	{ "channels",	'u',	O(conf_channels) },
-	{ "dir",	'=S',	O(conf_dir) },
-	{ "ext",	'=S',	O(conf_ext) },
-	{ "idev",	'u',	O(conf_idev) },
-	{ "name",	'=S',	O(conf_name) },
-	{ "opusq",	'u',	O(conf_opusq) },
-	{ "vorbisq",'u',	O(conf_vorbisq) },
+	{ "dir",		'=S',	O(conf_dir) },
+	{ "ext",		'=S',	O(conf_ext) },
+	{ "idev",		'u',	O(conf_idev) },
+	{ "name",		'=S',	O(conf_name) },
+	{ "opusq",		'u',	O(conf_opusq) },
+	{ "rate",		'u',	O(conf_rate) },
+	{ "vorbisq",	'u',	O(conf_vorbisq) },
 	{ "wrecord.pos",	'=s',	O(wnd_pos) },
 	{}
 };
@@ -75,6 +79,17 @@ static int wrec_time_value(ffstr s)
 	return fftime_to_msec(&t);
 }
 
+static char* wrec_time_str(char *buf, size_t cap, uint msec)
+{
+	fftime t;
+	fftime_from_msec(&t, msec);
+	ffdatetime dt = {};
+	fftime_split1(&dt, &t);
+	uint n = fftime_tostr1(&dt, buf, cap, FFTIME_HMS_MSEC);
+	buf[n] = '\0';
+	return buf;
+}
+
 static void wrecord_ui_to_conf()
 {
 	gui_wrecord *c = gg->wrecord;
@@ -87,6 +102,7 @@ static void wrecord_ui_to_conf()
 
 	c->conf_idev = c->cbdev.get();
 	c->conf_channels = c->cbchan.get();
+	c->conf_rate = ffvecxx(c->e_rate.text()).str().uint32(0);
 	c->conf_until = wrec_time_value(ffvecxx(c->euntil.text()).str());
 
 	c->conf_aacq = ffvecxx(c->eaacq.text()).str().uint32(0);
@@ -104,9 +120,11 @@ void wrecord_userconf_write(ffconfw *cw)
 	ffconfw_add2s(cw, "ext", w->conf_ext);
 	ffconfw_add2u(cw, "idev", w->conf_idev);
 	ffconfw_add2u(cw, "channels", w->conf_channels);
+	ffconfw_add2u(cw, "rate", w->conf_rate);
 	ffconfw_add2u(cw, "aacq", w->conf_aacq);
 	ffconfw_add2u(cw, "vorbisq", w->conf_vorbisq);
 	ffconfw_add2u(cw, "opusq", w->conf_opusq);
+	ffconfw_add2u(cw, "auto_stop", w->conf_until);
 
 	if (w->initialized)
 		conf_wnd_pos_write(cw, "wrecord.pos", &w->wnd);
@@ -188,6 +206,10 @@ static void wrecord_ui_from_conf()
 	file_extensions_fill();
 
 	ffstrxx_buf<100> s;
+	if (w->conf_until)
+		w->euntil.text(wrec_time_str(s.ptr, 100, w->conf_until));
+	if (w->conf_rate)
+		w->e_rate.text(s.zfmt("%u", w->conf_rate));
 	w->eaacq.text(s.zfmt("%u", (w->conf_aacq) ? w->conf_aacq : 5));
 	w->evorbisq.text(s.zfmt("%d", (w->conf_vorbisq) ? wrec_vorbisq_user(w->conf_vorbisq) : 7));
 	w->eopusq.text(s.zfmt("%u", (w->conf_opusq) ? w->conf_opusq : 256));
@@ -200,6 +222,7 @@ static struct phi_track_conf* record_conf_create()
 
 	c->iaudio.device_index = w->conf_idev;
 	c->iaudio.format.channels = w->conf_channels;
+	c->iaudio.format.rate = w->conf_rate;
 	// .iaudio.buf_time =
 	c->until_msec = w->conf_until;
 	// .afilter.gain_db =
