@@ -24,6 +24,9 @@ FF_EXTERN void gui_task_ptr(void (*func)(void*), void *ptr);
 static inline void gui_task_uint(void (*func)(uint), uint i) {
 	gui_task_ptr((void(*)(void*))(void*)func, (void*)(ffsize)i);
 }
+static inline void gui_task(void (*func)()) {
+	gui_task_ptr((void(*)(void*))(void*)func, NULL);
+}
 
 FF_EXTERN void file_dir_show(ffslice indexes);
 

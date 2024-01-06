@@ -593,7 +593,7 @@ static void grd_rec_close(void *f, phi_track *t)
 		core->sig(PHI_CORE_STOP);
 		return;
 	}
-	wrecord_done();
+	gui_task(wrecord_done);
 }
 static int grd_rec_process(void *f, phi_track *t) { return PHI_DONE; }
 static const phi_filter phi_gui_record_guard = {

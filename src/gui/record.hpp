@@ -252,7 +252,6 @@ void wrecord_start_stop()
 	gui_core_task_ptr(record_begin, record_conf_create());
 }
 
-/** Thread: worker */
 void wrecord_done()
 {
 	gui_wrecord *w = gg->wrecord;
