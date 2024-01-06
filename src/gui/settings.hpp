@@ -3,11 +3,13 @@
 
 struct gui_wsettings {
 	ffui_windowxx	wnd;
-	ffui_label		lseek_by, lleap_by;
+	ffui_label		ldev, lseek_by, lleap_by;
 	ffui_editxx		eseek_by, eleap_by;
 	ffui_checkboxxx	cbdarktheme;
+	ffui_comboboxxx	cbdev;
 
 	char*	wnd_pos;
+	uint	conf_odev;
 	uint	initialized :1;
 };
 
@@ -15,6 +17,7 @@ struct gui_wsettings {
 FF_EXTERN const ffui_ldr_ctl wsettings_ctls[] = {
 	_(wnd),
 	_(cbdarktheme),
+	_(ldev),		_(cbdev),
 	_(lseek_by),	_(eseek_by),
 	_(lleap_by),	_(eleap_by),
 	FFUI_LDR_CTL_END
@@ -35,6 +38,12 @@ static void wsettings_ui_to_conf()
 	if (w->cbdarktheme.h)
 		theme_switch(w->cbdarktheme.checked());
 
+	uint odev = w->cbdev.get();
+	if (gd->conf.odev != odev) {
+		gd->conf.odev = odev;
+		playback_device_set();
+	}
+
 	gd->conf.seek_step_delta = ffvecxx(w->eseek_by.text()).str().uint32(10);
 	gd->conf.seek_leap_delta = ffvecxx(w->eleap_by.text()).str().uint32(60);
 }
@@ -45,6 +54,12 @@ static void wsettings_ui_from_conf()
 
 	if (w->cbdarktheme.h)
 		w->cbdarktheme.check(!!gd->conf.theme);
+
+	uint odev = adevices_fill(PHI_ADEV_PLAYBACK, w->cbdev, gd->conf.odev);
+	if (gd->conf.odev != odev) {
+		gd->conf.odev = odev;
+		playback_device_set();
+	}
 
 	ffstrxx_buf<100> s;
 	w->eseek_by.text(s.zfmt("%u", gd->conf.seek_step_delta));

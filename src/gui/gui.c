@@ -100,6 +100,8 @@ static void gui_userconf_load()
 	int r = ffargs_process_conf(&a, args, NULL, 0, d);
 	if (r)
 		warnlog("%s:%s", gd->user_conf_name, a.error);
+	else
+		playback_device_set();
 
 end:
 	ffvec_free(&buf);

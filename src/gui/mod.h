@@ -131,6 +131,7 @@ struct gui_data {
 
 	struct {
 		char*	theme;
+		uint	odev;
 		uint	repeat;
 		uint	random;
 		uint	seek_step_delta;
@@ -138,6 +139,8 @@ struct gui_data {
 	} conf;
 };
 FF_EXTERN struct gui_data *gd;
+
+static inline void playback_device_set() { gd->queue->device(gd->conf.odev); }
 
 #define syserrlog(...) \
 	core->conf.log(core->conf.log_obj, PHI_LOG_ERR | PHI_LOG_SYS, "gui", NULL, __VA_ARGS__)

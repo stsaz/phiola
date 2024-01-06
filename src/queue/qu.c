@@ -16,6 +16,7 @@ typedef void (*on_change_t)(phi_queue_id, uint, uint);
 struct queue_mgr {
 	ffvec lists; // struct phi_queue*[]
 	uint selected;
+	int dev_idx;
 	uint random_ready :1;
 	on_change_t on_change;
 };
@@ -60,6 +61,7 @@ void qm_destroy()
 void qm_init()
 {
 	qm = ffmem_new(struct queue_mgr);
+	qm->dev_idx = -1;
 	qm->on_change = q_on_change;
 }
 
@@ -477,6 +479,11 @@ static void q_sort(phi_queue_id q, uint flags)
 	dbglog("sorted %L entries", q->index.len);
 }
 
+static void q_device(uint device)
+{
+	qm->dev_idx = device;
+}
+
 const phi_queue_if phi_queueif = {
 	q_create,
 	q_destroy,
@@ -507,4 +514,5 @@ const phi_queue_if phi_queueif = {
 
 	qm_set_on_change,
 	q_sort,
+	q_device,
 };

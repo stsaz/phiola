@@ -32,6 +32,7 @@ static void list_filter_close();
 const struct ffarg guimod_args[] = {
 	{ "list.auto_sel",	'u',	O(auto_select) },
 	{ "play.cursor",	'u',	O(cursor) },
+	{ "play.dev",		'u',	O(conf.odev) },
 	{ "play.random",	'u',	O(conf.random) },
 	{ "play.repeat",	'u',	O(conf.repeat) },
 	{ "play.seek_leap",	'u',	O(conf.seek_leap_delta) },
@@ -45,6 +46,7 @@ void mod_userconf_write(ffconfw *cw)
 {
 	ffconfw_add2u(cw, "list.auto_sel", gd->auto_select);
 	ffconfw_add2u(cw, "play.cursor", gd->cursor);
+	ffconfw_add2u(cw, "play.dev", gd->conf.odev);
 	ffconfw_add2u(cw, "play.random", gd->conf.random);
 	ffconfw_add2u(cw, "play.repeat", gd->conf.repeat);
 	ffconfw_add2u(cw, "play.seek_leap", gd->conf.seek_leap_delta);

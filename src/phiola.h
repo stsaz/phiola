@@ -11,7 +11,7 @@
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20013
+#define PHI_VERSION_CORE  20015
 
 typedef unsigned int uint;
 typedef unsigned short ushort;
@@ -472,6 +472,9 @@ struct phi_queue_if {
 	/**
 	flags: enum PHI_Q_SORT */
 	void (*sort)(phi_queue_id q, uint flags);
+
+	/** Override output device index for all tracks */
+	void (*device)(uint device);
 };
 
 
