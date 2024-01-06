@@ -3,15 +3,16 @@
 
 struct gui_wrecord {
 	ffui_windowxx		wnd;
-	ffui_labelxx		ldir, lname, lext, ldev, luntil, laacq, lvorbisq, lopusq;
+	ffui_labelxx		ldir, lname, lext, ldev, lchan, luntil, laacq, lvorbisq, lopusq;
 	ffui_editxx			edir, ename, euntil, eaacq, evorbisq, eopusq;
-	ffui_comboboxxx		cbext, cbdev;
+	ffui_comboboxxx		cbext, cbdev, cbchan;
 	ffui_buttonxx		bstart;
 
 	ffstrxx conf_dir, conf_name, conf_ext;
 	uint conf_aacq, conf_vorbisq, conf_opusq;
 	uint conf_until;
 	uint conf_idev;
+	uint conf_channels;
 	char *wnd_pos;
 
 	uint initialized;
@@ -24,6 +25,7 @@ FF_EXTERN const ffui_ldr_ctl wrecord_ctls[] = {
 	_(lname),	_(ename),
 	_(lext),	_(cbext),
 	_(ldev),	_(cbdev),
+	_(lchan),	_(cbchan),
 	_(luntil),	_(euntil),
 	_(laacq),	_(eaacq),
 	_(lvorbisq),_(evorbisq),
@@ -36,6 +38,7 @@ FF_EXTERN const ffui_ldr_ctl wrecord_ctls[] = {
 #define O(m)  (void*)FF_OFF(gui_wrecord, m)
 const ffarg wrecord_args[] = {
 	{ "aacq",	'u',	O(conf_aacq) },
+	{ "channels",	'u',	O(conf_channels) },
 	{ "dir",	'=S',	O(conf_dir) },
 	{ "ext",	'=S',	O(conf_ext) },
 	{ "idev",	'u',	O(conf_idev) },
@@ -83,6 +86,7 @@ static void wrecord_ui_to_conf()
 	c->conf_ext = c->cbext.text();
 
 	c->conf_idev = c->cbdev.get();
+	c->conf_channels = c->cbchan.get();
 	c->conf_until = wrec_time_value(ffvecxx(c->euntil.text()).str());
 
 	c->conf_aacq = ffvecxx(c->eaacq.text()).str().uint32(0);
@@ -99,6 +103,7 @@ void wrecord_userconf_write(ffconfw *cw)
 	ffconfw_add2s(cw, "name", w->conf_name);
 	ffconfw_add2s(cw, "ext", w->conf_ext);
 	ffconfw_add2u(cw, "idev", w->conf_idev);
+	ffconfw_add2u(cw, "channels", w->conf_channels);
 	ffconfw_add2u(cw, "aacq", w->conf_aacq);
 	ffconfw_add2u(cw, "vorbisq", w->conf_vorbisq);
 	ffconfw_add2u(cw, "opusq", w->conf_opusq);
@@ -149,6 +154,26 @@ static void file_extensions_fill()
 	w->conf_ext.free();
 }
 
+static void channels_fill()
+{
+	gui_wrecord *w = gg->wrecord;
+	w->cbchan.add("Default");
+	static const char chans[][11] = {
+		"1 (Mono)",
+		"2 (Stereo)",
+		"3",
+		"4",
+		"5",
+		"6 (5.1)",
+		"7",
+		"8",
+	};
+	for (uint i = 0;  i < FF_COUNT(chans);  i++) {
+		w->cbchan.add(chans[i]);
+	}
+	w->cbchan.set(w->conf_channels);
+}
+
 static void wrecord_ui_from_conf()
 {
 	gui_wrecord *w = gg->wrecord;
@@ -159,6 +184,7 @@ static void wrecord_ui_from_conf()
 
 	w->conf_idev = adevices_fill(PHI_ADEV_CAPTURE, w->cbdev, w->conf_idev);
 
+	channels_fill();
 	file_extensions_fill();
 
 	ffstrxx_buf<100> s;
@@ -173,6 +199,7 @@ static struct phi_track_conf* record_conf_create()
 	struct phi_track_conf *c = ffmem_new(struct phi_track_conf);
 
 	c->iaudio.device_index = w->conf_idev;
+	c->iaudio.format.channels = w->conf_channels;
 	// .iaudio.buf_time =
 	c->until_msec = w->conf_until;
 	// .afilter.gain_db =
