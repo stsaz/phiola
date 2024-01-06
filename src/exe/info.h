@@ -3,31 +3,30 @@
 
 static int info_help()
 {
-	static const char s[] = "\
+	help_info_write("\
 Show file meta data:\n\
-    phiola info [OPTIONS] INPUT...\n\
+    `phiola info` [OPTIONS] INPUT...\n\
 \n\
 INPUT                   File name, directory or URL\n\
-                          @stdin  Read from standard input\n\
+                          `@stdin`  Read from standard input\n\
 \n\
 Options:\n\
-  -include WILDCARD     Only include files matching a wildcard (case-insensitive)\n\
-  -exclude WILDCARD     Exclude files & directories matching a wildcard (case-insensitive)\n\
+  `-include` WILDCARD     Only include files matching a wildcard (case-insensitive)\n\
+  `-exclude` WILDCARD     Exclude files & directories matching a wildcard (case-insensitive)\n\
 \n\
-  -tags                 Print all meta tags\n\
+  `-tags`                 Print all meta tags\n\
 \n\
-  -tracks NUMBER[,...]  Select only specific tracks in a .cue list\n\
+  `-tracks` NUMBER[,...]  Select only specific tracks in a .cue list\n\
 \n\
-  -seek TIME            Seek to time:\n\
+  `-seek` TIME            Seek to time:\n\
                           [[HH:]MM:]SS[.MSC]\n\
-  -until TIME           Stop at time\n\
+  `-until` TIME           Stop at time\n\
 \n\
-  -peaks                Analyze audio and print some details\n\
-  -peaks_crc            Print audio data CRC (use with -peaks)\n\
+  `-peaks`                Analyze audio and print some details\n\
+  `-peaks_crc`            Print audio data CRC (use with `-peaks`)\n\
 \n\
-  -perf                 Print performance counters\n\
-";
-	ffstdout_write(s, FFS_LEN(s));
+  `-perf`                 Print performance counters\n\
+");
 	x->exit_code = 0;
 	return 1;
 }

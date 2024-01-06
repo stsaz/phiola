@@ -3,20 +3,19 @@
 
 static int lc_help()
 {
-	static const char s[] = "\
+	help_info_write("\
 Create playlist file\n\
 \n\
-    phiola list create [INPUT...] -o file.m3u\n\
+    `phiola list create` [INPUT...] -o file.m3u\n\
 \n\
   INPUT             File name, directory or URL\n\
 \n\
 Options:\n\
 \n\
-  -include WILDCARD     Only include files matching a wildcard (case-insensitive)\n\
-  -exclude WILDCARD     Exclude files & directories matching a wildcard (case-insensitive)\n\
-  -out FILE             Output file name\n\
-";
-	ffstdout_write(s, FFS_LEN(s));
+  `-include` WILDCARD     Only include files matching a wildcard (case-insensitive)\n\
+  `-exclude` WILDCARD     Exclude files & directories matching a wildcard (case-insensitive)\n\
+  `-out` FILE             Output file name\n\
+");
 	x->exit_code = 0;
 	return 1;
 }
@@ -107,19 +106,18 @@ static struct ffarg_ctx list_create_init(void *obj)
 
 static int list_help()
 {
-	static const char s[] = "\
+	help_info_write("\
 Process playlist files\n\
 \n\
-    phiola list COMMAND [OPTIONS]\n\
+    `phiola list` COMMAND [OPTIONS]\n\
 \n\
 COMMAND:\n\
 \n\
-  create            Create playlist file\n\
-  sort              Sort playlist\n\
+  `create`            Create playlist file\n\
+  `sort`              Sort playlist\n\
 \n\
 Use 'phiola list COMMAND -h' for more info.\n\
-";
-	ffstdout_write(s, FFS_LEN(s));
+");
 	x->exit_code = 0;
 	return 1;
 }

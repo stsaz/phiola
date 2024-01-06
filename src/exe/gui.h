@@ -3,13 +3,12 @@
 
 static int gui_help()
 {
-	static const char s[] = "\
+	help_info_write("\
 Show graphical interface:\n\
-    phiola gui [INPUT...]\n\
+    `phiola gui` [INPUT...]\n\
 \n\
 INPUT                   File name, directory or URL\n\
-";
-	ffstdout_write(s, FFS_LEN(s));
+");
 	x->exit_code = 0;
 	return 1;
 }

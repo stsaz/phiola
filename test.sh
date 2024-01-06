@@ -4,6 +4,19 @@
 
 set -xe
 
+test_help() {
+	./phiola -h
+	./phiola convert -h
+	./phiola device  -h
+	./phiola gui     -h
+	./phiola info    -h
+	./phiola list    -h
+	./phiola play    -h
+	./phiola record  -h
+	./phiola remote  -h
+	./phiola tag     -h
+}
+
 test_device() {
 	./phiola dev
 	./phiola dev list
@@ -385,6 +398,7 @@ test_clean() {
 }
 
 TESTS=(
+	help
 	device
 	record
 	# record_manual

@@ -3,17 +3,16 @@
 
 static int tag_help()
 {
-	static const char s[] = "\
+	help_info_write("\
 Edit .mp3 file tags:\n\
-    phiola tag OPTIONS FILE...\n\
+    `phiola tag` OPTIONS FILE...\n\
 \n\
 Options:\n\
-  -clear                Remove all existing tags.  By default all original tags are preserved.\n\
-  -meta NAME=VALUE      Meta data\n\
+  `-clear`                Remove all existing tags.  By default all original tags are preserved.\n\
+  `-meta` NAME=VALUE      Meta data\n\
                           .mp3 supports: album, albumartist, artist, comment, date, genre, picture, publisher, title, tracknumber, tracktotal.\n\
-  -preserve_date        Preserve file modification date\n\
-";
-	ffstdout_write(s, FFS_LEN(s));
+  `-preserve_date`        Preserve file modification date\n\
+");
 	x->exit_code = 0;
 	return 1;
 }

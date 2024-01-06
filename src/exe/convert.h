@@ -3,67 +3,67 @@
 
 static int conv_help()
 {
-	static const char s[] = "\
+	help_info_write("\
 Convert audio:\n\
-    phiola convert INPUT... -o OUTPUT [OPTIONS]\n\
+    `phiola convert` INPUT... -o OUTPUT [OPTIONS]\n\
 \n\
 INPUT                   File name, directory or URL\n\
-                          @stdin  Read from standard input\n\
+                          `@stdin`  Read from standard input\n\
 \n\
 Options:\n\
-  -include WILDCARD     Only include files matching a wildcard (case-insensitive)\n\
-  -exclude WILDCARD     Exclude files & directories matching a wildcard (case-insensitive)\n\
+  `-include` WILDCARD     Only include files matching a wildcard (case-insensitive)\n\
+  `-exclude` WILDCARD     Exclude files & directories matching a wildcard (case-insensitive)\n\
 \n\
-  -tracks NUMBER[,...]  Select only specific tracks in a .cue list\n\
+  `-tracks` NUMBER[,...]  Select only specific tracks in a .cue list\n\
 \n\
-  -cue_gaps=STRING      Control track pregaps:\n\
-                          skip      Skip pregaps, e.g.:\n\
+  `-cue_gaps` STRING      Control track pregaps:\n\
+                          `skip`      Skip pregaps, e.g.:\n\
                                       track01.index01 .. track02.index00\n\
-                          current   Add gap to the beginning of the current track, e.g.:\n\
+                          `current`   Add gap to the beginning of the current track, e.g.:\n\
                                       track01.index00 .. track02.index00\n\
-                          previous  Add gap to the previous track,\n\
+                          `previous`  Add gap to the previous track,\n\
                                      but track01's pregap is preserved, e.g.:\n\
                                       track01.index00 .. track02.index01\n\
                                       track02.index01 .. track03.index01\n\
                         By default, adds gap to the previous track, e.g.:\n\
                                       track01.index01 .. track02.index01\n\
 \n\
-  -seek TIME            Seek to time: [[HH:]MM:]SS[.MSC]\n\
-  -until TIME           Stop at time\n\
+  `-seek` TIME            Seek to time: [[HH:]MM:]SS[.MSC]\n\
+  `-until` TIME           Stop at time\n\
 \n\
-  -aformat FORMAT       Audio sample format:\n\
+  `-aformat` FORMAT       Audio sample format:\n\
                           int8 | int16 | int24 | int32 | float32\n\
-  -rate NUMBER          Sample rate\n\
-  -channels NUMBER      Channels number\n\
-  -danorm \"OPTIONS\"     Apply Dynamic Audio Normalizer filter. Options:\n\
-                          frame       Integer\n\
-                          size        Integer\n\
-                          peak        Float\n\
-                          max-amp     Float\n\
-                          target-rms  Float\n\
-                          compress    Float\n\
-  -gain NUMBER          Gain/attenuation in dB\n\
+  `-rate` NUMBER          Sample rate\n\
+  `-channels` NUMBER      Channels number\n\
+  `-danorm` \"OPTIONS\"     Apply Dynamic Audio Normalizer filter. Options:\n\
+                          `frame`       Integer\n\
+                          `size`        Integer\n\
+                          `peak`        Float\n\
+                          `max-amp`     Float\n\
+                          `target-rms`  Float\n\
+                          `compress`    Float\n\
+  `-gain` NUMBER          Gain/attenuation in dB\n\
 \n\
-  -copy                 Copy audio data without re-encoding\n\
-  -aac_profile CHAR     AAC profile:\n\
-                          l  AAC-LC\n\
-                          h  AAC-HE\n\
-                          H  AAC-HEv2\n\
-  -aac_quality NUMBER   AAC encoding quality:\n\
+  `-copy`                 Copy audio data without re-encoding\n\
+  `-aac_profile` CHAR     AAC profile:\n\
+                          `l`  AAC-LC\n\
+                          `h`  AAC-HE\n\
+                          `H`  AAC-HEv2\n\
+  `-aac_quality` NUMBER   AAC encoding quality:\n\
                           1..5 (VBR) or 8..800 (CBR, kbit/s)\n\
-  -opus_quality NUMBER  Opus encoding bitrate:\n\
+  `-opus_quality` NUMBER  Opus encoding bitrate:\n\
                           6..510 (VBR)\n\
-  -vorbis_quality NUMBER\n\
+  `-vorbis_quality` NUMBER\n\
                         Vorbis encoding quality:\n\
                           0..10\n\
 \n\
-  -meta NAME=VALUE      Meta data\n\
+  `-meta` NAME=VALUE      Meta data\n\
                           .mp3 supports: album, albumartist, artist, comment, date, genre, picture, publisher, title, tracknumber, tracktotal.\n\
                           .mp4 supports: album, albumartist, artist, comment, composer, copyright, date, discnumber, genre, lyrics, title, tracknumber.\n\
                           .flac, .ogg support tags of any name, but the use of MP3/MP4-compatible names is recommended.\n\
 \n\
-  -out FILE             Output file name.\n\
-                          @stdout    Write to standard output\n\
+  `-out` FILE             Output file name.\n\
+                          `@stdout`    Write to standard output\n\
                         The encoder is selected automatically from the given file extension:\n\
                           .m4a       AAC\n\
                           .ogg       Vorbis\n\
@@ -71,19 +71,18 @@ Options:\n\
                           .flac      FLAC\n\
                           .wav       PCM\n\
                         Supports runtime variable expansion:\n\
-                          @filepath  Expands to the input file path\n\
-                          @filename  Input file name (without extension)\n\
-                          @nowdate   Current date\n\
-                          @nowtime   Current time\n\
-                          @counter   Sequentially incremented number\n\
+                          `@filepath`  Expands to the input file path\n\
+                          `@filename`  Input file name (without extension)\n\
+                          `@nowdate`   Current date\n\
+                          `@nowtime`   Current time\n\
+                          `@counter`   Sequentially incremented number\n\
                           @STRING    Expands to file meta data,\n\
                                        e.g. `-o \"@tracknumber. @artist - @title.flac\"`\n\
                         When file name isn't specified, @filename is used automatically,\n\
                           e.g. `-o .ogg` == `-o @filename.ogg`\n\
-  -force                Overwrite output file\n\
-  -preserve_date        Preserve file modification date\n\
-";
-	ffstdout_write(s, FFS_LEN(s));
+  `-force`                Overwrite output file\n\
+  `-preserve_date`        Preserve file modification date\n\
+");
 	x->exit_code = 0;
 	return 1;
 }

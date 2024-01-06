@@ -5,6 +5,28 @@
 #include <ffsys/path.h>
 #include <ffsys/dirscan.h>
 
+static void help_info_write(const char *sz)
+{
+	ffstr s = FFSTR_INITZ(sz), l, k;
+	ffvec v = {};
+
+	const char *clr = FFSTD_CLR_B(FFSTD_PURPLE);
+	while (s.len) {
+		ffstr_splitby(&s, '`', &l, &s);
+		ffstr_splitby(&s, '`', &k, &s);
+		if (x->log.use_color) {
+			ffvec_addfmt(&v, "%S%s%S%s"
+				, &l, clr, &k, FFSTD_CLR_RESET);
+		} else {
+			ffvec_addfmt(&v, "%S%S"
+				, &l, &k);
+		}
+	}
+
+	ffstdout_write(v.ptr, v.len);
+	ffvec_free(&v);
+}
+
 static const char pcm_fmtstr[][8] = {
 	"float32",
 	"float64",
@@ -176,40 +198,40 @@ static int cmd_input(ffvec *input, ffstr s)
 
 static int root_help()
 {
-	static const char s[] = "\
+	help_info_write("\
 Usage:\n\
     phiola [GLOBAL-OPTIONS] COMMAND [OPTIONS]\n\
 \n\
 Global options:\n\
-  -Background   Create new process running in background\n\
-  -Codepage     Codepage for non-Unicode text:\n\
+  `-Background`   Create new process running in background\n\
+  `-Codepage`     Codepage for non-Unicode text:\n\
                   win1251 | win1252\n\
-  -Debug        Print debug log messages\n\
+  `-Debug`        Print debug log messages\n\
 \n\
 Commands:\n\
-  convert   Convert audio\n\
-  device    List audio devices\n\
-  gui       Show graphical interface\n\
-  info      Show file meta data\n\
-  play      Play audio [Default command]\n\
-  record    Record audio\n\
-  remote    Send remote command\n\
-  tag       Edit .mp3 file tags\n\
+  `convert`   Convert audio\n\
+  `device`    List audio devices\n\
+  `gui`       Show graphical interface\n\
+  `info`      Show file meta data\n\
+  `list`      Process playlist files\n\
+  `play`      Play audio [Default command]\n\
+  `record`    Record audio\n\
+  `remote`    Send remote command\n\
+  `tag`       Edit .mp3 file tags\n\
 \n\
 'phiola COMMAND -help' will print information on a particular command.\n\
-";
-	ffstdout_write(s, FFS_LEN(s));
+");
+	x->exit_code = 0;
 	return 1;
 }
 
 static int usage()
 {
-	static const char s[] = "\
+	help_info_write("\
 Usage:\n\
 	phiola [GLOBAL-OPTIONS] COMMAND [OPTIONS]\n\
-Run 'phiola -help' for complete help info.\n\
-";
-	ffstdout_write(s, FFS_LEN(s));
+Run `phiola -help` for complete help info.\n\
+");
 	return 1;
 }
 

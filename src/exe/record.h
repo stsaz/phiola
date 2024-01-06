@@ -3,54 +3,54 @@
 
 static int rec_help()
 {
-	static const char s[] = "\
+	help_info_write("\
 Record audio:\n\
-    phiola record -o OUTPUT [OPTIONS]\n\
+    `phiola record` -o OUTPUT [OPTIONS]\n\
 \n\
 Options:\n\
-  -audio STRING         Audio library name (e.g. alsa)\n\
-  -device NUMBER        Capture device number\n\
-  -exclusive            Open device in exclusive mode (WASAPI)\n\
-  -loopback             Loopback mode (\"record what you hear\") (WASAPI)\n\
+  `-audio` STRING         Audio library name (e.g. alsa)\n\
+  `-device` NUMBER        Capture device number\n\
+  `-exclusive`            Open device in exclusive mode (WASAPI)\n\
+  `-loopback`             Loopback mode (\"record what you hear\") (WASAPI)\n\
                           Note: '-device NUMBER' specifies Playback device and not Capture device.\n\
                           Note: recording is automatically on pause unless something is playing!\n\
-  -buffer NUMBER        Length (in msec) of the capture buffer\n\
-  -aformat FORMAT       Audio sample format:\n\
+  `-buffer` NUMBER        Length (in msec) of the capture buffer\n\
+  `-aformat` FORMAT       Audio sample format:\n\
                           int8 | int16 | int24 | int32 | float32\n\
-  -rate NUMBER          Sample rate\n\
-  -channels NUMBER      Channels number\n\
+  `-rate` NUMBER          Sample rate\n\
+  `-channels` NUMBER      Channels number\n\
 \n\
-  -until TIME           Stop at time\n\
+  `-until` TIME           Stop at time\n\
                           [[HH:]MM:]SS[.MSC]\n\
 \n\
-  -danorm \"OPTIONS\"     Apply Dynamic Audio Normalizer filter. Options:\n\
-                          frame       Integer\n\
-                          size        Integer\n\
-                          peak        Float\n\
-                          max-amp     Float\n\
-                          target-rms  Float\n\
-                          compress    Float\n\
-  -gain NUMBER          Gain/attenuation in dB\n\
+  `-danorm` \"OPTIONS\"     Apply Dynamic Audio Normalizer filter. Options:\n\
+                          `frame`       Integer\n\
+                          `size`        Integer\n\
+                          `peak`        Float\n\
+                          `max-amp`     Float\n\
+                          `target-rms`  Float\n\
+                          `compress`    Float\n\
+  `-gain` NUMBER          Gain/attenuation in dB\n\
 \n\
-  -aac_profile CHAR     AAC profile:\n\
-                          l  AAC-LC\n\
-                          h  AAC-HE\n\
-                          H  AAC-HEv2\n\
-  -aac_quality NUMBER   AAC encoding quality:\n\
+  `-aac_profile` CHAR     AAC profile:\n\
+                          `l`  AAC-LC\n\
+                          `h`  AAC-HE\n\
+                          `H`  AAC-HEv2\n\
+  `-aac_quality` NUMBER   AAC encoding quality:\n\
                           1..5 (VBR) or 8..800 (CBR, kbit/s)\n\
-  -opus_quality NUMBER  Opus encoding bitrate:\n\
+  `-opus_quality` NUMBER  Opus encoding bitrate:\n\
                           6..510 (VBR)\n\
-  -vorbis_quality NUMBER\n\
+  `-vorbis_quality` NUMBER\n\
                         Vorbis encoding quality:\n\
                           0..10\n\
 \n\
-  -meta NAME=VALUE      Meta data\n\
+  `-meta` NAME=VALUE      Meta data\n\
                           .mp3 supports: album, albumartist, artist, comment, date, genre, picture, publisher, title, tracknumber, tracktotal.\n\
                           .mp4 supports: album, albumartist, artist, comment, composer, copyright, date, discnumber, genre, lyrics, title, tracknumber.\n\
                           .flac, .ogg support tags of any name, but the use of MP3/MP4-compatible names is recommended.\n\
 \n\
-  -out FILE             Output file name\n\
-                          @stdout    Write to standard output\n\
+  `-out` FILE             Output file name\n\
+                          `@stdout`    Write to standard output\n\
                         The encoder is selected automatically from the given file extension:\n\
                           .m4a       AAC\n\
                           .ogg       Vorbis\n\
@@ -58,14 +58,13 @@ Options:\n\
                           .flac      FLAC\n\
                           .wav       PCM\n\
                         Supports runtime variable expansion:\n\
-                          @nowdate   Current date\n\
-                          @nowtime   Current time\n\
-                          @counter   Sequentially incremented number\n\
-  -force                Overwrite output file\n\
+                          `@nowdate`   Current date\n\
+                          `@nowtime`   Current time\n\
+                          `@counter`   Sequentially incremented number\n\
+  `-force`                Overwrite output file\n\
 \n\
-  -remote               Listen for incoming remote commands\n\
-";
-	ffstdout_write(s, FFS_LEN(s));
+  `-remote`               Listen for incoming remote commands\n\
+");
 	x->exit_code = 0;
 	return 1;
 }

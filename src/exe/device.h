@@ -3,18 +3,17 @@
 
 static int dev_help()
 {
-	static const char s[] = "\
+	help_info_write("\
 List audio devices:\n\
-    phiola device list [OPTIONS]\n\
+    `phiola device list` [OPTIONS]\n\
 \n\
 Options:\n\
-  -audio STRING     Audio library name (e.g. alsa)\n\
-  -capture          Show capture devices only\n\
-  -playback         Show playback devices only\n\
-  -filter STRING    Filter devices by name\n\
-  -number           Show only device number\n\
-";
-	ffstdout_write(s, FFS_LEN(s));
+  `-audio` STRING     Audio library name (e.g. alsa)\n\
+  `-capture`          Show capture devices only\n\
+  `-playback`         Show playback devices only\n\
+  `-filter` STRING    Filter devices by name\n\
+  `-number`           Show only device number\n\
+");
 	x->exit_code = 0;
 	return 1;
 }

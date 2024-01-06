@@ -3,55 +3,54 @@
 
 static int play_help()
 {
-	static const char s[] = "\
+	help_info_write("\
 Play audio:\n\
-    phiola play [OPTIONS] INPUT...\n\
+    `phiola play` [OPTIONS] INPUT...\n\
 \n\
 INPUT                   File name, directory or URL\n\
-                          @stdin  Read from standard input\n\
+                          `@stdin`  Read from standard input\n\
 \n\
 Options:\n\
-  -include WILDCARD     Only include files matching a wildcard (case-insensitive)\n\
-  -exclude WILDCARD     Exclude files & directories matching a wildcard (case-insensitive)\n\
-  -rbuffer SIZE         Read-buffer size (in KB units)\n\
-  -tee FILE             Copy input data to a file.\n\
-                          @stdout    Write to standard output\n\
+  `-include` WILDCARD     Only include files matching a wildcard (case-insensitive)\n\
+  `-exclude` WILDCARD     Exclude files & directories matching a wildcard (case-insensitive)\n\
+  `-rbuffer` SIZE         Read-buffer size (in KB units)\n\
+  `-tee` FILE             Copy input data to a file.\n\
+                          `@stdout`    Write to standard output\n\
                         File extension should match input data; audio conversion is never performed.\n\
                         Supports runtime variable expansion:\n\
-                          @nowdate   Current date\n\
-                          @nowtime   Current time\n\
-                          @counter   Sequentially incremented number\n\
-                          @STRING    Expands to file meta data,\n\
+                          `@nowdate`   Current date\n\
+                          `@nowtime`   Current time\n\
+                          `@counter`   Sequentially incremented number\n\
+                          `@STRING`    Expands to file meta data,\n\
                                        e.g. `-tee \"@artist - @title.mp3\"`\n\
-  -dup FILE.wav         Copy output data to a file.\n\
-                          @stdout    Write to standard output\n\
+  `-dup` FILE.wav         Copy output data to a file.\n\
+                          `@stdout`    Write to standard output\n\
                         Supports runtime variable expansion (see `-tee`)\n\
 \n\
-  -repeat_all           Repeat all tracks\n\
-  -random               Choose the next track randomly\n\
-  -tracks NUMBER[,...]  Select only specific tracks in a .cue list\n\
+  `-repeat_all`           Repeat all tracks\n\
+  `-random`               Choose the next track randomly\n\
+  `-tracks` NUMBER[,...]  Select only specific tracks in a .cue list\n\
 \n\
-  -seek TIME            Seek to time:\n\
+  `-seek` TIME            Seek to time:\n\
                           [[HH:]MM:]SS[.MSC]\n\
-  -until TIME           Stop at time\n\
+  `-until` TIME           Stop at time\n\
 \n\
-  -danorm \"OPTIONS\"     Apply Dynamic Audio Normalizer filter. Options:\n\
-                          frame       Integer\n\
-                          size        Integer\n\
-                          peak        Float\n\
-                          max-amp     Float\n\
-                          target-rms  Float\n\
-                          compress    Float\n\
+  `-danorm` \"OPTIONS\"     Apply Dynamic Audio Normalizer filter. Options:\n\
+                          `frame`       Integer\n\
+                          `size`        Integer\n\
+                          `peak`        Float\n\
+                          `max-amp`     Float\n\
+                          `target-rms`  Float\n\
+                          `compress`    Float\n\
 \n\
-  -audio STRING         Audio library name (e.g. alsa)\n\
-  -device NUMBER        Playback device number\n\
-  -exclusive            Open device in exclusive mode (WASAPI)\n\
-  -buffer NUMBER        Length (in msec) of the playback buffer\n\
+  `-audio` STRING         Audio library name (e.g. alsa)\n\
+  `-device` NUMBER        Playback device number\n\
+  `-exclusive`            Open device in exclusive mode (WASAPI)\n\
+  `-buffer` NUMBER        Length (in msec) of the playback buffer\n\
 \n\
-  -perf                 Print performance counters\n\
-  -remote               Listen for incoming remote commands\n\
-";
-	ffstdout_write(s, FFS_LEN(s));
+  `-perf`                 Print performance counters\n\
+  `-remote`               Listen for incoming remote commands\n\
+");
 	x->exit_code = 0;
 	return 1;
 }

@@ -3,20 +3,19 @@
 
 static int remote_help()
 {
-	static const char s[] = "\
+	help_info_write("\
 Show file meta data:\n\
-    phiola remote CMD...\n\
+    `phiola remote` CMD...\n\
 \n\
 Commands:\n\
-  start INPUT       Add track and play\n\
-  clear             Clear playlist\n\
-  play              Play\n\
-  next              Play next track\n\
-  previous          Play previous track\n\
-  stop              Stop all tracks\n\
-  quit              Exit\n\
-";
-	ffstdout_write(s, FFS_LEN(s));
+  `start` INPUT       Add track and play\n\
+  `clear`             Clear playlist\n\
+  `play`              Play\n\
+  `next`              Play next track\n\
+  `previous`          Play previous track\n\
+  `stop`              Stop all tracks\n\
+  `quit`              Exit\n\
+");
 	x->exit_code = 0;
 	return 1;
 }

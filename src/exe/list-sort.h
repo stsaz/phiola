@@ -3,12 +3,11 @@
 
 static int ls_help()
 {
-	static const char s[] = "\
+	help_info_write("\
 Sort entries in playlist\n\
 \n\
-    phiola list sort [M3U...]\n\
-";
-	ffstdout_write(s, FFS_LEN(s));
+    `phiola list sort` [M3U...]\n\
+");
 	x->exit_code = 0;
 	return 1;
 }
