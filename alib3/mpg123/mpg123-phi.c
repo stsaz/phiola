@@ -1,31 +1,36 @@
 /** libmpg123 interface
 2016, Simon Zolin */
 
-#include "mpg123-ff.h"
+#include "mpg123-phi.h"
 #include <mpg123.h>
 #include <mpg123lib_intern.h>
 #include <frame.h>
 
 #define ERR(r)  ((r > 0) ? -r : r - 1000)
 
-const char* mpg123_errstr(int e)
+const char* phi_mpg123_error(int e)
 {
 	e = (e > -1000) ? -e : e + 1000;
 	return mpg123_plain_strerror(e);
 }
 
 
-struct mpg123 {
+int phi_mpg123_init()
+{
+	return mpg123_init();
+}
+
+struct phi_mpg123 {
 	mpg123_handle *h;
-	unsigned int new_fmt :1;
+	unsigned new_fmt :1;
 };
 
-int mpg123_open(mpg123 **pm, unsigned int flags)
+int phi_mpg123_open(phi_mpg123 **pm, unsigned int flags)
 {
 	int r;
-	mpg123 *m;
+	phi_mpg123 *m;
 
-	if (NULL == (m = calloc(1, sizeof(mpg123))))
+	if (NULL == (m = calloc(1, sizeof(phi_mpg123))))
 		return ERR(MPG123_OUT_OF_MEM);
 
 	m->h = mpg123_new(NULL, &r);
@@ -37,7 +42,7 @@ int mpg123_open(mpg123 **pm, unsigned int flags)
 	mpg123_param(m->h, MPG123_ADD_FLAGS, MPG123_QUIET | MPG123_IGNORE_INFOFRAME | flags, .0);
 
 	if (MPG123_OK != (r = mpg123_open_feed(m->h))) {
-		mpg123_free(m);
+		phi_mpg123_free(m);
 		return ERR(r);
 	}
 
@@ -46,22 +51,22 @@ int mpg123_open(mpg123 **pm, unsigned int flags)
 	return 0;
 }
 
-void mpg123_free(mpg123 *m)
+void phi_mpg123_free(phi_mpg123 *m)
 {
 	mpg123_delete(m->h);
 	mpg123_exit();
 	free(m);
 }
 
-void mpg123_reset(mpg123 *m)
+void phi_mpg123_reset(phi_mpg123 *m)
 {
 	m->h->rdat.buffer.fileoff = 1;
 	m->h->rdat.filepos = 0;
-	feed_set_pos(m->h, 0);
-	frame_buffers_reset(m->h);
+	INT123_feed_set_pos(m->h, 0);
+	INT123_frame_buffers_reset(m->h);
 }
 
-int mpg123_decode(mpg123 *m, const char *data, size_t size, unsigned char **audio)
+int phi_mpg123_decode(phi_mpg123 *m, const char *data, size_t size, unsigned char **audio)
 {
 	int r;
 
@@ -85,9 +90,4 @@ int mpg123_decode(mpg123 *m, const char *data, size_t size, unsigned char **audi
 	return bytes;
 }
 
-int parse_new_id3(mpg123_handle *fr, unsigned long first4bytes){}
-void do_equalizer(real *bandPtr,int channel, real equalizer[2][32]){}
-void do_equalizer_3dnow(real *bandPtr,int channel, real equalizer[2][32]){}
-int compat_open(const char *filename, int flags){return 0;}
-int compat_close(int infd){return 0;}
-void mpg123_free_string(mpg123_string* sb){}
+int INT123_compat_open(const char *filename, int flags){return 0;}

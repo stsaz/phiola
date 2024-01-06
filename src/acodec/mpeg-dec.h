@@ -1,10 +1,10 @@
 /** phiola: MPEG-Layer3 decode
 2022, Simon Zolin */
 
-#include <mpg123/mpg123-ff.h>
+#include <mpg123/mpg123-phi.h>
 
 typedef struct mpeg_dec {
-	mpg123 *m123;
+	phi_mpg123 *m123;
 	uint64 pos;
 	uint64 seek, seek_curr;
 	uint fr_size;
@@ -14,7 +14,7 @@ typedef struct mpeg_dec {
 static void mpeg_dec_close(mpeg_dec *m, phi_track *t)
 {
 	if (m->m123 != NULL)
-		mpg123_free(m->m123);
+		phi_mpg123_free(m->m123);
 	ffmem_free(m);
 }
 
@@ -22,10 +22,10 @@ static void* mpeg_dec_open(phi_track *t)
 {
 	mpeg_dec *m = ffmem_new(mpeg_dec);
 
-	mpg123_init();
+	phi_mpg123_init();
 
 	int err;
-	if (0 != (err = mpg123_open(&m->m123, MPG123_FORCE_FLOAT))) {
+	if (0 != (err = phi_mpg123_open(&m->m123, 0))) {
 		mpeg_dec_close(m, t);
 		return PHI_OPEN_ERR;
 	}
@@ -67,7 +67,7 @@ static int mpeg_dec_process(void *ctx, phi_track *t)
 			uint64 ns = msec_to_samples(t->audio.seek, m->sample_rate) + t->audio.mpeg1_delay;
 			if (m->seek_curr != ns) {
 				m->seek_curr = ns;
-				mpg123_reset(m->m123);
+				phi_mpg123_reset(m->m123);
 			}
 		} else if (m->seek_curr != ~0ULL) {
 			m->seek_curr = ~0ULL;
@@ -75,13 +75,13 @@ static int mpeg_dec_process(void *ctx, phi_track *t)
 	}
 
 	if (in.len != 0 || (t->chain_flags & PHI_FFIRST))
-		r = mpg123_decode(m->m123, in.ptr, in.len, (ffbyte**)&out.ptr);
+		r = phi_mpg123_decode(m->m123, in.ptr, in.len, (ffbyte**)&out.ptr);
 
 	if (r == 0) {
 		goto end;
 	} else if (r < 0) {
-		errlog(t, "mpg123_decode(): %s. Near sample %U"
-			, mpg123_errstr(r), t->audio.pos);
+		errlog(t, "phi_mpg123_decode(): %s. Near sample %U"
+			, phi_mpg123_error(r), t->audio.pos);
 		goto end;
 	}
 

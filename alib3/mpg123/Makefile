@@ -2,7 +2,7 @@
 
 include ../config.mk
 
-VER := 1.25.10
+VER := 1.32.3
 URL := http://mpg123.de/download/mpg123-$(VER).tar.bz2
 PKG := $(notdir $(URL))
 DIR := mpg123-$(VER)
@@ -20,40 +20,65 @@ $(DIR): $(PKG)
 	$(UNTAR_BZ2) $(PKG)
 	touch $(DIR)
 
+_:=
 ifeq "$(OS)" "windows"
-CONFIGURE_FLAGS := --host=x86_64-w64-mingw32
+	CONFIGURE_FLAGS := --host=x86_64-w64-mingw32
+else ifeq "$(CPU)" "arm64"
+	CONFIGURE_FLAGS := --host=aarch64 --with-cpu=aarch64
+else ifeq "$(CPU)" "arm"
+	CONFIGURE_FLAGS := --host=armv7 --with-cpu=neon
 endif
+ifeq "$(SYS)" "android"
+	CONFIGURE_ENV := CC="$(C_DIR)/clang" CFLAGS="$(A_CFLAGS)"
+endif
+CONFIGURE_FLAGS += \
+	--disable-modules    \
+	--disable-id3v2      \
+	--disable-string     \
+	--disable-icy        \
+	--disable-messages   \
+	--disable-16bit      \
+	--disable-8bit       \
+	--disable-32bit      \
+	--disable-equalizer  \
+	--disable-layer1     \
+	--disable-layer2     \
+	--disable-largefile  \
+	--disable-components \
+	--enable-libmpg123
+
 $(DIR)/src/config.h: $(DIR)
-	cd $(DIR) && ./configure $(CONFIGURE_FLAGS)
+	cd $(DIR) && $(CONFIGURE_ENV) ./configure $(CONFIGURE_FLAGS)
 	cd $(DIR) && cat ../*.patch | patch -p1
+	cat $@
+	cd $(DIR) && make phi
 
 # build
 CFLAGS += \
 	-I. -I$(DIR) -I$(DIR)/src -I$(DIR)/src/libmpg123 -I$(DIR)/src/compat \
-	-DMPG123_SO -DMPG123_EXPORT="" -DHAVE_CONFIG_H -DNO_ID3V2 -DNO_ICY -DNO_WARNING -DNO_ERRORMSG -DNO_ERETURN \
-	-DOPT_MULTI -DOPT_GENERIC -DOPT_GENERIC_DITHER -DREAL_IS_FLOAT -DMPG123_NO_LARGENAME \
+	-DMPG123_EXPORT="" -DHAVE_CONFIG_H \
+	-DOPT_MULTI -DOPT_GENERIC -DOPT_GENERIC_DITHER -DREAL_IS_FLOAT \
 	-fomit-frame-pointer -funroll-all-loops -finline-functions -ffast-math
 
 SRC := \
-	$(DIR)/src/compat/compat_str.c \
+	$(DIR)/src/compat/compat_str.c
+SRC += \
 	$(DIR)/src/libmpg123/parse.c \
-	$(DIR)/src/libmpg123/index.c \
 	$(DIR)/src/libmpg123/frame.c \
 	$(DIR)/src/libmpg123/format.c \
 	$(DIR)/src/libmpg123/dct64.c \
+	$(DIR)/src/libmpg123/id3.c \
 	$(DIR)/src/libmpg123/optimize.c \
 	$(DIR)/src/libmpg123/readers.c \
 	$(DIR)/src/libmpg123/tabinit.c \
 	$(DIR)/src/libmpg123/libmpg123.c \
-	$(DIR)/src/libmpg123/ntom.c \
-	$(DIR)/src/libmpg123/synth.c  \
-	$(DIR)/src/libmpg123/layer1.c \
-	$(DIR)/src/libmpg123/layer2.c \
+	$(DIR)/src/libmpg123/index.c \
 	$(DIR)/src/libmpg123/layer3.c \
 	$(DIR)/src/libmpg123/dither.c \
-	$(DIR)/src/libmpg123/synth_8bit.c \
 	$(DIR)/src/libmpg123/synth_real.c \
-	$(DIR)/src/libmpg123/synth_s32.c
+	$(DIR)/src/libmpg123/lfs_wrap.c \
+	$(DIR)/src/libmpg123/feature.c \
+	$(DIR)/src/libmpg123/ntom.c
 
 ifeq "$(CPU)" "x86"
 
@@ -92,20 +117,15 @@ else ifeq "$(CPU)" "amd64"
 	SRC_AS := \
 		$(DIR)/src/libmpg123/getcpuflags_x86_64.S \
 		$(DIR)/src/libmpg123/dct36_x86_64.S \
+		$(DIR)/src/libmpg123/synth_stereo_x86_64_float.S \
+		$(DIR)/src/libmpg123/synth_stereo_x86_64_accurate.S \
 		$(DIR)/src/libmpg123/dct64_x86_64_float.S \
-		$(DIR)/src/libmpg123/dct64_x86_64.S \
+		$(DIR)/src/libmpg123/synth_x86_64_float.S \
+		$(DIR)/src/libmpg123/synth_x86_64_accurate.S \
 		$(DIR)/src/libmpg123/dct36_avx.S \
 		$(DIR)/src/libmpg123/dct64_avx_float.S \
-		$(DIR)/src/libmpg123/dct64_avx.S \
-		$(DIR)/src/libmpg123/synth_x86_64_float.S \
-		$(DIR)/src/libmpg123/synth_x86_64_s32.S \
-		$(DIR)/src/libmpg123/synth_stereo_x86_64_float.S \
-		$(DIR)/src/libmpg123/synth_stereo_x86_64_s32.S \
-		$(DIR)/src/libmpg123/synth_x86_64.S \
-		$(DIR)/src/libmpg123/synth_stereo_x86_64.S \
 		$(DIR)/src/libmpg123/synth_stereo_avx_float.S \
-		$(DIR)/src/libmpg123/synth_stereo_avx_s32.S \
-		$(DIR)/src/libmpg123/synth_stereo_avx.S
+		$(DIR)/src/libmpg123/synth_stereo_avx_accurate.S
 
 else ifeq "$(CPU)" "arm64"
 
@@ -116,14 +136,11 @@ else ifeq "$(CPU)" "arm64"
 	SRC_AS := \
 		$(DIR)/src/libmpg123/check_neon.S \
 		$(DIR)/src/libmpg123/dct36_neon64.S \
-		$(DIR)/src/libmpg123/dct64_neon64.S \
 		$(DIR)/src/libmpg123/dct64_neon64_float.S \
-		$(DIR)/src/libmpg123/synth_neon64.S \
 		$(DIR)/src/libmpg123/synth_neon64_float.S \
-		$(DIR)/src/libmpg123/synth_neon64_s32.S \
-		$(DIR)/src/libmpg123/synth_stereo_neon64.S \
 		$(DIR)/src/libmpg123/synth_stereo_neon64_float.S \
-		$(DIR)/src/libmpg123/synth_stereo_neon64_s32.S
+		$(DIR)/src/libmpg123/synth_neon64_accurate.S \
+		$(DIR)/src/libmpg123/synth_stereo_neon64_accurate.S
 
 else ifeq "$(CPU)" "arm"
 
@@ -134,18 +151,17 @@ else ifeq "$(CPU)" "arm"
 	SRC_AS := \
 		$(DIR)/src/libmpg123/check_neon.S \
 		$(DIR)/src/libmpg123/dct36_neon.S \
-		$(DIR)/src/libmpg123/dct64_neon.S \
 		$(DIR)/src/libmpg123/dct64_neon_float.S \
-		$(DIR)/src/libmpg123/synth_neon.S \
 		$(DIR)/src/libmpg123/synth_neon_float.S \
-		$(DIR)/src/libmpg123/synth_neon_s32.S \
-		$(DIR)/src/libmpg123/synth_stereo_neon.S \
 		$(DIR)/src/libmpg123/synth_stereo_neon_float.S \
-		$(DIR)/src/libmpg123/synth_stereo_neon_s32.S
+		$(DIR)/src/libmpg123/synth_neon_accurate.S \
+		$(DIR)/src/libmpg123/synth_stereo_neon_accurate.S
 
 endif
 
-OBJ := mpg123-ff.o $(SRC:.c=.o) $(SRC_AS:.S=.o)
+OBJ := mpg123-phi.o \
+	$(SRC:.c=.o) \
+	$(SRC_AS:.S=.o)
 
 %.o: %.c
 	$(C) $(CFLAGS) $< -o $@
@@ -155,6 +171,18 @@ OBJ := mpg123-ff.o $(SRC:.c=.o) $(SRC_AS:.S=.o)
 
 $(LIB): $(OBJ)
 	$(LINK) -shared $+ $(LINKFLAGS) -o $@
+ifeq "$(SYS)" "android"
+	$(C_DIR)/llvm-objdump -T $@
+else
+ifeq "$(OS)" "linux"
+	ldd $@
+endif
+	objdump -T $@
+endif
+	ls -l $@
+
+clean-obj:
+	$(RM) $(OBJ) $(LIB)
 
 clean:
 	$(RM) $(OBJ) $(DIR)

@@ -1,0 +1,44 @@
+From e0ac46f091a66d95c118a32673e6a26628dc407f Mon Sep 17 00:00:00 2001
+From: Simon Zolin <4729655+stsaz@users.noreply.github.com>
+Date: Sat, 6 Jan 2024 00:00:00 +0300
+Subject: [PATCH] Makefile: phi
+
+---
+ Makefile         |  6 ++++++
+ list-to-array.sh | 10 ++++++++++
+ 2 files changed, 16 insertions(+)
+ create mode 100644 list-to-array.sh
+
+diff --git a/Makefile b/Makefile
+index ac33da1..c1765df 100644
+--- a/Makefile
++++ b/Makefile
+@@ -6117,3 +6117,9 @@ clean-local-check:
+ # Tell versions [3.59,3.63) of GNU make to not export all variables.
+ # Otherwise a system limit (for SysV at least) may be exceeded.
+ .NOEXPORT:
++
++phi:
++	@echo $(CFLAGS)
++	@echo $(CPPFLAGS)
++	@echo $(DEFS)
++	@bash list-to-array.sh $(src_libmpg123_libmpg123_la_SOURCES)
+diff --git a/list-to-array.sh b/list-to-array.sh
+new file mode 100644
+index 0000000..1209468
+--- /dev/null
++++ b/list-to-array.sh
+@@ -0,0 +1,10 @@
++A=("$@")
++
++for I in "${A[@]}" ; do
++
++	if echo $I | grep -E '\.h$' > /dev/null ; then
++		continue
++	fi
++
++	echo "\$(DIR)/$I \\"
++done
+-- 
+2.40.0
+
