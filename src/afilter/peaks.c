@@ -1,4 +1,4 @@
-/** Analyze and print audio peaks information.
+/** phiola: Analyze and print audio peaks information.
 2019, Simon Zolin */
 
 #include <track.h>

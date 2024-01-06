@@ -3,7 +3,6 @@
 
 package com.github.stsaz.phiola;
 
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
@@ -23,7 +22,10 @@ public class AboutActivity extends AppCompatActivity {
 
 		core = Core.getInstance();
 
-		b.tAbout.setText(String.format("v%s\n\n%s", core.phiola.version(), "https://github.com/stsaz/phiola"));
+		b.lAbout.setText(String.format("v%s\n\n%s\n\nTranslations:\n%s",
+			core.phiola.version(),
+			"https://github.com/stsaz/phiola",
+			"https://hosted.weblate.org/projects/phiola/android/"));
 		b.bSaveLogs.setOnClickListener((v) -> logs_save_file());
 	}
 

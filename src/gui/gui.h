@@ -63,6 +63,8 @@ FF_EXTERN void wabout_show(uint show);
 
 struct gui_wlog;
 FF_EXTERN void wlog_init();
+FF_EXTERN void wlog_userconf_write(ffconfw *cw);
+FF_EXTERN const struct ffarg wlog_args[];
 
 struct gui {
 	ffui_menu mfile

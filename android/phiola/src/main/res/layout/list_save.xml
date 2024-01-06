@@ -1,34 +1,43 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="match_parent" android:layout_height="match_parent">
+	android:layout_width="match_parent"
+	android:layout_height="match_parent">
 
 	<LinearLayout
-		android:layout_width="match_parent" android:layout_height="wrap_content"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
 		android:focusableInTouchMode="true"
 		android:orientation="vertical">
 
 		<TextView
-			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
 			android:text="@string/lssv_ldir"
 			android:textColor="@color/text" />
-		<EditText android:id="@+id/tdir"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
+		<EditText
+			android:id="@+id/e_dir"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="10dp"
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
 
 		<TextView
-			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
 			android:text="@string/lssv_lname"
 			android:textColor="@color/text" />
-
-		<EditText android:id="@+id/tname"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
+		<EditText
+			android:id="@+id/e_name"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="10dp"
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
 
-		<Button android:id="@+id/bsave"
-			android:layout_width="wrap_content" android:layout_height="wrap_content"
+		<Button
+			android:id="@+id/b_save"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
 			android:text="@string/lssv_bsave" />
 
 	</LinearLayout>

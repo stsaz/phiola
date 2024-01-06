@@ -129,6 +129,7 @@ Java_com_github_stsaz_phiola_Phiola_convert(JNIEnv *env, jobject thiz, jstring j
 			.overwrite = !!(flags & F_OVERWRITE),
 		},
 		.stream_copy = jni_obj_bool(jconf, jni_field(jc_conf, "copy", JNI_TBOOL)),
+		.print_time = x->debug,
 	};
 
 	const phi_track_if *track = x->core->track;

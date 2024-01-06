@@ -79,9 +79,15 @@ static struct ffarg_ctx guimod_args_f() {
 	return ax;
 }
 
+static struct ffarg_ctx wlog_args_f() {
+	struct ffarg_ctx ax = { wlog_args, gg->wlog };
+	return ax;
+}
+
 static const struct ffarg args[] = {
 	{ "convert",	'{',	wconvert_args_f },
 	{ "info",		'{',	winfo_args_f },
+	{ "log",		'{',	wlog_args_f },
 	{ "main",		'{',	wmain_args_f },
 	{ "mod",		'{',	guimod_args_f },
 	{ "record",		'{',	wrecord_args_f },
@@ -138,6 +144,10 @@ static void gui_userconf_save()
 
 	ffconfw_add2obj(&cw, "settings", '{');
 		wsettings_userconf_write(&cw);
+	ffconfw_add_obj(&cw, '}');
+
+	ffconfw_add2obj(&cw, "log", '{');
+		wlog_userconf_write(&cw);
 	ffconfw_add_obj(&cw, '}');
 
 	ffconfw_fin(&cw);

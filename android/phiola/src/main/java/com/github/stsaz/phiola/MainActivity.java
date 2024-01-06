@@ -10,27 +10,21 @@ import android.content.res.ColorStateList;
 import android.graphics.PorterDuff;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ImageButton;
 import android.widget.PopupMenu;
 import android.widget.SeekBar;
-import android.widget.TextView;
-import android.widget.ToggleButton;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.appcompat.widget.Toolbar;
 import androidx.appcompat.widget.SearchView;
 import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import java.io.File;
 import java.util.Calendar;
@@ -160,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
 				if (mlist == null) {
 					mlist = new PopupMenu(this, findViewById(R.id.action_list_menu_show));
 					mlist.getMenuInflater().inflate(R.menu.list, mlist.getMenu());
-					mlist.setOnMenuItemClickListener((it) -> list_menu_click(it));
+					mlist.setOnMenuItemClickListener(this::list_menu_click);
 				}
 				mlist.show();
 				return true;

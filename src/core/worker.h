@@ -48,7 +48,7 @@ void wrk_task(struct worker *w, phi_task *t, phi_task_func func, void *param)
 	t->handler = func;
 	t->param = param;
 	zzkq_tq_post(&w->kq_tq, (fftask*)t);
-	dbglog("task added: %p", t);
+	dbglog("task added: %p %p %p", t, t->handler, t->param);
 }
 
 static void timer_suspend(void *param)

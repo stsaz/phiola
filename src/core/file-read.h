@@ -23,7 +23,7 @@ static void fr_close(struct file_r *f, phi_track *t)
 {
 	dbglog(t, "open:%Ums  io:%Ums;%UKB/%U  cache-hits:%U"
 		, fftime_to_msec(&f->stats.t_open)
-		, fftime_to_msec(&f->stats.t_io), f->stats.io_bytes, f->fcache.misses
+		, fftime_to_msec(&f->stats.t_io), f->stats.io_bytes / 1024, f->fcache.misses
 		, f->fcache.hits);
 	fcache_destroy(&f->fcache);
 	fffile_close(f->fd);

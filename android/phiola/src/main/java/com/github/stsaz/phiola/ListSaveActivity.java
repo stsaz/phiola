@@ -4,8 +4,6 @@
 package com.github.stsaz.phiola;
 
 import android.os.Bundle;
-import android.widget.Button;
-import android.widget.EditText;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -23,11 +21,10 @@ public class ListSaveActivity extends AppCompatActivity {
 		b = ListSaveBinding.inflate(getLayoutInflater());
 		setContentView(b.getRoot());
 
-		core = Core.getInstance();
+		b.bSave.setOnClickListener((v) -> save());
 
-		b.bsave.setOnClickListener((v) -> save());
-		b.tdir.setText(core.setts.plist_save_dir);
-		b.tname.setText("Playlist1");
+		core = Core.getInstance();
+		load();
 	}
 
 	protected void onDestroy() {
@@ -35,9 +32,14 @@ public class ListSaveActivity extends AppCompatActivity {
 		super.onDestroy();
 	}
 
+	private void load() {
+		b.eDir.setText(core.setts.plist_save_dir);
+		b.eName.setText("Playlist1");
+	}
+
 	private void save() {
-		core.setts.plist_save_dir = b.tdir.getText().toString();
-		String fn = String.format("%s/%s.m3u8", core.setts.plist_save_dir, b.tname.getText().toString());
+		core.setts.plist_save_dir = b.eDir.getText().toString();
+		String fn = String.format("%s/%s.m3u8", core.setts.plist_save_dir, b.eName.getText().toString());
 		File f = new File(fn);
 		if (f.exists()) {
 			core.errlog(TAG, "File already exists.  Please specify a different name.");

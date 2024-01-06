@@ -4,19 +4,24 @@
 	android:layout_height="match_parent"
 	android:orientation="vertical">
 
-	<ImageView android:id="@+id/imageView"
-		android:layout_width="match_parent" android:layout_height="wrap_content"
+	<ImageView
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
 		app:srcCompat="@drawable/ic_phiola" />
 
-	<TextView android:id="@+id/t_about"
-		android:layout_width="match_parent" android:layout_height="wrap_content"
+	<TextView
+		android:id="@+id/l_about"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
 		android:layout_margin="10dp"
 		android:autoLink="web"
 		android:gravity="center_horizontal"
 		android:textAlignment="center" />
 
-	<Button android:id="@+id/b_save_logs"
-		android:layout_width="wrap_content" android:layout_height="wrap_content"
+	<Button
+		android:id="@+id/b_save_logs"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
 		android:text="@string/about_save_logs" />
 
 </LinearLayout>

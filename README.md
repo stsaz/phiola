@@ -57,7 +57,7 @@ Features and notes by platform:
 | Batch conversion     | ✅ | ✅ | ❌ |
 | Record from mic      | ✅ | ✅ | ✅ |
 | Record from Internet | ✅ | ✅ | ❌ |
-| Record what you hear | ❌ | ✅ | ❌ |
+| Record what you hear | ✅ (PulseAudio) | ✅ | ❌ |
 | Requirements         | glibc-2.28 | Windows 7 | Android 6 |
 | HW Requirements      | AMD64 | AMD64 | ARM64, ARM(incomplete) |
 
@@ -150,6 +150,12 @@ phiola record -o @nowdate-@nowtime.flac
 
 # Record with a specific audio format
 phiola record -aformat int16 -rate 48000 -channels 2 -o audio.flac
+
+# Record what is currently playing on your system ("what you hear")
+# * WASAPI:
+phiola record -loopback -o audio.flac
+# * PulseAudio:
+phiola record -dev `phiola dev list -f Monitor -n` -o audio.flac
 
 # Start recording in background, then stop recording from another process:
 #   Step 1: record while listening for system-wide commands
@@ -277,7 +283,7 @@ The best example how to use phiola software interface is to see the source code 
 
 ## External Libraries
 
-phiola uses modified versions of these third party libraries: [libALAC](https://github.com/macosforge/alac), [libfdk-aac](https://github.com/mstorsjo/fdk-aac), [libFLAC](https://github.com/xiph/flac), libMAC, libmpg123, libmpc, [libogg](https://github.com/xiph/ogg), [libopus](https://github.com/xiph/opus), [libvorbis](https://github.com/xiph/vorbis), libwavpack, libsoxr, [libzstd](https://github.com/facebook/zstd), [libDynamicAudioNormalizer](https://github.com/lordmulder/DynamicAudioNormalizer).  And unmodified libraries: libssl & libcrypto.  Many thanks to their creators for the great work!!!  Please consider their licenses before commercial use.  See contents of `alib3/` for more info.
+phiola uses modified versions of these third party libraries: [libALAC](https://github.com/macosforge/alac), [libfdk-aac](https://github.com/mstorsjo/fdk-aac), [libFLAC](https://github.com/xiph/flac), libMAC, [libmpg123](https://mpg123.de), libmpc, [libogg](https://github.com/xiph/ogg), [libopus](https://github.com/xiph/opus), [libvorbis](https://github.com/xiph/vorbis), libwavpack, libsoxr, [libzstd](https://github.com/facebook/zstd), [libDynamicAudioNormalizer](https://github.com/lordmulder/DynamicAudioNormalizer).  And unmodified libraries: libssl & libcrypto.  Many thanks to their creators for the great work!!!  Please consider their licenses before commercial use.  See contents of `alib3/` for more info.
 
 Additionally:
 
@@ -309,3 +315,4 @@ phiola is not (and most likely will never be) a competitor to large commercial p
 phiola is licensed under BSD-2.
 But consider licenses of the third party libraries before commercial use.
 Playback control icons by [Icons8](https://icons8.com).
+[Translations for Android](https://hosted.weblate.org/projects/phiola/android/) are powered by [Weblate](https://weblate.org).

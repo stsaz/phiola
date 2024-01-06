@@ -20,7 +20,8 @@ RUN apt update && \
 FROM cxx-mingw64-debian-bookworm
 RUN apt install -y \
  perl \
- zstd unzip cmake patch dos2unix curl
+ zstd unzip bzip2 \
+ cmake patch dos2unix curl
 EOF
 	fi
 
