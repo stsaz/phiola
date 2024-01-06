@@ -129,17 +129,10 @@ uint adevices_fill(uint flags, ffui_comboboxxx &cb, uint index)
 	return index;
 }
 
-static void wrecord_ui_from_conf()
+static void file_extensions_fill()
 {
 	gui_wrecord *w = gg->wrecord;
-	w->edir.text((w->conf_dir.len) ? w->conf_dir : gd->user_conf_dir);
-	w->ename.text((w->conf_name.len) ? w->conf_name : "rec-@nowdate-@nowtime");
-	w->conf_dir.free();
-	w->conf_name.free();
-
-	w->conf_idev = adevices_fill(PHI_ADEV_CAPTURE, w->cbdev, w->conf_idev);
-
-	uint cbext_index = 0 /*m4a*/;
+	uint index = 0 /*m4a*/;
 	static const char oext[][5] = {
 		"m4a",
 		"ogg",
@@ -150,10 +143,23 @@ static void wrecord_ui_from_conf()
 	for (uint i = 0;  i < FF_COUNT(oext);  i++) {
 		w->cbext.add(oext[i]);
 		if (w->conf_ext == oext[i])
-			cbext_index = i;
+			index = i;
 	}
-	w->cbext.set(cbext_index);
+	w->cbext.set(index);
 	w->conf_ext.free();
+}
+
+static void wrecord_ui_from_conf()
+{
+	gui_wrecord *w = gg->wrecord;
+	w->edir.text((w->conf_dir.len) ? w->conf_dir : gd->user_conf_dir);
+	w->ename.text((w->conf_name.len) ? w->conf_name : "rec-@nowdate-@nowtime");
+	w->conf_dir.free();
+	w->conf_name.free();
+
+	w->conf_idev = adevices_fill(PHI_ADEV_CAPTURE, w->cbdev, w->conf_idev);
+
+	file_extensions_fill();
 
 	ffstrxx_buf<100> s;
 	w->eaacq.text(s.zfmt("%u", (w->conf_aacq) ? w->conf_aacq : 5));
