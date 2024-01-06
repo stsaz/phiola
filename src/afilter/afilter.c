@@ -13,6 +13,7 @@ const phi_core *core;
 #define dbglog(t, ...)  phi_dbglog(core, NULL, t, __VA_ARGS__)
 
 #include <afilter/auto-conv.h>
+#include <afilter/silence-gen.h>
 #include <afilter/until.h>
 
 extern const phi_filter
@@ -28,6 +29,7 @@ static const void* af_iface(const char *name)
 		{ "gain",		&phi_gain },
 		{ "peaks",		&phi_peaks },
 		{ "rtpeak",		&phi_rtpeak },
+		{ "silence-gen",&phi_sil_gen },
 		{ "until",		&phi_until },
 		{}
 	};

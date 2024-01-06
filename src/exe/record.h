@@ -13,7 +13,6 @@ Options:\n\
   `-exclusive`            Open device in exclusive mode (WASAPI)\n\
   `-loopback`             Loopback mode (\"record what you hear\") (WASAPI)\n\
                           Note: '-device NUMBER' specifies Playback device and not Capture device.\n\
-                          Note: recording is automatically on pause unless something is playing!\n\
   `-buffer` NUMBER        Length (in msec) of the capture buffer\n\
   `-aformat` FORMAT       Audio sample format:\n\
                           int8 | int16 | int24 | int32 | float32\n\
@@ -92,6 +91,39 @@ struct cmd_rec {
 	uint64	until;
 };
 
+#ifdef FF_WIN
+/** Start the track that generates silence so that
+ WASAPI loopback recording won't be paused when there's nothing else playing. */
+static void rec_silence_track(struct cmd_rec *r)
+{
+	const phi_track_if *track = x->core->track;
+	struct phi_track_conf c = {
+		.oaudio = {
+			.device_index = r->device,
+		},
+	};
+	phi_track *t = track->create(&c);
+
+	struct phi_af af = {
+		.format = PHI_PCM_16,
+		.rate = 48000,
+		.channels = 2,
+	};
+	t->oaudio.format = af;
+
+	if (!track->filter(t, x->core->mod("afilter.silence-gen"), 0)
+		|| !track->filter(t, x->core->mod("wasapi.play"), 0)) {
+		track->close(t);
+		return;
+	}
+
+	track->start(t);
+}
+
+#else
+static void rec_silence_track(struct cmd_rec *r) {}
+#endif
+
 static int rec_action(struct cmd_rec *r)
 {
 	struct phi_track_conf c = {
@@ -161,6 +193,10 @@ static int rec_action(struct cmd_rec *r)
 		if (rsv->start(NULL))
 			return -1;
 	}
+
+	if (r->loopback)
+		rec_silence_track(r);
+
 	return 0;
 }
 
