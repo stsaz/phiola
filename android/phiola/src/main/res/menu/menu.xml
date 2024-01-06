@@ -13,7 +13,7 @@
 		android:title="@string/mfile_convert" />
 	<item
 		android:id="@+id/action_file_showcur"
-		android:title="@string/menu_show_expl" />
+		android:title="@string/mfile_show" />
 	<item
 		android:id="@+id/action_file_del"
 		android:title="@string/mfile_del" />

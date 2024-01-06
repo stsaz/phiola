@@ -5,12 +5,12 @@ package com.github.stsaz.phiola;
 
 import android.os.Build;
 import android.os.Bundle;
+
 import android.widget.ArrayAdapter;
-import android.widget.TextView;
+import android.widget.SeekBar;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.SwitchCompat;
 
 import com.github.stsaz.phiola.databinding.SettingsBinding;
 
@@ -24,9 +24,56 @@ public class SettingsActivity extends AppCompatActivity {
 		super.onCreate(savedInstanceState);
 		b = SettingsBinding.inflate(getLayoutInflater());
 		setContentView(b.getRoot());
+
 		ActionBar actionBar = getSupportActionBar();
 		if (actionBar != null)
 			actionBar.setDisplayHomeAsUpEnabled(true);
+
+		ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item
+			, new String[] {
+				"Default",
+				"1 (Mono)",
+				"2 (Stereo)",
+			});
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		b.spRecChannels.setAdapter(adapter);
+
+		// Default; 8000..192000 by 1000
+		b.sbRecRate.setMax(rec_rate_progress(192000));
+		b.sbRecRate.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+				@Override
+				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+					if (fromUser) {
+						String s = "Default";
+						if (progress != 0)
+							s = core.int_to_str(rec_rate_value(progress));
+						b.eRecRate.setText(s);
+					}
+				}
+
+				@Override
+				public void onStartTrackingTouch(SeekBar seekBar) {}
+
+				@Override
+				public void onStopTrackingTouch(SeekBar seekBar) {}
+			});
+
+		adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item
+			, CoreSettings.rec_formats);
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		b.spRecEnc.setAdapter(adapter);
+
+		if (Build.VERSION.SDK_INT < 26) {
+			b.spRecChannels.setEnabled(false);
+			b.sbRecRate.setEnabled(false);
+			b.eRecRate.setEnabled(false);
+			b.spRecEnc.setEnabled(false);
+			b.eRecBufLen.setEnabled(false);
+			b.eRecUntil.setEnabled(false);
+			b.swRecDanorm.setEnabled(false);
+			b.eRecGain.setEnabled(false);
+			b.swRecExclusive.setEnabled(false);
+		}
 
 		core = Core.getInstance();
 		load();
@@ -48,30 +95,30 @@ public class SettingsActivity extends AppCompatActivity {
 
 	private void load() {
 		// Interface
-		b.bdark.setChecked(core.gui().theme == GUI.THM_DARK);
-		b.bStateHide.setChecked(core.gui().state_hide);
-		b.bshowfilter.setChecked(core.gui().filter_hide);
-		b.bshowrec.setChecked(core.gui().record_hide);
-		b.bsvcNotifDisable.setChecked(core.setts.svc_notification_disable);
-		b.blistRmOnErr.setChecked(core.setts.qu_rm_on_err);
-		b.uiInfoInTitle.setChecked(core.gui().ainfo_in_title);
+		b.swDark.setChecked(core.gui().theme == GUI.THM_DARK);
+		b.swStateHide.setChecked(core.gui().state_hide);
+		b.swShowfilter.setChecked(core.gui().filter_hide);
+		b.swShowrec.setChecked(core.gui().record_hide);
+		b.swSvcNotifDisable.setChecked(core.setts.svc_notification_disable);
+		b.swUiInfoInTitle.setChecked(core.gui().ainfo_in_title);
 
 		// Playback
-		b.brandom.setChecked(core.queue().is_random());
-		b.brepeat.setChecked(core.queue().is_repeat());
-		b.bnotags.setChecked(core.setts.no_tags);
-		b.blistAddRmOnPrev.setChecked(core.setts.list_add_rm_on_prev);
-		b.blistRmOnNext.setChecked(core.setts.list_rm_on_next);
-		b.tcodepage.setText(core.setts.codepage);
-		b.tAutoSkip.setText(core.queue().auto_skip_to_str());
-		b.tAutoSkipTail.setText(core.queue().auto_skip_tail_to_str());
-		b.tAutoStop.setText(core.int_to_str(core.queue().auto_stop_min));
+		b.swRandom.setChecked(core.queue().is_random());
+		b.swRepeat.setChecked(core.queue().is_repeat());
+		b.swNotags.setChecked(core.setts.play_no_tags);
+		b.swListAddRmOnNext.setChecked(core.queue().add_rm_on_next);
+		b.swListRmOnNext.setChecked(core.queue().rm_on_next);
+		b.swListRmOnErr.setChecked(core.queue().rm_on_err);
+		b.eCodepage.setText(core.setts.codepage);
+		b.eAutoSkip.setText(core.queue().auto_skip_to_str());
+		b.eAutoSkipTail.setText(core.queue().auto_skip_tail_to_str());
+		b.eAutoStop.setText(core.int_to_str(core.queue().auto_stop_min));
 
 		// Operation
-		b.tdataDir.setText(core.setts.pub_data_dir);
-		b.ttrashDir.setText(core.setts.trash_dir);
-		b.bfileDel.setChecked(core.setts.file_del);
-		b.tquickMoveDir.setText(core.setts.quick_move_dir);
+		b.eDataDir.setText(core.setts.pub_data_dir);
+		b.eTrashDir.setText(core.setts.trash_dir);
+		b.swFileDel.setChecked(core.setts.file_del);
+		b.eQuickMoveDir.setText(core.setts.quick_move_dir);
 
 		rec_load();
 	}
@@ -79,38 +126,38 @@ public class SettingsActivity extends AppCompatActivity {
 	private void save() {
 		// Interface
 		int i = GUI.THM_DEF;
-		if (b.bdark.isChecked())
+		if (b.swDark.isChecked())
 			i = GUI.THM_DARK;
 		core.gui().theme = i;
 
-		core.gui().state_hide = b.bStateHide.isChecked();
-		core.gui().filter_hide = b.bshowfilter.isChecked();
-		core.gui().record_hide = b.bshowrec.isChecked();
-		core.gui().ainfo_in_title = b.uiInfoInTitle.isChecked();
+		core.gui().state_hide = b.swStateHide.isChecked();
+		core.gui().filter_hide = b.swShowfilter.isChecked();
+		core.gui().record_hide = b.swShowrec.isChecked();
+		core.gui().ainfo_in_title = b.swUiInfoInTitle.isChecked();
 
 		// Playback
-		core.queue().random(b.brandom.isChecked());
-		core.queue().repeat(b.brepeat.isChecked());
-		core.setts.no_tags = b.bnotags.isChecked();
-		core.setts.list_add_rm_on_prev = b.blistAddRmOnPrev.isChecked();
-		core.setts.list_rm_on_next = b.blistRmOnNext.isChecked();
-		core.setts.qu_rm_on_err = b.blistRmOnErr.isChecked();
-		core.setts.set_codepage(b.tcodepage.getText().toString());
+		core.queue().random(b.swRandom.isChecked());
+		core.queue().repeat(b.swRepeat.isChecked());
+		core.setts.play_no_tags = b.swNotags.isChecked();
+		core.queue().add_rm_on_next = b.swListAddRmOnNext.isChecked();
+		core.queue().rm_on_next = b.swListRmOnNext.isChecked();
+		core.queue().rm_on_err = b.swListRmOnErr.isChecked();
+		core.setts.set_codepage(b.eCodepage.getText().toString());
 		core.phiola.setCodepage(core.setts.codepage);
-		core.queue().auto_skip(b.tAutoSkip.getText().toString());
-		core.queue().auto_skip_tail(b.tAutoSkipTail.getText().toString());
-		core.queue().auto_stop_min = core.str_to_uint(b.tAutoStop.getText().toString(), 0);
+		core.queue().auto_skip(b.eAutoSkip.getText().toString());
+		core.queue().auto_skip_tail(b.eAutoSkipTail.getText().toString());
+		core.queue().auto_stop_min = core.str_to_uint(b.eAutoStop.getText().toString(), 0);
 
 		// Operation
-		String s = b.tdataDir.getText().toString();
+		String s = b.eDataDir.getText().toString();
 		if (s.isEmpty())
 			s = core.storage_path + "/phiola";
 		core.setts.pub_data_dir = s;
 
-		core.setts.svc_notification_disable = b.bsvcNotifDisable.isChecked();
-		core.setts.trash_dir = b.ttrashDir.getText().toString();
-		core.setts.file_del = b.bfileDel.isChecked();
-		core.setts.quick_move_dir = b.tquickMoveDir.getText().toString();
+		core.setts.svc_notification_disable = b.swSvcNotifDisable.isChecked();
+		core.setts.trash_dir = b.eTrashDir.getText().toString();
+		core.setts.file_del = b.swFileDel.isChecked();
+		core.setts.quick_move_dir = b.eQuickMoveDir.getText().toString();
 
 		rec_save();
 		core.queue().conf_normalize();
@@ -118,50 +165,42 @@ public class SettingsActivity extends AppCompatActivity {
 	}
 
 	private int rec_format_index(String s) {
-		for (int i = 0;  i < core.setts.rec_formats.length;  i++) {
-			if (core.setts.rec_formats[i].equals(s))
+		for (int i = 0; i < CoreSettings.rec_formats.length; i++) {
+			if (CoreSettings.rec_formats[i].equals(s))
 				return i;
 		}
 		return -1;
 	}
 
+	private static int rec_rate_value(int progress) { return 8000 + (progress - 1) * 1000; }
+	private static int rec_rate_progress(int rate) { return 1 + (rate - 8000) / 1000; }
+
 	private void rec_load() {
-		b.trecdir.setText(core.setts.rec_path);
-
-		ArrayAdapter<String> adapter = new ArrayAdapter<>(
-			this,
-			android.R.layout.simple_spinner_item,
-			core.setts.rec_formats
-		);
-		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		b.recEnc.setAdapter(adapter);
-		b.recEnc.setSelection(rec_format_index(core.setts.rec_enc));
-
-		b.recBitrate.setText(Integer.toString(core.setts.rec_bitrate));
-		b.recBufLen.setText(core.int_to_str(core.setts.rec_buf_len_ms));
-		b.recUntil.setText(core.int_to_str(core.setts.rec_until_sec));
-		b.recDanorm.setChecked(core.setts.rec_danorm);
-		b.recGain.setText(core.float_to_str((float)core.setts.rec_gain_db100 / 100));
-		b.recExclusive.setChecked(core.setts.rec_exclusive);
-
-		if (Build.VERSION.SDK_INT < 26) {
-			b.recEnc.setEnabled(false);
-			b.recBufLen.setEnabled(false);
-			b.recUntil.setEnabled(false);
-			b.recDanorm.setEnabled(false);
-			b.recGain.setEnabled(false);
-			b.recExclusive.setEnabled(false);
+		b.eRecDir.setText(core.setts.rec_path);
+		b.spRecChannels.setSelection(core.setts.rec_channels);
+		if (core.setts.rec_rate != 0) {
+			b.eRecRate.setText(core.int_to_str(core.setts.rec_rate));
+			b.sbRecRate.setProgress(rec_rate_progress(core.setts.rec_rate));
 		}
+		b.spRecEnc.setSelection(rec_format_index(core.setts.rec_enc));
+		b.eRecBitrate.setText(Integer.toString(core.setts.rec_bitrate));
+		b.eRecBufLen.setText(core.int_to_str(core.setts.rec_buf_len_ms));
+		b.eRecUntil.setText(core.int_to_str(core.setts.rec_until_sec));
+		b.swRecDanorm.setChecked(core.setts.rec_danorm);
+		b.eRecGain.setText(core.float_to_str((float)core.setts.rec_gain_db100 / 100));
+		b.swRecExclusive.setChecked(core.setts.rec_exclusive);
 	}
 
 	private void rec_save() {
-		core.setts.rec_path = b.trecdir.getText().toString();
-		core.setts.rec_bitrate = core.str_to_uint(b.recBitrate.getText().toString(), -1);
-		core.setts.rec_enc = core.setts.rec_formats[b.recEnc.getSelectedItemPosition()];
-		core.setts.rec_buf_len_ms = core.str_to_uint(b.recBufLen.getText().toString(), -1);
-		core.setts.rec_until_sec = core.str_to_uint(b.recUntil.getText().toString(), -1);
-		core.setts.rec_danorm = b.recDanorm.isChecked();
-		core.setts.rec_gain_db100 = (int)(core.str_to_float(b.recGain.getText().toString(), 0) * 100);
-		core.setts.rec_exclusive = b.recExclusive.isChecked();
+		core.setts.rec_path = b.eRecDir.getText().toString();
+		core.setts.rec_bitrate = core.str_to_uint(b.eRecBitrate.getText().toString(), -1);
+		core.setts.rec_channels = b.spRecChannels.getSelectedItemPosition();
+		core.setts.rec_rate = core.str_to_uint(b.eRecRate.getText().toString(), 0);
+		core.setts.rec_enc = CoreSettings.rec_formats[b.spRecEnc.getSelectedItemPosition()];
+		core.setts.rec_buf_len_ms = core.str_to_uint(b.eRecBufLen.getText().toString(), -1);
+		core.setts.rec_until_sec = core.str_to_uint(b.eRecUntil.getText().toString(), -1);
+		core.setts.rec_danorm = b.swRecDanorm.isChecked();
+		core.setts.rec_gain_db100 = (int)(core.str_to_float(b.eRecGain.getText().toString(), 0) * 100);
+		core.setts.rec_exclusive = b.swRecExclusive.isChecked();
 	}
 }

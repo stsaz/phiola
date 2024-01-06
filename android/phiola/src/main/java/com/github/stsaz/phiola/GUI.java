@@ -3,7 +3,6 @@
 
 package com.github.stsaz.phiola;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.widget.Toast;
 
@@ -25,34 +24,59 @@ class GUI {
 		this.core = core;
 	}
 
-	@SuppressLint("DefaultLocale")
-	String writeconf() {
-		return String.format("curpath %s\n", cur_path) +
-				String.format("state_hide %d\n", core.bool_to_int(state_hide)) +
-				String.format("filter_hide %d\n", core.bool_to_int(filter_hide)) +
-				String.format("record_hide %d\n", core.bool_to_int(record_hide)) +
-				String.format("list_pos %d\n", list_pos) +
-				String.format("ui_info_in_title %d\n", core.bool_to_int(ainfo_in_title)) +
-				String.format("theme %d\n", theme);
+	String conf_write() {
+		return String.format(
+			"ui_curpath %s\n"
+			+ "ui_state_hide %d\n"
+			+ "ui_filter_hide %d\n"
+			+ "ui_record_hide %d\n"
+			+ "list_pos %d\n"
+			+ "ui_info_in_title %d\n"
+			+ "ui_theme %d\n"
+			, cur_path
+			, core.bool_to_int(state_hide)
+			, core.bool_to_int(filter_hide)
+			, core.bool_to_int(record_hide)
+			, list_pos
+			, core.bool_to_int(ainfo_in_title)
+			, theme
+			);
 	}
 
-	int readconf(String k, String v) {
-		if (k.equals("curpath"))
+	int conf_process1(int k, String v) {
+		switch (k) {
+
+		case Phiola.CONF_UI_CURPATH:
 			cur_path = v;
-		else if (k.equals("state_hide"))
+			break;
+
+		case Phiola.CONF_UI_STATE_HIDE:
 			state_hide = core.str_to_bool(v);
-		else if (k.equals("filter_hide"))
+			break;
+
+		case Phiola.CONF_UI_FILTER_HIDE:
 			filter_hide = core.str_to_bool(v);
-		else if (k.equals("record_hide"))
+			break;
+
+		case Phiola.CONF_UI_RECORD_HIDE:
 			record_hide = core.str_to_bool(v);
-		else if (k.equals("list_pos"))
+			break;
+
+		case Phiola.CONF_LIST_POS:
 			list_pos = core.str_to_uint(v, 0);
-		else if (k.equals("ui_info_in_title"))
+			break;
+
+		case Phiola.CONF_UI_INFO_IN_TITLE:
 			ainfo_in_title = core.str_to_bool(v);
-		else if (k.equals("theme"))
+			break;
+
+		case Phiola.CONF_UI_THEME:
 			theme = core.str_to_uint(v, 0);
-		else
+			break;
+
+		default:
 			return 1;
+		}
 		return 0;
 	}
 

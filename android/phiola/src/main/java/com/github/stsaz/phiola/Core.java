@@ -5,7 +5,6 @@ package com.github.stsaz.phiola;
 
 import androidx.annotation.NonNull;
 
-import android.annotation.SuppressLint;
 import android.content.ClipboardManager;
 import android.content.ClipData;
 import android.content.Context;
@@ -17,18 +16,22 @@ class CoreSettings {
 	boolean svc_notification_disable;
 	String trash_dir;
 	boolean file_del;
-	boolean no_tags;
-	boolean list_add_rm_on_prev, list_rm_on_next;
-	boolean qu_rm_on_err;
+	boolean play_no_tags;
 	String codepage;
 	String pub_data_dir;
 	String plist_save_dir;
 	String quick_move_dir;
 
-	String rec_path; // directory for recordings
-	String rec_enc, rec_fmt;
-	int rec_bitrate, rec_buf_len_ms, rec_until_sec, rec_gain_db100;
-	boolean rec_danorm, rec_exclusive;
+	String	rec_path; // directory for recordings
+	String	rec_enc, rec_fmt;
+	int		rec_channels;
+	int		rec_rate;
+	int		rec_bitrate;
+	int		rec_buf_len_ms;
+	int		rec_until_sec;
+	int		rec_gain_db100;
+	boolean	rec_danorm;
+	boolean	rec_exclusive;
 	static final String[] rec_formats = {
 		"AAC-LC",
 		"AAC-HE",
@@ -37,11 +40,13 @@ class CoreSettings {
 		"Opus"
 	};
 
-	String conv_outext;
-	int conv_aac_quality;
-	int conv_opus_quality;
-	int conv_vorbis_quality;
-	boolean conv_copy;
+	String	conv_outext;
+	int		conv_aac_quality;
+	int		conv_opus_quality;
+	int		conv_vorbis_quality;
+	boolean	conv_copy;
+	boolean	conv_file_date_preserve;
+	boolean	conv_new_add_list;
 	static final String[] conv_extensions = {
 		"m4a",
 		"opus",
@@ -72,34 +77,59 @@ class CoreSettings {
 		conv_vorbis_quality = 7;
 	}
 
-	@SuppressLint("DefaultLocale")
-	String writeconf() {
-		return String.format("svc_notification_disable %d\n", core.bool_to_int(svc_notification_disable)) +
-				String.format("file_delete %d\n", core.bool_to_int(file_del)) +
-				String.format("no_tags %d\n", core.bool_to_int(no_tags)) +
-				String.format("list_add_rm_on_prev %d\n", core.bool_to_int(list_add_rm_on_prev)) +
-				String.format("list_rm_on_next %d\n", core.bool_to_int(list_rm_on_next)) +
-				String.format("qu_rm_on_err %d\n", core.bool_to_int(qu_rm_on_err)) +
-				String.format("codepage %s\n", codepage) +
-				String.format("data_dir %s\n", pub_data_dir) +
-				String.format("plist_save_dir %s\n", plist_save_dir) +
-				String.format("quick_move_dir %s\n", quick_move_dir) +
-				String.format("trash_dir_rel %s\n", trash_dir) +
-
-				String.format("rec_path %s\n", rec_path) +
-				String.format("rec_enc %s\n", rec_enc) +
-				String.format("rec_bitrate %d\n", rec_bitrate) +
-				String.format("rec_buf_len %d\n", rec_buf_len_ms) +
-				String.format("rec_until %d\n", rec_until_sec) +
-				String.format("rec_danorm %d\n", core.bool_to_int(rec_danorm)) +
-				String.format("rec_gain %d\n", rec_gain_db100) +
-				String.format("rec_exclusive %d\n", core.bool_to_int(rec_exclusive)) +
-
-				String.format("conv_outext %s\n", conv_outext) +
-				String.format("conv_aac_quality %d\n", conv_aac_quality) +
-				String.format("conv_opus_quality %d\n", conv_opus_quality) +
-				String.format("conv_vorbis_quality %d\n", conv_vorbis_quality) +
-				String.format("conv_copy %d\n", core.bool_to_int(conv_copy));
+	String conf_write() {
+		return String.format(
+			"ui_svc_notfn_disable %d\n"
+			+ "play_no_tags %d\n"
+			+ "codepage %s\n"
+			+ "op_file_delete %d\n"
+			+ "op_data_dir %s\n"
+			+ "op_plist_save_dir %s\n"
+			+ "op_quick_move_dir %s\n"
+			+ "op_trash_dir_rel %s\n"
+			+ "rec_path %s\n"
+			+ "rec_enc %s\n"
+			+ "rec_channels %d\n"
+			+ "rec_rate %d\n"
+			+ "rec_bitrate %d\n"
+			+ "rec_buf_len %d\n"
+			+ "rec_until %d\n"
+			+ "rec_danorm %d\n"
+			+ "rec_gain %d\n"
+			+ "rec_exclusive %d\n"
+			+ "conv_outext %s\n"
+			+ "conv_aac_q %d\n"
+			+ "conv_opus_q %d\n"
+			+ "conv_vorbis_q %d\n"
+			+ "conv_copy %d\n"
+			+ "conv_file_date_pres %d\n"
+			+ "conv_new_add_list %d\n"
+			, core.bool_to_int(svc_notification_disable)
+			, core.bool_to_int(play_no_tags)
+			, codepage
+			, core.bool_to_int(file_del)
+			, pub_data_dir
+			, plist_save_dir
+			, quick_move_dir
+			, trash_dir
+			, rec_path
+			, rec_enc
+			, rec_channels
+			, rec_rate
+			, rec_bitrate
+			, rec_buf_len_ms
+			, rec_until_sec
+			, core.bool_to_int(rec_danorm)
+			, rec_gain_db100
+			, core.bool_to_int(rec_exclusive)
+			, conv_outext
+			, conv_aac_quality
+			, conv_opus_quality
+			, conv_vorbis_quality
+			, core.bool_to_int(conv_copy)
+			, core.bool_to_int(conv_file_date_preserve)
+			, core.bool_to_int(conv_new_add_list)
+			);
 	}
 
 	void set_codepage(String val) {
@@ -130,59 +160,112 @@ class CoreSettings {
 			rec_until_sec = 3600;
 	}
 
-	int readconf(String k, String v) {
-		if (k.equals("svc_notification_disable"))
+	int conf_process1(int k, String v) {
+		switch (k) {
+
+		case Phiola.CONF_UI_SVC_NOTFN_DISABLE:
 			svc_notification_disable = core.str_to_bool(v);
-		else if (k.equals("file_delete"))
+			break;
+
+		case Phiola.CONF_OP_FILE_DELETE:
 			file_del = core.str_to_bool(v);
-		else if (k.equals("data_dir"))
+			break;
+
+		case Phiola.CONF_OP_DATA_DIR:
 			pub_data_dir = v;
-		else if (k.equals("plist_save_dir"))
+			break;
+
+		case Phiola.CONF_OP_PLIST_SAVE_DIR:
 			plist_save_dir = v;
-		else if (k.equals("quick_move_dir"))
+			break;
+
+		case Phiola.CONF_OP_QUICK_MOVE_DIR:
 			quick_move_dir = v;
-		else if (k.equals("trash_dir_rel"))
+			break;
+
+		case Phiola.CONF_OP_TRASH_DIR_REL:
 			trash_dir = v;
-		else if (k.equals("no_tags"))
-			no_tags = core.str_to_bool(v);
-		else if (k.equals("list_add_rm_on_prev"))
-			list_add_rm_on_prev = core.str_to_bool(v);
-		else if (k.equals("list_rm_on_next"))
-			list_rm_on_next = core.str_to_bool(v);
-		else if (k.equals("qu_rm_on_err"))
-			qu_rm_on_err = core.str_to_bool(v);
-		else if (k.equals("codepage"))
+			break;
+
+		case Phiola.CONF_PLAY_NO_TAGS:
+			play_no_tags = core.str_to_bool(v);
+			break;
+
+		case Phiola.CONF_CODEPAGE:
 			set_codepage(v);
+			break;
 
-		else if (k.equals("rec_path"))
+		case Phiola.CONF_REC_PATH:
 			rec_path = v;
-		else if (k.equals("rec_enc"))
-			rec_enc = v;
-		else if (k.equals("rec_bitrate"))
-			rec_bitrate = core.str_to_uint(v, rec_bitrate);
-		else if (k.equals("rec_buf_len"))
-			rec_buf_len_ms = core.str_to_uint(v, rec_buf_len_ms);
-		else if (k.equals("rec_danorm"))
-			rec_danorm = core.str_to_bool(v);
-		else if (k.equals("rec_exclusive"))
-			rec_exclusive = core.str_to_bool(v);
-		else if (k.equals("rec_until"))
-			rec_until_sec = core.str_to_uint(v, rec_until_sec);
-		else if (k.equals("rec_gain"))
-			rec_gain_db100 = core.str_to_int(v, rec_gain_db100);
+			break;
 
-		else if (k.equals("conv_outext"))
+		case Phiola.CONF_REC_ENC:
+			rec_enc = v;
+			break;
+
+		case Phiola.CONF_REC_CHANNELS:
+			rec_channels = core.str_to_uint(v, 0);
+			break;
+
+		case Phiola.CONF_REC_RATE:
+			rec_rate = core.str_to_uint(v, 0);
+			break;
+
+		case Phiola.CONF_REC_BITRATE:
+			rec_bitrate = core.str_to_uint(v, rec_bitrate);
+			break;
+
+		case Phiola.CONF_REC_BUF_LEN:
+			rec_buf_len_ms = core.str_to_uint(v, rec_buf_len_ms);
+			break;
+
+		case Phiola.CONF_REC_DANORM:
+			rec_danorm = core.str_to_bool(v);
+			break;
+
+		case Phiola.CONF_REC_EXCLUSIVE:
+			rec_exclusive = core.str_to_bool(v);
+			break;
+
+		case Phiola.CONF_REC_UNTIL:
+			rec_until_sec = core.str_to_uint(v, rec_until_sec);
+			break;
+
+		case Phiola.CONF_REC_GAIN:
+			rec_gain_db100 = core.str_to_int(v, rec_gain_db100);
+			break;
+
+		case Phiola.CONF_CONV_OUTEXT:
 			conv_outext = v;
-		else if (k.equals("conv_aac_quality"))
+			break;
+
+		case Phiola.CONF_CONV_AAC_Q:
 			conv_aac_quality = core.str_to_uint(v, conv_aac_quality);
-		else if (k.equals("conv_opus_quality"))
+			break;
+
+		case Phiola.CONF_CONV_OPUS_Q:
 			conv_opus_quality = core.str_to_uint(v, conv_opus_quality);
-		else if (k.equals("conv_vorbis_quality"))
+			break;
+
+		case Phiola.CONF_CONV_VORBIS_Q:
 			conv_vorbis_quality = core.str_to_uint(v, conv_vorbis_quality);
-		else if (k.equals("conv_copy"))
+			break;
+
+		case Phiola.CONF_CONV_COPY:
 			conv_copy = core.str_to_bool(v);
-		else
+			break;
+
+		case Phiola.CONF_CONV_FILE_DATE_PRES:
+			conv_file_date_preserve = core.str_to_bool(v);
+			break;
+
+		case Phiola.CONF_CONV_NEW_ADD_LIST:
+			conv_new_add_list = core.str_to_bool(v);
+			break;
+
+		default:
 			return 1;
+		}
 		return 0;
 	}
 }
@@ -288,9 +371,9 @@ class Core extends Util {
 	void saveconf() {
 		String fn = work_dir + "/" + CONF_FN;
 		StringBuilder sb = new StringBuilder();
-		sb.append(this.setts.writeconf());
-		sb.append(qu.writeconf());
-		sb.append(gui.writeconf());
+		sb.append(this.setts.conf_write());
+		sb.append(qu.conf_write());
+		sb.append(gui.conf_write());
 		dbglog(TAG, "%s", sb.toString());
 		if (!phiola.confWrite(fn, sb.toString().getBytes()))
 			errlog(TAG, "saveconf: %s", fn);
@@ -303,17 +386,21 @@ class Core extends Util {
 	 */
 	private void loadconf() {
 		String fn = work_dir + "/" + CONF_FN;
-		String[] kv = phiola.confRead(fn);
+		Phiola.ConfEntry[] kv = phiola.confRead(fn);
 		if (kv == null)
 			return;
-		for (int i = 0;  i < kv.length;  i += 2) {
-			String k = kv[i];
-			String v = kv[i+1];
-			if (0 == setts.readconf(k, v))
-				continue;
-			if (0 == qu.readconf(k, v))
-				continue;
-			gui.readconf(k, v);
+		for (int i = 0;  i < kv.length;  i++) {
+			if (kv[i] == null)
+				break;
+
+			int k = kv[i].id;
+			String v = kv[i].value;
+			if (0 == setts.conf_process1(k, v))
+				;
+			else if (0 == qu.conf_process1(k, v))
+				;
+			else
+				gui.conf_process1(k, v);
 		}
 
 		setts.normalize();

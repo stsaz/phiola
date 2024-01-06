@@ -11,171 +11,238 @@
 		<TextView
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
+			android:text="@string/conv_in_out"
+			android:textColor="@color/sett_group" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/conv_input_file"
 			android:textColor="@color/text" />
 
 		<EditText
-			android:id="@+id/tiname"
+			android:id="@+id/e_in_name"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
 
 		<TextView
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/conv_out_dir"
 			android:textColor="@color/text" />
 		<EditText
-			android:id="@+id/todir"
+			android:id="@+id/e_out_dir"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
 
 		<TextView
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/conv_out_name"
 			android:textColor="@color/text" />
 		<EditText
-			android:id="@+id/toname"
+			android:id="@+id/e_out_name"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
 
 		<TextView
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/conv_out_fmt"
 			android:textColor="@color/text" />
-		<Spinner android:id="@+id/oext"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+		<Spinner
+			android:id="@+id/sp_out_ext"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			/>
 
 		<TextView
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
+			android:text="@string/conv_range"
+			android:textColor="@color/sett_group" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/conv_apos_start"
 			android:textColor="@color/text" />
 		<EditText
-			android:id="@+id/tfrom"
+			android:id="@+id/e_from"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
 		<Button
-			android:id="@+id/bfrom_set_cur"
+			android:id="@+id/b_from_set_cur"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/conv_from_set_cur" />
 
 		<TextView
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/conv_apos_end"
 			android:textColor="@color/text" />
 		<EditText
-			android:id="@+id/tuntil"
+			android:id="@+id/e_until"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
-		<Button android:id="@+id/until_set_cur"
-			android:layout_width="wrap_content" android:layout_height="wrap_content"
+		<Button
+			android:id="@+id/b_until_set_cur"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/conv_from_set_cur" />
 
 		<TextView
-			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:text="@string/conv_filters"
+			android:textColor="@color/sett_group" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/conv_sample_rate"
 			android:textColor="@color/text" />
-		<EditText android:id="@+id/tsample_rate"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+		<EditText
+			android:id="@+id/e_sample_rate"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
 
 		<TextView
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
+			android:text="@string/conv_encoding"
+			android:textColor="@color/sett_group" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/conv_aac_q"
 			android:textColor="@color/text" />
+		<SeekBar
+			android:id="@+id/sb_aac_q"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content" />
 		<EditText
-			android:id="@+id/taac_q"
+			android:id="@+id/e_aac_q"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
 
 		<TextView
-			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/conv_opus_q"
 			android:textColor="@color/text" />
-		<EditText android:id="@+id/topus_q"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+		<SeekBar
+			android:id="@+id/sb_opus_q"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content" />
+		<EditText
+			android:id="@+id/e_opus_q"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
 
 		<TextView
-			android:layout_width="match_parent" android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/conv_vorbis_q"
 			android:textColor="@color/text" />
-		<EditText android:id="@+id/tvorbis_q"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+		<SeekBar
+			android:id="@+id/sb_vorbis_q"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content" />
+		<EditText
+			android:id="@+id/e_vorbis_q"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
 
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:text="@string/conv_behaviour"
+			android:textColor="@color/sett_group" />
+
 		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/bcopy"
+			android:id="@+id/sw_copy"
 			android:layout_width="match_parent"
 			android:layout_height="match_parent"
-			android:layout_margin="10dp"
+			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/conv_copy" />
 
 		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/bpreserve_date"
+			android:id="@+id/sw_preserve_date"
 			android:layout_width="match_parent"
 			android:layout_height="match_parent"
-			android:layout_margin="10dp"
+			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/conv_preserve_date" />
 
 		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/btrash_orig"
+			android:id="@+id/sw_trash_orig"
 			android:layout_width="match_parent"
 			android:layout_height="match_parent"
-			android:layout_margin="10dp"
+			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/conv_trash_orig" />
 
 		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/bpl_add"
+			android:id="@+id/sw_pl_add"
 			android:layout_width="match_parent"
 			android:layout_height="match_parent"
-			android:layout_margin="10dp"
+			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/conv_pl_add" />
 
 		<TextView
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:text="Note: the process may take up to a minute! Be patient."
+			android:text="@string/conv_note"
 			android:textColor="@color/text" />
 		<Button
-			android:id="@+id/bstart"
+			android:id="@+id/b_start"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:text="@string/conv_go" />
 
 		<TextView
-			android:id="@+id/lresult"
+			android:id="@+id/l_result"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:text=""

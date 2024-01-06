@@ -15,41 +15,45 @@
 			android:textColor="@color/sett_group" />
 
 		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/bdark"
+			android:id="@+id/sw_dark"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_margin="10dp"
+			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/sett_dark" />
 
-		<androidx.appcompat.widget.SwitchCompat android:id="@+id/b_state_hide"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
-			android:layout_margin="10dp"
+		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/sw_state_hide"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/sett_ui_state_hide" />
 
 		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/bshowfilter"
+			android:id="@+id/sw_showfilter"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_margin="10dp"
+			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/sett_show_filter" />
 
 		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/bshowrec"
+			android:id="@+id/sw_showrec"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_margin="10dp"
+			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/sett_show_record" />
 
-		<androidx.appcompat.widget.SwitchCompat android:id="@+id/ui_info_in_title"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
-			android:layout_margin="10dp"
+		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/sw_ui_info_in_title"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/sett_ui_info_in_title" />
 
 		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/bsvc_notif_disable"
+			android:id="@+id/sw_svc_notif_disable"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_margin="10dp"
+			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/sett_svc_notif_disable" />
 
 		<TextView
@@ -59,95 +63,111 @@
 			android:textColor="@color/sett_group" />
 
 		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/brandom"
+			android:id="@+id/sw_random"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_margin="10dp"
+			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/sett_random" />
 
 		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/brepeat"
+			android:id="@+id/sw_repeat"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_margin="10dp"
+			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/sett_repeat_all" />
 
 		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/bnotags"
+			android:id="@+id/sw_notags"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_margin="10dp"
+			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/sett_no_tags" />
 
-		<androidx.appcompat.widget.SwitchCompat android:id="@+id/blist_add_rm_on_prev"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
-			android:layout_margin="10dp"
-			android:text="@string/sett_list_add_rm_on_prev" />
-
 		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/blist_rm_on_next"
+			android:id="@+id/sw_list_add_rm_on_next"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_margin="10dp"
+			android:layout_margin="@dimen/sett_margin"
+			android:text="@string/sett_list_add_rm_on_next" />
+
+		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/sw_list_rm_on_next"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/sett_list_rm_on_next" />
 
-		<androidx.appcompat.widget.SwitchCompat android:id="@+id/blist_rm_on_err"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
-			android:layout_margin="10dp"
+		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/sw_list_rm_on_err"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/sett_list_rm_on_err" />
 
 		<TextView
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
-			android:layout_marginTop="10dp"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:layout_marginTop="@dimen/sett_margin"
 			android:text="@string/sett_codepage"
 			android:textColor="@color/text" />
 
 		<EditText
-			android:id="@+id/tcodepage"
+			android:id="@+id/e_codepage"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:autofillHints=""
 			android:hint=""
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
 
-		<TextView android:text="@string/sett_auto_skip"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
-			android:layout_marginTop="10dp"
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:layout_marginTop="@dimen/sett_margin"
+			android:text="@string/sett_auto_skip"
 			android:textColor="@color/text" />
-		<EditText android:id="@+id/t_auto_skip"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+		<EditText
+			android:id="@+id/e_auto_skip"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:autofillHints=""
 			android:hint=""
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
 
-		<TextView android:text="@string/sett_auto_skip_tail"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
-			android:layout_marginTop="10dp"
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:layout_marginTop="@dimen/sett_margin"
+			android:text="@string/sett_auto_skip_tail"
 			android:textColor="@color/text" />
-		<EditText android:id="@+id/t_auto_skip_tail"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+		<EditText
+			android:id="@+id/e_auto_skip_tail"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:autofillHints=""
 			android:hint=""
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
 
-		<TextView android:text="@string/sett_auto_stop"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
-			android:layout_marginTop="10dp"
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:layout_marginTop="@dimen/sett_margin"
+			android:text="@string/sett_auto_stop"
 			android:textColor="@color/text" />
-		<EditText android:id="@+id/t_auto_stop"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+		<EditText
+			android:id="@+id/e_auto_stop"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:autofillHints=""
 			android:hint=""
 			android:inputType="text"
@@ -162,50 +182,54 @@
 		<TextView
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
-			android:layout_marginTop="10dp"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:layout_marginTop="@dimen/sett_margin"
 			android:text="@string/sett_data_dir"
 			android:textColor="@color/text" />
 		<EditText
-			android:id="@+id/tdata_dir"
+			android:id="@+id/e_data_dir"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
 
 		<TextView
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
-			android:layout_marginTop="10dp"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:layout_marginTop="@dimen/sett_margin"
 			android:text="@string/sett_trash_dir"
 			android:textColor="@color/text" />
 		<EditText
-			android:id="@+id/ttrash_dir"
+			android:id="@+id/e_trash_dir"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:autofillHints=""
 			android:hint=""
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
 
 		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/bfile_del"
+			android:id="@+id/sw_file_del"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_margin="10dp"
+			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/sett_file_del" />
 
-		<TextView android:text="@string/sett_quick_move_dir"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
-			android:layout_marginTop="10dp"
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:layout_marginTop="@dimen/sett_margin"
+			android:text="@string/sett_quick_move_dir"
 			android:textColor="@color/text" />
-		<EditText android:id="@+id/tquick_move_dir"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+		<EditText
+			android:id="@+id/e_quick_move_dir"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
 
@@ -216,88 +240,138 @@
 			android:textColor="@color/sett_group" />
 
 		<TextView
-			android:id="@+id/trecdir_text"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
-			android:layout_marginTop="10dp"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:layout_marginTop="@dimen/sett_margin"
 			android:text="@string/sett_rec_dir"
 			android:textColor="@color/text" />
 
 		<EditText
-			android:id="@+id/trecdir"
+			android:id="@+id/e_rec_dir"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:autofillHints=""
 			android:hint=""
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
 
 		<TextView
-			android:layout_width="match_parent" android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
-			android:text="@string/sett_rec_enc"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:layout_marginTop="@dimen/sett_margin"
+			android:text="@string/sett_rec_chan"
 			android:textColor="@color/text" />
-		<Spinner android:id="@+id/rec_enc"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+		<Spinner
+			android:id="@+id/sp_rec_channels"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:spinnerMode="dropdown" />
 
 		<TextView
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:text="@string/sett_rec_rate"
+			android:textColor="@color/text" />
+		<SeekBar
+			android:id="@+id/sb_rec_rate"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content" />
+		<EditText
+			android:id="@+id/e_rec_rate"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:inputType="text"
+			android:textSize="@dimen/text_editbox" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:text="@string/sett_rec_enc"
+			android:textColor="@color/text" />
+		<Spinner
+			android:id="@+id/sp_rec_enc"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:spinnerMode="dropdown" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/sett_rec_bitrate"
 			android:textColor="@color/text" />
 		<EditText
-			android:id="@+id/rec_bitrate"
+			android:id="@+id/e_rec_bitrate"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:autofillHints=""
 			android:hint=""
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
 
-		<TextView android:text="@string/sett_rec_buf_len"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:text="@string/sett_rec_buf_len"
 			android:textColor="@color/text" />
-		<EditText android:id="@+id/rec_buf_len"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+		<EditText
+			android:id="@+id/e_rec_buf_len"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
 
-		<TextView android:text="@string/sett_rec_until"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:text="@string/sett_rec_until"
 			android:textColor="@color/text" />
-		<EditText android:id="@+id/rec_until"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+		<EditText
+			android:id="@+id/e_rec_until"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
 
-		<androidx.appcompat.widget.SwitchCompat android:id="@+id/rec_danorm"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
-			android:layout_margin="10dp"
+		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/sw_rec_danorm"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/sett_rec_danorm" />
 
-		<TextView android:text="@string/sett_rec_gain"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:text="@string/sett_rec_gain"
 			android:textColor="@color/text" />
-		<EditText android:id="@+id/rec_gain"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
-			android:layout_marginHorizontal="10dp"
+		<EditText
+			android:id="@+id/e_rec_gain"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
 
-		<androidx.appcompat.widget.SwitchCompat android:id="@+id/rec_exclusive"
-			android:layout_width="match_parent" android:layout_height="wrap_content"
-			android:layout_margin="10dp"
+		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/sw_rec_exclusive"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/sett_rec_exclusive" />
 
 	</LinearLayout>

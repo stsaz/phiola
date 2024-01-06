@@ -333,7 +333,7 @@ class Track {
 		tplay.date = "";
 		tplay.info = "";
 
-		if (!core.setts.no_tags) {
+		if (!core.setts.play_no_tags) {
 			core.phiola.meta(core.queue().q_active_id(), list_item, url,
 				(meta) -> {
 					Handler mloop = new Handler(Looper.getMainLooper());
@@ -384,6 +384,9 @@ class Track {
 			p.format = Phiola.RecordParams.REC_FLAC;
 		else if (core.setts.rec_enc.equals("Opus"))
 			p.format = Phiola.RecordParams.REC_OPUS;
+
+		p.channels = core.setts.rec_channels;
+		p.sample_rate = core.setts.rec_rate;
 
 		if (core.setts.rec_exclusive)
 			p.flags |= Phiola.RecordParams.RECF_EXCLUSIVE;

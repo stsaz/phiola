@@ -103,14 +103,14 @@ class Explorer {
 			/* Prevent from going upper than sdcard because
 			 it may be impossible to come back (due to file permissions) */
 			if (core.array_ifind(core.storage_paths, path) >= 0) {
-				names.add("<UP>");
+				names.add(main.getString(R.string.explorer_up));
 				updir = true;
 				uproot = true;
 			} else {
 				String parent = fdir.getParent();
 				if (parent != null) {
 					fnames.add(parent);
-					names.add("<UP>");
+					names.add(main.getString(R.string.explorer_up));
 					updir = true;
 					ndirs++;
 				}
@@ -167,7 +167,7 @@ class Explorer {
 		ndirs = fns.length;
 
 		ArrayList<String> names = new ArrayList<>();
-		names.add("[Storage directories]");
+		names.add(main.getString(R.string.explorer_stg_dirs));
 		names.addAll(Arrays.asList(fns));
 		rows = names.toArray(new String[0]);
 	}

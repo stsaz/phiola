@@ -10,6 +10,7 @@
 
 #define PJC_PHIOLA  "com/github/stsaz/phiola/Phiola"
 #define PJC_META  "com/github/stsaz/phiola/Phiola$Meta"
+#define PJC_CONF_ENTRY  "com/github/stsaz/phiola/Phiola$ConfEntry"
 #define PJT_META  "Lcom/github/stsaz/phiola/Phiola$Meta;"
 
 struct phiola_jni {

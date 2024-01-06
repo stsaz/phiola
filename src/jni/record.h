@@ -53,12 +53,18 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 	jint buf_len_msec = jni_obj_int(jconf, jni_field(jc_conf, "buf_len_msec", JNI_TINT));
 	jint gain_db100 = jni_obj_int(jconf, jni_field(jc_conf, "gain_db100", JNI_TINT));
 	jint fmt = jni_obj_int(jconf, jni_field(jc_conf, "format", JNI_TINT));
+	jint chan = jni_obj_int(jconf, jni_field(jc_conf, "channels", JNI_TINT));
+	jint rate = jni_obj_int(jconf, jni_field(jc_conf, "sample_rate", JNI_TINT));
 	jint q = jni_obj_int(jconf, jni_field(jc_conf, "quality", JNI_TINT));
 	jint until_sec = jni_obj_int(jconf, jni_field(jc_conf, "until_sec", JNI_TINT));
 	jint flags = jni_obj_int(jconf, jni_field(jc_conf, "flags", JNI_TINT));
 
 	struct phi_track_conf c = {
 		.iaudio = {
+			.format = {
+				.channels = chan,
+				.rate = rate,
+			},
 			.buf_time = buf_len_msec,
 			.exclusive = !!(flags & RECF_EXCLUSIVE),
 			.power_save = !!(flags & RECF_POWER_SAVE),

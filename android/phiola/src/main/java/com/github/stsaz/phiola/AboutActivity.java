@@ -39,7 +39,7 @@ public class AboutActivity extends AppCompatActivity {
 		};
 		try {
 			Runtime.getRuntime().exec(args);
-			core.gui().msg_show(this, "Saved logs to %s", fn);
+			core.gui().msg_show(this, getString(R.string.about_log_saved), fn);
 		} catch (Exception e) {
 			core.errlog(TAG, "logs_save_file: %s", e);
 		}

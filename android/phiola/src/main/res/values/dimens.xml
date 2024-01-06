@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<dimen name="sett_margin">10dp</dimen>
 	<dimen name="text_editbox">15sp</dimen>
 	<dimen name="text_list">15sp</dimen>
 	<dimen name="text_label">15sp</dimen>

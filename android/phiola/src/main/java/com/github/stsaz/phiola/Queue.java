@@ -112,6 +112,8 @@ class Queue {
 	private boolean active;
 	private Random rnd;
 	boolean random_split;
+	boolean add_rm_on_next, rm_on_next;
+	boolean rm_on_err;
 	int autoskip_msec, autoskip_percent;
 	int autoskip_tail_msec, autoskip_tail_percent;
 	private Handler mloop;
@@ -332,7 +334,9 @@ class Queue {
 		if (active) {
 			if (trk_idx < 0) {
 				delta = 0; // user pressed Next after the currently playing track has been removed
-			} else if (core.setts.list_rm_on_next) {
+			} else if (add_rm_on_next || rm_on_next) {
+				if (add_rm_on_next)
+					next_list_add_cur();
 				remove(trk_idx);
 				delta = 0;
 			}
@@ -342,13 +346,7 @@ class Queue {
 
 	/** Previous track by user command */
 	void order_prev() {
-		int delta = -1;
-		if (active && core.setts.list_add_rm_on_prev) {
-			next_list_add_cur();
-			remove(trk_idx);
-			delta = 0; // play next track
-		}
-		play_delta(delta);
+		play_delta(-1);
 	}
 
 	private void on_open(TrackHandle t) {
@@ -362,7 +360,7 @@ class Queue {
 		if (autoskip_tail_percent != 0)
 			t.skip_tail_msec = t.time_total_msec * autoskip_tail_percent / 100;
 
-		if (!core.setts.no_tags) {
+		if (!core.setts.play_no_tags) {
 			queues.get(q_active).modified = true;
 			nfy_all(QueueNotify.UPDATE, trk_idx); // redraw item to display artist-title info
 		}
@@ -373,7 +371,7 @@ class Queue {
 		active = false;
 		boolean play_next = !t.stopped;
 
-		if (trk_idx >= 0 && t.error && core.setts.qu_rm_on_err) {
+		if (trk_idx >= 0 && t.error && rm_on_err) {
 			String url = queues.get(q_active).url(trk_idx);
 			if (url.equals(t.url))
 				remove(trk_idx);
@@ -471,44 +469,76 @@ class Queue {
 		nfy_all(QueueNotify.ADDED, pos);
 	}
 
-	String writeconf() {
-		StringBuilder s = new StringBuilder();
-		if (curpos >= 0)
-			s.append(String.format("curpos %d\n", curpos));
-
-		s.append(String.format("list_active %d\n", q_active));
-		s.append(String.format("random %d\n", core.bool_to_int(random)));
-		s.append(String.format("repeat %d\n", core.bool_to_int(repeat)));
-		s.append(String.format("auto_skip %s\n", auto_skip_to_str()));
-		s.append(String.format("auto_skip_tail %s\n", auto_skip_tail_to_str()));
-		s.append(String.format("play_auto_stop %d\n", auto_stop_min));
-
-		return s.toString();
+	String conf_write() {
+		return String.format(
+			"list_curpos %d\n"
+			+ "list_active %d\n"
+			+ "list_random %d\n"
+			+ "list_repeat %d\n"
+			+ "list_add_rm_on_next %d\n"
+			+ "list_rm_on_next %d\n"
+			+ "list_rm_on_err %d\n"
+			+ "play_auto_skip %s\n"
+			+ "play_auto_skip_tail %s\n"
+			+ "play_auto_stop %d\n"
+			, curpos
+			, q_active
+			, core.bool_to_int(random)
+			, core.bool_to_int(repeat)
+			, core.bool_to_int(add_rm_on_next)
+			, core.bool_to_int(rm_on_next)
+			, core.bool_to_int(rm_on_err)
+			, auto_skip_to_str()
+			, auto_skip_tail_to_str()
+			, auto_stop_min
+			);
 	}
 
-	int readconf(String k, String v) {
-		if (k.equals("curpos")) {
-			curpos = core.str_to_uint(v, 0);
+	int conf_process1(int k, String v) {
+		switch (k) {
 
-		} else if (k.equals("list_active")) {
+		case Phiola.CONF_LIST_CURPOS:
+			curpos = core.str_to_uint(v, 0);
+			break;
+
+		case Phiola.CONF_LIST_ACTIVE:
 			q_active = core.str_to_uint(v, 0);
 			selected = q_active;
+			break;
 
-		} else if (k.equals("random")) {
-			int val = core.str_to_uint(v, 0);
-			if (val == 1)
-				random(true);
+		case Phiola.CONF_LIST_RANDOM:
+			random(core.str_to_bool(v));
+			break;
 
-		} else if (k.equals("auto_skip")) {
+		case Phiola.CONF_LIST_REPEAT:
+			repeat(core.str_to_bool(v));
+			break;
+
+		case Phiola.CONF_LIST_ADD_RM_ON_NEXT:
+			add_rm_on_next = core.str_to_bool(v);
+			break;
+
+		case Phiola.CONF_LIST_RM_ON_NEXT:
+			rm_on_next = core.str_to_bool(v);
+			break;
+
+		case Phiola.CONF_LIST_RM_ON_ERR:
+			rm_on_err = core.str_to_bool(v);
+			break;
+
+		case Phiola.CONF_PLAY_AUTO_SKIP:
 			auto_skip(v);
+			break;
 
-		} else if (k.equals("auto_skip_tail")) {
+		case Phiola.CONF_PLAY_AUTO_SKIP_TAIL:
 			auto_skip_tail(v);
+			break;
 
-		} else if (k.equals("play_auto_stop")) {
+		case Phiola.CONF_PLAY_AUTO_STOP:
 			auto_stop_min = core.str_to_uint(v, 0);
+			break;
 
-		} else {
+		default:
 			return 1;
 		}
 		return 0;

@@ -1,4 +1,5 @@
 -keep class com.github.stsaz.phiola.Phiola {*;}
+-keep class com.github.stsaz.phiola.Phiola$ConfEntry {*;}
 -keep interface com.github.stsaz.phiola.Phiola$Callback {*;}
 -keep class com.github.stsaz.phiola.Phiola$ConvertParams {*;}
 -keep interface com.github.stsaz.phiola.Phiola$ConvertCallback {*;}

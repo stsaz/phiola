@@ -396,7 +396,7 @@ public class MainActivity extends AppCompatActivity {
 			track.record_stop(trec);
 			trec = null;
 			rec_state_set(false);
-			core.gui().msg_show(this, "Finished recording");
+			core.gui().msg_show(this, getString(R.string.main_rec_fin));
 			stopService(new Intent(this, RecSvc.class));
 			state(STATE_RECORDING, 0);
 		}
@@ -557,7 +557,7 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void bplaylist_text(int qi) {
-		String s = String.format("Playlist %d", qi + 1);
+		String s = String.format(getString(R.string.main_playlist_n), qi + 1);
 		b.bplaylist.setText(s);
 		b.bplaylist.setTextOn(s);
 		b.bplaylist.setTextOff(s);
@@ -569,7 +569,7 @@ public class MainActivity extends AppCompatActivity {
 		String s;
 		if (b) {
 			state(STATE_AUTO_STOP, STATE_AUTO_STOP);
-			s = String.format("Will stop playing after %d min", queue.auto_stop_min);
+			s = String.format(getString(R.string.mplay_auto_stop_msg), queue.auto_stop_min);
 		} else {
 			state(STATE_AUTO_STOP, 0);
 			s = "Disabled auto-stop timer";
@@ -582,7 +582,7 @@ public class MainActivity extends AppCompatActivity {
 		if (qi < 0)
 			return;
 
-		gui.msg_show(this, String.format("Created Playlist %d", qi+1));
+		gui.msg_show(this, String.format(getString(R.string.mlist_created), qi+1));
 		queue.switch_list(qi);
 		if (view_explorer)
 			plist_click();
@@ -595,7 +595,7 @@ public class MainActivity extends AppCompatActivity {
 		if (view_explorer) return;
 
 		queue.close_current_list();
-		gui.msg_show(this, "Closed playlist");
+		gui.msg_show(this, getString(R.string.mlist_closed));
 		list_update();
 		bplaylist_text(queue.current_list_index());
 	}
@@ -607,7 +607,7 @@ public class MainActivity extends AppCompatActivity {
 			return;
 
 		queue.remove(pos);
-		gui.msg_show(this, "Removed 1 entry");
+		gui.msg_show(this, getString(R.string.mlist_trk_rm));
 	}
 
 	/** Show dialog for saving playlist file */
@@ -627,7 +627,7 @@ public class MainActivity extends AppCompatActivity {
 	private void list_next_add_cur() {
 		int qi = queue.next_list_add_cur();
 		if (qi >= 0)
-			core.gui().msg_show(this, String.format("Added track to Playlist %d", qi+1));
+			core.gui().msg_show(this, String.format(getString(R.string.mlist_trk_added), qi+1));
 	}
 
 	/** Start recording */
@@ -657,7 +657,7 @@ public class MainActivity extends AppCompatActivity {
 		if (trec == null)
 			return;
 		rec_state_set(true);
-		core.gui().msg_show(this, "Started recording");
+		core.gui().msg_show(this, getString(R.string.main_rec_started));
 		startService(new Intent(this, RecSvc.class));
 		state(STATE_RECORDING, STATE_RECORDING);
 	}
@@ -686,7 +686,7 @@ public class MainActivity extends AppCompatActivity {
 
 			if ((st & STATE_PLAYING) != 0) {
 				if (st == STATE_PLAYING)
-					s += "Playing";
+					s += getString(R.string.main_st_playing);
 				else
 					s += "PLA";
 			}
