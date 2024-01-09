@@ -658,7 +658,7 @@ public class MainActivity extends AppCompatActivity {
 
 	/** UI event from seek bar */
 	private void seek(int percent) {
-		trackctl.seek(percent * total_dur_msec / 100);
+		trackctl.seek(total_dur_msec / 100 * percent);
 	}
 
 	private static final int
