@@ -46,31 +46,31 @@ class GUI {
 	int conf_process1(int k, String v) {
 		switch (k) {
 
-		case Phiola.CONF_UI_CURPATH:
+		case Conf.UI_CURPATH:
 			cur_path = v;
 			break;
 
-		case Phiola.CONF_UI_STATE_HIDE:
+		case Conf.UI_STATE_HIDE:
 			state_hide = core.str_to_bool(v);
 			break;
 
-		case Phiola.CONF_UI_FILTER_HIDE:
+		case Conf.UI_FILTER_HIDE:
 			filter_hide = core.str_to_bool(v);
 			break;
 
-		case Phiola.CONF_UI_RECORD_HIDE:
+		case Conf.UI_RECORD_HIDE:
 			record_hide = core.str_to_bool(v);
 			break;
 
-		case Phiola.CONF_LIST_POS:
+		case Conf.LIST_POS:
 			list_pos = core.str_to_uint(v, 0);
 			break;
 
-		case Phiola.CONF_UI_INFO_IN_TITLE:
+		case Conf.UI_INFO_IN_TITLE:
 			ainfo_in_title = core.str_to_bool(v);
 			break;
 
-		case Phiola.CONF_UI_THEME:
+		case Conf.UI_THEME:
 			theme = core.str_to_uint(v, 0);
 			break;
 

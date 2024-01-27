@@ -260,7 +260,7 @@ public class ConvertActivity extends AppCompatActivity {
 	}
 
 	private void trash_input_file(String iname) {
-		String e = core.phiola.trash(core.setts.trash_dir, iname);
+		String e = core.util.trash(core.setts.trash_dir, iname);
 		if (!e.isEmpty()) {
 			core.errlog(TAG, "Can't trash file %s: %s", iname, e);
 			return;

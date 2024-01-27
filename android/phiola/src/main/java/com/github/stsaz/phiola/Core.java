@@ -163,103 +163,103 @@ class CoreSettings {
 	int conf_process1(int k, String v) {
 		switch (k) {
 
-		case Phiola.CONF_UI_SVC_NOTFN_DISABLE:
+		case Conf.UI_SVC_NOTFN_DISABLE:
 			svc_notification_disable = core.str_to_bool(v);
 			break;
 
-		case Phiola.CONF_OP_FILE_DELETE:
+		case Conf.OP_FILE_DELETE:
 			file_del = core.str_to_bool(v);
 			break;
 
-		case Phiola.CONF_OP_DATA_DIR:
+		case Conf.OP_DATA_DIR:
 			pub_data_dir = v;
 			break;
 
-		case Phiola.CONF_OP_PLIST_SAVE_DIR:
+		case Conf.OP_PLIST_SAVE_DIR:
 			plist_save_dir = v;
 			break;
 
-		case Phiola.CONF_OP_QUICK_MOVE_DIR:
+		case Conf.OP_QUICK_MOVE_DIR:
 			quick_move_dir = v;
 			break;
 
-		case Phiola.CONF_OP_TRASH_DIR_REL:
+		case Conf.OP_TRASH_DIR_REL:
 			trash_dir = v;
 			break;
 
-		case Phiola.CONF_PLAY_NO_TAGS:
+		case Conf.PLAY_NO_TAGS:
 			play_no_tags = core.str_to_bool(v);
 			break;
 
-		case Phiola.CONF_CODEPAGE:
+		case Conf.CODEPAGE:
 			set_codepage(v);
 			break;
 
-		case Phiola.CONF_REC_PATH:
+		case Conf.REC_PATH:
 			rec_path = v;
 			break;
 
-		case Phiola.CONF_REC_ENC:
+		case Conf.REC_ENC:
 			rec_enc = v;
 			break;
 
-		case Phiola.CONF_REC_CHANNELS:
+		case Conf.REC_CHANNELS:
 			rec_channels = core.str_to_uint(v, 0);
 			break;
 
-		case Phiola.CONF_REC_RATE:
+		case Conf.REC_RATE:
 			rec_rate = core.str_to_uint(v, 0);
 			break;
 
-		case Phiola.CONF_REC_BITRATE:
+		case Conf.REC_BITRATE:
 			rec_bitrate = core.str_to_uint(v, rec_bitrate);
 			break;
 
-		case Phiola.CONF_REC_BUF_LEN:
+		case Conf.REC_BUF_LEN:
 			rec_buf_len_ms = core.str_to_uint(v, rec_buf_len_ms);
 			break;
 
-		case Phiola.CONF_REC_DANORM:
+		case Conf.REC_DANORM:
 			rec_danorm = core.str_to_bool(v);
 			break;
 
-		case Phiola.CONF_REC_EXCLUSIVE:
+		case Conf.REC_EXCLUSIVE:
 			rec_exclusive = core.str_to_bool(v);
 			break;
 
-		case Phiola.CONF_REC_UNTIL:
+		case Conf.REC_UNTIL:
 			rec_until_sec = core.str_to_uint(v, rec_until_sec);
 			break;
 
-		case Phiola.CONF_REC_GAIN:
+		case Conf.REC_GAIN:
 			rec_gain_db100 = core.str_to_int(v, rec_gain_db100);
 			break;
 
-		case Phiola.CONF_CONV_OUTEXT:
+		case Conf.CONV_OUTEXT:
 			conv_outext = v;
 			break;
 
-		case Phiola.CONF_CONV_AAC_Q:
+		case Conf.CONV_AAC_Q:
 			conv_aac_quality = core.str_to_uint(v, conv_aac_quality);
 			break;
 
-		case Phiola.CONF_CONV_OPUS_Q:
+		case Conf.CONV_OPUS_Q:
 			conv_opus_quality = core.str_to_uint(v, conv_opus_quality);
 			break;
 
-		case Phiola.CONF_CONV_VORBIS_Q:
+		case Conf.CONV_VORBIS_Q:
 			conv_vorbis_quality = core.str_to_uint(v, conv_vorbis_quality);
 			break;
 
-		case Phiola.CONF_CONV_COPY:
+		case Conf.CONV_COPY:
 			conv_copy = core.str_to_bool(v);
 			break;
 
-		case Phiola.CONF_CONV_FILE_DATE_PRES:
+		case Conf.CONV_FILE_DATE_PRES:
 			conv_file_date_preserve = core.str_to_bool(v);
 			break;
 
-		case Phiola.CONF_CONV_NEW_ADD_LIST:
+		case Conf.CONV_NEW_ADD_LIST:
 			conv_new_add_list = core.str_to_bool(v);
 			break;
 
@@ -284,6 +284,8 @@ class Core extends Util {
 	private SysJobs sysjobs;
 	private MP mp;
 	Phiola phiola;
+	UtilNative util;
+	private Conf conf;
 
 	String storage_path;
 	String[] storage_paths;
@@ -319,7 +321,9 @@ class Core extends Util {
 		storage_paths = system_storage_dirs(ctx);
 
 		phiola = new Phiola(ctx.getApplicationInfo().nativeLibraryDir);
-		phiola.storage_paths = storage_paths;
+		conf = new Conf(phiola);
+		util = new UtilNative(phiola);
+		util.storage_paths = storage_paths;
 		setts = new CoreSettings(this);
 		gui = new GUI(this);
 		track = new Track(this);
@@ -375,7 +379,7 @@ class Core extends Util {
 		sb.append(qu.conf_write());
 		sb.append(gui.conf_write());
 		dbglog(TAG, "%s", sb.toString());
-		if (!phiola.confWrite(fn, sb.toString().getBytes()))
+		if (!conf.confWrite(fn, sb.toString().getBytes()))
 			errlog(TAG, "saveconf: %s", fn);
 		else
 			dbglog(TAG, "saveconf ok: %s", fn);
@@ -386,7 +390,7 @@ class Core extends Util {
 	 */
 	private void loadconf() {
 		String fn = work_dir + "/" + CONF_FN;
-		Phiola.ConfEntry[] kv = phiola.confRead(fn);
+		Conf.Entry[] kv = conf.confRead(fn);
 		if (kv == null)
 			return;
 		for (int i = 0;  i < kv.length;  i++) {

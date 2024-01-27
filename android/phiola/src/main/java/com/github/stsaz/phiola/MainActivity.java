@@ -438,7 +438,7 @@ public class MainActivity extends AppCompatActivity {
 	/** Delete file and update view */
 	private void file_del(int pos, String fn) {
 		if (!core.setts.file_del) {
-			String e = core.phiola.trash(core.setts.trash_dir, fn);
+			String e = core.util.trash(core.setts.trash_dir, fn);
 			if (!e.isEmpty()) {
 				core.errlog(TAG, "Can't trash file %s: %s", fn, e);
 				return;
@@ -487,7 +487,7 @@ public class MainActivity extends AppCompatActivity {
 			return;
 		String fn = queue.get(pos);
 
-		String e = core.phiola.fileMove(fn, core.setts.quick_move_dir);
+		String e = core.util.fileMove(fn, core.setts.quick_move_dir);
 		if (!e.isEmpty()) {
 			core.errlog(TAG, "file move: %s", e);
 			return;

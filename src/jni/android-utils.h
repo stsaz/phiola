@@ -4,6 +4,8 @@
 #include <ffsys/path.h>
 #include <ffsys/dir.h>
 
+#define PJC_CONF_ENTRY  "com/github/stsaz/phiola/Conf$Entry"
+
 static inline ffsize ffstr_charcount(ffstr s, int ch)
 {
 	ffsize r = 0;
@@ -63,7 +65,7 @@ static const char setting_names[][20] = {
 };
 
 JNIEXPORT jobjectArray JNICALL
-Java_com_github_stsaz_phiola_Phiola_confRead(JNIEnv *env, jobject thiz, jstring jfilepath)
+Java_com_github_stsaz_phiola_Conf_confRead(JNIEnv *env, jobject thiz, jstring jfilepath)
 {
 	dbglog("%s: enter", __func__);
 	const char *fn = jni_sz_js(jfilepath);
@@ -112,7 +114,7 @@ end:
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_github_stsaz_phiola_Phiola_confWrite(JNIEnv *env, jobject thiz, jstring jfilepath, jbyteArray jdata)
+Java_com_github_stsaz_phiola_Conf_confWrite(JNIEnv *env, jobject thiz, jstring jfilepath, jbyteArray jdata)
 {
 	dbglog("%s: enter", __func__);
 	const char *fn = jni_sz_js(jfilepath);
@@ -205,7 +207,7 @@ static char* trash_dir_abs(JNIEnv *env, jobjectArray jsa, const char *trash_dir_
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_github_stsaz_phiola_Phiola_trash(JNIEnv *env, jobject thiz, jstring jtrash_dir, jstring jfilepath)
+Java_com_github_stsaz_phiola_UtilNative_trash(JNIEnv *env, jobject thiz, jstring jtrash_dir, jstring jfilepath)
 {
 	dbglog("%s: enter", __func__);
 	jclass jc = jni_class_obj(thiz);
@@ -231,7 +233,7 @@ Java_com_github_stsaz_phiola_Phiola_trash(JNIEnv *env, jobject thiz, jstring jtr
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_github_stsaz_phiola_Phiola_fileMove(JNIEnv *env, jobject thiz, jstring jfilepath, jstring jtarget_dir)
+Java_com_github_stsaz_phiola_UtilNative_fileMove(JNIEnv *env, jobject thiz, jstring jfilepath, jstring jtarget_dir)
 {
 	dbglog("%s: enter", __func__);
 	const char *fn = jni_sz_js(jfilepath);

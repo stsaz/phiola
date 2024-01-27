@@ -497,44 +497,44 @@ class Queue {
 	int conf_process1(int k, String v) {
 		switch (k) {
 
-		case Phiola.CONF_LIST_CURPOS:
+		case Conf.LIST_CURPOS:
 			curpos = core.str_to_uint(v, 0);
 			break;
 
-		case Phiola.CONF_LIST_ACTIVE:
+		case Conf.LIST_ACTIVE:
 			q_active = core.str_to_uint(v, 0);
 			selected = q_active;
 			break;
 
-		case Phiola.CONF_LIST_RANDOM:
+		case Conf.LIST_RANDOM:
 			random(core.str_to_bool(v));
 			break;
 
-		case Phiola.CONF_LIST_REPEAT:
+		case Conf.LIST_REPEAT:
 			repeat(core.str_to_bool(v));
 			break;
 
-		case Phiola.CONF_LIST_ADD_RM_ON_NEXT:
+		case Conf.LIST_ADD_RM_ON_NEXT:
 			add_rm_on_next = core.str_to_bool(v);
 			break;
 
-		case Phiola.CONF_LIST_RM_ON_NEXT:
+		case Conf.LIST_RM_ON_NEXT:
 			rm_on_next = core.str_to_bool(v);
 			break;
 
-		case Phiola.CONF_LIST_RM_ON_ERR:
+		case Conf.LIST_RM_ON_ERR:
 			rm_on_err = core.str_to_bool(v);
 			break;
 
-		case Phiola.CONF_PLAY_AUTO_SKIP:
+		case Conf.PLAY_AUTO_SKIP:
 			auto_skip(v);
 			break;
 
-		case Phiola.CONF_PLAY_AUTO_SKIP_TAIL:
+		case Conf.PLAY_AUTO_SKIP_TAIL:
 			auto_skip_tail(v);
 			break;
 
-		case Phiola.CONF_PLAY_AUTO_STOP:
+		case Conf.PLAY_AUTO_STOP:
 			auto_stop_min = core.str_to_uint(v, 0);
 			break;
 
