@@ -9,7 +9,7 @@ OGG(OPUS_HDR)  OGG(OPUS_TAGS)  OGG(OPUS_PKT...)...
 #include <afilter/pcm.h>
 #include <ffbase/vector.h>
 #include <avpack/vorbistag.h>
-#include <opus/opus-ff.h>
+#include <opus/opus-phi.h>
 
 enum FFOPUS_R {
 	FFOPUS_RWARN = -2,

@@ -2,7 +2,7 @@
 2016, Simon Zolin */
 
 #include <vorbis/codec.h>
-#include "vorbis-ff.h"
+#include "vorbis-phi.h"
 #include <stdlib.h>
 
 static const char* const vorb_errstr[] = {

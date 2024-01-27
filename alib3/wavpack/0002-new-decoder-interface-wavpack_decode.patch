@@ -25,7 +25,7 @@ index a8c7baa..3779506 100644
  
  #include <stdlib.h>
  #include <string.h>
-+#include <wavpack-ff.h>
++#include <wavpack-phi.h>
  
  #include "wavpack_local.h"
  
@@ -183,7 +183,7 @@ index 317dfd4..0809f3f 100644
  
  #include <stdlib.h>
  #include <string.h>
-+#include <wavpack-ff.h>
++#include <wavpack-phi.h>
  
  #include "wavpack_local.h"
  

@@ -1,7 +1,7 @@
 /** libALAC interface
 2016, Simon Zolin */
 
-#include "ALAC-ff.h"
+#include "ALAC-phi.h"
 #include <ALACDecoder.h>
 #include <ALACBitUtilities.h>
 

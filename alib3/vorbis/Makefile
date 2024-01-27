@@ -51,10 +51,10 @@ SRC := \
 	$(DIR)/lib/sharedbook.c \
 	$(DIR)/lib/lookup.c \
 	$(DIR)/lib/bitrate.c
-OBJ := vorbis-ff.o $(SRC:.c=.o)
+OBJ := vorbis-phi.o $(SRC:.c=.o)
 
 SRC_ENC := $(DIR)/lib/vorbisenc.c
-OBJ_ENC := vorbisenc-ff.o $(SRC_ENC:.c=.o)
+OBJ_ENC := vorbisenc-phi.o $(SRC_ENC:.c=.o)
 
 %.o: %.c
 	$(C) $(CFLAGS) $< -o $@

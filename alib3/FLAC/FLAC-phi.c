@@ -1,7 +1,7 @@
 /** libFLAC interface
 2016, Simon Zolin */
 
-#include "FLAC-ff.h"
+#include "FLAC-phi.h"
 #include <config.h>
 #include <FLAC/export.h>
 #include <FLAC/format.h>

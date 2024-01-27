@@ -48,7 +48,7 @@ else ifeq "$(CPU)" "arm64"
 	CXXFLAGS += -DPLATFORM_ARM
 endif
 
-OBJ := MAC-ff.o $(SRC:.cpp=.o)
+OBJ := MAC-phi.o $(SRC:.cpp=.o)
 
 $(DIR)/Source/MACLib/NNFilter.o: $(DIR)/Source/MACLib/NNFilter.cpp
 	$(CXX) $(CXXFLAGS) $(CFLAGS_CPU) $< -o $@

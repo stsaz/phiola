@@ -1,7 +1,7 @@
 /** libmpc interface
 2017, Simon Zolin */
 
-#include "mpc-ff.h"
+#include "mpc-phi.h"
 #include <mpc/mpcdec.h>
 #include <libmpcdec/internal.h>
 

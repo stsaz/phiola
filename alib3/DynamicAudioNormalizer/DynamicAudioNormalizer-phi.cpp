@@ -1,7 +1,7 @@
 /** libDynamicAudioNormalizer interface
 2018, Simon Zolin */
 
-#include "DynamicAudioNormalizer-ff.h"
+#include "DynamicAudioNormalizer-phi.h"
 #include <DynamicAudioNormalizer.h>
 #include <string.h>
 

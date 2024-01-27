@@ -34,7 +34,7 @@ SRC := \
 	$(DIR)/DynamicAudioNormalizerAPI/src/DynamicAudioNormalizer.cpp \
 	$(DIR)/DynamicAudioNormalizerAPI/src/GaussianFilter.cpp \
 	$(DIR)/DynamicAudioNormalizerAPI/src/FrameBuffer.cpp
-OBJ := DynamicAudioNormalizer-ff.o $(SRC:.cpp=.o)
+OBJ := DynamicAudioNormalizer-phi.o $(SRC:.cpp=.o)
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $< -o $@

@@ -242,7 +242,7 @@ SILK_SOURCES += $(SILK_SOURCES_FLOAT)
 OPUS_SOURCES += $(OPUS_SOURCES_FLOAT)
 
 SRC := $(CELT_SOURCES) $(SILK_SOURCES) $(OPUS_SOURCES)
-OBJ := opus-ff.o $(SRC:.c=.o)
+OBJ := opus-phi.o $(SRC:.c=.o)
 
 %.o: %.c
 	$(C) $(CFLAGS) $(CFLAGS_SSE) $< -o $@

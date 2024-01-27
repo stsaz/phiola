@@ -33,7 +33,7 @@ index 09bdada..bcd2f31 100644
  #include "private/md5.h"
  #include "private/memory.h"
  #include "private/macros.h"
-+#include <FLAC-ff.h>
++#include <FLAC-phi.h>
  
  
  /* technically this should be in an "export.c" but this is convenient enough */

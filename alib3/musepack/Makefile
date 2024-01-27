@@ -73,7 +73,7 @@ SRC_ENC := \
 	$(DIR)/mpcenc/wave_in.c \
 	$(DIR)/mpcenc/winmsg.c
 
-OBJ := mpc-ff.o $(SRC_DECLIB:.c=.o)
+OBJ := mpc-phi.o $(SRC_DECLIB:.c=.o)
 OBJ_DEC := $(SRC_DEC:.c=.o) $(SRC_COMM:.c=.o) $(SRC_DECLIB:.c=.o) $(SRC_WF:.c=.o)
 OBJ_ENC := $(SRC_ENC:.c=.o) $(SRC_COMM:.c=.o) $(SRC_ENCLIB:.c=.o) $(SRC_PSY:.c=.o)
 

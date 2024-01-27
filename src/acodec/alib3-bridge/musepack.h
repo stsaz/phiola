@@ -4,7 +4,7 @@
 #pragma once
 #include <afilter/pcm.h>
 #include <ffbase/string.h>
-#include <musepack/mpc-ff.h>
+#include <musepack/mpc-phi.h>
 
 typedef struct ffmpc {
 	mpc_ctx *mpc;

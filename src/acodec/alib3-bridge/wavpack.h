@@ -8,7 +8,7 @@
 #pragma once
 #include <afilter/pcm.h>
 #include <ffbase/vector.h>
-#include <wavpack/wavpack-ff.h>
+#include <wavpack/wavpack-phi.h>
 
 struct ffwvpk_info {
 	uint format; //enum PHI_PCM

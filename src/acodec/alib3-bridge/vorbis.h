@@ -9,7 +9,7 @@ OGG(VORB_INFO)  OGG(VORB_COMMENTS VORB_CODEBOOK)  OGG(PKT1 PKT2...)...
 #include <afilter/pcm.h>
 #include <ffbase/string.h>
 #include <avpack/vorbistag.h>
-#include <vorbis/vorbis-ff.h>
+#include <vorbis/vorbis-phi.h>
 
 enum {
 	FFVORBIS_EFMT = 1,

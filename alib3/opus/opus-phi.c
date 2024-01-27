@@ -1,7 +1,7 @@
 /** libopus interface
 2016, Simon Zolin */
 
-#include "opus-ff.h"
+#include "opus-phi.h"
 #include <opus.h>
 
 const char* opus_errstr(int e)

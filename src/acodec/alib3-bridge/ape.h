@@ -10,7 +10,7 @@ ver <= 3.97: HDR  [WAV_HDR]  SEEK_TBL
 #include <afilter/pcm.h>
 #include <avpack/apetag.h>
 #include <avpack/id3v1.h>
-#include <MAC/MAC-ff.h>
+#include <MAC/MAC-phi.h>
 
 enum FFAPE_R {
 	FFAPE_RDATA,

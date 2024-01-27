@@ -162,9 +162,9 @@ SYS_SRC := \
 SRC := $(AACDEC_SRC) $(MPEGTPDEC_SRC) $(SBRDEC_SRC) \
 	$(AACENC_SRC) $(MPEGTPENC_SRC) $(SBRENC_SRC) \
 	$(FDK_SRC) $(PCMUTILS_SRC) $(SYS_SRC)
-OBJ := fdk-aac-ff.o $(SRC:.cpp=.o)
+OBJ := fdk-aac-phi.o $(SRC:.cpp=.o)
 
-%.o: %.c fdk-aac-ff.h
+%.o: %.c fdk-aac-phi.h
 	$(C) $(CFLAGS) $(CF) $< -o $@
 
 %.o: %.cpp

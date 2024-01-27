@@ -4,7 +4,7 @@
 #pragma once
 #include <afilter/pcm.h>
 #include <ffbase/string.h>
-#include <fdk-aac/fdk-aac-ff.h>
+#include <fdk-aac/fdk-aac-phi.h>
 
 enum {
 	AAC_ESYS = -1,

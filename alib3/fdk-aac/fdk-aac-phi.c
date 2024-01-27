@@ -1,7 +1,7 @@
 /** FDK-AAC interface
 2016, Simon Zolin */
 
-#include "fdk-aac-ff.h"
+#include "fdk-aac-phi.h"
 #include <aacdecoder_lib.h>
 #include <aacenc_lib.h>
 #include <memory.h>

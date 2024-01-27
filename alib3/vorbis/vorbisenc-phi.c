@@ -3,7 +3,7 @@ Simon Zolin, 2016 */
 
 #include <vorbis/codec.h>
 #include <vorbis/vorbisenc.h>
-#include "vorbis-ff.h"
+#include "vorbis-phi.h"
 #include <stdlib.h>
 #include <memory.h>
 

@@ -5,7 +5,7 @@
 #include <afilter/pcm.h>
 #include <ffbase/vector.h>
 #include <avpack/flac-fmt.h>
-#include <FLAC/FLAC-ff.h>
+#include <FLAC/FLAC-phi.h>
 
 enum {
 	FLAC_EFMT = 1,

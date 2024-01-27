@@ -199,7 +199,7 @@ index 456bc89..14552ad 100644
  	#include "Old/APEDecompressOld.h"
  	#include "Old/UnBitArrayOld.h"
  #endif
-+#include <MAC-ff.h>
++#include <MAC-phi.h>
  
  namespace APE
  {

@@ -38,7 +38,7 @@ SRC := \
 # 	$(DIR)/codec/ag_enc.c \
 # 	$(DIR)/codec/dp_enc.c \
 # 	$(DIR)/codec/matrix_enc.c
-OBJ := ALAC-ff.o $(SRC_CPP:.cpp=.o) $(SRC:.c=.o)
+OBJ := ALAC-phi.o $(SRC_CPP:.cpp=.o) $(SRC:.c=.o)
 
 %.o: %.c
 	$(C) $(CFLAGS) $(CF) $< -o $@

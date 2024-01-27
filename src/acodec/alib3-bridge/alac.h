@@ -4,7 +4,7 @@
 #pragma once
 #include <afilter/pcm.h>
 #include <ffbase/vector.h>
-#include <ALAC/ALAC-ff.h>
+#include <ALAC/ALAC-phi.h>
 
 typedef struct ffalac {
 	struct alac_ctx *al;

@@ -1,7 +1,7 @@
 /** libMAC interface
 2016, Simon Zolin */
 
-#include "MAC-ff.h"
+#include "MAC-phi.h"
 #include <All.h>
 #include <APEDecompress.h>
 #include <NewPredictor.h>

@@ -3,7 +3,7 @@
 
 #include <track.h>
 #include <util/util.h>
-#include <DynamicAudioNormalizer/DynamicAudioNormalizer-ff.h>
+#include <DynamicAudioNormalizer/DynamicAudioNormalizer-phi.h>
 #include <ffsys/std.h>
 #include <ffsys/globals.h>
 #include <ffbase/args.h>

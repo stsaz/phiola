@@ -72,7 +72,7 @@ SRC += \
 	$(DIR)/src/libFLAC/stream_encoder_intrin_ssse3.c \
 	$(DIR)/src/libFLAC/stream_encoder_intrin_avx2.c
 
-OBJ := FLAC-ff.o $(SRC:.c=.o)
+OBJ := FLAC-phi.o $(SRC:.c=.o)
 
 %.o: %.c
 	$(C) $(CFLAGS) $< -o $@
