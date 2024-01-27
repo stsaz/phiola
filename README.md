@@ -25,6 +25,7 @@ Contents:
 * [How to Use SDK](#how-to-use-sdk)
 * [External Libraries](#external-libraries)
 * [Build](#build)
+* [Bug report](#bug-report)
 * [Why use phiola](#why-use-phiola)
 
 
@@ -70,7 +71,7 @@ See also: [phiola Architecture](doc/arch/arch.md).
 
 * Download the latest package for your OS and CPU from [phiola beta Releases](https://github.com/stsaz/phiola/releases)
 
-Linux:
+### Linux
 
 * Unpack the archive somewhere, e.g. to `~/bin`:
 
@@ -85,13 +86,21 @@ Linux:
 	ln -s ~/bin/phiola-2/phiola ~/bin/phiola
 	```
 
-Windows:
+* Optionally, add phiola app launcher to KDE Applications:
+
+	```sh
+	cp ~/bin/phiola-2/mod/gui/phiola.desktop ~/.local/share/applications
+	```
+
+	Then edit `Exec=` and `Icon=` rows in `~/.local/share/applications/phiola.desktop` if necessary.
+
+### Windows
 
 * Unpack the archive somewhere, e.g. to `C:\Program Files`
 * Add `C:\Program Files\phiola-2` to your `PATH` environment
 * Optionally, create a desktop shortcut to `phiola-gui.exe`
 
-Android:
+### Android
 
 Install from IzzyOnDroid:
 
@@ -131,7 +140,17 @@ phiola http://server/stream -tee "@artist - @title.mp3"
 phiola http://server/music.mp3 -dup @stdout.wav | phiola convert @stdin -aac_q 64 -o output.m4a
 ```
 
-> While audio is playing, you can control phiola via keyboard, e.g. press `Right Arrow` to seek forward; press `Space` to pause/unpause the current track; `n` to start playing the next track; `q` to exit; `h` to see all supported TUI commands.
+While audio is playing, you can control phiola via keyboard.  The most commonly used commands are:
+
+| Key | Action |
+| --- | --- |
+| `Space`       | Play/Pause |
+| `Right Arrow` | Seek forward |
+| `n`           | Play next track |
+| `p`           | Play previous track |
+| `q`           | Quit |
+| `h`           | Show all supported commands |
+
 
 Record:
 
@@ -178,6 +197,11 @@ Convert:
 # Convert
 phiola convert audio.flac -o audio.m4a
 
+# Convert with parameters
+phiola convert file.mp3 -aformat int16 -o file.wav
+phiola convert file.wav -vorbis_q 7 -o file.ogg
+phiola convert file.wav -rate 48000 -aac_q 5 -o file.m4a
+
 # Convert multiple files from .wav to .flac
 phiola convert *.wav -o .flac
 
@@ -188,23 +212,36 @@ phiola convert "My Recordings" -include "*.wav" -o @filepath/@filename.flac -pre
 # Copy (without re-encoding) MP3 audio region from 1:00 to 2:00 to another file
 phiola convert -copy -seek 1:0 -until 2:0 input.mp3 -o output.mp3
 
-# Split (100% accurately) the tracks from a .cue file to multiple files
-phiola convert input.cue -o "@tracknumber. @artist - @title.flac"
+# Extract (100% accurately) several tracks from a .cue file
+phiola convert input.cue -tracks 3,7,13 -o "@tracknumber. @artist - @title.flac"
+
+# Increase .wav file's volume by 6 dB
+phiola convert file.wav -gain 6 -o file-louder.wav
 ```
 
 > Note: the output audio format is chosen automatically by the file extension you specify.
+
+Show file info:
+
+```sh
+# Show meta info on all .wav files inside a directory
+phiola info "My Recordings" -include "*.wav"
+
+# Show meta info including all tags
+phiola info -tags file.mp3
+
+# Search for the .mp3 files containing a specific tag
+phiola info -tags -inc "*.mp3" . | grep -B10 "Purple Haze"
+
+# Analyze and show PCM info
+phiola info -peaks file.mp3
+```
 
 Other use-cases:
 
 ```sh
 # List all available audio playback and recording devices
 phiola device list
-
-# Show meta info on all .wav files inside a directory
-phiola info "My Recordings" -include "*.wav"
-
-# Search for the .mp3 files containing a specific tag
-phiola info -tags -inc "*.mp3" . | grep -B10 "Purple Haze"
 
 # Replace/add MP3 tags in-place
 # WARNING: please test first before actually using on real files (or at least make backups)!
@@ -300,6 +337,21 @@ Additionally:
 ## Build
 
 [Build Instructions](BUILDING.md)
+
+
+## Bug report
+
+If you encounter a bug, please report it via GitHub Issues.
+When filing a bug report try to provide enough information that can help the developers to understand and fix the problem.
+
+When using CLI, additional debug messages may help sometimes - just add `-D` after `phiola` when executing a command, e.g.:
+
+```sh
+phiola -D play file.mp3
+```
+
+With phiola on Android, there's a button in "About" screen that will save system logs to a file.
+It will contain the necessary information about the last time phiola crashed, for example.
 
 
 ## Why use phiola

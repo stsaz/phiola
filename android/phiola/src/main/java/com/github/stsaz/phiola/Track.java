@@ -97,9 +97,9 @@ class MP {
 		mp.setOnCompletionListener((mp) -> on_complete(t));
 		mp.setOnSeekCompleteListener((mp) -> on_seek_complete(t));
 		mp.setOnErrorListener((mp, what, extra) -> {
-			on_error(t);
-			return false;
-		});
+				on_error(t);
+				return false;
+			});
 		try {
 			mp.setDataSource(t.url);
 			mp.prepareAsync(); // -> on_start()
@@ -237,12 +237,14 @@ class Track {
 	private TrackHandle tplay;
 	TrackHandle trec;
 
-	static final int STATE_NONE = 1;
-	static final int STATE_OPENING = 2; // -> STATE_PLAYING
-	static final int STATE_SEEKING = 3; // -> STATE_PLAYING
-	static final int STATE_PLAYING = 4;
-	static final int STATE_PAUSED = 5; // -> STATE_UNPAUSE
-	static final int STATE_UNPAUSE = 6; // -> STATE_PLAYING
+	static final int
+		STATE_NONE = 0,
+		STATE_PREPARING = 1, // -> STATE_OPENING
+		STATE_OPENING = 2, // -> STATE_PLAYING
+		STATE_SEEKING = 3, // -> STATE_PLAYING
+		STATE_PLAYING = 4,
+		STATE_PAUSED = 5, // -> STATE_UNPAUSE
+		STATE_UNPAUSE = 6; // -> STATE_PLAYING
 
 	Track(Core core) {
 		this.core = core;
@@ -331,6 +333,7 @@ class Track {
 		core.dbglog(TAG, "play: %s", url);
 		if (tplay.state != STATE_NONE)
 			return;
+		tplay.state = STATE_PREPARING;
 
 		tplay.url = url;
 		tplay.seek_msec = -1;
@@ -381,7 +384,11 @@ class Track {
 		}
 	}
 
-	TrackHandle rec_start_26(String out, Phiola.RecordCallback cb) {
+	TrackHandle rec_start(String out, Phiola.RecordCallback cb) {
+		if (Build.VERSION.SDK_INT < 26) {
+			return rec_start_compat(out, cb);
+		}
+
 		Phiola.RecordParams p = new Phiola.RecordParams();
 
 		p.format = Phiola.RecordParams.REC_AACLC;
@@ -418,11 +425,7 @@ class Track {
 		return trec;
 	}
 
-	TrackHandle rec_start(String out, Phiola.RecordCallback cb) {
-		if (Build.VERSION.SDK_INT >= 26) {
-			return rec_start_26(out, cb);
-		}
-
+	private TrackHandle rec_start_compat(String out, Phiola.RecordCallback cb) {
 		trec = new TrackHandle();
 		trec.mr = new MediaRecorder();
 		try {

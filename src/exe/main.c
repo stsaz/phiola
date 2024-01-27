@@ -231,7 +231,12 @@ int main(int argc, char **argv, char **env)
 	x = ffmem_new(struct exe);
 	x->exit_code = 1;
 	logs(&x->log);
-	if (cmd(argv, argc)) goto end;
+
+#ifdef FF_WIN
+	x->cmd_line = ffsz_alloc_wtou(GetCommandLineW());
+#endif
+	if (cmd(argv, argc, x->cmd_line)) goto end;
+
 	if (conf(argv[0])) goto end;
 	if (x->stdout_busy)
 		logs(&x->log);

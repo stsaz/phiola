@@ -179,15 +179,20 @@ Run `phiola -help` for complete help info.\n\
 
 static int ffu_coding(ffstr s)
 {
-	static const char codestr[][8] = {
-		"win866", // FFUNICODE_WIN866
-		"win1251", // FFUNICODE_WIN1251
-		"win1252", // FFUNICODE_WIN1252
+	static const u_char codepage_val[] = {
+		FFUNICODE_WIN1251,
+		FFUNICODE_WIN1252,
+		FFUNICODE_WIN866,
 	};
-	int r = ffcharr_findsorted(codestr, FF_COUNT(codestr), sizeof(codestr[0]), s.ptr, s.len);
+	static const char codepage_str[][8] = {
+		"win1251",
+		"win1252",
+		"win866",
+	};
+	int r = ffcharr_findsorted(codepage_str, FF_COUNT(codepage_str), sizeof(codepage_str[0]), s.ptr, s.len);
 	if (r < 0)
 		return -1;
-	return _FFUNICODE_CP_BEGIN + r;
+	return codepage_val[r];
 }
 
 static int cmd_codepage(void *obj, ffstr s)
@@ -353,15 +358,13 @@ static const struct ffarg cmd_root[] = {
 };
 #undef O
 
-static int cmd(char **argv, uint argc)
+static int cmd(char **argv, uint argc, const char *cmd_line)
 {
 	uint f = FFARGS_O_PARTIAL | FFARGS_O_DUPLICATES | FFARGS_O_SKIP_FIRST;
 	int r;
 
 #ifdef FF_WIN
-	x->cmd_line = ffsz_alloc_wtou(GetCommandLineW());
-	r = ffargs_process_line(&x->cmd, cmd_root, x, f, x->cmd_line);
-
+	r = ffargs_process_line(&x->cmd, cmd_root, x, f, cmd_line);
 #else
 	r = ffargs_process_argv(&x->cmd, cmd_root, x, f, argv, argc);
 #endif

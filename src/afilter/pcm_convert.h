@@ -449,6 +449,22 @@ static inline int pcm_convert(const struct phi_af *outpcm, void *out, const stru
 		}
 		break;
 
+	case X(PHI_PCM_8, PHI_PCM_32):
+		for (ich = 0;  ich != nch;  ich++) {
+			for (i = 0;  i != samples;  i++) {
+				to.pin[ich][i * ostep] = (int)from.pb[ich][i * istep] * 0x1000000;
+			}
+		}
+		break;
+
+	case X(PHI_PCM_8, PHI_PCM_FLOAT32):
+		for (ich = 0;  ich != nch;  ich++) {
+			for (i = 0;  i != samples;  i++) {
+				to.pf[ich][i * ostep] = pcm_s8_flt((int)from.pb[ich][i * istep]);
+			}
+		}
+		break;
+
 // int16
 	case X(PHI_PCM_16, PHI_PCM_8):
 		for (ich = 0;  ich != nch;  ich++) {

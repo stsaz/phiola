@@ -112,6 +112,9 @@ static int mp3_process(struct mp3_r *m, phi_track *t)
 			t->audio.mpeg1_delay = info->delay;
 			t->audio.mpeg1_padding = info->padding;
 			t->audio.mpeg1_vbr_scale = info->vbr_scale + 1;
+			dbglog(t, "total:%U  rate:%u  br:%u  delay:%u  padding:%u  vbr-scale:%d"
+				, info->total_samples, info->sample_rate, info->bitrate
+				, info->delay, info->padding, info->vbr_scale);
 
 			if (t->conf.info_only)
 				return PHI_LASTOUT;
@@ -148,9 +151,9 @@ static int mp3_process(struct mp3_r *m, phi_track *t)
 
 data:
 	t->audio.pos = mp3read_cursample(&m->mpg);
-	dbglog(t, "passing frame #%u  samples:%u[%U]  size:%u  br:%u  off:%xU"
+	dbglog(t, "frame #%u  samples:%u @%U  size:%u  br:%u  off:%xU"
 		, ++m->nframe, mpeg1_samples(out.ptr), t->audio.pos, (uint)out.len
-		, mpeg1_bitrate(out.ptr), (ffint64)mp3read_offset(&m->mpg) - out.len);
+		, mpeg1_bitrate(out.ptr), (ffint64)mp3read_offset(&m->mpg));
 	t->data_out = out;
 	return PHI_DATA;
 }

@@ -272,7 +272,8 @@ static void conv_track_update(phi_track *t, const char *progress)
 /** Thread: worker */
 void wmain_conv_track_close(phi_track *t)
 {
-	conv_track_update(t, "Done");
+	const char *status = (!t->error) ? "Done" : "ERROR";
+	conv_track_update(t, status);
 }
 
 /** Thread: worker */

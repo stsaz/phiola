@@ -61,8 +61,8 @@ static int tuirec_process(void *ctx, phi_track *t)
 
 done:
 	u->processed_samples += t->data_in.len / u->sampsize;
-	dbglog(u->t, "samples: +%L [%U] at %U"
-		, t->data_in.len / u->sampsize, u->processed_samples, t->audio.pos);
+	dbglog(u->t, "samples: @%U +%L [%U]"
+		, t->audio.pos, t->data_in.len / u->sampsize, u->processed_samples);
 
 	t->data_out = t->data_in;
 

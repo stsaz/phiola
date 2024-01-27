@@ -697,12 +697,9 @@ public class MainActivity extends AppCompatActivity {
 					s += getString(R.string.main_st_playing);
 				else
 					s += "PLA";
-			}
 
-			if ((st & STATE_AUTO_STOP) != 0) {
-				if ((st & STATE_PLAYING) != 0)
-					s += ",";
-				s += "STP";
+				if ((st & STATE_AUTO_STOP) != 0)
+					s += ",STP";
 			}
 
 			if ((st & STATE_RECORDING) != 0) {

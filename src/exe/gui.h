@@ -49,6 +49,7 @@ static int gui_action(struct cmd_gui *g)
 		x->log.func = x->core->mod("gui.log");
 	}
 
+	x->exit_code = 0;
 	return 0;
 }
 

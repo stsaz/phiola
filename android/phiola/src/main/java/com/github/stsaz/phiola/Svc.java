@@ -38,7 +38,6 @@ public class Svc extends MediaBrowserServiceCompat {
 	private int state;
 	private PlaybackStateCompat.Builder pstate;
 	private NotificationCompat.Builder nfy;
-	private String nfy_chan;
 	private Handler mloop;
 	private Runnable delayed_stop;
 
@@ -211,20 +210,25 @@ public class Svc extends MediaBrowserServiceCompat {
 		sess.setQueue(q);
 	}
 
+	private String notification_channel_create(String id, String name) {
+		if (Build.VERSION.SDK_INT < 26)
+			return "";
+
+		String r = "";
+		NotificationManager mgr = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+		if (mgr != null) {
+			NotificationChannel chan = new NotificationChannel(id, name, NotificationManager.IMPORTANCE_LOW);
+			mgr.createNotificationChannel(chan);
+			r = id;
+		}
+		return r;
+	}
+
 	/**
 	 * Prepare notification
 	 */
 	void fg_prep() {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-			nfy_chan = "phiola.svc.chan";
-			NotificationManager mgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-			if (mgr != null) {
-				NotificationChannel chan = new NotificationChannel(nfy_chan, "channame", NotificationManager.IMPORTANCE_LOW);
-				mgr.createNotificationChannel(chan);
-			}
-		}
-
-		nfy = new NotificationCompat.Builder(this, nfy_chan);
+		nfy = new NotificationCompat.Builder(this, notification_channel_create("phiola.svc.chan", "channame"));
 		if (core.setts.svc_notification_disable)
 			return;
 		nfy.setSmallIcon(R.drawable.ic_phiola);

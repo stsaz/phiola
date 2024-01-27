@@ -35,6 +35,9 @@ union pcmdata {
 #define pcm_samples(time_ms, rate)   ((uint64)(time_ms) * (rate) / 1000)
 #define pcm_time(samples, rate)   ((uint64)(samples) * 1000 / (rate))
 
+/** Convert PCM signed 8-bit sample to FLOAT */
+#define pcm_s8_flt(sh)  ((double)(sh) * (1 / 128.0))
+
 /** Convert 16LE sample to FLOAT. */
 #define pcm_16le_flt(sh)  ((double)(sh) * (1 / 32768.0))
 

@@ -152,6 +152,8 @@ again:
 
 data:
 	t->audio.pos = wavread_cursample(&w->wav);
+	dbglog(t, "@%U samples:%u"
+		, t->audio.pos, (uint)t->data_out.len / pcm_size1(&t->audio.format));
 	return PHI_DATA;
 }
 

@@ -253,8 +253,9 @@ done:
 	{
 	size_t n = FFINT_DIVSAFE(t->data_in.len, u->sampsize);
 	u->played_samples += n;
-	dbglog(u->t, "samples: +%L [%U] @%U"
-		, n, u->played_samples, t->audio.pos);
+	dbglog(u->t, "samples: @%U(%Ums) +%L [%U]"
+		, t->audio.pos, pcm_time(t->audio.pos, t->audio.format.rate)
+		, n, u->played_samples);
 	}
 
 	t->data_out = t->data_in;

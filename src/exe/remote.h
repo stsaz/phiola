@@ -4,7 +4,7 @@
 static int remote_help()
 {
 	help_info_write("\
-Show file meta data:\n\
+Send remote command:\n\
     `phiola remote` CMD...\n\
 \n\
 Commands:\n\

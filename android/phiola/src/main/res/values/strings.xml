@@ -104,7 +104,7 @@
 	<string name="conv_copy">[.mp3/.m4a/.ogg] Stream Copy</string>
 
 	<string name="conv_behaviour">Behavior</string>
-	<string name="conv_preserve_date">Preserve File Date</string>
+	<string name="conv_preserve_date">Preserve File Modification Date</string>
 	<string name="conv_trash_orig">Move Input File to Trash</string>
 	<string name="conv_pl_add">Add New File to Playlist</string>
 

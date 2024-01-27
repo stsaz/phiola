@@ -39,7 +39,7 @@ static int opus_in_decode(void *ctx, phi_track *t)
 
 	ffstr in = {};
 	if (t->chain_flags & PHI_FFWD) {
-		ffstr_set(&in, t->data_in.ptr, t->data_in.len);
+		in = t->data_in;
 		t->data_in.len = 0;
 	}
 
@@ -87,39 +87,39 @@ again:
 	ffstr out;
 	for (;;) {
 
-	r = ffopus_decode(&o->opus, &in, &out);
+		r = ffopus_decode(&o->opus, &in, &out);
 
-	switch (r) {
+		switch (r) {
 
-	case FFOPUS_RDATA:
-		goto data;
+		case FFOPUS_RHDR:
+			t->audio.format.format = PHI_PCM_FLOAT32;
+			t->audio.format.interleaved = 1;
+			o->sampsize = pcm_size1(&t->audio.format);
+			t->data_type = "pcm";
+			break;
 
-	case FFOPUS_RERR:
-		errlog(t, "ffopus_decode(): %s", ffopus_errstr(&o->opus));
-		return PHI_ERR;
+		case FFOPUS_RHDRFIN:
+			goto again; // this packet isn't a Tags packet but audio data
+		case FFOPUS_RHDRFIN_TAGS:
+			break;
 
-	case FFOPUS_RWARN:
-		warnlog(t, "ffopus_decode(): %s", ffopus_errstr(&o->opus));
-		// fallthrough
+		case FFOPUS_RDATA:
+			goto data;
 
-	case FFOPUS_RMORE:
-		if (t->chain_flags & PHI_FFIRST) {
-			return PHI_DONE;
+		case FFOPUS_RERR:
+			errlog(t, "ffopus_decode(): %s", ffopus_errstr(&o->opus));
+			return PHI_ERR;
+
+		case FFOPUS_RWARN:
+			warnlog(t, "ffopus_decode(): %s", ffopus_errstr(&o->opus));
+			// fallthrough
+
+		case FFOPUS_RMORE:
+			if (t->chain_flags & PHI_FFIRST) {
+				return PHI_DONE;
+			}
+			return PHI_MORE;
 		}
-		return PHI_MORE;
-
-	case FFOPUS_RHDR:
-		t->audio.format.format = PHI_PCM_FLOAT32;
-		t->audio.format.interleaved = 1;
-		o->sampsize = pcm_size1(&t->audio.format);
-		t->data_type = "pcm";
-		break;
-
-	case FFOPUS_RHDRFIN:
-		goto again; // this packet isn't a Tags packet but audio data
-	case FFOPUS_RHDRFIN_TAGS:
-		break;
-	}
 	}
 
 data:

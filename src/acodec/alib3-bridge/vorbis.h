@@ -45,7 +45,6 @@ typedef struct ffvorbis {
 	uint64 cursample;
 	uint64 seek_sample;
 
-	size_t pcmlen;
 	const float **pcm; //non-interleaved
 	const float* pcm_arr[8];
 	uint fin :1;
@@ -181,7 +180,7 @@ void ffvorbis_seek(ffvorbis *v, uint64 sample)
 
 /** Decode Vorbis packet.
 Return enum FFVORBIS_R. */
-int ffvorbis_decode(ffvorbis *v, const char *pkt, size_t len)
+int ffvorbis_decode(ffvorbis *v, const char *pkt, size_t len, ffstr *out)
 {
 	enum { R_HDR, R_TAGS, R_BOOK, R_DATA };
 	int r;
@@ -246,8 +245,8 @@ int ffvorbis_decode(ffvorbis *v, const char *pkt, size_t len)
 	if (v->total_samples != (uint64)-1)
 		r = ffmin(r, v->total_samples - v->cursample);
 	v->pkt_samples = r;
-	v->pcmlen = r * sizeof(float) * v->info.channels;
 	v->cursample += r;
+	ffstr_set(out, (void*)v->pcm, r * sizeof(float) * v->info.channels);
 	return FFVORBIS_RDATA;
 }
 

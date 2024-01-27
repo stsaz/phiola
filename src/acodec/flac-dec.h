@@ -68,7 +68,7 @@ static int flac_dec_decode(void *ctx, phi_track *t)
 	t->audio.pos = ffflac_dec_cursample(&f->fl);
 	t->data_out.len = ffflac_dec_output(&f->fl, (void***)&t->data_out.ptr);
 	dbglog(t, "decoded %L samples (%U)"
-		, t->data_out.len / pcm_size1(&f->fmt), ffflac_dec_cursample(&f->fl));
+		, t->data_out.len / pcm_size1(&f->fmt), t->audio.pos);
 	return PHI_OK;
 }
 

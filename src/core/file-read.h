@@ -77,7 +77,7 @@ static int fr_process(struct file_r *f, phi_track *t)
 	if (t->input.seek != ~0ULL) {
 		f->off_cur = t->input.seek;
 		t->input.seek = ~0ULL;
-		dbglog(t, "%s: seek @%U", t->conf.ifile.name, f->off_cur);
+		dbglog(t, "%s: seek @%U(%xU)", t->conf.ifile.name, f->off_cur, f->off_cur);
 	}
 	uint64 off = f->off_cur;
 

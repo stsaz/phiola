@@ -1,20 +1,6 @@
 /** phiola: executor: logs
 2023, Simon Zolin */
 
-/** Check if fd is a terminal */
-static int std_console(fffd fd)
-{
-#ifdef FF_WIN
-	DWORD r;
-	return GetConsoleMode(fd, &r);
-
-#else
-	fffileinfo fi;
-	return (0 == fffile_info(fd, &fi)
-		&& FFFILE_UNIX_CHAR == (fffileinfo_attr(&fi) & FFFILE_UNIX_TYPEMASK));
-#endif
-}
-
 static void exe_logv(void *log_obj, uint flags, const char *module, phi_track *t, const char *fmt, va_list va)
 {
 	const char *id = (t) ? t->id : NULL;
@@ -63,28 +49,13 @@ static void logs(struct zzlog *l)
 	};
 	ffmem_copy(l->levels, levels, sizeof(levels));
 
-	if (!x->stdout_busy) {
-		l->fd = ffstdout;
-#ifdef FF_WIN
-		l->use_color = !ffstd_attr(ffstdout, FFSTD_VTERM, FFSTD_VTERM);
-		l->fd_file = (!l->use_color && !std_console(ffstdout));
-#else
-		l->use_color = std_console(ffstdout);
-#endif
-
-	} else {
-
-		l->fd = ffstderr;
-#ifdef FF_WIN
-		l->use_color = !ffstd_attr(ffstderr, FFSTD_VTERM, FFSTD_VTERM);
-		l->fd_file = (!l->use_color && !std_console(ffstderr));
-#else
-		l->use_color = std_console(ffstderr);
-#endif
-	}
+	l->fd = (!x->stdout_busy) ? ffstdout : ffstderr;
+	int r = ffstd_attr(l->fd, FFSTD_VTERM, FFSTD_VTERM);
+	l->use_color = !r;
+	l->fd_file = (r < 0);
 
 	static const char colors[][8] = {
-		/*PHI_LOG_ERR*/	FFSTD_CLR(FFSTD_RED),
+		/*PHI_LOG_ERR*/		FFSTD_CLR(FFSTD_RED),
 		/*PHI_LOG_WARN*/	FFSTD_CLR(FFSTD_YELLOW),
 		/*PHI_LOG_USER*/	"",
 		/*PHI_LOG_INFO*/	FFSTD_CLR(FFSTD_GREEN),

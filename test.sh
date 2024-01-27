@@ -46,7 +46,7 @@ test_record() {
 	rm rec.wav ; ./phiola rec -o @stdout.wav -u 2 >rec.wav ; test -f rec.wav
 
 	# ALSA
-	sleep 5 # let PulseAudio unlock devices
+	sleep 7 # let PulseAudio unlock devices
 	./phiola rec -o rec.wav -f -u 2 -au alsa
 	./phiola rec -o rec.wav -f -u 2 -au alsa -dev 1
 }
@@ -60,7 +60,7 @@ test_play() {
 	./phiola pl || true
 
 	if ! test -f pl.wav ; then
-		./phiola rec -o pl.wav -f -u 2
+		./phiola rec -rate 48000 -o pl.wav -f -u 2
 	fi
 
 	./phiola pl pl.wav
@@ -99,37 +99,38 @@ test_wasapi_loopback() {
 }
 
 convert_from_to() {
-	./phiola co co.$1 -f -o co-$1.$2 ; ./phiola pl co-$1.$2
+	./phiola co co.$1 -f -o co_$1.$2 ; ./phiola pl co_$1.$2
 }
 
 test_convert_af() {
-	./phiola co co.wav -af int24                   -f -o co-wav-i24.wav ; ./phiola i co-wav-i24.wav | grep 'int24' ; ./phiola pl co-wav-i24.wav
-	./phiola co co.wav                       -ch 1 -f -o co-wav-mono.wav ; ./phiola i co-wav-mono.wav | grep 'mono' ; ./phiola pl co-wav-mono.wav
-	./phiola co co.wav -af int24             -ch 1 -f -o co-wav-i24-mono.wav ; ./phiola i co-wav-i24-mono.wav | grep 'int24 44100Hz mono' ; ./phiola pl co-wav-i24-mono.wav
-	./phiola co co.wav           -rate 96000       -f -o co-wav-96k.wav ; ./phiola i co-wav-96k.wav | grep '96000Hz' ; ./phiola pl co-wav-96k.wav
-	./phiola co co.wav -af int32 -rate 96000       -f -o co-wav-i32-96k.wav ; ./phiola i co-wav-i32-96k.wav | grep 'int32 96000Hz' ; ./phiola pl co-wav-i32-96k.wav
-	./phiola co co.wav -af int32 -rate 96000 -ch 1 -f -o co-wav-i32-96k-mono.wav ; ./phiola i co-wav-i32-96k-mono.wav | grep 'int32 96000Hz mono' ; ./phiola pl co-wav-i32-96k-mono.wav
+	O=co_wav_i24.wav          ; ./phiola co co.wav -af int24                   -f -o $O ; ./phiola i $O | grep 'int24' ; ./phiola pl $O
+	O=co_wav_mono.wav         ; ./phiola co co.wav                       -ch 1 -f -o $O ; ./phiola i $O | grep 'mono' ; ./phiola pl $O
+	O=co_wav_i24_mono.wav     ; ./phiola co co.wav -af int24             -ch 1 -f -o $O ; ./phiola i $O | grep 'int24 48000Hz mono' ; ./phiola pl $O
+	O=co_wav_96k.wav          ; ./phiola co co.wav           -rate 96000       -f -o $O ; ./phiola i $O | grep '96000Hz' ; ./phiola pl $O
+	O=co_wav_i32_96k.wav      ; ./phiola co co.wav -af int32 -rate 96000       -f -o $O ; ./phiola i $O | grep 'int32 96000Hz' ; ./phiola pl $O
+	O=co_wav_i32_96k_mono.wav ; ./phiola co co.wav -af int32 -rate 96000 -ch 1 -f -o $O ; ./phiola i $O | grep 'int32 96000Hz mono' ; ./phiola pl $O
+	# O=co_wav_i24_96k_mono.wav ; ./phiola co co.wav -af int24 -rate 96000 -ch 1 -f -o $O ; ./phiola i $O | grep 'int24 96000Hz mono' ; ./phiola pl $O
 }
 
 test_convert() {
 	./phiola co || true
 
 	if ! test -f co.wav ; then
-		./phiola rec -o co.wav -f -u 2
+		./phiola rec -rate 48000 -o co.wav -f -u 2
 	fi
 
 	# std
-	./phiola co @stdin -f -o co-std.wav <co.wav ; ./phiola pl co-std.wav
-	./phiola co co.wav -f -o @stdout.wav >co-std.wav ; ./phiola pl co-std.wav
-	./phiola co @stdin -f -o @stdout.wav <co.wav >co-std.wav ; ./phiola pl co-std.wav
+	./phiola co @stdin -f -o co_std.wav <co.wav ; ./phiola pl co_std.wav
+	./phiola co co.wav -f -o @stdout.wav >co_std.wav ; ./phiola pl co_std.wav
+	./phiola co @stdin -f -o @stdout.wav <co.wav >co_std.wav ; ./phiola pl co_std.wav
 
 	# seek/until
-	./phiola co co.wav -f -o co-wav-s1-u2.wav -s 1 -u 2 ; ./phiola pl co-wav-s1-u2.wav
+	./phiola co co.wav -f -o co_wav_s1-u2.wav -s 1 -u 2 ; ./phiola pl co_wav_s1-u2.wav
 
 	test_convert_af
 
-	./phiola co co.wav -f -o co-wav-gain6.wav -gain -6 ; ./phiola pl co-wav-gain6.wav
-	./phiola co co.wav -f -o co-wav.wav -preserve_date
+	./phiola co co.wav -f -o co_wav_gain6.wav -gain -6 ; ./phiola pl co_wav_gain6.wav
+	./phiola co co.wav -f -o co_wav.wav -preserve_date
 
 	convert_from_to wav m4a
 	convert_from_to wav ogg
@@ -141,60 +142,61 @@ test_danorm() {
 	if ! test -f dani.wav ; then
 		./phiola rec -u 10 -f -o dani.wav
 	fi
-	./phiola co -danorm "frame 500 size 15" dani.wav -f -o dan-co.wav ; ./phiola dan-co.wav
-	./phiola co -danorm "" dani.wav -f -o dan-co.flac -af int24 ; ./phiola i dan-co.flac | grep 'int24' ; ./phiola dan-co.flac
-	# ./phiola co -danorm "" dani.wav -f -o dan-co96k.flac -af int24 -rate 96000 ; ./phiola dan-co96k.flac
-	./phiola rec -danorm "frame 500 size 15" -f -o dan-rec.wav     -u 10 ; ./phiola dan-rec.wav
-	./phiola rec -danorm "" -f -o dan-rec96k.flac -u 10 -af int24 -rate 96000 ; ./phiola i dan-rec96k.flac | grep 'int24 96000Hz' ; ./phiola dan-rec96k.flac
+	./phiola co -danorm "frame 500 size 15" dani.wav -f -o dan_co.wav ; ./phiola dan_co.wav
+	./phiola co -danorm "" dani.wav -f -o dan_co.flac -af int24 ; ./phiola i dan_co.flac | grep 'int24' ; ./phiola dan_co.flac
+	# ./phiola co -danorm "" dani.wav -f -o dan_co96k.flac -af int24 -rate 96000 ; ./phiola dan_co96k.flac
+	./phiola rec -danorm "frame 500 size 15" -f -o dan_rec.wav     -u 10 ; ./phiola dan_rec.wav
+	./phiola rec -danorm "" -f -o dan_rec96k.flac -u 10 -af int24 -rate 96000 ; ./phiola i dan_rec96k.flac | grep 'int24 96000Hz' ; ./phiola dan_rec96k.flac
 }
 
 ffmpeg_encode() {
-	ffmpeg -i $1 -y -c:a aac        fm-aac.aac    2>/dev/null
-	ffmpeg -i $1 -y -c:a aac        fm-aac.avi    2>/dev/null
-	ffmpeg -i $1 -y -c:a aac        fm-aac.mkv    2>/dev/null
-	ffmpeg -i $1 -y -c:a aac        fm-aac.mp4    2>/dev/null
-	ffmpeg -i $1 -y -c:a alac       fm-alac.mkv   2>/dev/null
-	ffmpeg -i $1 -y -c:a alac       fm-alac.mp4   2>/dev/null
-	ffmpeg -i $1 -y -c:a flac       fm-flac.flac  2>/dev/null
-	ffmpeg -i $1 -y -c:a flac       fm-flac.ogg   2>/dev/null
-	ffmpeg -i $1 -y -c:a libmp3lame fm-mp3.avi    2>/dev/null
-	ffmpeg -i $1 -y -c:a libmp3lame fm-mp3.mkv    2>/dev/null
-	ffmpeg -i $1 -y -c:a libmp3lame fm-mp3.mp3    2>/dev/null
-	ffmpeg -i $1 -y -c:a libopus    fm-opus.mkv   2>/dev/null
-	ffmpeg -i $1 -y -c:a libopus    fm-opus.ogg   2>/dev/null
-	ffmpeg -i $1 -y -c:a libvorbis  fm-vorbis.mkv 2>/dev/null
-	ffmpeg -i $1 -y -c:a libvorbis  fm-vorbis.ogg 2>/dev/null
-	ffmpeg -i $1 -y -c:a pcm_s16le  fm-pcm.avi    2>/dev/null
-	ffmpeg -i $1 -y -c:a pcm_s16le  fm-pcm.caf    2>/dev/null
-	ffmpeg -i $1 -y -c:a pcm_s16le  fm-pcm.mkv    2>/dev/null
-	ffmpeg -i $1 -y -c:a pcm_s16le  fm-pcm.wav    2>/dev/null
-	ffmpeg -i $1 -y -c:a wavpack    fm-wv.wv      2>/dev/null
+	ffmpeg -i $1 -y -c:a aac        fm_aac.aac    2>/dev/null
+	ffmpeg -i $1 -y -c:a aac        fm_aac.avi    2>/dev/null
+	ffmpeg -i $1 -y -c:a aac        fm_aac.mkv    2>/dev/null
+	ffmpeg -i $1 -y -c:a aac        fm_aac.mp4    2>/dev/null
+	ffmpeg -i $1 -y -c:a alac       fm_alac.mkv   2>/dev/null
+	ffmpeg -i $1 -y -c:a alac       fm_alac.mp4   2>/dev/null
+	ffmpeg -i $1 -y -c:a flac       fm_flac.flac  2>/dev/null
+	ffmpeg -i $1 -y -c:a flac       fm_flac.ogg   2>/dev/null
+	ffmpeg -i $1 -y -c:a libmp3lame fm_mp3.avi    2>/dev/null
+	ffmpeg -i $1 -y -c:a libmp3lame fm_mp3.mkv    2>/dev/null
+	ffmpeg -i $1 -y -c:a libmp3lame fm_mp3.mp3    2>/dev/null
+	ffmpeg -i $1 -y -c:a libmp3lame -b:a 320k fm_mp3_320.mp3 2>/dev/null
+	ffmpeg -i $1 -y -c:a libopus    fm_opus.mkv   2>/dev/null
+	ffmpeg -i $1 -y -c:a libopus    fm_opus.ogg   2>/dev/null
+	ffmpeg -i $1 -y -c:a libvorbis  fm_vorbis.mkv 2>/dev/null
+	ffmpeg -i $1 -y -c:a libvorbis  fm_vorbis.ogg 2>/dev/null
+	ffmpeg -i $1 -y -c:a pcm_s16le  fm_pcm.avi    2>/dev/null
+	ffmpeg -i $1 -y -c:a pcm_s16le  fm_pcm.caf    2>/dev/null
+	ffmpeg -i $1 -y -c:a pcm_s16le  fm_pcm.mkv    2>/dev/null
+	ffmpeg -i $1 -y -c:a pcm_s16le  fm_pcm.wav    2>/dev/null
+	ffmpeg -i $1 -y -c:a wavpack    fm_wv.wv      2>/dev/null
 }
 
 test_copy() {
 	if ! test -f co.wav ; then
-		./phiola rec -o co.wav -f -u 2
+		./phiola rec -rate 48000 -o co.wav -f -u 2
 	fi
 
-	if ! test -f fm-wv.wv ; then
+	if ! test -f fm_wv.wv ; then
 		ffmpeg_encode co.wav
 	fi
 
-	./phiola co -copy -f -s 1 -u 2 co.wav -o copy-wav.wav ; ./phiola pl copy-wav.wav
-	./phiola co -copy -f -s 1 -u 2 fm-aac.aac -o copy-aac.m4a ; ./phiola pl copy-aac.m4a
-	# ./phiola co -copy -f -s 1 -u 2 fm-aac.mkv -o copy-aac-mkv.m4a ; ./phiola pl copy-aac-mkv.m4a
-	./phiola co -copy -f -s 1 -u 2 fm-aac.mp4 -o copy-mp4.m4a ; ./phiola pl copy-mp4.m4a
-	./phiola co -copy -f -s 1 -u 2 fm-mp3.mkv -o copy-mp3-mkv.mp3 ; ./phiola pl copy-mp3-mkv.mp3
-	./phiola co -copy -f -s 1 -u 2 fm-mp3.mp3 -o copy-mp3.mp3 ; ./phiola pl copy-mp3.mp3
-	./phiola co -copy -f -s 1 -u 2 fm-opus.mkv -o copy-opus-mkv.ogg ; ./phiola pl copy-opus-mkv.ogg
-	./phiola co -copy -f -s 1 -u 2 fm-opus.ogg -o copy-opus.ogg ; ./phiola pl copy-opus.ogg
-	# ./phiola co -copy -f -s 1 -u 2 fm-vorbis.mkv -o copy-vorbis-mkv.ogg ; ./phiola pl copy-vorbis-mkv.ogg
-	./phiola co -copy -f -s 1.50 -u 2 fm-vorbis.ogg -o copy-vorbis.ogg ; ./phiola pl copy-vorbis.ogg
+	## Seek + Until
+	O=copy_aac.m4a        ; ./phiola co -copy -f -s 1 -u 2 fm_aac.aac    -o $O ; ./phiola pl $O
+	# O=copy_aac_mkv.m4a    ; ./phiola co -copy -f -s 1 -u 2 fm_aac.mkv    -o $O ; ./phiola pl $O
+	O=copy_mp3.mp3        ; ./phiola co -copy -f -s 1 -u 2 fm_mp3.mp3    -o $O ; ./phiola pl $O
+	O=copy_mp3_mkv.mp3    ; ./phiola co -copy -f -s 1 -u 2 fm_mp3.mkv    -o $O ; ./phiola pl $O
+	O=copy_mp4.m4a        ; ./phiola co -copy -f -s 1 -u 2 fm_aac.mp4    -o $O ; ./phiola pl $O
+	O=copy_opus.ogg       ; ./phiola co -copy -f -s 1 -u 2 fm_opus.ogg   -o $O ; ./phiola pl $O
+	O=copy_opus_mkv.ogg   ; ./phiola co -copy -f -s 1 -u 2 fm_opus.mkv   -o $O ; ./phiola pl $O
+	O=copy_vorbis.ogg     ; ./phiola co -copy -f -s 1 -u 2 fm_vorbis.ogg -o $O ; ./phiola pl $O
+	# O=copy_vorbis_mkv.ogg ; ./phiola co -copy -f -s 1 -u 2 fm_vorbis.mkv -o $O ; ./phiola pl $O
 }
 
 test_info() {
 	if ! test -f pl.wav ; then
-		./phiola rec -o pl.wav -f -u 2
+		./phiola rec -rate 48000 -o pl.wav -f -u 2
 	fi
 	./phiola i pl.wav
 	./phiola i pl.wav -tags
@@ -202,10 +204,10 @@ test_info() {
 	./phiola i pl.wav -peaks
 	./phiola i pl.wav -peaks -peaks_crc
 
-	if ! test -f fm-wv.wv ; then
-		ffmpeg_encode co.wav
+	if ! test -f fm_wv.wv ; then
+		ffmpeg_encode pl.wav
 	fi
-	./phiola i fm-* -peaks
+	./phiola i fm_* -peaks
 }
 
 test_dir_read() {
@@ -347,10 +349,10 @@ FILE "rec6.wav" WAVE
   INDEX 00 00:04:00
   INDEX 01 00:05:00
 EOF
-	./phiola co cue.cue                    -o cue-@tracknumber.wav -f ; ./phiola i cue-01.wav | grep '0:02.000' ; ./phiola i cue-02.wav | grep '0:02.000' ; ./phiola i cue-03.wav | grep '0:01.000'
-	./phiola co cue.cue -cue_gaps previous -o cue-@tracknumber.wav -f ; ./phiola i cue-01.wav | grep '0:03.000' ; ./phiola i cue-02.wav | grep '0:02.000' ; ./phiola i cue-03.wav | grep '0:01.000'
-	./phiola co cue.cue -cue_gaps current  -o cue-@tracknumber.wav -f ; ./phiola i cue-01.wav | grep '0:02.000' ; ./phiola i cue-02.wav | grep '0:02.000' ; ./phiola i cue-03.wav | grep '0:02.000'
-	./phiola co cue.cue -cue_gaps skip     -o cue-@tracknumber.wav -f ; ./phiola i cue-01.wav | grep '0:01.000' ; ./phiola i cue-02.wav | grep '0:01.000' ; ./phiola i cue-03.wav | grep '0:01.000'
+	./phiola co cue.cue                    -o cue_@tracknumber.wav -f ; ./phiola i cue_01.wav | grep '0:02.000' ; ./phiola i cue_02.wav | grep '0:02.000' ; ./phiola i cue_03.wav | grep '0:01.000'
+	./phiola co cue.cue -cue_gaps previous -o cue_@tracknumber.wav -f ; ./phiola i cue_01.wav | grep '0:03.000' ; ./phiola i cue_02.wav | grep '0:02.000' ; ./phiola i cue_03.wav | grep '0:01.000'
+	./phiola co cue.cue -cue_gaps current  -o cue_@tracknumber.wav -f ; ./phiola i cue_01.wav | grep '0:02.000' ; ./phiola i cue_02.wav | grep '0:02.000' ; ./phiola i cue_03.wav | grep '0:02.000'
+	./phiola co cue.cue -cue_gaps skip     -o cue_@tracknumber.wav -f ; ./phiola i cue_01.wav | grep '0:01.000' ; ./phiola i cue_02.wav | grep '0:01.000' ; ./phiola i cue_03.wav | grep '0:01.000'
 }
 
 test_meta() {
@@ -412,13 +414,13 @@ test_ofile_vars() {
 }
 
 test_remote() {
-	CHILD=$(./phiola -Background rec -f -o rec-remote.flac -remote)
+	CHILD=$(./phiola -Background rec -f -o rec_remote.flac -remote)
 	sleep 5
 	./phiola remote stop
 	sleep 1
 	ps -q $CHILD && exit 1 # subprocess must exit
 	./phiola remote stop || true
-	./phiola i rec-remote.flac
+	./phiola i rec_remote.flac
 }
 
 test_tag() {
@@ -431,35 +433,34 @@ test_tag() {
 	# unsupported format
 	./phiola tag -m 'artist=Great Artist' tag.ogg || true
 
-	cp tag.mp3 tag-a.mp3
-	./phiola tag -m 'artist=Great Artist' tag-a.mp3 ; ./phiola i tag-a.mp3 | grep "Great Artist - "
+	cp tag.mp3 tag_a.mp3
+	./phiola tag -m 'artist=Great Artist' tag_a.mp3 ; ./phiola i tag_a.mp3 | grep "Great Artist - "
 
-	cp tag-a.mp3 tag-at.mp3
-	./phiola tag -m 'title=Cool Song' tag-at.mp3 ; ./phiola i tag-at.mp3 | grep "Great Artist - Cool Song"
+	cp tag_a.mp3 tag_at.mp3
+	./phiola tag -m 'title=Cool Song' tag_at.mp3 ; ./phiola i tag_at.mp3 | grep "Great Artist - Cool Song"
 
-	cp tag.mp3 tag-at2.mp3
-	./phiola tag -m 'artist=Great Artist' -m 'title=Cool Song' tag-at2.mp3 ; ./phiola i tag-at2.mp3 | grep "Great Artist - Cool Song"
+	cp tag.mp3 tag_at2.mp3
+	./phiola tag -m 'artist=Great Artist' -m 'title=Cool Song' tag_at2.mp3 ; ./phiola i tag_at2.mp3 | grep "Great Artist - Cool Song"
 
-	cp tag-at.mp3 tag-t.mp3
-	./phiola tag -clear -m 'title=T2' tag-t.mp3 ; ./phiola i tag-t.mp3 | grep " - T2"
+	cp tag_at.mp3 tag_t.mp3
+	./phiola tag -clear -m 'title=T2' tag_t.mp3 ; ./phiola i tag_t.mp3 | grep " - T2"
 }
 
 test_clean() {
-	rm -f *.wav *.flac *.m4a *.ogg *.opus *.mp3 fm-* ofv/*.ogg *.cue *.m3u
+	rm -f *.wav *.flac *.m4a *.ogg *.opus *.mp3 fm_* ofv/*.ogg *.cue *.m3u
 	rmdir ofv
 }
 
 TESTS=(
-	help
 	device
 	record
 	# record_manual
 	play
 	convert
-	danorm
 	copy
 	info
 	meta
+	danorm
 	dir_read
 	list
 	list_heal
@@ -472,6 +473,7 @@ TESTS=(
 	clean
 	# wasapi_exclusive
 	# wasapi_loopback
+	help
 	)
 
 if test "$#" -gt "0" ; then

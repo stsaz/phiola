@@ -64,9 +64,9 @@ static int vorbis_in_decode(void *ctx, phi_track *t)
 	}
 
 	int r;
-	ffstr in = {0};
+	ffstr in = {};
 	if (t->chain_flags & PHI_FFWD) {
-		ffstr_set(&in, t->data_in.ptr, t->data_in.len);
+		in = t->data_in;
 		t->data_in.len = 0;
 		v->vorbis.fin = !!(t->chain_flags & PHI_FFIRST);
 
@@ -78,43 +78,41 @@ static int vorbis_in_decode(void *ctx, phi_track *t)
 
 	for (;;) {
 
-	r = ffvorbis_decode(&v->vorbis, in.ptr, in.len);
+		r = ffvorbis_decode(&v->vorbis, in.ptr, in.len, &t->data_out);
 
-	switch (r) {
+		switch (r) {
 
-	case FFVORBIS_RDATA:
-		goto data;
+		case FFVORBIS_RHDR:
+			t->audio.format.interleaved = 0;
+			t->data_type = "pcm";
+			return PHI_MORE;
 
-	case FFVORBIS_RERR:
-		errlog(t, "ffvorbis_decode(): %s", ffvorbis_errstr(&v->vorbis));
-		return PHI_ERR;
+		case FFVORBIS_RHDRFIN:
+			return PHI_MORE;
 
-	case FFVORBIS_RWARN:
-		warnlog(t, "ffvorbis_decode(): %s", ffvorbis_errstr(&v->vorbis));
-		// fallthrough
+		case FFVORBIS_RDATA:
+			goto data;
 
-	case FFVORBIS_RMORE:
-		if (t->chain_flags & PHI_FFIRST) {
+		case FFVORBIS_RERR:
+			errlog(t, "ffvorbis_decode(): %s", ffvorbis_errstr(&v->vorbis));
+			return PHI_ERR;
 
-			return PHI_DONE;
+		case FFVORBIS_RWARN:
+			warnlog(t, "ffvorbis_decode(): %s", ffvorbis_errstr(&v->vorbis));
+			// fallthrough
+
+		case FFVORBIS_RMORE:
+			if (t->chain_flags & PHI_FFIRST) {
+				return PHI_DONE;
+			}
+			return PHI_MORE;
 		}
-		return PHI_MORE;
-
-	case FFVORBIS_RHDR:
-		t->audio.format.interleaved = 0;
-		t->data_type = "pcm";
-		return PHI_MORE;
-
-	case FFVORBIS_RHDRFIN:
-		return PHI_MORE;
-	}
 	}
 
 data:
-	dbglog(t, "decoded %L samples (at %U)"
-		, v->vorbis.pcmlen / pcm_size(PHI_PCM_FLOAT32, ffvorbis_channels(&v->vorbis)), ffvorbis_cursample(&v->vorbis));
 	t->audio.pos = ffvorbis_cursample(&v->vorbis);
-	ffstr_set(&t->data_out, (void*)v->vorbis.pcm, v->vorbis.pcmlen);
+	dbglog(t, "decoded %L samples (at %U)"
+		, t->data_out.len / pcm_size(PHI_PCM_FLOAT32, ffvorbis_channels(&v->vorbis)), t->audio.pos);
 	return PHI_DATA;
 }
 

@@ -46,8 +46,9 @@ static int wavw_process(struct wav_w *w, phi_track *t)
 		// fallthrough
 
 	case 1: {
-		if (!t->oaudio.format.interleaved) {
-			errlog(t, "input audio format not supported");
+		if (!t->oaudio.format.interleaved
+			|| t->oaudio.format.format == PHI_PCM_8) {
+			errlog(t, "audio format is not supported");
 			return PHI_ERR;
 		}
 

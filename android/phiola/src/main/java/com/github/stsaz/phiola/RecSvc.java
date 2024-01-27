@@ -18,14 +18,15 @@ public class RecSvc extends Service {
 	private Core core;
 
 	private String notification_channel_create(String id, String name) {
+		if (Build.VERSION.SDK_INT < 26)
+			return "";
+
 		String r = "";
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-			NotificationManager mgr = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
-			if (mgr != null) {
-				NotificationChannel chan = new NotificationChannel(id, name, NotificationManager.IMPORTANCE_LOW);
-				mgr.createNotificationChannel(chan);
-				r = id;
-			}
+		NotificationManager mgr = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+		if (mgr != null) {
+			NotificationChannel chan = new NotificationChannel(id, name, NotificationManager.IMPORTANCE_LOW);
+			mgr.createNotificationChannel(chan);
+			r = id;
 		}
 		return r;
 	}
