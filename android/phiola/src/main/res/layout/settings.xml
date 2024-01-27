@@ -129,6 +129,10 @@
 			android:layout_marginTop="@dimen/sett_margin"
 			android:text="@string/sett_auto_skip"
 			android:textColor="@color/text" />
+		<SeekBar
+			android:id="@+id/sb_play_auto_skip"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content" />
 		<EditText
 			android:id="@+id/e_auto_skip"
 			android:layout_width="match_parent"
@@ -146,6 +150,10 @@
 			android:layout_marginTop="@dimen/sett_margin"
 			android:text="@string/sett_auto_skip_tail"
 			android:textColor="@color/text" />
+		<SeekBar
+			android:id="@+id/sb_play_auto_skip_tail"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content" />
 		<EditText
 			android:id="@+id/e_auto_skip_tail"
 			android:layout_width="match_parent"
@@ -163,6 +171,10 @@
 			android:layout_marginTop="@dimen/sett_margin"
 			android:text="@string/sett_auto_stop"
 			android:textColor="@color/text" />
+		<SeekBar
+			android:id="@+id/sb_play_auto_stop"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content" />
 		<EditText
 			android:id="@+id/e_auto_stop"
 			android:layout_width="match_parent"
@@ -359,6 +371,10 @@
 			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/sett_rec_gain"
 			android:textColor="@color/text" />
+		<SeekBar
+			android:id="@+id/sb_rec_gain"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content" />
 		<EditText
 			android:id="@+id/e_rec_gain"
 			android:layout_width="match_parent"

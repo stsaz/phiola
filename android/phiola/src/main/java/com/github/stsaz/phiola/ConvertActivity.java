@@ -17,6 +17,7 @@ import com.github.stsaz.phiola.databinding.ConvertBinding;
 public class ConvertActivity extends AppCompatActivity {
 	private static final String TAG = "phiola.ConvertActivity";
 	Core core;
+	private long length_msec;
 	private int qu_cur_pos;
 	private ConvertBinding b;
 
@@ -25,18 +26,37 @@ public class ConvertActivity extends AppCompatActivity {
 		super.onCreate(savedInstanceState);
 		b = ConvertBinding.inflate(getLayoutInflater());
 		setContentView(b.getRoot());
-		b.bFromSetCur.setOnClickListener((v) -> pos_set_cur(true));
-		b.bUntilSetCur.setOnClickListener((v) -> pos_set_cur(false));
-		b.bStart.setOnClickListener((v) -> convert());
 
 		ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item
 			, CoreSettings.conv_extensions);
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		b.spOutExt.setAdapter(adapter);
 
-		// 8..800 by 8; 1..5
+		b.sbRangeFrom.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
+				@Override
+				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+					if (fromUser) {
+						b.eFrom.setText(time_str(time_value(progress)));
+					}
+				}
+			});
+		b.bFromSetCur.setOnClickListener((v) -> pos_set_cur(true));
+
+		b.sbRangeUntil.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
+				@Override
+				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+					if (fromUser) {
+						String s = "";
+						if (!(progress == 0 || progress == 100))
+							s = time_str(time_value(progress));
+						b.eUntil.setText(s);
+					}
+				}
+			});
+		b.bUntilSetCur.setOnClickListener((v) -> pos_set_cur(false));
+
 		b.sbAacQ.setMax(aac_q_progress(5));
-		b.sbAacQ.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+		b.sbAacQ.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
 				@Override
 				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 					if (fromUser) {
@@ -49,44 +69,24 @@ public class ConvertActivity extends AppCompatActivity {
 						b.eAacQ.setText(s);
 					}
 				}
-
-				@Override
-				public void onStartTrackingTouch(SeekBar seekBar) {}
-
-				@Override
-				public void onStopTrackingTouch(SeekBar seekBar) {}
 			});
 
-		// 8..504 by 8
 		b.sbOpusQ.setMax(opus_q_progress(510));
-		b.sbOpusQ.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+		b.sbOpusQ.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
 				@Override
 				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 					if (fromUser)
 						b.eOpusQ.setText(core.int_to_str(opus_q_value(progress)));
 				}
-
-				@Override
-				public void onStartTrackingTouch(SeekBar seekBar) {}
-
-				@Override
-				public void onStopTrackingTouch(SeekBar seekBar) {}
 			});
 
-		// 1..10
 		b.sbVorbisQ.setMax(vorbis_q_progress(10));
-		b.sbVorbisQ.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+		b.sbVorbisQ.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
 				@Override
 				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 					if (fromUser)
 						b.eVorbisQ.setText(core.int_to_str(vorbis_q_value(progress)));
 				}
-
-				@Override
-				public void onStartTrackingTouch(SeekBar seekBar) {}
-
-				@Override
-				public void onStopTrackingTouch(SeekBar seekBar) {}
 			});
 
 		b.swCopy.setOnCheckedChangeListener((v, checked) -> {
@@ -102,12 +102,16 @@ public class ConvertActivity extends AppCompatActivity {
 				b.eVorbisQ.setEnabled(!checked);
 			});
 
+		b.bStart.setOnClickListener((v) -> convert());
+
 		core = Core.getInstance();
 		load();
 
 		qu_cur_pos = core.queue().cur();
 		String iname = getIntent().getStringExtra("iname");
 		b.eInName.setText(iname);
+
+		length_msec = getIntent().getLongExtra("length", 0);
 
 		int sl = iname.lastIndexOf('/');
 		if (sl < 0)
@@ -122,6 +126,24 @@ public class ConvertActivity extends AppCompatActivity {
 		b.eOutName.setText(iname.substring(sl, pos));
 	}
 
+	private static abstract class SBOnSeekBarChangeListener implements SeekBar.OnSeekBarChangeListener {
+		@Override
+		public void onStartTrackingTouch(SeekBar seekBar) {}
+
+		@Override
+		public void onStopTrackingTouch(SeekBar seekBar) {}
+	}
+
+	private int time_progress(long sec) {
+		return (int)(sec * 100 / (length_msec/1000));
+	}
+	private long time_value(int progress) {
+		return length_msec/1000 * progress / 100;
+	}
+	private String time_str(long sec) {
+		return String.format("%d:%02d", sec / 60, sec % 60);
+	}
+
 	private int conv_extension(String s) {
 		for (int i = 0; i < CoreSettings.conv_extensions.length; i++) {
 			if (CoreSettings.conv_extensions[i].equals(s))
@@ -130,6 +152,7 @@ public class ConvertActivity extends AppCompatActivity {
 		return -1;
 	}
 
+	// 8..800 by 8; 1..5
 	private static int aac_q_value(int progress) {
 		if (progress > (800 - 8) / 8)
 			return progress - (800 - 8) / 8;
@@ -141,9 +164,11 @@ public class ConvertActivity extends AppCompatActivity {
 		return (q - 8) / 8;
 	}
 
+	// 8..504 by 8
 	private static int opus_q_value(int progress) { return 8 + progress * 8; }
 	private static int opus_q_progress(int q) { return (q - 8) / 8; }
 
+	// 1..10
 	private static int vorbis_q_value(int progress) { return 1 + progress; }
 	private static int vorbis_q_progress(int q) { return q - 1; }
 
@@ -198,11 +223,14 @@ public class ConvertActivity extends AppCompatActivity {
 	/** Set 'from/until' position equal to the current playing position */
 	private void pos_set_cur(boolean from) {
 		long sec = core.track().curpos_msec() / 1000;
-		String s = String.format("%d:%02d", sec/60, sec%60);
-		if (from)
+		String s = time_str(sec);
+		if (from) {
+			b.sbRangeFrom.setProgress(time_progress(sec));
 			b.eFrom.setText(s);
-		else
+		} else {
+			b.sbRangeUntil.setProgress(time_progress(sec));
 			b.eUntil.setText(s);
+		}
 	}
 
 	String iname, oname;

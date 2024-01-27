@@ -549,6 +549,8 @@ class Queue {
 			auto_stop_min = 60;
 	}
 
+	/** Get auto-skip numeric values from string.
+	Supports "N%", "N sec" or just N". */
 	private int[] auto_skip_convert(String s) {
 		int[] a = new int[2];
 		if (!s.isEmpty() && s.charAt(s.length() - 1) == '%') {
@@ -557,6 +559,8 @@ class Queue {
 				a[0] = 0;
 			a[1] = 0;
 		} else {
+			if (s.indexOf(" sec") > 0)
+				s = s.substring(0, s.length() - 4);
 			a[0] = 0;
 			a[1] = core.str_to_uint(s, 0) * 1000;
 		}

@@ -166,7 +166,7 @@ public class MainActivity extends AppCompatActivity {
 		case R.id.action_file_convert:
 			startActivity(new Intent(this, ConvertActivity.class)
 					.putExtra("iname", track.cur_url())
-					.putExtra("length", total_dur_msec / 1000 + 1));
+					.putExtra("length", total_dur_msec));
 			break;
 
 		case R.id.action_file_showcur:

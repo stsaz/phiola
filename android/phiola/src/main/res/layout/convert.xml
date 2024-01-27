@@ -82,6 +82,11 @@
 			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/conv_apos_start"
 			android:textColor="@color/text" />
+		<SeekBar
+			android:id="@+id/sb_range_from"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:max="100" />
 		<EditText
 			android:id="@+id/e_from"
 			android:layout_width="match_parent"
@@ -102,6 +107,11 @@
 			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/conv_apos_end"
 			android:textColor="@color/text" />
+		<SeekBar
+			android:id="@+id/sb_range_until"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:max="100" />
 		<EditText
 			android:id="@+id/e_until"
 			android:layout_width="match_parent"
