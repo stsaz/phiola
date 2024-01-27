@@ -5,28 +5,17 @@
 	<item
 		android:id="@+id/action_settings"
 		android:title="@string/menu_settings" />
-	<item
-		android:id="@+id/action_file_tags_show"
-		android:title="@string/mfile_tags_show" />
-	<item
-		android:id="@+id/action_file_convert"
-		android:title="@string/mfile_convert" />
-	<item
-		android:id="@+id/action_file_showcur"
-		android:title="@string/mfile_show" />
-	<item
-		android:id="@+id/action_file_del"
-		android:title="@string/mfile_del" />
 
-	<item android:id="@+id/action_file_move"
-		android:title="@string/mfile_move" />
-
-	<item android:id="@+id/action_play_auto_stop"
-		android:title="@string/mplay_auto_stop" />
+	<item android:id="@+id/action_file_menu_show"
+		android:icon="@drawable/audio_file"
+		app:showAsAction="ifRoom" />
 
 	<item android:id="@+id/action_list_menu_show"
 		android:icon="@drawable/list"
 		app:showAsAction="ifRoom" />
+
+	<item android:id="@+id/action_play_auto_stop"
+		android:title="@string/mplay_auto_stop" />
 
 	<item
 		android:id="@+id/action_about"

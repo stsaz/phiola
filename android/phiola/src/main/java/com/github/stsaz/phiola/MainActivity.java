@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
 	private boolean view_explorer;
 	private Explorer explorer;
 	private PlaylistAdapter pl_adapter;
-	private PopupMenu mlist;
+	private PopupMenu mfile, mlist;
 
 	private MainBinding b;
 
@@ -128,26 +128,17 @@ public class MainActivity extends AppCompatActivity {
 				startActivity(new Intent(this, SettingsActivity.class));
 				return true;
 
-			case R.id.action_file_del:
-				file_del_cur();
-				return true;
-
-			case R.id.action_file_move:
-				file_move_cur();
-				return true;
-
-			case R.id.action_file_tags_show:
-				startActivity(new Intent(this, TagsActivity.class));
-				return true;
-
-			case R.id.action_file_convert:
-				startActivity(new Intent(this, ConvertActivity.class)
-						.putExtra("iname", track.cur_url())
-						.putExtra("length", total_dur_msec / 1000 + 1));
-				return true;
-
 			case R.id.action_play_auto_stop:
 				play_auto_stop();
+				return true;
+
+			case R.id.action_file_menu_show:
+				if (mfile == null) {
+					mfile = new PopupMenu(this, findViewById(R.id.action_file_menu_show));
+					mfile.getMenuInflater().inflate(R.menu.file, mfile.getMenu());
+					mfile.setOnMenuItemClickListener(this::file_menu_click);
+				}
+				mfile.show();
 				return true;
 
 			case R.id.action_list_menu_show:
@@ -159,15 +150,38 @@ public class MainActivity extends AppCompatActivity {
 				mlist.show();
 				return true;
 
-			case R.id.action_file_showcur:
-				explorer_file_current_show();
-				return true;
-
 			case R.id.action_about:
 				startActivity(new Intent(this, AboutActivity.class));
 				return true;
 		}
 		return super.onOptionsItemSelected(item);
+	}
+
+	private boolean file_menu_click(MenuItem item) {
+		switch (item.getItemId()) {
+
+		case R.id.action_file_tags_show:
+			startActivity(new Intent(this, TagsActivity.class));  break;
+
+		case R.id.action_file_convert:
+			startActivity(new Intent(this, ConvertActivity.class)
+					.putExtra("iname", track.cur_url())
+					.putExtra("length", total_dur_msec / 1000 + 1));
+			break;
+
+		case R.id.action_file_showcur:
+			explorer_file_current_show();  break;
+
+		case R.id.action_file_del:
+			file_del_cur();  break;
+
+		case R.id.action_file_move:
+			file_move_cur();  break;
+
+		default:
+			return false;
+		}
+		return true;
 	}
 
 	private boolean list_menu_click(MenuItem item) {

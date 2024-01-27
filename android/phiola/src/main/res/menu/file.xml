@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto">
+
+	<item android:id="@+id/action_file_tags_show"
+		android:title="@string/mfile_tags_show" />
+
+	<item android:id="@+id/action_file_convert"
+		android:title="@string/mfile_convert" />
+
+	<item android:id="@+id/action_file_showcur"
+		android:title="@string/mfile_show" />
+
+	<item android:id="@+id/action_file_del"
+		android:title="@string/mfile_del" />
+
+	<item android:id="@+id/action_file_move"
+		android:title="@string/mfile_move" />
+</menu>
