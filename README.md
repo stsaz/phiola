@@ -215,6 +215,9 @@ phiola list create "My Music" -include "*.mp3" -o my-music.m3u
 
 # Sort entries (by file name) in all playlists in the current directory
 phiola list sort *.m3u
+
+# Automatically correct the file paths inside playlist (e.g. after some files were moved)
+phiola list heal Music/playlist.m3u
 ```
 
 Currently supported commands:

@@ -102,6 +102,7 @@ static struct ffarg_ctx list_create_init(void *obj)
 	return SUBCMD_INIT(ffmem_new(struct list_create), list_create_free, lc_action, list_create_args);
 }
 
+#include <exe/list-heal.h>
 #include <exe/list-sort.h>
 
 static int list_help()
@@ -114,6 +115,7 @@ Process playlist files\n\
 COMMAND:\n\
 \n\
   `create`            Create playlist file\n\
+  `heal`              Heal playlist\n\
   `sort`              Sort playlist\n\
 \n\
 Use 'phiola list COMMAND -h' for more info.\n\
@@ -125,6 +127,7 @@ Use 'phiola list COMMAND -h' for more info.\n\
 const struct ffarg cmd_list_args[] = {
 	{ "-help",		'1',	list_help },
 	{ "create",		'{',	list_create_init },
+	{ "heal",		'{',	list_heal_init },
 	{ "sort",		'{',	list_sort_init },
 	{}
 };
