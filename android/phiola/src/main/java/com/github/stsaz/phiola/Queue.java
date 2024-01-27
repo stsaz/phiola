@@ -318,9 +318,9 @@ class Queue {
 		if (random) {
 			i = next_random(n);
 		} else if (repeat) {
-			if (i > n)
+			if (i >= n)
 				i = 0;
-			else if (i <= 0)
+			else if (i < 0)
 				i = n - 1;
 		}
 		_play(q_active, i);
