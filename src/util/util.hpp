@@ -14,6 +14,7 @@ struct ffstrxx : ffstr {
 	void free() { ffmem_free(ptr);  ptr = NULL;  len = 0; }
 	ffstrxx shift(ffsize n) { ffstr_shift(this, n); return *this; }
 	ffssize split(char by, ffstrxx *left, ffstrxx *right) const { return ffstr_splitby(this, by, left, right); }
+	bool equals_i(const char *sz) const { return ffstr_ieqz(this, sz); }
 	ffssize matchf(const char *fmt, ...) const {
 		va_list va;
 		va_start(va, fmt);

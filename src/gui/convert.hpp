@@ -1,13 +1,15 @@
 /** phiola: GUI: convert files
 2023, Simon Zolin */
 
+#include <util/util.h>
+
 struct gui_wconvert {
 	ffui_windowxx		wnd;
 	ffui_labelxx		ldir, lname, lext, lfrom, luntil, laacq, lvorbisq, lopusq;
 	ffui_editxx			edir, ename, efrom, euntil, eaacq, evorbisq, eopusq;
 	ffui_comboboxxx		cbext;
 	ffui_checkboxxx		cbcopy;
-	ffui_buttonxx		bstart;
+	ffui_buttonxx		bbrowse, bstart;
 
 	ffstrxx conf_dir, conf_name, conf_ext;
 	char *wnd_pos;
@@ -22,6 +24,7 @@ FF_EXTERN const ffui_ldr_ctl wconvert_ctls[] = {
 	_(ldir),	_(edir),
 	_(lname),	_(ename),
 	_(lext),	_(cbext),
+	_(bbrowse),
 	_(lfrom),	_(efrom),
 	_(luntil),	_(euntil),
 	_(cbcopy),
@@ -95,6 +98,25 @@ void wconvert_userconf_write(ffconfw *cw)
 		ffconfw_add2z(cw, "wconvert.pos", c->wnd_pos);
 }
 
+static const char out_file_ext[][5] = {
+	"m4a",
+	"ogg",
+	"opus",
+	"flac",
+	"wav",
+	"mp3",
+};
+
+/** Get file extension index by value */
+static int out_file_ext_index(ffstrxx val)
+{
+	for (uint i = 0;  i < FF_COUNT(out_file_ext);  i++) {
+		if (val.equals_i(out_file_ext[i]))
+			return i;
+	}
+	return -1;
+}
+
 static void wconvert_ui_from_conf()
 {
 	gui_wconvert *c = gg->wconvert;
@@ -104,17 +126,9 @@ static void wconvert_ui_from_conf()
 	c->conf_name.free();
 
 	uint cbext_index = 0 /*m4a*/;
-	static const char oext[][5] = {
-		"m4a",
-		"ogg",
-		"opus",
-		"flac",
-		"wav",
-		"mp3",
-	};
-	for (uint i = 0;  i < FF_COUNT(oext);  i++) {
-		c->cbext.add(oext[i]);
-		if (c->conf_ext == oext[i])
+	for (uint i = 0;  i < FF_COUNT(out_file_ext);  i++) {
+		c->cbext.add(out_file_ext[i]);
+		if (c->conf_ext == out_file_ext[i])
 			cbext_index = i;
 	}
 	c->cbext.set(cbext_index);
@@ -183,10 +197,39 @@ static struct phi_track_conf* conv_conf_create()
 	return tc;
 }
 
+static void wconvert_browse()
+{
+	gui_wconvert *c = gg->wconvert;
+
+	ffvecxx v;
+	v.addf("%S/%S.%S"
+		, &ffvecxx(c->edir.text()).str()
+		, &ffvecxx(c->ename.text()).str()
+		, &ffvecxx(c->cbext.text()).str());
+
+	char *fn;
+	if (!(fn = ffui_dlg_save(&gg->dlg, &c->wnd, (char*)v.ptr, v.len)))
+		return;
+
+	ffstr path, name, ext;
+	ffpath_split3_str(FFSTR_Z(fn), &path, &name, &ext);
+
+	c->edir.text(path);
+	c->ename.text(name);
+
+	int i = out_file_ext_index(ext);
+	if (i >= 0)
+		c->cbext.set(i);
+}
+
 static void wconvert_action(ffui_window *wnd, int id)
 {
 	gui_wconvert *c = gg->wconvert;
 	switch (id) {
+
+	case A_CONVERT_BROWSE:
+		wconvert_browse();  break;
+
 	case A_CONVERT_START: {
 		c->bstart.enable(0);
 		struct phi_track_conf *conf = conv_conf_create();
