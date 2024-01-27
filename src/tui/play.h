@@ -86,7 +86,7 @@ static void tui_info(tui_track *u)
 		, u->total_samples
 		, (t->audio.bitrate + 500) / 1000
 		, t->audio.decoder
-		, pcm_fmt_str(fmt->format)
+		, phi_af_name(fmt->format)
 		, fmt->rate
 		, pcm_channelstr(fmt->channels));
 

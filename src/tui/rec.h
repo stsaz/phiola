@@ -13,7 +13,7 @@ static void* tuirec_open(phi_track *t)
 	u->sampsize = pcm_size1(f);
 
 	userlog(t, "Recording...  Source: %s %uHz %s.  Press \"s\" to stop."
-		, pcm_fmt_str(f->format), f->rate, pcm_channelstr(f->channels));
+		, phi_af_name(f->format), f->rate, pcm_channelstr(f->channels));
 	return u;
 }
 

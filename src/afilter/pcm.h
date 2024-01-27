@@ -10,6 +10,7 @@ union pcmdata {
 	int *in;
 	float *f;
 
+	u_char **pub;
 	char **pb;
 	short **psh;
 	int **pin;

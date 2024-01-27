@@ -415,6 +415,23 @@ static inline int pcm_convert(const struct phi_af *outpcm, void *out, const stru
 
 	switch (X(ifmt, outpcm->format)) {
 
+// uint8
+	case X(PHI_PCM_U8, PHI_PCM_16):
+		for (ich = 0;  ich != nch;  ich++) {
+			for (i = 0;  i != samples;  i++) {
+				to.psh[ich][i * ostep] = (((int)from.pub[ich][i * istep]) - 127) * 0x100;
+			}
+		}
+		break;
+
+	case X(PHI_PCM_U8, PHI_PCM_32):
+		for (ich = 0;  ich != nch;  ich++) {
+			for (i = 0;  i != samples;  i++) {
+				to.pin[ich][i * ostep] = (((int)from.pub[ich][i * istep]) - 127) * 0x1000000;
+			}
+		}
+		break;
+
 // int8
 	case X(PHI_PCM_8, PHI_PCM_8):
 		for (ich = 0;  ich != nch;  ich++) {

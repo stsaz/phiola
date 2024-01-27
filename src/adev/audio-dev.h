@@ -37,7 +37,7 @@ static int audio_dev_list(const phi_core *core, const ffaudio_interface *audio, 
 
 		const ffuint *def_fmt = (void*)audio->dev_info(t, FFAUDIO_DEV_MIX_FORMAT);
 		if (def_fmt != NULL) {
-			e->default_format.format = ffaudio_to_ffpcm(def_fmt[0]);
+			e->default_format.format = ffaudio_to_phi_af(def_fmt[0]);
 			e->default_format.rate = def_fmt[1];
 			e->default_format.channels = def_fmt[2];
 		}

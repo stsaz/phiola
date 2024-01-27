@@ -3,6 +3,7 @@
 
 #include <track.h>
 #include <util/util.h>
+#include <util/aformat.h>
 #include <afilter/pcm.h>
 #include <ffsys/std.h>
 #include <ffsys/pipe.h>
@@ -116,34 +117,6 @@ static void tui_cmd_read(void *param);
 static void tui_help(uint cmd);
 static void tui_op(uint cmd);
 static void cmd_next();
-
-static const char pcm_fmtstr[][8] = {
-	"float32",
-	"float64",
-	"int16",
-	"int24",
-	"int24-4",
-	"int32",
-	"int8",
-};
-static const ushort pcm_fmt[] = {
-	PHI_PCM_FLOAT32,
-	PHI_PCM_FLOAT64,
-	PHI_PCM_16,
-	PHI_PCM_24,
-	PHI_PCM_24_4,
-	PHI_PCM_32,
-	PHI_PCM_8,
-};
-
-static const char* pcm_fmt_str(uint fmt)
-{
-	int r = ffarrint16_find(pcm_fmt, FF_COUNT(pcm_fmt), fmt);
-	if (r < 0) {
-		return "";
-	}
-	return pcm_fmtstr[r];
-}
 
 static const char *const _pcm_channelstr[] = {
 	"mono", "stereo",

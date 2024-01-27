@@ -56,6 +56,15 @@ static void wav_meta(struct wav_r *w, phi_track *t)
 	phi_metaif.set(&t->meta, name, val, 0);
 }
 
+static uint af_wav_phi(uint wf)
+{
+	switch (wf) {
+	case WAV_FLOAT: return PHI_PCM_FLOAT32;
+	case WAV_8: return PHI_PCM_U8;
+	}
+	return wf;
+}
+
 static int wav_process(void *ctx, phi_track *t)
 {
 	enum { I_HDR, I_DATA };
@@ -108,7 +117,7 @@ again:
 			const struct wav_info *ai = wavread_info(&w->wav);
 			t->audio.decoder = "WAVE";
 			struct phi_af f = {
-				.format = (ai->format == WAV_FLOAT) ? PHI_PCM_FLOAT32 : ai->format,
+				.format = af_wav_phi(ai->format),
 				.channels = ai->channels,
 				.rate = ai->sample_rate,
 				.interleaved = 1,

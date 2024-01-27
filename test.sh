@@ -67,6 +67,9 @@ test_play() {
 	./phiola pl pl.wav -dev 1
 	./phiola -D pl pl.wav -buf 1000 | grep 'opened buffer 1000ms'
 
+	ffmpeg -i pl.wav -y -c:a pcm_u8 fm_pcm8.wav 2>/dev/null
+	./phiola pl fm_pcm8.wav
+
 	# seek/until
 	./phiola pl pl.wav -s 1
 	./phiola pl pl.wav -u 1

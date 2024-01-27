@@ -1,6 +1,8 @@
 /** phiola/Android: info/meta tracks
 2023, Simon Zolin */
 
+#include <util/aformat.h>
+
 static const char* channel_str(uint channels)
 {
 	static const char _channel_str[][8] = {
@@ -38,20 +40,6 @@ static uint64 info_add(ffvec *info, const phi_track *t)
 		, (int64)t->audio.total);
 
 	return msec;
-}
-
-static const char ffaudio_formats_str[][8] = {
-	"int8", "int16", "int24", "int32", "int24_4",
-	"float32", "float64",
-};
-static const ushort ffpcm_formats[] = {
-	PHI_PCM_8, PHI_PCM_16, PHI_PCM_24, PHI_PCM_32, PHI_PCM_24_4,
-	PHI_PCM_FLOAT32, PHI_PCM_FLOAT64,
-};
-static inline const char* pcm_format_str(uint f)
-{
-	int i = ffarrint16_find(ffpcm_formats, FF_COUNT(ffpcm_formats), f);
-	return ffaudio_formats_str[i];
 }
 
 jobject meta_create(JNIEnv *env, ffvec *meta, const char *filename, uint64 msec)
@@ -96,7 +84,7 @@ static ffvec info_prepare(JNIEnv *env, jobject jmeta, jclass jc_meta, phi_track 
 		, t->audio.decoder
 		, t->audio.format.rate
 		, channel_str(t->audio.format.channels)
-		, pcm_format_str(t->audio.format.format));
+		, phi_af_name(t->audio.format.format));
 	jni_obj_sz_set(env, jmeta, jni_field(jc_meta, "info", JNI_TSTR), format);
 	*ffvec_pushT(&info, char*) = ffsz_dup("format");
 	*ffvec_pushT(&info, char*) = format;

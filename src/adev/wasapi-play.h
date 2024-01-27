@@ -91,7 +91,7 @@ fin:
 	t->oaudio.adev_stop = audio_stop;
 	dbglog(t, "%s buffer %ums, %s/%uHz/%u, exclusive:%u"
 		, reused ? "reused" : "opened", mod->buffer_length_msec
-		, pcm_format_str(mod->fmt.format), mod->fmt.rate, mod->fmt.channels
+		, phi_af_name(mod->fmt.format), mod->fmt.rate, mod->fmt.channels
 		, t->conf.oaudio.exclusive);
 
 	if (w->event_h)

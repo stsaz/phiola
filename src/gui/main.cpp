@@ -5,6 +5,7 @@
 #include <track.h>
 #include <util/util.h>
 #include <util/util.hpp>
+#include <util/aformat.h>
 
 #define VOLUME_MAX 125
 
@@ -157,33 +158,6 @@ void wmain_status_id(uint id)
 	wmain_status((id == ST_PAUSED) ? "Paused" : "");
 }
 
-static const char pcm_fmtstr[][8] = {
-	"float32",
-	"float64",
-	"int16",
-	"int24",
-	"int24-4",
-	"int32",
-	"int8",
-};
-static const ushort pcm_fmt[] = {
-	PHI_PCM_FLOAT32,
-	PHI_PCM_FLOAT64,
-	PHI_PCM_16,
-	PHI_PCM_24,
-	PHI_PCM_24_4,
-	PHI_PCM_32,
-	PHI_PCM_8,
-};
-
-static const char* pcm_fmt_str(uint fmt)
-{
-	int r = ffarrint16_find(pcm_fmt, FF_COUNT(pcm_fmt), fmt);
-	if (r < 0)
-		return "";
-	return pcm_fmtstr[r];
-}
-
 static const char _pcm_channelstr[][10] = {
 	"mono", "stereo",
 	"3-channel", "4-channel", "5-channel",
@@ -209,7 +183,7 @@ int wmain_track_new(phi_track *t, uint time_total)
 		, (t->audio.bitrate + 500) / 1000
 		, t->audio.decoder
 		, t->audio.format.rate
-		, pcm_fmt_str(t->audio.format.format)
+		, phi_af_name(t->audio.format.format)
 		, pcm_channelstr(t->audio.format.channels));
 	gd->metaif->set(&t->meta, FFSTR_Z("_phi_info"), FFSTR_Z(buf), 0);
 

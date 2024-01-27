@@ -2,6 +2,7 @@
 2023, Simon Zolin */
 
 #include <track.h>
+#include <util/aformat.h>
 #include <afilter/soxr.h>
 
 struct soxr {
@@ -26,20 +27,10 @@ static void soxr_close(void *ctx, phi_track *t)
 	ffmem_free(c);
 }
 
-static inline char* af_print(const struct phi_af *af, char *buf, ffsize cap, const char **fmts)
+static inline char* af_print(const struct phi_af *af, char *buf, ffsize cap)
 {
-	static const ushort pcm_fmt[] = {
-		PHI_PCM_FLOAT32,
-		PHI_PCM_FLOAT64,
-		PHI_PCM_16,
-		PHI_PCM_24,
-		PHI_PCM_24_4,
-		PHI_PCM_32,
-		PHI_PCM_8,
-	};
-	int r = ffarrint16_find(pcm_fmt, FF_COUNT(pcm_fmt), af->format);
-	r = ffs_format_r0(buf, cap - 1, "%s/%u/%u/%s"
-		, fmts[r], af->rate, af->channels, (af->interleaved) ? "i" : "ni");
+	int r = ffs_format_r0(buf, cap - 1, "%s/%u/%u/%s"
+		, phi_af_name(af->format), af->rate, af->channels, (af->interleaved) ? "i" : "ni");
 	buf[r] = '\0';
 	return buf;
 }
@@ -53,20 +44,10 @@ static void log_pcmconv(int r, const struct phi_af *in, const struct phi_af *out
 		unsupp = " not supported";
 	}
 
-	static const char* fmtstr[] = {
-		"float32",
-		"float64",
-		"int16",
-		"int24",
-		"int24-4",
-		"int32",
-		"int8",
-	};
 	char bufi[100], bufo[100];
-
 	core->conf.log(core->conf.log_obj, level, NULL, t, "audio conversion%s: %s -> %s"
 		, unsupp
-		, af_print(in, bufi, sizeof(bufi), fmtstr), af_print(out, bufo, sizeof(bufo), fmtstr));
+		, af_print(in, bufi, sizeof(bufi)), af_print(out, bufo, sizeof(bufo)));
 }
 
 /*

@@ -61,7 +61,7 @@ static int audio_out_open(audio_out *a, phi_track *t, const struct phi_af *fmt)
 		goto end;
 	}
 
-	int afmt = ffpcm_to_ffaudio(fmt->format);
+	int afmt = phi_af_to_ffaudio(fmt->format);
 	if (afmt < 0) {
 		errlog(t, "format not supported", 0);
 		goto end;
@@ -83,7 +83,7 @@ static int audio_out_open(audio_out *a, phi_track *t, const struct phi_af *fmt)
 		if (a->try_open) {
 			int new_format = 0;
 			if (conf.format != in_conf.format) {
-				t->oaudio.conv_format.format = ffaudio_to_ffpcm(conf.format);
+				t->oaudio.conv_format.format = ffaudio_to_phi_af(conf.format);
 				new_format = 1;
 			}
 

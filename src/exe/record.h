@@ -224,7 +224,7 @@ static int rec_meta(struct cmd_rec *r, ffstr s)
 
 static int rec_aformat(struct cmd_rec *r, ffstr s)
 {
-	if (~0U == (r->aformat = pcm_str_fmt(s.ptr, s.len)))
+	if (~0U == (r->aformat = phi_af_val(s)))
 		return _ffargs_err(&x->cmd, 1, "incorrect audio format '%S'", &s);
 	return 0;
 }

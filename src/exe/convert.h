@@ -124,7 +124,7 @@ static int conv_exclude(struct cmd_conv *v, ffstr s)
 
 static int conv_aformat(struct cmd_conv *v, ffstr s)
 {
-	if (~0U == (v->aformat = pcm_str_fmt(s.ptr, s.len)))
+	if (~0U == (v->aformat = phi_af_val(s)))
 		return _ffargs_err(&x->cmd, 1, "incorrect audio format '%S'", &s);
 	return 0;
 }
