@@ -197,7 +197,7 @@ public class ConvertActivity extends AppCompatActivity {
 
 	/** Set 'from/until' position equal to the current playing position */
 	private void pos_set_cur(boolean from) {
-		int sec = core.track().curpos_msec() / 1000;
+		long sec = core.track().curpos_msec() / 1000;
 		String s = String.format("%d:%02d", sec/60, sec%60);
 		if (from)
 			b.eFrom.setText(s);

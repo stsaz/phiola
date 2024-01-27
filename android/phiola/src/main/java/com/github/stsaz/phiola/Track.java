@@ -53,11 +53,11 @@ class TrackHandle {
 	String[] meta;
 	String artist, title, date, info;
 	String name; // track name shown in GUI
-	int pos_msec; // current progress (msec)
-	int prev_pos_msec; // previous progress position (msec)
-	int seek_msec; // default:-1
-	int skip_tail_msec;
-	int time_total_msec; // track duration (msec)
+	long pos_msec; // current progress (msec)
+	long prev_pos_msec; // previous progress position (msec)
+	long seek_msec; // default:-1
+	long skip_tail_msec;
+	long time_total_msec; // track duration (msec)
 }
 
 class MP {
@@ -125,6 +125,15 @@ class MP {
 		}
 	}
 
+	private void seek(long pos_msec) {
+		if (Build.VERSION.SDK_INT < 26) {
+			mp.seekTo((int)pos_msec);
+			return;
+		}
+
+		mp.seekTo(pos_msec, MediaPlayer.SEEK_PREVIOUS_SYNC);
+	}
+
 	private int on_process(TrackHandle t) {
 		if (t.seek_msec != -1) {
 			if (t.state == Track.STATE_PLAYING)
@@ -133,7 +142,7 @@ class MP {
 			if (t.seek_msec >= t.time_total_msec - t.skip_tail_msec)
 				t.skip_tail_msec = 0; // disable auto-skip after manual seek in tail area
 
-			mp.seekTo(t.seek_msec);
+			seek(t.seek_msec);
 			t.seek_msec = -1;
 		}
 
@@ -169,7 +178,7 @@ class MP {
 		if (t.seek_msec > 0) {
 			t.seek_msec = Math.min(t.seek_msec, t.time_total_msec / 2);
 			core.dbglog(TAG, "initial seek: %d", t.seek_msec);
-			mp.seekTo(t.seek_msec);
+			seek(t.seek_msec);
 			t.seek_msec = -1;
 		}
 
@@ -256,7 +265,7 @@ class Track {
 		return tplay.url;
 	}
 
-	int curpos_msec() {
+	long curpos_msec() {
 		return tplay.pos_msec;
 	}
 

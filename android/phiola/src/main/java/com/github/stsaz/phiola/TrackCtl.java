@@ -99,7 +99,7 @@ class TrackCtl {
 		ctl.getTransportControls().skipToPrevious();
 	}
 
-	void seek(int pos_msec) {
+	void seek(long pos_msec) {
 		ctl.getTransportControls().seekTo(pos_msec);
 	}
 }

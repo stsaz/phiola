@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
 	private Track track;
 	private Filter trk_nfy;
 	private TrackCtl trackctl;
-	private int total_dur_msec;
+	private long total_dur_msec;
 	private int state;
 
 	private TrackHandle trec;
@@ -658,7 +658,7 @@ public class MainActivity extends AppCompatActivity {
 
 	/** UI event from seek bar */
 	private void seek(int percent) {
-		trackctl.seek(percent * total_dur_msec / 100);
+		trackctl.seek(total_dur_msec * percent / 100);
 	}
 
 	private static final int
@@ -770,13 +770,13 @@ public class MainActivity extends AppCompatActivity {
 				break;
 		}
 
-		int pos = t.pos_msec / 1000;
+		long pos = t.pos_msec / 1000;
 		total_dur_msec = t.time_total_msec;
-		int dur = t.time_total_msec / 1000;
+		long dur = t.time_total_msec / 1000;
 
 		int progress = 0;
 		if (dur != 0)
-			progress = pos * 100 / dur;
+			progress = (int)(pos * 100 / dur);
 		b.seekbar.setProgress(progress);
 
 		String s = String.format("%d:%02d / %d:%02d"

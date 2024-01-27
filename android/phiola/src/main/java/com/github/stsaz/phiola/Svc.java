@@ -32,7 +32,7 @@ public class Svc extends MediaBrowserServiceCompat {
 	private Core core;
 	private Track track;
 	private Queue queue;
-	private int playtime_msec; // current track's progress
+	private long playtime_msec; // current track's progress
 
 	private MediaSessionCompat sess;
 	private int state;
@@ -188,7 +188,7 @@ public class Svc extends MediaBrowserServiceCompat {
 	/**
 	 * Set session state
 	 */
-	void sess_state(int st, int playtime_msec) {
+	void sess_state(int st, long playtime_msec) {
 		core.dbglog(TAG, "pstate.setState(%d, %d)", st, playtime_msec);
 		state = st;
 		pstate.setState(state, playtime_msec, 0);
