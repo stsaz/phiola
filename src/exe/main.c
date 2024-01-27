@@ -89,7 +89,8 @@ static void phi_grd_close(void *f, phi_track *t)
 		return;
 	}
 
-	if (!x->queue->status(NULL))
+	if (!x->queue->status(NULL) // nothing is playing
+		&& !(t->chain_flags & PHI_FSTOP)) // not stopped by user command
 		x->core->sig(PHI_CORE_STOP);
 }
 
