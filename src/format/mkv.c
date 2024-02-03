@@ -216,6 +216,7 @@ again:
 			case MKV_A_AAC:
 				t->data_type = "aac";
 				t->data_out = ai->codec_conf;
+				t->oaudio.mp4_frame_samples = 1024;
 				break;
 
 			case MKV_A_VORBIS:

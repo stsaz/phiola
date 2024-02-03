@@ -151,10 +151,6 @@ static int mp4r_decode(struct mp4_r *m, phi_track *t)
 				errlog(t, "no audio track found");
 				return PHI_ERR;
 			}
-			if (ai->format.bits == 0) {
-				errlog(t, "mp4read_process(): %s", mp4read_error(&m->mp));
-				return PHI_ERR;
-			}
 			struct phi_af f = {
 				.format = ai->format.bits,
 				.rate = ai->format.rate,
