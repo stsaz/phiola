@@ -159,7 +159,7 @@ test_until() {
 	./phiola i -peaks -u 1 fm_mp3.mp3     | grep -E '4[789],... total'
 	./phiola i -peaks -u 1 fm_mp3_320.mp3 | grep -E '4[789],... total'
 	./phiola i -peaks -u 1 fm_opus.mkv    | grep -E '4[78],... total'
-	./phiola i -peaks -u 1 fm_opus.ogg    | grep -E '4[78],... total'
+	./phiola i -peaks -u 1 fm_opus.ogg    | grep -E '48,000 total'
 	./phiola i -peaks -u 1 fm_pcm.avi     | grep -E '48,000 total'
 	./phiola i -peaks -u 1 fm_pcm.caf     | grep -E '48,000 total'
 	./phiola i -peaks -u 1 fm_pcm.mkv     | grep -E '48,... total'
@@ -304,7 +304,7 @@ test_copy() {
 	test_copy_until fm_mp3.mp3     copy_u_mp3.mp3        '4[89],...'
 	test_copy_until fm_mp3_320.mp3 copy_u_mp3_320.mp3    '4[89],...'
 	test_copy_until fm_opus.mkv    copy_u_opus_mkv.ogg   '4[789],...'
-	test_copy_until fm_opus.ogg    copy_u_opus.ogg       '48,...'
+	test_copy_until fm_opus.ogg    copy_u_opus.ogg       '4[78],...'
 	test_copy_until fm_vorbis.mkv  copy_u_vorbis_mkv.ogg '48,...'
 	test_copy_until fm_vorbis.ogg  copy_u_vorbis.ogg     '48,...'
 

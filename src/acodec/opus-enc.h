@@ -1,6 +1,8 @@
 /** phiola: Opus encode
 2016, Simon Zolin */
 
+#include <acodec/alib3-bridge/opus-enc-if.h>
+
 struct opus_enc {
 	uint state;
 	struct phi_af fmt;

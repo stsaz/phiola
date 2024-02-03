@@ -3,7 +3,6 @@
 
 #include <track.h>
 #include <util/util.h>
-#include <acodec/alib3-bridge/opus.h>
 #include <format/mmtag.h>
 #include <ffsys/globals.h>
 
