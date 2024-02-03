@@ -5,7 +5,7 @@
 #include <ffsys/timerqueue.h>
 #include <ffbase/string.h>
 
-#define PHI_VERSION  20016
+#define PHI_VERSION  20017
 
 /** Inter-module compatibility version.
 It must be updated when incompatible changes are made to this file,

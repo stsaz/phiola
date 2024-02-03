@@ -33,7 +33,7 @@ do { \
 } while (0)
 
 #ifndef PHI_VERSION_STR
-	#define PHI_VERSION_STR  "2.0-beta16"
+	#define PHI_VERSION_STR  "2.0-beta17"
 #endif
 
 #include <core/worker.h>
