@@ -142,12 +142,11 @@ again:
 		if (r < 0) {
 			errlog(t, "mkv_vorbis_hdr()");
 			return PHI_ERR;
-		} else if (r == 1) {
-			m->state = I_DATA;
-		} else {
+		} else if (r == 0) {
 			return PHI_DATA;
 		}
-		break;
+		m->state = I_DATA;
+		// fallthrough
 
 	case I_DATA:
 		if (t->audio.seek_req && t->audio.seek != -1) {
@@ -263,7 +262,7 @@ again:
 
 data:
 	t->audio.pos = msec_to_samples(mkvread_curpos(&m->mkv), m->sample_rate);
-	dbglog(t, "data size:%L  pos:%U", out.len, t->audio.pos);
+	dbglog(t, "frame size:%L  @%U", out.len, t->audio.pos);
 	t->data_out = out;
 	return PHI_DATA;
 }
