@@ -129,6 +129,9 @@ static inline ffsize ffpath_makefn(char *dst, ffsize dstcap, ffstr src, char rep
 #define pcm_size(format, channels)  (pcm_bits(format) / 8 * (channels))
 #define pcm_size1(f)  pcm_size((f)->format, (f)->channels)
 
+#define phi_af_size(af)  (((af)->format & 0xff) / 8 * (af)->channels)
+#define phi_af_bits(af)  ((af)->format & 0xff)
+
 static inline void phi_af_update(struct phi_af *dst, const struct phi_af *src)
 {
 	if (src->format)

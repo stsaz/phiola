@@ -96,6 +96,47 @@ static const struct mp4read_audio_info* get_first_audio_track(struct mp4_r *m)
 	return NULL;
 }
 
+static const char* mp4r_info(struct mp4_r *m, phi_track *t, const struct mp4read_audio_info *ai)
+{
+	struct phi_af f = {
+		.format = ai->format.bits,
+		.rate = ai->format.rate,
+		.channels = ai->format.channels,
+	};
+	t->audio.format = f;
+	t->audio.total = ai->total_samples;
+
+	const char *filter = NULL;
+	switch (ai->codec) {
+	case MP4_A_ALAC:
+		filter = "alac.decode";
+		t->audio.bitrate = ai->real_bitrate;
+		break;
+
+	case MP4_A_AAC:
+		filter = "aac.decode";
+		if (!t->conf.stream_copy) {
+			t->audio.start_delay = ai->enc_delay;
+			t->audio.end_padding = ai->end_padding;
+			t->audio.bitrate = ((int)ai->aac_bitrate > 0) ? ai->aac_bitrate : ai->real_bitrate;
+		}
+		break;
+
+	case MP4_A_MPEG1:
+		filter = "mpeg.decode";
+		t->audio.bitrate = (ai->aac_bitrate != 0) ? ai->aac_bitrate : 0;
+		break;
+	}
+
+	if (ai->frame_samples)
+		t->oaudio.mp4_frame_samples = ai->frame_samples;
+
+	dbglog(t, "codec:%u  total:%U  delay:%u  padding:%u  br:%u"
+		, ai->codec, ai->total_samples, ai->enc_delay, ai->end_padding, t->audio.bitrate);
+
+	return filter;
+}
+
 /**
 . Read .mp4 data.
 . Add the appropriate audio decoding filter.
@@ -151,45 +192,15 @@ static int mp4r_decode(struct mp4_r *m, phi_track *t)
 				errlog(t, "no audio track found");
 				return PHI_ERR;
 			}
-			struct phi_af f = {
-				.format = ai->format.bits,
-				.rate = ai->format.rate,
-				.channels = ai->format.channels,
-			};
-			t->audio.format = f;
-			t->audio.total = ai->total_samples;
 
-			const char *filt;
-			switch (ai->codec) {
-			case MP4_A_ALAC:
-				filt = "alac.decode";
-				t->audio.bitrate = ai->real_bitrate;
-				break;
-
-			case MP4_A_AAC:
-				filt = "aac.decode";
-				if (!t->conf.stream_copy) {
-					t->audio.aac_encoder_delay = ai->enc_delay;
-					t->audio.aac_end_padding = ai->end_padding;
-					t->audio.bitrate = ((int)ai->aac_bitrate > 0) ? ai->aac_bitrate : ai->real_bitrate;
-				}
-				break;
-
-			case MP4_A_MPEG1:
-				filt = "mpeg.decode";
-				t->audio.bitrate = (ai->aac_bitrate != 0) ? ai->aac_bitrate : 0;
-				break;
-
-			default:
-				errlog(t, "%s: decoding unsupported", ai->codec_name);
+			const char *filter = mp4r_info(m, t, ai);
+			if (!filter) {
+				errlog(t, "%s: decoding not supported", ai->codec_name);
 				return PHI_ERR;
 			}
 
-			if (ai->frame_samples)
-				t->oaudio.mp4_frame_samples = ai->frame_samples;
-
 			if (!t->conf.stream_copy
-				&& !core->track->filter(t, core->mod(filt), 0))
+				&& !core->track->filter(t, core->mod(filter), 0))
 				return PHI_ERR;
 
 			m->rate = ai->format.rate;
@@ -208,12 +219,7 @@ static int mp4r_decode(struct mp4_r *m, phi_track *t)
 			break;
 
 		case MP4READ_DATA:
-			t->audio.pos = mp4read_cursample(&m->mp);
-			dbglog(t, "passing %L bytes at position #%U"
-				, out.len, t->audio.pos);
-			t->data_in = m->in;
-			t->data_out = out;
-			return PHI_DATA;
+			goto data;
 
 		case MP4READ_DONE:
 			return PHI_LASTOUT;
@@ -233,10 +239,15 @@ static int mp4r_decode(struct mp4_r *m, phi_track *t)
 		}
 		break;
 	}
-
 	}
 
-	//unreachable
+data:
+	t->audio.pos = mp4read_cursample(&m->mp);
+	dbglog(t, "passing %L bytes @%U"
+		, out.len, t->audio.pos);
+	t->data_in = m->in;
+	t->data_out = out;
+	return PHI_DATA;
 }
 
 const phi_filter phi_mp4_read = {

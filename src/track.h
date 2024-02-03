@@ -169,6 +169,9 @@ struct phi_track {
 		double maxpeak_db;
 		const char *decoder;
 
+		// Set by mp4.read, mp3.read, opus.dec
+		uint start_delay, end_padding;
+
 		// flac.read/ogg -> flac.dec
 		uint flac_samples;
 		uint flac_minblock, flac_maxblock;
@@ -177,13 +180,7 @@ struct phi_track {
 		uint ape_block_samples;
 		uint ape_align4;
 
-		// mp4.read -> aac.dec
-		uint aac_encoder_delay;
-		uint aac_end_padding;
-
 		// mp3.read -> mpeg.dec
-		ushort mpeg1_delay;
-		ushort mpeg1_padding;
 		ffbyte mpeg1_vbr_scale; // +1
 	} audio;
 

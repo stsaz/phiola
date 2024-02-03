@@ -9,7 +9,6 @@ struct mp3_r {
 	void *trk;
 	uint sample_rate;
 	uint nframe;
-	char codec_name[9];
 	uint have_id32tag :1;
 };
 
@@ -58,6 +57,26 @@ static void mp3_meta(struct mp3_r *m, phi_track *t, uint type)
 	phi_metaif.set(&t->meta, name, val, 0);
 }
 
+static void mp3_info(struct mp3_r *m, phi_track *t, const struct mpeg1read_info *info)
+{
+	struct phi_af f = {
+		.format = PHI_PCM_FLOAT32,
+		.channels = info->channels,
+		.rate = info->sample_rate,
+	};
+	t->audio.format = f;
+	t->audio.bitrate = info->bitrate;
+	t->audio.total = info->total_samples;
+	t->audio.decoder = "MPEG1-L3";
+	t->data_type = "mpeg";
+	t->audio.start_delay = info->delay;
+	t->audio.end_padding = info->padding;
+	t->audio.mpeg1_vbr_scale = info->vbr_scale + 1;
+	dbglog(t, "total:%U  rate:%u  br:%u  delay:%u  padding:%u  vbr-scale:%d"
+		, info->total_samples, info->sample_rate, info->bitrate
+		, info->delay, info->padding, info->vbr_scale);
+}
+
 static int mp3_process(struct mp3_r *m, phi_track *t)
 {
 	int r;
@@ -95,26 +114,9 @@ static int mp3_process(struct mp3_r *m, phi_track *t)
 		case MP3READ_DONE:
 			return PHI_LASTOUT;
 
-		case MPEG1READ_HEADER: {
-			const struct mpeg1read_info *info = mp3read_info(&m->mpg);
-			struct phi_af f = {
-				.format = PHI_PCM_16,
-				.channels = info->channels,
-				.rate = info->sample_rate,
-			};
-			t->audio.format = f;
-			m->sample_rate = info->sample_rate;
-			t->audio.bitrate = info->bitrate;
-			t->audio.total = info->total_samples;
-			ffs_format(m->codec_name, sizeof(m->codec_name), "MPEG1-L%u%Z", info->layer);
-			t->audio.decoder = m->codec_name;
-			t->data_type = "mpeg";
-			t->audio.mpeg1_delay = info->delay;
-			t->audio.mpeg1_padding = info->padding;
-			t->audio.mpeg1_vbr_scale = info->vbr_scale + 1;
-			dbglog(t, "total:%U  rate:%u  br:%u  delay:%u  padding:%u  vbr-scale:%d"
-				, info->total_samples, info->sample_rate, info->bitrate
-				, info->delay, info->padding, info->vbr_scale);
+		case MPEG1READ_HEADER:
+			mp3_info(m, t, mp3read_info(&m->mpg));
+			m->sample_rate = t->audio.format.rate;
 
 			if (t->conf.info_only)
 				return PHI_LASTOUT;
@@ -124,7 +126,6 @@ static int mp3_process(struct mp3_r *m, phi_track *t)
 				return PHI_ERR;
 
 			break;
-		}
 
 		case MP3READ_ID31:
 		case MP3READ_ID32:

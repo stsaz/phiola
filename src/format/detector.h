@@ -181,8 +181,12 @@ static void* fdetcr_open(phi_track *t)
 
 	if (t->conf.seek_cdframes || t->conf.until_cdframes) {
 		// Initial request to seek to .cue track audio position
-		t->audio.seek += t->conf.seek_cdframes * 1000 / 75;
-		t->audio.seek_req = (t->audio.seek > 0);
+		if (t->conf.seek_cdframes) {
+			if (t->audio.seek == -1)
+				t->audio.seek = 0;
+			t->audio.seek += t->conf.seek_cdframes * 1000 / 75;
+			t->audio.seek_req = 1;
+		}
 
 		if (!core->track->filter(t, core->mod("format.cue-hook"), 0))
 			return PHI_OPEN_ERR;

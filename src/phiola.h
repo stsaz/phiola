@@ -11,7 +11,7 @@
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20015
+#define PHI_VERSION_CORE  20017
 
 typedef unsigned int uint;
 typedef unsigned short ushort;

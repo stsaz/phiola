@@ -14,6 +14,7 @@ const phi_core *core;
 
 #include <afilter/auto-conv.h>
 #include <afilter/silence-gen.h>
+#include <afilter/skip.h>
 #include <afilter/until.h>
 
 extern const phi_filter
@@ -30,6 +31,7 @@ static const void* af_iface(const char *name)
 		{ "peaks",		&phi_peaks },
 		{ "rtpeak",		&phi_rtpeak },
 		{ "silence-gen",&phi_sil_gen },
+		{ "skip",		&phi_pcm_skip },
 		{ "until",		&phi_until },
 		{}
 	};

@@ -17,8 +17,8 @@ enum { DETECT_FRAMES = 32, }; //# of frames to detect real audio format
 static void* aac_open(phi_track *t)
 {
 	struct aac_in *a = ffmem_new(struct aac_in);
-	a->aac.enc_delay = t->audio.aac_encoder_delay;
-	a->aac.end_padding = t->audio.aac_end_padding;
+	a->aac.enc_delay = t->audio.start_delay;
+	a->aac.end_padding = t->audio.end_padding;
 	a->aac.total_samples = t->audio.total;
 	a->aac.contr_samprate = t->audio.format.rate;
 	if (0 != ffaac_open(&a->aac, t->audio.format.channels, t->data_in.ptr, t->data_in.len)) {
