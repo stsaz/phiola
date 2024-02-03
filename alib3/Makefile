@@ -51,6 +51,10 @@ $(TGT_DIR)/libmusepack-phi.$(SO):
 	$(MAKE) -C musepack -I..
 	cp musepack/*.$(SO) $(TGT_DIR)
 
+$(TGT_DIR)/libopus-phi.$(SO):
+	$(MAKE) -C opus -I..
+	cp opus/*.$(SO) $(TGT_DIR)
+
 $(TGT_DIR)/libsoxr-phi.$(SO):
 	$(MAKE) -C soxr -I..
 	cp soxr/*.$(SO) $(TGT_DIR)

@@ -161,12 +161,12 @@ struct phi_track {
 
 	struct {
 		struct phi_af format;
-		uint64 pos, total; // samples; -1:unset/unknown
-		int64 seek; // >0:msec; -1:unset
-		uint seek_req :1; // New seek request is received (UI -> fmt.read)
-		uint bitrate;
-		double gain_db; // Audio gain/attenuation
-		double maxpeak_db;
+		uint64	pos, total; // samples; -1:unset/unknown
+		int64	seek; // >0:msec; -1:unset
+		uint	seek_req :1; // New seek request is received (UI -> fmt.read)
+		uint	bitrate;
+		double	gain_db; // Audio gain/attenuation
+		double	maxpeak_db;
 		const char *decoder;
 
 		// Set by mp4.read, mp3.read, opus.dec

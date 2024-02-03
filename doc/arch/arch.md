@@ -22,3 +22,102 @@ Example of a track chain for audio conversion:
 2. Output filter (`aenc` or `apla`) requests audio conversion (`oaudio.conv_format.format=int16`).
 3. `aconv` applies the conversion format specified by output filter.  The resulting conversion will be `float32/stereo => int16/mono`.  Adds `conv` filter to the chain.
 4. `conv` performs the conversion and supplies data to output filter.
+
+
+## Seeking
+
+Case 1.  Seek position is initially set (e.g. with --seek=TIME).
+
+```C
+	           fmt            dec        ui
+	=========================================
+	S=N,Q=1 -> (Q&&S!=''):
+	           seek(S),Q=0 -> dec()
+	           *           <- *
+	           (!Q)        -> skip(S) -> S=''
+```
+
+`S` - seek position.
+`Q` - seek request flag.
+
+Case 2.  Seek position is set in 'ui' module by user's command while the currently active filter is 'ui' itself or any previous filter.
+Key factor: 'ui' can't update seek position `S` while it's still in use by previous filters.
+Note: 'dec' may check `Q` (which means a new seek request is received) to interrupt the current decoding process.
+
+```C
+	file      fmt             dec        ui       aout
+	==============================================================
+	                                   s=N,Q=1 -> stop()
+	... <-> ...         <-> ...
+	                        (Q)     -> *
+	        (Q&&S!=''): <------------- S=s
+	        seek(S),Q=0 --> dec()
+	        *           <-- *
+	        (!Q)        --> skip(S) -> S=''    -> clear(),write()
+```
+
+Case 3.  Seek position is set in 'ui' module by user's command while the currently active filter is 'aout' or previous filters.
+Key factor: 'aout' discards all current data (due to `Q`) and requests new data immediately.
+
+```C
+	fmt            dec        ui         aout               core
+	============================================================
+	                          s=N,Q=1 -> stop()          -> *
+	(Q&&S!=''): <------------ S=s     <- (Q)             <- *
+	seek(S),Q=0 -> dec()
+	               skip(S) -> S=''    -> clear(),write()
+```
+
+Case 4.  Seeking on .cue tracks.  These tracks have `abs_seek` value set.
+Key factor: 'fmt' and 'dec' know nothing about `abs_seek`;
+ 'cuehook' module updates current position and seek position values.
+
+```C
+	track    fmt              dec        cuehook    ui
+	====================================================
+	S+=AS -> seek(S),POS=S -> dec()
+	                          skip(S) -> POS-=AS -> S=''
+	         *             <------------ S+=AS   <- S=N
+	         ...
+```
+
+`POS` - current audio position.
+`AS` - audio offset for the current .cue track (`abs_seek`).
+
+
+## .ogg write
+
+Case 1.  Add packets normally with known audio position of every packet.
+Note: `GEN_OPUS_TAG` flag is for mkv->ogg copying.
+
+```C
+	mkv.in              ogg.out                      file.out
+	==============================================================
+	GEN_OPUS_TAG=1
+	POS='',PKT=.     -> cache=PKT //e.g. Opus hdr
+	POS=n,PKT=.      -> write(cache,end=0,flush)  -> *
+	                    GEN_OPUS_TAG:
+	                    write("...",end=0,flush)  -> *
+	*                <- cache=PKT                 <- *
+	POS=n+1,PKT=.    -> write(cache,end=POS)
+	*                <- cache=PKT
+	           ...
+	POS=.,PKT=.      -> write(cache,end=POS)      -> *
+	*                <- cache=PKT                 <- *
+	           ...
+	POS=.,PKT=.,DONE -> write(cache,end=POS)
+	                    write(PKT,end=TOTAL,last) -> *
+```
+
+Case 2.  Input is OGG with only end-position value of each page.
+
+```C
+	ogg.in         ogg.out        file.out
+	=================================================================
+	END=0,FLUSH -> write()     -> * //e.g. Opus hdr
+	END=0,FLUSH -> write()     -> * //e.g. Opus tags
+	END=-1      -> write()
+	       ...
+	END=.,FLUSH -> write()     -> *
+	DONE        -> write(last) -> *
+```

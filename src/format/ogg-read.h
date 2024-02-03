@@ -159,7 +159,7 @@ static int ogg_decode(void *ctx, phi_track *t)
 
 data:
 	t->audio.pos = oggread_page_pos(&o->og);
-	dbglog(t, "packet#%u.%u  length:%L  page-start-pos:%U"
+	dbglog(t, "packet#%u.%u  length:%L  @%U"
 		, (int)oggread_page_num(&o->og), (int)oggread_pkt_num(&o->og)
 		, t->data_out.len
 		, t->audio.pos);

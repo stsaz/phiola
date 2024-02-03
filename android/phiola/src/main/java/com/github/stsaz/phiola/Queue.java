@@ -380,7 +380,7 @@ class Queue {
 		if (auto_stop_active) {
 			core.dbglog(TAG, "auto-stop timer: Stopping playback");
 			play_next = false;
-			auto_stop();
+			auto_stop_toggle();
 		}
 
 		if (play_next) {
@@ -592,7 +592,7 @@ class Queue {
 	}
 
 	boolean auto_stop_armed() { return (auto_stop_timer != null); }
-	boolean auto_stop() {
+	boolean auto_stop_toggle() {
 		if (auto_stop_timer != null) {
 			auto_stop_active = false;
 			auto_stop_timer.cancel();

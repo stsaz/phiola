@@ -17,7 +17,6 @@ struct ffwvpk_info {
 
 	uint version;
 	uint comp_level;
-	uint total_samples;
 	ffbyte md5[16];
 	uint lossless :1;
 };

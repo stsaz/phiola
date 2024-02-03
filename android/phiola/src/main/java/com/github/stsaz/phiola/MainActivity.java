@@ -395,14 +395,15 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void rec_state_set(boolean active) {
+		if (Build.VERSION.SDK_INT < 21)
+			return;
+
 		int res = R.color.control_button;
 		if (active)
 			res = R.color.recording;
 		int color = getResources().getColor(res);
-		if (Build.VERSION.SDK_INT >= 21) {
-			b.brec.setImageTintMode(PorterDuff.Mode.SRC_IN);
-			b.brec.setImageTintList(ColorStateList.valueOf(color));
-		}
+		b.brec.setImageTintMode(PorterDuff.Mode.SRC_IN);
+		b.brec.setImageTintList(ColorStateList.valueOf(color));
 	}
 
 	private void rec_click() {
@@ -581,9 +582,8 @@ public class MainActivity extends AppCompatActivity {
 
 	/** Toggle playback auto-stop timer */
 	private void play_auto_stop() {
-		boolean b = queue.auto_stop();
 		String s;
-		if (b) {
+		if (queue.auto_stop_toggle()) {
 			state(STATE_AUTO_STOP, STATE_AUTO_STOP);
 			s = String.format(getString(R.string.mplay_auto_stop_msg), queue.auto_stop_min);
 		} else {
