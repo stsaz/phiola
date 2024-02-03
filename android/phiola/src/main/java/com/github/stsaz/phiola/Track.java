@@ -51,7 +51,7 @@ class TrackHandle {
 	boolean error; // processing error
 	String url;
 	String[] meta;
-	String artist, title, date, info;
+	String artist, title, album, date, info;
 	String name; // track name shown in GUI
 	long pos_msec; // current progress (msec)
 	long prev_pos_msec; // previous progress position (msec)
@@ -342,6 +342,7 @@ class Track {
 		tplay.meta = new String[0];
 		tplay.artist = "";
 		tplay.title = "";
+		tplay.album = "";
 		tplay.date = "";
 		tplay.info = "";
 
@@ -363,6 +364,7 @@ class Track {
 		tplay.meta = meta.meta;
 		tplay.artist = meta.artist;
 		tplay.title = meta.title;
+		tplay.album = meta.album;
 		tplay.date = meta.date;
 		tplay.info = meta.info;
 		tplay.time_total_msec = meta.length_msec;

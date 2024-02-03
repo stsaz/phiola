@@ -287,17 +287,25 @@ public class Svc extends MediaBrowserServiceCompat {
 
 		pstate.setActiveQueueItemId(queue.cur());
 
+		String title = t.title;
+		if (t.title.isEmpty())
+			title = t.name;
+
 		MediaMetadataCompat.Builder meta = new MediaMetadataCompat.Builder();
-		meta.putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, t.url);
 		meta.putLong(MediaMetadataCompat.METADATA_KEY_DURATION, t.time_total_msec);
+		meta.putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, t.url);
+		meta.putString(MediaMetadataCompat.METADATA_KEY_TITLE, title);
+		if (!t.artist.isEmpty())
+			meta.putString(MediaMetadataCompat.METADATA_KEY_ARTIST, t.artist);
+		if (!t.album.isEmpty())
+			meta.putString(MediaMetadataCompat.METADATA_KEY_ALBUM, t.album);
+		// meta.putString(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, );
+		// meta.putString(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, );
 		sess.setMetadata(meta.build());
 
 		sess_state(PlaybackStateCompat.STATE_BUFFERING, 0);
 
 		if (!core.setts.svc_notification_disable) {
-			String title = t.title;
-			if (title.isEmpty())
-				title = t.name;
 			nfy.setContentTitle(title);
 			nfy.setContentText(t.artist);
 		}

@@ -44,7 +44,7 @@ static uint64 info_add(ffvec *info, const phi_track *t)
 
 jobject meta_create(JNIEnv *env, ffvec *meta, const char *filename, uint64 msec)
 {
-	char *artist, *title, *date;
+	char *artist, *title, *album, *date;
 	ffstr val;
 	if (!x->metaif->find(meta, FFSTR_Z("artist"), &val, 0))
 		artist = ffsz_dupstr(&val);
@@ -56,6 +56,11 @@ jobject meta_create(JNIEnv *env, ffvec *meta, const char *filename, uint64 msec)
 	else
 		title = ffsz_dup("");
 
+	if (!x->metaif->find(meta, FFSTR_Z("album"), &val, 0))
+		album = ffsz_dupstr(&val);
+	else
+		album = ffsz_dup("");
+
 	date = (!x->metaif->find(meta, FFSTR_Z("date"), &val, 0)) ? ffsz_dupstr(&val) : NULL;
 
 	jclass jc = x->Phiola_Meta;
@@ -65,11 +70,13 @@ jobject meta_create(JNIEnv *env, ffvec *meta, const char *filename, uint64 msec)
 	jni_obj_sz_set(env, jmeta, jni_field(jc, "url", JNI_TSTR), filename);
 	jni_obj_sz_set(env, jmeta, jni_field(jc, "artist", JNI_TSTR), artist);
 	jni_obj_sz_set(env, jmeta, jni_field(jc, "title", JNI_TSTR), title);
+	jni_obj_sz_set(env, jmeta, jni_field(jc, "album", JNI_TSTR), album);
 	jni_obj_sz_set(env, jmeta, jni_field(jc, "date", JNI_TSTR), (date) ? date : "");
 	jni_obj_int_set(jmeta, jni_field(jc, "length_msec", JNI_TINT), msec);
 
 	ffmem_free(artist);
 	ffmem_free(title);
+	ffmem_free(album);
 	ffmem_free(date);
 	return jmeta;
 }

@@ -20,7 +20,7 @@ class Phiola {
 
 	static class Meta {
 		int length_msec;
-		String url, artist, title, date, info;
+		String url, artist, title, album, date, info;
 		String[] meta;
 	}
 	interface MetaCallback {
