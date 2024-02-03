@@ -45,6 +45,7 @@ static int aac_adts_process(void *ctx, phi_track *t)
 {
 	struct aac_adts_r *a = ctx;
 	int r;
+	uint64 apos = 0;
 
 	if (t->chain_flags & PHI_FSTOP) {
 		return PHI_LASTOUT;
@@ -86,11 +87,12 @@ static int aac_adts_process(void *ctx, phi_track *t)
 
 		case AACREAD_DATA:
 		case AACREAD_FRAME:
+			apos = a->pos;
 			a->pos += aacread_frame_samples(&a->adts);
 			if (t->audio.seek_req && t->audio.seek != -1) {
 				uint64 seek_samps = msec_to_samples(t->audio.seek, a->sample_rate);
-				dbglog(t, "seek: tgt:%U  @%U", seek_samps, a->pos);
-				if (a->pos < seek_samps)
+				dbglog(t, "seek: tgt:%U  @%U", seek_samps, apos);
+				if (apos < seek_samps)
 					continue;
 				t->audio.seek_req = 0;
 			}
@@ -119,7 +121,7 @@ static int aac_adts_process(void *ctx, phi_track *t)
 	}
 
 data:
-	t->audio.pos = a->pos;
+	t->audio.pos = apos;
 	dbglog(t, "passing frame #%u  samples:%u @%U  size:%u"
 		, a->frno++, aacread_frame_samples(&a->adts), t->audio.pos
 		, out.len);

@@ -146,7 +146,7 @@ test_until() {
 	./phiola i -peaks fm_wv.wv       | grep -E '96,000 total'
 
 	## the ffmpeg-generated mkv file may contain the blocks with +1ms greater start position
-	./phiola i -peaks -u 1 fm_aac.aac     | grep -E '4[6789],... total'
+	./phiola i -peaks -u 1 fm_aac.aac     | grep -E '48,000 total'
 	# ./phiola i -peaks -u 1 fm_aac.avi     | grep -E '4[89],... total'
 	./phiola i -peaks -u 1 fm_aac.mkv     | grep -E '48,... total'
 	./phiola i -peaks -u 1 fm_aac.mp4     | grep -E '48,000 total'
@@ -179,7 +179,7 @@ test_seek() {
 
 	## mkv seeking implementation is not precise
 	## 128k mp3 has smaller frame size than 320k
-	./phiola i -peaks -s 1 fm_aac.aac     | grep -E '50,... total'
+	./phiola i -peaks -s 1 fm_aac.aac     | grep -E '4[89],... total'
 	# ./phiola i -peaks -s 1 fm_aac.avi     | grep -E '4[89],... total'
 	./phiola i -peaks -s 1 fm_aac.mkv     | grep -E '4[89],... total'
 	./phiola i -peaks -s 1 fm_aac.mp4     | grep -E '4[89],... total'
@@ -296,7 +296,7 @@ test_copy() {
 	fi
 
 	## Until
-	test_copy_until fm_aac.aac     copy_u_aac.m4a        '4[789],...'
+	test_copy_until fm_aac.aac     copy_u_aac.m4a        '4[89],...'
 	test_copy_until fm_aac.mkv     copy_u_mkv.m4a        '48,...'
 	test_copy_until fm_aac.mp4     copy_u_mp4.m4a        '48,...'
 	test_copy_until fm_mp3.mkv     copy_u_mp3_mkv.mp3    '4[89],...'
@@ -310,7 +310,7 @@ test_copy() {
 	## Seek
 	## mkv seeking implementation is not precise
 	## mp3 copy algorithm implementation doesn't preserve original delay/padding values
-	test_copy_seek fm_aac.aac     copy_s_aac.m4a        '50,...'
+	test_copy_seek fm_aac.aac     copy_s_aac.m4a        '4[89],...'
 	test_copy_seek fm_aac.mkv     copy_s_mkv.m4a        '4[789],...'
 	test_copy_seek fm_aac.mp4     copy_s_mp4.m4a        '5[01],...'
 	test_copy_seek fm_mp3.mkv     copy_s_mp3_mkv.mp3    '4[789],...'
