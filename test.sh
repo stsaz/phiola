@@ -98,6 +98,110 @@ test_wasapi_loopback() {
 	kill $!
 }
 
+test_info() {
+	if ! test -f pl.wav ; then
+		./phiola rec -rate 48000 -o pl.wav -f -u 2
+	fi
+
+	./phiola i pl.wav
+	./phiola i pl.wav -tags
+
+	./phiola i pl.wav -peaks
+	./phiola i pl.wav -peaks -peaks_crc
+
+	if ! test -f fm_wv.wv ; then
+		ffmpeg_encode pl.wav
+	fi
+	./phiola i fm_* -peaks
+}
+
+test_until() {
+	if ! test -f pl.wav ; then
+		./phiola rec -rate 48000 -o pl.wav -f -u 2
+	fi
+	if ! test -f fm_wv.wv ; then
+		ffmpeg_encode pl.wav
+	fi
+
+	./phiola i -peaks fm_aac.aac     | grep -E '9[67],... total'
+	./phiola i -peaks fm_aac.avi     | grep -E '9[67],... total'
+	./phiola i -peaks fm_aac.mkv     | grep -E '9[67],... total'
+	./phiola i -peaks fm_aac.mp4     | grep -E '9[67],... total'
+	./phiola i -peaks fm_alac.mkv    | grep -E '9[56],... total'
+	./phiola i -peaks fm_alac.mp4    | grep -E '96,000 total'
+	./phiola i -peaks fm_flac.flac   | grep -E '96,000 total'
+	./phiola i -peaks fm_flac.ogg    | grep -E '96,... total'
+	./phiola i -peaks fm_mp3.avi     | grep -E '9[67],... total'
+	./phiola i -peaks fm_mp3.mkv     | grep -E '9[67],... total'
+	./phiola i -peaks fm_mp3.mp3     | grep -E '9[67],... total'
+	./phiola i -peaks fm_mp3_320.mp3 | grep -E '9[67],... total'
+	./phiola i -peaks fm_opus.mkv    | grep -E '96,... total'
+	./phiola i -peaks fm_opus.ogg    | grep -E '96,000 total'
+	./phiola i -peaks fm_pcm.avi     | grep -E '96,000 total'
+	./phiola i -peaks fm_pcm.caf     | grep -E '96,000 total'
+	./phiola i -peaks fm_pcm.mkv     | grep -E '96,000 total'
+	./phiola i -peaks fm_pcm.wav     | grep -E '96,000 total'
+	./phiola i -peaks fm_vorbis.mkv  | grep -E '96,... total'
+	./phiola i -peaks fm_vorbis.ogg  | grep -E '96,000 total'
+	./phiola i -peaks fm_wv.wv       | grep -E '96,000 total'
+
+	## the ffmpeg-generated mkv file may contain the blocks with +1ms greater start position
+	./phiola i -peaks -u 1 fm_aac.aac     | grep -E '4[6789],... total'
+	# ./phiola i -peaks -u 1 fm_aac.avi     | grep -E '4[89],... total'
+	./phiola i -peaks -u 1 fm_aac.mkv     | grep -E '48,... total'
+	./phiola i -peaks -u 1 fm_aac.mp4     | grep -E '48,000 total'
+	./phiola i -peaks -u 1 fm_alac.mkv    | grep -E '4[78],... total'
+	./phiola i -peaks -u 1 fm_alac.mp4    | grep -E '48,000 total'
+	./phiola i -peaks -u 1 fm_flac.flac   | grep -E '48,000 total'
+	./phiola i -peaks -u 1 fm_flac.ogg    | grep -E '48,000 total'
+	./phiola i -peaks -u 1 fm_mp3.avi     | grep -E '4[6789],... total'
+	./phiola i -peaks -u 1 fm_mp3.mkv     | grep -E '4[6789],... total'
+	./phiola i -peaks -u 1 fm_mp3.mp3     | grep -E '4[789],... total'
+	./phiola i -peaks -u 1 fm_mp3_320.mp3 | grep -E '4[789],... total'
+	./phiola i -peaks -u 1 fm_opus.mkv    | grep -E '4[78],... total'
+	./phiola i -peaks -u 1 fm_opus.ogg    | grep -E '4[78],... total'
+	./phiola i -peaks -u 1 fm_pcm.avi     | grep -E '48,000 total'
+	./phiola i -peaks -u 1 fm_pcm.caf     | grep -E '48,000 total'
+	./phiola i -peaks -u 1 fm_pcm.mkv     | grep -E '48,... total'
+	./phiola i -peaks -u 1 fm_pcm.wav     | grep -E '48,000 total'
+	./phiola i -peaks -u 1 fm_vorbis.mkv  | grep -E '4[789],... total'
+	./phiola i -peaks -u 1 fm_vorbis.ogg  | grep -E '48,000 total'
+	./phiola i -peaks -u 1 fm_wv.wv       | grep -E '48,000 total'
+}
+
+test_seek() {
+	if ! test -f pl.wav ; then
+		./phiola rec -rate 48000 -o pl.wav -f -u 2
+	fi
+	if ! test -f fm_wv.wv ; then
+		ffmpeg_encode pl.wav
+	fi
+
+	## mkv seeking implementation is not precise
+	## 128k mp3 has smaller frame size than 320k
+	./phiola i -peaks -s 1 fm_aac.aac     | grep -E '50,... total'
+	# ./phiola i -peaks -s 1 fm_aac.avi     | grep -E '4[89],... total'
+	./phiola i -peaks -s 1 fm_aac.mkv     | grep -E '4[89],... total'
+	./phiola i -peaks -s 1 fm_aac.mp4     | grep -E '4[89],... total'
+	./phiola i -peaks -s 1 fm_alac.mkv    | grep -E '4[678],... total'
+	./phiola i -peaks -s 1 fm_alac.mp4    | grep -E '48,000 total'
+	./phiola i -peaks -s 1 fm_flac.flac   | grep -E '48,000 total'
+	./phiola i -peaks -s 1 fm_flac.ogg    | grep -E '..,... total'
+	# ./phiola i -peaks -s 1 fm_mp3.avi     | grep -E '4[89],... total'
+	./phiola i -peaks -s 1 fm_mp3.mkv     | grep -E '4[89],... total'
+	./phiola i -peaks -s 1 fm_mp3.mp3     | grep -E '5[01],... total'
+	./phiola i -peaks -s 1 fm_mp3_320.mp3 | grep -E '4[89],... total'
+	./phiola i -peaks -s 1 fm_opus.mkv    | grep -E '4[78],... total'
+	./phiola i -peaks -s 1 fm_opus.ogg    | grep -E '48,000 total'
+	# ./phiola i -peaks -s 1 fm_pcm.avi     | grep -E '4[89],... total'
+	# ./phiola i -peaks -s 1 fm_pcm.caf     | grep -E '4[89],... total'
+	./phiola i -peaks -s 1 fm_pcm.mkv     | grep -E '4[78],... total'
+	./phiola i -peaks -s 1 fm_pcm.wav     | grep -E '48,000 total'
+	./phiola i -peaks -s 1 fm_vorbis.mkv  | grep -E '4[6789],... total'
+	./phiola i -peaks -s 1 fm_vorbis.ogg  | grep -E '48,000 total'
+	./phiola i -peaks -s 1 fm_wv.wv       | grep -E '48,000 total'
+}
+
 convert_from_to() {
 	./phiola co co.$1 -f -o co_$1.$2 ; ./phiola pl co_$1.$2
 }
@@ -138,17 +242,6 @@ test_convert() {
 	convert_from_to wav flac
 }
 
-test_danorm() {
-	if ! test -f dani.wav ; then
-		./phiola rec -u 10 -f -o dani.wav
-	fi
-	./phiola co -danorm "frame 500 size 15" dani.wav -f -o dan_co.wav ; ./phiola dan_co.wav
-	./phiola co -danorm "" dani.wav -f -o dan_co.flac -af int24 ; ./phiola i dan_co.flac | grep 'int24' ; ./phiola dan_co.flac
-	# ./phiola co -danorm "" dani.wav -f -o dan_co96k.flac -af int24 -rate 96000 ; ./phiola dan_co96k.flac
-	./phiola rec -danorm "frame 500 size 15" -f -o dan_rec.wav     -u 10 ; ./phiola dan_rec.wav
-	./phiola rec -danorm "" -f -o dan_rec96k.flac -u 10 -af int24 -rate 96000 ; ./phiola i dan_rec96k.flac | grep 'int24 96000Hz' ; ./phiola dan_rec96k.flac
-}
-
 ffmpeg_encode() {
 	ffmpeg -i $1 -y -c:a aac        fm_aac.aac    2>/dev/null
 	ffmpeg -i $1 -y -c:a aac        fm_aac.avi    2>/dev/null
@@ -173,6 +266,26 @@ ffmpeg_encode() {
 	ffmpeg -i $1 -y -c:a wavpack    fm_wv.wv      2>/dev/null
 }
 
+test_copy_until() {
+	local INFO_N=$3
+	if test "$#" == 4 ; then
+		INFO_N=$4
+	fi
+	./phiola co -copy -f -u 1 $1 -o $2
+	./phiola i $2 | grep -E "$INFO_N"
+	./phiola i -peaks $2 | grep -E "$3"
+}
+
+test_copy_seek() {
+	local INFO_N=$3
+	if test "$#" == 4 ; then
+		INFO_N=$4
+	fi
+	./phiola co -copy -f -s 1 $1 -o $2
+	./phiola i $2 | grep -E "$INFO_N"
+	./phiola i -peaks $2 | grep -E "$3"
+}
+
 test_copy() {
 	if ! test -f co.wav ; then
 		./phiola rec -rate 48000 -o co.wav -f -u 2
@@ -182,32 +295,54 @@ test_copy() {
 		ffmpeg_encode co.wav
 	fi
 
+	## Until
+	test_copy_until fm_aac.aac     copy_u_aac.m4a        '4[789],...'
+	# test_copy_until fm_aac.mkv     copy_u_mkv.m4a        '4[89],...'
+	test_copy_until fm_aac.mp4     copy_u_mp4.m4a        '48,...'
+	test_copy_until fm_mp3.mkv     copy_u_mp3_mkv.mp3    '4[89],...'
+	test_copy_until fm_mp3.mp3     copy_u_mp3.mp3        '4[89],...'
+	test_copy_until fm_mp3_320.mp3 copy_u_mp3_320.mp3    '4[89],...'
+	test_copy_until fm_opus.mkv    copy_u_opus_mkv.ogg   '4[789],...'
+	test_copy_until fm_opus.ogg    copy_u_opus.ogg       '48,...'
+	test_copy_until fm_vorbis.mkv  copy_u_vorbis_mkv.ogg '48,...'
+	test_copy_until fm_vorbis.ogg  copy_u_vorbis.ogg     '48,...'
+
+	## Seek
+	## mkv seeking implementation is not precise
+	## mp3 copy algorithm implementation doesn't preserve original delay/padding values
+	test_copy_seek fm_aac.aac     copy_s_aac.m4a        '50,...'
+	# test_copy_seek fm_aac.mkv     copy_s_mkv.m4a        '4[789],...'
+	test_copy_seek fm_aac.mp4     copy_s_mp4.m4a        '5[01],...'
+	test_copy_seek fm_mp3.mkv     copy_s_mp3_mkv.mp3    '4[789],...'
+	test_copy_seek fm_mp3.mp3     copy_s_mp3.mp3        '5[01],...'
+	test_copy_seek fm_mp3_320.mp3 copy_s_mp3_320.mp3    '5[01],...'
+	test_copy_seek fm_opus.mkv    copy_s_opus_mkv.ogg   '4[789],...' '96,...'
+	test_copy_seek fm_opus.ogg    copy_s_opus.ogg       '48,...' '96,...'
+	test_copy_seek fm_vorbis.mkv  copy_s_vorbis_mkv.ogg '4[6789],...' '9[56],...'
+	./phiola co co.wav -o co_vorbis.ogg -f
+	test_copy_seek co_vorbis.ogg  copy_s_vorbis.ogg     '4[789],...' '96,...'
+
 	## Seek + Until
 	O=copy_aac.m4a        ; ./phiola co -copy -f -s 1 -u 2 fm_aac.aac    -o $O ; ./phiola pl $O
-	# O=copy_aac_mkv.m4a    ; ./phiola co -copy -f -s 1 -u 2 fm_aac.mkv    -o $O ; ./phiola pl $O
+	O=copy_aac_mkv.m4a    ; ./phiola co -copy -f -s 1 -u 2 fm_aac.mkv    -o $O ; ./phiola pl $O
+	O=copy_mp4.m4a        ; ./phiola co -copy -f -s 1 -u 2 fm_aac.mp4    -o $O ; ./phiola pl $O
 	O=copy_mp3.mp3        ; ./phiola co -copy -f -s 1 -u 2 fm_mp3.mp3    -o $O ; ./phiola pl $O
 	O=copy_mp3_mkv.mp3    ; ./phiola co -copy -f -s 1 -u 2 fm_mp3.mkv    -o $O ; ./phiola pl $O
-	O=copy_mp4.m4a        ; ./phiola co -copy -f -s 1 -u 2 fm_aac.mp4    -o $O ; ./phiola pl $O
-	O=copy_opus.ogg       ; ./phiola co -copy -f -s 1 -u 2 fm_opus.ogg   -o $O ; ./phiola pl $O
 	O=copy_opus_mkv.ogg   ; ./phiola co -copy -f -s 1 -u 2 fm_opus.mkv   -o $O ; ./phiola pl $O
+	O=copy_opus.ogg       ; ./phiola co -copy -f -s 1 -u 2 fm_opus.ogg   -o $O ; ./phiola pl $O
+	O=copy_vorbis_mkv.ogg ; ./phiola co -copy -f -s 1 -u 2 fm_vorbis.mkv -o $O ; ./phiola pl $O
 	O=copy_vorbis.ogg     ; ./phiola co -copy -f -s 1 -u 2 fm_vorbis.ogg -o $O ; ./phiola pl $O
-	# O=copy_vorbis_mkv.ogg ; ./phiola co -copy -f -s 1 -u 2 fm_vorbis.mkv -o $O ; ./phiola pl $O
 }
 
-test_info() {
-	if ! test -f pl.wav ; then
-		./phiola rec -rate 48000 -o pl.wav -f -u 2
+test_danorm() {
+	if ! test -f dani.wav ; then
+		./phiola rec -u 10 -f -o dani.wav
 	fi
-	./phiola i pl.wav
-	./phiola i pl.wav -tags
-
-	./phiola i pl.wav -peaks
-	./phiola i pl.wav -peaks -peaks_crc
-
-	if ! test -f fm_wv.wv ; then
-		ffmpeg_encode pl.wav
-	fi
-	./phiola i fm_* -peaks
+	./phiola co -danorm "frame 500 size 15" dani.wav -f -o dan_co.wav ; ./phiola dan_co.wav
+	./phiola co -danorm "" dani.wav -f -o dan_co.flac -af int24 ; ./phiola i dan_co.flac | grep 'int24' ; ./phiola dan_co.flac
+	# ./phiola co -danorm "" dani.wav -f -o dan_co96k.flac -af int24 -rate 96000 ; ./phiola dan_co96k.flac
+	./phiola rec -danorm "frame 500 size 15" -f -o dan_rec.wav     -u 10 ; ./phiola dan_rec.wav
+	./phiola rec -danorm "" -f -o dan_rec96k.flac -u 10 -af int24 -rate 96000 ; ./phiola i dan_rec96k.flac | grep 'int24 96000Hz' ; ./phiola dan_rec96k.flac
 }
 
 test_dir_read() {
@@ -457,8 +592,10 @@ TESTS=(
 	# record_manual
 	play
 	convert
-	copy
 	info
+	until
+	seek
+	copy
 	meta
 	danorm
 	dir_read
