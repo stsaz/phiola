@@ -380,10 +380,18 @@ public class MainActivity extends AppCompatActivity {
 			v = View.INVISIBLE;
 		b.tfilter.setVisibility(v);
 
+		int mask = STATE_PLAYBACK;
+		int st = STATE_DEF;
+		if (queue.auto_stop_armed()) {
+			mask |= STATE_AUTO_STOP;
+			st |= STATE_AUTO_STOP;
+		}
 		if (trec != null) {
+			mask |= STATE_RECORDING;
+			st |= STATE_RECORDING;
 			rec_state_set(true);
 		}
-		state(STATE_DEF);
+		state(mask, st);
 	}
 
 	private void rec_state_set(boolean active) {
