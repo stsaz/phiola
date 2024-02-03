@@ -3,7 +3,6 @@
 
 #include <track.h>
 #include <util/util.h>
-#include <acodec/alib3-bridge/vorbis.h>
 #include <format/mmtag.h>
 #include <ffsys/globals.h>
 
@@ -13,8 +12,8 @@ static const phi_meta_if *phi_metaif;
 #define warnlog(t, ...)  phi_warnlog(core, NULL, t, __VA_ARGS__)
 #define dbglog(t, ...)  phi_dbglog(core, NULL, t, __VA_ARGS__)
 
-#include <acodec/vorbis-enc.h>
 #include <acodec/vorbis-dec.h>
+#include <acodec/vorbis-enc.h>
 
 static const void* vorbis_iface(const char *name)
 {

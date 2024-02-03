@@ -1,14 +1,19 @@
 /** phiola: Vorbis input
 2016, Simon Zolin */
 
+#include <acodec/alib3-bridge/vorbis-dec-if.h>
+
 struct vorbis_dec {
 	uint state;
-	uint64 pagepos;
 	ffvorbis vorbis;
+	uint64 prev_page_pos;
 };
 
 static void* vorbis_open(phi_track *t)
 {
+	if (!core->track->filter(t, core->mod("afilter.skip"), 0))
+		return PHI_OPEN_ERR;
+
 	struct vorbis_dec *v = ffmem_new(struct vorbis_dec);
 
 	if (0 != ffvorbis_open(&v->vorbis)) {
@@ -17,6 +22,7 @@ static void* vorbis_open(phi_track *t)
 		return PHI_OPEN_ERR;
 	}
 
+	t->audio.end_padding = (t->audio.total != ~0ULL);
 	return v;
 }
 
@@ -50,15 +56,15 @@ static int vorbis_in_decode(void *ctx, phi_track *t)
 		if (t->conf.info_only)
 			return PHI_LASTOUT;
 
-		if (t->audio.total != ~0ULL && t->audio.total != 0)
-			v->vorbis.total_samples = t->audio.total;
 		v->state = R_DATA;
 		// fallthrough
 
 	case R_DATA:
-		if ((t->chain_flags & PHI_FFWD) && t->audio.seek != -1) {
-			uint64 seek = msec_to_samples(t->audio.seek, ffvorbis_rate(&v->vorbis));
-			ffvorbis_seek(&v->vorbis, seek);
+		if (t->chain_flags & PHI_FFWD) {
+			if (v->vorbis.cursample == ~0ULL || v->prev_page_pos != t->audio.pos) {
+				v->prev_page_pos = t->audio.pos;
+				v->vorbis.cursample = t->audio.pos;
+			}
 		}
 		break;
 	}
@@ -69,16 +75,11 @@ static int vorbis_in_decode(void *ctx, phi_track *t)
 		in = t->data_in;
 		t->data_in.len = 0;
 		v->vorbis.fin = !!(t->chain_flags & PHI_FFIRST);
-
-		if (v->pagepos != t->audio.pos) {
-			v->vorbis.cursample = t->audio.pos;
-			v->pagepos = t->audio.pos;
-		}
 	}
 
 	for (;;) {
 
-		r = ffvorbis_decode(&v->vorbis, in.ptr, in.len, &t->data_out);
+		r = ffvorbis_decode(&v->vorbis, in, &t->data_out, &t->audio.pos);
 
 		switch (r) {
 
@@ -110,8 +111,7 @@ static int vorbis_in_decode(void *ctx, phi_track *t)
 	}
 
 data:
-	t->audio.pos = ffvorbis_cursample(&v->vorbis);
-	dbglog(t, "decoded %L samples (at %U)"
+	dbglog(t, "decoded %L samples @%U"
 		, t->data_out.len / pcm_size(PHI_PCM_FLOAT32, ffvorbis_channels(&v->vorbis)), t->audio.pos);
 	return PHI_DATA;
 }

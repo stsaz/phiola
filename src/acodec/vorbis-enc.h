@@ -1,6 +1,8 @@
 /** phiola: Vorbis encode
 2016, Simon Zolin */
 
+#include <acodec/alib3-bridge/vorbis-enc-if.h>
+
 struct vorbis_enc {
 	uint state;
 	struct phi_af fmt;

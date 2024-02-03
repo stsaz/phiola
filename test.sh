@@ -164,7 +164,7 @@ test_until() {
 	./phiola i -peaks -u 1 fm_pcm.caf     | grep -E '48,000 total'
 	./phiola i -peaks -u 1 fm_pcm.mkv     | grep -E '48,... total'
 	./phiola i -peaks -u 1 fm_pcm.wav     | grep -E '48,000 total'
-	./phiola i -peaks -u 1 fm_vorbis.mkv  | grep -E '4[789],... total'
+	./phiola i -peaks -u 1 fm_vorbis.mkv  | grep -E '4[78],... total'
 	./phiola i -peaks -u 1 fm_vorbis.ogg  | grep -E '48,000 total'
 	./phiola i -peaks -u 1 fm_wv.wv       | grep -E '48,000 total'
 }
@@ -198,7 +198,7 @@ test_seek() {
 	# ./phiola i -peaks -s 1 fm_pcm.caf     | grep -E '4[89],... total'
 	./phiola i -peaks -s 1 fm_pcm.mkv     | grep -E '4[78],... total'
 	./phiola i -peaks -s 1 fm_pcm.wav     | grep -E '48,000 total'
-	./phiola i -peaks -s 1 fm_vorbis.mkv  | grep -E '4[6789],... total'
+	./phiola i -peaks -s 1 fm_vorbis.mkv  | grep -E '4[678],... total'
 	./phiola i -peaks -s 1 fm_vorbis.ogg  | grep -E '48,000 total'
 	./phiola i -peaks -s 1 fm_wv.wv       | grep -E '48,000 total'
 }
@@ -321,7 +321,7 @@ test_copy() {
 	test_copy_seek fm_opus.ogg    copy_s_opus.ogg       '48,...' '96,...'
 	test_copy_seek fm_vorbis.mkv  copy_s_vorbis_mkv.ogg '4[6789],...' '9[56],...'
 	./phiola co co.wav -o co_vorbis.ogg -f
-	test_copy_seek co_vorbis.ogg  copy_s_vorbis.ogg     '4[789],...' '96,...'
+	test_copy_seek co_vorbis.ogg  copy_s_vorbis.ogg     '4[78],...' '96,...'
 
 	## Seek + Until
 	O=copy_aac.m4a        ; ./phiola co -copy -f -s 1 -u 2 fm_aac.aac    -o $O ; ./phiola pl $O
