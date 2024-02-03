@@ -1,4 +1,4 @@
-/** ALAC.
+/** ALAC decoder interface
 2016, Simon Zolin */
 
 #pragma once
@@ -18,12 +18,7 @@ typedef struct ffalac {
 	const char *data;
 	size_t datalen;
 
-	const void *pcm; // 16|20|24|32-bits interleaved
-	uint pcmlen; // PCM data length in bytes
 	ffvec buf;
-	uint64 cursample;
-	uint64 seek_sample;
-	uint64 total_samples; //the last frame will be truncated to match this value
 } ffalac;
 
 enum FFALAC_R {
@@ -76,12 +71,11 @@ int ffalac_open(ffalac *a, const char *data, size_t len)
 	a->fmt.rate = ffint_be_cpu32_ptr(conf->sample_rate);
 	a->bitrate = ffint_be_cpu32_ptr(conf->avg_bitrate);
 
-	ffuint n = ffint_be_cpu32_ptr(conf->frame_length) * pcm_size1(&a->fmt);
+	ffuint n = ffint_be_cpu32_ptr(conf->frame_length) * phi_af_size(&a->fmt);
 	if (NULL == ffvec_alloc(&a->buf, n, 1)) {
 		a->err = ESYS;
 		return FFALAC_RERR;
 	}
-	a->total_samples = (uint64)-1;
 	return 0;
 }
 
@@ -92,22 +86,11 @@ void ffalac_close(ffalac *a)
 	ffvec_free(&a->buf);
 }
 
-/** Seek on decoded frame (after a target frame is found in container). */
-void ffalac_seek(ffalac *a, uint64 sample)
-{
-	a->seek_sample = sample;
-}
-
-#define ffalac_cursample(a)  ((a)->cursample - (a)->pcmlen / pcm_size1(&(a)->fmt))
-
 /**
 Return enum FFALAC_R. */
-int ffalac_decode(ffalac *a)
+int ffalac_decode(ffalac *a, ffstr *out)
 {
-	int r;
-	uint off = 0, samps;
-
-	r = alac_decode(a->al, a->data, a->datalen, a->buf.ptr);
+	int r = alac_decode(a->al, a->data, a->datalen, a->buf.ptr);
 	if (r < 0) {
 		a->err = r;
 		return FFALAC_RERR;
@@ -115,21 +98,6 @@ int ffalac_decode(ffalac *a)
 		return FFALAC_RMORE;
 
 	a->datalen = 0;
-	samps = r;
-
-	if (a->seek_sample != 0) {
-		off = ffmax((int64)(a->seek_sample - a->cursample), 0);
-		off = ffmin(off, samps);
-		a->seek_sample = 0;
-	}
-
-	a->cursample += samps;
-	if (a->cursample > a->total_samples) {
-		samps -= ffmin(a->cursample - a->total_samples, samps);
-		a->cursample = a->total_samples;
-	}
-
-	a->pcm = a->buf.ptr + off * pcm_size1(&a->fmt);
-	a->pcmlen = (samps - off) * pcm_size1(&a->fmt);
+	ffstr_set(out, a->buf.ptr, r * phi_af_size(&a->fmt));
 	return 0;
 }

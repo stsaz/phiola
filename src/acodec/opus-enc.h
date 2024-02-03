@@ -116,7 +116,7 @@ static int opus_enc_encode(void *ctx, phi_track *t)
 	o->endpos = ffopus_enc_pos(&o->opus);
 	o->npkt++;
 	dbglog(t, "encoded %L samples into %L bytes @%U [%U]"
-		, (t->data_in.len - o->opus.pcmlen) / pcm_size1(&o->fmt), o->opus.data.len
+		, (t->data_in.len - o->opus.pcmlen) / phi_af_size(&o->fmt), o->opus.data.len
 		, t->audio.pos, o->endpos);
 	ffstr_set(&t->data_out, o->opus.data.ptr, o->opus.data.len);
 	return PHI_DATA;

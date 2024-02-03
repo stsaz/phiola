@@ -110,7 +110,7 @@ static int vorbis_out_encode(void *ctx, phi_track *t)
 	t->audio.pos = v->endpos;
 	v->endpos = ffvorbis_enc_pos(&v->vorbis);
 	dbglog(t, "encoded %L samples into %L bytes @%U [%U]"
-		, (v->in.len - v->vorbis.pcmlen) / pcm_size1(&v->fmt), v->vorbis.data.len
+		, (v->in.len - v->vorbis.pcmlen) / phi_af_size(&v->fmt), v->vorbis.data.len
 		, t->audio.pos, v->endpos);
 	ffstr_set(&v->in, v->vorbis.pcm, v->vorbis.pcmlen);
 	ffstr_set(&t->data_out, v->vorbis.data.ptr, v->vorbis.data.len);

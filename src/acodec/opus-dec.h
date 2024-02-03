@@ -99,7 +99,7 @@ static int opus_in_decode(void *ctx, phi_track *t)
 			case FFOPUS_RHDR:
 				t->audio.format.format = PHI_PCM_FLOAT32;
 				t->audio.format.interleaved = 1;
-				o->sample_size = pcm_size1(&t->audio.format);
+				o->sample_size = phi_af_size(&t->audio.format);
 				t->audio.start_delay = o->opus.info.preskip;
 				t->data_type = "pcm";
 				break;

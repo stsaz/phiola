@@ -48,6 +48,30 @@ static void flac_meta(struct flac_r *f, phi_track *t)
 	phi_metaif.set(&t->meta, name, val, 0);
 }
 
+static void flac_info(struct flac_r *f, phi_track *t, const struct flac_info *i, int done)
+{
+	if (done) {
+		dbglog(t, "blocksize:%u..%u  framesize:%u..%u  MD5:%16xb  seek-table:%u  meta-length:%u  total-samples:%,U"
+			, (int)i->minblock, (int)i->maxblock, (int)i->minframe, (int)i->maxframe
+			, i->md5, (int)f->fl.sktab.len, (int)f->fl.frame1_off, i->total_samples);
+		t->audio.bitrate = i->bitrate;
+		t->audio.flac_minblock = i->minblock;
+		t->audio.flac_maxblock = i->maxblock;
+		return;
+	}
+
+	t->audio.decoder = "FLAC";
+	struct phi_af af = {
+		.format = i->bits,
+		.channels = i->channels,
+		.rate = i->sample_rate,
+	};
+	t->audio.format = af;
+	t->audio.format.interleaved = 0;
+	t->data_type = "flac";
+	t->audio.total = i->total_samples;
+}
+
 static int flac_in_read(void *ctx, phi_track *t)
 {
 	struct flac_r *f = ctx;
@@ -84,43 +108,24 @@ static int flac_in_read(void *ctx, phi_track *t)
 			}
 			return PHI_MORE;
 
-		case FLACREAD_HEADER: {
-			const struct flac_info *i = flacread_info(&f->fl);
-			t->audio.decoder = "FLAC";
-			struct phi_af af = {
-				.format = i->bits,
-				.channels = i->channels,
-				.rate = i->sample_rate,
-			};
-			t->audio.format = af;
-			t->audio.format.interleaved = 0;
-			t->data_type = "flac";
-			t->audio.total = i->total_samples;
-			f->sample_rate = i->sample_rate;
+		case FLACREAD_HEADER:
+			flac_info(f, t, flacread_info(&f->fl), 0);
+			f->sample_rate = t->audio.format.rate;
 			break;
-		}
 
 		case FLACREAD_TAG:
 			flac_meta(f, t);
 			break;
 
-		case FLACREAD_HEADER_FIN: {
-			const struct flac_info *i = flacread_info(&f->fl);
-			dbglog(t, "blocksize:%u..%u  framesize:%u..%u  MD5:%16xb  seek-table:%u  meta-length:%u  total-samples:%,U"
-				, (int)i->minblock, (int)i->maxblock, (int)i->minframe, (int)i->maxframe
-				, i->md5, (int)f->fl.sktab.len, (int)f->fl.frame1_off, i->total_samples);
-			t->audio.bitrate = i->bitrate;
+		case FLACREAD_HEADER_FIN:
+			flac_info(f, t, flacread_info(&f->fl), 1);
 
 			if (t->conf.info_only)
 				return PHI_LASTOUT;
 
-			t->audio.flac_minblock = i->minblock;
-			t->audio.flac_maxblock = i->maxblock;
-
 			if (!core->track->filter(t, core->mod("flac.decode"), 0))
 				return PHI_ERR;
 			break;
-		}
 
 		case FLACREAD_DATA:
 			goto data;

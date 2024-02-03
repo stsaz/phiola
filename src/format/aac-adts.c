@@ -41,6 +41,20 @@ static void aac_adts_close(void *ctx, phi_track *t)
 	ffmem_free(a);
 }
 
+static void aac_info(struct aac_adts_r *a, phi_track *t, const struct aacread_info *info)
+{
+	struct phi_af f = {
+		.format = PHI_PCM_16,
+		.rate = info->sample_rate,
+		.channels = info->channels,
+	};
+	t->audio.format = f;
+	t->audio.total = 0;
+	t->audio.decoder = "AAC";
+	t->data_type = "aac";
+	t->oaudio.mp4_frame_samples = 1024;
+}
+
 static int aac_adts_process(void *ctx, phi_track *t)
 {
 	struct aac_adts_r *a = ctx;
@@ -62,19 +76,9 @@ static int aac_adts_process(void *ctx, phi_track *t)
 
 		switch (r) {
 
-		case AACREAD_HEADER: {
-			const struct aacread_info *info = aacread_info(&a->adts);
-			struct phi_af f = {
-				.format = PHI_PCM_16,
-				.rate = info->sample_rate,
-				.channels = info->channels,
-			};
-			t->audio.format = f;
-			a->sample_rate = info->sample_rate;
-			t->audio.total = 0;
-			t->audio.decoder = "AAC";
-			t->data_type = "aac";
-			t->oaudio.mp4_frame_samples = 1024;
+		case AACREAD_HEADER:
+			aac_info(a, t, aacread_info(&a->adts));
+			a->sample_rate = t->audio.format.rate;
 
 			if (!t->conf.stream_copy) {
 				if (!core->track->filter(t, core->mod("aac.decode"), 0))
@@ -83,7 +87,6 @@ static int aac_adts_process(void *ctx, phi_track *t)
 
 			t->data_out = out;
 			return PHI_DATA;
-		}
 
 		case AACREAD_DATA:
 		case AACREAD_FRAME:

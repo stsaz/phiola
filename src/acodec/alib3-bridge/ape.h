@@ -1,4 +1,4 @@
-/** APE (MAC).
+/** APE (MAC) decoder interface
 2015, Simon Zolin */
 
 /*
@@ -39,9 +39,6 @@ typedef struct ffape {
 
 	struct ape_decoder *ap;
 	void *pcm;
-	uint block_samples;
-	uint64 cursample;
-	uint64 seek_sample;
 
 	int err;
 	uint init;
@@ -57,15 +54,6 @@ static inline void ffape_close(ffape *a)
 		ape_decode_free(a->ap),  a->ap = NULL;
 	ffmem_free(a->pcm);  a->pcm = NULL;
 }
-
-static inline void ffape_seek(ffape *a, uint64 sample)
-{
-	a->seek_sample = sample;
-}
-
-#define ffape_totalsamples(a)  ((a)->info.total_samples)
-
-#define ffape_cursample(a)  ((a)->cursample - (a)->block_samples)
 
 struct ape_desc {
 	char id[4]; // "MAC "
@@ -289,7 +277,7 @@ static int _ffape_init(ffape *a)
 		return FFAPE_RERR;
 	}
 
-	if (NULL == (a->pcm = ffmem_alloc(a->info.frame_blocks * pcm_size1(&a->info.fmt)))) {
+	if (NULL == (a->pcm = ffmem_alloc(a->info.frame_blocks * phi_af_size(&a->info.fmt)))) {
 		a->err = APE_ESYS;
 		return FFAPE_RERR;
 	}
@@ -299,7 +287,7 @@ static int _ffape_init(ffape *a)
 
 /**
 Return enum FFAPE_R. */
-int ffape_decode(ffape *a, ffstr *input, ffstr *output, ffuint block_start, ffuint block_samples, ffuint align4)
+int ffape_decode(ffape *a, ffstr *input, ffstr *output, ffuint block_samples, ffuint align4)
 {
 	int r;
 
@@ -328,23 +316,7 @@ int ffape_decode(ffape *a, ffstr *input, ffstr *output, ffuint block_start, ffui
 		return FFAPE_RERR;
 	}
 
-	ffuint pcmlen = r;
-	a->cursample = block_start;
-	void *o = a->pcm;
-	if (a->seek_sample != 0) {
-		if (a->cursample < a->seek_sample && a->seek_sample < a->cursample + pcmlen) {
-			uint n = a->seek_sample - a->cursample;
-			a->cursample += n;
-			o = (char*)a->pcm + n * pcm_size1(&a->info.fmt);
-			pcmlen -= n;
-		}
-		a->seek_sample = 0;
-	}
-
-	a->block_samples = pcmlen;
-	a->cursample += pcmlen;
-	pcmlen *= pcm_size1(&a->info.fmt);
-	ffstr_set(output, o, pcmlen);
+	ffstr_set(output, a->pcm, r * phi_af_size(&a->info.fmt));
 	input->len = 0;
 	return FFAPE_RDATA;
 }

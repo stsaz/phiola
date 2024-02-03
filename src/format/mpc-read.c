@@ -46,6 +46,18 @@ static void mpc_close(void *ctx, phi_track *t)
 #define brate(bytes, samples, rate) \
 	FFINT_DIVSAFE((uint64)(bytes) * 8 * (rate), samples)
 
+static void mpc_info(struct mpc_r *m, phi_track *t, const struct mpcread_info *info)
+{
+	t->audio.format.rate = info->sample_rate;
+	t->audio.format.channels = info->channels;
+
+	if (t->input.size != ~0ULL)
+		t->audio.bitrate = brate(t->input.size, info->total_samples, info->sample_rate);
+
+	t->audio.total = info->total_samples;
+	t->audio.decoder = "Musepack";
+}
+
 extern const phi_meta_if phi_metaif;
 static int mpc_process(void *ctx, phi_track *t)
 {
@@ -74,24 +86,15 @@ static int mpc_process(void *ctx, phi_track *t)
 
 		switch (r) {
 
-		case MPCREAD_HEADER: {
-			const struct mpcread_info *info = mpcread_info(&m->mpc);
-			t->audio.format.rate = info->sample_rate;
-			m->sample_rate = info->sample_rate;
-			t->audio.format.channels = info->channels;
-
-			if (t->input.size != ~0ULL)
-				t->audio.bitrate = brate(t->input.size, info->total_samples, info->sample_rate);
-
-			t->audio.total = info->total_samples;
-			t->audio.decoder = "Musepack";
+		case MPCREAD_HEADER:
+			mpc_info(m, t, mpcread_info(&m->mpc));
 
 			if (!core->track->filter(t, core->mod("mpc.decode"), 0))
 				return PHI_ERR;
 
+			m->sample_rate = t->audio.format.rate;
 			t->data_out = blk;
 			return PHI_DATA;
-		}
 
 		case MPCREAD_MORE:
 			return PHI_MORE;
@@ -130,7 +133,7 @@ static int mpc_process(void *ctx, phi_track *t)
 
 data:
 	t->audio.pos = mpcread_cursample(&m->mpc);
-	dbglog(t, "frame#%U passing %L bytes at position #%U"
+	dbglog(t, "frame#%U passing %L bytes @%U"
 		, ++m->frno, blk.len, t->audio.pos);
 	t->data_out = blk;
 	return PHI_DATA;

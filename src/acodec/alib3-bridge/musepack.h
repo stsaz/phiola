@@ -1,4 +1,4 @@
-/** Musepack decoder.
+/** Musepack decoder interface
 2017, Simon Zolin */
 
 #pragma once
@@ -10,22 +10,16 @@ typedef struct ffmpc {
 	mpc_ctx *mpc;
 	int err;
 	uint channels;
-	uint frsamples;
-	uint64 cursample;
-	uint64 seek_sample;
 	uint need_data :1;
 
 	ffstr input;
 
 	float *pcm;
-	uint pcmoff;
-	uint pcmlen;
 } ffmpc;
 
-static inline void ffmpc_inputblock(ffmpc *m, const char *block, size_t len, uint64 audio_pos)
+static inline void ffmpc_inputblock(ffmpc *m, const char *block, size_t len)
 {
 	ffstr_set(&m->input, block, len);
-	m->cursample = audio_pos;
 }
 
 enum {
@@ -33,14 +27,6 @@ enum {
 	FFMPC_RDATA,
 	FFMPC_RERR,
 };
-
-#define ffmpc_audiodata(m, dst) \
-	ffstr_set(dst, (char*)(m)->pcm + (m)->pcmoff, (m)->pcmlen)
-
-#define ffmpc_seek(m, sample) \
-	((m)->seek_sample = (sample))
-
-#define ffmpc_cursample(m)  ((m)->cursample - (m)->frsamples)
 
 #define ERR(m, r) \
 	(m)->err = (r),  FFMPC_RERR
@@ -80,10 +66,8 @@ void ffmpc_close(ffmpc *m)
 }
 
 /** Decode 1 frame. */
-int ffmpc_decode(ffmpc *m)
+int ffmpc_decode(ffmpc *m, ffstr *out)
 {
-	int r;
-
 	if (m->need_data) {
 		if (m->input.len == 0)
 			return FFMPC_RMORE;
@@ -92,33 +76,15 @@ int ffmpc_decode(ffmpc *m)
 		m->input.len = 0;
 	}
 
-	m->pcmoff = 0;
-
-	for (;;) {
-
-		r = mpc_decode(m->mpc, m->pcm);
-		if (r == 0) {
-			m->need_data = 1;
-			return FFMPC_RMORE;
-		} else if (r < 0) {
-			m->need_data = 1;
-			return ERR(m, r);
-		}
-
-		m->cursample += r;
-		if (m->seek_sample != 0) {
-			if (m->seek_sample >= m->cursample)
-				continue;
-			uint64 oldpos = m->cursample - r;
-			uint skip = ffmax((int64)(m->seek_sample - oldpos), 0);
-			m->pcmoff = skip * m->channels * sizeof(float);
-			r -= skip;
-			m->seek_sample = 0;
-		}
-		break;
+	int r = mpc_decode(m->mpc, m->pcm);
+	if (r == 0) {
+		m->need_data = 1;
+		return FFMPC_RMORE;
+	} else if (r < 0) {
+		m->need_data = 1;
+		return ERR(m, r);
 	}
 
-	m->pcmlen = r * m->channels * sizeof(float);
-	m->frsamples = r;
+	ffstr_set(out, (char*)m->pcm, r * m->channels * sizeof(float));
 	return FFMPC_RDATA;
 }

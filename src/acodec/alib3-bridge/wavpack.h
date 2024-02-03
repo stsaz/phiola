@@ -1,4 +1,4 @@
-/** WavPack.
+/** WavPack decoder interface
 2015, Simon Zolin */
 
 /*
@@ -42,13 +42,10 @@ typedef struct ffwvpack_dec {
 	float *pcmf;
 	};
 	uint outcap; //samples
-	uint64 seek_sample;
-	uint samp_idx;
 } ffwvpack_dec;
 
 static inline void ffwvpk_dec_open(ffwvpack_dec *w)
 {
-	w->seek_sample = (ffuint64)-1;
 }
 
 static inline void ffwvpk_dec_close(ffwvpack_dec *w)
@@ -61,11 +58,6 @@ static inline void ffwvpk_dec_close(ffwvpack_dec *w)
 static inline const struct ffwvpk_info* ffwvpk_dec_info(ffwvpack_dec *w)
 {
 	return &w->info;
-}
-
-static inline void ffwvpk_dec_seek(ffwvpack_dec *w, uint64 sample)
-{
-	w->seek_sample = sample;
 }
 
 static inline const char* ffwvpk_dec_error(ffwvpack_dec *w)
@@ -116,7 +108,7 @@ static int wvpk_hdrinfo(ffwvpack_dec *w, const wavpack_info *i)
 	return 0;
 }
 
-int ffwvpk_decode(ffwvpack_dec *w, ffstr *in, ffstr *out, ffuint block_index)
+int ffwvpk_decode(ffwvpack_dec *w, ffstr *in, ffstr *out)
 {
 	int r;
 
@@ -164,30 +156,18 @@ int ffwvpk_decode(ffwvpack_dec *w, ffstr *in, ffstr *out, ffuint block_index)
 
 	FF_ASSERT((ffuint)n == blk_samples);
 
-	w->samp_idx = block_index;
-	ffuint isrc = 0;
-	if (w->seek_sample != (ffuint64)-1) {
-		if (block_index < w->seek_sample && w->seek_sample < block_index + n) {
-			isrc = w->seek_sample - block_index;
-			w->samp_idx += isrc;
-			n -= isrc;
-			isrc *= w->info.channels;
-		}
-		w->seek_sample = (ffuint64)-1;
-	}
-
 	switch (w->info.format) {
 	case PHI_PCM_16:
 		//in-place conversion: int[] -> short[]
-		for (ffuint i = 0;  i != n * w->info.channels;  i++, isrc++) {
-			w->pcm[i] = (short)w->pcm32[isrc];
+		for (ffuint i = 0;  i != n * w->info.channels;  i++) {
+			w->pcm[i] = (short)w->pcm32[i];
 		}
 		ffstr_set(out, w->pcm, n * w->frsize);
 		break;
 
 	case PHI_PCM_32:
 	case PHI_PCM_FLOAT32:
-		ffstr_set(out, &w->pcm32[isrc], n * w->frsize);
+		ffstr_set(out, &w->pcm32[0], n * w->frsize);
 		break;
 
 	default:

@@ -42,6 +42,30 @@ static void flacogg_meta(struct flacogg_r *f, phi_track *t)
 	phi_metaif.set(&t->meta, name, val, 0);
 }
 
+static int flacogg_info(struct flacogg_r *f, phi_track *t, const struct flac_info *info, int done)
+{
+	if (done) {
+		if (info->minblock != info->maxblock) {
+			errlog(t, "unsupported case: minblock != maxblock");
+			return -1;
+		}
+
+		t->audio.flac_minblock = info->minblock;
+		t->audio.flac_maxblock = info->maxblock;
+		return 0;
+	}
+
+	t->audio.decoder = "FLAC";
+	struct phi_af af = {
+		.format = info->bits,
+		.channels = info->channels,
+		.rate = info->sample_rate,
+	};
+	t->audio.format = af;
+	t->data_type = "flac";
+	return 0;
+}
+
 static int flacogg_in_read(void *ctx, phi_track *t)
 {
 	struct flacogg_r *f = ctx;
@@ -66,41 +90,26 @@ static int flacogg_in_read(void *ctx, phi_track *t)
 		r = flacoggread_process(&f->fo, &f->in, &out);
 
 		switch (r) {
-		case FLACOGGREAD_HEADER: {
-			t->audio.decoder = "FLAC";
-			const struct flac_info *info = flacoggread_info(&f->fo);
-			struct phi_af af = {
-				.format = info->bits,
-				.channels = info->channels,
-				.rate = info->sample_rate,
-			};
-			t->audio.format = af;
-			t->data_type = "flac";
+		case FLACOGGREAD_HEADER:
+			flacogg_info(f, t, flacoggread_info(&f->fo), 0);
 			break;
-		}
 
 		case FLACOGGREAD_TAG:
 			flacogg_meta(f, t);
 			break;
 
-		case FLACOGGREAD_HEADER_FIN: {
+		case FLACOGGREAD_HEADER_FIN:
 			if (t->conf.info_only)
 				return PHI_LASTOUT;
 
-			const struct flac_info *info = flacoggread_info(&f->fo);
-			if (info->minblock != info->maxblock) {
-				errlog(t, "unsupported case: minblock != maxblock");
+			if (flacogg_info(f, t, flacoggread_info(&f->fo), 1))
 				return PHI_ERR;
-			}
 
-			t->audio.flac_minblock = info->minblock;
-			t->audio.flac_maxblock = info->maxblock;
-			f->fr_samples = info->minblock;
+			f->fr_samples = t->audio.flac_minblock;
 
 			if (!core->track->filter(t, core->mod("flac.decode"), 0))
 				return PHI_ERR;
 			break;
-		}
 
 		case FLACOGGREAD_DATA:
 			goto data;

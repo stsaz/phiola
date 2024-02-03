@@ -3,7 +3,6 @@
 
 #include <track.h>
 #include <util/util.h>
-#include <acodec/alib3-bridge/aac.h>
 #include <ffsys/globals.h>
 
 const phi_core *core;

@@ -9,6 +9,9 @@ typedef struct alac_in {
 
 static void* alac_open(phi_track *t)
 {
+	if (!core->track->filter(t, core->mod("afilter.skip"), 0))
+		return PHI_OPEN_ERR;
+
 	alac_in *a = ffmem_new(alac_in);
 
 	if (0 != ffalac_open(&a->alac, t->data_in.ptr, t->data_in.len)) {
@@ -16,7 +19,7 @@ static void* alac_open(phi_track *t)
 		ffmem_free(a);
 		return PHI_OPEN_ERR;
 	}
-	a->alac.total_samples = t->audio.total;
+	t->audio.end_padding = (t->audio.total != ~0ULL);
 	t->data_in.len = 0;
 
 	if (a->alac.bitrate != 0)
@@ -42,15 +45,9 @@ static int alac_in_decode(void *ctx, phi_track *t)
 	if (t->chain_flags & PHI_FFWD) {
 		a->alac.data = t->data_in.ptr,  a->alac.datalen = t->data_in.len;
 		t->data_in.len = 0;
-		a->alac.cursample = t->audio.pos;
-		if (t->audio.seek != -1) {
-			uint64 seek = msec_to_samples(t->audio.seek, a->alac.fmt.rate);
-			ffalac_seek(&a->alac, seek);
-		}
 	}
 
-	int r;
-	r = ffalac_decode(&a->alac);
+	int r = ffalac_decode(&a->alac, &t->data_out);
 	if (r == FFALAC_RERR) {
 		errlog(t, "ffalac_decode(): %s", ffalac_errstr(&a->alac));
 		return PHI_ERR;
@@ -62,11 +59,8 @@ static int alac_in_decode(void *ctx, phi_track *t)
 		return PHI_MORE;
 	}
 
-	dbglog(t, "decoded %u samples (%U)"
-		, a->alac.pcmlen / pcm_size1(&a->alac.fmt), ffalac_cursample(&a->alac));
-	t->audio.pos = ffalac_cursample(&a->alac);
-
-	ffstr_set(&t->data_out, a->alac.pcm, a->alac.pcmlen);
+	dbglog(t, "decoded %u samples @%U"
+		, t->data_out.len / phi_af_size(&a->alac.fmt), t->audio.pos);
 	return PHI_DATA;
 }
 

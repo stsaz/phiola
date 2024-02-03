@@ -1,7 +1,7 @@
 /** phiola: AAC encode
 2016, Simon Zolin */
 
-#include <acodec/alib3-bridge/aac.h>
+#include <acodec/alib3-bridge/aac-enc-if.h>
 
 struct aac_enc {
 	uint state;
@@ -108,7 +108,7 @@ static int aacw_encode(struct aac_enc *a, phi_track *t)
 	}
 
 	dbglog(t, "encoded %L samples into %L bytes"
-		, (a->in.len - a->aac.pcmlen) / pcm_size1(&a->fmt), a->aac.datalen);
+		, (a->in.len - a->aac.pcmlen) / phi_af_size(&a->fmt), a->aac.datalen);
 	ffstr_set(&a->in, (void*)a->aac.pcm, a->aac.pcmlen);
 	ffstr_set(&t->data_out, a->aac.data, a->aac.datalen);
 	a->total_out += t->data_out.len;
