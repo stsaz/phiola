@@ -3,7 +3,7 @@
 include ../config.mk
 
 VER := 433
-URL := https://github.com/stsaz/fmedia/files/8148606/MAC_SDK_433.zip
+URL := https://github.com/stsaz/phiola/raw/alib3/alib3/MAC/MAC_SDK_433.zip
 PKG := $(notdir $(URL))
 DIR := mac
 LIB := libMAC-phi.$(SO)

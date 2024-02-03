@@ -3,7 +3,7 @@
 include ../config.mk
 
 VER := 0.1.3
-URL := https://github.com/stsaz/fmedia/raw/alib3/alib3/soxr/soxr-0.1.3-Source.tar.xz
+URL := https://github.com/stsaz/phiola/raw/alib3/alib3/soxr/soxr-0.1.3-Source.tar.xz
 PKG := $(notdir $(URL))
 DIR := soxr-$(VER)-Source
 LIB := libsoxr-phi.$(SO)
