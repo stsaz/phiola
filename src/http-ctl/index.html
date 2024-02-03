@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
+</head>
+<body>
+
+<p><span style="font-weight: bold; color: orange;">φ</span>fmedia instance web controller</p>
+
+<div>
+	<button id="pause">Pause</button>
+	<button id="unpause">Play (Unpause)</button>
+	<button id="next">Next</button>
+</div>
+
+<script>
+function id(id) { return document.getElementById(id); }
+function req(method, url) {
+	var h = new XMLHttpRequest();
+	h.open(method, url);
+	h.send(null);
+}
+function ctl(ev) {
+	req("POST", "/api/" + ev.target.id);
+}
+id("pause").onclick = ctl;
+id("unpause").onclick = ctl;
+id("next").onclick = ctl;
+</script>
+
+</body>
+</html>
