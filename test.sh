@@ -179,6 +179,7 @@ test_seek() {
 
 	## mkv seeking implementation is not precise
 	## 128k mp3 has smaller frame size than 320k
+	## ogg: first packet is skipped if the target page has 'continued' flag
 	./phiola i -peaks -s 1 fm_aac.aac     | grep -E '4[89],... total'
 	# ./phiola i -peaks -s 1 fm_aac.avi     | grep -E '4[89],... total'
 	./phiola i -peaks -s 1 fm_aac.mkv     | grep -E '4[89],... total'
@@ -186,7 +187,7 @@ test_seek() {
 	./phiola i -peaks -s 1 fm_alac.mkv    | grep -E '4[678],... total'
 	./phiola i -peaks -s 1 fm_alac.mp4    | grep -E '48,000 total'
 	./phiola i -peaks -s 1 fm_flac.flac   | grep -E '48,000 total'
-	./phiola i -peaks -s 1 fm_flac.ogg    | grep -E '..,... total'
+	./phiola i -peaks -s 1 fm_flac.ogg    | grep -E '4[45678],... total'
 	# ./phiola i -peaks -s 1 fm_mp3.avi     | grep -E '4[89],... total'
 	./phiola i -peaks -s 1 fm_mp3.mkv     | grep -E '4[89],... total'
 	./phiola i -peaks -s 1 fm_mp3.mp3     | grep -E '5[01],... total'

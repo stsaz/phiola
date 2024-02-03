@@ -1,6 +1,7 @@
 /** libFLAC interface
 2016, Simon Zolin */
 
+#pragma once
 #include <stdlib.h>
 
 #ifdef WIN32

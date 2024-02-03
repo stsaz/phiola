@@ -1,131 +1,37 @@
-/** FLAC.
+/** FLAC encoder interface
 2015, Simon Zolin */
 
 #pragma once
-#include <afilter/pcm.h>
 #include <ffbase/vector.h>
 #include <avpack/flac-fmt.h>
 #include <FLAC/FLAC-phi.h>
 
 enum {
-	FLAC_EFMT = 1,
-	FLAC_ELIB,
-	FLAC_ESYS,
-};
-
-enum {
 	FFFLAC_RDATA,
-	FFFLAC_RWARN,
 	FFFLAC_RMORE,
 	FFFLAC_RDONE,
 	FFFLAC_RERR,
 };
 
-typedef struct ffflac_dec {
-	flac_decoder *dec;
-	int err;
-	uint errtype;
-	struct flac_info info;
-	uint64 frsample;
-	uint64 seeksample;
-	ffstr in;
-
-	size_t pcmlen;
-	void **pcm;
-	const void *out[FLAC__MAX_CHANNELS];
-} ffflac_dec;
-
-/** Return 0 on success. */
-int ffflac_dec_open(ffflac_dec *f, const struct flac_info *info)
-{
-	int r;
-	flac_conf si = {0};
-	si.min_blocksize = info->minblock;
-	si.max_blocksize = info->maxblock;
-	si.rate = info->sample_rate;
-	si.channels = info->channels;
-	si.bps = info->bits;
-	if (0 != (r = flac_decode_init(&f->dec, &si))) {
-		f->errtype = FLAC_ELIB;
-		f->err = r;
-		return FFFLAC_RERR;
-	}
-	f->info = *info;
-	return 0;
-}
-
-void ffflac_dec_close(ffflac_dec *f)
-{
-	if (f->dec != NULL)
-		flac_decode_free(f->dec);
-}
-
-#define ffflac_dec_seek(f, sample) \
-	(f)->seeksample = sample
-
-/** Set input data. */
-static FFINL void ffflac_dec_input(ffflac_dec *f, const ffstr *frame, uint frame_samples, uint64 frame_pos)
-{
-	f->in = *frame;
-	f->frsample = frame_pos;
-	f->pcmlen = frame_samples;
-}
-
-/** Get an absolute sample number. */
-#define ffflac_dec_cursample(f)  ((f)->frsample)
-
-/** Get output data (non-interleaved PCM). */
-static FFINL size_t ffflac_dec_output(ffflac_dec *f, void ***pcm)
-{
-	*pcm = f->pcm;
-	return f->pcmlen;
-}
+enum {
+	FLAC_ELIB = 1,
+	FLAC_ESYS,
+};
 
 #define ERR(f, e) \
 	(f)->errtype = e,  FFFLAC_RERR
 
+static inline int int_ltoh24s(const void *p)
+{
+	const ffbyte *b = (ffbyte*)p;
+	uint n = ((uint)b[2] << 16) | ((uint)b[1] << 8) | b[0];
+	if (n & 0x00800000)
+		n |= 0xff000000;
+	return n;
+}
+
 /** Convert data between 32bit integer and any other integer PCM format.
 e.g. 16bit: "11 22 00 00" <-> "11 22" */
-
-static int pcm_from32(const int **src, void **dst, uint dstbits, uint channels, uint samples)
-{
-	uint ic, i;
-	union {
-	char **pb;
-	short **psh;
-	} to;
-	to.psh = (void*)dst;
-
-	switch (dstbits) {
-	case 8:
-		for (ic = 0;  ic != channels;  ic++) {
-			for (i = 0;  i != samples;  i++) {
-				to.pb[ic][i] = (char)src[ic][i];
-			}
-		}
-		break;
-
-	case 16:
-		for (ic = 0;  ic != channels;  ic++) {
-			for (i = 0;  i != samples;  i++) {
-				to.psh[ic][i] = (short)src[ic][i];
-			}
-		}
-		break;
-
-	case 24:
-		for (ic = 0;  ic != channels;  ic++) {
-			for (i = 0;  i != samples;  i++) {
-				int_htol24(&to.pb[ic][i * 3], src[ic][i]);
-			}
-		}
-		break;
-
-	default:
-		return -1;
-	}
-	return 0;
-}
 
 static int pcm_to32(int **dst, const void **src, uint srcbits, uint channels, uint samples)
 {
@@ -168,63 +74,6 @@ static int pcm_to32(int **dst, const void **src, uint srcbits, uint channels, ui
 	return 0;
 }
 
-const char* ffflac_dec_errstr(ffflac_dec *f)
-{
-	switch (f->errtype) {
-	case FLAC_ESYS:
-		return "not enough memory";
-
-	case FLAC_ELIB:
-		return flac_errstr(f->err);
-
-	case FLAC_EFMT:
-		return "format error";
-	}
-
-	return "";
-}
-
-/** Return enum FFFLAC_R. */
-int ffflac_decode(ffflac_dec *f)
-{
-	int r;
-	const int **out;
-	uint isrc, ich;
-
-	r = flac_decode(f->dec, f->in.ptr, f->in.len, &out);
-	if (r != 0) {
-		f->errtype = FLAC_ELIB;
-		f->err = r;
-		return FFFLAC_RWARN;
-	}
-
-	f->pcm = (void**)f->out;
-	isrc = 0;
-	if (f->seeksample != 0) {
-		if (f->frsample < f->seeksample && f->seeksample < f->frsample + f->pcmlen) {
-			isrc = f->seeksample - f->frsample;
-			f->pcmlen -= isrc;
-			f->frsample = f->seeksample;
-		}
-		f->seeksample = 0;
-	}
-
-	for (ich = 0;  ich != f->info.channels;  ich++) {
-		f->out[ich] = out[ich];
-	}
-
-	const int *out2[FLAC__MAX_CHANNELS];
-	for (ich = 0;  ich != f->info.channels;  ich++) {
-		out2[ich] = out[ich] + isrc;
-	}
-
-	//in-place conversion
-	pcm_from32(out2, (void*)f->out, f->info.bits, f->info.channels, f->pcmlen);
-	f->pcmlen *= f->info.bits / 8 * f->info.channels;
-	return FFFLAC_RDATA;
-}
-
-
 enum FFFLAC_ENC_OPT {
 	FFFLAC_ENC_NOMD5 = 1, // don't generate MD5 checksum of uncompressed data
 };
@@ -257,7 +106,6 @@ typedef struct ffflac_enc {
 void ffflac_enc_init(ffflac_enc *f)
 {
 	ffmem_zero_obj(f);
-	f->level = 5;
 }
 
 void ffflac_enc_close(ffflac_enc *f)
@@ -273,10 +121,15 @@ void ffflac_enc_close(ffflac_enc *f)
 
 const char* ffflac_enc_errstr(ffflac_enc *f)
 {
-	ffflac_dec fl;
-	fl.errtype = f->errtype;
-	fl.err = f->err;
-	return ffflac_dec_errstr(&fl);
+	switch (f->errtype) {
+	case FLAC_ESYS:
+		return "not enough memory";
+
+	case FLAC_ELIB:
+		return flac_errstr(f->err);
+	}
+
+	return "";
 }
 
 enum ENC_STATE {
@@ -284,42 +137,23 @@ enum ENC_STATE {
 };
 
 /** Return 0 on success. */
-int ffflac_create(ffflac_enc *f, struct phi_af *pcm)
+int ffflac_create(ffflac_enc *f, flac_conf *conf)
 {
 	int r;
-
-	switch (pcm->format) {
-	case PHI_PCM_8:
-	case PHI_PCM_16:
-	case PHI_PCM_24:
-		break;
-
-	default:
-		pcm->format = PHI_PCM_24;
-		f->errtype = FLAC_EFMT;
-		return FLAC_EFMT;
-	}
-
-	flac_conf conf = {0};
-	conf.bps = pcm_bits(pcm->format);
-	conf.channels = pcm->channels;
-	conf.rate = pcm->rate;
-	conf.level = f->level;
-	conf.nomd5 = !!(f->opts & FFFLAC_ENC_NOMD5);
-
-	if (0 != (r = flac_encode_init(&f->enc, &conf))) {
+	if (0 != (r = flac_encode_init(&f->enc, conf))) {
 		f->err = r;
 		f->errtype = FLAC_ELIB;
 		return FLAC_ELIB;
 	}
 
+	f->info.bits = conf->bps;
+	f->info.channels = conf->channels;
+	f->info.sample_rate = conf->rate;
+
 	flac_conf info;
 	flac_encode_info(f->enc, &info);
 	f->info.minblock = info.min_blocksize;
 	f->info.maxblock = info.max_blocksize;
-	f->info.channels = pcm->channels;
-	f->info.sample_rate = pcm->rate;
-	f->info.bits = pcm_bits(pcm->format);
 	return 0;
 }
 
@@ -353,7 +187,7 @@ int ffflac_encode(ffflac_enc *f)
 		break;
 
 	case ENC_DONE: {
-		flac_conf info = {0};
+		flac_conf info = {};
 		flac_encode_info(f->enc, &info);
 		f->info.minblock = info.min_blocksize;
 		f->info.maxblock = info.max_blocksize;
@@ -381,8 +215,8 @@ int ffflac_encode(ffflac_enc *f)
 			dst[i] = f->pcm32[i] + f->off_pcm32;
 		}
 
-		if (0 != (r = pcm_to32(dst, src, f->info.bits, f->info.channels, samples)))
-			return ERR(f, FLAC_EFMT);
+		r = pcm_to32(dst, src, f->info.bits, f->info.channels, samples);
+		FF_ASSERT(!r);
 
 		f->off_pcm += samples;
 		f->off_pcm32 += samples;

@@ -16,7 +16,6 @@ struct flacogg_r {
 	uint64 apos, page_start_pos;
 	ffstr in;
 	uint fr_samples;
-	uint sample_rate;
 };
 
 static void* flacogg_in_create(phi_track *t)
@@ -49,7 +48,6 @@ static int flacogg_in_read(void *ctx, phi_track *t)
 	int r;
 
 	if (t->chain_flags & PHI_FSTOP) {
-
 		return PHI_LASTOUT;
 	}
 
@@ -78,7 +76,6 @@ static int flacogg_in_read(void *ctx, phi_track *t)
 			};
 			t->audio.format = af;
 			t->data_type = "flac";
-			f->sample_rate = info->sample_rate;
 			break;
 		}
 
@@ -124,16 +121,6 @@ static int flacogg_in_read(void *ctx, phi_track *t)
 	}
 
 data:
-	if (t->audio.seek_req && t->audio.seek != -1) {
-		uint64 seek = msec_to_samples(t->audio.seek, f->sample_rate);
-		dbglog(t, "seek: %U @%U", seek, f->apos);
-		if (seek >= f->apos + f->fr_samples) {
-			f->apos += f->fr_samples;
-			return PHI_MORE;
-		}
-		t->audio.seek_req = 0;
-	}
-
 	dbglog(t, "frame size:%L  @%U", out.len, f->apos);
 	t->audio.pos = f->apos;
 	t->audio.flac_samples = f->fr_samples;

@@ -1,7 +1,7 @@
 /** phiola: FLAC encode
 2015, Simon Zolin */
 
-#include <acodec/alib3-bridge/flac.h>
+#include <acodec/alib3-bridge/flac-enc-if.h>
 
 struct flac_enc {
 	ffflac_enc fl;
@@ -17,7 +17,6 @@ static void* flac_enc_create(phi_track *t)
 
 	struct flac_enc *f = ffmem_new(struct flac_enc);
 	ffflac_enc_init(&f->fl);
-	f->fl.level = 6;
 	return f;
 }
 
@@ -27,6 +26,17 @@ static void flac_enc_free(struct flac_enc *f, phi_track *t)
 	ffmem_free(f);
 }
 
+static int flac_format_supported(uint f)
+{
+	switch (f) {
+	case PHI_PCM_8:
+	case PHI_PCM_16:
+	case PHI_PCM_24:
+		return 1;
+	}
+	return 0;
+}
+
 static int flac_enc_encode(struct flac_enc *f, phi_track *t)
 {
 	int r;
@@ -34,20 +44,31 @@ static int flac_enc_encode(struct flac_enc *f, phi_track *t)
 	switch (f->state) {
 
 	case 0:
-	case 1:
-		if (0 != (r = ffflac_create(&f->fl, (void*)&t->oaudio.format))) {
-
-			if (f->state == 0 && r == FLAC_EFMT) {
-				t->oaudio.conv_format.interleaved = 0;
+	case 1: {
+		if (!flac_format_supported(t->oaudio.format.format)) {
+			if (f->state == 0) {
 				f->state = 1;
+				t->oaudio.conv_format.format = PHI_PCM_24;
+				t->oaudio.conv_format.interleaved = 0;
 				return PHI_MORE;
 			}
+			errlog(t, "format not supported");
+			return PHI_ERR;
+		}
 
+		flac_conf conf = {
+			.bps = phi_af_bits(&t->oaudio.format),
+			.channels = t->oaudio.format.channels,
+			.rate = t->oaudio.format.rate,
+			.level = 6,
+		};
+		if (0 != (r = ffflac_create(&f->fl, &conf))) {
 			errlog(t, "ffflac_create(): %s", ffflac_enc_errstr(&f->fl));
 			return PHI_ERR;
 		}
 		t->oaudio.flac_vendor = flac_vendor();
 		t->data_type = "flac";
+	}
 		// fallthrough
 
 	case 2:
