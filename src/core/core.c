@@ -250,9 +250,14 @@ static fftime core_time(ffdatetime *dt, uint flags)
 	fftime t = {};
 
 	switch (flags) {
+	case PHI_CORE_TIME_UTC:
 	case PHI_CORE_TIME_LOCAL:
 		fftime_now(&t);
-		t.sec += FFTIME_1970_SECONDS + cc->tz.real_offset;
+		t.sec += FFTIME_1970_SECONDS;
+
+		if (flags == PHI_CORE_TIME_LOCAL)
+			t.sec += cc->tz.real_offset;
+
 		if (dt)
 			fftime_split1(dt, &t);
 		break;

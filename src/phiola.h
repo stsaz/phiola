@@ -87,6 +87,7 @@ struct phi_core_conf {
 };
 
 enum PHI_CORE_TIME {
+	PHI_CORE_TIME_UTC,
 	PHI_CORE_TIME_LOCAL,
 	PHI_CORE_TIME_MONOTONIC,
 };
