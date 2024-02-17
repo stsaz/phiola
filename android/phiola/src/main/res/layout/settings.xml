@@ -320,6 +320,10 @@
 			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/sett_rec_bitrate"
 			android:textColor="@color/text" />
+		<SeekBar
+			android:id="@+id/sb_rec_bitrate"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content" />
 		<EditText
 			android:id="@+id/e_rec_bitrate"
 			android:layout_width="match_parent"
@@ -350,6 +354,10 @@
 			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/sett_rec_until"
 			android:textColor="@color/text" />
+		<SeekBar
+			android:id="@+id/sb_rec_until"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content" />
 		<EditText
 			android:id="@+id/e_rec_until"
 			android:layout_width="match_parent"

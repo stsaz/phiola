@@ -81,6 +81,24 @@ public class SettingsActivity extends AppCompatActivity {
 				}
 			});
 
+		b.sbRecBitrate.setMax(rec_bitrate_progress(256));
+		b.sbRecBitrate.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
+				@Override
+				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+					if (fromUser)
+						b.eRecBitrate.setText(String.format("%d", rec_bitrate_value(progress)));
+				}
+			});
+
+		b.sbRecUntil.setMax(rec_until_progress(3600));
+		b.sbRecUntil.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
+				@Override
+				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+					if (fromUser)
+						b.eRecUntil.setText(String.format("%d", rec_until_value(progress)));
+				}
+			});
+
 		adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item
 			, CoreSettings.rec_formats);
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -106,6 +124,7 @@ public class SettingsActivity extends AppCompatActivity {
 			b.eRecRate.setEnabled(false);
 			b.spRecEnc.setEnabled(false);
 			b.eRecBufLen.setEnabled(false);
+			b.sbRecUntil.setEnabled(false);
 			b.eRecUntil.setEnabled(false);
 			b.swRecDanorm.setEnabled(false);
 			b.sbRecGain.setEnabled(false);
@@ -255,6 +274,14 @@ public class SettingsActivity extends AppCompatActivity {
 	private static int rec_rate_value(int progress) { return 8000 + (progress - 1) * 1000; }
 	private static int rec_rate_progress(int rate) { return 1 + (rate - 8000) / 1000; }
 
+	// 8..256 by 8
+	private static int rec_bitrate_value(int progress) { return 8 + (progress) * 8; }
+	private static int rec_bitrate_progress(int value) { return (value - 8) / 8; }
+
+	// 60..3600 by 60
+	private static int rec_until_value(int progress) { return 60 + (progress) * 60; }
+	private static int rec_until_progress(int value) { return (value - 60) / 60; }
+
 	private void rec_load() {
 		b.eRecDir.setText(core.setts.rec_path);
 		b.spRecChannels.setSelection(core.setts.rec_channels);
@@ -263,8 +290,10 @@ public class SettingsActivity extends AppCompatActivity {
 			b.sbRecRate.setProgress(rec_rate_progress(core.setts.rec_rate));
 		}
 		b.spRecEnc.setSelection(rec_format_index(core.setts.rec_enc));
+		b.sbRecBitrate.setProgress(rec_bitrate_progress(core.setts.rec_bitrate));
 		b.eRecBitrate.setText(Integer.toString(core.setts.rec_bitrate));
 		b.eRecBufLen.setText(core.int_to_str(core.setts.rec_buf_len_ms));
+		b.sbRecUntil.setProgress(rec_until_progress(core.setts.rec_until_sec));
 		b.eRecUntil.setText(core.int_to_str(core.setts.rec_until_sec));
 		b.swRecDanorm.setChecked(core.setts.rec_danorm);
 		b.eRecGain.setText(core.float_to_str((float)core.setts.rec_gain_db100 / 100));
