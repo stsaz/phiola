@@ -57,7 +57,8 @@ static char* lh_abs_norm(ffvec *buf, ffstr base, ffstr path)
 		ffvec_realloc(buf, path.len+1, 1);
 	}
 
-	int r = ffpath_normalize(buf->ptr, buf->cap, path.ptr, path.len, FFPATH_SLASH_BACKSLASH | FFPATH_FORCE_SLASH);
+	int r = ffpath_normalize(buf->ptr, buf->cap, path.ptr, path.len
+		, FFPATH_SIMPLE | FFPATH_SLASH_BACKSLASH | FFPATH_FORCE_SLASH);
 	FF_ASSERT(r >= 0);
 	buf->len = r;
 	char *afn = buf->ptr;

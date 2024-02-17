@@ -385,6 +385,8 @@ test_list_heal() {
 	echo "#EXTM3U
 #EXTINF:123,ARTIST - abs-rel
 `pwd`/phi_test/listheal/file-abs.mp3
+#EXTINF:123,ARTIST - norm
+././/listheal//file-abs.mp3
 #EXTINF:123,ARTIST - chg-ext
 listheal/file.mp3
 #EXTINF:123,ARTIST - chg-dir
@@ -396,6 +398,8 @@ listheal/dir1/dir2/file-cde.mp3
 
 	echo '#EXTM3U
 #EXTINF:123,ARTIST - abs-rel
+listheal/file-abs.mp3
+#EXTINF:123,ARTIST - norm
 listheal/file-abs.mp3
 #EXTINF:123,ARTIST - chg-ext
 listheal/file.ogg
