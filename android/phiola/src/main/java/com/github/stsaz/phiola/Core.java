@@ -37,7 +37,8 @@ class CoreSettings {
 		"AAC-HE",
 		"AAC-HEv2",
 		"FLAC",
-		"Opus"
+		"Opus",
+		"Opus-VOIP"
 	};
 
 	String	conv_outext;
@@ -145,7 +146,7 @@ class CoreSettings {
 			rec_fmt = "m4a";
 		} else if (rec_enc.equals("FLAC")) {
 			rec_fmt = "flac";
-		} else if (rec_enc.equals("Opus")) {
+		} else if (rec_enc.equals("Opus") || rec_enc.equals("Opus-VOIP")) {
 			rec_fmt = "opus";
 		} else {
 			rec_fmt = "m4a";

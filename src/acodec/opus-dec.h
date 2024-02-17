@@ -35,16 +35,29 @@ static void opus_close(void *ctx, phi_track *t)
 	ffmem_free(o);
 }
 
+static const char* opus_pkt_mode(const char *d)
+{
+	if (d[0] & 0x80)
+		return "celt";
+	else if ((d[0] & 0x60) == 0x60)
+		return "hybrid";
+	return "silk";
+}
+
 static int opus_in_decode(void *ctx, phi_track *t)
 {
 	enum { R_HDR, R_TAGS, R_DATA1, R_DATA };
 	struct opus_dec *o = ctx;
 	int r;
+	const char *opus_mode = NULL;
 
 	ffstr in = {};
 	if (t->chain_flags & PHI_FFWD) {
 		in = t->data_in;
 		t->data_in.len = 0;
+
+		if (core->conf.log_level >= PHI_LOG_DEBUG && in.len)
+			opus_mode = opus_pkt_mode(in.ptr);
 	}
 
 	ffstr out;
@@ -133,8 +146,8 @@ again:
 	}
 
 data:
-	dbglog(t, "decoded %L samples @%U"
-		, out.len / o->sample_size, t->audio.pos);
+	dbglog(t, "decoded %L samples @%U  mode:%s"
+		, out.len / o->sample_size, t->audio.pos, opus_mode);
 	t->data_out = out;
 	return PHI_DATA;
 }

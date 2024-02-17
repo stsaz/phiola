@@ -53,6 +53,9 @@ Options:\n\
                           1..5 (VBR) or 8..800 (CBR, kbit/s)\n\
   `-opus_quality` NUMBER  Opus encoding bitrate:\n\
                           6..510 (VBR)\n\
+  `-opus_mode` CHAR       Opus mode:\n\
+                          `a`  Audio (default)\n\
+                          `v`  VOIP\n\
   `-vorbis_quality` NUMBER\n\
                         Vorbis encoding quality:\n\
                           0..10\n\
@@ -89,6 +92,7 @@ Options:\n\
 
 struct cmd_conv {
 	const char*	aac_profile;
+	const char*	opus_mode;
 	const char*	danorm;
 	const char*	output;
 	ffvec	include, exclude; // ffstr[]
@@ -103,6 +107,7 @@ struct cmd_conv {
 	uint	channels;
 	uint	force;
 	uint	opus_q;
+	uint	opus_mode_n;
 	uint	preserve_date;
 	uint	rate;
 	uint	vorbis_q;
@@ -203,6 +208,7 @@ static void conv_qu_add(struct cmd_conv *v, ffstr *fn)
 		.vorbis.quality = (v->vorbis_q + 1) * 10,
 		.opus = {
 			.bitrate = v->opus_q,
+			.mode = v->opus_mode_n,
 		},
 		.ofile = {
 			.name = ffsz_dup(v->output),
@@ -247,6 +253,9 @@ static int conv_prepare(struct cmd_conv *v)
 	if (!v->aac_profile)
 		v->aac_profile = "l";
 
+	if ((int)(v->opus_mode_n = cmd_opus_mode(v->opus_mode)) < 0)
+		return _ffargs_err(&x->cmd, 1, "-opus_mode: incorrect value");
+
 	ffstr name;
 	ffpath_splitname_str(FFSTR_Z(v->output), &name, NULL);
 	x->stdout_busy = ffstr_eqz(&name, "@stdout");
@@ -269,6 +278,7 @@ static const struct ffarg cmd_conv[] = {
 	{ "-include",		'S',	conv_include },
 	{ "-meta",			'+S',	conv_meta },
 	{ "-o",				's',	O(output) },
+	{ "-opus_mode",		's',	O(opus_mode) },
 	{ "-opus_quality",	'u',	O(opus_q) },
 	{ "-out",			's',	O(output) },
 	{ "-preserve_date",	'1',	O(preserve_date) },

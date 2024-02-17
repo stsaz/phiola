@@ -52,9 +52,9 @@ class Phiola {
 
 	static class RecordParams {
 		static final int
-			REC_AACLC = 0,
-			REC_AACHE = 1,
-			REC_AACHE2 = 2,
+			REC_AAC_LC = 0,
+			REC_AAC_HE = 1,
+			REC_AAC_HE2 = 2,
 			REC_FLAC = 3,
 			REC_OPUS = 4,
 			REC_OPUS_VOICE = 5;

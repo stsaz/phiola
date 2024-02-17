@@ -117,6 +117,15 @@ static int cmd_input(ffvec *input, ffstr s)
 	return 0;
 }
 
+static int cmd_opus_mode(const char *s)
+{
+	if (!s) return 0;
+	if (!s[0] || s[1]) return -1;
+	if (s[0] == 'a') return 0;
+	if (s[0] == 'v') return 1;
+	return -1;
+}
+
 #define SUBCMD_INIT(ptr, f_free, f_action, args) \
 ({ \
 	x->subcmd.obj = ptr; \

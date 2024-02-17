@@ -39,6 +39,9 @@ Options:\n\
                           1..5 (VBR) or 8..800 (CBR, kbit/s)\n\
   `-opus_quality` NUMBER  Opus encoding bitrate:\n\
                           6..510 (VBR)\n\
+  `-opus_mode` CHAR       Opus mode:\n\
+                          `a`  Audio (default)\n\
+                          `v`  VOIP\n\
   `-vorbis_quality` NUMBER\n\
                         Vorbis encoding quality:\n\
                           0..10\n\
@@ -73,6 +76,7 @@ struct cmd_rec {
 	const char*	aac_profile;
 	const char*	audio;
 	const char*	danorm;
+	const char*	opus_mode;
 	const char*	output;
 	ffvec	meta;
 	int		gain;
@@ -85,6 +89,7 @@ struct cmd_rec {
 	uint	buffer;
 	uint	channels;
 	uint	device;
+	uint	opus_mode_n;
 	uint	opus_q;
 	uint	rate;
 	uint	vorbis_q;
@@ -150,6 +155,7 @@ static int rec_action(struct cmd_rec *r)
 		.vorbis.quality = (r->vorbis_q + 1) * 10,
 		.opus = {
 			.bitrate = r->opus_q,
+			.mode = r->opus_mode_n,
 		},
 		.ofile = {
 			.name = ffsz_dup(r->output),
@@ -208,6 +214,9 @@ static int rec_check(struct cmd_rec *r)
 	if (!r->aac_profile)
 		r->aac_profile = "l";
 
+	if ((int)(r->opus_mode_n = cmd_opus_mode(r->opus_mode)) < 0)
+		return _ffargs_err(&x->cmd, 1, "-opus_mode: incorrect value");
+
 	ffstr name;
 	ffpath_splitname_str(FFSTR_Z(r->output), &name, NULL);
 	x->stdout_busy = ffstr_eqz(&name, "@stdout");
@@ -252,6 +261,7 @@ static const struct ffarg cmd_rec[] = {
 	{ "-loopback",		'1',	O(loopback) },
 	{ "-meta",			'+S',	rec_meta },
 	{ "-o",				's',	O(output) },
+	{ "-opus_mode",		's',	O(opus_mode) },
 	{ "-opus_quality",	'u',	O(opus_q) },
 	{ "-out",			's',	O(output) },
 	{ "-rate",			'u',	O(rate) },

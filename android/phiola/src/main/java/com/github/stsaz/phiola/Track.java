@@ -386,23 +386,27 @@ class Track {
 		}
 	}
 
+	private int rec_fmt(String s) {
+		if (s.equals("AAC-HE"))
+			return Phiola.RecordParams.REC_AAC_HE;
+		else if (s.equals("AAC-HEv2"))
+			return Phiola.RecordParams.REC_AAC_HE2;
+		else if (s.equals("FLAC"))
+			return Phiola.RecordParams.REC_FLAC;
+		else if (s.equals("Opus"))
+			return Phiola.RecordParams.REC_OPUS;
+		else if (s.equals("Opus-VOIP"))
+			return Phiola.RecordParams.REC_OPUS_VOICE;
+		return Phiola.RecordParams.REC_AAC_LC;
+	}
+
 	TrackHandle rec_start(String out, Phiola.RecordCallback cb) {
 		if (Build.VERSION.SDK_INT < 26) {
 			return rec_start_compat(out, cb);
 		}
 
 		Phiola.RecordParams p = new Phiola.RecordParams();
-
-		p.format = Phiola.RecordParams.REC_AACLC;
-		if (core.setts.rec_enc.equals("AAC-HE"))
-			p.format = Phiola.RecordParams.REC_AACHE;
-		else if (core.setts.rec_enc.equals("AAC-HEv2"))
-			p.format = Phiola.RecordParams.REC_AACHE2;
-		else if (core.setts.rec_enc.equals("FLAC"))
-			p.format = Phiola.RecordParams.REC_FLAC;
-		else if (core.setts.rec_enc.equals("Opus"))
-			p.format = Phiola.RecordParams.REC_OPUS;
-
+		p.format = rec_fmt(core.setts.rec_enc);
 		p.channels = core.setts.rec_channels;
 		p.sample_rate = core.setts.rec_rate;
 
