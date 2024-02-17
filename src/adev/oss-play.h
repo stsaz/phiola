@@ -55,7 +55,7 @@ static int oss_create(audio_out *a, phi_track *t)
 		if (cur != NULL) {
 			mod->usedby = NULL;
 			core->timer(t->worker, &mod->tmr, 0, NULL, NULL);
-			audio_out_onplay(cur);
+			audio_out_stop(cur);
 		}
 
 		if (fmt.channels == mod->fmt.channels
@@ -80,6 +80,7 @@ static int oss_create(audio_out *a, phi_track *t)
 
 	r = audio_out_open(a, t, &fmt);
 	if (r == FFAUDIO_EFORMAT) {
+		t->oaudio.conv_format.interleaved = 1;
 		return PHI_MORE;
 	} else if (r != 0)
 		return PHI_ERR;
@@ -114,11 +115,11 @@ static int oss_write(void *ctx, phi_track *t)
 	case 0:
 	case 1:
 		a->try_open = (a->state == 0);
-		if (PHI_ERR == (r = oss_create(a, t)))
+		r = oss_create(a, t);
+		if (r == PHI_ERR) {
 			return PHI_ERR;
 
-		if (!(r == PHI_DONE && t->oaudio.format.interleaved)) {
-			t->oaudio.conv_format.interleaved = 1;
+		} else if (r == PHI_MORE) {
 			if (a->state == 1) {
 				errlog(t, "need input audio conversion");
 				return PHI_ERR;
@@ -128,6 +129,11 @@ static int oss_write(void *ctx, phi_track *t)
 		}
 
 		a->state = 2;
+
+		if (!t->oaudio.format.interleaved) {
+			t->oaudio.conv_format.interleaved = 1;
+			return PHI_MORE;
+		}
 	}
 
 	r = audio_out_write(a, t);

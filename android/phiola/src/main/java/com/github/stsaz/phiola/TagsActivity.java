@@ -39,7 +39,7 @@ public class TagsActivity extends AppCompatActivity  {
 	}
 
 	private void show() {
-		meta = core.track().meta();
+		meta = core.track.meta();
 		if (meta == null)
 			meta = new String[0];
 		ArrayList<String> tags = new ArrayList<>();

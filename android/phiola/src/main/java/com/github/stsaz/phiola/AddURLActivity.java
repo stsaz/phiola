@@ -34,7 +34,7 @@ public class AddURLActivity extends AppCompatActivity {
 
 	private void add() {
 		String fn = t_url.getText().toString();
-		if (!core.track().supported_url(fn)) {
+		if (!core.track.supported_url(fn)) {
 			core.gui().msg_show(AddURLActivity.this, "Unsupported URL");
 			return;
 		}

@@ -95,7 +95,7 @@ static const struct ffarg args[] = {
 	{}
 };
 
-static void gui_userconf_load()
+void gui_userconf_load()
 {
 	ffvec buf = {};
 	if (fffile_readwhole(gd->user_conf_name, &buf, 1*1024*1024))
@@ -282,10 +282,9 @@ void theme_switch(uint i)
 	}
 }
 
-int FFTHREAD_PROCCALL gui_worker(void *param)
+void gui_init()
 {
 	gg = ffmem_new(struct gui);
-	ffui_init();
 	wmain_init();
 	winfo_init();
 	wsettings_init();
@@ -296,8 +295,11 @@ int FFTHREAD_PROCCALL gui_worker(void *param)
 	wconvert_init();
 	wabout_init();
 	wlog_init();
+}
 
-	gui_userconf_load();
+int FFTHREAD_PROCCALL gui_worker(void *param)
+{
+	ffui_init();
 	if (load_ui())
 		goto end;
 

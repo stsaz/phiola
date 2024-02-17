@@ -19,13 +19,9 @@ static void* wasapi_open(phi_track *t)
 
 static int wasapi_create(audio_out *w, phi_track *t)
 {
-	struct phi_af fmt;
 	int r, reused = 0;
-
 	w->dev_idx = t->conf.oaudio.device_index;
 	w->handle_dev_offline = (!t->conf.oaudio.device_index);
-
-	fmt = t->oaudio.format;
 
 	if (mod->out != NULL) {
 
@@ -34,12 +30,12 @@ static int wasapi_create(audio_out *w, phi_track *t)
 		audio_out *cur = mod->usedby;
 		if (cur != NULL) {
 			mod->usedby = NULL;
-			audio_out_onplay(cur);
+			audio_out_stop(cur);
 		}
 
 		// Note: we don't support cases when devices are switched
 		if (mod->dev_idx == w->dev_idx && mod->excl == t->conf.oaudio.exclusive) {
-			if (af_eq(&fmt, &mod->fmt)) {
+			if (af_eq(&t->oaudio.format, &mod->fmt)) {
 				dbglog(NULL, "stop/clear");
 				ffwasapi.stop(mod->out);
 				ffwasapi.clear(mod->out);
@@ -53,11 +49,12 @@ static int wasapi_create(audio_out *w, phi_track *t)
 			}
 
 			const struct phi_af *good_fmt;
-			if (w->try_open && NULL != (good_fmt = fmt_conv_find(&mod->fmts, &fmt))
+			if (w->try_open && NULL != (good_fmt = fmt_conv_find(&mod->fmts, &t->oaudio.format))
 				&& af_eq(good_fmt, &mod->fmt)) {
 				// Don't try to reopen the buffer, because it's likely to fail again.
 				// Instead, just use the format ffaudio set for us previously.
 				t->oaudio.conv_format = *good_fmt;
+				t->oaudio.conv_format.interleaved = 1;
 				return PHI_MORE;
 			}
 		}
@@ -67,11 +64,12 @@ static int wasapi_create(audio_out *w, phi_track *t)
 
 	w->aflags |= (t->conf.oaudio.exclusive) ? FFAUDIO_O_EXCLUSIVE | FFAUDIO_O_USER_EVENTS : 0;
 	w->aflags |= FFAUDIO_O_UNSYNC_NOTIFY;
-	r = audio_out_open(w, t, &fmt);
+	r = audio_out_open(w, t, &t->oaudio.format);
 	if (r == FFAUDIO_EFORMAT) {
+		t->oaudio.conv_format.interleaved = 1;
 		struct phi_af req_fmt = t->oaudio.format;
 		phi_af_update(&req_fmt, &t->oaudio.conv_format);
-		fmt_conv_add(&mod->fmts, &fmt, &req_fmt);
+		fmt_conv_add(&mod->fmts, &t->oaudio.format, &req_fmt);
 		return PHI_MORE;
 	} else if (r != 0)
 		return PHI_ERR;
@@ -82,7 +80,7 @@ static int wasapi_create(audio_out *w, phi_track *t)
 	mod->out = w->stream;
 	mod->buffer_length_msec = w->buffer_length_msec;
 	mod->excl = t->conf.oaudio.exclusive;
-	mod->fmt = fmt;
+	mod->fmt = t->oaudio.format;
 	mod->dev_idx = w->dev_idx;
 
 fin:
@@ -134,11 +132,11 @@ static int wasapi_write(void *ctx, phi_track *t)
 	case ST_TRY:
 	case ST_OPEN:
 		w->try_open = (w->state == 0);
-		if (PHI_ERR == (r = wasapi_create(w, t)))
+		r = wasapi_create(w, t);
+		if (r == PHI_ERR) {
 			return PHI_ERR;
 
-		if (!(r == PHI_DONE && t->oaudio.format.interleaved)) {
-			t->oaudio.conv_format.interleaved = 1;
+		} else if (r == PHI_MORE) {
 			if (w->state == ST_OPEN) {
 				errlog(t, "need input audio conversion");
 				return PHI_ERR;
@@ -148,6 +146,11 @@ static int wasapi_write(void *ctx, phi_track *t)
 		}
 
 		w->state = ST_WAITING;
+
+		if (!t->oaudio.format.interleaved) {
+			t->oaudio.conv_format.interleaved = 1;
+			return PHI_MORE;
+		}
 	}
 
 	r = audio_out_write(w, t);

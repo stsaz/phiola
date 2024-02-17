@@ -120,13 +120,17 @@ end:
 
 }
 
-JNIEXPORT void JNICALL
+JNIEXPORT jstring JNICALL
 Java_com_github_stsaz_phiola_Phiola_recStop(JNIEnv *env, jobject thiz, jlong trk)
 {
-	if (trk == 0) return;
+	if (trk == 0) return NULL;
 
 	dbglog("%s: enter", __func__);
 	phi_track *t = (void*)trk;
+	jstring e = NULL;
+	if (t->error)
+		e = jni_js_szf(env, "code %u", t->error);
 	x->core->track->stop(t);
 	dbglog("%s: exit", __func__);
+	return e;
 }

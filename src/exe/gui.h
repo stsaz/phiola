@@ -36,8 +36,7 @@ static int gui_action(struct cmd_gui *g)
 		struct phi_queue_entry qe = {
 			.conf.ifile.name = ffsz_dupstr(it),
 		};
-		if (0 == x->queue->add(NULL, &qe))
-			x->queue->play(NULL, x->queue->at(NULL, 0));
+		x->queue->add(NULL, &qe);
 	}
 	ffvec_free(&g->input);
 

@@ -123,7 +123,8 @@ static void q_free(struct phi_queue *q)
 {
 	struct q_entry **e;
 	FFSLICE_WALK(&q->index, e) {
-		qe_unref(*e);
+		if (qe_unref(*e))
+			(*e)->q = NULL;
 	}
 	ffvec_free(&q->index);
 	ffmem_free(q->conf.name);
@@ -227,7 +228,7 @@ static void qm_rand_init()
 static uint q_random(struct phi_queue *q)
 {
 	ffsize n = q->index.len;
-	if (n == 1)
+	if (n <= 1)
 		return 0;
 	qm_rand_init();
 	ffsize i = ffrand_get();
@@ -527,7 +528,7 @@ static void q_sort(phi_queue_id q, uint flags)
 	qm->on_change(q, 'u', 0);
 }
 
-static void q_device(uint device)
+static void qm_device(uint device)
 {
 	qm->dev_idx = device;
 }
@@ -570,6 +571,9 @@ static void q_remove_multi(phi_queue_id q, uint flags)
 }
 
 const phi_queue_if phi_queueif = {
+	qm_set_on_change,
+	qm_device,
+
 	q_create,
 	q_destroy,
 	qm_select,
@@ -587,10 +591,11 @@ const phi_queue_if phi_queueif = {
 
 	q_save,
 	q_status,
-	q_at,
 	q_remove_at,
 	q_remove_multi,
+	q_sort,
 
+	q_at,
 	q_ref,
 	(void*)qe_unref,
 
@@ -598,8 +603,4 @@ const phi_queue_if phi_queueif = {
 	(void*)qe_insert,
 	(void*)qe_index,
 	(void*)qe_remove,
-
-	qm_set_on_change,
-	q_sort,
-	q_device,
 };

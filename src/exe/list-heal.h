@@ -254,7 +254,7 @@ static char* lh_heal(struct list_heal *lh, const char *name)
 	if (!fffile_exists(afn)) {
 		if (lh_fix_ext(lh, *(ffstr*)&lh->buf, &output)) {
 			if (lh_fix_dir(lh, *(ffstr*)&lh->buf, &output)) {
-				warnlog("%s: file doesn't exist and can't be found in %S"
+				warnlog("%s: file doesn't exist and wasn't found in %S"
 					, afn, &lh->pl_dir);
 				goto end;
 			}
@@ -344,7 +344,7 @@ static void lh_ready(void *param)
 	ffdirscan_close(&lh->ds);
 	lh_free_table(lh);
 
-	infolog("Corrected %u/%u paths", nfixed, ntotal);
+	infolog("%s: corrected %u/%u paths", lname, nfixed, ntotal);
 	x->queue->save(q, lname, lh_save_complete, lh);
 }
 

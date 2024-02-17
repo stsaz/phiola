@@ -4,8 +4,6 @@
 package com.github.stsaz.phiola;
 
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 
 import android.widget.ArrayAdapter;
 import android.widget.SeekBar;
@@ -222,7 +220,7 @@ public class ConvertActivity extends AppCompatActivity {
 
 	/** Set 'from/until' position equal to the current playing position */
 	private void pos_set_cur(boolean from) {
-		long sec = core.track().curpos_msec() / 1000;
+		long sec = core.track.curpos_msec() / 1000;
 		String s = time_str(sec);
 		if (from) {
 			b.sbRangeFrom.setProgress(time_progress(sec));
@@ -261,13 +259,12 @@ public class ConvertActivity extends AppCompatActivity {
 			, b.eOutName.getText().toString()
 			, CoreSettings.conv_extensions[b.spOutExt.getSelectedItemPosition()]);
 		core.phiola.convert(iname, oname, p,
-			(result) -> {
-				Handler mloop = new Handler(Looper.getMainLooper());
-				mloop.post(() -> {
-					convert_done(result);
-				});
-			}
-		);
+				(result) -> {
+					core.tq.post(() -> {
+						convert_done(result);
+					});
+				}
+			);
 	}
 
 	private void convert_done(String result) {

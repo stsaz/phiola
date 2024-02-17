@@ -145,6 +145,12 @@ static void audio_out_onplay(void *param)
 	core->track->wake(a->trk);
 }
 
+static inline void audio_out_stop(audio_out *a)
+{
+	a->trk->chain_flags |= PHI_FSTOP;
+	audio_out_onplay(a);
+}
+
 static int audio_out_write(audio_out *a, phi_track *t)
 {
 	int r;

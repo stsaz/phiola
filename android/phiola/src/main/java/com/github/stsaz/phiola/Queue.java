@@ -3,14 +3,89 @@
 
 package com.github.stsaz.phiola;
 
-import android.os.Handler;
-import android.os.Looper;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
+
+class AutoSkip {
+	private final Core core;
+	int msec, percent;
+
+	AutoSkip(Core core) { this.core = core; }
+
+	/** Set numeric values from string.
+	Supports "N%", "N sec" or just "N". */
+	void parse(String s) {
+		if (!s.isEmpty() && s.charAt(s.length() - 1) == '%') {
+			percent = core.str_to_uint(s.substring(0, s.length() - 1), 0);
+			if (percent >= 100)
+				percent = 0;
+			msec = 0;
+		} else {
+			if (s.indexOf(" sec") > 0)
+				s = s.substring(0, s.length() - 4);
+			percent = 0;
+			msec = core.str_to_uint(s, 0) * 1000;
+		}
+	}
+
+	String str() {
+		if (percent != 0)
+			return String.format("%d%%", percent);
+		return Integer.toString(msec / 1000);
+	}
+
+	long value(long total_msec) {
+		if (percent != 0)
+			return total_msec * percent / 100;
+		return msec;
+	}
+}
+
+class AutoStop {
+	private static final String TAG = "phiola.Queue";
+	private final Core core;
+	int				value_min;
+	private Timer	timer;
+	private boolean	active;
+
+	AutoStop(Core core) { this.core = core; }
+
+	boolean armed() { return (timer != null); }
+
+	private void disable() {
+		active = false;
+		timer.cancel();
+		timer = null;
+	}
+
+	int toggle() {
+		if (timer != null) {
+			disable();
+			return -1;
+		}
+
+		timer = new Timer();
+		timer.schedule(new TimerTask() {
+				public void run() {
+					core.dbglog(TAG, "auto-stop timer: expired");
+					active = true;
+				}
+			}, value_min*60*1000);
+		return value_min;
+	}
+
+	boolean expired() {
+		if (!active)
+			return false;
+
+		disable();
+		return true;
+	}
+}
 
 class QueueItemInfo {
 	QueueItemInfo() {
@@ -101,14 +176,13 @@ interface QueueNotify {
 class Queue {
 	private static final String TAG = "phiola.Queue";
 	private Core core;
-	private Track track;
 	private int trk_idx = -1; // Active track index
 	private ArrayList<QueueNotify> nfy;
 
 	private ArrayList<PhiolaQueue> queues;
 	private PhiolaQueue q_filtered;
-	private int q_active; // Active queue index
-	private int selected; // Currently selected queue index
+	private int i_active; // Active queue index
+	private int i_selected; // Currently selected queue index
 	private int curpos = -1; // Last active track index
 	private int filter_len;
 
@@ -117,22 +191,16 @@ class Queue {
 	private boolean random;
 	private boolean active;
 	private Random rnd;
-	boolean random_split;
+	private boolean random_split;
 	boolean add_rm_on_next, rm_on_next;
 	boolean rm_on_err;
-	int autoskip_msec, autoskip_percent;
-	int autoskip_tail_msec, autoskip_tail_percent;
-	private Handler mloop;
-
-	int				auto_stop_min;
-	private Timer	auto_stop_timer;
-	private boolean	auto_stop_active;
+	AutoSkip auto_skip_beginning, auto_skip_tail;
+	AutoStop auto_stop;
 
 	Queue(Core core) {
 		this.core = core;
 		core.phiola.quSetCallback(this::on_change);
-		track = core.track();
-		track.filter_add(new Filter() {
+		core.track.filter_add(new Filter() {
 				public int open(TrackHandle t) {
 					on_open(t);
 					return 0;
@@ -147,12 +215,15 @@ class Queue {
 		queues.add(new PhiolaQueue(core.phiola));
 
 		nfy = new ArrayList<>();
-		mloop = new Handler(Looper.getMainLooper());
+		auto_skip_beginning = new AutoSkip(core);
+		auto_skip_tail = new AutoSkip(core);
+		auto_stop = new AutoStop(core);
 	}
 
 	private void on_change(long q, int flags, int pos) {
-		mloop.post(() -> {
-				if (q != queues.get(selected).q)
+		core.tq.post(() -> {
+				if (i_selected < 0 // after Queue.close()
+					|| q != queues.get(i_selected).q)
 					return;
 
 				switch (flags) {
@@ -181,11 +252,13 @@ class Queue {
 		}
 
 		filter_close();
-		queues.get(selected).destroy();
-		queues.remove(selected);
-		selected--;
-		if (selected < 0)
-			selected = 0;
+		queues.get(i_selected).destroy();
+		queues.remove(i_selected);
+		if (i_active == i_selected)
+			i_active = 0;
+		i_selected--;
+		if (i_selected < 0)
+			i_selected = 0;
 	}
 
 	void close() {
@@ -194,7 +267,7 @@ class Queue {
 			q.destroy();
 		}
 		queues.clear();
-		selected = -1;
+		i_selected = -1;
 	}
 
 	private String list_file_name(int i) {
@@ -214,10 +287,10 @@ class Queue {
 			queues.get(i).load(fn);
 		}
 
-		if (q_active >= queues.size())
-			q_active = 0;
-		if (selected >= queues.size())
-			selected = 0;
+		if (i_active >= queues.size())
+			i_active = 0;
+		if (i_selected >= queues.size())
+			i_selected = 0;
 	}
 
 	void saveconf() {
@@ -251,24 +324,24 @@ class Queue {
 	/** Change to next playlist */
 	int next_list_select() {
 		filter("");
-		selected = index_next(selected);
-		return selected;
+		i_selected = index_next(i_selected);
+		return i_selected;
 	}
 
-	void switch_list(int i) { selected = i; }
+	void switch_list(int i) { i_selected = i; }
 
-	int current_list_index() { return selected; }
+	int current_list_index() { return i_selected; }
 
 	/** Add currently playing track to next list.
 	Return the modified list index. */
 	int next_list_add_cur() {
 		if (queues.size() == 1) return -1;
 
-		String url = track.cur_url();
+		String url = core.track.cur_url();
 		if (url.isEmpty())
 			return -1;
 
-		int ni = index_next(q_active);
+		int ni = index_next(i_active);
 		filter_close();
 		queues.get(ni).add(url, 0);
 		return ni;
@@ -291,32 +364,32 @@ class Queue {
 	/** Play track at cursor */
 	void playcur() {
 		int pos = curpos;
-		if (pos < 0 || pos >= queues.get(q_active).count())
+		if (pos < 0 || pos >= queues.get(i_active).count())
 			pos = 0;
-		_play(q_active, pos);
+		_play(i_active, pos);
 	}
 
 	private void _play(int iq, int it) {
 		core.dbglog(TAG, "play: %d %d", iq, it);
 		if (active)
-			track.stop();
+			core.track.stop();
 
 		if (it < 0 || it >= queues.get(iq).count())
 			return;
 
-		q_active = iq;
+		i_active = iq;
 		trk_idx = it;
 		curpos = it;
-		track.start(it, queues.get(iq).url(it));
+		core.track.start(it, queues.get(iq).url(it));
 	}
 
 	/** Play track at the specified position */
 	void play(int index) {
-		_play(selected, index);
+		_play(i_selected, index);
 	}
 
 	void visiblelist_play(int i) {
-		_play(selected, q_visible().index_real(i));
+		_play(i_selected, q_visible().index_real(i));
 	}
 
 	/** Get random index */
@@ -335,7 +408,7 @@ class Queue {
 
 	/** Play next or previous track */
 	private void play_delta(int delta) {
-		int n = queues.get(q_active).count();
+		int n = queues.get(i_active).count();
 		if (n == 0)
 			return;
 
@@ -348,7 +421,7 @@ class Queue {
 			else if (i < 0)
 				i = n - 1;
 		}
-		_play(q_active, i);
+		_play(i_active, i);
 	}
 
 	private void next() { play_delta(1); }
@@ -377,16 +450,11 @@ class Queue {
 	private void on_open(TrackHandle t) {
 		active = true;
 
-		t.seek_msec = autoskip_msec;
-		if (autoskip_percent != 0)
-			t.seek_msec = t.time_total_msec * autoskip_percent / 100;
-
-		t.skip_tail_msec = autoskip_tail_msec;
-		if (autoskip_tail_percent != 0)
-			t.skip_tail_msec = t.time_total_msec * autoskip_tail_percent / 100;
+		t.seek_msec = auto_skip_beginning.value(t.time_total_msec);
+		t.skip_tail_msec = auto_skip_tail.value(t.time_total_msec);
 
 		if (!core.setts.play_no_tags) {
-			queues.get(q_active).modified = true;
+			queues.get(i_active).modified = true;
 			nfy_all(QueueNotify.UPDATE, trk_idx); // redraw item to display artist-title info
 		}
 	}
@@ -397,15 +465,14 @@ class Queue {
 		boolean play_next = !t.stopped;
 
 		if (trk_idx >= 0 && t.error && rm_on_err) {
-			String url = queues.get(q_active).url(trk_idx);
+			String url = queues.get(i_active).url(trk_idx);
 			if (url.equals(t.url))
 				remove(trk_idx);
 		}
 
-		if (auto_stop_active) {
+		if (auto_stop.expired()) {
 			core.dbglog(TAG, "auto-stop timer: Stopping playback");
 			play_next = false;
-			auto_stop_toggle();
 		}
 
 		if (t.error) {
@@ -421,9 +488,9 @@ class Queue {
 
 		if (play_next) {
 			if (trk_idx < 0)
-				mloop.post(this::playcur); // play at current position after the track has been removed
+				core.tq.post(this::playcur); // play at current position after the track has been removed
 			else
-				mloop.post(this::next);
+				core.tq.post(this::next);
 		}
 
 		trk_idx = -1;
@@ -442,7 +509,7 @@ class Queue {
 
 	boolean is_repeat() { return repeat; }
 
-	String get(int i) { return queues.get(selected).url(i); }
+	String get(int i) { return queues.get(i_selected).url(i); }
 
 	QueueItemInfo info(int i) {
 		Phiola.Meta m = q_visible().meta(i);
@@ -456,9 +523,9 @@ class Queue {
 	}
 
 	void remove(int pos) {
-		core.dbglog(TAG, "remove: %d:%d", q_active, pos);
+		core.dbglog(TAG, "remove: %d:%d", i_active, pos);
 		filter_close();
-		queues.get(q_active).remove(pos);
+		queues.get(i_active).remove(pos);
 		if (pos < curpos)
 			curpos--;
 		if (pos == trk_idx)
@@ -471,17 +538,17 @@ class Queue {
 	void clear() {
 		core.dbglog(TAG, "clear");
 		filter_close();
-		queues.get(selected).clear();
+		queues.get(i_selected).clear();
 		curpos = -1;
 		trk_idx = -1;
 	}
 
 	void rm_non_existing() {
-		queues.get(selected).remove_non_existing();
+		queues.get(i_selected).remove_non_existing();
 	}
 
 	/** Get tracks number in the currently selected (not filtered) list */
-	int count() { return queues.get(selected).count(); }
+	int count() { return queues.get(i_selected).count(); }
 
 	int visiblelist_itemcount() { return q_visible().count(); }
 
@@ -494,7 +561,7 @@ class Queue {
 		int f = 0;
 		if (flags == ADD_RECURSE)
 			f = Phiola.QUADD_RECURSE;
-		queues.get(selected).add_many(urls, f);
+		queues.get(i_selected).add_many(urls, f);
 		nfy_all(QueueNotify.ADDED, pos);
 	}
 
@@ -503,7 +570,7 @@ class Queue {
 		core.dbglog(TAG, "add: %s", url);
 		int pos = count();
 		filter_close();
-		queues.get(selected).add(url, 0);
+		queues.get(i_selected).add(url, 0);
 		nfy_all(QueueNotify.ADDED, pos);
 	}
 
@@ -520,137 +587,41 @@ class Queue {
 			+ "play_auto_skip_tail %s\n"
 			+ "play_auto_stop %d\n"
 			, curpos
-			, q_active
+			, i_active
 			, core.bool_to_int(random)
 			, core.bool_to_int(repeat)
 			, core.bool_to_int(add_rm_on_next)
 			, core.bool_to_int(rm_on_next)
 			, core.bool_to_int(rm_on_err)
-			, auto_skip_to_str()
-			, auto_skip_tail_to_str()
-			, auto_stop_min
+			, auto_skip_beginning.str()
+			, auto_skip_tail.str()
+			, auto_stop.value_min
 			);
 	}
 
-	int conf_process1(int k, String v) {
-		switch (k) {
+	void conf_load(Conf.Entry[] kv) {
+		curpos = core.str_to_uint(kv[Conf.LIST_CURPOS].value, 0);
+		i_active = core.str_to_uint(kv[Conf.LIST_ACTIVE].value, 0);
+		i_selected = i_active;
+		random(kv[Conf.LIST_RANDOM].enabled);
+		repeat(kv[Conf.LIST_REPEAT].enabled);
+		add_rm_on_next = kv[Conf.LIST_ADD_RM_ON_NEXT].enabled;
+		rm_on_next = kv[Conf.LIST_RM_ON_NEXT].enabled;
+		rm_on_err = kv[Conf.LIST_RM_ON_ERR].enabled;
 
-		case Conf.LIST_CURPOS:
-			curpos = core.str_to_uint(v, 0);
-			break;
-
-		case Conf.LIST_ACTIVE:
-			q_active = core.str_to_uint(v, 0);
-			selected = q_active;
-			break;
-
-		case Conf.LIST_RANDOM:
-			random(core.str_to_bool(v));
-			break;
-
-		case Conf.LIST_REPEAT:
-			repeat(core.str_to_bool(v));
-			break;
-
-		case Conf.LIST_ADD_RM_ON_NEXT:
-			add_rm_on_next = core.str_to_bool(v);
-			break;
-
-		case Conf.LIST_RM_ON_NEXT:
-			rm_on_next = core.str_to_bool(v);
-			break;
-
-		case Conf.LIST_RM_ON_ERR:
-			rm_on_err = core.str_to_bool(v);
-			break;
-
-		case Conf.PLAY_AUTO_SKIP:
-			auto_skip(v);
-			break;
-
-		case Conf.PLAY_AUTO_SKIP_TAIL:
-			auto_skip_tail(v);
-			break;
-
-		case Conf.PLAY_AUTO_STOP:
-			auto_stop_min = core.str_to_uint(v, 0);
-			break;
-
-		default:
-			return 1;
-		}
-		return 0;
+		auto_skip_beginning.parse(kv[Conf.PLAY_AUTO_SKIP].value);
+		auto_skip_tail.parse(kv[Conf.PLAY_AUTO_SKIP_TAIL].value);
+		auto_stop.value_min = core.str_to_uint(kv[Conf.PLAY_AUTO_STOP].value, 0);
 	}
 
 	void conf_normalize() {
-		if (auto_stop_min == 0)
-			auto_stop_min = 60;
-	}
-
-	/** Get auto-skip numeric values from string.
-	Supports "N%", "N sec" or just N". */
-	private int[] auto_skip_convert(String s) {
-		int[] a = new int[2];
-		if (!s.isEmpty() && s.charAt(s.length() - 1) == '%') {
-			a[0] = core.str_to_uint(s.substring(0, s.length() - 1), 0);
-			if (a[0] >= 100)
-				a[0] = 0;
-			a[1] = 0;
-		} else {
-			if (s.indexOf(" sec") > 0)
-				s = s.substring(0, s.length() - 4);
-			a[0] = 0;
-			a[1] = core.str_to_uint(s, 0) * 1000;
-		}
-		return a;
-	}
-
-	void auto_skip(String s) {
-		int[] a = auto_skip_convert(s);
-		autoskip_percent = a[0];
-		autoskip_msec = a[1];
-	}
-	String auto_skip_to_str() {
-		String s = Integer.toString(autoskip_msec / 1000);
-		if (autoskip_percent != 0)
-			s = String.format("%d%%", autoskip_percent);
-		return s;
-	}
-
-	void auto_skip_tail(String s) {
-		int[] a = auto_skip_convert(s);
-		autoskip_tail_percent = a[0];
-		autoskip_tail_msec = a[1];
-	}
-	String auto_skip_tail_to_str() {
-		String s = Integer.toString(autoskip_tail_msec / 1000);
-		if (autoskip_tail_percent != 0)
-			s = String.format("%d%%", autoskip_tail_percent);
-		return s;
-	}
-
-	boolean auto_stop_armed() { return (auto_stop_timer != null); }
-	boolean auto_stop_toggle() {
-		if (auto_stop_timer != null) {
-			auto_stop_active = false;
-			auto_stop_timer.cancel();
-			auto_stop_timer = null;
-			return false;
-		}
-
-		auto_stop_timer = new Timer();
-		auto_stop_timer.schedule(new TimerTask() {
-			public void run() {
-				core.dbglog(TAG, "auto-stop timer: expired");
-				auto_stop_active = true;
-			}
-		}, auto_stop_min*60*1000);
-		return true;
+		if (auto_stop.value_min == 0)
+			auto_stop.value_min = 60;
 	}
 
 	/** Get currently playing track index */
 	int cur() {
-		if (selected != q_active)
+		if (i_selected != i_active)
 			return -1;
 		return trk_idx;
 	}
@@ -661,16 +632,16 @@ class Queue {
 		q_selected().sort(flags);
 	}
 
-	long q_active_id() { return queues.get(q_active).q; }
+	long q_active_id() { return queues.get(i_active).q; }
 
 	/** Currently selected (not filtered) list */
-	private PhiolaQueue q_selected() { return queues.get(selected); }
+	private PhiolaQueue q_selected() { return queues.get(i_selected); }
 
 	/** Currently visible (filtered) list */
 	private PhiolaQueue q_visible() {
 		if (q_filtered != null)
 			return q_filtered;
-		return queues.get(selected);
+		return queues.get(i_selected);
 	}
 
 	private void filter_close() {
@@ -684,7 +655,7 @@ class Queue {
 	void filter(String filter) {
 		PhiolaQueue newqf = null;
 		if (!filter.isEmpty()) {
-			PhiolaQueue qcur = queues.get(selected);
+			PhiolaQueue qcur = queues.get(i_selected);
 			if (q_filtered != null && filter.length() > filter_len)
 				qcur = q_filtered;
 			int f = Phiola.QUFILTER_URL | Phiola.QUFILTER_META;

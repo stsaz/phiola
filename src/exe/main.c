@@ -40,6 +40,7 @@ struct exe {
 	uint mode_record :1;
 	uint stdin_busy :1;
 	uint stdout_busy :1;
+	uint ctrl_c :1;
 
 	ffstr codepage;
 	struct ffargs cmd;
@@ -91,7 +92,8 @@ static void phi_grd_close(void *f, phi_track *t)
 	}
 
 	if (!x->queue->status(NULL) // nothing is playing
-		&& !(t->chain_flags & PHI_FSTOP)) // not stopped by user command
+		&& (!(t->chain_flags & PHI_FSTOP) // not stopped by user command
+			|| x->ctrl_c))
 		x->core->sig(PHI_CORE_STOP);
 }
 
@@ -172,6 +174,7 @@ static void on_sig(struct ffsig_info *i)
 {
 	switch (i->sig) {
 	case FFSIG_INT:
+		x->ctrl_c = 1;
 		if (0 == x->core->track->cmd(NULL, PHI_TRACK_STOP_ALL))
 			x->core->sig(PHI_CORE_STOP);
 		break;

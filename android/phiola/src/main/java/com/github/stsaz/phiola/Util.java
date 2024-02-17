@@ -49,10 +49,6 @@ abstract class Util {
 		return def;
 	}
 
-	boolean str_to_bool(String s) {
-		return s.equals("1");
-	}
-
 	int bool_to_int(boolean b) {
 		if (b)
 			return 1;

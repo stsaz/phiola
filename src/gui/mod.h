@@ -8,6 +8,8 @@
 
 FF_EXTERN const phi_core *core;
 
+FF_EXTERN void gui_init();
+FF_EXTERN void gui_userconf_load();
 FF_EXTERN int FFTHREAD_PROCCALL gui_worker(void *param);
 
 /** Execute commands within Core thread */

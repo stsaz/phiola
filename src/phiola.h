@@ -434,6 +434,20 @@ enum PHI_Q_REMOVE {
 typedef struct phi_queue* phi_queue_id;
 typedef struct phi_queue_if phi_queue_if;
 struct phi_queue_if {
+	/** Assign callback function to receive events from queue module.
+	cb.flags:
+		'a': item @pos added
+		'r': item @pos removed
+		'n': list created
+		'c': cleared
+		'd': deleted
+		'u': updated
+	*/
+	void (*on_change)(void (*cb)(phi_queue_id q, uint flags, uint pos));
+
+	/** Override output device index for all tracks */
+	void (*device)(uint device);
+
 	phi_queue_id (*create)(struct phi_queue_conf *conf);
 	void (*destroy)(phi_queue_id q);
 	phi_queue_id (*select)(uint pos);
@@ -454,13 +468,19 @@ struct phi_queue_if {
 	int (*save)(phi_queue_id q, const char *filename, void (*on_complete)(void*, phi_track*), void *param);
 	int (*status)(phi_queue_id q);
 
-	struct phi_queue_entry* (*at)(phi_queue_id q, uint pos);
 	int (*remove_at)(phi_queue_id q, uint pos, uint n);
 
 	/**
 	Generates on_change('u') event.
 	flags: enum PHI_Q_REMOVE */
 	void (*remove_multi)(phi_queue_id q, uint flags);
+
+	/**
+	Generates on_change('u') event.
+	flags: enum PHI_Q_SORT */
+	void (*sort)(phi_queue_id q, uint flags);
+
+	struct phi_queue_entry* (*at)(phi_queue_id q, uint pos);
 
 	/** Get item pointer, increase refcount.
 	Guarantees that the returned item won't be suddenly destroyed by remove() from the main thread.
@@ -476,24 +496,6 @@ struct phi_queue_if {
 	void* (*insert)(void *e, struct phi_queue_entry *qe);
 	int (*index)(void *e);
 	int (*remove)(void *e);
-
-	/** Assign callback function to receive events from queue module.
-	cb.flags:
-		'a': item @pos added
-		'r': item @pos removed
-		'n': list created
-		'c': cleared
-		'd': deleted
-		'u': updated
-	*/
-	void (*on_change)(void (*cb)(phi_queue_id q, uint flags, uint pos));
-
-	/**
-	flags: enum PHI_Q_SORT */
-	void (*sort)(phi_queue_id q, uint flags);
-
-	/** Override output device index for all tracks */
-	void (*device)(uint device);
 };
 
 

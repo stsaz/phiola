@@ -10,8 +10,6 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.MediaMetadataCompat;
@@ -38,7 +36,6 @@ public class Svc extends MediaBrowserServiceCompat {
 	private int state;
 	private PlaybackStateCompat.Builder pstate;
 	private NotificationCompat.Builder nfy;
-	private Handler mloop;
 	private Runnable delayed_stop;
 
 	public void onCreate() {
@@ -74,7 +71,7 @@ public class Svc extends MediaBrowserServiceCompat {
 		core.dbglog(TAG, "init");
 		queue = core.queue();
 		queue.nfy_add(this::sess_setqueue);
-		track = core.track();
+		track = core.track;
 		track.filter_add(new Filter() {
 			public int open(TrackHandle t) {
 				return new_track(t);
@@ -89,7 +86,6 @@ public class Svc extends MediaBrowserServiceCompat {
 			}
 		});
 
-		mloop = new Handler(Looper.getMainLooper());
 		delayed_stop = this::stop_delayed;
 
 		sess_init();
@@ -278,7 +274,7 @@ public class Svc extends MediaBrowserServiceCompat {
 	 * Called by Track when a new track is initialized
 	 */
 	int new_track(TrackHandle t) {
-		mloop.removeCallbacks(delayed_stop);
+		core.tq.removeCallbacks(delayed_stop);
 		playtime_msec = (int) PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN;
 		if (state == PlaybackStateCompat.STATE_STOPPED) {
 			sess.setActive(true);
@@ -319,7 +315,7 @@ public class Svc extends MediaBrowserServiceCompat {
 	 */
 	void close_track(TrackHandle t) {
 		sess_state(PlaybackStateCompat.STATE_SKIPPING_TO_NEXT, 0);
-		mloop.postDelayed(delayed_stop, 1000);
+		core.tq.postDelayed(delayed_stop, 1000);
 	}
 
 	/**

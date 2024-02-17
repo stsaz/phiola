@@ -229,6 +229,7 @@ again:
 				break;
 
 			case MKV_A_OPUS:
+				t->audio.decoder = "Opus";
 				if (t->conf.stream_copy) {
 					t->data_type = "Opus";
 					t->oaudio.ogg_gen_opus_tag = 1;

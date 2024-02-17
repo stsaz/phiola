@@ -7,8 +7,8 @@ class Conf {
 	Conf(Phiola phi) {}
 
 	static class Entry {
-		int id;
 		String value;
+		boolean enabled;
 	}
 	static final int
 		CODEPAGE				= 1,

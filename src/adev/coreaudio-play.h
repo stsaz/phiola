@@ -33,13 +33,11 @@ static void coraud_close(void *ctx, phi_track *t)
 static int coraud_create(struct coraud_out *c, phi_track *t)
 {
 	audio_out *a = &c->out;
-	struct phi_af fmt;
 	int r;
 
-	fmt = t->oaudio.format;
-
-	r = audio_out_open(a, t, &fmt);
+	r = audio_out_open(a, t, &t->oaudio.format);
 	if (r == FFAUDIO_EFORMAT) {
+		t->oaudio.conv_format.interleaved = 1;
 		return PHI_MORE;
 	} else if (r != 0)
 		return PHI_ERR;
@@ -49,7 +47,7 @@ static int coraud_create(struct coraud_out *c, phi_track *t)
 
 	dbglog("%s buffer %ums, %uHz"
 		, "opened", a->buffer_length_msec
-		, fmt.rate);
+		, t->oaudio.format.rate);
 
 	t->oaudio.adev_ctx = a;
 	t->oaudio.adev_stop = audio_stop;
@@ -67,11 +65,11 @@ static int coraud_write(void *ctx, phi_track *t)
 	case 0:
 	case 1:
 		a->try_open = (a->state == 0);
-		if (PHI_ERR == (r = coraud_create(a, t)))
+		r = coraud_create(a, t);
+		if (r == PHI_ERR) {
 			return PHI_ERR;
 
-		if (!(r == PHI_DONE && t->oaudio.format.interleaved)) {
-			t->oaudio.conv_format.interleaved = 1;
+		} else if (r == PHI_MORE) {
 			if (a->state == 1) {
 				errlog(t, "need input audio conversion");
 				return PHI_ERR;
@@ -81,6 +79,11 @@ static int coraud_write(void *ctx, phi_track *t)
 		}
 
 		a->state = 2;
+
+		if (!t->oaudio.format.interleaved) {
+			t->oaudio.conv_format.interleaved = 1;
+			return PHI_MORE;
+		}
 	}
 
 	r = audio_out_write(&c->out, t);

@@ -6,6 +6,7 @@
 
 	<string name="brec">Start/Stop Recording</string>
 	<string name="main_rec_fin">Finished recording</string>
+	<string name="main_rec_err">Recording failed</string>
 	<string name="main_rec_started">Started recording</string>
 	<string name="bplay">Play/Pause</string>
 	<string name="bprev">Previous</string>

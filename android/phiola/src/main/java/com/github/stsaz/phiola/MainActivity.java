@@ -10,8 +10,6 @@ import android.content.res.ColorStateList;
 import android.graphics.PorterDuff;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -161,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
 		switch (item.getItemId()) {
 
 		case R.id.action_file_tags_show:
-			startActivity(new Intent(this, TagsActivity.class));  break;
+			file_tags_show();  break;
 
 		case R.id.action_file_convert:
 			startActivity(new Intent(this, ConvertActivity.class)
@@ -297,7 +295,7 @@ public class MainActivity extends AppCompatActivity {
 			}
 		};
 		queue.nfy_add(quenfy);
-		track = core.track();
+		track = core.track;
 		trk_nfy = new Filter() {
 			public int open(TrackHandle t) { return track_opening(t); }
 			public void close(TrackHandle t) { track_closing(t); }
@@ -318,7 +316,15 @@ public class MainActivity extends AppCompatActivity {
 		setSupportActionBar(b.toolbar);
 
 		explorer = new Explorer(core, this);
-		b.brec.setOnClickListener((v) -> rec_click());
+
+		b.lname.setOnClickListener((v) -> file_tags_show());
+
+		b.brec.setOnClickListener((v) -> {
+				if (trec == null)
+					rec_start();
+				else
+					rec_stop();
+			});
 
 		b.bplay.setOnClickListener((v) -> play_pause_click());
 
@@ -385,7 +391,7 @@ public class MainActivity extends AppCompatActivity {
 
 		int mask = STATE_PLAYBACK;
 		int st = STATE_DEF;
-		if (queue.auto_stop_armed()) {
+		if (queue.auto_stop.armed()) {
 			mask |= STATE_AUTO_STOP;
 			st |= STATE_AUTO_STOP;
 		}
@@ -409,17 +415,16 @@ public class MainActivity extends AppCompatActivity {
 		b.brec.setImageTintList(ColorStateList.valueOf(color));
 	}
 
-	private void rec_click() {
-		if (trec == null) {
-			rec_start();
-		} else {
-			track.record_stop(trec);
-			trec = null;
-			rec_state_set(false);
+	private void rec_stop() {
+		String e = track.record_stop(trec);
+		trec = null;
+		rec_state_set(false);
+		stopService(new Intent(this, RecSvc.class));
+		state(STATE_RECORDING, 0);
+		if (e != null)
+			core.errlog(TAG, String.format("%s: %s", getString(R.string.main_rec_err), e));
+		else
 			core.gui().msg_show(this, getString(R.string.main_rec_fin));
-			stopService(new Intent(this, RecSvc.class));
-			state(STATE_RECORDING, 0);
-		}
 	}
 
 	private void play_pause_click() {
@@ -460,6 +465,8 @@ public class MainActivity extends AppCompatActivity {
 		list_update();
 		plist_show();
 	}
+
+	private void file_tags_show() { startActivity(new Intent(this, TagsActivity.class)); }
 
 	/** Delete file and update view */
 	private void file_del(int pos, String fn) {
@@ -586,9 +593,10 @@ public class MainActivity extends AppCompatActivity {
 	/** Toggle playback auto-stop timer */
 	private void play_auto_stop() {
 		String s;
-		if (queue.auto_stop_toggle()) {
+		int value_min = queue.auto_stop.toggle();
+		if (value_min > 0) {
 			state(STATE_AUTO_STOP, STATE_AUTO_STOP);
-			s = String.format(getString(R.string.mplay_auto_stop_msg), queue.auto_stop_min);
+			s = String.format(getString(R.string.mplay_auto_stop_msg), value_min);
 		} else {
 			state(STATE_AUTO_STOP, 0);
 			s = "Disabled auto-stop timer";
@@ -670,8 +678,7 @@ public class MainActivity extends AppCompatActivity {
 				, core.setts.rec_path, dt[0], dt[1], dt[2], dt[3], dt[4], dt[5]
 				, core.setts.rec_fmt);
 		trec = track.rec_start(fname, () -> {
-				Handler mloop = new Handler(Looper.getMainLooper());
-				mloop.post(this::rec_click);
+				core.tq.post(this::rec_stop);
 			});
 		if (trec == null)
 			return;
@@ -774,7 +781,7 @@ public class MainActivity extends AppCompatActivity {
 
 	private void track_closed(TrackHandle t) {
 		int st = STATE_DEF;
-		if (queue.auto_stop_armed())
+		if (queue.auto_stop.armed())
 			st |= STATE_AUTO_STOP;
 		state(STATE_PLAYBACK | STATE_AUTO_STOP, st);
 	}

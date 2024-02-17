@@ -175,12 +175,12 @@ public class SettingsActivity extends AppCompatActivity {
 		b.swListRmOnNext.setChecked(core.queue().rm_on_next);
 		b.swListRmOnErr.setChecked(core.queue().rm_on_err);
 		b.eCodepage.setText(core.setts.codepage);
-		b.sbPlayAutoSkip.setProgress(auto_skip_progress(core.queue().autoskip_percent, core.queue().autoskip_msec / 1000));
-		b.eAutoSkip.setText(core.queue().auto_skip_to_str());
-		b.sbPlayAutoSkipTail.setProgress(auto_skip_progress(core.queue().autoskip_tail_percent, core.queue().autoskip_tail_msec / 1000));
-		b.eAutoSkipTail.setText(core.queue().auto_skip_tail_to_str());
-		b.sbPlayAutoStop.setProgress(auto_stop_progress(core.queue().auto_stop_min));
-		b.eAutoStop.setText(core.int_to_str(core.queue().auto_stop_min));
+		b.sbPlayAutoSkip.setProgress(auto_skip_progress(core.queue().auto_skip_beginning.percent, core.queue().auto_skip_beginning.msec / 1000));
+		b.eAutoSkip.setText(core.queue().auto_skip_beginning.str());
+		b.sbPlayAutoSkipTail.setProgress(auto_skip_progress(core.queue().auto_skip_tail.percent, core.queue().auto_skip_tail.msec / 1000));
+		b.eAutoSkipTail.setText(core.queue().auto_skip_tail.str());
+		b.sbPlayAutoStop.setProgress(auto_stop_progress(core.queue().auto_stop.value_min));
+		b.eAutoStop.setText(core.int_to_str(core.queue().auto_stop.value_min));
 
 		// Operation
 		b.eDataDir.setText(core.setts.pub_data_dir);
@@ -212,9 +212,9 @@ public class SettingsActivity extends AppCompatActivity {
 		core.queue().rm_on_err = b.swListRmOnErr.isChecked();
 		core.setts.set_codepage(b.eCodepage.getText().toString());
 		core.phiola.setCodepage(core.setts.codepage);
-		core.queue().auto_skip(b.eAutoSkip.getText().toString());
-		core.queue().auto_skip_tail(b.eAutoSkipTail.getText().toString());
-		core.queue().auto_stop_min = core.str_to_uint(b.eAutoStop.getText().toString(), 0);
+		core.queue().auto_skip_beginning.parse(b.eAutoSkip.getText().toString());
+		core.queue().auto_skip_tail.parse(b.eAutoSkipTail.getText().toString());
+		core.queue().auto_stop.value_min = core.str_to_uint(b.eAutoStop.getText().toString(), 0);
 
 		// Operation
 		String s = b.eDataDir.getText().toString();

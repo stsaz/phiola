@@ -6,19 +6,6 @@
 
 #define PJC_CONF_ENTRY  "com/github/stsaz/phiola/Conf$Entry"
 
-static inline ffsize ffstr_charcount(ffstr s, int ch)
-{
-	ffsize r = 0;
-	for (;;) {
-		ffssize i = ffstr_findchar(&s, ch);
-		if (i < 0)
-			break;
-		r++;
-		ffstr_shift(&s, i+1);
-	}
-	return r;
-}
-
 static const char setting_names[][20] = {
 	"codepage",
 	"conv_aac_q",
@@ -76,14 +63,12 @@ Java_com_github_stsaz_phiola_Conf_confRead(JNIEnv *env, jobject thiz, jstring jf
 
 	jclass jc = jni_class(PJC_CONF_ENTRY);
 	jmethodID jinit = jni_func(jc, "<init>", "()V");
-	jfieldID jf_id = jni_field(jc, "id", JNI_TINT);
 	jfieldID jf_value = jni_field(jc, "value", JNI_TSTR);
+	jfieldID jf_enabled = jni_field(jc, "enabled", JNI_TBOOL);
 
 	ffstr s = FFSTR_INITSTR(&d);
-	uint n = ffstr_charcount(s, '\n');
-	joa = jni_joa(n, jc);
+	joa = jni_joa(FF_COUNT(setting_names)+1, jc);
 
-	uint i = 0;
 	ffstr_setstr(&s, &d);
 	while (s.len) {
 		ffstr ln, k, v;
@@ -96,14 +81,23 @@ Java_com_github_stsaz_phiola_Conf_confRead(JNIEnv *env, jobject thiz, jstring jf
 
 		jobject jo = jni_obj_new(jc, jinit);
 
-		jni_obj_int_set(jo, jf_id, r + 1);
-
 		v.ptr[v.len] = '\0';
 		jni_obj_sz_set(env, jo, jf_value, v.ptr);
 
-		jni_joa_i_set(joa, i, jo);
+		jni_obj_bool_set(jo, jf_enabled, ffstr_eqz(&v, "1"));
+
+		jni_joa_i_set(joa, r + 1, jo);
 		jni_local_unref(jo);
-		i++;
+	}
+
+	for (uint i = 1;  i <= FF_COUNT(setting_names);  i++) {
+		jobject jo = jni_joa_i(joa, i);
+		if (!jo) {
+			jo = jni_obj_new(jc, jinit);
+			jni_obj_sz_set(env, jo, jf_value, "");
+			jni_joa_i_set(joa, i, jo);
+		}
+		jni_local_unref(jo);
 	}
 
 end:

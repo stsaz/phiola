@@ -117,6 +117,14 @@ static int cmd_input(ffvec *input, ffstr s)
 	return 0;
 }
 
+static const char* cmd_aac_profile(const char *s)
+{
+	if (!s) return "l";
+	if (!s[0] || s[1]) return NULL;
+	if (s[0] == 'l' || s[0] == 'h' || s[0] == 'H') return s;
+	return NULL;
+}
+
 static int cmd_opus_mode(const char *s)
 {
 	if (!s) return 0;

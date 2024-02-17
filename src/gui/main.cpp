@@ -30,7 +30,6 @@ struct gui_wmain {
 
 	char *vlist_col;
 	char *wnd_pos;
-	uint tvol_val;
 	uint ready;
 };
 
@@ -93,7 +92,6 @@ static void conf_vlist_col(ffui_viewxx &v, ffstrxx val)
 
 #define O(m)  (void*)FF_OFF(struct gui_wmain, m)
 const ffarg wmain_args[] = {
-	{ "tvol",		'u',	O(tvol_val) },
 	{ "vlist.col",	'=s',	O(vlist_col) },
 	{ "wmain.pos",	'=s',	O(wnd_pos) },
 	{}
@@ -103,7 +101,6 @@ const ffarg wmain_args[] = {
 void wmain_userconf_write(ffconfw *cw)
 {
 	gui_wmain *m = gg->wmain;
-	ffconfw_add2u(cw, "tvol", m->tvol.get());
 
 	ffvecxx v = {};
 	ffui_viewcolxx vc = {};
@@ -190,11 +187,11 @@ int wmain_track_new(phi_track *t, uint time_total)
 	m->tpos.range(time_total);
 	qe->length_msec = time_total * 1000;
 
-	void *qe_active = m->qe_active;
+	void *qe_prev_active = m->qe_active;
 	m->qe_active = qe;
 
 	int idx;
-	if (qe_active && -1 != (idx = gd->queue->index(qe_active)) && !gd->q_filtered)
+	if (qe_prev_active && -1 != (idx = gd->queue->index(qe_prev_active)) && !gd->q_filtered)
 		m->vlist.update(idx, 0);
 
 	if (-1 != (idx = gd->queue->index(qe))) {
@@ -438,6 +435,7 @@ static void q_on_change(phi_queue_id q, uint flags, uint pos)
 	switch (flags & 0xff) {
 	case 'a':
 	case 'r':
+	case 'u':
 		q_len = gd->queue->count(q);
 		// fallthrough
 
@@ -455,6 +453,9 @@ static void q_on_change(phi_queue_id q, uint flags, uint pos)
 	list_update_schedule(flags & 0xff, q_len, pos);
 
 	switch (flags & 0xff) {
+	case 'u':
+		wmain_list_draw(q_len, 1);  break;
+
 	case 'c':
 		m->vlist.clear();  break;
 
@@ -722,7 +723,6 @@ void wmain_init()
 	m->wnd.on_action = wmain_action;
 	m->wnd.onclose_id = A_CLOSE;
 	m->vlist.dispinfo_id = A_LIST_DISPLAY;
-	m->tvol_val = 100;
 }
 
 void wmain_show()
@@ -737,7 +737,7 @@ void wmain_show()
 		conf_wnd_pos_read(&m->wnd, FFSTR_Z(m->wnd_pos));
 	ffmem_free(m->wnd_pos);
 
-	m->tvol.set(m->tvol_val);
+	m->tvol.set(gd->volume);
 	m->tabs.add("Playlist 1");
 	m->wnd.show(1);
 	wmain_list_draw(gd->queue->count(gd->q_selected), 0);
@@ -745,7 +745,6 @@ void wmain_show()
 
 	gd->queue->on_change(q_on_change);
 	gui_core_task(lists_load);
-	volume_set(m->tvol_val);
 
 	m->ready = 1;
 }

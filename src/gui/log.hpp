@@ -33,7 +33,7 @@ void wlog_userconf_write(ffconfw *cw)
 
 extern "C" void phi_gui_log(ffstr s)
 {
-	if (!gg || !gg->wlog) return;
+	if (!gg || !gg->wlog || !gg->wlog->wnd.h) return;
 
 	gui_wlog *w = gg->wlog;
 	w->tlog.add(s);

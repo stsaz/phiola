@@ -25,7 +25,7 @@ Object:
 	jni_obj_sz_set jni_obj_sz_setf
 	jni_obj_long jni_obj_long_set
 	jni_obj_int jni_obj_int_set
-	jni_obj_bool
+	jni_obj_bool jni_obj_bool_set
 Functions:
 	jni_func jni_call_void
 	jni_sfunc jni_scall_void jni_scall_bool
@@ -165,11 +165,11 @@ static inline jobjectArray jni_jsa_sza(JNIEnv *env, char **asz, ffsize n)
 
 
 /** object = new */
-#define	jni_obj_new(jc, ...) \
+#define jni_obj_new(jc, ...) \
 	(*env)->NewObject(env, jc, __VA_ARGS__)
 
 /** obj.object = VAL */
-#define	jni_obj_jo_set(jobj, jfield, val) \
+#define jni_obj_jo_set(jobj, jfield, val) \
 	(*env)->SetObjectField(env, jobj, jfield, val)
 
 /** object = obj.object */
@@ -199,7 +199,7 @@ static inline void jni_obj_sz_setf(JNIEnv *env, jobject jo, jfieldID jf, const c
 	(*env)->GetLongField(env, jobj, jfield)
 
 /** obj.long = VAL */
-#define	jni_obj_long_set(jobj, jfield, val) \
+#define jni_obj_long_set(jobj, jfield, val) \
 	(*env)->SetLongField(env, jobj, jfield, val)
 
 /** int = obj.int */
@@ -207,12 +207,16 @@ static inline void jni_obj_sz_setf(JNIEnv *env, jobject jo, jfieldID jf, const c
 	(*env)->GetIntField(env, jobj, jfield)
 
 /** obj.int = VAL */
-#define	jni_obj_int_set(jobj, jfield, val) \
+#define jni_obj_int_set(jobj, jfield, val) \
 	(*env)->SetIntField(env, jobj, jfield, val)
 
 /** bool = obj.bool */
 #define jni_obj_bool(jobj, jfield) \
 	(*env)->GetBooleanField(env, jobj, jfield)
+
+/** obj.bool = VAL */
+#define jni_obj_bool_set(jobj, jfield, val) \
+	(*env)->SetBooleanField(env, jobj, jfield, val)
 
 
 /** jmethodID of a class function

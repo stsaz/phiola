@@ -37,6 +37,7 @@ const struct ffarg guimod_args[] = {
 	{ "play.repeat",	'u',	O(conf.repeat) },
 	{ "play.seek_leap",	'u',	O(conf.seek_leap_delta) },
 	{ "play.seek_step",	'u',	O(conf.seek_step_delta) },
+	{ "play.volume",	'u',	O(volume) },
 	{ "theme",			'=s',	O(conf.theme) },
 	{}
 };
@@ -51,6 +52,7 @@ void mod_userconf_write(ffconfw *cw)
 	ffconfw_add2u(cw, "play.repeat", gd->conf.repeat);
 	ffconfw_add2u(cw, "play.seek_leap", gd->conf.seek_leap_delta);
 	ffconfw_add2u(cw, "play.seek_step", gd->conf.seek_step_delta);
+	ffconfw_add2u(cw, "play.volume", gd->volume);
 	if (gd->conf.theme)
 		ffconfw_add2z(cw, "theme", gd->conf.theme);
 }
@@ -380,7 +382,6 @@ void ctl_action(uint cmd)
 	case A_LIST_SHUFFLE:
 		if (!gd->q_filtered) {
 			gd->queue->sort(gd->q_selected, (cmd == A_LIST_SHUFFLE) ? PHI_Q_SORT_RANDOM : 0);
-			wmain_list_draw(gd->queue->count(gd->q_selected), 1);
 		}
 		break;
 
@@ -814,6 +815,12 @@ static void gui_start(void *param)
 		gd->user_conf_name = ffsz_allocfmt("%s%s", gd->user_conf_dir, USER_CONF_NAME);
 	}
 
+	gui_init();
+	gui_userconf_load();
+	volume_set(gd->volume);
+	if (FFTHREAD_NULL == (gd->th = ffthread_create(gui_worker, NULL, 0)))
+		return;
+
 	phi_queue_id q = gd->queue->select(0);
 	struct phi_queue_conf *qc = gd->queue->conf(q);
 	gd->playback_first_filter = qc->first_filter;
@@ -822,9 +829,8 @@ static void gui_start(void *param)
 	li->q = q;
 	gd->q_selected = q;
 	gd->playlist_counter = 1;
-
-	if (FFTHREAD_NULL == (gd->th = ffthread_create(gui_worker, NULL, 0)))
-		return;
+	if (gd->queue->count(q))
+		ctl_play(0);
 }
 
 void gui_stop()

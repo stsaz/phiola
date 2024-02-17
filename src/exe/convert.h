@@ -248,10 +248,12 @@ static int conv_prepare(struct cmd_conv *v)
 {
 	if (!v->input.len)
 		return _ffargs_err(&x->cmd, 1, "please specify input file");
+
 	if (!v->output)
 		return _ffargs_err(&x->cmd, 1, "please specify output file name with '-out FILE'");
-	if (!v->aac_profile)
-		v->aac_profile = "l";
+
+	if (!(v->aac_profile = cmd_aac_profile(v->aac_profile)))
+		return _ffargs_err(&x->cmd, 1, "-aac_profile: incorrect value");
 
 	if ((int)(v->opus_mode_n = cmd_opus_mode(v->opus_mode)) < 0)
 		return _ffargs_err(&x->cmd, 1, "-opus_mode: incorrect value");

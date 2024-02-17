@@ -29,7 +29,6 @@ class SysJobs extends Filter {
 
 	private boolean afocus;
 	private boolean transient_pause;
-	private Handler mloop;
 	private Runnable delayed_abandon_focus;
 
 	class BecomingNoisyReceiver extends BroadcastReceiver {
@@ -41,7 +40,7 @@ class SysJobs extends Filter {
 
 	void init(Core core) {
 		this.core = core;
-		track = core.track();
+		track = core.track;
 		track.filter_add(this);
 
 		// be notified when headphones are unplugged
@@ -58,7 +57,7 @@ class SysJobs extends Filter {
 	}
 
 	public int open(TrackHandle t) {
-		mloop.removeCallbacks(delayed_abandon_focus);
+		core.tq.removeCallbacks(delayed_abandon_focus);
 		if (!afocus) {
 			int r = afocus_request();
 			if (r != AudioManager.AUDIOFOCUS_REQUEST_GRANTED)
@@ -70,7 +69,7 @@ class SysJobs extends Filter {
 
 	public void close(TrackHandle t) {
 		if (t.stopped && afocus)
-			mloop.postDelayed(delayed_abandon_focus, 1000);
+			core.tq.postDelayed(delayed_abandon_focus, 1000);
 	}
 
 	/**
@@ -79,19 +78,19 @@ class SysJobs extends Filter {
 	private void afocus_prepare() {
 		amgr = (AudioManager) core.context.getSystemService(Context.AUDIO_SERVICE);
 		afocus_change = this::afocus_onchange;
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-			AudioFocusRequest.Builder afb = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN);
-			afb.setOnAudioFocusChangeListener(afocus_change);
-
-			AudioAttributes.Builder aab = new AudioAttributes.Builder();
-			aab.setUsage(AudioAttributes.USAGE_MEDIA);
-			aab.setContentType(AudioAttributes.CONTENT_TYPE_MUSIC);
-
-			focus_obj = afb.setAudioAttributes(aab.build()).build();
-		}
-
-		mloop = new Handler(core.context.getMainLooper());
 		delayed_abandon_focus = this::afocus_abandon;
+
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
+			return;
+
+		AudioFocusRequest.Builder afb = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN);
+		afb.setOnAudioFocusChangeListener(afocus_change);
+
+		AudioAttributes.Builder aab = new AudioAttributes.Builder();
+		aab.setUsage(AudioAttributes.USAGE_MEDIA);
+		aab.setContentType(AudioAttributes.CONTENT_TYPE_MUSIC);
+
+		focus_obj = afb.setAudioAttributes(aab.build()).build();
 	}
 
 	/**

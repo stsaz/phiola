@@ -43,41 +43,14 @@ class GUI {
 			);
 	}
 
-	int conf_process1(int k, String v) {
-		switch (k) {
-
-		case Conf.UI_CURPATH:
-			cur_path = v;
-			break;
-
-		case Conf.UI_STATE_HIDE:
-			state_hide = core.str_to_bool(v);
-			break;
-
-		case Conf.UI_FILTER_HIDE:
-			filter_hide = core.str_to_bool(v);
-			break;
-
-		case Conf.UI_RECORD_HIDE:
-			record_hide = core.str_to_bool(v);
-			break;
-
-		case Conf.LIST_POS:
-			list_pos = core.str_to_uint(v, 0);
-			break;
-
-		case Conf.UI_INFO_IN_TITLE:
-			ainfo_in_title = core.str_to_bool(v);
-			break;
-
-		case Conf.UI_THEME:
-			theme = core.str_to_uint(v, 0);
-			break;
-
-		default:
-			return 1;
-		}
-		return 0;
+	void conf_load(Conf.Entry[] kv) {
+		cur_path = kv[Conf.UI_CURPATH].value;
+		state_hide = kv[Conf.UI_STATE_HIDE].enabled;
+		filter_hide = kv[Conf.UI_FILTER_HIDE].enabled;
+		record_hide = kv[Conf.UI_RECORD_HIDE].enabled;
+		list_pos = core.str_to_uint(kv[Conf.LIST_POS].value, 0);
+		ainfo_in_title = kv[Conf.UI_INFO_IN_TITLE].enabled;
+		theme = core.str_to_uint(kv[Conf.UI_THEME].value, 0);
 	}
 
 	void on_error(String fmt, Object... args) {

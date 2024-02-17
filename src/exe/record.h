@@ -211,8 +211,8 @@ static int rec_check(struct cmd_rec *r)
 	if (!r->output)
 		return _ffargs_err(&x->cmd, 1, "please specify output file name with '-out FILE'");
 
-	if (!r->aac_profile)
-		r->aac_profile = "l";
+	if (!(r->aac_profile = cmd_aac_profile(r->aac_profile)))
+		return _ffargs_err(&x->cmd, 1, "-aac_profile: incorrect value");
 
 	if ((int)(r->opus_mode_n = cmd_opus_mode(r->opus_mode)) < 0)
 		return _ffargs_err(&x->cmd, 1, "-opus_mode: incorrect value");

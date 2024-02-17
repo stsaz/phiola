@@ -6,8 +6,6 @@ package com.github.stsaz.phiola;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.os.Build;
-import android.os.Handler;
-import android.os.Looper;
 
 import androidx.annotation.NonNull;
 import androidx.collection.SimpleArrayMap;
@@ -58,24 +56,40 @@ class TrackHandle {
 	long seek_msec; // default:-1
 	long skip_tail_msec;
 	long time_total_msec; // track duration (msec)
+
+	void reset() {
+		seek_msec = -1;
+		prev_pos_msec = -1;
+		time_total_msec = 0;
+		meta = new String[0];
+		artist = "";
+		title = "";
+		album = "";
+		date = "";
+		info = "";
+	}
+
+	void meta(Phiola.Meta m) {
+		meta = m.meta;
+		artist = m.artist;
+		title = m.title;
+		album = m.album;
+		date = m.date;
+		info = m.info;
+		time_total_msec = m.length_msec;
+	}
 }
 
 class MP {
 	private static final String TAG = "phiola.MP";
 	private MediaPlayer mp;
 	private Timer tmr;
-	private Handler mloop;
 	private Core core;
-	private Track track;
 
-	void init(Core core) {
+	MP(Core core) {
 		this.core = core;
-		mloop = new Handler(Looper.getMainLooper());
 
-		mp = new MediaPlayer();
-
-		track = core.track();
-		track.filter_add(new Filter() {
+		core.track.filter_add(new Filter() {
 			public int open(TrackHandle t) {
 				return on_open(t);
 			}
@@ -93,6 +107,8 @@ class MP {
 	private int on_open(TrackHandle t) {
 		t.state = Track.STATE_OPENING;
 
+		if (mp == null)
+			mp = new MediaPlayer();
 		mp.setOnPreparedListener((mp) -> on_start(t));
 		mp.setOnCompletionListener((mp) -> on_complete(t));
 		mp.setOnSeekCompleteListener((mp) -> on_seek_complete(t));
@@ -200,7 +216,7 @@ class MP {
 			return;
 
 		t.stopped = false;
-		track.close(t);
+		core.track.close(t);
 	}
 
 	private void on_error(TrackHandle t) {
@@ -210,7 +226,7 @@ class MP {
 	}
 
 	private void on_timer(TrackHandle t) {
-		mloop.post(() -> update(t));
+		core.tq.post(() -> update(t));
 	}
 
 	private void update(TrackHandle t) {
@@ -220,7 +236,7 @@ class MP {
 		if (t.prev_pos_msec < 0
 				|| t.pos_msec / 1000 != t.prev_pos_msec / 1000) {
 			t.prev_pos_msec = t.pos_msec;
-			track.update(t);
+			core.track.update(t);
 		}
 	}
 }
@@ -334,40 +350,20 @@ class Track {
 		if (tplay.state != STATE_NONE)
 			return;
 		tplay.state = STATE_PREPARING;
-
 		tplay.url = url;
-		tplay.seek_msec = -1;
-		tplay.prev_pos_msec = -1;
-		tplay.time_total_msec = 0;
-		tplay.meta = new String[0];
-		tplay.artist = "";
-		tplay.title = "";
-		tplay.album = "";
-		tplay.date = "";
-		tplay.info = "";
+		tplay.reset();
 
 		if (!core.setts.play_no_tags) {
 			core.phiola.meta(core.queue().q_active_id(), list_item, url,
 				(meta) -> {
-					Handler mloop = new Handler(Looper.getMainLooper());
-					mloop.post(() -> {
-						start_2(meta);
+					core.tq.post(() -> {
+						tplay.meta(meta);
+						start_3();
 					});
 				});
 			return;
 		}
 
-		start_3();
-	}
-
-	private void start_2(Phiola.Meta meta) {
-		tplay.meta = meta.meta;
-		tplay.artist = meta.artist;
-		tplay.title = meta.title;
-		tplay.album = meta.album;
-		tplay.date = meta.date;
-		tplay.info = meta.info;
-		tplay.time_total_msec = meta.length_msec;
 		start_3();
 	}
 
@@ -450,22 +446,28 @@ class Track {
 		return trec;
 	}
 
-	void record_stop(TrackHandle t) {
-		if (trec.phi_trk != 0) {
-			core.phiola.recStop(trec.phi_trk);
-			trec = null;
-			return;
+	String record_stop(TrackHandle t) {
+		if (Build.VERSION.SDK_INT < 26) {
+			return record_stop_compat(t);
 		}
 
+		String e = core.phiola.recStop(trec.phi_trk);
+		trec = null;
+		return e;
+	}
+
+	private String record_stop_compat(TrackHandle t) {
+		String err = null;
 		try {
 			t.mr.stop();
 			t.mr.reset();
 			t.mr.release();
 		} catch (Exception e) {
-			core.errlog(TAG, "mr.stop(): %s", e);
+			err = String.format("mr.stop(): %s", e);
 		}
 		t.mr = null;
 		trec = null;
+		return err;
 	}
 
 	private void trk_close(TrackHandle t) {

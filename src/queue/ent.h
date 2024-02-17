@@ -34,7 +34,7 @@ static inline void track_conf_destroy(struct phi_track_conf *c)
 
 static void qe_free(struct q_entry *e)
 {
-	if (e == e->q->cursor)
+	if (e->q && e == e->q->cursor)
 		e->q->cursor = NULL;
 
 	track_conf_destroy(&e->pub.conf);
@@ -56,12 +56,13 @@ struct q_entry* qe_ref(struct q_entry *e)
 	return e;
 }
 
-void qe_unref(struct q_entry *e)
+int qe_unref(struct q_entry *e)
 {
 	FF_ASSERT(!!e->used);
-	if (--e->used != 0) return;
+	if (--e->used != 0) return 1;
 
 	qe_free(e);
+	return 0;
 }
 
 static void* qe_open(phi_track *t) { return t->qent; }
@@ -72,7 +73,7 @@ static void qe_close(void *f, phi_track *t)
 	if (e->trk == t) {
 		e->trk = NULL;
 
-		if (!e->q->conf.conversion && !e->have_user_meta) {
+		if (e->q && !e->q->conf.conversion && !e->have_user_meta) {
 			int mod = (e->pub.conf.meta.len || t->meta.len); // empty meta == not modified
 			meta_destroy(&e->pub.conf.meta);
 			e->pub.conf.meta = t->meta; // Remember the tags we read from file in this track
@@ -85,7 +86,9 @@ static void qe_close(void *f, phi_track *t)
 			core->track->stop(t);
 	}
 
-	int r = q_ent_closed(e->q, t);
+	int r = -1;
+	if (e->q)
+		r = q_ent_closed(e->q, t);
 
 	meta_destroy(&t->meta);
 	if (!r // allowed to autoplay next track
@@ -242,6 +245,8 @@ static void qe_stop(struct q_entry *e)
 
 static int qe_index(struct q_entry *e)
 {
+	if (!e->q) return -1;
+
 	if (q_get(e->q, e->index) != e) {
 		e->index = q_find(e->q, e);
 	}
