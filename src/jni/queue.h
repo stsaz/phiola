@@ -1,6 +1,38 @@
 /** phiola/Android: queue
 2023, Simon Zolin */
 
+static void qu_on_change(phi_queue_id q, uint flags, uint pos)
+{
+	dbglog("%s: '%c' q:%p", __func__, flags, (size_t)q);
+
+	switch (flags) {
+	case 'a':
+	case 'n':
+	case 'd':
+		return;
+	}
+
+	JNIEnv *env;
+	int r = jni_vm_attach(jvm, &env);
+	if (r) {
+		errlog("jni_vm_attach: %d", r);
+		goto end;
+	}
+
+	jni_call_void(x->obj_QueueCallback, x->Phiola_QueueCallback_on_change, (jlong)q, flags, pos);
+
+end:
+	jni_vm_detach(jvm);
+}
+
+JNIEXPORT void JNICALL
+Java_com_github_stsaz_phiola_Phiola_quSetCallback(JNIEnv *env, jobject thiz, jobject jcb)
+{
+	x->Phiola_QueueCallback_on_change = jni_func(jni_class_obj(jcb), "on_change", "(" JNI_TLONG JNI_TINT JNI_TINT ")" JNI_TVOID);
+	x->obj_QueueCallback = jni_global_ref(jcb);
+	x->queue->on_change(qu_on_change);
+}
+
 JNIEXPORT jlong JNICALL
 Java_com_github_stsaz_phiola_Phiola_quNew(JNIEnv *env, jobject thiz)
 {
@@ -53,6 +85,26 @@ Java_com_github_stsaz_phiola_Phiola_quEntry(JNIEnv *env, jobject thiz, jlong q, 
 #define QUCOM_COUNT  3
 #define QUCOM_INDEX  4
 #define QUCOM_SORT  5
+#define QUCOM_REMOVE_NON_EXISTING  6
+
+static void qu_cmd(struct core_data *d)
+{
+	switch (d->cmd) {
+	case QUCOM_CLEAR:
+		x->queue->clear(d->q);  break;
+
+	case QUCOM_REMOVE_I:
+		x->queue->remove_at(d->q, d->param_int, 1);  break;
+
+	case QUCOM_REMOVE_NON_EXISTING:
+		x->queue->remove_multi(d->q, PHI_Q_RM_NONEXIST);  break;
+
+	case QUCOM_SORT:
+		x->queue->sort(d->q, d->param_int);  break;
+	}
+
+	ffmem_free(d);
+}
 
 JNIEXPORT jint JNICALL
 Java_com_github_stsaz_phiola_Phiola_quCmd(JNIEnv *env, jobject thiz, jlong jq, jint cmd, jint i)
@@ -61,19 +113,26 @@ Java_com_github_stsaz_phiola_Phiola_quCmd(JNIEnv *env, jobject thiz, jlong jq, j
 
 	switch (cmd) {
 	case QUCOM_CLEAR:
-		x->queue->clear(q);  break;
-
 	case QUCOM_REMOVE_I:
-		x->queue->remove_at(q, i, 1);  break;
+	case QUCOM_REMOVE_NON_EXISTING:
+	case QUCOM_SORT: {
+		struct core_data *d = ffmem_new(struct core_data);
+		d->cmd = cmd;
+		d->q = q;
+		d->param_int = i;
+		core_task(d, qu_cmd);
+		break;
+	}
 
 	case QUCOM_COUNT:
 		return x->queue->count(q);
 
-	case QUCOM_INDEX:
-		return x->queue->index(x->queue->at(q, i));
-
-	case QUCOM_SORT:
-		x->queue->sort(q, i);  break;
+	case QUCOM_INDEX: {
+		struct phi_queue_entry *qe = x->queue->ref(q, i);
+		int r = x->queue->index(qe);
+		x->queue->unref(qe);
+		return r;
+	}
 	}
 	return 0;
 }

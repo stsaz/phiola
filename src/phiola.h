@@ -11,7 +11,7 @@
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20017
+#define PHI_VERSION_CORE  20018
 
 typedef unsigned int uint;
 typedef unsigned short ushort;
@@ -424,6 +424,10 @@ enum PHI_Q_SORT {
 	PHI_Q_SORT_RANDOM = 1,
 };
 
+enum PHI_Q_REMOVE {
+	PHI_Q_RM_NONEXIST = 1,
+};
+
 typedef struct phi_queue* phi_queue_id;
 typedef struct phi_queue_if phi_queue_if;
 struct phi_queue_if {
@@ -450,6 +454,11 @@ struct phi_queue_if {
 	struct phi_queue_entry* (*at)(phi_queue_id q, uint pos);
 	int (*remove_at)(phi_queue_id q, uint pos, uint n);
 
+	/**
+	Generates on_change('u') event.
+	flags: enum PHI_Q_REMOVE */
+	void (*remove_multi)(phi_queue_id q, uint flags);
+
 	/** Get item pointer, increase refcount.
 	Guarantees that the returned item won't be suddenly destroyed by remove() from the main thread.
 	Each ref() must be paired with unref(). */
@@ -469,6 +478,7 @@ struct phi_queue_if {
 		'n': list created
 		'c': cleared
 		'd': deleted
+		'u': updated
 	*/
 	void (*on_change)(void (*cb)(phi_queue_id q, uint flags, uint pos));
 

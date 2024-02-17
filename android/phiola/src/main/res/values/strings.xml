@@ -31,6 +31,7 @@
 	<string name="mlist_save">List: Save...</string>
 	<string name="mlist_add">List: Add...</string>
 	<string name="mlist_remove">List: Remove Current Track</string>
+	<string name="mlist_remove_non_existing">List: Remove Non-Existing Files</string>
 	<string name="mlist_trk_rm">Removed 1 entry</string>
 	<string name="mlist_clear">List: Clear</string>
 	<string name="mlist_show_track">List: Show Current Track</string>

@@ -81,6 +81,12 @@ class Phiola {
 	native void recStop(long trk);
 
 	// track queue
+
+	interface QueueCallback {
+		void on_change(long q, int flags, int pos);
+	}
+	native void quSetCallback(QueueCallback cb);
+
 	native long quNew();
 	native void quDestroy(long q);
 
@@ -89,18 +95,17 @@ class Phiola {
 
 	native String quEntry(long q, int i);
 
-	static final int QUCOM_CLEAR = 1;
-	static final int QUCOM_REMOVE_I = 2;
-	static final int QUCOM_COUNT = 3;
-
-	/** Convert track index in the currently visible (filtered) list
-	 to the index within its parent (not filtered) list */
-	static final int QUCOM_INDEX = 4;
-
-	static final int QUCOM_SORT = 5;
-	static final int QU_SORT_FILENAME = 0;
-	static final int QU_SORT_RANDOM = 1;
-
+	static final int
+		QUCOM_CLEAR = 1,
+		QUCOM_REMOVE_I = 2,
+		QUCOM_COUNT = 3,
+		/** Convert track index in the currently visible (filtered) list
+		 to the index within its parent (not filtered) list */
+		QUCOM_INDEX = 4,
+		QUCOM_SORT = 5,
+			QU_SORT_FILENAME = 0,
+			QU_SORT_RANDOM = 1,
+		QUCOM_REMOVE_NON_EXISTING = 6;
 	native int quCmd(long q, int cmd, int i);
 
 	native Meta quMeta(long q, int i);

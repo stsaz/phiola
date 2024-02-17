@@ -456,7 +456,6 @@ static void sort_random(phi_queue_id q)
 		*it = e[n];
 		e[n] = tmp;
 	}
-	dbglog("sorted (random) %L entries", q->index.len);
 }
 
 static int q_sort_cmp(const void *_a, const void *_b, void *udata)
@@ -472,16 +471,53 @@ static void q_sort(phi_queue_id q, uint flags)
 
 	if (flags & PHI_Q_SORT_RANDOM) {
 		sort_random(q);
-		return;
+	} else {
+		ffsort(q->index.ptr, q->index.len, sizeof(void*), q_sort_cmp, (void*)(ffsize)flags);
 	}
 
-	ffsort(q->index.ptr, q->index.len, sizeof(void*), q_sort_cmp, (void*)(ffsize)flags);
 	dbglog("sorted %L entries", q->index.len);
+	qm->on_change(q, 'u', 0);
 }
 
 static void q_device(uint device)
 {
 	qm->dev_idx = device;
+}
+
+static void q_remove_multi(phi_queue_id q, uint flags)
+{
+	if (!q) q = qm_default();
+
+	ffvec new_index = {};
+	ffvec_allocT(&new_index, q->index.len, void*);
+
+	struct q_entry **it;
+	FFSLICE_WALK(&q->index, it) {
+		struct q_entry *qe = *it;
+		if (flags & PHI_Q_RM_NONEXIST) {
+			const char *fn = qe->pub.conf.ifile.name;
+			if (fffile_exists(fn)) {
+				*ffvec_pushT(&new_index, void*) = qe;
+				continue;
+			} else {
+				dbglog("remove: file doesn't exist: '%s'", fn);
+			}
+		}
+		qe_unref(qe);
+	}
+
+	if (new_index.len == q->index.len) {
+		ffvec_free(&new_index);
+		return;
+	}
+
+	fflock_lock(&q->lock);
+	ffvec old = q->index;
+	q->index = new_index;
+	fflock_unlock(&q->lock);
+	ffvec_free(&old);
+
+	qm->on_change(q, 'u', 0);
 }
 
 const phi_queue_if phi_queueif = {
@@ -504,6 +540,7 @@ const phi_queue_if phi_queueif = {
 	q_status,
 	q_at,
 	q_remove_at,
+	q_remove_multi,
 
 	q_ref,
 	(void*)qe_unref,

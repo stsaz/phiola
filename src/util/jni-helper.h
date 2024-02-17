@@ -49,6 +49,7 @@ Notes:
 #define JNI_TLONG "J"
 #define JNI_TBOOL "Z"
 #define JNI_TARR "["
+#define JNI_TVOID "V"
 
 #define jni_vm_attach(jvm, envp) \
 	(*jvm)->AttachCurrentThread(jvm, envp, NULL)

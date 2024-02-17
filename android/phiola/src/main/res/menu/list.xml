@@ -17,6 +17,9 @@
 	<item android:id="@+id/action_list_rm"
 		android:title="@string/mlist_remove" />
 
+	<item android:id="@+id/action_list_rm_non_existing"
+		android:title="@string/mlist_remove_non_existing" />
+
 	<item android:id="@+id/action_list_clear"
 		android:title="@string/mlist_clear" />
 

@@ -27,6 +27,9 @@ struct phiola_jni {
 	jmethodID Phiola_RecordCallback_on_finish;
 	jmethodID Phiola_ConvertCallback_on_finish;
 	jmethodID Phiola_MetaCallback_on_finish;
+
+	jobject obj_QueueCallback;
+	jmethodID Phiola_QueueCallback_on_change;
 };
 static struct phiola_jni *x;
 static JavaVM *jvm;
@@ -101,6 +104,20 @@ do { \
 	if (x->debug) \
 		exe_log(NULL, PHI_LOG_DEBUG, NULL, NULL, __VA_ARGS__); \
 } while (0)
+
+
+struct core_data {
+	phi_task task;
+	uint cmd;
+	int param_int;
+	phi_queue_id q;
+};
+
+static void core_task(struct core_data *d, void (*func)(struct core_data*))
+{
+	x->core->task(0, &d->task, (void(*)(void*))func, d);
+}
+
 
 #include <jni/record.h>
 #include <jni/convert.h>
@@ -222,6 +239,7 @@ Java_com_github_stsaz_phiola_Phiola_destroy(JNIEnv *env, jobject thiz)
 
 	dbglog("%s: enter", __func__);
 	phi_core_destroy();
+	jni_global_unref(x->obj_QueueCallback);
 	jni_global_unref(x->Phiola_Meta);
 	jni_global_unref(x->Phiola_class);
 	ffstr_free(&x->dir_libs);

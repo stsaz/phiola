@@ -58,6 +58,11 @@ class PhiolaQueue {
 		modified = true;
 	}
 
+	void remove_non_existing() {
+		phi.quCmd(q, Phiola.QUCOM_REMOVE_NON_EXISTING, 0);
+		modified = true;
+	}
+
 	void clear() {
 		phi.quCmd(q, Phiola.QUCOM_CLEAR, 0);
 		modified = true;
@@ -124,23 +129,42 @@ class Queue {
 
 	Queue(Core core) {
 		this.core = core;
+		core.phiola.quSetCallback(this::on_change);
 		track = core.track();
 		track.filter_add(new Filter() {
-			public int open(TrackHandle t) {
-				on_open(t);
-				return 0;
-			}
+				public int open(TrackHandle t) {
+					on_open(t);
+					return 0;
+				}
 
-			public void close(TrackHandle t) {
-				on_close(t);
-			}
-		});
+				public void close(TrackHandle t) {
+					on_close(t);
+				}
+			});
 
 		queues = new ArrayList<>();
 		queues.add(new PhiolaQueue(core.phiola));
 
 		nfy = new ArrayList<>();
 		mloop = new Handler(Looper.getMainLooper());
+	}
+
+	private void on_change(long q, int flags, int pos) {
+		mloop.post(() -> {
+				if (q != queues.get(selected).q)
+					return;
+
+				switch (flags) {
+				case 'u':
+					nfy_all(QueueNotify.UPDATE, -1);  break;
+
+				case 'c':
+					nfy_all(QueueNotify.REMOVED, -1);  break;
+
+				case 'r':
+					nfy_all(QueueNotify.REMOVED, pos);  break;
+				}
+			});
 	}
 
 	int new_list() {
@@ -429,7 +453,6 @@ class Queue {
 			trk_idx = -1;
 		else if (pos < trk_idx)
 			trk_idx--;
-		nfy_all(QueueNotify.REMOVED, pos);
 	}
 
 	/** Clear playlist */
@@ -439,7 +462,10 @@ class Queue {
 		queues.get(selected).clear();
 		curpos = -1;
 		trk_idx = -1;
-		nfy_all(QueueNotify.REMOVED, -1);
+	}
+
+	void rm_non_existing() {
+		queues.get(selected).remove_non_existing();
 	}
 
 	/** Get tracks number in the currently selected (not filtered) list */
@@ -621,7 +647,6 @@ class Queue {
 		if (q_filtered != null) return;
 
 		q_selected().sort(flags);
-		nfy_all(QueueNotify.UPDATE, -1);
 	}
 
 	long q_active_id() { return queues.get(q_active).q; }

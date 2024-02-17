@@ -1,5 +1,6 @@
 -keep class com.github.stsaz.phiola.Phiola {*;}
 -keep interface com.github.stsaz.phiola.Phiola$Callback {*;}
+-keep interface com.github.stsaz.phiola.Phiola$QueueCallback {*;}
 -keep class com.github.stsaz.phiola.Phiola$ConvertParams {*;}
 -keep interface com.github.stsaz.phiola.Phiola$ConvertCallback {*;}
 -keep class com.github.stsaz.phiola.Phiola$RecordParams {*;}

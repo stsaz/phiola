@@ -198,6 +198,9 @@ public class MainActivity extends AppCompatActivity {
 		case R.id.action_list_rm:
 			list_rm();  break;
 
+		case R.id.action_list_rm_non_existing:
+			queue.rm_non_existing();  break;
+
 		case R.id.action_list_clear:
 			queue.clear();  break;
 
