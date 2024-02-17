@@ -16,6 +16,7 @@ typedef void (*on_change_t)(phi_queue_id, uint, uint);
 struct queue_mgr {
 	ffvec lists; // struct phi_queue*[]
 	uint selected;
+	uint errors;
 	int dev_idx;
 	uint random_ready :1;
 	on_change_t on_change;
@@ -42,6 +43,7 @@ static void* q_insert(struct phi_queue *q, uint pos, struct phi_queue_entry *qe)
 static int q_remove_at(struct phi_queue *q, uint pos, uint n);
 static struct q_entry* q_get(struct phi_queue *q, uint i);
 static int q_find(struct phi_queue *q, struct q_entry *e);
+static int q_ent_closed(struct phi_queue *q, phi_track *t);
 static void q_modified(struct phi_queue *q);
 
 #include <queue/ent.h>
@@ -299,6 +301,29 @@ static int q_play(struct phi_queue *q, void *_e)
 	q->cursor_index = qe_index(e);
 	if (!!qe_play(e))
 		return -1;
+	return 0;
+}
+
+static int q_ent_closed(struct phi_queue *q, phi_track *t)
+{
+	q->active_n--;
+
+	/* Don't start the next track when there are too many consecutive errors.
+	When in Random or Repeat-All mode we may waste CPU resources
+	 without making any progress, e.g.:
+	* input: storage isn't online, files were moved, etc.
+	* filters: format or codec isn't supported, decoding error, etc.
+	* output: audio system is failing */
+	if (t->error) {
+		if (++qm->errors >= 20) {
+			errlog("Stopped after %u consecutive errors", qm->errors);
+			qm->errors = 0;
+			return -1;
+		}
+	} else {
+		qm->errors = 0;
+	}
+
 	return 0;
 }
 

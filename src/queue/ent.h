@@ -85,9 +85,11 @@ static void qe_close(void *f, phi_track *t)
 			core->track->stop(t);
 	}
 
+	int r = q_ent_closed(e->q, t);
+
 	meta_destroy(&t->meta);
-	e->q->active_n--;
-	if (!(t->chain_flags & PHI_FSTOP)
+	if (!r // allowed to autoplay next track
+		&& !(t->chain_flags & PHI_FSTOP) // track wasn't stopped by user
 		&& (!e->expand || e->play_next_on_close))
 		q_play_next(e->q);
 	qe_unref(e);

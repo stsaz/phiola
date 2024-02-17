@@ -112,6 +112,7 @@ class Queue {
 	private int curpos = -1; // Last active track index
 	private int filter_len;
 
+	private int consecutive_errors;
 	private boolean repeat;
 	private boolean random;
 	private boolean active;
@@ -405,6 +406,17 @@ class Queue {
 			core.dbglog(TAG, "auto-stop timer: Stopping playback");
 			play_next = false;
 			auto_stop_toggle();
+		}
+
+		if (t.error) {
+			this.consecutive_errors++;
+			if (this.consecutive_errors >= 20) {
+				core.errlog(TAG, "Stopped after %d consecutive errors", this.consecutive_errors);
+				this.consecutive_errors = 0;
+				play_next = false;
+			}
+		} else {
+			this.consecutive_errors = 0;
 		}
 
 		if (play_next) {
