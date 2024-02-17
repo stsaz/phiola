@@ -56,6 +56,8 @@ DEPS := $(PHIOLA)/src/phiola.h \
 
 %.o: $(PHIOLA)/src/%.c
 	$(C) $(CFLAGS) $< -o $@
+%.o: $(FFBASE)/ffbase/%.c
+	$(C) $(CFLAGS) -DFFBASE_OPT_SIZE $< -o $@
 
 EXES :=
 MODS :=

@@ -46,7 +46,7 @@ ifeq "$(DEBUG_GUI)" "1"
 	CFLAGS_GUI += -DFFGUI_DEBUG
 endif
 CFLAGS_GUI += -I$(FFGUI)
-CFLAGS_GUI := $(CFLAGS) $(CFLAGS_GUI)
+CFLAGS_GUI := $(CFLAGS) $(CFLAGS_GUI) -DFFBASE_OPT_SIZE
 CXXFLAGS_GUI := $(CXXFLAGS) $(CFLAGS_GUI)
 LINKFLAGS_GUI := $(LINKFLAGS) $(LINKFLAGS_GUI)
 
@@ -74,7 +74,9 @@ gui.$(SO): gui-mod.o \
 		gui-main.o \
 		gui-dialogs.o \
 		$(GUI_RES) \
-		$(FFGUI_OBJ)
+		$(FFGUI_OBJ) \
+		\
+		str-format.o
 	$(LINKXX) -shared $+ $(LINKFLAGS_GUI) $(LINK_DL) -o $@
 
 _:=

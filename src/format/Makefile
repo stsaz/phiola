@@ -16,10 +16,11 @@ AVPACK := $(ROOT_DIR)/avpack
 
 MODS += format.$(SO)
 
+CFLAGS_FORMAT := $(CFLAGS) -DFFBASE_OPT_SIZE -I$(AVPACK)
 %.o: $(PHIOLA)/src/format/%.c
-	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
+	$(C) $(CFLAGS_FORMAT) $< -o $@
 %.o: $(PHIOLA)/src/list/%.c
-	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
+	$(C) $(CFLAGS_FORMAT) $< -o $@
 
 format.$(SO): mod-fmt.o \
 		aac-adts.o \
@@ -39,5 +40,8 @@ format.$(SO): mod-fmt.o \
 		\
 		cue-read.o \
 		m3u.o \
-		pls-read.o
+		pls-read.o \
+		\
+		sort.o \
+		str-format.o
 	$(LINK) -shared $+ $(LINKFLAGS) -o $@

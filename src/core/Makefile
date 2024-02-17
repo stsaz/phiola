@@ -25,13 +25,17 @@ endif
 ifeq "$(SYS)" "android"
 	CORE_O += phiola-jni.o
 endif
+CORE_O += \
+	sort.o \
+	str-format.o
 
 libphiola.$(SO): $(CORE_O)
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_PTHREAD) $(LINK_DL) -o $@
 
+CFLAGS_CORE := $(CFLAGS) -DFFBASE_OPT_SIZE
 %.o: $(PHIOLA)/src/core/%.c
-	$(C) $(CFLAGS) $< -o $@
+	$(C) $(CFLAGS_CORE) $< -o $@
 %.o: $(PHIOLA)/src/queue/%.c
-	$(C) $(CFLAGS) $< -o $@
+	$(C) $(CFLAGS_CORE) $< -o $@
 %.o: $(PHIOLA)/src/jni/%.c
-	$(C) $(CFLAGS) $< -o $@
+	$(C) $(CFLAGS_CORE) $< -o $@

@@ -24,7 +24,7 @@ endif
 
 MODS += afilter.$(SO)
 %.o: $(PHIOLA)/src/afilter/%.c
-	$(C) $(CFLAGS) $< -o $@
+	$(C) $(CFLAGS) -DFFBASE_OPT_SIZE $< -o $@
 crc.o: $(PHIOLA)/3pt/crc/crc.c
 	$(C) $(CFLAGS) $< -o $@
 afilter.$(SO): afilter.o \
@@ -32,7 +32,9 @@ afilter.$(SO): afilter.o \
 		peaks.o \
 		gain.o \
 		rtpeak.o \
-		conv.o
+		conv.o \
+		\
+		str-format.o
 	$(LINK) -shared $+ $(LINKFLAGS) -lm -o $@
 
 MODS += soxr.$(SO)

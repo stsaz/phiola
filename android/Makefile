@@ -163,6 +163,9 @@ CFLAGS += -I$(PHIOLA)/src -I$(FFSYS)
 LINKFLAGS := $(A_LINKFLAGS) \
 	-llog
 
+%.o: $(FFBASE)/ffbase/%.c
+	$(C) $(CFLAGS) -DFFBASE_OPT_SIZE $< -o $@
+
 -include $(wildcard *.d)
 
 include $(PHIOLA)/src/core/Makefile
