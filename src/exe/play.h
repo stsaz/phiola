@@ -177,6 +177,8 @@ static int play_check(struct cmd_play *p)
 		x->stdout_busy = ffstr_eqz(&name, "@stdout");
 	}
 
+	if (p->buffer)
+		x->timer_int_msec = ffmin(p->buffer / 2, x->timer_int_msec);
 	return 0;
 }
 

@@ -204,12 +204,16 @@ static int rec_check(struct cmd_rec *r)
 {
 	if (!r->output)
 		return _ffargs_err(&x->cmd, 1, "please specify output file name with '-out FILE'");
+
 	if (!r->aac_profile)
 		r->aac_profile = "l";
 
 	ffstr name;
 	ffpath_splitname_str(FFSTR_Z(r->output), &name, NULL);
 	x->stdout_busy = ffstr_eqz(&name, "@stdout");
+
+	if (r->buffer)
+		x->timer_int_msec = ffmin(r->buffer / 2, x->timer_int_msec);
 	return 0;
 }
 

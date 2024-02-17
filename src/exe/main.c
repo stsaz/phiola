@@ -35,6 +35,7 @@ struct exe {
 	u_char	background, background_child;
 	u_char	debug;
 	u_char	verbose;
+	uint timer_int_msec;
 	uint codepage_id;
 	uint mode_record :1;
 	uint stdin_busy :1;
@@ -155,6 +156,7 @@ static int core()
 		.mod_loading = mod_loading,
 		.code_page = x->codepage_id,
 		.workers = ~0U,
+		.timer_interval_msec = x->timer_int_msec,
 		.root = x->root_dir,
 		.stdin_busy = x->stdin_busy,
 		.stdout_busy = x->stdout_busy,
@@ -229,6 +231,7 @@ int main(int argc, char **argv, char **env)
 {
 	ffenv_init(NULL, env);
 	x = ffmem_new(struct exe);
+	x->timer_int_msec = 100;
 	x->exit_code = 1;
 	logs(&x->log);
 
