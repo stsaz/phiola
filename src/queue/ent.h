@@ -73,9 +73,12 @@ static void qe_close(void *f, phi_track *t)
 		e->trk = NULL;
 
 		if (!e->q->conf.conversion && !e->have_user_meta) {
+			int mod = (e->pub.conf.meta.len || t->meta.len); // empty meta == not modified
 			meta_destroy(&e->pub.conf.meta);
 			e->pub.conf.meta = t->meta; // Remember the tags we read from file in this track
 			ffvec_null(&t->meta);
+			if (mod)
+				q_modified(e->q);
 		}
 
 		if (e->expand)
@@ -273,4 +276,9 @@ int qe_filter(struct q_entry *e, ffstr filter, uint flags)
 	}
 
 	return 0;
+}
+
+static phi_queue_id qe_queue(struct q_entry *e)
+{
+	return e->q;
 }

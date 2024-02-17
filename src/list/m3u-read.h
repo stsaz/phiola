@@ -34,6 +34,11 @@ static void m3u_close(void *ctx, phi_track *t)
 	m3uread_close(&m->m3u);
 	pls_entry_free(&m->pls_ent);
 	ffmem_free(m);
+
+	/* When auto-loading playlist at GUI startup - set it as "not modified" */
+	struct phi_queue_conf *qc = queue->conf(queue->queue(t->qent));
+	if (qc->last_mod_time.sec)
+		qc->modified = 0;
 }
 
 static int m3u_add(struct m3u *m, phi_track *t)

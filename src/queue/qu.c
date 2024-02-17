@@ -42,6 +42,7 @@ static void* q_insert(struct phi_queue *q, uint pos, struct phi_queue_entry *qe)
 static int q_remove_at(struct phi_queue *q, uint pos, uint n);
 static struct q_entry* q_get(struct phi_queue *q, uint i);
 static int q_find(struct phi_queue *q, struct q_entry *e);
+static void q_modified(struct phi_queue *q);
 
 #include <queue/ent.h>
 
@@ -151,6 +152,11 @@ static struct phi_queue_conf* q_conf(phi_queue_id q)
 	return &q->conf;
 }
 
+static void q_modified(struct phi_queue *q)
+{
+	q->conf.modified = 1;
+}
+
 static void* q_insert(struct phi_queue *q, uint pos, struct phi_queue_entry *qe)
 {
 	struct q_entry *e = qe_new(qe);
@@ -162,6 +168,7 @@ static void* q_insert(struct phi_queue *q, uint pos, struct phi_queue_entry *qe)
 	else
 		*ffslice_moveT((ffslice*)&q->index, pos, pos + 1, q->index.len - 1 - pos, void*) = e;
 	dbglog("added '%s' [%L]", qe->conf.ifile.name, q->index.len);
+	q_modified(q);
 	qm->on_change(q, 'a', pos);
 	return e;
 }
@@ -183,6 +190,7 @@ static int q_clear(struct phi_queue *q)
 	ffvec a = q->index;
 	ffvec_null(&q->index);
 	fflock_unlock(&q->lock);
+	q_modified(q);
 	qm->on_change(q, 'c', 0);
 
 	struct q_entry **it;
@@ -361,13 +369,26 @@ static int q_save(struct phi_queue *q, const char *filename, void (*on_complete)
 			.overwrite = 1,
 		},
 	};
+
+	int skip = 0;
+	fffileinfo fi;
+	if (!q->conf.modified && !fffile_info_path(filename, &fi)) {
+		fftime mt = fffileinfo_mtime(&fi);
+		mt.sec += FFTIME_1970_SECONDS;
+		if (!fftime_cmp_val(mt, q->conf.last_mod_time)) {
+			skip = 1;
+			dbglog("q_save: '%s': skip (mtime)", filename);
+		}
+	}
+
 	phi_track *t = core->track->create(&c);
 	t->udata = q;
-	if (!core->track->filter(t, &phi_qsave_guard, 0)
-		|| !core->track->filter(t, core->mod("format.m3u-write"), 0)
-		|| (compress
-			&& !core->track->filter(t, core->mod("zstd.compress"), 0))
-		|| !core->track->filter(t, core->mod("core.file-write"), 0)) {
+	core->track->filter(t, &phi_qsave_guard, 0);
+	if (!skip
+		&& (!core->track->filter(t, core->mod("format.m3u-write"), 0)
+			|| (compress
+				&& !core->track->filter(t, core->mod("zstd.compress"), 0))
+			|| !core->track->filter(t, core->mod("core.file-write"), 0))) {
 		core->track->close(t);
 		return -1;
 	}
@@ -421,6 +442,7 @@ static int q_remove_at(struct phi_queue *q, uint pos, uint n)
 	ffslice_rmT((ffslice*)&q->index, pos, 1, void*);
 	qe_unref(e);
 	fflock_unlock(&q->lock);
+	q_modified(q);
 	qm->on_change(q, 'r', pos);
 	return 0;
 }
@@ -476,6 +498,7 @@ static void q_sort(phi_queue_id q, uint flags)
 	}
 
 	dbglog("sorted %L entries", q->index.len);
+	q_modified(q);
 	qm->on_change(q, 'u', 0);
 }
 
@@ -517,6 +540,7 @@ static void q_remove_multi(phi_queue_id q, uint flags)
 	fflock_unlock(&q->lock);
 	ffvec_free(&old);
 
+	q_modified(q);
 	qm->on_change(q, 'u', 0);
 }
 
@@ -545,6 +569,7 @@ const phi_queue_if phi_queueif = {
 	q_ref,
 	(void*)qe_unref,
 
+	(void*)qe_queue,
 	(void*)qe_insert,
 	(void*)qe_index,
 	(void*)qe_remove,

@@ -481,12 +481,17 @@ void lists_load()
 	for (uint i = 1;;  i++) {
 
 		fn = ffsz_allocfmt("%s" AUTO_LIST_FN, gd->user_conf_dir, i);
-		if (!fffile_exists(fn))
+		fffileinfo fi;
+		if (fffile_info_path(fn, &fi))
 			break;
 
 		phi_queue_id q = NULL;
 		if (i > 1)
 			q = list_new();
+
+		fftime mt = fffileinfo_mtime(&fi);
+		mt.sec += FFTIME_1970_SECONDS;
+		gd->queue->conf(q)->last_mod_time = mt;
 
 		struct phi_queue_entry qe = {
 			.conf.ifile.name = fn,

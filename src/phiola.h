@@ -410,9 +410,11 @@ struct phi_queue_conf {
 	const phi_filter *first_filter;
 	const char *audio_module;
 	const char *ui_module;
+	fftime last_mod_time;
 	uint conversion :1;
 	uint random :1;
 	uint repeat_all :1;
+	uint modified :1;
 };
 
 struct phi_queue_entry {
@@ -466,6 +468,9 @@ struct phi_queue_if {
 
 	/** Decrease refcount for the item obtained by ref(). */
 	void (*unref)(struct phi_queue_entry *qe);
+
+	/** Get the queue containing this item */
+	phi_queue_id (*queue)(void *e);
 
 	void* (*insert)(void *e, struct phi_queue_entry *qe);
 	int (*index)(void *e);
