@@ -9,6 +9,8 @@ struct ogg_w {
 	ffvec pktbuf;
 	ffstr pkt, in;
 	uint state;
+	uint pos_start_set;
+	uint64 pos_start; // starting position of the first data page
 	uint64 total;
 };
 
@@ -131,7 +133,12 @@ static int ogg_w_encode(void *ctx, phi_track *t)
 		}
 
 		case I_PKT:
-			endpos = t->audio.pos; // end-pos (for previous packet) = start-pos of this packet
+			if (!o->pos_start_set && t->audio.pos) {
+				o->pos_start_set = 1;
+				o->pos_start = t->audio.pos;
+			}
+
+			endpos = t->audio.pos - o->pos_start; // end-pos (for previous packet) = start-pos of this packet
 			if (o->og.stat.npkts == 0) {
 				endpos = 0;
 				if (t->oaudio.ogg_gen_opus_tag)
@@ -146,7 +153,7 @@ static int ogg_w_encode(void *ctx, phi_track *t)
 			if (r == PHI_MORE) {
 				if (t->chain_flags & PHI_FFIRST) {
 					if (t->audio.total != ~0ULL && endpos < t->audio.total)
-						endpos = t->audio.total;
+						endpos = t->audio.total - o->pos_start;
 					else
 						endpos++; // we don't know the packet's audio length -> can't set the real end-pos value
 					return pkt_write(o, t, &o->in, &t->data_out, endpos, OGGWRITE_FLAST);
@@ -168,12 +175,17 @@ static int ogg_w_encode(void *ctx, phi_track *t)
 			if (t->oaudio.ogg_flush) {
 				t->oaudio.ogg_flush = 0;
 				flags = OGGWRITE_FFLUSH;
+
+				if (!o->pos_start_set && t->oaudio.ogg_granule_pos) {
+					o->pos_start_set = 1;
+					o->pos_start = t->audio.pos;
+				}
 			}
 
 			if (t->chain_flags & PHI_FFIRST)
 				flags = OGGWRITE_FLAST;
 
-			endpos = t->oaudio.ogg_granule_pos;
+			endpos = t->oaudio.ogg_granule_pos - o->pos_start;
 			r = pkt_write(o, t, &o->in, &t->data_out, endpos, flags);
 			return r;
 		}

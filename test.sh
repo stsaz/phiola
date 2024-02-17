@@ -303,7 +303,7 @@ test_copy() {
 	test_copy_until fm_mp3.mkv     copy_u_mp3_mkv.mp3    '4[89],...'
 	test_copy_until fm_mp3.mp3     copy_u_mp3.mp3        '4[89],...'
 	test_copy_until fm_mp3_320.mp3 copy_u_mp3_320.mp3    '4[89],...'
-	test_copy_until fm_opus.mkv    copy_u_opus_mkv.ogg   '4[789],...'
+	test_copy_until fm_opus.mkv    copy_u_opus_mkv.ogg   '4[6789],...'
 	test_copy_until fm_opus.ogg    copy_u_opus.ogg       '4[78],...'
 	test_copy_until fm_vorbis.mkv  copy_u_vorbis_mkv.ogg '48,...'
 	test_copy_until fm_vorbis.ogg  copy_u_vorbis.ogg     '48,...'
@@ -317,11 +317,11 @@ test_copy() {
 	test_copy_seek fm_mp3.mkv     copy_s_mp3_mkv.mp3    '4[789],...'
 	test_copy_seek fm_mp3.mp3     copy_s_mp3.mp3        '5[01],...'
 	test_copy_seek fm_mp3_320.mp3 copy_s_mp3_320.mp3    '5[01],...'
-	test_copy_seek fm_opus.mkv    copy_s_opus_mkv.ogg   '4[789],...' '96,...'
-	test_copy_seek fm_opus.ogg    copy_s_opus.ogg       '48,...' '96,...'
-	test_copy_seek fm_vorbis.mkv  copy_s_vorbis_mkv.ogg '4[6789],...' '9[56],...'
+	test_copy_seek fm_opus.mkv    copy_s_opus_mkv.ogg   '4[789],...'
+	test_copy_seek fm_opus.ogg    copy_s_opus.ogg       '48,...'
+	test_copy_seek fm_vorbis.mkv  copy_s_vorbis_mkv.ogg '4[6789],...'
 	./phiola co co.wav -o co_vorbis.ogg -f
-	test_copy_seek co_vorbis.ogg  copy_s_vorbis.ogg     '4[78],...' '96,...'
+	test_copy_seek co_vorbis.ogg  copy_s_vorbis.ogg     '4[78],...'
 
 	## Seek + Until
 	O=copy_aac.m4a        ; ./phiola co -copy -f -s 1 -u 2 fm_aac.aac    -o $O ; ./phiola pl $O
