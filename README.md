@@ -2,15 +2,13 @@
 
 ![](res/phiola.svg)
 
-phiola *beta* - fast audio player, recorder, converter for Windows, Linux & Android.
+phiola - fast audio player, recorder, converter for Windows, Linux & Android.
 It can play audio files from your device or remote server, record audio from your microphone or Internet radio stream, process and convert audio into another format, and more.
 Its low CPU consumption conserves the notebook/phone battery.
 You can issue commands to phiola via its CLI, TUI, GUI, system pipe and SDK interfaces.
 Its fast startup time allows using it from custom scripts on a "play-and-exit" or "record-and-exit" basis.
 It's completely portable (all codecs are bundled) - you can run it directly from a read-only flash drive.
 It's a free and open-source project, and you can use it as a standalone application or as a library for your own software.
-
-*beta* note: still need to port some stuff from fmedia and re-test everything.
 
 Screenshots of phiola GUI on Android, KDE/Linux and Windows 10:
 ![phiola GUI on Android, KDE/Linux and Windows 10](../screenshots/phiola-gui-screenshot-android-kdelinux-windows.png)
@@ -69,7 +67,7 @@ See also: [phiola Architecture](doc/arch/arch.md).
 
 ## Install
 
-* Download the latest package for your OS and CPU from [phiola beta Releases](https://github.com/stsaz/phiola/releases)
+* Download the latest package for your OS and CPU from [phiola Releases](https://github.com/stsaz/phiola/releases)
 
 ### Linux
 

@@ -109,6 +109,8 @@ static void qu_cmd(struct core_data *d)
 JNIEXPORT jint JNICALL
 Java_com_github_stsaz_phiola_Phiola_quCmd(JNIEnv *env, jobject thiz, jlong jq, jint cmd, jint i)
 {
+	dbglog("%s: enter", __func__);
+	int rc = 0;
 	phi_queue_id q = (phi_queue_id)jq;
 
 	switch (cmd) {
@@ -125,16 +127,18 @@ Java_com_github_stsaz_phiola_Phiola_quCmd(JNIEnv *env, jobject thiz, jlong jq, j
 	}
 
 	case QUCOM_COUNT:
-		return x->queue->count(q);
+		rc = x->queue->count(q);  break;
 
 	case QUCOM_INDEX: {
 		struct phi_queue_entry *qe = x->queue->ref(q, i);
-		int r = x->queue->index(qe);
+		rc = x->queue->index(qe);
 		x->queue->unref(qe);
-		return r;
+		break;
 	}
 	}
-	return 0;
+
+	dbglog("%s: exit", __func__);
+	return rc;
 }
 
 JNIEXPORT jobject JNICALL
