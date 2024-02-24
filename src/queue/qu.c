@@ -123,7 +123,7 @@ static void q_free(struct phi_queue *q)
 {
 	struct q_entry **e;
 	FFSLICE_WALK(&q->index, e) {
-		if (qe_unref(*e))
+		if (qe_unref(*e) && (*e)->q == q)
 			(*e)->q = NULL;
 	}
 	ffvec_free(&q->index);
