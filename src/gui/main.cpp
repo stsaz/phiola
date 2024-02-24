@@ -23,7 +23,7 @@ struct gui_wmain {
 #endif
 
 	ffui_icon ico_play, ico_pause;
-	struct phi_queue_entry *qe_active;
+	uint playing_track_closing :1;
 
 	phi_timer tmr_redraw;
 	uint redraw_n, redraw_offset;
@@ -187,8 +187,8 @@ int wmain_track_new(phi_track *t, uint time_total)
 	m->tpos.range(time_total);
 	qe->length_msec = time_total * 1000;
 
-	void *qe_prev_active = m->qe_active;
-	m->qe_active = qe;
+	void *qe_prev_active = gd->qe_active;
+	gd->qe_active = qe;
 
 	int idx;
 	if (qe_prev_active && -1 != (idx = gd->queue->index(qe_prev_active)) && !gd->q_filtered)
@@ -215,22 +215,23 @@ int wmain_track_new(phi_track *t, uint time_total)
 }
 
 /** Thread: worker */
-void wmain_track_close()
+void wmain_track_close(phi_track *t)
 {
 	gui_wmain *m = gg->wmain;
 	if (!m || !m->ready) return;
 
-	if (m->qe_active != NULL) {
-		int idx = gd->queue->index(m->qe_active);
-		m->qe_active = NULL;
-		if (idx >= 0)
-			m->vlist.update(idx, 0);
+	int idx = gd->queue->index(t->qent);
+	if (idx >= 0) {
+		m->playing_track_closing = 1;
+		m->vlist.update(idx, 0);
 	}
 
 	m->wnd.title("phiola");
 	m->lpos.text("");
 	m->tpos.range(0);
 	wmain_status_id(ST_STOPPED);
+
+	m->playing_track_closing = 0;
 }
 
 /** Thread: worker */
@@ -301,9 +302,11 @@ static void list_display(ffui_view_disp *disp)
 	if (!qe)
 		return;
 
+	ffvec *meta = gui_qe_meta(qe);
+
 	switch (sub) {
 	case H_INDEX:
-		buf.zfmt("%s%u", (qe == m->qe_active) ? "> " : "", i + 1);
+		buf.zfmt("%s%u", (qe == gd->qe_active && !m->playing_track_closing) ? "> " : "", i + 1);
 		val = &buf;
 		break;
 
@@ -313,7 +316,7 @@ static void list_display(ffui_view_disp *disp)
 		break;
 
 	default:
-		if (!gd->metaif->find(&qe->conf.meta, FFSTR_Z(list_colname[sub]), &s, PHI_META_PRIVATE))
+		if (!gd->metaif->find(meta, FFSTR_Z(list_colname[sub]), &s, PHI_META_PRIVATE))
 			val = &s;
 	}
 
@@ -329,7 +332,7 @@ static void list_display(ffui_view_disp *disp)
 		if (!val && qe->length_msec != 0) {
 			uint sec = qe->length_msec / 1000;
 			buf.zfmt("%u:%02u", sec / 60, sec % 60);
-			gd->metaif->set(&qe->conf.meta, FFSTR_Z("_phi_dur"), buf, 0);
+			gd->metaif->set(meta, FFSTR_Z("_phi_dur"), buf, 0);
 			val = &buf;
 		}
 		break;

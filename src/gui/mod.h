@@ -46,6 +46,7 @@ FF_EXTERN void list_select(uint i);
 FF_EXTERN void list_filter(ffstr filter);
 FF_EXTERN phi_queue_id list_id_visible();
 
+FF_EXTERN ffvec* gui_qe_meta(struct phi_queue_entry *qe);
 FF_EXTERN void ctl_play(uint i);
 FF_EXTERN void volume_set(uint vol);
 FF_EXTERN void ctl_volume();
@@ -72,7 +73,7 @@ enum STATUS_ID {
 id: enum STATUS_ID */
 FF_EXTERN void wmain_status_id(uint id);
 FF_EXTERN int wmain_track_new(phi_track *t, uint time_total);
-FF_EXTERN void wmain_track_close();
+FF_EXTERN void wmain_track_close(phi_track *t);
 FF_EXTERN void wmain_track_update(uint time_cur, uint time_total);
 FF_EXTERN void wmain_conv_track_new(phi_track *t, uint time_total);
 FF_EXTERN void wmain_conv_track_close(phi_track *t);
@@ -105,6 +106,7 @@ struct gui_data {
 	const phi_adev_if *adev_if;
 
 	struct gtrk *playing_track;
+	struct phi_queue_entry *qe_active;
 	uint cursor;
 	uint seek_pos_sec;
 	uint marker_sec;

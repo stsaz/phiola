@@ -81,8 +81,10 @@ static void gtrk_close(void *ctx, phi_track *t)
 {
 	struct gtrk *gt = ctx;
 	if (gd->playing_track == gt) {
+		wmain_track_close(t);
+		gd->qe_active = NULL;
+		ffcpu_fence_release(); // sync with gui_qe_meta()
 		gd->playing_track = NULL;
-		wmain_track_close();
 	}
 	ffmem_free(gt);
 }

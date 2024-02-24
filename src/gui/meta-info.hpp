@@ -67,11 +67,13 @@ static void winfo_display(struct phi_queue_entry *qe)
 	}
 	winfo_addpair("File date", data);
 
-	gd->metaif->find(&qe->conf.meta, FFSTR_Z("_phi_info"), &val, PHI_META_PRIVATE);
+	const ffvec *meta = gui_qe_meta(qe);
+
+	gd->metaif->find(meta, FFSTR_Z("_phi_info"), &val, PHI_META_PRIVATE);
 	winfo_addpair("Info", val);
 
 	uint i = 0;
-	while (gd->metaif->list(&qe->conf.meta, &i, &name, &val, 0)) {
+	while (gd->metaif->list(meta, &i, &name, &val, 0)) {
 		winfo_addpair(name, val);
 	}
 }
