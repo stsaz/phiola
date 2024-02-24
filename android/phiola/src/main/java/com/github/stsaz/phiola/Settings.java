@@ -42,6 +42,14 @@ class CoreSettings {
 	boolean	conv_file_date_preserve;
 	boolean	conv_new_add_list;
 	static final String[] conv_extensions = {
+		"m4a",
+		"opus",
+		"ogg",
+		"flac",
+		"wav",
+		"mp3",
+	};
+	static final String[] conv_ext_display = {
 		".m4a (AAC-LC)",
 		".opus (Opus)",
 		".ogg (Vorbis)",

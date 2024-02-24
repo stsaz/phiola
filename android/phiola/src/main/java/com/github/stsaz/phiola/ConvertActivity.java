@@ -26,7 +26,7 @@ public class ConvertActivity extends AppCompatActivity {
 		setContentView(b.getRoot());
 
 		ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item
-			, CoreSettings.conv_extensions);
+			, CoreSettings.conv_ext_display);
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		b.spOutExt.setAdapter(adapter);
 
