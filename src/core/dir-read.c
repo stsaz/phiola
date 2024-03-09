@@ -2,8 +2,8 @@
 2019, Simon Zolin */
 
 #include <track.h>
-#include <util/fntree.h>
 #include <ffsys/dirscan.h>
+#include <ffbase/fntree.h>
 
 extern const phi_core *core;
 extern const phi_queue_if phi_queueif;

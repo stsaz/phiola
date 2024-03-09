@@ -290,10 +290,10 @@ static void list_display(ffui_view_disp *disp)
 #ifdef FF_WIN
 	if (!(disp->mask & LVIF_TEXT))
 		return;
-	uint i = disp->iItem, sub = disp->iSubItem;
-#else
-	uint i = disp->idx, sub = disp->sub;
 #endif
+
+	uint i = ffui_view_dispinfo_index(disp);
+	uint sub = ffui_view_dispinfo_subindex(disp);
 
 	gui_wmain *m = gg->wmain;
 	ffstrxx_buf<1000> buf;
@@ -536,13 +536,7 @@ Thread: gui, worker */
 void wmain_list_draw(uint n, uint flags)
 {
 	gui_wmain *m = gg->wmain;
-
 	m->vlist.length(n, 1);
-#ifdef FF_LINUX
-	if (flags == 1)
-		m->vlist.clear();
-	m->vlist.update(0, n);
-#endif
 }
 
 /** A new tab is selected */
@@ -673,12 +667,7 @@ static void wmain_action(ffui_window *wnd, int id)
 		break;
 
 	case A_LIST_DISPLAY:
-#ifdef FF_WIN
-		list_display(m->vlist.dispinfo_item);
-#else
-		list_display(&m->vlist.disp);
-#endif
-		break;
+		list_display(m->vlist.dispinfo_item);  break;
 
 // Record:
 	case A_RECORD_SHOW:

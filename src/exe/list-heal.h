@@ -21,8 +21,8 @@ Note: can NOT detect file renamings.\n\
 	return 1;
 }
 
-#include <util/fntree.h>
 #include <ffsys/dirscan.h>
+#include <ffbase/fntree.h>
 #include <ffsys/path.h>
 #include <ffbase/map.h>
 
