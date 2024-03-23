@@ -57,8 +57,8 @@ Features and notes by platform:
 | Record from mic      | ✅ | ✅ | ✅ |
 | Record from Internet | ✅ | ✅ | ❌ |
 | Record what you hear | ✅ (PulseAudio) | ✅ | ❌ |
-| Requirements         | glibc-2.28 | Windows 7 | Android 6 |
-| HW Requirements      | AMD64 | AMD64 | ARM64, ARM(incomplete) |
+| Requirements         | glibc-2.28(AMD64), glibc-2.36(ARM64) | Windows 7 | Android 6 |
+| HW Requirements      | AMD64, ARM64 | AMD64 | ARM64, ARM(incomplete) |
 
 > Although not officially supported, phiola should build fine for **macOS**, **FreeBSD** and **Windows XP** after tweaking the build script.
 

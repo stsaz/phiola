@@ -24,7 +24,12 @@ _:=
 ifeq "$(OS)" "windows"
 	CONFIGURE_FLAGS := --host=x86_64-w64-mingw32
 else ifeq "$(CPU)" "arm64"
-	CONFIGURE_FLAGS := --host=aarch64 --with-cpu=aarch64
+	ifeq "$(SYS)" "android"
+		CONFIGURE_FLAGS := --host=aarch64
+	else
+		CONFIGURE_FLAGS := --host=aarch64-linux-gnu
+	endif
+	CONFIGURE_FLAGS += --with-cpu=aarch64
 else ifeq "$(CPU)" "arm"
 	CONFIGURE_FLAGS := --host=armv7 --with-cpu=neon
 endif
@@ -173,11 +178,12 @@ $(LIB): $(OBJ)
 	$(LINK) -shared $+ $(LINKFLAGS) -o $@
 ifeq "$(SYS)" "android"
 	$(C_DIR)/llvm-objdump -T $@
-else
+else ifeq "$(CPU)" "amd64"
 ifeq "$(OS)" "linux"
 	ldd $@
 endif
 	objdump -T $@
+endif
 endif
 	ls -l $@
 

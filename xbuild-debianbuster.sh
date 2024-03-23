@@ -12,17 +12,18 @@ if ! podman container exists phiola_debianbuster_build ; then
 	if ! podman image exists phiola-debianbuster-builder ; then
 		# Create builder image
 		cat <<EOF | podman build -t phiola-debianbuster-builder -f - .
-FROM debian:buster-slim AS cxx-debianbuster-builder
+FROM debian:buster-slim
 RUN apt update && \
  apt install -y \
-  gcc g++ make
-
-FROM cxx-debianbuster-builder
+  make \
+  gcc g++
+RUN apt install -y \
+ zstd unzip bzip2 xz-utils \
+ cmake patch dos2unix curl
 RUN apt install -y \
  libasound2-dev libpulse-dev libjack-dev \
  libdbus-1-dev \
- libgtk-3-dev \
- zstd unzip cmake patch dos2unix curl
+ libgtk-3-dev
 EOF
 	fi
 

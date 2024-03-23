@@ -68,7 +68,7 @@ template<uint N> struct ffwstrxx_buf {
 struct ffvecxx : ffvec {
 	ffvecxx() { ffvec_null(this); }
 	ffvecxx(ffstr s) {
-		ptr = s.ptr, len = s.len, cap = s.len;
+		ptr = s.ptr, len = s.len, cap = (s.len == 0 && s.ptr != NULL) ? 1 : s.len;
 	}
 	~ffvecxx() { ffvec_free(this); }
 	void free() { ffvec_free(this); }

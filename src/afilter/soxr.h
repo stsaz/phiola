@@ -74,7 +74,6 @@ static inline int ffsoxr_create(ffsoxr *soxr, const struct phi_af *inpcm, const 
 	if (inpcm->channels != outpcm->channels)
 		return -1;
 
-
 	int itype = _ffsoxr_getfmt(inpcm->format, inpcm->interleaved);
 	int otype = _ffsoxr_getfmt(outpcm->format, outpcm->interleaved);
 	if (itype == -1 || otype == -1)

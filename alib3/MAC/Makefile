@@ -20,7 +20,10 @@ $(DIR): $(PKG)
 	$(UNZIP) $(PKG) -d $(DIR)
 	find $(DIR) -name '*.cpp' -print0 | xargs -0 dos2unix
 	find $(DIR) -name '*.h' -print0 | xargs -0 dos2unix
-	cd $(DIR) && cat ../*.patch | patch -p1
+	cd $(DIR) && cat ../0001-*.patch ../0003-*.patch | patch -p1
+ifeq "$(CPU)" "x86"
+	cd $(DIR) && cat ../0002-*.patch | patch -p1
+endif
 	touch $(DIR)
 
 # build
@@ -30,6 +33,9 @@ ifeq ($(OS),windows)
 	CXXFLAGS += -DPLATFORM_WINDOWS -DWINVER=0x0501
 else
 	CXXFLAGS += -DPLATFORM_LINUX
+endif
+ifeq "$(CPU)" "arm64"
+	CXXFLAGS += -DPLATFORM_x64
 endif
 
 SRC := \

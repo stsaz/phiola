@@ -24,7 +24,11 @@ _:=
 ifeq "$(OS)" "windows"
 	CONFIGURE_FLAGS := --host=x86_64-w64-mingw32
 else ifeq "$(CPU)" "arm64"
-	CONFIGURE_FLAGS := --host=aarch64
+	ifeq "$(SYS)" "android"
+		CONFIGURE_FLAGS := --host=aarch64
+	else
+		CONFIGURE_FLAGS := --host=aarch64-linux-gnu
+	endif
 else ifeq "$(CPU)" "arm"
 	CONFIGURE_FLAGS := --host=armv7
 endif

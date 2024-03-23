@@ -30,7 +30,8 @@ endif
 CFLAGS += $(CFLAGS_USER)
 CFLAGS_BASE := $(CFLAGS)
 CFLAGS += -I$(PHIOLA)/src -I$(FFSYS)
-CXXFLAGS := $(CFLAGS) -fno-exceptions -fno-rtti -Wno-c++11-narrowing
+CXXFLAGS := -std=c++11 $(CFLAGS) -fno-exceptions -fno-rtti
+CFLAGS := -std=c99 $(CFLAGS)
 ifeq "$(OS)" "windows"
 	LINKFLAGS += -lws2_32
 endif
@@ -141,3 +142,8 @@ PKG_NAME := phiola-$(PKG_VER)-$(OS)-$(PKG_ARCH).$(PKG_EXT)
 package: $(PKG_NAME)
 $(PKG_NAME): $(APP_DIR)
 	$(PKG_PACKER) $@ $<
+
+PKG_DEBUG_NAME := phiola-$(PKG_VER)-$(OS)-$(PKG_ARCH)-debug.$(PKG_EXT)
+$(PKG_DEBUG_NAME):
+	$(PKG_PACKER) $@ *.debug
+package-debug: $(PKG_DEBUG_NAME)

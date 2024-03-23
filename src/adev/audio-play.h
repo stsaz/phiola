@@ -103,7 +103,8 @@ static int audio_out_open(audio_out *a, phi_track *t, const struct phi_af *fmt)
 			}
 		}
 
-		errlog(t, "open(): unsupported format", 0);
+		errlog(t, "open(): format not supported: %s/%u/%u"
+			, ffaudio_format_str(conf.format), conf.sample_rate, conf.channels);
 		goto end;
 
 	} else if (r == FFAUDIO_ECONNECTION) {

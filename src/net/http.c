@@ -249,7 +249,7 @@ static void* httpcl_open(phi_track *t)
 {
 	struct httpcl *h = ffmem_new(struct httpcl);
 	h->trk = t;
-	h->cl = nml_http_client_new();
+	h->cl = nml_http_client_create();
 
 	struct nml_http_client_conf *c = &h->conf;
 	if (conf_prepare(h, c))

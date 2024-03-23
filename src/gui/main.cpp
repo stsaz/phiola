@@ -102,7 +102,7 @@ void wmain_userconf_write(ffconfw *cw)
 {
 	gui_wmain *m = gg->wmain;
 
-	ffvecxx v = {};
+	ffvecxx v;
 	ffui_viewcolxx vc = {};
 	vc.width(0);
 	for (uint i = 0;  i != _H_LAST;  i++) {

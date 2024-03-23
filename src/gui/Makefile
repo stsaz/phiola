@@ -35,8 +35,8 @@ ifeq "$(OS)" "windows"
 		ffgui-winapi-loader.o
 else
 	CFLAGS_GUI := -Wno-free-nonheap-object -Wno-deprecated-declarations \
-		`pkg-config --cflags gtk+-3.0`
-	LINKFLAGS_GUI := `pkg-config --libs gtk+-3.0` \
+		$(shell pkg-config --cflags gtk+-3.0)
+	LINKFLAGS_GUI := $(shell pkg-config --libs gtk+-3.0) \
 		$(LINK_PTHREAD) -lm
 	FFGUI_OBJ := \
 		ffgui-gtk.o \
@@ -45,9 +45,9 @@ endif
 ifeq "$(DEBUG_GUI)" "1"
 	CFLAGS_GUI += -DFFGUI_DEBUG
 endif
-CFLAGS_GUI += -I$(FFGUI)
-CFLAGS_GUI := $(CFLAGS) $(CFLAGS_GUI) -DFFBASE_OPT_SIZE
+CFLAGS_GUI += -I$(FFGUI) -DFFBASE_OPT_SIZE
 CXXFLAGS_GUI := $(CXXFLAGS) $(CFLAGS_GUI)
+CFLAGS_GUI := $(CFLAGS) $(CFLAGS_GUI)
 LINKFLAGS_GUI := $(LINKFLAGS) $(LINKFLAGS_GUI)
 
 gui-mod.o: $(PHIOLA)/src/gui/mod.c

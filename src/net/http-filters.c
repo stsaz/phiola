@@ -59,7 +59,12 @@ const nml_http_cl_component *hc_chain[] = {
 };
 
 #ifndef PHI_HTTP_NO_SSL
-#include <http-client/ssl.h>
+#include <ssl/ssl.h>
+#include <ssl/send.h>
+#include <ssl/receive.h>
+#include <ssl/handshake.h>
+#include <ssl/request.h>
+#include <ssl/response.h>
 const nml_http_cl_component *hc_ssl_chain[] = {
 	&nml_http_cl_resolve,
 	&nml_http_cl_connect,
