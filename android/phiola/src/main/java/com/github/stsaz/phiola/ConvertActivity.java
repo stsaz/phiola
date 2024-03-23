@@ -111,17 +111,21 @@ public class ConvertActivity extends AppCompatActivity {
 
 		length_msec = getIntent().getLongExtra("length", 0);
 
-		int sl = iname.lastIndexOf('/');
-		if (sl < 0)
-			sl = 0;
+		int pos_slash = iname.lastIndexOf('/');
+		if (pos_slash < 0)
+			pos_slash = 0;
 		else
-			sl++;
-		b.eOutDir.setText(iname.substring(0, sl));
+			pos_slash++;
+
+		if (b.eOutDir.getText().toString().isEmpty()) {
+			// output directory := input file's directory
+			b.eOutDir.setText(iname.substring(0, pos_slash));
+		}
 
 		int pos = iname.lastIndexOf('.');
 		if (pos < 0)
 			pos = 0;
-		b.eOutName.setText(iname.substring(sl, pos));
+		b.eOutName.setText(iname.substring(pos_slash, pos));
 	}
 
 	private static abstract class SBOnSeekBarChangeListener implements SeekBar.OnSeekBarChangeListener {
@@ -171,6 +175,7 @@ public class ConvertActivity extends AppCompatActivity {
 	private static int vorbis_q_progress(int q) { return q - 1; }
 
 	private void load() {
+		b.eOutDir.setText(core.setts.conv_out_dir);
 		b.spOutExt.setSelection(conv_extension(core.setts.conv_outext));
 
 		b.sbAacQ.setProgress(aac_q_progress(core.setts.conv_aac_quality));
@@ -189,6 +194,7 @@ public class ConvertActivity extends AppCompatActivity {
 	}
 
 	private void save() {
+		core.setts.conv_out_dir = b.eOutDir.getText().toString();
 		core.setts.conv_outext = CoreSettings.conv_extensions[b.spOutExt.getSelectedItemPosition()];
 		core.setts.conv_copy = b.swCopy.isChecked();
 
@@ -253,9 +259,23 @@ public class ConvertActivity extends AppCompatActivity {
 		if (false)
 			p.flags |= Phiola.ConvertParams.F_OVERWRITE;
 
-		iname = b.eInName.getText().toString();
+		String in = b.eInName.getText().toString();
+		if (in.isEmpty()) {
+			b.lResult.setText("Please specify Input file name");
+			return;
+		}
+
+		String odir = b.eOutDir.getText().toString();
+		if (odir.isEmpty()) {
+			int i = in.lastIndexOf('/');
+			if (i < 0)
+				i = 0;
+			odir = in.substring(0, i);
+		}
+
+		iname = in;
 		oname = String.format("%s/%s.%s"
-			, b.eOutDir.getText().toString()
+			, odir
 			, b.eOutName.getText().toString()
 			, CoreSettings.conv_extensions[b.spOutExt.getSelectedItemPosition()]);
 		core.phiola.convert(iname, oname, p,

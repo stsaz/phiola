@@ -34,6 +34,7 @@ class CoreSettings {
 		"Opus-VOIP"
 	};
 
+	String	conv_out_dir;
 	String	conv_outext;
 	int		conv_aac_quality;
 	int		conv_opus_quality;
@@ -74,6 +75,7 @@ class CoreSettings {
 		rec_buf_len_ms = 500;
 		rec_until_sec = 3600;
 
+		conv_out_dir = "";
 		conv_outext = "m4a";
 		conv_aac_quality = 5;
 		conv_opus_quality = 192;
@@ -100,6 +102,7 @@ class CoreSettings {
 			+ "rec_danorm %d\n"
 			+ "rec_gain %d\n"
 			+ "rec_exclusive %d\n"
+			+ "conv_out_dir %s\n"
 			+ "conv_outext %s\n"
 			+ "conv_aac_q %d\n"
 			+ "conv_opus_q %d\n"
@@ -125,6 +128,7 @@ class CoreSettings {
 			, core.bool_to_int(rec_danorm)
 			, rec_gain_db100
 			, core.bool_to_int(rec_exclusive)
+			, conv_out_dir
 			, conv_outext
 			, conv_aac_quality
 			, conv_opus_quality
@@ -190,6 +194,7 @@ class CoreSettings {
 		rec_until_sec = core.str_to_uint(kv[Conf.REC_UNTIL].value, rec_until_sec);
 		rec_gain_db100 = core.str_to_int(kv[Conf.REC_GAIN].value, rec_gain_db100);
 
+		conv_out_dir = kv[Conf.CONV_OUT_DIR].value;
 		conv_outext = kv[Conf.CONV_OUTEXT].value;
 		conv_aac_quality = core.str_to_uint(kv[Conf.CONV_AAC_Q].value, conv_aac_quality);
 		conv_opus_quality = core.str_to_uint(kv[Conf.CONV_OPUS_Q].value, conv_opus_quality);
