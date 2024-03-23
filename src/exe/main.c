@@ -124,7 +124,28 @@ static const phi_filter phi_guard_gui = {
 
 #include <exe/cmd.h>
 
-static int conf(const char *argv_0)
+static const struct ffarg conf_args[] = {
+	{ "Codepage",	'S',		cmd_codepage },
+	{}
+};
+
+static int conf_read(struct exe *x, ffstr d)
+{
+	ffstr line;
+	while (d.len) {
+		ffstr_splitby(&d, '\n', &line, &d);
+		ffstr_trimwhite(&line);
+		line.ptr[line.len] = '\0';
+
+		ffmem_zero_obj(&x->cmd);
+		int r = ffargs_process_line(&x->cmd, conf_args, x, 0, line.ptr);
+		if (r)
+			return -1;
+	}
+	return 0;
+}
+
+static int conf(struct exe *x, const char *argv_0)
 {
 	const char *p;
 	if (NULL == (p = ffps_filename(x->fn, sizeof(x->fn), argv_0)))
@@ -132,6 +153,16 @@ static int conf(const char *argv_0)
 	if (ffpath_splitpath_str(FFSTR_Z(p), &x->root_dir, NULL) < 0)
 		return -1;
 	x->root_dir.len++;
+
+	char *conf_fn = ffsz_allocfmt("%Sphiola.conf", &x->root_dir);
+	ffvec buf = {};
+	if (!fffile_readwhole(conf_fn, &buf, 10*1024*1024)
+		&& conf_read(x, *(ffstr*)&buf)) {
+		errlog("reading '%s': %s", conf_fn, x->cmd.error);
+	}
+
+	ffvec_free(&buf);
+	ffmem_free(conf_fn);
 	return 0;
 }
 
@@ -238,12 +269,13 @@ int main(int argc, char **argv, char **env)
 	x->exit_code = 1;
 	logs(&x->log);
 
+	if (conf(x, argv[0])) goto end;
+
 #ifdef FF_WIN
 	x->cmd_line = ffsz_alloc_wtou(GetCommandLineW());
 #endif
 	if (cmd(argv, argc, x->cmd_line)) goto end;
 
-	if (conf(argv[0])) goto end;
 	if (x->stdout_busy)
 		logs(&x->log);
 	if (core()) goto end;
