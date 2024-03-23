@@ -95,6 +95,7 @@ static int aconv_prepare(struct aconv *c, phi_track *t)
 		// next module's input format:
 		t->aconv.in.format = c->fo.format;
 		t->aconv.in.channels = c->fo.channels;
+		t->aconv.in.interleaved = c->fo.interleaved;
 	}
 
 	int r = pcm_convert(&c->fo, NULL, &c->fi, NULL, 0);
