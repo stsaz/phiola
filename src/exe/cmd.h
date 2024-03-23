@@ -164,7 +164,7 @@ Usage:\n\
 Global options:\n\
   `-Background`   Create new process running in background\n\
   `-Codepage`     Codepage for non-Unicode text:\n\
-                  win1251 | win1252\n\
+                  win866 | win1251 | win1252\n\
   `-Debug`        Print debug log messages\n\
 \n\
 Commands:\n\
@@ -215,10 +215,8 @@ static int ffu_coding(ffstr s)
 static int cmd_codepage(void *obj, ffstr s)
 {
 	int r = ffu_coding(s);
-	if (r < 0) {
-		_ffargs_err(&x->cmd, 1, "unknown codepage: '%S'", &s);
-		return 1;
-	}
+	if (r < 0)
+		return _ffargs_err(&x->cmd, 1, "unknown codepage: '%S'", &s);
 	x->codepage_id = r;
 	return 0;
 }
@@ -354,7 +352,7 @@ done:
 #define O(m)  (void*)FF_OFF(struct exe, m)
 static const struct ffarg cmd_root[] = {
 	{ "-Background",'1',		O(background) },
-	{ "-Codepage",	's',		cmd_codepage },
+	{ "-Codepage",	'S',		cmd_codepage },
 	{ "-Debug",		'1',		O(debug) },
 
 	{ "-help",		0,			root_help },
