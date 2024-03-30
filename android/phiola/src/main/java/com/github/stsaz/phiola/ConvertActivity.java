@@ -117,11 +117,6 @@ public class ConvertActivity extends AppCompatActivity {
 		else
 			pos_slash++;
 
-		if (b.eOutDir.getText().toString().isEmpty()) {
-			// output directory := input file's directory
-			b.eOutDir.setText(iname.substring(0, pos_slash));
-		}
-
 		int pos = iname.lastIndexOf('.');
 		if (pos < 0)
 			pos = 0;

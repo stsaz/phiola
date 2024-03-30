@@ -102,7 +102,7 @@ class CoreSettings {
 			+ "rec_danorm %d\n"
 			+ "rec_gain %d\n"
 			+ "rec_exclusive %d\n"
-			+ "conv_out_dir %s\n"
+			+ "conv_out_dir2 %s\n"
 			+ "conv_outext %s\n"
 			+ "conv_aac_q %d\n"
 			+ "conv_opus_q %d\n"
