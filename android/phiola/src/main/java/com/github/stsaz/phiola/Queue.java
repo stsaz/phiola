@@ -259,6 +259,13 @@ class Queue {
 		i_selected--;
 		if (i_selected < 0)
 			i_selected = 0;
+
+		// As positions of all next lists have just been changed, we must rewrite the files on disk accordingly
+		int i = 0;
+		for (PhiolaQueue q : queues) {
+			if (i++ >= i_selected)
+				q.modified = true;
+		}
 	}
 
 	void close() {
