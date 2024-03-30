@@ -13,6 +13,8 @@ It must be updated when incompatible changes are made to this file,
 The core will refuse to load modules built for any other core version. */
 #define PHI_VERSION_CORE  20018
 
+typedef long long int64;
+typedef unsigned long long uint64;
 typedef unsigned int uint;
 typedef unsigned short ushort;
 typedef unsigned char u_char;
