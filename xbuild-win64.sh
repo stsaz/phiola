@@ -12,12 +12,12 @@ if ! podman container exists phiola_win64_build ; then
 	if ! podman image exists phiola-win64-builder ; then
 		# Create builder image
 		cat <<EOF | podman build -t phiola-win64-builder -f - .
-FROM debian:bookworm-slim AS cxx-mingw64-debian-bookworm
+FROM debian:bookworm-slim
 RUN apt update && \
  apt install -y \
-  gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 make
-
-FROM cxx-mingw64-debian-bookworm
+  make
+RUN apt install -y \
+ gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64
 RUN apt install -y \
  perl \
  zstd zip unzip bzip2 \
@@ -43,7 +43,7 @@ make -j8 openssl \
  COMPILER=gcc \
  CROSS_PREFIX=x86_64-w64-mingw32-
 
-make -j8 libzstd \
+make -j8 zstd \
  -C ../ffpack \
  OS=windows \
  COMPILER=gcc \

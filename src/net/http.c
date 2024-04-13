@@ -115,7 +115,7 @@ int phi_hc_resp(void *ctx, struct phi_http_data *d)
 
 	if (d->code != 200) {
 		errlog(NULL, "resource unavailable: %S", &d->status);
-		return NMLF_ERR;
+		return NMLR_ERR;
 	}
 
 	static const struct map_sz_vptr ct_ext[] = {
@@ -130,7 +130,7 @@ int phi_hc_resp(void *ctx, struct phi_http_data *d)
 	h->trk->icy_meta_interval = d->icy_meta_interval;
 	h->icy = !!d->icy_meta_interval;
 
-	return NMLF_OPEN;
+	return NMLR_OPEN;
 }
 
 int phi_hc_data(void *ctx, ffstr data, uint flags)
@@ -145,13 +145,13 @@ int phi_hc_data(void *ctx, ffstr data, uint flags)
 			core->track->wake(h->trk);
 			h->fstate = 1;
 		}
-		return NMLF_ASYNC;
+		return NMLR_ASYNC;
 
 	case 1:
 		h->fstate = 0;
-		return NMLF_BACK;
+		return NMLR_BACK;
 	}
-	return NMLF_ERR;
+	return NMLR_ERR;
 }
 
 static void on_complete(void *param)

@@ -10,7 +10,7 @@ static void pulsr_close(struct pulsr *p, phi_track *t)
 {
 	core->timer(t->worker, &p->tmr, 0, NULL, NULL);
 	audio_in_close(&p->in);
-	ffmem_free(p);
+	phi_track_free(t, p);
 }
 
 static void* pulsr_open(phi_track *t)
@@ -18,7 +18,7 @@ static void* pulsr_open(phi_track *t)
 	if (0 != pulse_init(t))
 		return PHI_OPEN_ERR;
 
-	struct pulsr *p = ffmem_new(struct pulsr);
+	struct pulsr *p = phi_track_allocT(t, struct pulsr);
 	audio_in *a = &p->in;
 	a->audio = &ffpulse;
 	a->trk = t;

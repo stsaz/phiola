@@ -321,7 +321,25 @@ The best example how to use phiola software interface is to see the source code 
 
 ## External Libraries
 
-phiola uses modified versions of these third party libraries: [libALAC](https://github.com/macosforge/alac), [libfdk-aac](https://github.com/mstorsjo/fdk-aac), [libFLAC](https://github.com/xiph/flac), libMAC, [libmpg123](https://mpg123.de), libmpc, [libogg](https://github.com/xiph/ogg), [libopus](https://github.com/xiph/opus), [libvorbis](https://github.com/xiph/vorbis), libwavpack, libsoxr, [libzstd](https://github.com/facebook/zstd), [libDynamicAudioNormalizer](https://github.com/lordmulder/DynamicAudioNormalizer).  And unmodified libraries: libssl & libcrypto.  Many thanks to their creators for the great work!!!  Please consider their licenses before commercial use.  See contents of `alib3/` for more info.
+phiola uses modified versions of these third party libraries:
+[libALAC](https://github.com/macosforge/alac),
+[libfdk-aac](https://github.com/mstorsjo/fdk-aac),
+[libFLAC](https://github.com/xiph/flac),
+libMAC,
+[libmpg123](https://mpg123.de),
+libmpc,
+[libogg](https://github.com/xiph/ogg),
+[libopus](https://github.com/xiph/opus),
+[libvorbis](https://github.com/xiph/vorbis),
+libwavpack,
+libsoxr,
+[libzstd](https://github.com/facebook/zstd),
+[libDynamicAudioNormalizer](https://github.com/lordmulder/DynamicAudioNormalizer).
+And these unmodified libraries:
+[openssl](https://www.openssl.org).
+Many thanks to their creators for the great work!!!
+Please consider their licenses before commercial use.
+See contents of `alib3/` for more info.
 
 Additionally:
 

@@ -16,7 +16,7 @@ struct gain {
 
 static void* gain_open(phi_track *t)
 {
-	struct gain *c = ffmem_new(struct gain);
+	struct gain *c = phi_track_allocT(t, struct gain);
 	c->pcm = t->audio.format;
 	c->samp_size = pcm_size1(&c->pcm);
 	t->audio.gain_db = (t->audio.gain_db) ? t->audio.gain_db : t->conf.afilter.gain_db;
@@ -27,7 +27,7 @@ static void* gain_open(phi_track *t)
 static void gain_close(void *ctx, phi_track *t)
 {
 	struct gain *c = ctx;
-	ffmem_free(c);
+	phi_track_free(t, c);
 }
 
 static int gain_process(void *ctx, phi_track *t)

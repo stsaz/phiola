@@ -8,7 +8,7 @@ struct gui_wrecord {
 	ffui_comboboxxx		cbext, cbdev, cbchan;
 	ffui_buttonxx		bstart;
 
-	ffstrxx conf_dir, conf_name, conf_ext;
+	xxstr conf_dir, conf_name, conf_ext;
 	uint conf_aacq, conf_vorbisq, conf_opusq;
 	uint conf_until;
 	uint conf_idev;
@@ -54,7 +54,7 @@ const ffarg wrecord_args[] = {
 };
 #undef O
 
-static uint wrec_vorbisq_conf(ffstrxx s)
+static uint wrec_vorbisq_conf(xxstr s)
 {
 	int n = s.int16(255);
 	if (n == 255) {
@@ -102,12 +102,12 @@ static void wrecord_ui_to_conf()
 
 	c->conf_idev = c->cbdev.get();
 	c->conf_channels = c->cbchan.get();
-	c->conf_rate = ffvecxx(c->e_rate.text()).str().uint32(0);
-	c->conf_until = wrec_time_value(ffvecxx(c->euntil.text()).str());
+	c->conf_rate = xxvec(c->e_rate.text()).str().uint32(0);
+	c->conf_until = wrec_time_value(xxvec(c->euntil.text()).str());
 
-	c->conf_aacq = ffvecxx(c->eaacq.text()).str().uint32(0);
-	c->conf_vorbisq = wrec_vorbisq_conf(ffvecxx(c->evorbisq.text()).str());
-	c->conf_opusq = ffvecxx(c->eopusq.text()).str().uint32(0);
+	c->conf_aacq = xxvec(c->eaacq.text()).str().uint32(0);
+	c->conf_vorbisq = wrec_vorbisq_conf(xxvec(c->evorbisq.text()).str());
+	c->conf_opusq = xxvec(c->eopusq.text()).str().uint32(0);
 }
 
 void wrecord_userconf_write(ffconfw *cw)
@@ -165,7 +165,7 @@ static void file_extensions_fill()
 	};
 	for (uint i = 0;  i < FF_COUNT(oext);  i++) {
 		w->cbext.add(oext[i]);
-		if (w->conf_ext == oext[i])
+		if (w->conf_ext.equals(oext[i]))
 			index = i;
 	}
 	w->cbext.set(index);
@@ -205,7 +205,7 @@ static void wrecord_ui_from_conf()
 	channels_fill();
 	file_extensions_fill();
 
-	ffstrxx_buf<100> s;
+	xxstr_buf<100> s;
 	if (w->conf_until)
 		w->euntil.text(wrec_time_str(s.ptr, 100, w->conf_until));
 	if (w->conf_rate)

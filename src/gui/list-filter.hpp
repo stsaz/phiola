@@ -21,7 +21,7 @@ static void wlistfilter_action(ffui_window *wnd, int id)
 		gui_core_task_data(list_filter, w->tfilter.text());  break;
 
 	case A_LISTFILTER_CLOSE:
-		gui_core_task_data(list_filter, ffstrxx());  break;
+		gui_core_task_data(list_filter, xxstr());  break;
 	}
 }
 

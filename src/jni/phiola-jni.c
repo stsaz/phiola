@@ -100,7 +100,7 @@ static void exe_log(void *log_obj, uint flags, const char *module, phi_track *t,
 
 #define dbglog(...) \
 do { \
-	if (x->debug) \
+	if (ff_unlikely(x->debug)) \
 		exe_log(NULL, PHI_LOG_DEBUG, NULL, NULL, __VA_ARGS__); \
 } while (0)
 

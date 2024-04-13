@@ -31,19 +31,19 @@
 
 #define phi_dbglogv(core, mod, trk, fmt, va) \
 do { \
-	if (core->conf.log_level >= PHI_LOG_DEBUG) \
+	if (ff_unlikely(core->conf.log_level >= PHI_LOG_DEBUG)) \
 		core->conf.logv(core->conf.log_obj, PHI_LOG_DEBUG, mod, trk, fmt, va); \
 } while (0)
 
 #define phi_dbglog(core, mod, trk, ...) \
 do { \
-	if (core->conf.log_level >= PHI_LOG_DEBUG) \
+	if (ff_unlikely(core->conf.log_level >= PHI_LOG_DEBUG)) \
 		core->conf.log(core->conf.log_obj, PHI_LOG_DEBUG, mod, trk, __VA_ARGS__); \
 } while (0)
 
 #define phi_extralog(core, mod, trk, ...) \
 do { \
-	if (core->conf.log_level >= PHI_LOG_EXTRA) \
+	if (ff_unlikely(core->conf.log_level >= PHI_LOG_EXTRA)) \
 		core->conf.log(core->conf.log_obj, PHI_LOG_EXTRA, mod, trk, __VA_ARGS__); \
 } while (0)
 
@@ -94,14 +94,13 @@ struct phi_filter {
 	/** Return enum PHI_R */
 	int (*process)(void *f, phi_track *t);
 
-	char name[32];
+	char name[16];
 };
 
 #define MAX_FILTERS 20
 
 struct filter {
-	const char *name;
-	const struct phi_filter *iface;
+	struct phi_filter iface;
 	void *obj;
 	fftime busytime;
 	uint backward_skip :1;
@@ -181,7 +180,7 @@ struct phi_track {
 		uint ape_align4;
 
 		// mp3.read -> mpeg.dec
-		ffbyte mpeg1_vbr_scale; // +1
+		u_char mpeg1_vbr_scale; // +1
 	} audio;
 
 	struct {
@@ -233,7 +232,37 @@ struct phi_track {
 		uint64 seek; // Seek to offset and reset. -1:unset
 		uint cant_seek :1;
 	} output;
+
+	uint area_cap, area_size;
+	u_char area[0];
+	// filter private data[]
+	// padding[]
+	// ...
 };
+
+static inline void* phi_track_alloc(phi_track *t, uint n)
+{
+	uint sz = t->area_size + ffint_align_ceil2(n, 8);
+	if (sz > t->area_cap) {
+		FF_ASSERT(0);
+		return ffmem_calloc(1, n);
+	}
+	void *p = t->area + t->area_size;
+	t->area_size = sz;
+	// ffmem_zero(p, n);
+	return p;
+
+}
+#define phi_track_allocT(t, T)  phi_track_alloc(t, sizeof(T))
+
+static inline void phi_track_free(phi_track *t, void *ptr)
+{
+	if ((u_char*)ptr >= t->area
+		&& (u_char*)ptr < t->area + t->area_cap) {
+		return;
+	}
+	ffmem_free(ptr);
+}
 
 static inline void phi_track_conf_assign(struct phi_track_conf *dst, const struct phi_track_conf *src)
 {

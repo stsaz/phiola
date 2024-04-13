@@ -11,7 +11,7 @@ static void* wasapi_open(phi_track *t)
 	if (0 != wasapi_init(t))
 		return PHI_OPEN_ERR;
 
-	audio_out *w = ffmem_new(audio_out);
+	audio_out *w = phi_track_allocT(t, audio_out);
 	w->audio = &ffwasapi;
 	w->trk = t;
 	return w;
@@ -120,7 +120,7 @@ static void wasapi_close(void *ctx, phi_track *t)
 	}
 
 	ffwasapi.dev_free(w->dev);
-	ffmem_free(w);
+	phi_track_free(t, w);
 }
 
 static int wasapi_write(void *ctx, phi_track *t)

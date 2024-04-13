@@ -3,7 +3,7 @@
 
 static void* tuirec_open(phi_track *t)
 {
-	struct tui_rec *u = ffmem_new(struct tui_rec);
+	struct tui_rec *u = phi_track_allocT(t, struct tui_rec);
 	u->t = t;
 	mod->curtrk_rec = u;
 	u->maxdb = -MINDB;
@@ -23,7 +23,7 @@ static void tuirec_close(void *ctx, phi_track *t)
 	if (u == mod->curtrk_rec)
 		mod->curtrk_rec = NULL;
 	ffvec_free(&u->buf);
-	ffmem_free(u);
+	phi_track_free(t, u);
 }
 
 static int tuirec_process(void *ctx, phi_track *t)

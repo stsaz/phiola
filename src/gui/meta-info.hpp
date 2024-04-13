@@ -31,7 +31,7 @@ void winfo_userconf_write(ffconfw *cw)
 		ffconfw_add2z(cw, "winfo.pos", w->wnd_pos);
 }
 
-static void winfo_addpair(ffstrxx name, ffstrxx val)
+static void winfo_addpair(xxstr name, xxstr val)
 {
 	gui_winfo *w = gg->winfo;
 	int i = w->vinfo.append(name);

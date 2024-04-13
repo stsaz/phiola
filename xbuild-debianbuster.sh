@@ -15,8 +15,9 @@ if ! podman container exists phiola_debianbuster_build ; then
 FROM debian:buster-slim
 RUN apt update && \
  apt install -y \
-  make \
-  gcc g++
+  make
+RUN apt install -y \
+ gcc g++
 RUN apt install -y \
  zstd unzip bzip2 xz-utils \
  cmake patch dos2unix curl
@@ -43,7 +44,7 @@ set -xe
 make -j8 openssl \
  -C ../netmill/3pt
 
-make -j8 libzstd \
+make -j8 zstd \
  -C ../ffpack
 
 make -j8 \

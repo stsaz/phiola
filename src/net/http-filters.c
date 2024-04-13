@@ -60,22 +60,22 @@ const nml_http_cl_component *hc_chain[] = {
 
 #ifndef PHI_HTTP_NO_SSL
 #include <ssl/ssl.h>
-#include <ssl/send.h>
-#include <ssl/receive.h>
-#include <ssl/handshake.h>
-#include <ssl/request.h>
-#include <ssl/response.h>
+#include <ssl/htcl-send.h>
+#include <ssl/htcl-receive.h>
+#include <ssl/htcl-handshake.h>
+#include <ssl/htcl-request.h>
+#include <ssl/htcl-response.h>
 const nml_http_cl_component *hc_ssl_chain[] = {
 	&nml_http_cl_resolve,
 	&nml_http_cl_connect,
-	&nml_http_cl_ssl_recv,
-	&nml_http_cl_ssl_handshake,
-	&nml_http_cl_ssl_send,
+	&nml_htcl_ssl_recv,
+	&nml_htcl_ssl_handshake,
+	&nml_htcl_ssl_send,
 	&nml_http_cl_request,
-	&nml_http_cl_ssl_req,
-	&nml_http_cl_ssl_send,
-	&nml_http_cl_ssl_recv,
-	&nml_http_cl_ssl_resp,
+	&nml_htcl_ssl_req,
+	&nml_htcl_ssl_send,
+	&nml_htcl_ssl_recv,
+	&nml_htcl_ssl_resp,
 	&nml_http_cl_response,
 	&nml_http_cl_transfer,
 	&nml_http_cl_redir,

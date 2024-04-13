@@ -15,8 +15,9 @@ if ! podman container exists phiola_debianbookworm_arm64_build ; then
 FROM debian:bookworm-slim
 RUN apt update && \
  apt install -y \
-  make \
-  gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+  make
+RUN apt install -y \
+ gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 RUN apt install -y \
  zstd unzip bzip2 xz-utils \
  cmake patch dos2unix curl
@@ -41,7 +42,7 @@ fi
 cat >build_linux.sh <<EOF
 set -xe
 
-make -j8 libzstd \
+make -j8 zstd \
  -C ../ffpack \
  CPU=arm64 \
  CROSS_PREFIX=aarch64-linux-gnu-

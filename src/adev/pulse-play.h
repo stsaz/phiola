@@ -6,7 +6,7 @@ static void* pulse_open(phi_track *t)
 	if (0 != pulse_init(t))
 		return PHI_OPEN_ERR;
 
-	audio_out *a = ffmem_new(audio_out);
+	audio_out *a = phi_track_allocT(t, audio_out);
 	a->audio = &ffpulse;
 	a->trk = t;
 	return a;
@@ -35,7 +35,7 @@ static void pulse_close(void *ctx, phi_track *t)
 	}
 
 	ffpulse.dev_free(a->dev);
-	ffmem_free(a);
+	phi_track_free(t, a);
 }
 
 static int pulse_create(audio_out *a, phi_track *t)

@@ -135,45 +135,45 @@ test_until() {
 	./phiola i -peaks fm_aac.mkv     | grep -E '9[67],... total'
 	./phiola i -peaks fm_aac.mp4     | grep -E '9[67],... total'
 	./phiola i -peaks fm_alac.mkv    | grep -E '9[56],... total'
-	./phiola i -peaks fm_alac.mp4    | grep -E '96,000 total'
-	./phiola i -peaks fm_flac.flac   | grep -E '96,000 total'
+	./phiola i -peaks fm_alac.mp4    | grep '96,000 total'
+	./phiola i -peaks fm_flac.flac   | grep '96,000 total'
 	./phiola i -peaks fm_flac.ogg    | grep -E '96,... total'
 	./phiola i -peaks fm_mp3.avi     | grep -E '9[67],... total'
 	./phiola i -peaks fm_mp3.mkv     | grep -E '9[67],... total'
-	./phiola i -peaks fm_mp3.mp3     | grep -E '96,000 total'
-	./phiola i -peaks fm_mp3_320.mp3 | grep -E '96,000 total'
+	./phiola i -peaks fm_mp3.mp3     | grep '96,000 total'
+	./phiola i -peaks fm_mp3_320.mp3 | grep '96,000 total'
 	./phiola i -peaks fm_opus.mkv    | grep -E '96,... total'
-	./phiola i -peaks fm_opus.ogg    | grep -E '96,000 total'
-	./phiola i -peaks fm_pcm.avi     | grep -E '96,000 total'
-	./phiola i -peaks fm_pcm.caf     | grep -E '96,000 total'
-	./phiola i -peaks fm_pcm.mkv     | grep -E '96,000 total'
-	./phiola i -peaks fm_pcm.wav     | grep -E '96,000 total'
+	./phiola i -peaks fm_opus.ogg    | grep '96,000 total'
+	./phiola i -peaks fm_pcm.avi     | grep '96,000 total'
+	./phiola i -peaks fm_pcm.caf     | grep '96,000 total'
+	./phiola i -peaks fm_pcm.mkv     | grep '96,000 total'
+	./phiola i -peaks fm_pcm.wav     | grep '96,000 total'
 	./phiola i -peaks fm_vorbis.mkv  | grep -E '96,... total'
-	./phiola i -peaks fm_vorbis.ogg  | grep -E '96,000 total'
-	./phiola i -peaks fm_wv.wv       | grep -E '96,000 total'
+	./phiola i -peaks fm_vorbis.ogg  | grep '96,000 total'
+	./phiola i -peaks fm_wv.wv       | grep '96,000 total'
 
 	## the ffmpeg-generated mkv file may contain the blocks with +1ms greater start position
-	./phiola i -peaks -u 1 fm_aac.aac     | grep -E '48,000 total'
+	./phiola i -peaks -u 1 fm_aac.aac     | grep '48,000 total'
 	# ./phiola i -peaks -u 1 fm_aac.avi     | grep -E '4[89],... total'
 	./phiola i -peaks -u 1 fm_aac.mkv     | grep -E '48,... total'
-	./phiola i -peaks -u 1 fm_aac.mp4     | grep -E '48,000 total'
+	./phiola i -peaks -u 1 fm_aac.mp4     | grep '48,000 total'
 	./phiola i -peaks -u 1 fm_alac.mkv    | grep -E '4[78],... total'
-	./phiola i -peaks -u 1 fm_alac.mp4    | grep -E '48,000 total'
-	./phiola i -peaks -u 1 fm_flac.flac   | grep -E '48,000 total'
-	./phiola i -peaks -u 1 fm_flac.ogg    | grep -E '48,000 total'
-	./phiola i -peaks -u 1 fm_mp3.avi     | grep -E '48,000 total'
-	./phiola i -peaks -u 1 fm_mp3.mkv     | grep -E '48,000 total'
-	./phiola i -peaks -u 1 fm_mp3.mp3     | grep -E '48,000 total'
-	./phiola i -peaks -u 1 fm_mp3_320.mp3 | grep -E '48,000 total'
+	./phiola i -peaks -u 1 fm_alac.mp4    | grep '48,000 total'
+	./phiola i -peaks -u 1 fm_flac.flac   | grep '48,000 total'
+	./phiola i -peaks -u 1 fm_flac.ogg    | grep '48,000 total'
+	./phiola i -peaks -u 1 fm_mp3.avi     | grep '48,000 total'
+	./phiola i -peaks -u 1 fm_mp3.mkv     | grep '48,000 total'
+	./phiola i -peaks -u 1 fm_mp3.mp3     | grep '48,000 total'
+	./phiola i -peaks -u 1 fm_mp3_320.mp3 | grep '48,000 total'
 	./phiola i -peaks -u 1 fm_opus.mkv    | grep -E '4[78],... total'
-	./phiola i -peaks -u 1 fm_opus.ogg    | grep -E '48,000 total'
-	./phiola i -peaks -u 1 fm_pcm.avi     | grep -E '48,000 total'
-	./phiola i -peaks -u 1 fm_pcm.caf     | grep -E '48,000 total'
+	./phiola i -peaks -u 1 fm_opus.ogg    | grep '48,000 total'
+	./phiola i -peaks -u 1 fm_pcm.avi     | grep '48,000 total'
+	./phiola i -peaks -u 1 fm_pcm.caf     | grep '48,000 total'
 	./phiola i -peaks -u 1 fm_pcm.mkv     | grep -E '48,... total'
-	./phiola i -peaks -u 1 fm_pcm.wav     | grep -E '48,000 total'
+	./phiola i -peaks -u 1 fm_pcm.wav     | grep '48,000 total'
 	./phiola i -peaks -u 1 fm_vorbis.mkv  | grep -E '4[78],... total'
-	./phiola i -peaks -u 1 fm_vorbis.ogg  | grep -E '48,000 total'
-	./phiola i -peaks -u 1 fm_wv.wv       | grep -E '48,000 total'
+	./phiola i -peaks -u 1 fm_vorbis.ogg  | grep '48,000 total'
+	./phiola i -peaks -u 1 fm_wv.wv       | grep '48,000 total'
 }
 
 test_seek() {
@@ -192,26 +192,22 @@ test_seek() {
 	./phiola i -peaks -s 1 fm_aac.mkv     | grep -E '4[89],... total'
 	./phiola i -peaks -s 1 fm_aac.mp4     | grep -E '4[89],... total'
 	./phiola i -peaks -s 1 fm_alac.mkv    | grep -E '4[678],... total'
-	./phiola i -peaks -s 1 fm_alac.mp4    | grep -E '48,000 total'
-	./phiola i -peaks -s 1 fm_flac.flac   | grep -E '48,000 total'
+	./phiola i -peaks -s 1 fm_alac.mp4    | grep '48,000 total'
+	./phiola i -peaks -s 1 fm_flac.flac   | grep '48,000 total'
 	./phiola i -peaks -s 1 fm_flac.ogg    | grep -E '4[45678],... total'
 	# ./phiola i -peaks -s 1 fm_mp3.avi     | grep -E '4[89],... total'
 	./phiola i -peaks -s 1 fm_mp3.mkv     | grep -E '4[89],... total'
 	./phiola i -peaks -s 1 fm_mp3.mp3     | grep -E '50,... total'
 	./phiola i -peaks -s 1 fm_mp3_320.mp3 | grep -E '49,... total'
 	./phiola i -peaks -s 1 fm_opus.mkv    | grep -E '4[78],... total'
-	./phiola i -peaks -s 1 fm_opus.ogg    | grep -E '48,000 total'
+	./phiola i -peaks -s 1 fm_opus.ogg    | grep '48,000 total'
 	# ./phiola i -peaks -s 1 fm_pcm.avi     | grep -E '4[89],... total'
 	# ./phiola i -peaks -s 1 fm_pcm.caf     | grep -E '4[89],... total'
 	./phiola i -peaks -s 1 fm_pcm.mkv     | grep -E '4[78],... total'
-	./phiola i -peaks -s 1 fm_pcm.wav     | grep -E '48,000 total'
+	./phiola i -peaks -s 1 fm_pcm.wav     | grep '48,000 total'
 	./phiola i -peaks -s 1 fm_vorbis.mkv  | grep -E '4[678],... total'
-	./phiola i -peaks -s 1 fm_vorbis.ogg  | grep -E '48,000 total'
-	./phiola i -peaks -s 1 fm_wv.wv       | grep -E '48,000 total'
-}
-
-convert_from_to() {
-	./phiola co co.$1 -f -o co_$1.$2 ; ./phiola pl co_$1.$2
+	./phiola i -peaks -s 1 fm_vorbis.ogg  | grep '48,000 total'
+	./phiola i -peaks -s 1 fm_wv.wv       | grep '48,000 total'
 }
 
 test_convert_af() {
@@ -243,11 +239,46 @@ test_convert() {
 
 	./phiola co co.wav -f -o co_wav_gain6.wav -gain -6 ; ./phiola pl co_wav_gain6.wav
 	./phiola co co.wav -f -o co_wav.wav -preserve_date
+}
 
-	convert_from_to wav m4a
-	convert_from_to wav ogg
-	convert_from_to wav opus
-	convert_from_to wav flac
+convert__from_to() {
+	./phiola co co.$1 -f -o co_$1.$2 ; ./phiola pl co_$1.$2
+}
+
+test_convert_encode() {
+	if ! test -f co.wav ; then
+		./phiola rec -rate 48000 -f -o co.wav -u 2
+	fi
+
+	convert__from_to wav flac
+	./phiola i co_wav.flac             | grep '96,000 samples'
+	./phiola i co_wav.flac -peaks      | grep '96,000 total'
+	./phiola i -u 1 co_wav.flac -peaks | grep '48,000 total'
+	# ./phiola i -s 1 co_wav.flac -peaks | grep '48,000 total'
+
+	convert__from_to wav m4a
+	./phiola i co_wav.m4a              | grep -E '98,... samples'
+	./phiola i co_wav.m4a -peaks       | grep -E '96,... total'
+	./phiola i -u 1 co_wav.m4a -peaks  | grep '48,000 total'
+	./phiola i -s 1 co_wav.m4a -peaks  | grep -E '48,... total'
+
+	./phiola co co.wav -aac_profile HE -f -o co_wav_he.m4a
+	./phiola pl co_wav_he.m4a | grep 'HE-AAC'
+
+	./phiola co co.wav -aac_profile HE2 -f -o co_wav_he2.m4a
+	./phiola pl co_wav_he2.m4a | grep 'HE-AACv2'
+
+	convert__from_to wav ogg
+	./phiola i co_wav.ogg              | grep -E '95,... samples'
+	./phiola i co_wav.ogg -peaks       | grep '96,000 total'
+	./phiola i -u 1 co_wav.ogg -peaks  | grep -E '48,... total'
+	./phiola i -s 1 co_wav.ogg -peaks  | grep -E '47,... total'
+
+	convert__from_to wav opus
+	./phiola i co_wav.opus             | grep -E '94,... samples'
+	./phiola i co_wav.opus -peaks      | grep '96,000 total'
+	./phiola i -u 1 co_wav.opus -peaks | grep '48,000 total'
+	./phiola i -s 1 co_wav.opus -peaks | grep -E '46,... total'
 }
 
 ffmpeg_encode() {
@@ -605,6 +636,7 @@ TESTS=(
 	# record_manual
 	play
 	convert
+	convert_encode
 	info
 	until
 	seek

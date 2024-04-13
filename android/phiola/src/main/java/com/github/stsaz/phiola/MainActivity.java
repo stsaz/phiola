@@ -380,15 +380,11 @@ public class MainActivity extends AppCompatActivity {
 			mode = AppCompatDelegate.MODE_NIGHT_YES;
 		AppCompatDelegate.setDefaultNightMode(mode);
 
-		int v = View.VISIBLE;
 		if (gui.record_hide)
-			v = View.INVISIBLE;
-		b.brec.setVisibility(v);
+			b.brec.setVisibility(View.INVISIBLE);
 
-		v = View.VISIBLE;
 		if (gui.filter_hide)
-			v = View.INVISIBLE;
-		b.tfilter.setVisibility(v);
+			b.tfilter.setVisibility(View.INVISIBLE);
 
 		int mask = GUI.MASK_PLAYBACK;
 		int st = GUI.STATE_DEF;
@@ -676,7 +672,7 @@ public class MainActivity extends AppCompatActivity {
 	private void list_next_add_cur() {
 		int qi = queue.next_list_add_cur();
 		if (qi >= 0)
-			core.gui().msg_show(this, String.format(getString(R.string.mlist_trk_added), qi+1));
+			gui.msg_show(this, String.format(getString(R.string.mlist_trk_added), qi+1));
 	}
 
 	/** Start recording */

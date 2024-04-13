@@ -14,13 +14,13 @@ static void* autoconv_open(phi_track *t)
 	if (t->conf.stream_copy || !t->data_type || !ffsz_eq(t->data_type, "pcm"))
 		return PHI_OPEN_SKIP;
 
-	struct autoconv *c = ffmem_new(struct autoconv);
+	struct autoconv *c = phi_track_allocT(t, struct autoconv);
 	return c;
 }
 
 static void autoconv_close(void *ctx, phi_track *t)
 {
-	ffmem_free(ctx);
+	phi_track_free(t, ctx);
 }
 
 static int autoconv_process(struct autoconv *c, phi_track *t)

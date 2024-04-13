@@ -72,7 +72,7 @@ static void track_busytime_print(phi_track *t)
 			continue;
 		uint percent = fftime_to_usec(&f->busytime) * 100 / fftime_to_usec(&total);
 		ffvec_addfmt(&buf, "%s: %u.%06u (%u%%), "
-			, f->name, (int)fftime_sec(&f->busytime), (int)fftime_usec(&f->busytime)
+			, f->iface.name, (int)fftime_sec(&f->busytime), (int)fftime_usec(&f->busytime)
 			, percent);
 	}
 	buf.len -= FFS_LEN(", ");
@@ -99,8 +99,8 @@ static void track_close(phi_track *t)
 	if (t->conf.print_time)
 		track_busytime_print(t);
 
-	dbglog(t, "closed");
-	ffmem_free(t);
+	dbglog(t, "closed.  area:%u/%u", t->area_size, t->area_cap);
+	ffmem_alignfree(t);
 }
 
 static void conveyor_init(struct phi_conveyor *v)
@@ -114,13 +114,13 @@ static void conveyor_close(struct phi_conveyor *v, phi_track *t)
 	for (int i = MAX_FILTERS - 1;  i >= 0;  i--) {
 		struct filter *f = &v->filters_pool[i];
 		if (f->obj != NULL) {
-			extralog(t, "%s: closing", f->name);
-			if (f->iface->close) {
+			extralog(t, "%s: closing", f->iface.name);
+			if (f->iface.close) {
 
 				((void**)v->filters.ptr)[0] = f;
 				v->cur = 0; // logger needs to know the current filter name
 
-				f->iface->close(f->obj, t);
+				f->iface.close(f->obj, t);
 			}
 			f->obj = NULL;
 		}
@@ -136,7 +136,7 @@ static char* conveyor_print(struct phi_conveyor *v, const struct filter *mark, c
 		f = *pf;
 		if (f == mark)
 			ffstr_addchar(&s, cap, '*');
-		ffstr_addfmt(&s, cap, "%s -> ", f->name);
+		ffstr_addfmt(&s, cap, "%s -> ", f->iface.name);
 	}
 	if (s.len > FFS_LEN(" -> "))
 		s.len -= FFS_LEN(" -> ");
@@ -146,7 +146,12 @@ static char* conveyor_print(struct phi_conveyor *v, const struct filter *mark, c
 
 static phi_track* track_create(struct phi_track_conf *conf)
 {
-	phi_track *t = ffmem_new(phi_track);
+	FF_ASSERT(sizeof(phi_track) < 4000);
+	phi_track *t = ffmem_align(4000, 4096);
+	ffmem_zero(t, 4000);
+	t->area_cap = 4000 - sizeof(phi_track);
+	FF_ASSERT(!((size_t)t->area & 7));
+	FF_ASSERT(!(t->area_cap & 7));
 	t->conf = *conf;
 	conveyor_init(&t->conveyor);
 	t->worker = core->worker_assign(conf->cross_worker_assign);
@@ -177,8 +182,7 @@ static int trk_filter_add(phi_track *t, const phi_filter *iface, uint pos)
 
 	struct filter *f = v->filters_pool + v->i_fpool;
 	v->i_fpool++;
-	f->iface = iface;
-	f->name = iface->name;
+	f->iface = *iface;
 
 	v->filters.len++;
 	struct filter **pf;
@@ -190,7 +194,7 @@ static int trk_filter_add(phi_track *t, const phi_filter *iface, uint pos)
 
 	char buf[200];
 	dbglog(t, "%s: added to chain [%s]"
-		, f->name, conveyor_print(v, f, buf, sizeof(buf)));
+		, f->iface.name, conveyor_print(v, f, buf, sizeof(buf)));
 	return pf - (struct filter**)v->filters.ptr;
 }
 
@@ -230,15 +234,15 @@ static int trk_filter_run(phi_track *t, struct filter *f)
 		t->chain_flags |= PHI_FFIRST;
 
 	if (f->obj == NULL) {
-		extralog(t, "%s: opening", f->name);
+		extralog(t, "%s: opening", f->iface.name);
 		void *obj = (void*)-1;
-		if (f->iface->open != NULL) {
-			if (PHI_OPEN_ERR == (obj = f->iface->open(t))) {
-				extralog(t, "%s: open failed", f->name);
+		if (f->iface.open != NULL) {
+			if (PHI_OPEN_ERR == (obj = f->iface.open(t))) {
+				extralog(t, "%s: open failed", f->iface.name);
 				return PHI_ERR;
 			}
 			if (obj == PHI_OPEN_SKIP) {
-				extralog(t, "%s: skipping", f->name);
+				extralog(t, "%s: skipping", f->iface.name);
 				t->data_out = t->data_in;
 				return PHI_DONE;
 			}
@@ -247,9 +251,9 @@ static int trk_filter_run(phi_track *t, struct filter *f)
 	}
 
 	extralog(t, "%s: in:%L"
-		, f->name, t->data_in.len, t->chain_flags);
+		, f->iface.name, t->data_in.len, t->chain_flags);
 
-	int r = f->iface->process(f->obj, t);
+	int r = f->iface.process(f->obj, t);
 
 	static const char filter_result_str[][16] = {
 		"PHI_DATA",
@@ -263,7 +267,7 @@ static int trk_filter_run(phi_track *t, struct filter *f)
 		"PHI_ERR",
 	};
 	extralog(t, "%s: %s, out:%L"
-		, f->name, filter_result_str[r], t->data_out.len);
+		, f->iface.name, filter_result_str[r], t->data_out.len);
 
 	return r;
 }
@@ -315,7 +319,7 @@ go_fwd:
 	case PHI_MORE:
 	case PHI_BACK:
 		if (v->cur == 0) {
-			errlog(t, "%s: first-in-chain filter wants more data", f->name);
+			errlog(t, "%s: first-in-chain filter wants more data", f->iface.name);
 			return PHI_ERR;
 		}
 		v->cur--;
@@ -327,7 +331,7 @@ go_fwd:
 		break;
 
 	default:
-		errlog(t, "%s: bad return code %u", f->name, r);
+		errlog(t, "%s: bad return code %u", f->iface.name, r);
 		r = PHI_ERR;
 	}
 
@@ -470,7 +474,7 @@ static ffssize track_cmd(phi_track *t, uint cmd, ...)
 		if (t->conveyor.cur == ~0U) return (ffssize)"";
 
 		struct filter *f = *ffslice_itemT(&t->conveyor.filters, t->conveyor.cur, struct filter*);
-		return (ffssize)f->name;
+		return (ffssize)f->iface.name;
 	}
 	}
 	return 0;

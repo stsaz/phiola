@@ -27,12 +27,12 @@ static void fr_close(struct file_r *f, phi_track *t)
 		, f->fcache.hits);
 	fcache_destroy(&f->fcache);
 	fffile_close(f->fd);
-	ffmem_free(f);
+	phi_track_free(t, f);
 }
 
 static void* fr_open(phi_track *t)
 {
-	struct file_r *f = ffmem_new(struct file_r);
+	struct file_r *f = phi_track_allocT(t, struct file_r);
 	f->buf_cap = (t->conf.ifile.buf_size) ? t->conf.ifile.buf_size : 64*1024;
 	f->fd = FFFILE_NULL;
 	if (0 != fcache_init(&f->fcache, 2, f->buf_cap, ALIGN))

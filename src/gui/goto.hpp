@@ -14,7 +14,7 @@ FF_EXTERN const ffui_ldr_ctl wgoto_ctls[] = {
 	FFUI_LDR_CTL_END
 };
 
-static void play_goto(ffstrxx s)
+static void play_goto(xxstr s)
 {
 	gui_wgoto *g = gg->wgoto;
 
@@ -35,14 +35,14 @@ static void wgoto_action(ffui_window *wnd, int id)
 
 	switch (id) {
 	case A_GOTO:
-		play_goto(ffvecxx(g->etime.text()).str());  break;
+		play_goto(xxvec(g->etime.text()).str());  break;
 	}
 }
 
 void wgoto_show(uint pos)
 {
 	gui_wgoto *g = gg->wgoto;
-	g->etime.text(ffvecxx().addf("%02u:%02u", pos / 60, pos % 60).str());
+	g->etime.text(xxvec().add_f("%02u:%02u", pos / 60, pos % 60).str());
 	g->etime.sel_all();
 	g->etime.focus();
 	g->wnd.show(1);

@@ -287,13 +287,13 @@ struct phi_track_conf {
 	} aac;
 
 	struct {
-		ffbyte	quality; // (q+1.0)*10
+		u_char	quality; // (q+1.0)*10
 	} vorbis;
 
 	struct {
 		ushort	bitrate;
-		ffbyte	mode; // 0:audio; 1:voip
-		ffbyte	bandwidth; // either 4, 6, 8, 12, 20kHz
+		u_char	mode; // 0:audio; 1:voip
+		u_char	bandwidth; // either 4, 6, 8, 12, 20kHz
 	} opus;
 
 	struct {

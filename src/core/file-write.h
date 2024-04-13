@@ -67,7 +67,7 @@ end:
 	ffmem_alignfree(f->wbuf.ptr);
 	ffstr_free(&f->namebuf);
 	ffmem_free(f->filename_tmp);
-	ffmem_free(f);
+	phi_track_free(t, f);
 }
 
 /** All printable, plus SPACE, except: ", *, /, :, <, >, ?, \, | */
@@ -187,7 +187,7 @@ static const char* fw_name(ffstr *sbuf, const char *name, phi_track *t)
 
 static void* fw_open(phi_track *t)
 {
-	struct file_w *f = ffmem_new(struct file_w);
+	struct file_w *f = phi_track_allocT(t, struct file_w);
 	f->trk = t;
 	f->fd = FFFILE_NULL;
 	f->name = fw_name(&f->namebuf, t->conf.ofile.name, t);

@@ -44,8 +44,8 @@ static void wsettings_ui_to_conf()
 		playback_device_set();
 	}
 
-	gd->conf.seek_step_delta = ffvecxx(w->eseek_by.text()).str().uint32(10);
-	gd->conf.seek_leap_delta = ffvecxx(w->eleap_by.text()).str().uint32(60);
+	gd->conf.seek_step_delta = xxvec(w->eseek_by.text()).str().uint32(10);
+	gd->conf.seek_leap_delta = xxvec(w->eleap_by.text()).str().uint32(60);
 }
 
 static void wsettings_ui_from_conf()
@@ -61,7 +61,7 @@ static void wsettings_ui_from_conf()
 		playback_device_set();
 	}
 
-	ffstrxx_buf<100> s;
+	xxstr_buf<100> s;
 	w->eseek_by.text(s.zfmt("%u", gd->conf.seek_step_delta));
 	w->eleap_by.text(s.zfmt("%u", gd->conf.seek_leap_delta));
 }

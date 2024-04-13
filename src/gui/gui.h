@@ -67,7 +67,12 @@ FF_EXTERN void wlog_userconf_write(ffconfw *cw);
 FF_EXTERN const struct ffarg wlog_args[];
 
 struct gui {
-	ffui_menu mfile
+#ifdef __cplusplus
+	ffui_menuxx
+#else
+	ffui_menu
+#endif
+		mfile
 		, mlist
 		, mplay
 		, mrecord

@@ -26,7 +26,7 @@ struct aconv {
 
 static void* aconv_open(phi_track *t)
 {
-	struct aconv *c = ffmem_new(struct aconv);
+	struct aconv *c = phi_track_allocT(t, struct aconv);
 	return c;
 }
 
@@ -34,7 +34,7 @@ static void aconv_close(void *ctx, phi_track *t)
 {
 	struct aconv *c = ctx;
 	ffmem_alignfree(c->buf.ptr);
-	ffmem_free(c);
+	phi_track_free(t, c);
 }
 
 static inline char* af_print(const struct phi_af *af, char *buf, ffsize cap)

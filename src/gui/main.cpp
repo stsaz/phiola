@@ -74,15 +74,15 @@ static const char list_colname[][10] = {
 	"", // H_FN
 };
 
-static void conf_vlist_col(ffui_viewxx &v, ffstrxx val)
+static void conf_vlist_col(ffui_viewxx &v, xxstr val)
 {
 	ffui_viewcolxx vc = {};
 	uint i = 0;
 	while (val.len) {
-		ffstrxx s;
-		val.split(' ', &s, &val);
+		xxstr s;
+		val.split_by(' ', &s, &val);
 		uint width;
-		if (!s.matchf("%u", &width)) {
+		if (!s.match_f("%u", &width)) {
 			vc.width(width);
 			v.column(i, vc);
 		}
@@ -102,11 +102,11 @@ void wmain_userconf_write(ffconfw *cw)
 {
 	gui_wmain *m = gg->wmain;
 
-	ffvecxx v;
+	xxvec v;
 	ffui_viewcolxx vc = {};
 	vc.width(0);
 	for (uint i = 0;  i != _H_LAST;  i++) {
-		v.addf("%u ", m->vlist.column(i, &vc).width());
+		v.add_f("%u ", m->vlist.column(i, &vc).width());
 	}
 	ffconfw_add2s(cw, "vlist.col", v.str());
 
@@ -129,9 +129,9 @@ static ffui_icon& res_icon_load(ffui_icon *ico, const char *name, uint resource_
 {
 	if (!ffui_icon_valid(ico)) {
 #ifdef FF_WIN
-		ffui_icon_load_res(ico, GetModuleHandleW(L"gui.dll"), ffwstrxx_buf<100>().utow(ffstrxx_buf<100>().zfmt("#%u", resource_id)), 0, 0);
+		ffui_icon_load_res(ico, GetModuleHandleW(L"gui.dll"), xxwstr_buf<100>().utow(xxstr_buf<100>().zfmt("#%u", resource_id)), 0, 0);
 #else
-		ffui_icon_load(ico, ffstrxx_buf<4096>().zfmt("%S/mod/gui/%s.png", &core->conf.root, name));
+		ffui_icon_load(ico, xxstr_buf<4096>().zfmt("%S/mod/gui/%s.png", &core->conf.root, name));
 #endif
 		PHI_ASSERT(ffui_icon_valid(ico));
 	}
@@ -296,7 +296,7 @@ static void list_display(ffui_view_disp *disp)
 	uint sub = ffui_view_dispinfo_subindex(disp);
 
 	gui_wmain *m = gg->wmain;
-	ffstrxx_buf<1000> buf;
+	xxstr_buf<1000> buf;
 	ffstr *val = NULL, s;
 	struct phi_queue_entry *qe = gd->queue->ref(list_id_visible(), i);
 	if (!qe)
@@ -568,7 +568,7 @@ static void list_add_choose()
 	if (!(fn = ffui_dlg_open(&gg->dlg, &m->wnd)))
 		return;
 
-	ffvecxx names;
+	xxvec names;
 	for (;;) {
 		*names.push<char*>() = ffsz_dup(fn);
 		if (!(fn = ffui_dlg_nextname(&gg->dlg)))
@@ -634,6 +634,16 @@ static void wmain_action(ffui_window *wnd, int id)
 		gui_core_task_uint(ctl_action, A_SEEK);
 		break;
 
+	case A_REPEAT_TOGGLE:
+		gg->mplay.check(A_REPEAT_TOGGLE, !gd->conf.repeat);
+		gui_core_task_uint(ctl_action, id);
+		break;
+
+	case A_RANDOM_TOGGLE:
+		gg->mplay.check(A_RANDOM_TOGGLE, !gd->conf.random);
+		gui_core_task_uint(ctl_action, id);
+		break;
+
 // List:
 	case A_LIST_CHANGE:
 		list_changed(m->tabs.changed());  break;
@@ -663,6 +673,7 @@ static void wmain_action(ffui_window *wnd, int id)
 
 	case A_LIST_AUTOSELECT:
 		gd->auto_select = !gd->auto_select;
+		gg->mlist.check(A_LIST_AUTOSELECT, gd->auto_select);
 		wmain_status("Auto Select Current: %s", (gd->auto_select) ? "On" : "Off");
 		break;
 
@@ -737,6 +748,13 @@ void wmain_show()
 
 	gd->queue->on_change(q_on_change);
 	gui_core_task(lists_load);
+
+	if (gd->auto_select)
+		gg->mlist.check(A_LIST_AUTOSELECT, 1);
+	if (gd->conf.repeat)
+		gg->mplay.check(A_REPEAT_TOGGLE, 1);
+	if (gd->conf.random)
+		gg->mplay.check(A_RANDOM_TOGGLE, 1);
 
 	m->ready = 1;
 }

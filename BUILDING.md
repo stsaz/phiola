@@ -88,7 +88,7 @@ cd phiola
 * Build on Linux:
 
 	```sh
-	make -j8 -C ../ffpack libzstd
+	make -j8 -C ../ffpack zstd
 	make -j8 -C alib3
 	make -j8
 	```
@@ -108,7 +108,7 @@ cd phiola
 * Cross-Build on Linux for Android/ARM64:
 
 	```sh
-	make -j8 SYS=android CPU=arm64 NDK_DIR=$SDK_DIR/ndk/YOUR_NDK_VERSION -C ../ffpack libzstd
+	make -j8 SYS=android CPU=arm64 NDK_DIR=$SDK_DIR/ndk/YOUR_NDK_VERSION -C ../ffpack zstd
 	make -j8 SYS=android CPU=arm64 NDK_DIR=$SDK_DIR/ndk/YOUR_NDK_VERSION -C alib3
 	make -j8 -C android SDK_DIR=$SDK_DIR
 	```
@@ -117,7 +117,7 @@ cd phiola
 
 	```sh
 	mingw32-make -j8 -C ../netmill/3pt openssl
-	mingw32-make -j8 -C ../ffpack libzstd
+	mingw32-make -j8 -C ../ffpack zstd
 	mingw32-make -j8 -C alib3
 	mingw32-make -j8
 	```
@@ -125,7 +125,7 @@ cd phiola
 * Build on FreeBSD & macOS:
 
 	```sh
-	gmake -j8 -C ../ffpack libzstd
+	gmake -j8 -C ../ffpack zstd
 	gmake -j8 -C alib3
 	gmake -j8 PHI_HTTP_SSL=0
 	```

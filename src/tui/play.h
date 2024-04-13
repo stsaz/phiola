@@ -6,7 +6,7 @@ static double tui_setvol(tui_track *u, uint vol);
 
 static void* tuiplay_open(phi_track *t)
 {
-	tui_track *u = ffmem_new(tui_track);
+	tui_track *u = phi_track_allocT(t, tui_track);
 	u->seek_msec = -1;
 	u->lastpos = (uint)-1;
 	u->t = t;
@@ -36,7 +36,7 @@ static void tuiplay_close(void *ctx, phi_track *t)
 		mod->curtrk = NULL;
 	}
 	ffvec_free(&u->buf);
-	ffmem_free(u);
+	phi_track_free(t, u);
 }
 
 static void tui_addtags(tui_track *u, ffvec *buf)

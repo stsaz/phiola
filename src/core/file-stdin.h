@@ -14,12 +14,12 @@ static void stdin_close(void *ctx, phi_track *t)
 {
 	struct std_in *f = ctx;
 	ffmem_alignfree(f->buf.ptr);
-	ffmem_free(f);
+	phi_track_free(t, f);
 }
 
 static void* stdin_open(phi_track *t)
 {
-	struct std_in *f = ffmem_new(struct std_in);
+	struct std_in *f = phi_track_allocT(t, struct std_in);
 	t->input.size = ~0ULL;
 	t->input.seek = ~0ULL;
 	f->fd = ffstdin;

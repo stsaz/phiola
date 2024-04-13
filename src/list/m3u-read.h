@@ -19,7 +19,7 @@ static void* m3u_open(phi_track *t)
 	if (!metaif)
 		metaif = core->mod("format.meta");
 
-	struct m3u *m = ffmem_new(struct m3u);
+	struct m3u *m = phi_track_allocT(t, struct m3u);
 	m3uread_open(&m->m3u);
 	m->qu_cur = t->qent;
 	return m;
@@ -33,7 +33,7 @@ static void m3u_close(void *ctx, phi_track *t)
 	}
 	m3uread_close(&m->m3u);
 	pls_entry_free(&m->pls_ent);
-	ffmem_free(m);
+	phi_track_free(t, m);
 
 	/* When auto-loading playlist at GUI startup - set it as "not modified" */
 	struct phi_queue_conf *qc = queue->conf(queue->queue(t->qent));

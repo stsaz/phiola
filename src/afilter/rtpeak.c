@@ -14,7 +14,7 @@ struct rtpeak {
 
 static void* rtpeak_open(phi_track *t)
 {
-	struct rtpeak *p = ffmem_new(struct rtpeak);
+	struct rtpeak *p = phi_track_allocT(t, struct rtpeak);
 	p->fmt = t->audio.format;
 	if (0 != pcm_maxpeak(&p->fmt, NULL, 0, NULL)) {
 		errlog(t, "pcm_maxpeak(): format not supported");
@@ -27,7 +27,7 @@ static void* rtpeak_open(phi_track *t)
 static void rtpeak_close(void *ctx, phi_track *t)
 {
 	struct rtpeak *p = ctx;
-	ffmem_free(p);
+	phi_track_free(t, p);
 }
 
 static int rtpeak_process(void *ctx, phi_track *t)
