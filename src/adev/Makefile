@@ -18,7 +18,7 @@
 FFAUDIO := $(ROOT_DIR)/ffaudio
 
 ifeq "$(OS)" "windows"
-	MODS += wasapi.$(SO) direct-sound.$(SO)
+	MODS += wasapi.$(SO)
 else ifeq "$(OS)" "apple"
 	MODS += coreaudio.$(SO)
 else ifeq "$(OS)" "freebsd"
@@ -38,9 +38,6 @@ ffaudio-%.o: $(FFAUDIO)/ffaudio/%.c
 
 wasapi.$(SO): wasapi.o ffaudio-wasapi.o
 	$(LINK) -shared $+ $(LINKFLAGS) -lole32 -o $@
-
-direct-sound.$(SO): directsound.o ffaudio-dsound.o
-	$(LINK) -shared $+ $(LINKFLAGS) -ldsound -ldxguid -o $@
 
 alsa.$(SO): alsa.o ffaudio-alsa.o
 	$(LINK) -shared $+ $(LINKFLAGS) -lasound -o $@

@@ -69,7 +69,6 @@ static const void* dev_find_mod()
 	static const char mods[][20] = {
 #if defined FF_WIN
 		"wasapi.dev",
-		"direct-sound.dev",
 
 #elif defined FF_BSD
 		"oss.dev",
