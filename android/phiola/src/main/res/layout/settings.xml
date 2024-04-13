@@ -251,6 +251,13 @@
 			android:text="@string/sett_recording"
 			android:textColor="@color/sett_group" />
 
+		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/sw_rec_longclick"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="@dimen/sett_margin"
+			android:text="@string/sett_rec_longclick" />
+
 		<TextView
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"

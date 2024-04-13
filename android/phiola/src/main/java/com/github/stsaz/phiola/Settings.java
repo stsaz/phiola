@@ -25,6 +25,7 @@ class CoreSettings {
 	int		rec_gain_db100;
 	boolean	rec_danorm;
 	boolean	rec_exclusive;
+	boolean	rec_longclick;
 	static final String[] rec_formats = {
 		"AAC-LC",
 		"AAC-HE",
@@ -122,6 +123,7 @@ class CoreSettings {
 			+ "rec_danorm %d\n"
 			+ "rec_gain %d\n"
 			+ "rec_exclusive %d\n"
+			+ "rec_longclick %d\n"
 			+ "conv_out_dir2 %s\n"
 			+ "conv_outext %s\n"
 			+ "conv_aac_q %d\n"
@@ -148,6 +150,7 @@ class CoreSettings {
 			, core.bool_to_int(rec_danorm)
 			, rec_gain_db100
 			, core.bool_to_int(rec_exclusive)
+			, core.bool_to_int(rec_longclick)
 			, conv_out_dir
 			, conv_format
 			, conv_aac_quality
@@ -211,6 +214,7 @@ class CoreSettings {
 		rec_buf_len_ms = core.str_to_uint(kv[Conf.REC_BUF_LEN].value, rec_buf_len_ms);
 		rec_danorm = kv[Conf.REC_DANORM].enabled;
 		rec_exclusive = kv[Conf.REC_EXCLUSIVE].enabled;
+		rec_longclick = kv[Conf.REC_LONGCLICK].enabled;
 		rec_until_sec = core.str_to_uint(kv[Conf.REC_UNTIL].value, rec_until_sec);
 		rec_gain_db100 = core.str_to_int(kv[Conf.REC_GAIN].value, rec_gain_db100);
 

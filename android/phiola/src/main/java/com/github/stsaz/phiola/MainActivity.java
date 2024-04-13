@@ -45,9 +45,6 @@ public class MainActivity extends AppCompatActivity {
 	private Filter trk_nfy;
 	private TrackCtl trackctl;
 	private long total_dur_msec;
-	private int state;
-
-	private TrackHandle trec;
 
 	private boolean view_explorer;
 	private Explorer explorer;
@@ -305,7 +302,6 @@ public class MainActivity extends AppCompatActivity {
 		track.filter_add(trk_nfy);
 		trackctl = new TrackCtl(core, this);
 		trackctl.connect();
-		trec = track.trec;
 		return 0;
 	}
 
@@ -320,10 +316,15 @@ public class MainActivity extends AppCompatActivity {
 		b.lname.setOnClickListener((v) -> file_tags_show());
 
 		b.brec.setOnClickListener((v) -> {
-				if (trec == null)
-					rec_start();
+				if (core.setts.rec_longclick)
+					rec_pause_toggle();
 				else
-					rec_stop();
+					rec_start_stop();
+			});
+		b.brec.setOnLongClickListener((v) -> {
+				if (core.setts.rec_longclick)
+					rec_start_stop();
+				return true;
 			});
 
 		b.bplay.setOnClickListener((v) -> play_pause_click());
@@ -389,18 +390,16 @@ public class MainActivity extends AppCompatActivity {
 			v = View.INVISIBLE;
 		b.tfilter.setVisibility(v);
 
-		int mask = STATE_PLAYBACK;
-		int st = STATE_DEF;
+		int mask = GUI.MASK_PLAYBACK;
+		int st = GUI.STATE_DEF;
 		if (queue.auto_stop.armed()) {
-			mask |= STATE_AUTO_STOP;
-			st |= STATE_AUTO_STOP;
+			mask |= GUI.STATE_AUTO_STOP;
+			st |= GUI.STATE_AUTO_STOP;
 		}
-		if (trec != null) {
-			mask |= STATE_RECORDING;
-			st |= STATE_RECORDING;
+		if (gui.state_test(GUI.STATE_RECORDING)) {
 			rec_state_set(true);
 		}
-		state(mask, st);
+		state_f(mask, st, true);
 	}
 
 	private void rec_state_set(boolean active) {
@@ -416,15 +415,38 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void rec_stop() {
-		String e = track.record_stop(trec);
-		trec = null;
+		String e = track.record_stop();
 		rec_state_set(false);
 		stopService(new Intent(this, RecSvc.class));
-		state(STATE_RECORDING, 0);
+		state(GUI.STATE_RECORDING, 0);
 		if (e != null)
 			core.errlog(TAG, String.format("%s: %s", getString(R.string.main_rec_err), e));
 		else
-			core.gui().msg_show(this, getString(R.string.main_rec_fin));
+			gui.msg_show(this, getString(R.string.main_rec_fin));
+	}
+
+	private void rec_start_stop() {
+		if (gui.state_test(GUI.STATE_RECORDING))
+			rec_stop();
+		else
+			rec_start();
+	}
+
+	private void rec_pause_toggle() {
+		int r = track.record_pause_toggle();
+		String s = null;
+		if (r < 0) {
+			s = "Long press to start recording";
+		} else {
+			s = "Paused Recording";
+			int st = GUI.STATE_REC_PAUSED;
+			if (r == 0) {
+				s = "Resumed Recording";
+				st = 0;
+			}
+			state(GUI.STATE_REC_PAUSED, st);
+		}
+		gui.msg_show(this, s);
 	}
 
 	private void play_pause_click() {
@@ -595,10 +617,10 @@ public class MainActivity extends AppCompatActivity {
 		String s;
 		int value_min = queue.auto_stop.toggle();
 		if (value_min > 0) {
-			state(STATE_AUTO_STOP, STATE_AUTO_STOP);
+			state(GUI.STATE_AUTO_STOP, GUI.STATE_AUTO_STOP);
 			s = String.format(getString(R.string.mplay_auto_stop_msg), value_min);
 		} else {
-			state(STATE_AUTO_STOP, 0);
+			state(GUI.STATE_AUTO_STOP, 0);
 			s = "Disabled auto-stop timer";
 		}
 		gui.msg_show(this, s);
@@ -677,15 +699,15 @@ public class MainActivity extends AppCompatActivity {
 		String fname = String.format("%s/rec_%04d%02d%02d_%02d%02d%02d.%s"
 				, core.setts.rec_path, dt[0], dt[1], dt[2], dt[3], dt[4], dt[5]
 				, core.setts.rec_fmt);
-		trec = track.rec_start(fname, () -> {
+		TrackHandle trec = track.rec_start(fname, () -> {
 				core.tq.post(this::rec_stop);
 			});
 		if (trec == null)
 			return;
 		rec_state_set(true);
-		core.gui().msg_show(this, getString(R.string.main_rec_started));
+		gui.msg_show(this, getString(R.string.main_rec_started));
 		startService(new Intent(this, RecSvc.class));
-		state(STATE_RECORDING, STATE_RECORDING);
+		state(GUI.STATE_RECORDING, GUI.STATE_RECORDING);
 	}
 
 	/** UI event from seek bar */
@@ -693,37 +715,32 @@ public class MainActivity extends AppCompatActivity {
 		trackctl.seek(total_dur_msec * percent / 100);
 	}
 
-	private static final int
-		STATE_DEF = 1,
-		STATE_PLAYING = 2,
-		STATE_PAUSED = 4,
-		STATE_PLAYBACK = 7,
-		STATE_AUTO_STOP = 8,
-		STATE_RECORDING = 0x10;
-
 	// [Playing]
 	// [PLA,STP,REC]
 	private String state_flags(int st) {
 		if (core.gui().state_hide) return "";
 
 		String s = "";
-		if ((st & (STATE_PLAYING | STATE_RECORDING)) != 0) {
+		if ((st & (GUI.STATE_PLAYING | GUI.STATE_RECORDING)) != 0) {
 			s = "[";
 
-			if ((st & STATE_PLAYING) != 0) {
-				if (st == STATE_PLAYING)
+			if ((st & GUI.STATE_PLAYING) != 0) {
+				if (st == GUI.STATE_PLAYING)
 					s += getString(R.string.main_st_playing);
 				else
 					s += "PLA";
 
-				if ((st & STATE_AUTO_STOP) != 0)
+				if ((st & GUI.STATE_AUTO_STOP) != 0)
 					s += ",STP";
 			}
 
-			if ((st & STATE_RECORDING) != 0) {
-				if ((st & STATE_PLAYING) != 0)
+			if ((st & GUI.STATE_RECORDING) != 0) {
+				if ((st & GUI.STATE_PLAYING) != 0)
 					s += ",";
-				s += "REC";
+				if ((st & GUI.STATE_REC_PAUSED) != 0)
+					s += "RPA";
+				else
+					s += "REC";
 			}
 
 			s += "]";
@@ -731,27 +748,22 @@ public class MainActivity extends AppCompatActivity {
 		return s;
 	}
 
-	/** Playback state */
-	private void state(int st) { state(STATE_PLAYBACK, st); }
-	private void state(int mask, int val) {
-		int st = state & ~mask;
-		if (val != 0)
-			st |= val;
-		if (st == state)
+	private void state(int mask, int val) { state_f(mask, val, false); }
+	private void state_f(int mask, int val, boolean force) {
+		int old = gui.state_update(mask, val);
+		int st = (old & ~mask) | val;
+		if (!force && st == old)
 			return;
 
 		String title = "φphiola";
 		getSupportActionBar().setTitle(String.format("%s %s", title, state_flags(st)));
 
-		if ((st & STATE_PLAYBACK) != (state & STATE_PLAYBACK)) {
+		if ((st & GUI.MASK_PLAYBACK) != (old & GUI.MASK_PLAYBACK)) {
 			int play_icon = R.drawable.ic_play;
-			if ((st & STATE_PLAYING) != 0)
+			if ((st & GUI.STATE_PLAYING) != 0)
 				play_icon = R.drawable.ic_pause;
 			b.bplay.setImageResource(play_icon);
 		}
-
-		core.dbglog(TAG, "state: %d -> %d", state, st);
-		state = st;
 	}
 
 	/** Called by Track when a new track is initialized */
@@ -765,9 +777,9 @@ public class MainActivity extends AppCompatActivity {
 
 		b.seekbar.setProgress(0);
 		if (t.state == Track.STATE_PAUSED) {
-			state(STATE_PAUSED);
+			state(GUI.MASK_PLAYBACK, GUI.STATE_PAUSED);
 		} else {
-			state(STATE_PLAYING);
+			state(GUI.MASK_PLAYBACK, GUI.STATE_PLAYING);
 		}
 		return 0;
 	}
@@ -780,10 +792,10 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void track_closed(TrackHandle t) {
-		int st = STATE_DEF;
+		int st = GUI.STATE_DEF;
 		if (queue.auto_stop.armed())
-			st |= STATE_AUTO_STOP;
-		state(STATE_PLAYBACK | STATE_AUTO_STOP, st);
+			st |= GUI.STATE_AUTO_STOP;
+		state(GUI.MASK_PLAYBACK | GUI.STATE_AUTO_STOP, st);
 	}
 
 	/** Called by Track during playback */
@@ -791,11 +803,11 @@ public class MainActivity extends AppCompatActivity {
 		core.dbglog(TAG, "track_update: state:%d pos:%d", t.state, t.pos_msec);
 		switch (t.state) {
 			case Track.STATE_PAUSED:
-				state(STATE_PAUSED);
+				state(GUI.MASK_PLAYBACK, GUI.STATE_PAUSED);
 				break;
 
 			case Track.STATE_PLAYING:
-				state(STATE_PLAYING);
+				state(GUI.MASK_PLAYBACK, GUI.STATE_PLAYING);
 				break;
 		}
 

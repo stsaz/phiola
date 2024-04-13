@@ -7,6 +7,7 @@ import android.content.Context;
 import android.widget.Toast;
 
 class GUI {
+	private static final String TAG = "phiola.GUI";
 	private Core core;
 	Context cur_activity;
 	boolean state_hide;
@@ -19,6 +20,16 @@ class GUI {
 	static final int THM_DEF = 0;
 	static final int THM_DARK = 1;
 	int theme;
+
+	static final int
+		STATE_DEF = 1,
+		STATE_PLAYING = 2,
+		STATE_PAUSED = 4,
+		MASK_PLAYBACK = 7,
+		STATE_AUTO_STOP = 8,
+		STATE_RECORDING = 0x10,
+		STATE_REC_PAUSED = 0x20;
+	int state;
 
 	GUI(Core core) {
 		this.core = core;
@@ -51,6 +62,17 @@ class GUI {
 		list_pos = core.str_to_uint(kv[Conf.LIST_POS].value, 0);
 		ainfo_in_title = kv[Conf.UI_INFO_IN_TITLE].enabled;
 		theme = core.str_to_uint(kv[Conf.UI_THEME].value, 0);
+	}
+
+	boolean state_test(int mask) { return (state & mask) != 0; }
+	int state_update(int mask, int val) {
+		int old = state;
+		int _new = (old & ~mask) | val;
+		if (_new != old) {
+			state = _new;
+			core.dbglog(TAG, "state: %x -> %x", old, _new);
+		}
+		return old;
 	}
 
 	void on_error(String fmt, Object... args) {

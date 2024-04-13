@@ -24,7 +24,6 @@ struct phiola_jni {
 	jclass Phiola_Meta;
 
 	jmethodID Phiola_lib_load;
-	jmethodID Phiola_RecordCallback_on_finish;
 	jmethodID Phiola_ConvertCallback_on_finish;
 	jmethodID Phiola_MetaCallback_on_finish;
 

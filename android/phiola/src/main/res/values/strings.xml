@@ -70,6 +70,7 @@
 	<string name="sett_data_dir">App Data Directory:</string>
 
 	<string name="sett_recording">Recording</string>
+	<string name="sett_rec_longclick">Long-click for Start/Stop; Short-click for Pause/Resume</string>
 	<string name="sett_rec_dir">Directory for Recordings:</string>
 	<string name="sett_rec_chan">Channels:</string>
 	<string name="sett_rec_rate">Sample Rate (Hz):</string>

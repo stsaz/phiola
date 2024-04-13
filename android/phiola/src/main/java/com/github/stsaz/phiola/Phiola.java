@@ -81,7 +81,11 @@ class Phiola {
 		void on_finish();
 	}
 	native long recStart(String oname, RecordParams conf, RecordCallback cb);
-	native String recStop(long trk);
+	static final int
+		RECL_STOP = 1,
+		RECL_PAUSE = 2,
+		RECL_RESUME = 3;
+	native String recCtrl(long trk, int cmd);
 
 	// track queue
 

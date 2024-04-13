@@ -283,6 +283,7 @@ public class SettingsActivity extends AppCompatActivity {
 	private static int rec_until_progress(int value) { return (value - 60) / 60; }
 
 	private void rec_load() {
+		b.swRecLongclick.setChecked(core.setts.rec_longclick);
 		b.eRecDir.setText(core.setts.rec_path);
 		b.spRecChannels.setSelection(core.setts.rec_channels);
 		if (core.setts.rec_rate != 0) {
@@ -302,6 +303,7 @@ public class SettingsActivity extends AppCompatActivity {
 	}
 
 	private void rec_save() {
+		core.setts.rec_longclick = b.swRecLongclick.isChecked();
 		core.setts.rec_path = b.eRecDir.getText().toString();
 		core.setts.rec_bitrate = core.str_to_uint(b.eRecBitrate.getText().toString(), -1);
 		core.setts.rec_channels = b.spRecChannels.getSelectedItemPosition();

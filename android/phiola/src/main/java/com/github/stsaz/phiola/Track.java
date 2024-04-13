@@ -251,7 +251,8 @@ class Track {
 	private SimpleArrayMap<String, Boolean> supp_exts;
 
 	private TrackHandle tplay;
-	TrackHandle trec;
+	private TrackHandle trec;
+	private boolean rec_paused;
 
 	static final int
 		STATE_NONE = 0,
@@ -446,12 +447,12 @@ class Track {
 		return trec;
 	}
 
-	String record_stop(TrackHandle t) {
+	String record_stop() {
 		if (Build.VERSION.SDK_INT < 26) {
-			return record_stop_compat(t);
+			return record_stop_compat(trec);
 		}
 
-		String e = core.phiola.recStop(trec.phi_trk);
+		String e = core.phiola.recCtrl(trec.phi_trk, Phiola.RECL_STOP);
 		trec = null;
 		return e;
 	}
@@ -468,6 +469,21 @@ class Track {
 		t.mr = null;
 		trec = null;
 		return err;
+	}
+
+	int record_pause_toggle() {
+		if (Build.VERSION.SDK_INT < 26) return -1;
+		if (trec == null) return -1;
+
+		int cmd = Phiola.RECL_PAUSE;
+		if (rec_paused)
+			cmd = Phiola.RECL_RESUME;
+		core.phiola.recCtrl(trec.phi_trk, cmd);
+
+		rec_paused = !rec_paused;
+		if (rec_paused)
+			return 1;
+		return 0;
 	}
 
 	private void trk_close(TrackHandle t) {

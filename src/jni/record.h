@@ -1,8 +1,21 @@
 /** phiola/Android: recording functionality
 2023, Simon Zolin */
 
+struct rec_ctx {
+	uint state;
+
+	jmethodID Phiola_RecordCallback_on_finish;
+	jobject on_finish_object;
+};
+
+enum {
+	RS_PAUSED = 1,
+};
+
+
 static void rectrk_close(void *ctx, phi_track *t)
 {
+	struct rec_ctx *rx = t->udata;
 	JNIEnv *env;
 	int r = jni_vm_attach(jvm, &env);
 	if (r != 0) {
@@ -10,12 +23,12 @@ static void rectrk_close(void *ctx, phi_track *t)
 		goto end;
 	}
 	if (t->chain_flags & PHI_FFINISHED) {
-		jobject jo = t->udata;
-		jni_call_void(jo, x->Phiola_RecordCallback_on_finish);
+		jni_call_void(rx->on_finish_object, rx->Phiola_RecordCallback_on_finish);
 	}
 
 end:
-	jni_global_unref(t->udata);
+	jni_global_unref(rx->on_finish_object);
+	ffmem_free(rx);
 	jni_vm_detach(jvm);
 }
 
@@ -28,6 +41,27 @@ static const phi_filter phi_android_guard = {
 	NULL, rectrk_close, rectrk_process,
 	"rec-guard"
 };
+
+
+static int rec_ctl_process(void *ctx, phi_track *t)
+{
+	struct rec_ctx *rx = t->udata;
+	if (t->chain_flags & PHI_FFIRST)
+		return PHI_DONE;
+	if (!(t->chain_flags & PHI_FFWD)) {
+		if (rx->state & RS_PAUSED)
+			return PHI_ASYNC;
+		return PHI_MORE;
+	}
+	t->data_out = t->data_in;
+	return PHI_DATA;
+}
+
+static const phi_filter phi_android_rec_ctl = {
+	NULL, NULL, rec_ctl_process,
+	"rec-ctl"
+};
+
 
 #define RECF_EXCLUSIVE  1
 #define RECF_POWER_SAVE  2
@@ -86,6 +120,7 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 	if (!track->filter(t, &phi_android_guard, 0)
 		|| !track->filter(t, x->core->mod("core.auto-rec"), 0)
 		|| !track->filter(t, x->core->mod("afilter.until"), 0)
+		|| !track->filter(t, &phi_android_rec_ctl, 0)
 		|| ((flags & RECF_DANORM)
 			&& !track->filter(t, x->core->mod("danorm.f"), 0))
 		|| !track->filter(t, x->core->mod("afilter.gain"), 0)
@@ -94,8 +129,10 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 		|| !track->filter(t, x->core->mod("core.file-write"), 0))
 		goto end;
 
-	x->Phiola_RecordCallback_on_finish = jni_func(jni_class_obj(jcb), "on_finish", "()V");
-	t->udata = jni_global_ref(jcb);
+	struct rec_ctx *rx = ffmem_new(struct rec_ctx);
+	rx->Phiola_RecordCallback_on_finish = jni_func(jni_class_obj(jcb), "on_finish", "()V");
+	rx->on_finish_object = jni_global_ref(jcb);
+	t->udata = rx;
 
 	track->start(t);
 	e = 0;
@@ -108,20 +145,42 @@ end:
 	}
 	dbglog("%s: exit", __func__);
 	return (jlong)t;
-
 }
 
+enum {
+	RECL_STOP = 1,
+	RECL_PAUSE = 2,
+	RECL_RESUME = 3,
+};
+
 JNIEXPORT jstring JNICALL
-Java_com_github_stsaz_phiola_Phiola_recStop(JNIEnv *env, jobject thiz, jlong trk)
+Java_com_github_stsaz_phiola_Phiola_recCtrl(JNIEnv *env, jobject thiz, jlong trk, jint cmd)
 {
 	if (trk == 0) return NULL;
 
-	dbglog("%s: enter", __func__);
-	phi_track *t = (void*)trk;
 	jstring e = NULL;
-	if (t->error)
-		e = jni_js_szf(env, "code %u", t->error);
-	x->core->track->stop(t);
+	dbglog("%s: enter", __func__);
+
+	phi_track *t = (void*)trk;
+	struct rec_ctx *rx = t->udata;
+
+	switch (cmd) {
+	case RECL_STOP:
+		if (t->error)
+			e = jni_js_szf(env, "code %u", t->error);
+		rx->state &= ~RS_PAUSED;
+		x->core->track->stop(t);
+		break;
+
+	case RECL_PAUSE:
+		rx->state |= RS_PAUSED; break;
+
+	case RECL_RESUME:
+		rx->state &= ~RS_PAUSED;
+		x->core->track->wake(t);
+		break;
+	}
+
 	dbglog("%s: exit", __func__);
 	return e;
 }
