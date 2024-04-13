@@ -26,7 +26,7 @@ public class ConvertActivity extends AppCompatActivity {
 		setContentView(b.getRoot());
 
 		ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item
-			, CoreSettings.conv_ext_display);
+			, CoreSettings.conv_format_display);
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		b.spOutExt.setAdapter(adapter);
 
@@ -141,9 +141,9 @@ public class ConvertActivity extends AppCompatActivity {
 		return String.format("%d:%02d", sec / 60, sec % 60);
 	}
 
-	private int conv_extension(String s) {
-		for (int i = 0; i < CoreSettings.conv_extensions.length; i++) {
-			if (CoreSettings.conv_extensions[i].equals(s))
+	private int conv_format_index(String name) {
+		for (int i = 0; i < CoreSettings.conv_formats.length; i++) {
+			if (CoreSettings.conv_formats[i].equals(name))
 				return i;
 		}
 		return -1;
@@ -171,7 +171,7 @@ public class ConvertActivity extends AppCompatActivity {
 
 	private void load() {
 		b.eOutDir.setText(core.setts.conv_out_dir);
-		b.spOutExt.setSelection(conv_extension(core.setts.conv_outext));
+		b.spOutExt.setSelection(conv_format_index(core.setts.conv_format));
 
 		b.sbAacQ.setProgress(aac_q_progress(core.setts.conv_aac_quality));
 		b.eAacQ.setText(core.int_to_str(core.setts.conv_aac_quality));
@@ -190,7 +190,7 @@ public class ConvertActivity extends AppCompatActivity {
 
 	private void save() {
 		core.setts.conv_out_dir = b.eOutDir.getText().toString();
-		core.setts.conv_outext = CoreSettings.conv_extensions[b.spOutExt.getSelectedItemPosition()];
+		core.setts.conv_format = CoreSettings.conv_formats[b.spOutExt.getSelectedItemPosition()];
 		core.setts.conv_copy = b.swCopy.isChecked();
 
 		String s = b.eAacQ.getText().toString();
@@ -245,6 +245,9 @@ public class ConvertActivity extends AppCompatActivity {
 		p.aac_quality = core.str_to_uint(b.eAacQ.getText().toString(), 0);
 		p.opus_quality = core.str_to_uint(b.eOpusQ.getText().toString(), 0);
 
+		int iformat = b.spOutExt.getSelectedItemPosition();
+		p.format = CoreSettings.conv_encoders[iformat];
+
 		int q = core.str_to_uint(b.eVorbisQ.getText().toString(), 0);
 		if (q != 0)
 			p.vorbis_quality = (q + 1) * 10;
@@ -272,7 +275,7 @@ public class ConvertActivity extends AppCompatActivity {
 		oname = String.format("%s/%s.%s"
 			, odir
 			, b.eOutName.getText().toString()
-			, CoreSettings.conv_extensions[b.spOutExt.getSelectedItemPosition()]);
+			, CoreSettings.conv_extensions[iformat]);
 		core.phiola.convert(iname, oname, p,
 				(result) -> {
 					core.tq.post(() -> {

@@ -35,14 +35,33 @@ class CoreSettings {
 	};
 
 	String	conv_out_dir;
-	String	conv_outext;
+	String	conv_format;
 	int		conv_aac_quality;
 	int		conv_opus_quality;
 	int		conv_vorbis_quality;
 	boolean	conv_copy;
 	boolean	conv_file_date_preserve;
 	boolean	conv_new_add_list;
+	static final int conv_encoders[] = {
+		Phiola.AF_AAC_LC,
+		Phiola.AF_AAC_HE,
+		0,
+		0,
+		0,
+		0,
+		0,
+	};
+	static final String[] conv_formats = {
+		"m4a",
+		"m4a/aac-he",
+		"opus",
+		"ogg",
+		"flac",
+		"wav",
+		"mp3",
+	};
 	static final String[] conv_extensions = {
+		"m4a",
 		"m4a",
 		"opus",
 		"ogg",
@@ -50,8 +69,9 @@ class CoreSettings {
 		"wav",
 		"mp3",
 	};
-	static final String[] conv_ext_display = {
+	static final String[] conv_format_display = {
 		".m4a (AAC-LC)",
+		".m4a (AAC-HE)",
 		".opus (Opus)",
 		".ogg (Vorbis)",
 		".flac (FLAC)",
@@ -76,7 +96,7 @@ class CoreSettings {
 		rec_until_sec = 3600;
 
 		conv_out_dir = "";
-		conv_outext = "m4a";
+		conv_format = "m4a";
 		conv_aac_quality = 5;
 		conv_opus_quality = 192;
 		conv_vorbis_quality = 7;
@@ -129,7 +149,7 @@ class CoreSettings {
 			, rec_gain_db100
 			, core.bool_to_int(rec_exclusive)
 			, conv_out_dir
-			, conv_outext
+			, conv_format
 			, conv_aac_quality
 			, conv_opus_quality
 			, conv_vorbis_quality
@@ -169,8 +189,8 @@ class CoreSettings {
 		if (rec_until_sec < 0)
 			rec_until_sec = 3600;
 
-		if (conv_outext.isEmpty())
-			conv_outext = "m4a";
+		if (conv_format.isEmpty())
+			conv_format = "m4a";
 	}
 
 	void conf_load(Conf.Entry[] kv) {
@@ -195,7 +215,7 @@ class CoreSettings {
 		rec_gain_db100 = core.str_to_int(kv[Conf.REC_GAIN].value, rec_gain_db100);
 
 		conv_out_dir = kv[Conf.CONV_OUT_DIR].value;
-		conv_outext = kv[Conf.CONV_OUTEXT].value;
+		conv_format = kv[Conf.CONV_FORMAT].value;
 		conv_aac_quality = core.str_to_uint(kv[Conf.CONV_AAC_Q].value, conv_aac_quality);
 		conv_opus_quality = core.str_to_uint(kv[Conf.CONV_OPUS_Q].value, conv_opus_quality);
 		conv_vorbis_quality = core.str_to_uint(kv[Conf.CONV_VORBIS_Q].value, conv_vorbis_quality);

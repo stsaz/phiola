@@ -384,16 +384,16 @@ class Track {
 
 	private int rec_fmt(String s) {
 		if (s.equals("AAC-HE"))
-			return Phiola.RecordParams.REC_AAC_HE;
+			return Phiola.AF_AAC_HE;
 		else if (s.equals("AAC-HEv2"))
-			return Phiola.RecordParams.REC_AAC_HE2;
+			return Phiola.AF_AAC_HE2;
 		else if (s.equals("FLAC"))
-			return Phiola.RecordParams.REC_FLAC;
+			return Phiola.AF_FLAC;
 		else if (s.equals("Opus"))
-			return Phiola.RecordParams.REC_OPUS;
+			return Phiola.AF_OPUS;
 		else if (s.equals("Opus-VOIP"))
-			return Phiola.RecordParams.REC_OPUS_VOICE;
-		return Phiola.RecordParams.REC_AAC_LC;
+			return Phiola.AF_OPUS_VOICE;
+		return Phiola.AF_AAC_LC;
 	}
 
 	TrackHandle rec_start(String out, Phiola.RecordCallback cb) {

@@ -119,6 +119,15 @@ static void core_task(struct core_data *d, void (*func)(struct core_data*))
 }
 
 
+enum {
+	AF_AAC_LC = 0,
+	AF_AAC_HE = 1,
+	AF_AAC_HE2 = 2,
+	AF_FLAC = 3,
+	AF_OPUS = 4,
+	AF_OPUS_VOICE = 5,
+};
+
 #include <jni/record.h>
 #include <jni/convert.h>
 #include <jni/info.h>

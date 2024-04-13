@@ -87,6 +87,7 @@ Java_com_github_stsaz_phiola_Phiola_convert(JNIEnv *env, jobject thiz, jstring j
 {
 	dbglog("%s: enter", __func__);
 	jclass jc_conf = jni_class_obj(jconf);
+	int format = jni_obj_int(jconf, jni_field(jc_conf, "format", JNI_TINT));
 	jstring jfrom = jni_obj_jo(jconf, jni_field(jc_conf, "from_msec", JNI_TSTR));
 	jstring jto = jni_obj_jo(jconf, jni_field(jc_conf, "to_msec", JNI_TSTR));
 	int flags = jni_obj_int(jconf, jni_field(jc_conf, "flags", JNI_TINT));
@@ -115,6 +116,7 @@ Java_com_github_stsaz_phiola_Phiola_convert(JNIEnv *env, jobject thiz, jstring j
 		.seek_msec = seek,
 		.until_msec = until,
 		.aac = {
+			.profile = (format == AF_AAC_HE) ? 'h' : 0,
 			.quality = jni_obj_int(jconf, jni_field(jc_conf, "aac_quality", JNI_TINT)),
 		},
 		.opus = {

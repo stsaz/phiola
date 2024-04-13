@@ -28,11 +28,21 @@ class Phiola {
 	}
 	native int meta(long q, int list_item, String filepath, MetaCallback cb);
 
+	static final int
+		AF_AAC_LC = 0,
+		AF_AAC_HE = 1,
+		AF_AAC_HE2 = 2,
+		AF_FLAC = 3,
+		AF_OPUS = 4,
+		AF_OPUS_VOICE = 5;
+
 	static class ConvertParams {
 		ConvertParams() {
 			from_msec = "";
 			to_msec = "";
 		}
+
+		int format;
 
 		static final int F_DATE_PRESERVE = 1;
 		static final int F_OVERWRITE = 2;
@@ -51,13 +61,6 @@ class Phiola {
 	native int convert(String iname, String oname, ConvertParams conf, ConvertCallback cb);
 
 	static class RecordParams {
-		static final int
-			REC_AAC_LC = 0,
-			REC_AAC_HE = 1,
-			REC_AAC_HE2 = 2,
-			REC_FLAC = 3,
-			REC_OPUS = 4,
-			REC_OPUS_VOICE = 5;
 		int format;
 
 		int channels;

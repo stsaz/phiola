@@ -29,15 +29,6 @@ static const phi_filter phi_android_guard = {
 	"rec-guard"
 };
 
-enum {
-	REC_AAC_LC = 0,
-	REC_AAC_HE = 1,
-	REC_AAC_HE2 = 2,
-	REC_FLAC = 3,
-	REC_OPUS = 4,
-	REC_OPUS_VOICE = 5,
-};
-
 #define RECF_EXCLUSIVE  1
 #define RECF_POWER_SAVE  2
 #define RECF_DANORM  4
@@ -75,14 +66,14 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 			.danorm = (flags & RECF_DANORM) ? "" : NULL,
 		},
 		.aac = {
-			.profile = (fmt == REC_AAC_HE) ? 'h'
-				: (fmt == REC_AAC_HE2) ? 'H'
+			.profile = (fmt == AF_AAC_HE) ? 'h'
+				: (fmt == AF_AAC_HE2) ? 'H'
 				: 0,
 			.quality = (uint)q,
 		},
 		.opus = {
 			.bitrate = q,
-			.mode = (fmt == REC_OPUS_VOICE) ? 1 : 0,
+			.mode = (fmt == AF_OPUS_VOICE) ? 1 : 0,
 		},
 		.ofile = {
 			.name = ffsz_dup(oname),
