@@ -51,6 +51,13 @@ test_record() {
 	./phiola rec -o rec.wav -f -u 2 -au alsa -dev 1
 }
 
+test_record_split() {
+	./phiola rec  -rate 48000  -split 1  -until 3  -f -o rec_split_@counter.flac
+	./phiola info ./rec_split_1.flac | grep '48,000 samples'
+	./phiola info ./rec_split_2.flac | grep '48,000 samples'
+	./phiola info ./rec_split_3.flac | grep '48,000 samples'
+}
+
 test_record_manual() {
 	echo "!!! PRESS CTRL+C MANUALLY !!!"
 	./phiola rec -o rec.wav -f
@@ -594,6 +601,7 @@ test_clean() {
 TESTS=(
 	device
 	record
+	record_split
 	# record_manual
 	play
 	convert

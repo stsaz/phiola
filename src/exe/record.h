@@ -19,6 +19,8 @@ Options:\n\
   `-rate` NUMBER          Sample rate\n\
   `-channels` NUMBER      Channels number\n\
 \n\
+  `-split` TIME           Create new output file periodically\n\
+                          [[HH:]MM:]SS[.MSC]\n\
   `-until` TIME           Stop at time\n\
                           [[HH:]MM:]SS[.MSC]\n\
 \n\
@@ -92,6 +94,7 @@ struct cmd_rec {
 	uint	opus_mode_n;
 	uint	opus_q;
 	uint	rate;
+	uint	split;
 	uint	vorbis_q;
 	uint64	until;
 };
@@ -143,6 +146,7 @@ static int rec_action(struct cmd_rec *r)
 			.loopback = r->loopback,
 			.buf_time = r->buffer,
 		},
+		.split_msec = r->split,
 		.until_msec = r->until,
 		.afilter = {
 			.gain_db = r->gain,
@@ -182,8 +186,12 @@ static int rec_action(struct cmd_rec *r)
 			&& !track->filter(t, x->core->mod("danorm.f"), 0))
 		|| !track->filter(t, x->core->mod("afilter.gain"), 0)
 		|| !track->filter(t, x->core->mod("afilter.auto-conv"), 0)
-		|| !track->filter(t, x->core->mod("format.auto-write"), 0)
-		|| !track->filter(t, x->core->mod(output), 0)) {
+		|| (r->split
+			&& !track->filter(t, x->core->mod("afilter.split"), 0))
+		|| (!r->split
+			&& (!track->filter(t, x->core->mod("format.auto-write"), 0)
+				|| !track->filter(t, x->core->mod(output), 0)))
+		) {
 		track->close(t);
 		return -1;
 	}
@@ -242,6 +250,15 @@ static int rec_aformat(struct cmd_rec *r, ffstr s)
 	return 0;
 }
 
+static int rec_split(struct cmd_rec *c, ffstr s)
+{
+	uint64 v;
+	int r;
+	if ((r = cmd_time_value(&v, s)))
+		return r;
+	c->split = v;
+	return 0;
+}
 static int rec_until(struct cmd_rec *r, ffstr s) { return cmd_time_value(&r->until, s); }
 
 #define O(m)  (void*)FF_OFF(struct cmd_rec, m)
@@ -266,6 +283,7 @@ static const struct ffarg cmd_rec[] = {
 	{ "-out",			's',	O(output) },
 	{ "-rate",			'u',	O(rate) },
 	{ "-remote",		'1',	O(remote) },
+	{ "-split",			'S',	rec_split },
 	{ "-until",			'S',	rec_until },
 	{ "-vorbis_quality",'u',	O(vorbis_q) },
 	{ "",				0,		rec_check },

@@ -11,7 +11,7 @@
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20018
+#define PHI_VERSION_CORE  20022
 
 typedef long long int64;
 typedef unsigned long long uint64;
@@ -253,6 +253,7 @@ struct phi_track_conf {
 
 	ffslice tracks; // uint[]
 
+	uint	split_msec;
 	uint64	seek_msec;
 	uint64	until_msec;
 	uint64	seek_cdframes;
