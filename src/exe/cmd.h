@@ -120,8 +120,9 @@ static int cmd_input(ffvec *input, ffstr s)
 static const char* cmd_aac_profile(const char *s)
 {
 	if (!s) return "l";
-	if (!s[0] || s[1]) return NULL;
-	if (s[0] == 'l' || s[0] == 'h' || s[0] == 'H') return s;
+	if (ffsz_ieq(s, "lc")) return "l";
+	if (ffsz_ieq(s, "he")) return "h";
+	if (ffsz_ieq(s, "he2")) return "H";
 	return NULL;
 }
 

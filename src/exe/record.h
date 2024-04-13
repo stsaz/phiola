@@ -33,10 +33,10 @@ Options:\n\
                           `compress`    Float\n\
   `-gain` NUMBER          Gain/attenuation in dB\n\
 \n\
-  `-aac_profile` CHAR     AAC profile:\n\
-                          `l`  AAC-LC\n\
-                          `h`  AAC-HE\n\
-                          `H`  AAC-HEv2\n\
+  `-aac_profile` STRING   AAC profile:\n\
+                          `LC`  AAC-LC\n\
+                          `HE`  AAC-HE\n\
+                          `HE2` AAC-HEv2\n\
   `-aac_quality` NUMBER   AAC encoding quality:\n\
                           1..5 (VBR) or 8..800 (CBR, kbit/s)\n\
   `-opus_quality` NUMBER  Opus encoding bitrate:\n\
