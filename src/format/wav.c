@@ -65,8 +65,11 @@ static uint af_wav_phi(uint wf)
 	return wf;
 }
 
-static void wav_info(struct wav_r *w, phi_track *t, const struct wav_info *ai)
+static int wav_info(struct wav_r *w, phi_track *t, const struct wav_info *ai)
 {
+	if (ai->channels > 8)
+		return -1;
+
 	t->audio.decoder = "WAVE";
 	struct phi_af f = {
 		.format = af_wav_phi(ai->format),
@@ -78,6 +81,7 @@ static void wav_info(struct wav_r *w, phi_track *t, const struct wav_info *ai)
 	t->audio.total = ai->total_samples;
 	t->audio.bitrate = ai->bitrate;
 	t->data_type = "pcm";
+	return 0;
 }
 
 static int wav_process(void *ctx, phi_track *t)
@@ -129,7 +133,10 @@ again:
 			goto data;
 
 		case WAVREAD_HEADER:
-			wav_info(w, t, wavread_info(&w->wav));
+			if (wav_info(w, t, wavread_info(&w->wav))) {
+				errlog(t, "incorrect WAV header");
+				return PHI_ERR;
+			}
 
 			if (t->conf.info_only)
 				return PHI_LASTOUT;

@@ -103,6 +103,12 @@ static int aconv_prepare(struct aconv *c, phi_track *t)
 	if (r != 0)
 		return PHI_ERR;
 
+	// Allow no more than 16MB per 1 second of 64-bit 7.1 audio: 0x00ffffff/(64/8*8)=262143
+	if (c->fo.rate > 262143) {
+		errlog(t, "too large sample rate: %u", c->fo.rate);
+		return PHI_ERR;
+	}
+
 	uint out_ch = c->fo.channels & PHI_PCM_CHMASK;
 	c->out_samp_size = pcm_size(c->fo.format, out_ch);
 	size_t cap = msec_to_samples(CONV_OUTBUF_MSEC, c->fo.rate) * c->out_samp_size;

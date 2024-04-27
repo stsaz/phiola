@@ -74,6 +74,10 @@ static inline int ffsoxr_create(ffsoxr *soxr, const struct phi_af *inpcm, const 
 	if (inpcm->channels != outpcm->channels)
 		return -1;
 
+	// Allow no more than 16MB per 1 second of 64-bit 7.1 audio: 0x00ffffff/(64/8*8)=262143
+	if (outpcm->rate > 262143)
+		return -1;
+
 	int itype = _ffsoxr_getfmt(inpcm->format, inpcm->interleaved);
 	int otype = _ffsoxr_getfmt(outpcm->format, outpcm->interleaved);
 	if (itype == -1 || otype == -1)
