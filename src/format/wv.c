@@ -28,7 +28,7 @@ static void wv_log(void *udata, const char *fmt, va_list va)
 
 static void* wv_in_create(phi_track *t)
 {
-	wvpk_r *w = ffmem_new(wvpk_r);
+	wvpk_r *w = phi_track_allocT(t, wvpk_r);
 	w->trk = t;
 	ffuint64 fs = (t->input.size != ~0ULL) ? t->input.size : 0;
 	wvread_open(&w->wv, fs);
@@ -42,7 +42,7 @@ static void wv_in_free(void *ctx, phi_track *t)
 {
 	wvpk_r *w = ctx;
 	wvread_close(&w->wv);
-	ffmem_free(w);
+	phi_track_free(t, w);
 }
 
 extern const phi_meta_if phi_metaif;

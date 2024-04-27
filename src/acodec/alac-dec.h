@@ -12,11 +12,11 @@ static void* alac_open(phi_track *t)
 	if (!core->track->filter(t, core->mod("afilter.skip"), 0))
 		return PHI_OPEN_ERR;
 
-	alac_in *a = ffmem_new(alac_in);
+	alac_in *a = phi_track_allocT(t, alac_in);
 
 	if (0 != ffalac_open(&a->alac, t->data_in.ptr, t->data_in.len)) {
 		errlog(t, "ffalac_open(): %s", ffalac_errstr(&a->alac));
-		ffmem_free(a);
+		phi_track_free(t, a);
 		return PHI_OPEN_ERR;
 	}
 	t->audio.end_padding = (t->audio.total != ~0ULL);
@@ -35,7 +35,7 @@ static void alac_close(void *ctx, phi_track *t)
 {
 	alac_in *a = ctx;
 	ffalac_close(&a->alac);
-	ffmem_free(a);
+	phi_track_free(t, a);
 }
 
 static int alac_in_decode(void *ctx, phi_track *t)

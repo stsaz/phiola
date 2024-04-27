@@ -20,7 +20,7 @@ static void ogg_log(void *udata, const char *fmt, va_list va)
 
 static void* ogg_open(phi_track *t)
 {
-	struct ogg_r *o = ffmem_new(struct ogg_r);
+	struct ogg_r *o = phi_track_allocT(t, struct ogg_r);
 	o->trk = t;
 
 	ffuint64 total_size = (t->input.size != ~0ULL) ? t->input.size : 0;
@@ -39,7 +39,7 @@ static void ogg_close(void *ctx, phi_track *t)
 {
 	struct ogg_r *o = ctx;
 	oggread_close(&o->og);
-	ffmem_free(o);
+	phi_track_free(t, o);
 }
 
 #define VORBIS_HEAD_STR  "\x01vorbis"

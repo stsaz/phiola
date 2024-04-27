@@ -12,12 +12,12 @@ static void zstdr_close(void *ctx, phi_track *t)
 	struct zstdr *z = ctx;
 	zstd_decode_free(z->zst);
 	ffvec_free(&z->buf);
-	ffmem_free(z);
+	phi_track_free(t, z);
 }
 
 static void* zstdr_open(phi_track *t)
 {
-	struct zstdr *z = ffmem_new(struct zstdr);
+	struct zstdr *z = phi_track_allocT(t, struct zstdr);
 	zstd_dec_conf zc = {};
 	zstd_decode_init(&z->zst, &zc);
 	ffvec_alloc(&z->buf, 512*1024, 1);

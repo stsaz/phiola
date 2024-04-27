@@ -14,14 +14,14 @@ struct mp4_w {
 
 static void* mp4w_create(phi_track *t)
 {
-	struct mp4_w *m = ffmem_new(struct mp4_w);
+	struct mp4_w *m = phi_track_allocT(t, struct mp4_w);
 	return m;
 }
 
 static void mp4w_free(struct mp4_w *m, phi_track *t)
 {
 	mp4write_close(&m->mp);
-	ffmem_free(m);
+	phi_track_free(t, m);
 }
 
 static int mp4w_addmeta(struct mp4_w *m, phi_track *t)

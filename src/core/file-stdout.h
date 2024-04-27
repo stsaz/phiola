@@ -12,7 +12,7 @@ struct std_out {
 static void stdout_close(void *ctx, phi_track *t)
 {
 	struct std_out *f = ctx;
-	ffvec_free(&f->buf);
+	ffmem_alignfree(f->buf.ptr);
 	phi_track_free(t, f);
 }
 
@@ -21,7 +21,8 @@ static void* stdout_open(phi_track *t)
 	struct std_out *f = phi_track_allocT(t, struct std_out);
 	f->fd = ffstdout;
 	t->output.cant_seek = 1;
-	ffvec_alloc(&f->buf, 64*1024, 1);
+	f->buf.cap = 64*1024;
+	f->buf.ptr = ffmem_align(f->buf.cap, 4*1024);
 	return f;
 }
 

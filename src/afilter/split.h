@@ -42,6 +42,11 @@ static void split_brg_consume(struct split_brg *g)
 		core->track->wake(g->parent);
 }
 
+static int split_brg_busy(struct split_brg *g)
+{
+	return (g->state != S_NONE);
+}
+
 static void split_brg_unref(struct split_brg *g)
 {
 	if (--g->users == 0)
@@ -100,7 +105,7 @@ static void* split_open(phi_track *t)
 	if (t->conf.split_msec == 0)
 		return PHI_OPEN_SKIP;
 
-	struct split *c = ffmem_new(struct split);
+	struct split *c = phi_track_allocT(t, struct split);
 	c->split_by = msec_to_samples(t->conf.split_msec, t->audio.format.rate);
 	c->sample_size = pcm_size(t->audio.format.format, t->audio.format.channels);
 	c->split_next = 1;
@@ -117,7 +122,7 @@ static void split_close(void *ctx, phi_track *t)
 		c->brg->parent = NULL;
 		split_brg_unref(c->brg);
 	}
-	ffmem_free(c);
+	phi_track_free(t, c);
 }
 
 /** Create a subtrack that will encode audio (supplied by us) and write the output to a file. */
@@ -178,7 +183,7 @@ static int split_process(void *ctx, phi_track *t)
 		t->data_in.len = 0;
 	}
 
-	if (c->brg && c->brg->state != S_NONE)
+	if (c->brg && split_brg_busy(c->brg))
 		return PHI_ASYNC; // we're waiting for the subtrack to finish reading the data
 
 	if (!input.len) {

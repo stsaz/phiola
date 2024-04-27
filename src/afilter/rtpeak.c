@@ -18,7 +18,7 @@ static void* rtpeak_open(phi_track *t)
 	p->fmt = t->audio.format;
 	if (0 != pcm_maxpeak(&p->fmt, NULL, 0, NULL)) {
 		errlog(t, "pcm_maxpeak(): format not supported");
-		ffmem_free(p);
+		phi_track_free(t, p);
 		return PHI_OPEN_ERR;
 	}
 	return p;

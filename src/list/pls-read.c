@@ -24,7 +24,7 @@ static void* pls_open(phi_track *t)
 	if (!metaif)
 		metaif = core->mod("format.meta");
 
-	struct pls_r *p = ffmem_new(struct pls_r);
+	struct pls_r *p = phi_track_allocT(t, struct pls_r);
 	plsread_open(&p->pls);
 	p->qu_cur = t->qent;
 	return p;
@@ -35,7 +35,7 @@ static void pls_close(void *ctx, phi_track *t)
 	struct pls_r *p = ctx;
 	plsread_close(&p->pls);
 	pls_entry_free(&p->pls_ent);
-	ffmem_free(p);
+	phi_track_free(t, p);
 }
 
 static int pls_add(struct pls_r *p, phi_track *t)

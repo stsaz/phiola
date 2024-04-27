@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# phiola: cross-build on Linux for Debian-buster
+# phiola: cross-build on Linux for Debian-bullseye
 
 set -xe
 
@@ -8,11 +8,11 @@ if ! test -d "../phiola" ; then
 	exit 1
 fi
 
-if ! podman container exists phiola_debianbuster_build ; then
-	if ! podman image exists phiola-debianbuster-builder ; then
+if ! podman container exists phiola_debianbullseye_build ; then
+	if ! podman image exists phiola-debianbullseye-builder ; then
 		# Create builder image
-		cat <<EOF | podman build -t phiola-debianbuster-builder -f - .
-FROM debian:buster-slim
+		cat <<EOF | podman build -t phiola-debianbullseye-builder -f - .
+FROM debian:bullseye-slim
 RUN apt update && \
  apt install -y \
   make
@@ -22,17 +22,18 @@ RUN apt install -y \
  zstd unzip bzip2 xz-utils \
  cmake patch dos2unix curl
 RUN apt install -y \
- libasound2-dev libpulse-dev libjack-dev \
- libdbus-1-dev \
  libgtk-3-dev
+RUN apt install -y \
+ libasound2-dev libpulse-dev libjack-dev \
+ libdbus-1-dev
 EOF
 	fi
 
 	# Create builder container
 	podman create --attach --tty \
 	 -v `pwd`/..:/src \
-	 --name phiola_debianbuster_build \
-	 phiola-debianbuster-builder \
+	 --name phiola_debianbullseye_build \
+	 phiola-debianbullseye-builder \
 	 bash -c 'cd /src/phiola && source ./build_linux.sh'
 fi
 
@@ -64,4 +65,4 @@ make -j8 app \
 EOF
 
 # Build inside the container
-podman start --attach phiola_debianbuster_build
+podman start --attach phiola_debianbullseye_build

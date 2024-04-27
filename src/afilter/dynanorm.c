@@ -51,14 +51,14 @@ struct danorm {
 
 static void* danorm_f_open(phi_track *t)
 {
-	struct danorm *c = ffmem_new(struct danorm);
+	struct danorm *c = phi_track_allocT(t, struct danorm);
 	dynanorm_init(&c->conf);
 	c->conf.channels = t->audio.format.channels;
 	c->conf.sampleRate = t->audio.format.rate;
 	struct ffargs a = {};
 	if (!!ffargs_process_line(&a, danorm_conf_args, &c->conf, FFARGS_O_PARTIAL | FFARGS_O_DUPLICATES, t->conf.afilter.danorm)) {
 		errlog(t, "%s", a.error);
-		ffmem_free(c);
+		phi_track_free(t, c);
 		return PHI_OPEN_ERR;
 	}
 	return c;
@@ -69,7 +69,7 @@ static void danorm_f_close(void *ctx, phi_track *t)
 	struct danorm *c = ctx;
 	dynanorm_close(c->ctx);
 	ffvec_free(&c->buf);
-	ffmem_free(c);
+	phi_track_free(t, c);
 }
 
 /** Set array elements to point to consecutive regions of one buffer */

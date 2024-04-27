@@ -12,7 +12,7 @@ static void* coraud_open(phi_track *t)
 	if (0 != mod_init(t->trk))
 		return PHI_OPEN_ERR;
 
-	struct coraud_out *c = ffmem_new(struct coraud_out);
+	struct coraud_out *c = phi_track_allocT(t, struct coraud_out);
 	c->out.trk = t->trk;
 	c->out.core = core;
 	c->out.audio = &ffcoreaudio;
@@ -27,7 +27,7 @@ static void coraud_close(void *ctx, phi_track *t)
 	core->timer(t->worker, &c->tmr, 0, NULL, NULL);
 	ffcoreaudio.free(c->out.stream);
 	ffcoreaudio.dev_free(c->out.dev);
-	ffmem_free(c);
+	phi_track_free(t, c);
 }
 
 static int coraud_create(struct coraud_out *c, phi_track *t)

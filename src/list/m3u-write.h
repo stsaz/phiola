@@ -19,7 +19,7 @@ static void* m3uw_open(phi_track *t)
 	if (!metaif)
 		metaif = core->mod("format.meta");
 
-	struct m3uw *m = ffmem_new(struct m3uw);
+	struct m3uw *m = phi_track_allocT(t, struct m3uw);
 	m->q = t->udata;
 	m3uwrite_create(&m->m3, 0);
 	return m;
@@ -29,7 +29,7 @@ static void m3uw_close(void *ctx, phi_track *t)
 {
 	struct m3uw *m = ctx;
 	m3uwrite_close(&m->m3);
-	ffmem_free(m);
+	phi_track_free(t, m);
 }
 
 static int m3uw_process(void *ctx, phi_track *t)

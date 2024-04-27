@@ -14,11 +14,11 @@ static void* vorbis_open(phi_track *t)
 	if (!core->track->filter(t, core->mod("afilter.skip"), 0))
 		return PHI_OPEN_ERR;
 
-	struct vorbis_dec *v = ffmem_new(struct vorbis_dec);
+	struct vorbis_dec *v = phi_track_allocT(t, struct vorbis_dec);
 
 	if (0 != ffvorbis_open(&v->vorbis)) {
 		errlog(t, "ffvorbis_open(): %s", ffvorbis_errstr(&v->vorbis));
-		ffmem_free(v);
+		phi_track_free(t, v);
 		return PHI_OPEN_ERR;
 	}
 
@@ -30,7 +30,7 @@ static void vorbis_close(void *ctx, phi_track *t)
 {
 	struct vorbis_dec *v = ctx;
 	ffvorbis_close(&v->vorbis);
-	ffmem_free(v);
+	phi_track_free(t, v);
 }
 
 /*

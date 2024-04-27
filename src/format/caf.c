@@ -24,7 +24,7 @@ void caf_log(void *udata, const char *fmt, va_list va)
 
 static void* caf_open(phi_track *t)
 {
-	struct caf_r *c = ffmem_new(struct caf_r);
+	struct caf_r *c = phi_track_allocT(t, struct caf_r);
 	c->trk = t;
 	cafread_open(&c->caf);
 	c->caf.log = caf_log;
@@ -36,7 +36,7 @@ static void caf_close(void *ctx, phi_track *t)
 {
 	struct caf_r *c = ctx;
 	cafread_close(&c->caf);
-	ffmem_free(c);
+	phi_track_free(t, c);
 }
 
 static const ffbyte caf_codecs[] = {

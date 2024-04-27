@@ -20,7 +20,7 @@ struct flacogg_r {
 
 static void* flacogg_in_create(phi_track *t)
 {
-	struct flacogg_r *f = ffmem_new(struct flacogg_r);
+	struct flacogg_r *f = phi_track_allocT(t, struct flacogg_r);
 	flacoggread_open(&f->fo);
 	return f;
 }
@@ -29,7 +29,7 @@ static void flacogg_in_free(void *ctx, phi_track *t)
 {
 	struct flacogg_r *f = ctx;
 	flacoggread_close(&f->fo);
-	ffmem_free(f);
+	phi_track_free(t, f);
 }
 
 static void flacogg_meta(struct flacogg_r *f, phi_track *t)

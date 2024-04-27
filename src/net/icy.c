@@ -15,7 +15,7 @@ struct icy {
 
 static void* icy_open(phi_track *t)
 {
-	struct icy *c = ffmem_new(struct icy);
+	struct icy *c = phi_track_allocT(t, struct icy);
 	c->metaif = core->mod("format.meta");
 	icyread_open(&c->icy, t->icy_meta_interval);
 	return c;
@@ -24,7 +24,7 @@ static void* icy_open(phi_track *t)
 static void icy_close(void *ctx, phi_track *t)
 {
 	struct icy *c = ctx;
-	ffmem_free(c);
+	phi_track_free(t, c);
 }
 
 static int icy_meta(struct icy *c, ffstr data, phi_track *t)

@@ -33,7 +33,7 @@ static void* peaks_open(phi_track *t)
 		return PHI_OPEN_ERR;
 	}
 
-	p = ffmem_new(struct peaks);
+	p = phi_track_allocT(t, struct peaks);
 	p->nch = t->oaudio.format.channels;
 	p->do_crc = t->conf.afilter.peaks_crc;
 	return p;
@@ -41,7 +41,7 @@ static void* peaks_open(phi_track *t)
 
 static void peaks_close(struct peaks *p, phi_track *t)
 {
-	ffmem_free(p);
+	phi_track_free(t, p);
 }
 
 static int peaks_process(struct peaks *p, phi_track *t)

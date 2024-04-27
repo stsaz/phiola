@@ -247,7 +247,7 @@ static int conf_prepare(struct httpcl *h, struct nml_http_client_conf *c)
 
 static void* httpcl_open(phi_track *t)
 {
-	struct httpcl *h = ffmem_new(struct httpcl);
+	struct httpcl *h = phi_track_allocT(t, struct httpcl);
 	h->trk = t;
 	h->cl = nml_http_client_create();
 
@@ -268,7 +268,7 @@ static void httpcl_close(struct httpcl *h, phi_track *t)
 	nml_http_client_free(h->cl);
 	ffvec_free(&h->path);
 	ffstr_free(&h->conf.headers);
-	ffmem_free(h);
+	phi_track_free(t, h);
 }
 
 static int httpcl_process(struct httpcl *h, phi_track *t)

@@ -58,7 +58,7 @@ struct opusmeta {
 
 static void* opusmeta_open(phi_track *t)
 {
-	struct opusmeta *o = ffmem_new(struct opusmeta);
+	struct opusmeta *o = phi_track_allocT(t, struct opusmeta);
 	return o;
 }
 
@@ -66,7 +66,7 @@ static void opusmeta_close(void *ctx, phi_track *t)
 {
 	struct opusmeta *o = ctx;
 	ffvec_free(&o->hdr);
-	ffmem_free(o);
+	phi_track_free(t, o);
 }
 
 static int opusmeta_read(void *ctx, phi_track *t)

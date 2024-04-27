@@ -16,7 +16,7 @@ static void* until_open(phi_track *t)
 		return PHI_OPEN_SKIP;
 
 	struct until *u;
-	u = ffmem_new(struct until);
+	u = phi_track_allocT(t, struct until);
 	u->until = msec_to_samples(t->conf.until_msec, t->audio.format.rate);
 
 	u->sampsize = pcm_size(t->audio.format.format, t->audio.format.channels);
@@ -29,7 +29,7 @@ static void* until_open(phi_track *t)
 static void until_close(void *ctx, phi_track *t)
 {
 	struct until *u = ctx;
-	ffmem_free(u);
+	phi_track_free(t, u);
 }
 
 static int until_process(void *ctx, phi_track *t)

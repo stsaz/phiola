@@ -14,7 +14,7 @@ struct vorbis_enc {
 
 static void* vorbis_out_create(phi_track *t)
 {
-	struct vorbis_enc *v = ffmem_new(struct vorbis_enc);
+	struct vorbis_enc *v = phi_track_allocT(t, struct vorbis_enc);
 	if (!phi_metaif)
 		phi_metaif = core->mod("format.meta");
 	return v;
@@ -24,7 +24,7 @@ static void vorbis_out_free(void *ctx, phi_track *t)
 {
 	struct vorbis_enc *v = ctx;
 	ffvorbis_enc_close(&v->vorbis);
-	ffmem_free(v);
+	phi_track_free(t, v);
 }
 
 static int vorbis_out_addmeta(struct vorbis_enc *v, phi_track *t)

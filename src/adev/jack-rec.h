@@ -10,7 +10,7 @@ static void jack_in_close(struct jack_in *ji, phi_track *t)
 {
 	core->timer(t->worker, &ji->tmr, 0, NULL, NULL);
 	audio_in_close(&ji->in);
-	ffmem_free(ji);
+	phi_track_free(t, ji);
 }
 
 static void* jack_in_open(phi_track *t)
@@ -18,7 +18,7 @@ static void* jack_in_open(phi_track *t)
 	if (0 != jack_initonce(t))
 		return PHI_OPEN_ERR;
 
-	struct jack_in *ji = ffmem_new(struct jack_in);
+	struct jack_in *ji = phi_track_allocT(t, struct jack_in);
 	audio_in *a = &ji->in;
 	a->audio = &ffjack;
 	a->trk = t;

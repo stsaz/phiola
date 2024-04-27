@@ -19,7 +19,7 @@ static void mp4_log(void *udata, const char *fmt, va_list va)
 
 static void* mp4r_create(phi_track *t)
 {
-	struct mp4_r *m = ffmem_new(struct mp4_r);
+	struct mp4_r *m = phi_track_allocT(t, struct mp4_r);
 	m->trk = t;
 
 	mp4read_open(&m->mp);
@@ -36,7 +36,7 @@ static void* mp4r_create(phi_track *t)
 static void mp4r_free(struct mp4_r *m, phi_track *t)
 {
 	mp4read_close(&m->mp);
-	ffmem_free(m);
+	phi_track_free(t, m);
 }
 
 static void mp4_meta(struct mp4_r *m, phi_track *t)

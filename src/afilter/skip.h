@@ -30,14 +30,14 @@ static int audio_skip(struct pcm_skip *c, phi_track *t, ffstr *buf, uint64 skip)
 
 static void* pcm_skip_open(phi_track *t)
 {
-	struct pcm_skip *c = ffmem_new(struct pcm_skip);
+	struct pcm_skip *c = phi_track_allocT(t, struct pcm_skip);
 	return c;
 }
 
 static void pcm_skip_close(void *ctx, phi_track *t)
 {
 	struct pcm_skip *c = ctx;
-	ffmem_free(c);
+	phi_track_free(t, c);
 }
 
 static int pcm_skip_process(void *ctx, phi_track *t)

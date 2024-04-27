@@ -11,7 +11,7 @@ static void* oss_in_open(phi_track *d)
 	if (0 != mod_init(d->trk))
 		return PHI_OPEN_ERR;
 
-	oss_in *pi = ffmem_new(oss_in);
+	oss_in *pi = phi_track_allocT(t, oss_in);
 	audio_in *a = &pi->in;
 	a->audio = &ffoss;
 	a->trk = d->trk;
@@ -32,7 +32,7 @@ static void oss_in_close(void *ctx, phi_track *t)
 	oss_in *pi = ctx;
 	core->timer(t->worker, &pi->tmr, 0, NULL, NULL);
 	audio_in_close(&pi->in);
-	ffmem_free(pi);
+	phi_track_free(t, pi);
 }
 
 static int oss_in_read(void *ctx, phi_track *d)

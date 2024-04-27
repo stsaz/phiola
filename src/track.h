@@ -100,17 +100,18 @@ struct phi_filter {
 #define MAX_FILTERS 20
 
 struct filter {
-	struct phi_filter iface;
 	void *obj;
-	fftime busytime;
-	uint backward_skip :1;
+	int (*process)(void *obj, phi_track *t);
+	const struct phi_filter *iface;
+
+	uint64 busytime_nsec :63;
+	uint64 backward_skip :1;
 };
 
 struct phi_conveyor {
 	struct filter filters_pool[MAX_FILTERS];
-	struct filter *filters_active[MAX_FILTERS];
-	ffslice filters;
-	uint i_fpool, cur;
+	u_char filters_active[MAX_FILTERS];
+	uint i_fpool, n_active, cur;
 };
 
 enum PHI_F {
@@ -171,16 +172,22 @@ struct phi_track {
 		// Set by mp4.read, mp3.read, opus.dec
 		uint start_delay, end_padding;
 
-		// flac.read/ogg -> flac.dec
-		uint flac_samples;
-		uint flac_minblock, flac_maxblock;
+		union {
+			// flac.read/ogg -> flac.dec
+			struct {
+				uint flac_samples;
+				uint flac_minblock, flac_maxblock;
+			};
 
-		// ape.read -> ape.dec
-		uint ape_block_samples;
-		uint ape_align4;
+			// ape.read -> ape.dec
+			struct {
+				uint ape_block_samples;
+				uint ape_align4;
+			};
 
-		// mp3.read -> mpeg.dec
-		u_char mpeg1_vbr_scale; // +1
+			// mp3.read -> mpeg.dec
+			u_char mpeg1_vbr_scale; // +1
+		};
 	} audio;
 
 	struct {
@@ -198,19 +205,23 @@ struct phi_track {
 		struct {
 			struct phi_af format;
 			struct phi_af conv_format;
+
+			// ui -> audio.play
 			void *adev_ctx;
 			void (*adev_stop)(void *adev_ctx);
 
-			// for mp4.write
+			// (aac.read|aac.enc) -> mp4.write
 			uint mp4_delay;
 			uint mp4_bitrate;
+
+			// ((mp4|mkv|aac).read|aac.enc) -> mp4.write
 			uint mp4_frame_samples;
 
 			// flac.enc -> flac.write
 			const char *flac_vendor;
 			uint flac_frame_samples;
 
-			// for ogg.write
+			// (ogg|mkv).read -> ogg.write
 			uint64 ogg_granule_pos; // stream_copy=1: granule-position value from source
 			uint ogg_flush :1;
 			uint ogg_gen_opus_tag :1; // ogg.write must generate Opus-tag packet
@@ -244,7 +255,6 @@ static inline void* phi_track_alloc(phi_track *t, uint n)
 {
 	uint sz = t->area_size + ffint_align_ceil2(n, 8);
 	if (sz > t->area_cap) {
-		FF_ASSERT(0);
 		return ffmem_calloc(1, n);
 	}
 	void *p = t->area + t->area_size;

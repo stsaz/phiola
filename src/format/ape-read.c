@@ -20,7 +20,7 @@ struct ape_r {
 
 static void* ape_in_create(phi_track *t)
 {
-	struct ape_r *a = ffmem_new(struct ape_r);
+	struct ape_r *a = phi_track_allocT(t, struct ape_r);
 	ffuint64 fs = (t->input.size != ~0ULL) ? t->input.size : 0;
 	aperead_open(&a->ape, fs);
 	a->ape.id3v1.codepage = core->conf.code_page;
@@ -31,7 +31,7 @@ static void ape_in_free(void *ctx, phi_track *t)
 {
 	struct ape_r *a = ctx;
 	aperead_close(&a->ape);
-	ffmem_free(a);
+	phi_track_free(t, a);
 }
 
 extern const phi_meta_if phi_metaif;

@@ -14,7 +14,7 @@ static void mpeg_dec_close(struct mpeg_dec *m, phi_track *t)
 {
 	if (m->m123 != NULL)
 		phi_mpg123_free(m->m123);
-	ffmem_free(m);
+	phi_track_free(t, m);
 }
 
 static void* mpeg_dec_open(phi_track *t)
@@ -22,7 +22,7 @@ static void* mpeg_dec_open(phi_track *t)
 	if (!core->track->filter(t, core->mod("afilter.skip"), 0))
 		return PHI_OPEN_ERR;
 
-	struct mpeg_dec *m = ffmem_new(struct mpeg_dec);
+	struct mpeg_dec *m = phi_track_allocT(t, struct mpeg_dec);
 
 	phi_mpg123_init();
 

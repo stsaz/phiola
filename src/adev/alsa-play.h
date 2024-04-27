@@ -6,7 +6,7 @@ static void* alsa_open(phi_track *t)
 	if (0 != alsa_init(t))
 		return PHI_OPEN_ERR;
 
-	audio_out *a = ffmem_new(audio_out);
+	audio_out *a = phi_track_allocT(t, audio_out);
 	a->audio = &ffalsa;
 	a->trk = t;
 	return a;
@@ -29,7 +29,7 @@ static void alsa_close(audio_out *a, phi_track *t)
 	}
 
 	ffalsa.dev_free(a->dev);
-	ffmem_free(a);
+	phi_track_free(t, a);
 }
 
 static int alsa_create(audio_out *a, phi_track *t)

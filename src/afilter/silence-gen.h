@@ -13,7 +13,7 @@ struct silgen {
 
 static void* silgen_open(phi_track *t)
 {
-	struct silgen *c = ffmem_new(struct silgen);
+	struct silgen *c = phi_track_allocT(t, struct silgen);
 	return c;
 }
 
@@ -21,7 +21,7 @@ static void silgen_close(void *ctx, phi_track *t)
 {
 	struct silgen *c = ctx;
 	ffmem_free(c->buf);
-	ffmem_free(c);
+	phi_track_free(t, c);
 }
 
 static int silgen_process(void *ctx, phi_track *t)

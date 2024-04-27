@@ -57,7 +57,7 @@ Features and notes by platform:
 | Record from mic      | ✅ | ✅ | ✅ |
 | Record from Internet | ✅ | ✅ | ❌ |
 | Record what you hear | ✅ (PulseAudio) | ✅ | ❌ |
-| Requirements         | glibc-2.28(AMD64), glibc-2.36(ARM64) | Windows 7 | Android 6 |
+| Requirements         | glibc-2.31(AMD64), glibc-2.36(ARM64) | Windows 7 | Android 6 |
 | HW Requirements      | AMD64, ARM64 | AMD64 | ARM64, ARM(incomplete) |
 
 > Although not officially supported, phiola should build fine for **macOS**, **FreeBSD** and **Windows XP** after tweaking the build script.
@@ -180,6 +180,9 @@ phiola -Background record -o audio.flac -remote
 #   Step 2: send 'stop' signal to the phiola instance that is recording audio
 phiola remote stop
 
+# Record and split the output files by 1 hour
+phiola record -split 1:00:00 -o @nowdate-@nowtime.flac
+
 # Record and pass the audio through Dynamic Audio Normalizer filter
 phiola record -danorm 'frame 500 size 15' -o audio.flac
 
@@ -188,6 +191,8 @@ phiola record -o @stdout.wav | your_program
 ```
 
 > Note: the output audio format is chosen automatically by the file extension you specify.
+
+> Note: it's not required to always type the whole name of a command or an option - you may type just its prefix (enough for phiola to recognize it), e.g. instead of `phiola record -aformat int16` you may type `phiola rec -af int16`.
 
 Convert:
 
@@ -312,11 +317,11 @@ First time start:
 
 ## How to Use SDK
 
-The best example how to use phiola software interface is to see the source code of phiola executor in `src/exe`, e.g. `src/exe/play.h` contains the code that adds input files into a playlist and starts the playback.
+The best example how to use phiola software interface is to see the source code of phiola executor in `src/exe`, e.g. [src/exe/play.h](src/exe/play.h) contains the code that adds input files into a playlist and starts the playback.
 
-* `src/phiola.h` describes all interfaces implemented either by phiola Core or dynamic modules
-* `android/phiola/src/main/java/com/github/stsaz/phiola/Phiola.java` is a Java interface
-* `src/track.h` contains internal declarations for a phiola track, and you'll need it only if you want to write your own filter
+* [src/phiola.h](src/phiola.h) describes all interfaces implemented either by phiola Core or dynamic modules
+* [android/.../Phiola.java](android/phiola/src/main/java/com/github/stsaz/phiola/Phiola.java) is a Java interface
+* [src/track.h](src/track.h) contains internal declarations for a phiola track, and you'll need it only if you want to write your own filter
 
 
 ## External Libraries

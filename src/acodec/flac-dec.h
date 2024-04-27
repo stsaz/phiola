@@ -13,7 +13,7 @@ static void flac_dec_free(void *ctx, phi_track *t)
 {
 	struct flac_dec *f = ctx;
 	ffflac_dec_close(&f->fl);
-	ffmem_free(f);
+	phi_track_free(t, f);
 }
 
 static void* flac_dec_create(phi_track *t)
@@ -22,7 +22,7 @@ static void* flac_dec_create(phi_track *t)
 		return PHI_OPEN_ERR;
 
 	int r;
-	struct flac_dec *f = ffmem_new(struct flac_dec);
+	struct flac_dec *f = phi_track_allocT(t, struct flac_dec);
 
 	flac_conf info = {
 		.bps = phi_af_bits(&t->audio.format),

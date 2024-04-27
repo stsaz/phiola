@@ -19,11 +19,11 @@ static void* aac_open(phi_track *t)
 	if (!core->track->filter(t, core->mod("afilter.skip"), 0))
 		return PHI_OPEN_ERR;
 
-	struct aac_in *a = ffmem_new(struct aac_in);
+	struct aac_in *a = phi_track_allocT(t, struct aac_in);
 	a->aac.contr_samprate = t->audio.format.rate;
 	if (0 != ffaac_open(&a->aac, t->audio.format.channels, t->data_in.ptr, t->data_in.len)) {
 		errlog(t, "ffaac_open(): %s", ffaac_errstr(&a->aac));
-		ffmem_free(a);
+		phi_track_free(t, a);
 		return PHI_OPEN_ERR;
 	}
 	t->data_in.len = 0;
@@ -39,7 +39,7 @@ static void aac_close(struct aac_in *a, phi_track *t)
 {
 	ffaac_close(&a->aac);
 	ffvec_free(&a->cache);
-	ffmem_free(a);
+	phi_track_free(t, a);
 }
 
 /** Dynamic mean value with weight. */

@@ -50,7 +50,7 @@ static void cue_close(void *ctx, phi_track *t)
 	FFSLICE_FOREACH_T(&c->metas, ffvec_free, ffvec);
 	ffvec_free(&c->gmetas);
 	ffvec_free(&c->metas);
-	ffmem_free(c);
+	phi_track_free(t, c);
 }
 
 static void* cue_open(phi_track *t)
@@ -60,7 +60,7 @@ static void* cue_open(phi_track *t)
 	if (!metaif)
 		metaif = core->mod("format.meta");
 
-	struct cue *c = ffmem_new(struct cue);
+	struct cue *c = phi_track_allocT(t, struct cue);
 	ffarrint32_sort((uint*)t->conf.tracks.ptr, t->conf.tracks.len);
 	cueread_open(&c->cue);
 	c->qu_cur = t->qent;
@@ -332,7 +332,7 @@ static void* cuehook_open(phi_track *t)
 	if (!(t->conf.seek_cdframes || t->conf.until_cdframes))
 		return PHI_OPEN_SKIP;
 
-	struct cuehook *c = ffmem_new(struct cuehook);
+	struct cuehook *c = phi_track_allocT(t, struct cuehook);
 	c->abs_seek = cdframes_to_samples(t->conf.seek_cdframes, t->audio.format.rate);
 	c->abs_seek_ms = cdframes_to_msec(t->conf.seek_cdframes);
 	dbglog(t, "abs_seek:%U (%Ums)", c->abs_seek, c->abs_seek_ms);
@@ -345,7 +345,7 @@ static void* cuehook_open(phi_track *t)
 static void cuehook_close(void *ctx, phi_track *t)
 {
 	struct cuehook *c = ctx;
-	ffmem_free(c);
+	phi_track_free(t, c);
 }
 
 static int cuehook_process(void *ctx, phi_track *t)

@@ -20,7 +20,7 @@ static void mp3_log(void *udata, const char *fmt, va_list va)
 
 static void* mp3_open(phi_track *t)
 {
-	struct mp3_r *m = ffmem_new(struct mp3_r);
+	struct mp3_r *m = phi_track_allocT(t, struct mp3_r);
 	m->trk = t;
 	ffuint64 total_size = (t->input.size != ~0ULL) ? t->input.size : 0;
 	mp3read_open(&m->mpg, total_size);
@@ -34,7 +34,7 @@ static void* mp3_open(phi_track *t)
 static void mp3_close(struct mp3_r *m, phi_track *t)
 {
 	mp3read_close(&m->mpg);
-	ffmem_free(m);
+	phi_track_free(t, m);
 }
 
 extern const phi_meta_if phi_metaif;

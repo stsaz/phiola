@@ -106,7 +106,7 @@ static int flac_out_addmeta(flac_w *f, phi_track *t)
 
 static void* flac_out_create(phi_track *t)
 {
-	flac_w *f = ffmem_new(flac_w);
+	flac_w *f = phi_track_allocT(t, flac_w);
 	return f;
 }
 
@@ -114,7 +114,7 @@ static void flac_out_free(void *ctx, phi_track *t)
 {
 	flac_w *f = ctx;
 	flacwrite_close(&f->fl);
-	ffmem_free(f);
+	phi_track_free(t, f);
 }
 
 static int flac_out_encode(void *ctx, phi_track *t)

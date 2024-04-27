@@ -38,30 +38,32 @@ do { \
 
 static void logs(struct zzlog *l)
 {
-	static const char levels[][8] = {
-		"ERROR ",
-		"WARN  ",
-		"INFO  ",
-		"INFO  ",
-		"INFO  ",
-		"DEBUG ",
-		"DEBUG+",
-	};
-	ffmem_copy(l->levels, levels, sizeof(levels));
+	if (!l->fd) {
+		static const char levels[][8] = {
+			"ERROR ",
+			"WARN  ",
+			"INFO  ",
+			"INFO  ",
+			"INFO  ",
+			"DEBUG ",
+			"DEBUG+",
+		};
+		ffmem_copy(l->levels, levels, sizeof(levels));
+
+		static const char colors[][8] = {
+			/*PHI_LOG_ERR*/		FFSTD_CLR(FFSTD_RED),
+			/*PHI_LOG_WARN*/	FFSTD_CLR(FFSTD_YELLOW),
+			/*PHI_LOG_USER*/	"",
+			/*PHI_LOG_INFO*/	FFSTD_CLR(FFSTD_GREEN),
+			/*PHI_LOG_VERBOSE*/	FFSTD_CLR(FFSTD_GREEN),
+			/*PHI_LOG_DEBUG*/	"",
+			/*PHI_LOG_EXTRA*/	FFSTD_CLR_I(FFSTD_BLUE),
+		};
+		ffmem_copy(l->colors, colors, sizeof(colors));
+	}
 
 	l->fd = (!x->stdout_busy) ? ffstdout : ffstderr;
 	int r = ffstd_attr(l->fd, FFSTD_VTERM, FFSTD_VTERM);
 	l->use_color = !r;
 	l->fd_file = (r < 0);
-
-	static const char colors[][8] = {
-		/*PHI_LOG_ERR*/		FFSTD_CLR(FFSTD_RED),
-		/*PHI_LOG_WARN*/	FFSTD_CLR(FFSTD_YELLOW),
-		/*PHI_LOG_USER*/	"",
-		/*PHI_LOG_INFO*/	FFSTD_CLR(FFSTD_GREEN),
-		/*PHI_LOG_VERBOSE*/	FFSTD_CLR(FFSTD_GREEN),
-		/*PHI_LOG_DEBUG*/	"",
-		/*PHI_LOG_EXTRA*/	FFSTD_CLR_I(FFSTD_BLUE),
-	};
-	ffmem_copy(l->colors, colors, sizeof(colors));
 }

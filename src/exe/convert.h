@@ -85,6 +85,8 @@ Options:\n\
                           e.g. `-o .ogg` == `-o @filename.ogg`\n\
   `-force`                Overwrite output file\n\
   `-preserve_date`        Preserve file modification date\n\
+\n\
+  `-perf`                 Print performance counters\n\
 ");
 	x->exit_code = 0;
 	return 1;
@@ -102,6 +104,7 @@ struct cmd_conv {
 	int		gain;
 	u_char	copy;
 	u_char	cue_gaps;
+	u_char	perf;
 	uint	aac_q;
 	uint	aformat;
 	uint	channels;
@@ -215,6 +218,7 @@ static void conv_qu_add(struct cmd_conv *v, ffstr *fn)
 			.overwrite = v->force,
 		},
 		.stream_copy = v->copy,
+		.print_time = v->perf,
 	};
 
 	cmd_meta_set(&c.meta, &v->meta);
@@ -284,6 +288,7 @@ static const struct ffarg cmd_conv[] = {
 	{ "-opus_mode",		's',	O(opus_mode) },
 	{ "-opus_quality",	'u',	O(opus_q) },
 	{ "-out",			's',	O(output) },
+	{ "-perf",			'1',	O(perf) },
 	{ "-preserve_date",	'1',	O(preserve_date) },
 	{ "-rate",			'u',	O(rate) },
 	{ "-seek",			'S',	conv_seek },

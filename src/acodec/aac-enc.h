@@ -25,14 +25,14 @@ static int aac_aot_profile(char profile)
 
 static void* aacw_create(phi_track *t)
 {
-	struct aac_enc *a = ffmem_new(struct aac_enc);
+	struct aac_enc *a = phi_track_allocT(t, struct aac_enc);
 	return a;
 }
 
 static void aacw_free(struct aac_enc *a, phi_track *t)
 {
 	ffaac_enc_close(&a->aac);
-	ffmem_free(a);
+	phi_track_free(t, a);
 }
 
 static int aacw_encode(struct aac_enc *a, phi_track *t)

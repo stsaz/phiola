@@ -16,11 +16,11 @@ static void* opus_open(phi_track *t)
 	if (!core->track->filter(t, core->mod("afilter.skip"), 0))
 		return PHI_OPEN_ERR;
 
-	struct opus_dec *o = ffmem_new(struct opus_dec);
+	struct opus_dec *o = phi_track_allocT(t, struct opus_dec);
 
 	if (ffopus_open(&o->opus)) {
 		errlog(t, "ffopus_open(): %s", ffopus_errstr(&o->opus));
-		ffmem_free(o);
+		phi_track_free(t, o);
 		return PHI_OPEN_ERR;
 	}
 
@@ -32,7 +32,7 @@ static void opus_close(void *ctx, phi_track *t)
 {
 	struct opus_dec *o = ctx;
 	ffopus_close(&o->opus);
-	ffmem_free(o);
+	phi_track_free(t, o);
 }
 
 static const char* opus_pkt_mode(const char *d)

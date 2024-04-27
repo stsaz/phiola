@@ -13,7 +13,7 @@ static void* wvpk_dec_create(phi_track *t)
 	if (!core->track->filter(t, core->mod("afilter.skip"), 0))
 		return PHI_OPEN_ERR;
 
-	struct wvpk_dec *w = ffmem_new(struct wvpk_dec);
+	struct wvpk_dec *w = phi_track_allocT(t, struct wvpk_dec);
 	ffwvpk_dec_open(&w->wv);
 	return w;
 }
@@ -22,7 +22,7 @@ static void wvpk_dec_free(void *ctx, phi_track *t)
 {
 	struct wvpk_dec *w = ctx;
 	ffwvpk_dec_close(&w->wv);
-	ffmem_free(w);
+	phi_track_free(t, w);
 }
 
 /** Return bits/sec. */

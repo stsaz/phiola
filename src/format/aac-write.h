@@ -7,14 +7,14 @@ struct aac_adts_w {
 
 static void* aac_adts_w_open(phi_track *t)
 {
-	struct aac_adts_w *a = ffmem_new(struct aac_adts_w);
+	struct aac_adts_w *a = phi_track_allocT(t, struct aac_adts_w);
 	return a;
 }
 
 static void aac_adts_w_close(void *ctx, phi_track *t)
 {
 	struct aac_adts_w *a = ctx;
-	ffmem_free(a);
+	phi_track_free(t, a);
 }
 
 static int aac_adts_w_process(void *ctx, phi_track *t)

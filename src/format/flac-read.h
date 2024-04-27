@@ -18,7 +18,7 @@ void flac_in_log(void *udata, const char *fmt, va_list va)
 
 static void* flac_in_create(phi_track *t)
 {
-	struct flac_r *f = ffmem_new(struct flac_r);
+	struct flac_r *f = phi_track_allocT(t, struct flac_r);
 	f->trk = t;
 
 	ffuint64 size = (t->input.size != ~0ULL) ? t->input.size : 0;
@@ -32,7 +32,7 @@ static void flac_in_free(void *ctx, phi_track *t)
 {
 	struct flac_r *f = ctx;
 	flacread_close(&f->fl);
-	ffmem_free(f);
+	phi_track_free(t, f);
 }
 
 extern const phi_meta_if phi_metaif;

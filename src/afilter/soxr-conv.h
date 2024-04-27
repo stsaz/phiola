@@ -13,7 +13,7 @@ struct soxr {
 
 static void* soxr_open(phi_track *t)
 {
-	struct soxr *c = ffmem_new(struct soxr);
+	struct soxr *c = phi_track_allocT(t, struct soxr);
 	c->inpcm = t->aconv.in;
 	c->outpcm = t->aconv.out;
 	ffsoxr_init(&c->soxr);
@@ -24,7 +24,7 @@ static void soxr_close(void *ctx, phi_track *t)
 {
 	struct soxr *c = ctx;
 	ffsoxr_destroy(&c->soxr);
-	ffmem_free(c);
+	phi_track_free(t, c);
 }
 
 static inline char* af_print(const struct phi_af *af, char *buf, ffsize cap)

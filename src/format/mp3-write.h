@@ -13,7 +13,7 @@ typedef struct mp3_w {
 
 void* mpeg_out_open(phi_track *t)
 {
-	mp3_w *m = ffmem_new(mp3_w);
+	mp3_w *m = phi_track_allocT(t, mp3_w);
 	mp3write_create(&m->mpgw);
 	if (t->conf.stream_copy) {
 		m->mpgw.options |= MP3WRITE_XINGTAG;
@@ -27,7 +27,7 @@ void mpeg_out_close(void *ctx, phi_track *t)
 {
 	mp3_w *m = ctx;
 	mp3write_close(&m->mpgw);
-	ffmem_free(m);
+	phi_track_free(t, m);
 }
 
 int mpeg_out_addmeta(mp3_w *m, phi_track *t)

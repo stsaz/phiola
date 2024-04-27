@@ -11,7 +11,7 @@ struct conv {
 
 static void* conv_open(phi_track *t)
 {
-	struct conv *c = ffmem_new(struct conv);
+	struct conv *c = phi_track_allocT(t, struct conv);
 	c->last_pos_sec = -1;
 	c->sample_rate = t->audio.format.rate;
 	c->time_total = samples_to_msec(t->audio.total, c->sample_rate) / 1000;
@@ -23,7 +23,7 @@ static void conv_close(void *ctx, phi_track *t)
 {
 	struct conv *c = ctx;
 	wmain_conv_track_close(t);
-	ffmem_free(c);
+	phi_track_free(t, c);
 }
 
 static int conv_process(void *ctx, phi_track *t)

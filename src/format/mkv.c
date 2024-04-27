@@ -29,7 +29,7 @@ static void mkv_log(void *udata, const char *fmt, va_list va)
 
 static void* mkv_open(phi_track *t)
 {
-	struct mkv_r *m = ffmem_new(struct mkv_r);
+	struct mkv_r *m = phi_track_allocT(t, struct mkv_r);
 	ffuint64 total_size = 0;
 	if (t->input.size != ~0ULL)
 		total_size = t->input.size;
@@ -44,7 +44,7 @@ static void mkv_close(void *ctx, phi_track *t)
 {
 	struct mkv_r *m = ctx;
 	mkvread_close(&m->mkv);
-	ffmem_free(m);
+	phi_track_free(t, m);
 }
 
 extern const phi_meta_if phi_metaif;

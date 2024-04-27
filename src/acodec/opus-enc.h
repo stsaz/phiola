@@ -13,7 +13,7 @@ struct opus_enc {
 
 static void* opus_enc_create(phi_track *t)
 {
-	struct opus_enc *o = ffmem_new(struct opus_enc);
+	struct opus_enc *o = phi_track_allocT(t, struct opus_enc);
 	if (!phi_metaif)
 		phi_metaif = core->mod("format.meta");
 	return o;
@@ -23,7 +23,7 @@ static void opus_enc_free(void *ctx, phi_track *t)
 {
 	struct opus_enc *o = ctx;
 	ffopus_enc_close(&o->opus);
-	ffmem_free(o);
+	phi_track_free(t, o);
 }
 
 static int opus_enc_addmeta(struct opus_enc *o, phi_track *t)

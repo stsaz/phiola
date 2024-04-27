@@ -22,15 +22,18 @@ struct exe_subcmd {
 };
 
 struct exe {
-	uint exit_code;
-	struct zzlog log;
-	const phi_core *core;
-	const phi_queue_if *queue;
-	const phi_meta_if *metaif;
-	fftime time_last;
-	char fn[4*1024];
-	ffstr root_dir;
-	char *cmd_line;
+	const phi_core*		core;
+	const phi_queue_if*	queue;
+	const phi_meta_if*	metaif;
+
+	struct zzlog	log;
+	fftime			time_last;
+
+	char*	fn;
+	char*	cmd_line;
+	ffstr	root_dir;
+
+	uint	exit_code;
 
 	u_char	background, background_child;
 	u_char	debug;
@@ -154,8 +157,9 @@ static int conf_read(struct exe *x, ffstr d)
 
 static int conf(struct exe *x, const char *argv_0)
 {
+	x->fn = ffmem_alloc(4*1024);
 	const char *p;
-	if (NULL == (p = ffps_filename(x->fn, sizeof(x->fn), argv_0)))
+	if (NULL == (p = ffps_filename(x->fn, 4*1024, argv_0)))
 		return -1;
 	if (ffpath_splitpath_str(FFSTR_Z(p), &x->root_dir, NULL) < 0)
 		return -1;
@@ -264,6 +268,7 @@ static void cleanup()
 	ffmem_free(x->dump_file_dir);
 	ffmem_free(x->cmd_line);
 	ffmem_free((char*)x->ci.full_name);
+	ffmem_free(x->fn);
 	ffmem_free(x);
 #endif
 }

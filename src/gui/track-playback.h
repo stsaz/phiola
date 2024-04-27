@@ -67,7 +67,7 @@ static void* gtrk_open(phi_track *t)
 {
 	if (t->qent == NULL) return PHI_OPEN_SKIP;
 
-	struct gtrk *gt = ffmem_new(struct gtrk);
+	struct gtrk *gt = phi_track_allocT(t, struct gtrk);
 	gt->t = t;
 	gt->last_pos_sec = -1;
 	gt->seek_msec = -1;
@@ -86,7 +86,7 @@ static void gtrk_close(void *ctx, phi_track *t)
 		ffcpu_fence_release(); // sync with gui_qe_meta()
 		gd->playing_track = NULL;
 	}
-	ffmem_free(gt);
+	phi_track_free(t, gt);
 }
 
 static int gtrk_process(void *ctx, phi_track *t)

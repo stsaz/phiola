@@ -27,7 +27,7 @@ static void mpc_log(void *udata, const char *fmt, va_list va)
 
 static void* mpc_open(phi_track *t)
 {
-	struct mpc_r *m = ffmem_new(struct mpc_r);
+	struct mpc_r *m = phi_track_allocT(t, struct mpc_r);
 	m->trk = t;
 	uint64 tsize = (t->input.size != ~0ULL) ? t->input.size : 0;
 	mpcread_open(&m->mpc, tsize);
@@ -40,7 +40,7 @@ static void mpc_close(void *ctx, phi_track *t)
 {
 	struct mpc_r *m = ctx;
 	mpcread_close(&m->mpc);
-	ffmem_free(m);
+	phi_track_free(t, m);
 }
 
 #define brate(bytes, samples, rate) \

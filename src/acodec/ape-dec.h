@@ -11,7 +11,7 @@ static void* ape_dec_create(phi_track *t)
 	if (!core->track->filter(t, core->mod("afilter.skip"), 0))
 		return PHI_OPEN_ERR;
 
-	struct ape_dec *a = ffmem_new(struct ape_dec);
+	struct ape_dec *a = phi_track_allocT(t, struct ape_dec);
 	ffape_open(&a->ap);
 	return a;
 }
@@ -20,7 +20,7 @@ static void ape_dec_free(void *ctx, phi_track *t)
 {
 	struct ape_dec *a = ctx;
 	ffape_close(&a->ap);
-	ffmem_free(a);
+	phi_track_free(t, a);
 }
 
 /** Return bits/sec. */

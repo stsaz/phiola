@@ -6,7 +6,7 @@ static void* oss_open(phi_track *t)
 	if (0 != mod_init(t->trk))
 		return PHI_OPEN_ERR;
 
-	audio_out *a = ffmem_new(audio_out);
+	audio_out *a = phi_track_allocT(t, audio_out);
 	a->audio = &ffoss;
 	a->trk = t->trk;
 	return a;
@@ -39,7 +39,7 @@ static void oss_close(void *ctx, phi_track *t)
 	}
 
 	ffoss.dev_free(a->dev);
-	ffmem_free(a);
+	phi_track_free(t, a);
 }
 
 static int oss_create(audio_out *a, phi_track *t)

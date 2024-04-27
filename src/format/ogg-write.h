@@ -16,7 +16,7 @@ struct ogg_w {
 
 static void* ogg_w_open(phi_track *t)
 {
-	struct ogg_w *o = ffmem_new(struct ogg_w);
+	struct ogg_w *o = phi_track_allocT(t, struct ogg_w);
 
 	static ffbyte seed;
 	if (!seed) {
@@ -34,7 +34,7 @@ static void ogg_w_close(void *ctx, phi_track *t)
 	struct ogg_w *o = ctx;
 	oggwrite_close(&o->og);
 	ffvec_free(&o->pktbuf);
-	ffmem_free(o);
+	phi_track_free(t, o);
 }
 
 static const char* ogg_enc_mod(const char *fn)

@@ -18,14 +18,14 @@ static void* wavw_open(phi_track *t)
 		return PHI_OPEN_ERR;
 	}
 
-	struct wav_w *w = ffmem_new(struct wav_w);
+	struct wav_w *w = phi_track_allocT(t, struct wav_w);
 	return w;
 }
 
 static void wavw_close(struct wav_w *w, phi_track *t)
 {
 	wavwrite_close(&w->wav);
-	ffmem_free(w);
+	phi_track_free(t, w);
 }
 
 /** Get size of 1 sample (in bytes). */

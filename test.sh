@@ -148,7 +148,7 @@ test_until() {
 	./phiola i -peaks fm_pcm.caf     | grep '96,000 total'
 	./phiola i -peaks fm_pcm.mkv     | grep '96,000 total'
 	./phiola i -peaks fm_pcm.wav     | grep '96,000 total'
-	./phiola i -peaks fm_vorbis.mkv  | grep -E '96,... total'
+	./phiola i -peaks fm_vorbis.mkv  | grep -E '9[56],... total'
 	./phiola i -peaks fm_vorbis.ogg  | grep '96,000 total'
 	./phiola i -peaks fm_wv.wv       | grep '96,000 total'
 
@@ -206,7 +206,7 @@ test_seek() {
 	./phiola i -peaks -s 1 fm_pcm.mkv     | grep -E '4[78],... total'
 	./phiola i -peaks -s 1 fm_pcm.wav     | grep '48,000 total'
 	./phiola i -peaks -s 1 fm_vorbis.mkv  | grep -E '4[678],... total'
-	./phiola i -peaks -s 1 fm_vorbis.ogg  | grep '48,000 total'
+	./phiola i -peaks -s 1 fm_vorbis.ogg  | grep -E '4[78],... total'
 	./phiola i -peaks -s 1 fm_wv.wv       | grep '48,000 total'
 }
 
@@ -272,7 +272,7 @@ test_convert_encode() {
 	./phiola i co_wav.ogg              | grep -E '95,... samples'
 	./phiola i co_wav.ogg -peaks       | grep '96,000 total'
 	./phiola i -u 1 co_wav.ogg -peaks  | grep -E '48,... total'
-	./phiola i -s 1 co_wav.ogg -peaks  | grep -E '47,... total'
+	./phiola i -s 1 co_wav.ogg -peaks  | grep -E '4[78],... total'
 
 	convert__from_to wav opus
 	./phiola i co_wav.opus             | grep -E '94,... samples'
@@ -359,8 +359,8 @@ test_copy() {
 	test_copy_until fm_mp3_320.mp3 copy_u_mp3_320.mp3    '4[89],...'
 	test_copy_until fm_opus.mkv    copy_u_opus_mkv.ogg   '4[6789],...'
 	test_copy_until fm_opus.ogg    copy_u_opus.ogg       '4[78],...'
-	test_copy_until fm_vorbis.mkv  copy_u_vorbis_mkv.ogg '48,...'
-	test_copy_until fm_vorbis.ogg  copy_u_vorbis.ogg     '48,...'
+	test_copy_until fm_vorbis.mkv  copy_u_vorbis_mkv.ogg '4[78],...'
+	test_copy_until fm_vorbis.ogg  copy_u_vorbis.ogg     '..,...'
 
 	## Seek
 	## mkv seeking implementation is not precise

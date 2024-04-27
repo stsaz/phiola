@@ -30,7 +30,7 @@ static void wav_log(void *udata, const char *fmt, va_list va)
 
 static void* wav_open(phi_track *t)
 {
-	struct wav_r *w = ffmem_new(struct wav_r);
+	struct wav_r *w = phi_track_allocT(t, struct wav_r);
 	w->trk = t;
 	wavread_open(&w->wav);
 	w->wav.log = wav_log;
@@ -42,7 +42,7 @@ static void wav_close(void *ctx, phi_track *t)
 {
 	struct wav_r *w = ctx;
 	wavread_close(&w->wav);
-	ffmem_free(w);
+	phi_track_free(t, w);
 }
 
 extern const phi_meta_if phi_metaif;

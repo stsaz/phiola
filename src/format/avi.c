@@ -25,7 +25,7 @@ void avi_log(void *udata, const char *fmt, va_list va)
 
 static void* avi_open(phi_track *t)
 {
-	struct avi_r *a = ffmem_new(struct avi_r);
+	struct avi_r *a = phi_track_allocT(t, struct avi_r);
 	a->trk = t;
 	aviread_open(&a->avi);
 	a->avi.log = avi_log;
@@ -37,7 +37,7 @@ static void avi_close(void *ctx, phi_track *t)
 {
 	struct avi_r *a = ctx;
 	aviread_close(&a->avi);
-	ffmem_free(a);
+	phi_track_free(t, a);
 }
 
 extern const phi_meta_if phi_metaif;

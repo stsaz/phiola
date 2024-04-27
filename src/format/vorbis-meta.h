@@ -71,7 +71,7 @@ struct vorbismeta {
 
 static void* vorbismeta_open(phi_track *t)
 {
-	struct vorbismeta *v = ffmem_new(struct vorbismeta);
+	struct vorbismeta *v = phi_track_allocT(t, struct vorbismeta);
 	return v;
 }
 
@@ -79,7 +79,7 @@ static void vorbismeta_close(void *ctx, phi_track *t)
 {
 	struct vorbismeta *v = ctx;
 	ffvec_free(&v->hdr);
-	ffmem_free(v);
+	phi_track_free(t, v);
 }
 
 int vorbistag_read(phi_track *t, ffstr vc)

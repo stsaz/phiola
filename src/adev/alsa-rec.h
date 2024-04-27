@@ -10,7 +10,7 @@ static void alsar_close(struct alsar *al, phi_track *t)
 {
 	core->timer(t->worker, &al->tmr, 0, NULL, NULL);
 	audio_in_close(&al->in);
-	ffmem_free(al);
+	phi_track_free(t, al);
 }
 
 static void* alsar_open(phi_track *t)
@@ -18,7 +18,7 @@ static void* alsar_open(phi_track *t)
 	if (0 != alsa_init(t))
 		return PHI_OPEN_ERR;
 
-	struct alsar *al = ffmem_new(struct alsar);
+	struct alsar *al = phi_track_allocT(t, struct alsar);
 	audio_in *a = &al->in;
 	a->audio = &ffalsa;
 	a->trk = t;

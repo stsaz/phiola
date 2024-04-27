@@ -436,6 +436,8 @@ static void core_log(void *log_obj, uint flags, const char *module, phi_track *t
 
 FF_EXPORT phi_core* phi_core_create(struct phi_core_conf *conf)
 {
+	if (cc) return NULL;
+
 	core = &_core;
 	core->conf = *conf;
 	if (core->conf.log == NULL) {

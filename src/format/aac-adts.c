@@ -23,7 +23,7 @@ struct aac_adts_r {
 
 static void* aac_adts_open(phi_track *t)
 {
-	struct aac_adts_r *a = ffmem_new(struct aac_adts_r);
+	struct aac_adts_r *a = phi_track_allocT(t, struct aac_adts_r);
 	if (t->conf.stream_copy) {
 		ffstr fn = FFSTR_INITZ(t->conf.ofile.name), ext;
 		ffstr_rsplitby(&fn, '.', NULL, &ext);
@@ -38,7 +38,7 @@ static void aac_adts_close(void *ctx, phi_track *t)
 {
 	struct aac_adts_r *a = ctx;
 	aacread_close(&a->adts);
-	ffmem_free(a);
+	phi_track_free(t, a);
 }
 
 static void aac_info(struct aac_adts_r *a, phi_track *t, const struct aacread_info *info)

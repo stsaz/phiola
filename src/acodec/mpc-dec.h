@@ -12,10 +12,10 @@ static void* mpc_dec_open(phi_track *t)
 	if (!core->track->filter(t, core->mod("afilter.skip"), 0))
 		return PHI_OPEN_ERR;
 
-	struct mpc_dec *m = ffmem_new(struct mpc_dec);
+	struct mpc_dec *m = phi_track_allocT(t, struct mpc_dec);
 	if (0 != ffmpc_open(&m->mpcdec, &t->audio.format, t->data_in.ptr, t->data_in.len)) {
 		errlog(t, "ffmpc_open()");
-		ffmem_free(m);
+		phi_track_free(t, m);
 		return PHI_OPEN_ERR;
 	}
 	m->sample_size = phi_af_size(&t->audio.format);
@@ -28,7 +28,7 @@ static void mpc_dec_close(void *ctx, phi_track *t)
 {
 	struct mpc_dec *m = ctx;
 	ffmpc_close(&m->mpcdec);
-	ffmem_free(m);
+	phi_track_free(t, m);
 }
 
 static int mpc_dec_process(void *ctx, phi_track *t)

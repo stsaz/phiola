@@ -15,7 +15,7 @@ static void* flac_enc_create(phi_track *t)
 		return PHI_OPEN_ERR;
 	}
 
-	struct flac_enc *f = ffmem_new(struct flac_enc);
+	struct flac_enc *f = phi_track_allocT(t, struct flac_enc);
 	ffflac_enc_init(&f->fl);
 	return f;
 }
@@ -23,7 +23,7 @@ static void* flac_enc_create(phi_track *t)
 static void flac_enc_free(struct flac_enc *f, phi_track *t)
 {
 	ffflac_enc_close(&f->fl);
-	ffmem_free(f);
+	phi_track_free(t, f);
 }
 
 static int flac_format_supported(uint f)

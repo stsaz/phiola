@@ -9,12 +9,12 @@ static void aai_close(void *ctx, phi_track *t)
 {
 	struct aai *c = ctx;
 	audio_in_close(&c->in);
-	ffmem_free(c);
+	phi_track_free(t, c);
 }
 
 static void* aai_open(phi_track *t)
 {
-	struct aai *c = ffmem_new(struct aai);
+	struct aai *c = phi_track_allocT(t, struct aai);
 	audio_in *a = &c->in;
 	a->audio = &ffaaudio;
 	a->trk = t;

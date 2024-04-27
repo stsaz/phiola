@@ -12,12 +12,12 @@ static void zstdw_close(void *ctx, phi_track *t)
 	struct zstdw *z = ctx;
 	zstd_encode_free(z->zst);
 	ffvec_free(&z->buf);
-	ffmem_free(z);
+	phi_track_free(t, z);
 }
 
 static void* zstdw_open(phi_track *t)
 {
-	struct zstdw *z = ffmem_new(struct zstdw);
+	struct zstdw *z = phi_track_allocT(t, struct zstdw);
 	zstd_enc_conf zc = {};
 	zc.level = 1;
 	zc.workers = 1;

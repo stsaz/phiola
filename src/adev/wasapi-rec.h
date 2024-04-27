@@ -14,7 +14,7 @@ static void wasapi_in_close(void *ctx, phi_track *t)
 	audio_in *a = &wi->in;
 	core->timer(t->worker, &wi->tmr, 0, NULL, NULL);
 	audio_in_close(a);
-	ffmem_free(wi);
+	phi_track_free(t, wi);
 }
 
 static void* wasapi_in_open(phi_track *t)
@@ -22,7 +22,7 @@ static void* wasapi_in_open(phi_track *t)
 	if (0 != wasapi_init(t))
 		return PHI_OPEN_ERR;
 
-	was_in *wi = ffmem_new(was_in);
+	was_in *wi = phi_track_allocT(t, was_in);
 	audio_in *a = &wi->in;
 	a->audio = &ffwasapi;
 	a->trk = t;
