@@ -429,7 +429,7 @@ static void track_start(phi_track *t)
 	fflist_add(&tx->tracks, &t->sib);
 	fflock_unlock(&tx->tracks_lock);
 
-	dbglog(t, "starting");
+	dbglog(t, "%p: starting (worker #%u)", t, t->worker);
 	core->task(t->worker, &t->task_wake, (phi_task_func)track_run, t);
 }
 

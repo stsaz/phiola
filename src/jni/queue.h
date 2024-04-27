@@ -6,9 +6,11 @@ static void qu_on_change(phi_queue_id q, uint flags, uint pos)
 	dbglog("%s: '%c' q:%p", __func__, flags, (size_t)q);
 
 	switch (flags) {
-	case 'a':
-	case 'n':
-	case 'd':
+	case 'r':
+	case 'c':
+	case 'u':
+		break;
+	default:
 		return;
 	}
 

@@ -451,6 +451,12 @@ static void q_on_change(phi_queue_id q, uint flags, uint pos)
 		if (gd->filtering)
 			return; // a filtered list is created
 		break;
+
+	case 'd':
+		break;
+
+	default:
+		return;
 	}
 
 	list_update_schedule(flags & 0xff, q_len, pos);

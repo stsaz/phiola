@@ -11,6 +11,7 @@ extern const phi_track_if phi_track_iface;
 extern const phi_meta_if *phi_metaif;
 #define dbglog(...)  phi_dbglog(core, "queue", NULL, __VA_ARGS__)
 #define errlog(...)  phi_errlog(core, "queue", NULL, __VA_ARGS__)
+#define ERR_MAX  20
 
 typedef void (*on_change_t)(phi_queue_id, uint, uint);
 struct queue_mgr {
@@ -27,9 +28,12 @@ struct phi_queue {
 	struct phi_queue_conf conf;
 	ffvec index; // struct q_entry*[]
 	fflock lock;
+	phi_task task;
 	struct q_entry *cursor;
 	uint cursor_index;
-	uint active_n;
+	uint active_n, finished_n;
+	uint track_closed_flags;
+	uint closing :1;
 	uint random_split :1;
 };
 
@@ -38,16 +42,20 @@ enum {
 	Q_PLAYING,
 };
 
-static int q_play_next(struct phi_queue *q);
 static void* q_insert(struct phi_queue *q, uint pos, struct phi_queue_entry *qe);
 static int q_remove_at(struct phi_queue *q, uint pos, uint n);
 static struct q_entry* q_get(struct phi_queue *q, uint i);
 static int q_find(struct phi_queue *q, struct q_entry *e);
-static int q_ent_closed(struct phi_queue *q, phi_track *t);
+enum Q_TKCL_F {
+	Q_TKCL_ERR = 1,
+	Q_TKCL_STOP = 2,
+};
+static void q_ent_closed(struct phi_queue *q, uint flags);
 static void q_modified(struct phi_queue *q);
 
 #include <queue/ent.h>
 
+static int q_play_next(struct phi_queue *q);
 static void q_on_change(phi_queue_id q, uint flags, uint pos){}
 static void q_free(struct phi_queue *q);
 
@@ -123,10 +131,15 @@ static void q_free(struct phi_queue *q)
 {
 	struct q_entry **e;
 	FFSLICE_WALK(&q->index, e) {
-		if (qe_unref(*e) && (*e)->q == q)
-			(*e)->q = NULL;
+		qe_unref(*e);
 	}
 	ffvec_free(&q->index);
+
+	if (q->active_n > 0) {
+		q->closing = 1;
+		return;
+	}
+
 	ffmem_free(q->conf.name);
 	ffmem_free(q);
 }
@@ -277,7 +290,7 @@ static int q_play(struct phi_queue *q, void *_e)
 		q = e->q;
 	}
 
-	if (e->q->conf.conversion) {
+	if (q->conf.conversion) {
 		for (;;) {
 			q->cursor = e;
 			q->cursor_index = qe_index(e);
@@ -290,6 +303,10 @@ static int q_play(struct phi_queue *q, void *_e)
 			uint i = e->index + 1;
 			if (i >= q->index.len)
 				break;
+
+			if (FFINT_READONCE(qm->errors) >= ERR_MAX)
+				return -1; // consecutive errors increase while we're starting the tracks here
+
 			e = q_get(q, i);
 		}
 		return 0;
@@ -305,27 +322,60 @@ static int q_play(struct phi_queue *q, void *_e)
 	return 0;
 }
 
-static int q_ent_closed(struct phi_queue *q, phi_track *t)
+static void q_trk_closed(void *param)
 {
-	q->active_n--;
+	struct phi_queue *q = param;
+	fflock_lock(&q->lock);
+	uint n = FF_SWAP(&q->finished_n, 0);
+	uint flags = FF_SWAP(&q->track_closed_flags, 0);
+	fflock_unlock(&q->lock);
 
+	q->active_n -= n;
+
+	if (!(flags & Q_TKCL_STOP)) {
+		q_play_next(q);
+	}
+
+	if (q->active_n == 0) {
+		if (q->closing) {
+			q_free(q);
+			return;
+		}
+
+		qm->errors = 0; // for the user to be able to manually restart the processing
+		qm->on_change(q, '.', 0);
+	}
+}
+
+/**
+Thread: worker */
+static void q_ent_closed(struct phi_queue *q, uint flags)
+{
 	/* Don't start the next track when there are too many consecutive errors.
-	When in Random or Repeat-All mode we may waste CPU resources
-	 without making any progress, e.g.:
+	When in Random or Repeat-All mode we may waste CPU resources without making any progress, e.g.:
 	* input: storage isn't online, files were moved, etc.
 	* filters: format or codec isn't supported, decoding error, etc.
 	* output: audio system is failing */
-	if (t->error) {
-		if (++qm->errors >= 20) {
-			errlog("Stopped after %u consecutive errors", qm->errors);
-			qm->errors = 0;
-			return -1;
+	if (flags & Q_TKCL_ERR) {
+		uint e = ffint_fetch_add(&qm->errors, 1) + 1;
+		if (e >= ERR_MAX) {
+			if (e == ERR_MAX)
+				errlog("Stopped after %u consecutive errors", e);
+			flags |= Q_TKCL_STOP;
 		}
 	} else {
-		qm->errors = 0;
+		ffint_fetch_and(&qm->errors, 0);
 	}
 
-	return 0;
+	fflock_lock(&q->lock);
+	q->track_closed_flags |= flags;
+	uint signal = (q->finished_n == 0);
+	q->finished_n++;
+	FF_ASSERT(q->finished_n <= q->active_n);
+	fflock_unlock(&q->lock);
+
+	if (signal) // guarantee that the queue isn't destroyed
+		core->task(0, &q->task, q_trk_closed, q);
 }
 
 static int q_play_next(struct phi_queue *q)

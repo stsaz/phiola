@@ -281,6 +281,22 @@ test_convert_encode() {
 	./phiola i -s 1 co_wav.opus -peaks | grep -E '46,... total'
 }
 
+test_convert_parallel() {
+	if ! test -f co.wav ; then
+		./phiola rec -u 2 -rate 48000 -o co.wav -f
+	fi
+
+	if ! test -f copa/co99.wav ; then
+		mkdir -p copa
+		for i in $(seq 1 99) ; do
+			cp -u co.wav copa/co$i.wav
+		done
+	fi
+
+	./phiola co copa -inc '*.wav' -u 1 -o copa/.flac -f
+	./phiola i copa/*.flac
+}
+
 ffmpeg_encode() {
 	ffmpeg -i $1 -y -c:a aac        fm_aac.aac    2>/dev/null
 	ffmpeg -i $1 -y -c:a aac        fm_aac.avi    2>/dev/null
@@ -625,8 +641,8 @@ test_tag() {
 }
 
 test_clean() {
-	rm -f *.wav *.flac *.m4a *.ogg *.opus *.mp3 fm_* ofv/*.ogg *.cue *.m3u
-	rmdir ofv
+	rm -f *.wav *.flac *.m4a *.ogg *.opus *.mp3 fm_* ofv/*.ogg *.cue *.m3u copa/*
+	rmdir ofv copa
 }
 
 TESTS=(
@@ -637,6 +653,7 @@ TESTS=(
 	play
 	convert
 	convert_encode
+	convert_parallel
 	info
 	until
 	seek

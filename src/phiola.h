@@ -445,6 +445,7 @@ struct phi_queue_if {
 		'c': cleared
 		'd': deleted
 		'u': updated
+		'.': reached the end
 	*/
 	void (*on_change)(void (*cb)(phi_queue_id q, uint flags, uint pos));
 

@@ -41,6 +41,7 @@ struct exe {
 	uint stdin_busy :1;
 	uint stdout_busy :1;
 	uint ctrl_c :1;
+	uint dont_exit :1;
 
 	ffstr codepage;
 	struct ffargs cmd;
@@ -79,10 +80,19 @@ static void version_print()
 		, x->core->version_str);
 }
 
+static void q_on_change(phi_queue_id q, uint flags, uint pos)
+{
+	if ((flags & 0xff) == '.' // the whole queue is processed
+		&& (!x->dont_exit || x->ctrl_c))
+		x->core->sig(PHI_CORE_STOP);
+}
+
 static void phi_grd_close(void *f, phi_track *t)
 {
 	x->core->track->stop(t);
-	x->exit_code = t->error & 0xff;
+
+	if (x->exit_code == ~0U || t->error)
+		x->exit_code = t->error & 0xff;
 
 	if (x->mode_record) {
 		ffmem_free(t->conf.ofile.name);  t->conf.ofile.name = NULL;
@@ -91,10 +101,7 @@ static void phi_grd_close(void *f, phi_track *t)
 		return;
 	}
 
-	if (!x->queue->status(NULL) // nothing is playing
-		&& (!(t->chain_flags & PHI_FSTOP) // not stopped by user command
-			|| x->ctrl_c))
-		x->core->sig(PHI_CORE_STOP);
+	x->dont_exit = !!(t->chain_flags & PHI_FSTOP); // don't exit app if the last track is stopped by user command
 }
 
 static void phi_guigrd_close(void *f, phi_track *t)
@@ -266,7 +273,7 @@ int main(int argc, char **argv, char **env)
 	ffenv_init(NULL, env);
 	x = ffmem_new(struct exe);
 	x->timer_int_msec = 100;
-	x->exit_code = 1;
+	x->exit_code = ~0U;
 	logs(&x->log);
 
 	if (conf(x, argv[0])) goto end;
@@ -285,8 +292,12 @@ int main(int argc, char **argv, char **env)
 	phi_core_run();
 
 end:
-	dbglog("exit code: %d", x->exit_code);
-	int ec = x->exit_code;
+	{
+	uint ec = x->exit_code;
+	if (ec == ~0U)
+		ec = 1;
+	dbglog("exit code: %d", ec);
 	cleanup();
 	return ec;
+	}
 }

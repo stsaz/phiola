@@ -98,6 +98,7 @@ static void info_qu_add(struct cmd_info *p, ffstr *fn)
 
 static int info_action(struct cmd_info *p)
 {
+	x->queue->on_change(q_on_change);
 	struct phi_queue_conf qc = {
 		.first_filter = &phi_guard,
 		.ui_module = "tui.play",

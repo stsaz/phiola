@@ -396,7 +396,7 @@ static void color_init(struct tui_mod *c)
 	}
 }
 
-static void tui_create(void *param)
+static void tui_create()
 {
 	mod->vol = 100;
 	mod->queue = core->mod("core.queue");
@@ -436,6 +436,6 @@ FF_EXPORT const phi_mod* phi_mod_init(const phi_core *_core)
 {
 	core = _core;
 	mod = ffmem_new(struct tui_mod);
-	core->task(0, &mod->task_init, tui_create, NULL);
+	tui_create();
 	return &phi_tui_mod;
 }

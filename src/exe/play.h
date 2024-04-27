@@ -139,6 +139,7 @@ static int play_action(struct cmd_play *p)
 	if (p->audio.len)
 		p->audio_module = ffsz_allocfmt("%S.play", &p->audio);
 
+	x->queue->on_change(q_on_change);
 	struct phi_queue_conf qc = {
 		.first_filter = &phi_guard,
 		.audio_module = p->audio_module,

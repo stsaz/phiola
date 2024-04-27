@@ -58,8 +58,9 @@ struct q_entry* qe_ref(struct q_entry *e)
 
 int qe_unref(struct q_entry *e)
 {
-	FF_ASSERT(!!e->used);
-	if (--e->used != 0) return 1;
+	FF_ASSERT(e->used);
+	if (1 != ffint_fetch_add(&e->used, -1))
+		return 1;
 
 	qe_free(e);
 	return 0;
@@ -86,15 +87,14 @@ static void qe_close(void *f, phi_track *t)
 			core->track->stop(t);
 	}
 
-	int r = -1;
-	if (e->q)
-		r = q_ent_closed(e->q, t);
-
 	meta_destroy(&t->meta);
-	if (!r // allowed to autoplay next track
-		&& !(t->chain_flags & PHI_FSTOP) // track wasn't stopped by user
-		&& (!e->expand || e->play_next_on_close))
-		q_play_next(e->q);
+	if (e->q) {
+		uint flags = (t->error) ? Q_TKCL_ERR : 0;
+		if ((t->chain_flags & PHI_FSTOP) // track stopped by user
+			|| (e->expand && !e->play_next_on_close))
+			flags |= Q_TKCL_STOP;
+		q_ent_closed(e->q, flags);
+	}
 	qe_unref(e);
 }
 

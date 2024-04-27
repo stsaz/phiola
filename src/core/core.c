@@ -52,7 +52,7 @@ static void win_sleep_destroy(){}
 #endif
 
 struct core_mod {
-	char *name;
+	char name[32];
 	ffdl dl;
 	const struct phi_mod *mod;
 };
@@ -71,6 +71,7 @@ struct core_ctx *cc;
 
 static void core_sig(uint signal)
 {
+	dbglog("signal: %u", signal);
 	switch (signal) {
 	case PHI_CORE_STOP:
 		wrkx_stop(&cc->wx);
@@ -135,20 +136,19 @@ static void mod_destroy(struct core_mod *m)
 		dbglog("'%s': ffdl_close", m->name);
 		ffdl_close(m->dl);
 	}
-	ffmem_free(m->name);
 }
 
 /** Create module object */
 static struct core_mod* mod_create(ffstr name)
 {
 	struct core_mod *m = ffvec_zpushT(&cc->mods, struct core_mod);
-	m->name = ffsz_dupstr(&name);
+	ffsz_copystr(m->name, sizeof(m->name), &name);
 	return m;
 }
 
-static ffdl mod_load(struct core_mod *m, ffstr file)
+static int mod_load(struct core_mod *m, ffstr file)
 {
-	int done = 0;
+	int rc = 1;
 	ffdl dl = FFDL_NULL;
 
 	fftime t1;
@@ -173,44 +173,101 @@ static ffdl mod_load(struct core_mod *m, ffstr file)
 		goto end;
 	}
 
-	if (NULL == (m->mod = mod_init(core)))
+	dbglog("%s: calling phi_mod_init()", fn);
+
+	const phi_mod *mod;
+	if (NULL == (mod = mod_init(core)))
 		goto end;
 
 	if (core->conf.log_level >= PHI_LOG_DEBUG) {
 		fftime t2 = core->time(NULL, PHI_CORE_TIME_MONOTONIC);
 		fftime_sub(&t2, &t1);
 
-		uint ma = m->mod->ver/10000
-			, mi = m->mod->ver%10000/100
-			, pa = m->mod->ver%100;
+		uint ma = mod->ver/10000
+			, mi = mod->ver%10000/100
+			, pa = mod->ver%100;
 		dbglog("loaded module %S v%u.%u.%u in %Uusec"
 			, &file, ma, mi, pa, fftime_to_usec(&t2));
 	}
 
-	if (m->mod->ver_core != PHI_VERSION_CORE) {
+	if (mod->ver_core != PHI_VERSION_CORE) {
 		errlog("module %S is incompatible with this phiola version", &file);
 		goto end;
 	}
-	done = 1;
+	m->mod = mod;
+	m->dl = dl;
+	dl = FFDL_NULL;
+	rc = 0;
 
 end:
 	ffmem_free(fn);
-	if (!done && dl != FFDL_NULL)
+	if (dl != FFDL_NULL)
 		ffdl_close(dl);
-	return dl;
+	return rc;
+}
+
+/** Find or load module; wait while the module is being loaded by another thread.
+Thread-safe.
+Return NULL if failed to load. */
+static const phi_mod* core_mod_provide(ffstr file)
+{
+	for (uint ntry = 0;  ;  ntry++) {
+		int load = 0;
+		struct core_mod *m;
+
+		fflock_lock(&cc->mods_lock);
+		if (NULL == (m = mod_find(file))) {
+			m = mod_create(file);
+			m->dl = (void*)-1;
+			load = 1;
+		} else if (m->dl == FFDL_NULL) {
+			m->dl = (void*)-1;
+			load = 1;
+		}
+		const phi_mod *mod = m->mod;
+		uint index = m - (struct core_mod*)cc->mods.ptr;
+		fflock_unlock(&cc->mods_lock);
+
+		if (mod)
+			return mod;
+
+		if (load) {
+			struct core_mod lm;
+			int e = mod_load(&lm, file);
+
+			fflock_lock(&cc->mods_lock);
+			if (ff_unlikely(e)) {
+				m->dl = FFDL_NULL;
+				fflock_unlock(&cc->mods_lock);
+				return NULL;
+			}
+			m = ffslice_itemT(&cc->mods, index, struct core_mod);
+			m->dl = lm.dl;
+			m->mod = lm.mod;
+			fflock_unlock(&cc->mods_lock);
+			return lm.mod;
+		}
+
+		if (ntry < 10) {
+			ffthread_yield();
+		} else {
+			ffthread_sleep(1);
+			dbglog("%S: module is being loaded", &file);
+		}
+	}
 }
 
 /** Load module, get interface */
 static const void* core_mod(const char *name)
 {
 	const void *mi = NULL;
-	struct core_mod *m = NULL;
-	int locked = 0;
 
 	ffstr s = FFSTR_INITZ(name), file, iface;
 	ffstr_splitby(&s, '.', &file, &iface);
-	if (!file.len)
+	if (!file.len || file.len >= sizeof(((struct core_mod*)NULL)->name)) {
+		FF_ASSERT(0); // Empty or too large module name
 		goto end;
+	}
 
 	if (ffstr_eqz(&file, "core")) {
 		if (NULL == (mi = core_iface(iface.ptr))) {
@@ -220,29 +277,16 @@ static const void* core_mod(const char *name)
 		return mi;
 	}
 
-	fflock_lock(&cc->mods_lock);
-	locked = 1;
-	if (NULL == (m = mod_find(file)))
-		m = mod_create(file);
-
-	if (m->dl == FFDL_NULL) {
-		if (FFDL_NULL == (m->dl = mod_load(m, file)))
-			goto end;
-	}
-	fflock_unlock(&cc->mods_lock);
-	locked = 0;
-
-	if (!iface.len)
+	const phi_mod *mod = core_mod_provide(file);
+	if (!mod)
 		goto end;
 
-	if (NULL == (mi = m->mod->iface(iface.ptr))) {
+	if (iface.len && NULL == (mi = mod->iface(iface.ptr))) {
 		errlog("%s: no such interface", name);
 		goto end;
 	}
 
 end:
-	if (locked)
-		fflock_unlock(&cc->mods_lock);
 	return mi;
 }
 
@@ -362,11 +406,15 @@ FF_EXPORT void phi_core_destroy()
 {
 	if (cc == NULL) return;
 
+	dbglog("stats: %L modules; %L workers"
+		, cc->mods.len, cc->wx.workers.len);
+
 #ifdef FF_WIN
 	woeh_free(cc->woeh_obj);
 #endif
 
-	wrkx_destroy(&cc->wx);
+	wrkx_stop(&cc->wx);
+	wrkx_wait_stopped(&cc->wx);
 
 	struct core_mod *m;
 	FFSLICE_WALK(&cc->mods, m) {
@@ -376,6 +424,7 @@ FF_EXPORT void phi_core_destroy()
 
 	tracks_destroy();
 	qm_destroy();
+	wrkx_destroy(&cc->wx);
 	win_sleep_destroy();
 	ffmem_free(cc);  cc = NULL;
 }
@@ -397,6 +446,7 @@ FF_EXPORT phi_core* phi_core_create(struct phi_core_conf *conf)
 	if (!core->conf.timer_interval_msec) core->conf.timer_interval_msec = 100;
 
 	cc = ffmem_new(struct core_ctx);
+	ffvec_allocT(&cc->mods, 8, struct core_mod);
 	fftime_local(&cc->tz);
 	tracks_init();
 	qm_init();

@@ -47,8 +47,8 @@ void wrk_task(struct worker *w, phi_task *t, phi_task_func func, void *param)
 
 	t->handler = func;
 	t->param = param;
+	dbglog("task add: %p %p %p", t, t->handler, t->param);
 	zzkq_tq_post(&w->kq_tq, (fftask*)t);
-	dbglog("task added: %p %p %p", t, t->handler, t->param);
 }
 
 static void timer_suspend(void *param)
@@ -212,12 +212,16 @@ void wrkx_stop(struct wrk_ctx *wx)
 	}
 }
 
-void wrkx_destroy(struct wrk_ctx *wx)
+void wrkx_wait_stopped(struct wrk_ctx *wx)
 {
 	struct worker *w;
 	FFSLICE_WALK(&wx->workers, w) {
 		wrk_destroy(w);
 	}
+}
+
+void wrkx_destroy(struct wrk_ctx *wx)
+{
 	ffvec_free(&wx->workers);
 }
 
@@ -228,8 +232,11 @@ static int wrkx_available(struct wrk_ctx *wx)
 
 	struct worker *w;
 	FFSLICE_WALK(&wx->workers, w) {
-		if (0 == ffatomic_load(&w->njobs))
+		if (0 == ffatomic_load(&w->njobs)) {
+			if (w == wx->workers.ptr && wx->workers.len > 1)
+				continue; // main worker must be free to manage the queue
 			return 1;
+		}
 	}
 	return 0;
 }
@@ -249,6 +256,8 @@ uint wrkx_assign(struct wrk_ctx *wx, uint flags)
 	FFSLICE_WALK(&wx->workers, it) {
 		uint nj = ffatomic_load(&it->njobs);
 		if (nj < jobs_min) {
+			if (it == wx->workers.ptr && wx->workers.len > 1)
+				continue; // main worker must be free to manage the queue
 			jobs_min = nj;
 			w = it;
 			if (nj == 0)
@@ -256,16 +265,20 @@ uint wrkx_assign(struct wrk_ctx *wx, uint flags)
 		}
 	}
 
+	// The selected worker `w` is the least busy one.
+
 	if (jobs_min != 0 && wx->workers.len < wx->workers.cap) {
 		// no free workers; activate one from pool
 		fflock_lock(&wx->lock);
 		if (wx->workers.len < wx->workers.cap) {
-			w = &((struct worker*)wx->workers.ptr)[wx->workers.len++];
-			if (wrk_create(w)
-				|| wrk_start(w)) {
+			w = &((struct worker*)wx->workers.ptr)[wx->workers.len];
+			int failed = (wrk_create(w) || wrk_start(w));
+			if (ff_unlikely(failed)) {
 				wrk_destroy(w);
-				wx->workers.len--;
 				w = wx->workers.ptr; // use main worker
+			} else {
+				ffcpu_fence_release(); // the data is written before the counter
+				wx->workers.len++;
 			}
 		}
 		fflock_unlock(&wx->lock);

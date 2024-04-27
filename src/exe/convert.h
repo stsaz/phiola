@@ -228,6 +228,7 @@ static void conv_qu_add(struct cmd_conv *v, ffstr *fn)
 
 static int conv_action(struct cmd_conv *v)
 {
+	x->queue->on_change(q_on_change);
 	struct phi_queue_conf qc = {
 		.first_filter = &phi_guard,
 		.ui_module = "tui.play",
