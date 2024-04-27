@@ -3,7 +3,8 @@
 
 #include <track.h>
 
-extern phi_core *core;
+extern const phi_core *core;
+extern const phi_meta_if *phi_metaif;
 #define syserrlog(t, ...)  phi_syserrlog(core, NULL, t, __VA_ARGS__)
 #define errlog(t, ...)  phi_errlog(core, NULL, t, __VA_ARGS__)
 #define warnlog(t, ...)  phi_warnlog(core, NULL, t, __VA_ARGS__)

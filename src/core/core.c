@@ -14,6 +14,7 @@
 
 static phi_core _core;
 phi_core *core;
+const phi_meta_if *phi_metaif;
 
 #define syserrlog(...) \
 	core->conf.log(core->conf.log_obj, PHI_LOG_ERR | PHI_LOG_SYS, "core", NULL, __VA_ARGS__)

@@ -16,12 +16,12 @@ CFLAGS += -DFFBASE_MEM_ASSERT \
 	-MMD -MP \
 	-I$(FFBASE) \
 	-Wall -Wextra -Wno-unused-parameter -Wno-multichar \
-	-fPIC \
+	-fPIC -fvisibility=hidden \
 	-g
 ifeq "$(DEBUG)" "1"
 	CFLAGS += -DFF_DEBUG -O0 -Werror -Wno-deprecated-declarations
 else
-	CFLAGS += -O3 -fno-strict-aliasing -fvisibility=hidden
+	CFLAGS += -O3 -fno-strict-aliasing
 endif
 ifeq "$(ASAN)" "1"
 	CFLAGS += -fsanitize=address

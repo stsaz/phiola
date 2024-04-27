@@ -6,7 +6,7 @@
 #include <ffbase/list.h>
 #include <ffbase/vector.h>
 
-extern struct phi_core *core;
+extern const phi_core *core;
 #define syserrlog(t, ...)  phi_syserrlog(core, "track", t, __VA_ARGS__)
 #define errlog(t, ...)  phi_errlog(core, "track", t, __VA_ARGS__)
 #define warnlog(t, ...)  phi_warnlog(core, "track", t, __VA_ARGS__)

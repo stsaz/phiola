@@ -4,7 +4,7 @@
 #include <track.h>
 #include <ffsys/file.h>
 #include <ffsys/path.h>
-extern phi_core *core;
+extern const phi_core *core;
 
 #define errlog(t, ...)  phi_errlog(core, NULL, t, __VA_ARGS__)
 

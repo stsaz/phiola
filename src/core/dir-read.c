@@ -7,6 +7,7 @@
 
 extern const phi_core *core;
 extern const phi_queue_if phi_queueif;
+extern const phi_meta_if *phi_metaif;
 #define syswarnlog(t, ...)  phi_syswarnlog(core, NULL, t, __VA_ARGS__)
 
 /**
@@ -110,6 +111,9 @@ static int qu_add_dir_r(const char *fn, phi_track *t)
 		phi_track_conf_assign(&qe.conf, &t->conf);
 		qe.conf.ifile.name = fpath;
 		fpath = NULL;
+		if (t->conf.ofile.name)
+			qe.conf.ofile.name = ffsz_dup(t->conf.ofile.name);
+		phi_metaif->copy(&qe.conf.meta, &t->conf.meta);
 
 		qcur = phi_queueif.insert(qcur, &qe);
 
@@ -131,6 +135,9 @@ end:
 
 static void* dir_open(phi_track *t)
 {
+	if (!phi_metaif)
+		phi_metaif = core->mod("format.meta");
+
 	if (!!qu_add_dir_r(t->conf.ifile.name, t))
 		return PHI_OPEN_ERR;
 	return (void*)1;
