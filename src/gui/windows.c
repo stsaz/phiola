@@ -18,23 +18,14 @@ struct ctx {
 	struct zzlog log;
 	fftime time_last;
 
-	char fn[4*1024];
-	ffstr root_dir;
+	char	fn_buf[128], *fn;
+	ffstr	root_dir;
 
+	struct ffargs cmd;
+	uint codepage_id;
 	ffvec input; // char*[]
 };
 static struct ctx *x;
-
-static int conf()
-{
-	const char *p;
-	if (!(p = ffps_filename(x->fn, sizeof(x->fn), NULL)))
-		return -1;
-	if (ffpath_splitpath_str(FFSTR_Z(p), &x->root_dir, NULL) < 0)
-		return -1;
-	x->root_dir.len++;
-	return 0;
-}
 
 static void exe_logv(void *log_obj, uint flags, const char *module, phi_track *t, const char *fmt, va_list va)
 {
@@ -61,6 +52,87 @@ static void exe_log(void *log_obj, uint flags, const char *module, phi_track *t,
 	va_end(va);
 }
 
+#define errlog(...)  exe_log(&x->log, PHI_LOG_ERR, NULL, NULL, __VA_ARGS__)
+
+static int ffu_coding(ffstr s)
+{
+	static const u_char codepage_val[] = {
+		FFUNICODE_WIN1251,
+		FFUNICODE_WIN1252,
+		FFUNICODE_WIN866,
+	};
+	static const char codepage_str[][8] = {
+		"win1251",
+		"win1252",
+		"win866",
+	};
+	int r = ffcharr_findsorted(codepage_str, FF_COUNT(codepage_str), sizeof(codepage_str[0]), s.ptr, s.len);
+	if (r < 0)
+		return -1;
+	return codepage_val[r];
+}
+
+static int cmd_codepage(void *obj, ffstr s)
+{
+	int r = ffu_coding(s);
+	if (r < 0)
+		return _ffargs_err(&x->cmd, 1, "unknown codepage: '%S'", &s);
+	x->codepage_id = r;
+	return 0;
+}
+
+static const struct ffarg conf_args[] = {
+	{ "Codepage",	'S',		cmd_codepage },
+	{}
+};
+
+static int conf_read(struct ctx *x, ffstr d)
+{
+	ffstr line;
+	while (d.len) {
+		ffstr_splitby(&d, '\n', &line, &d);
+		ffstr_trimwhite(&line);
+		line.ptr[line.len] = '\0';
+
+		ffmem_zero_obj(&x->cmd);
+		int r = ffargs_process_line(&x->cmd, conf_args, x, 0, line.ptr);
+		if (r)
+			return -1;
+	}
+	return 0;
+}
+
+static int conf(struct ctx *x)
+{
+	x->fn = ffmem_alloc(4*1024);
+	const char *p;
+	if (!(p = ffps_filename(x->fn, 4*1024, NULL)))
+		return -1;
+
+	uint n = ffsz_len(p);
+	if (n + 1 <= sizeof(x->fn_buf)) {
+		ffmem_copy(x->fn_buf, p, n + 1);
+		ffmem_free(x->fn);  x->fn = NULL;
+		p = x->fn_buf;
+	}
+
+	ffstr s = FFSTR_INITN(p, n);
+	if (ffpath_splitpath_str(s, &x->root_dir, NULL) < 0)
+		return -1;
+	x->root_dir.len++;
+
+	char *conf_fn = ffsz_allocfmt("%Sphiola.conf", &x->root_dir);
+	ffvec buf = {};
+	if (!fffile_readwhole(conf_fn, &buf, 10*1024*1024)
+		&& conf_read(x, *(ffstr*)&buf)) {
+		errlog("reading '%s': %s", conf_fn, x->cmd.error);
+	}
+
+	ffvec_free(&buf);
+	ffmem_free(conf_fn);
+	return 0;
+}
+
 static char* env_expand(const char *s)
 {
 	return ffenv_expand(NULL, NULL, 0, s);
@@ -82,8 +154,14 @@ static int core()
 
 		.env_expand = env_expand,
 		.mod_loading = mod_loading,
+
+		.workers = ~0U,
+		.timer_interval_msec = 100,
+
+		.code_page = x->codepage_id,
 		.root = x->root_dir,
 	};
+	ffenv_locale(conf.language, sizeof(conf.language), FFENV_LANGUAGE);
 	if (!(x->core = phi_core_create(&conf)))
 		return -1;
 	x->queue = x->core->mod("core.queue");
@@ -168,13 +246,16 @@ static int cmd()
 static void cleanup()
 {
 	phi_core_destroy();
-	// ffmem_free(x);
+#ifdef FF_DEBUG
+	ffmem_free(x->fn);
+	ffmem_free(x);
+#endif
 }
 
 int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
 	x = ffmem_new(struct ctx);
-	if (conf()) goto end;
+	if (conf(x)) goto end;
 	if (core()) goto end;
 	logs();
 	if (cmd()) goto end;
