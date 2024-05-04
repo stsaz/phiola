@@ -96,6 +96,11 @@ int flac_decode(flac_decoder *f, const char *input, size_t len, const int ***out
 
 #ifdef _WIN32
 FILE* fopen_utf8(const char *filename, const char *mode){}
+int rename_utf8(const char *oldname, const char *newname){}
+int utime_utf8(const char *filename, struct utimbuf *times){}
+int unlink_utf8(const char *filename){}
+int stat64_utf8(const char *path, struct __stat64 *buffer){}
+int chmod_utf8(const char *filename, int pmode){}
 #endif
 
 

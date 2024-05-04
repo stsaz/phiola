@@ -21,7 +21,7 @@ RUN apt install -y \
 RUN apt install -y \
  zstd unzip bzip2 xz-utils \
  cmake patch dos2unix curl \
- autoconf libtool
+ autoconf libtool libtool-bin gettext
 RUN dpkg --add-architecture arm64 && \
  apt update && \
  apt install -y \

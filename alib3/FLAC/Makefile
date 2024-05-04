@@ -2,13 +2,15 @@
 
 include ../config.mk
 
-VER := 1.4.2
-URL := https://github.com/xiph/flac/releases/download/$(VER)/flac-$(VER).tar.xz
+VER := 1.4.3
+URL := https://github.com/xiph/flac/archive/refs/tags/$(VER).zip
 PKG := $(notdir $(URL))
 DIR := flac-$(VER)
 LIB := libFLAC-phi.$(SO)
 
 default: $(DIR)/config.h
+	cd $(DIR) && sed -n '/libFLAC_sources = /,/libFLAC_la_SOURCES = /p' src/libFLAC/Makefile.in >phi.mk
+	#cd $(DIR) && make -j8 V=1 >LOG
 	$(MAKE) $(LIB)
 
 # download
@@ -17,9 +19,10 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
-	$(UNTAR_XZ) $(PKG)
-	touch $(DIR)
+	$(UNZIP) $(PKG)
+	touch $@
 
+# config
 _:=
 ifeq "$(OS)" "windows"
 	CONFIGURE_FLAGS := --host=x86_64-w64-mingw32
@@ -36,47 +39,30 @@ ifeq "$(SYS)" "android"
 	CONFIGURE_ENV := CC="$(C_DIR)/clang" CFLAGS="$(A_CFLAGS)"
 endif
 $(DIR)/config.h: $(DIR)
+	cd $(DIR) && bash autogen.sh
 	cd $(DIR) && $(CONFIGURE_ENV) ./configure --disable-ogg $(CONFIGURE_FLAGS)
 	cd $(DIR) && cat ../*.patch | patch -p1
 	cat $@
+	touch $@
 
 # build
 CFLAGS += \
 	-I. -I$(DIR) -I$(DIR)/src/libFLAC/include -I$(DIR)/include \
 	-DHAVE_CONFIG_H -D_FORTIFY_SOURCE=2 -DDLL_EXPORT \
-	-fvisibility=hidden -fassociative-math -fno-signed-zeros -fno-trapping-math -freciprocal-math -funroll-loops
+	-Wall -Wextra -Wstrict-prototypes -Wmissing-prototypes -Waggregate-return -Wcast-align -Wnested-externs -Wshadow -Wundef -Wmissing-declarations -Winline -Wdeclaration-after-statement \
+	-fassociative-math -fno-signed-zeros -fno-trapping-math -freciprocal-math -funroll-loops
+ifeq "$(OS)" "linux"
+	CFLAGS += -fstack-protector-strong
+endif
 
-SRC := \
-	$(DIR)/src/libFLAC/bitmath.c \
-	$(DIR)/src/libFLAC/bitreader.c \
-	$(DIR)/src/libFLAC/bitwriter.c \
-	$(DIR)/src/libFLAC/cpu.c \
-	$(DIR)/src/libFLAC/crc.c \
-	$(DIR)/src/libFLAC/fixed.c \
-	$(DIR)/src/libFLAC/float.c \
-	$(DIR)/src/libFLAC/format.c \
-	$(DIR)/src/libFLAC/lpc.c \
-	$(DIR)/src/libFLAC/md5.c \
-	$(DIR)/src/libFLAC/memory.c \
-	$(DIR)/src/libFLAC/stream_decoder.c \
-	$(DIR)/src/libFLAC/stream_encoder.c \
-	$(DIR)/src/libFLAC/stream_encoder_framing.c \
-	$(DIR)/src/libFLAC/window.c
+ifeq "$(OS)" "windows"
+	LINKFLAGS += -Wl,-static -lssp
+endif
 
-SRC += \
-	$(DIR)/src/libFLAC/fixed_intrin_sse2.c \
-	$(DIR)/src/libFLAC/fixed_intrin_ssse3.c \
-	$(DIR)/src/libFLAC/lpc_intrin_avx2.c \
-	$(DIR)/src/libFLAC/lpc_intrin_fma.c \
-	$(DIR)/src/libFLAC/lpc_intrin_neon.c \
-	$(DIR)/src/libFLAC/lpc_intrin_sse2.c \
-	$(DIR)/src/libFLAC/lpc_intrin_sse41.c \
-	$(DIR)/src/libFLAC/lpc_intrin_vsx.c \
-	$(DIR)/src/libFLAC/stream_encoder_intrin_sse2.c \
-	$(DIR)/src/libFLAC/stream_encoder_intrin_ssse3.c \
-	$(DIR)/src/libFLAC/stream_encoder_intrin_avx2.c
+-include $(DIR)/phi.mk
 
-OBJ := FLAC-phi.o $(SRC:.c=.o)
+SRC := $(libFLAC_sources)
+OBJ := FLAC-phi.o $(addprefix $(DIR)/src/libFLAC/,$(SRC:.c=.o))
 
 %.o: %.c
 	$(C) $(CFLAGS) $< -o $@

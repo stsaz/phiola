@@ -22,7 +22,7 @@ RUN apt install -y \
  perl \
  zstd zip unzip bzip2 \
  cmake patch dos2unix curl \
- autoconf libtool
+ autoconf libtool libtool-bin gettext pkg-config
 EOF
 	fi
 

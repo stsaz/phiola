@@ -13,7 +13,7 @@ In order to be used by phiola all these libraries must be built in a specific wa
 
 * alac-rev2
 * fdk-aac-0.1.6
-* flac-1.4.2
+* flac-1.4.3
 * MAC-433
 * mpg123-1.32.3
 * musepack-r475

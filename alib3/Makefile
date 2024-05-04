@@ -100,7 +100,7 @@ md5:
 		ALAC/master.zip \
 		DynamicAudioNormalizer/2.10.tar.gz \
 		fdk-aac/v0.1.6.tar.gz \
-		FLAC/flac-1.4.2.tar.xz \
+		FLAC/1.4.3.zip \
 		MAC/MAC_SDK_433.zip \
 		mpg123/mpg123-1.32.3.tar.bz2 \
 		musepack/musepack_src_r475.tar.gz \
