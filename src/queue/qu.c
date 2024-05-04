@@ -297,15 +297,15 @@ static int q_play(struct phi_queue *q, void *_e)
 			if (qe_play(e))
 				return -1;
 
-			if (!core->workers_available())
-				break;
-
 			uint i = e->index + 1;
 			if (i >= q->index.len)
 				break;
 
 			if (FFINT_READONCE(qm->errors) >= ERR_MAX)
 				return -1; // consecutive errors increase while we're starting the tracks here
+
+			if (!core->workers_available())
+				break;
 
 			e = q_get(q, i);
 		}
@@ -333,7 +333,9 @@ static void q_trk_closed(void *param)
 	q->active_n -= n;
 
 	if (!(flags & Q_TKCL_STOP)) {
-		q_play_next(q);
+		if (!(q->conf.conversion
+			&& core->conf.workers > 1 && !core->workers_available()))
+			q_play_next(q);
 	}
 
 	if (q->active_n == 0) {

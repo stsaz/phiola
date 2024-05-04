@@ -97,7 +97,6 @@ static void track_close(phi_track *t)
 	if (t == NULL) return;
 
 	core->task(t->worker, &t->task_wake, NULL, NULL);
-	core->worker_release(t->worker);
 
 	if (t->sib.next) {
 		fflock_lock(&tx->tracks_lock);
@@ -121,7 +120,12 @@ static void conveyor_init(struct phi_conveyor *v)
 
 static void conveyor_close(struct phi_conveyor *v, phi_track *t)
 {
-	for (int i = MAX_FILTERS - 1;  i >= 0;  i--) {
+	if (v->i_fpool == ~0U)
+		return;
+
+	core->worker_release(t->worker);
+
+	for (int i = v->i_fpool - 1;  i >= 0;  i--) {
 		struct filter *f = &v->filters_pool[i];
 		if (f->obj != NULL) {
 			extralog(t, "%s: closing", f->iface->name);
@@ -135,6 +139,7 @@ static void conveyor_close(struct phi_conveyor *v, phi_track *t)
 			f->obj = NULL;
 		}
 	}
+	v->i_fpool = ~0U;
 }
 
 static char* conveyor_print(struct phi_conveyor *v, const struct filter *mark, char *buf, ffsize cap)
