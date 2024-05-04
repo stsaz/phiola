@@ -20,7 +20,8 @@ RUN apt install -y \
  gcc g++
 RUN apt install -y \
  zstd unzip bzip2 xz-utils \
- cmake patch dos2unix curl
+ cmake patch dos2unix curl \
+ autoconf libtool
 RUN apt install -y \
  libgtk-3-dev
 RUN apt install -y \

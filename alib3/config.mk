@@ -8,7 +8,7 @@ ifneq "$(DEBUG)" "1"
 endif
 CXXFLAGS := $(CFLAGS)
 
-LINKFLAGS = -fpic $(LINK_INSTALLNAME_LOADERPATH) -lm
+LINKFLAGS += -fpic $(LINK_INSTALLNAME_LOADERPATH) -lm
 ifneq "$(DEBUG)" "1"
 	LINKFLAGS += -s
 endif

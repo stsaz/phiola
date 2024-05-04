@@ -20,7 +20,8 @@ RUN apt install -y \
  gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 RUN apt install -y \
  zstd unzip bzip2 xz-utils \
- cmake patch dos2unix curl
+ cmake patch dos2unix curl \
+ autoconf libtool
 RUN dpkg --add-architecture arm64 && \
  apt update && \
  apt install -y \

@@ -18,7 +18,7 @@ In order to be used by phiola all these libraries must be built in a specific wa
 * mpg123-1.32.3
 * musepack-r475
 * ogg-1.3.3
-* opus-1.3.1
+* opus-1.5.2
 * vorbis-1.3.7
 * wavpack-4.75.0
 

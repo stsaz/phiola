@@ -100,12 +100,12 @@ md5:
 		ALAC/master.zip \
 		DynamicAudioNormalizer/2.10.tar.gz \
 		fdk-aac/v0.1.6.tar.gz \
-		FLAC/flac-1.3.3.tar.xz \
+		FLAC/flac-1.4.2.tar.xz \
 		MAC/MAC_SDK_433.zip \
-		mpg123/mpg123-1.25.10.tar.bz2 \
+		mpg123/mpg123-1.32.3.tar.bz2 \
 		musepack/musepack_src_r475.tar.gz \
 		ogg/libogg-1.3.3.tar.xz \
-		opus/opus-1.3.1.tar.gz \
+		opus/opus-1.5.2.zip \
 		soxr/soxr-0.1.3-Source.tar.xz \
 		vorbis/libvorbis-1.3.7.tar.xz \
 		wavpack/wavpack-4.75.0.tar.bz2 \
