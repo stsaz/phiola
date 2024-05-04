@@ -34,7 +34,7 @@ do { \
 } while (0)
 
 #ifndef PHI_VERSION_STR
-	#define PHI_VERSION_STR  "2.0-rc23"
+	#define PHI_VERSION_STR  "2.0.24"
 #endif
 
 #include <core/worker.h>
