@@ -1,9 +1,10 @@
 /** phiola: public interface */
 
 #pragma once
-#include <ffsys/file.h>
-#include <ffsys/timerqueue.h>
+#include <ffsys/error.h>
+#include <ffbase/vector.h>
 #include <ffbase/string.h>
+#include <ffbase/time.h>
 
 #define PHI_VERSION  20024
 
@@ -21,11 +22,18 @@ typedef unsigned char u_char;
 
 #define PHI_ASSERT  assert
 
+#ifdef FF_WIN
+typedef HANDLE fffd;
+#else
+typedef int fffd;
+#endif
 struct phi_track_if;
 typedef struct phi_filter phi_filter;
 typedef struct phi_track phi_track;
-typedef struct fftask phi_task;
-typedef struct fftimerqueue_node phi_timer;
+struct _phi_fftask { size_t a[4]; };
+typedef struct _phi_fftask phi_task;
+struct _phi_fftimerqueue_node { size_t a[8]; };
+typedef struct _phi_fftimerqueue_node phi_timer;
 
 enum PHI_LOG {
 	PHI_LOG_ERR,
@@ -41,8 +49,6 @@ enum PHI_LOG {
 
 #define FFTASKQUEUE_LOG_DEBUG  PHI_LOG_DEBUG
 #define FFTASKQUEUE_LOG_EXTRA  PHI_LOG_EXTRA
-
-#include <util/taskqueue.h>
 
 /** phiola Core.
 Usage:

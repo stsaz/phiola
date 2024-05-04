@@ -351,7 +351,7 @@ static void lh_ready(void *param)
 static int lh_action(struct list_heal *lh)
 {
 	int i = 0;
-	ffvec_zallocT(&lh->tasks, lh->input.len, fftask);
+	ffvec_zallocT(&lh->tasks, lh->input.len, phi_task);
 	lh->counter = lh->input.len;
 
 	char **it;
@@ -366,7 +366,7 @@ static int lh_action(struct list_heal *lh)
 		};
 		x->queue->add(q, &qe);
 
-		x->core->task(0, ffslice_itemT(&lh->tasks, i, fftask), lh_ready, q);
+		x->core->task(0, ffslice_itemT(&lh->tasks, i, phi_task), lh_ready, q);
 		i++;
 	}
 	ffvec_free(&lh->input);

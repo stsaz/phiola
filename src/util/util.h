@@ -3,7 +3,7 @@
 
 #include <ffbase/stringz.h>
 
-static inline ffbool ffbit_test_array32(const uint *ar, uint bit)
+static inline int ffbit_test_array32(const uint *ar, uint bit)
 {
 	return ffbit_test32(&ar[bit / 32], bit % 32);
 }

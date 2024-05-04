@@ -63,14 +63,12 @@ cd phiola
 	First, install Android SDK & NDK, and then:
 
 	```sh
-	make -j8 zstd \
-		-C ../ffpack \
-		SYS=android CPU=arm64 NDK_DIR=$SDK_DIR/ndk/YOUR_NDK_VERSION
-	make -j8 \
-		-C alib3 \
-		SYS=android CPU=arm64 NDK_DIR=$SDK_DIR/ndk/YOUR_NDK_VERSION
-	make -j8 \
-		-C android SDK_DIR=$SDK_DIR
+	SDK_DIR=/home/USER/Android/Sdk \
+		NDK_VER=YOUR_NDK_VERSION \
+		bash xbuild-android.sh
+	make build-java \
+		-C android \
+		SDK_DIR=/home/USER/Android/Sdk
 	```
 
 

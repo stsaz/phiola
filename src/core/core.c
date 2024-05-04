@@ -322,21 +322,21 @@ static fftime core_time(ffdatetime *dt, uint flags)
 
 static void core_timer(uint worker, phi_timer *t, int interval_msec, phi_task_func func, void *param)
 {
-	assert(worker < cc->wx.workers.len);
+	PHI_ASSERT(worker < cc->wx.workers.len);
 	struct worker *w = ffslice_itemT(&cc->wx.workers, worker, struct worker);
-	wrk_timer(w, t, interval_msec, func, param);
+	wrk_timer(w, (fftimerqueue_node*)t, interval_msec, func, param);
 }
 
-static void core_task(uint worker, phi_task *t, phi_task_func func, void *param)
+static void core_task(uint worker, phi_task *pt, phi_task_func func, void *param)
 {
-	assert(worker < cc->wx.workers.len);
+	PHI_ASSERT(worker < cc->wx.workers.len);
 	struct worker *w = ffslice_itemT(&cc->wx.workers, worker, struct worker);
-	wrk_task(w, t, func, param);
+	wrk_task(w, (fftask*)pt, func, param);
 }
 
 static phi_kevent* core_kev_alloc(uint worker)
 {
-	assert(worker < cc->wx.workers.len);
+	PHI_ASSERT(worker < cc->wx.workers.len);
 	struct worker *w = ffslice_itemT(&cc->wx.workers, worker, struct worker);
 	phi_kevent *kev = (void*)zzkq_kev_alloc(&w->kq);
 	if (kev) {
@@ -350,7 +350,7 @@ static void core_kev_free(uint worker, phi_kevent *kev)
 {
 	if (!kev) return;
 
-	assert(worker < cc->wx.workers.len);
+	PHI_ASSERT(worker < cc->wx.workers.len);
 	struct worker *w = ffslice_itemT(&cc->wx.workers, worker, struct worker);
 	zzkq_kev_free(&w->kq, (void*)kev);
 	dbglog("kev free: %p", kev);
@@ -358,7 +358,7 @@ static void core_kev_free(uint worker, phi_kevent *kev)
 
 static int core_kq_attach(uint worker, phi_kevent *kev, fffd fd, uint flags)
 {
-	assert(worker < cc->wx.workers.len);
+	PHI_ASSERT(worker < cc->wx.workers.len);
 	struct worker *w = ffslice_itemT(&cc->wx.workers, worker, struct worker);
 	uint f = FFKQ_READWRITE;
 	if (flags == 1)
@@ -376,7 +376,8 @@ static int core_kq_attach(uint worker, phi_kevent *kev, fffd fd, uint flags)
 static void woeh_task(void *param)
 {
 	struct phi_woeh_task *wt = param;
-	core_task(wt->worker, &wt->task, wt->task.handler, wt->task.param);
+	fftask *t = (fftask*)&wt->task;
+	core_task(wt->worker, &wt->task, t->handler, t->param);
 }
 
 static int core_woeh(uint worker, fffd fd, struct phi_woeh_task *wt, phi_task_func func, void *param, uint flags)
@@ -387,8 +388,9 @@ static int core_woeh(uint worker, fffd fd, struct phi_woeh_task *wt, phi_task_fu
 		return -1;
 	}
 
-	wt->task.handler = func;
-	wt->task.param = param;
+	fftask *t = (fftask*)&wt->task;
+	t->handler = func;
+	t->param = param;
 	wt->worker = worker;
 	return woeh_add(cc->woeh_obj, fd, woeh_task, wt, flags);
 }
@@ -407,7 +409,7 @@ static uint core_worker_assign(uint flags)
 
 static void core_worker_release(uint worker)
 {
-	assert(worker < cc->wx.workers.len);
+	PHI_ASSERT(worker < cc->wx.workers.len);
 	wrkx_release(&cc->wx, worker);
 }
 
@@ -467,6 +469,9 @@ static uint wrk_n(uint n)
 
 FF_EXPORT phi_core* phi_core_create(struct phi_core_conf *conf)
 {
+	FF_ASSERT(sizeof(phi_task) >= sizeof(fftask));
+	FF_ASSERT(sizeof(phi_timer) >= sizeof(fftimerqueue_node));
+
 	if (cc) return NULL;
 
 	core = &_core;

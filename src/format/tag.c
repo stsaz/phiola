@@ -5,7 +5,7 @@
 #include <format/mmtag.h>
 #include <avpack/id3v1.h>
 #include <avpack/id3v2.h>
-#include <ffsys/error.h>
+#include <ffsys/file.h>
 #include <ffsys/path.h>
 
 #define syserrlog(...) \

@@ -81,16 +81,16 @@ static int nmlcore_kq_attach(void *boss, ffsock sk, struct zzkevent *kev, void *
 static void nmlcore_timer(void *boss, nml_timer *tmr, int interval_msec, fftimerqueue_func func, void *param)
 {
 	struct httpcl *h = boss;
-	core->timer(h->trk->worker, tmr, interval_msec, func, param);
+	core->timer(h->trk->worker, (phi_timer*)tmr, interval_msec, func, param);
 }
 
 static void nmlcore_task(void *boss, nml_task *t, uint flags)
 {
 	struct httpcl *h = boss;
 	if (flags == 0)
-		core->task(h->trk->worker, t, NULL, NULL);
+		core->task(h->trk->worker, (phi_task*)t, NULL, NULL);
 	else
-		core->task(h->trk->worker, t, t->handler, t->param);
+		core->task(h->trk->worker, (phi_task*)t, t->handler, t->param);
 }
 
 static fftime nmlcore_date(void *boss, ffstr *dts)

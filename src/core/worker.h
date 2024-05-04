@@ -47,10 +47,10 @@ struct worker {
 	fftimerqueue_node	tmr_stop;
 };
 
-void wrk_task(struct worker *w, phi_task *t, phi_task_func func, void *param)
+void wrk_task(struct worker *w, fftask *t, phi_task_func func, void *param)
 {
 	if (func == NULL) {
-		fftaskqueue_del(&w->tq, (fftask*)t);
+		fftaskqueue_del(&w->tq, t);
 		dbglog("task removed: %p", t);
 		return;
 	}
@@ -58,7 +58,7 @@ void wrk_task(struct worker *w, phi_task *t, phi_task_func func, void *param)
 	t->handler = func;
 	t->param = param;
 	dbglog("task add: %p %p %p", t, t->handler, t->param);
-	zzkq_tq_post(&w->kq_tq, (fftask*)t);
+	zzkq_tq_post(&w->kq_tq, t);
 }
 
 static void timer_suspend(void *param)
@@ -82,7 +82,7 @@ static void on_timer(void *param)
 	}
 }
 
-void wrk_timer(struct worker *w, phi_timer *t, int interval_msec, phi_task_func func, void *param)
+void wrk_timer(struct worker *w, fftimerqueue_node *t, int interval_msec, phi_task_func func, void *param)
 {
 	if (interval_msec == 0) {
 		dbglog("timer:%p stop", t);

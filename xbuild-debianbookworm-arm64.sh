@@ -17,17 +17,24 @@ RUN apt update && \
  apt install -y \
   make
 RUN apt install -y \
- gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+ zstd zip unzip bzip2 xz-utils \
+ perl \
+ cmake \
+ patch \
+ dos2unix \
+ curl \
+ autoconf libtool libtool-bin \
+ gettext \
+ pkg-config
 RUN apt install -y \
- zstd unzip bzip2 xz-utils \
- cmake patch dos2unix curl \
- autoconf libtool libtool-bin gettext
+ gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 RUN dpkg --add-architecture arm64 && \
  apt update && \
  apt install -y \
   libasound2-dev:arm64 libpulse-dev:arm64 libjack-dev:arm64 \
-  libdbus-1-dev:arm64 \
-  libgtk-3-dev:arm64
+  libdbus-1-dev:arm64
+RUN apt install -y \
+ libgtk-3-dev:arm64
 EOF
 	fi
 

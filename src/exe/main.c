@@ -29,7 +29,7 @@ struct exe {
 	struct zzlog	log;
 	fftime			time_last;
 
-	char*	fn;
+	char	fn_buf[128], *fn;
 	char*	cmd_line;
 	ffstr	root_dir;
 
@@ -167,7 +167,16 @@ static int conf(struct exe *x, const char *argv_0)
 	const char *p;
 	if (NULL == (p = ffps_filename(x->fn, 4*1024, argv_0)))
 		return -1;
-	if (ffpath_splitpath_str(FFSTR_Z(p), &x->root_dir, NULL) < 0)
+
+	uint n = ffsz_len(p);
+	if (n + 1 <= sizeof(x->fn_buf)) {
+		ffmem_copy(x->fn_buf, p, n + 1);
+		ffmem_free(x->fn);  x->fn = NULL;
+		p = x->fn_buf;
+	}
+
+	ffstr s = FFSTR_INITN(p, n);
+	if (ffpath_splitpath_str(s, &x->root_dir, NULL) < 0)
 		return -1;
 	x->root_dir.len++;
 

@@ -3,6 +3,7 @@
 
 #include <gui/gui.h>
 #include <util/conf-args.h>
+#include <ffsys/file.h>
 #include <ffsys/perf.h>
 
 struct gui *gg;

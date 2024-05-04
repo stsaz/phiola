@@ -128,12 +128,12 @@ static void conveyor_close(struct phi_conveyor *v, phi_track *t)
 	for (int i = v->i_fpool - 1;  i >= 0;  i--) {
 		struct filter *f = &v->filters_pool[i];
 		if (f->obj != NULL) {
-			extralog(t, "%s: closing", f->iface->name);
 			if (f->iface->close) {
 
 				t->conveyor.filters_active[0] = i;
 				v->cur = 0; // logger needs to know the current filter name
 
+				extralog(t, "%s: closing", f->iface->name);
 				f->iface->close(f->obj, t);
 			}
 			f->obj = NULL;
@@ -484,13 +484,13 @@ static void track_wake(phi_track *t)
 Return N of tracks that were issued the stop command */
 static uint track_xstop_all()
 {
-	uint n = tx->tracks.len;
 	fflock_lock(&tx->tracks_lock);
 	ffchain_item *it;
 	FFLIST_WALK(&tx->tracks, it) {
-		phi_track *t = FF_STRUCTPTR(phi_track, sib, it);
+		phi_track *t = FF_CONTAINER(phi_track, sib, it);
 		track_xstop(t);
 	}
+	uint n = tx->tracks.len;
 	fflock_unlock(&tx->tracks_lock);
 	return n;
 }

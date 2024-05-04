@@ -1,6 +1,8 @@
 /** phiola: GUI: display file meta info
 2023, Simon Zolin */
 
+#include <ffsys/file.h>
+
 struct gui_winfo {
 	ffui_windowxx wnd;
 	ffui_viewxx vinfo;

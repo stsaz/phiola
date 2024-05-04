@@ -17,12 +17,17 @@ RUN apt update && \
  apt install -y \
   make
 RUN apt install -y \
- gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64
-RUN apt install -y \
+ zstd zip unzip bzip2 xz-utils \
  perl \
- zstd zip unzip bzip2 \
- cmake patch dos2unix curl \
- autoconf libtool libtool-bin gettext pkg-config
+ cmake \
+ patch \
+ dos2unix \
+ curl \
+ autoconf libtool libtool-bin \
+ gettext \
+ pkg-config
+RUN apt install -y \
+ gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64
 EOF
 	fi
 

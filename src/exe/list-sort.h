@@ -15,7 +15,7 @@ Sort entries in playlist\n\
 struct list_sort {
 	ffvec	input; // char*[]
 
-	ffvec	tasks; // fftask[]
+	ffvec	tasks; // phi_task[]
 	uint	counter;
 };
 
@@ -45,7 +45,7 @@ static void ls_ready(void *param)
 static int ls_action(struct list_sort *ls)
 {
 	int i = 0;
-	ffvec_zallocT(&ls->tasks, ls->input.len, fftask);
+	ffvec_zallocT(&ls->tasks, ls->input.len, phi_task);
 	ls->counter = ls->input.len;
 
 	char **it;
@@ -60,7 +60,7 @@ static int ls_action(struct list_sort *ls)
 		};
 		x->queue->add(q, &qe);
 
-		x->core->task(0, ffslice_itemT(&ls->tasks, i, fftask), ls_ready, q);
+		x->core->task(0, ffslice_itemT(&ls->tasks, i, phi_task), ls_ready, q);
 		i++;
 	}
 	ffvec_free(&ls->input);
