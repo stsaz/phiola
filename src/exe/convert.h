@@ -86,6 +86,7 @@ Options:\n\
   `-force`                Overwrite output file\n\
   `-preserve_date`        Preserve file modification date\n\
 \n\
+  `-workers` N            Max. number of workers\n\
   `-perf`                 Print performance counters\n\
 ");
 	x->exit_code = 0;
@@ -179,6 +180,12 @@ static int conv_cue_gaps(struct cmd_conv *v, ffstr s)
 static int conv_seek(struct cmd_conv *v, ffstr s) { return cmd_time_value(&v->seek, s); }
 
 static int conv_until(struct cmd_conv *v, ffstr s) { return cmd_time_value(&v->until, s); }
+
+static int conv_workers(struct cmd_conv *v, uint64 val)
+{
+	x->workers = val;
+	return 0;
+}
 
 static void conv_qu_add(struct cmd_conv *v, ffstr *fn)
 {
@@ -295,6 +302,7 @@ static const struct ffarg cmd_conv[] = {
 	{ "-tracks",		'S',	conv_tracks },
 	{ "-until",			'S',	conv_until },
 	{ "-vorbis_quality",'u',	O(vorbis_q) },
+	{ "-workers",		'u',	conv_workers },
 	{ "\0\1",			'S',	conv_input },
 	{ "",				0,		conv_prepare },
 };
