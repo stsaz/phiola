@@ -160,7 +160,6 @@ void wconvert_set(int id, uint pos)
 	}
 }
 
-/** Thread: worker */
 void wconvert_done()
 {
 	gui_wconvert *c = gg->wconvert;

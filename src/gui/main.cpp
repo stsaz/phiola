@@ -455,6 +455,11 @@ static void q_on_change(phi_queue_id q, uint flags, uint pos)
 	case 'd':
 		break;
 
+	case '.':
+		if (q == gd->q_convert)
+			wconvert_done();
+		return;
+
 	default:
 		return;
 	}

@@ -658,8 +658,6 @@ int record_stop()
 static void grd_conv_close(void *f, phi_track *t)
 {
 	core->track->stop(t);
-	if (!gd->queue->status(gd->q_convert))
-		wconvert_done();
 }
 static int grd_conv_process(void *f, phi_track *t) { return PHI_DONE; }
 static const phi_filter phi_gui_convert_guard = {
