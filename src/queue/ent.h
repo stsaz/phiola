@@ -140,6 +140,7 @@ static int qe_play(struct q_entry *e)
 			|| !track->filter(t, core->mod("format.auto-write"), 0)
 			|| !track->filter(t, core->mod("core.auto-output"), 0))
 			goto err;
+		t->output.allow_async = 1;
 
 	} else if (c->info_only || c->afilter.peaks_info) {
 		if (!track->filter(t, &phi_queue_guard, 0)

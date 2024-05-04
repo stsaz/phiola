@@ -11,7 +11,7 @@
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20024
+#define PHI_VERSION_CORE  20100
 
 typedef long long int64;
 typedef unsigned long long uint64;
@@ -81,6 +81,15 @@ struct phi_core_conf {
 	0: 1 worker
 	-1: all available CPU */
 	uint workers;
+
+	/** Worker-to-CPU affinity.
+	e.g. `01010101` for 4 workers -> use cores 0,2,4,6. */
+	uint cpu_affinity;
+
+	/** Number of I/O workers.
+	-1: ==workers */
+	uint io_workers;
+
 	uint timer_interval_msec;
 	uint max_tasks; // Max concurrent system tasks
 	uint run_detach :1; // phi_core_run() will detach from parent thread

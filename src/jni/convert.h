@@ -151,6 +151,7 @@ Java_com_github_stsaz_phiola_Phiola_convert(JNIEnv *env, jobject thiz, jstring j
 	x->Phiola_ConvertCallback_on_finish = jni_func(jni_class_obj(jcb), "on_finish", "(" JNI_TSTR ")V");
 	t->udata = jni_global_ref(jcb);
 
+	t->output.allow_async = 1;
 	track->start(t);
 	t = NULL;
 

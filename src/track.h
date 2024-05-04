@@ -242,6 +242,7 @@ struct phi_track {
 	struct {
 		uint64 seek; // Seek to offset and reset. -1:unset
 		uint cant_seek :1;
+		uint allow_async :1;
 	} output;
 
 	uint area_cap, area_size;

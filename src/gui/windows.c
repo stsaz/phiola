@@ -156,6 +156,7 @@ static int core()
 		.mod_loading = mod_loading,
 
 		.workers = ~0U,
+		.io_workers = ~0U,
 		.timer_interval_msec = 100,
 
 		.code_page = x->codepage_id,

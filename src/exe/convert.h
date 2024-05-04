@@ -87,6 +87,8 @@ Options:\n\
   `-preserve_date`        Preserve file modification date\n\
 \n\
   `-workers` N            Max. number of workers\n\
+  `-cpu_affinity` STRING  Set Worker-CPU affinity:\n\
+                          `auto`\n\
   `-perf`                 Print performance counters\n\
 ");
 	x->exit_code = 0;
@@ -187,6 +189,15 @@ static int conv_workers(struct cmd_conv *v, uint64 val)
 	return 0;
 }
 
+static int conv_cpu_affinity(struct cmd_conv *v, ffstr s)
+{
+	if (ffstr_eqz(&s, "auto"))
+		x->cpu_affinity = ~0U;
+	else
+		return _ffargs_err(&x->cmd, 1, "-cpu_affinity: incorrect value: '%S'", &s);
+	return 0;
+}
+
 static void conv_qu_add(struct cmd_conv *v, ffstr *fn)
 {
 	struct phi_track_conf c = {
@@ -283,6 +294,7 @@ static const struct ffarg cmd_conv[] = {
 	{ "-aformat",		'S',	conv_aformat },
 	{ "-channels",		'u',	O(channels) },
 	{ "-copy",			'1',	O(copy) },
+	{ "-cpu_affinity",	'S',	conv_cpu_affinity },
 	{ "-cue_gaps",		'S',	conv_cue_gaps },
 	{ "-danorm",		's',	O(danorm) },
 	{ "-exclude",		'S',	conv_exclude },

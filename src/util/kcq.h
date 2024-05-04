@@ -32,7 +32,7 @@ static inline int zzkcq_create(struct zzkcq *k, ffuint workers, ffuint max_jobs,
 		goto err;
 	}
 
-	if (NULL == ffvec_allocT(&k->workers, workers, ffthread))
+	if (NULL == ffvec_zallocT(&k->workers, workers, ffthread))
 		goto err;
 
 	k->workers.len = workers;
@@ -82,14 +82,41 @@ static int FFTHREAD_PROCCALL _zzkcq_worker(void *param)
 	return 0;
 }
 
-static inline int zzkcq_start(struct zzkcq *k)
+static void _zzkcq_thread_name(ffthread th, unsigned i)
+{
+#ifdef FF_LINUX
+	char name[8] = "kcq";
+	name[3] = i / 10 + '0';
+	name[4] = i % 10 + '0';
+	pthread_setname_np(th, name);
+#endif
+}
+
+/**
+index: Worker index to start; -1 to start all workers */
+static inline int zzkcq_start(struct zzkcq *k, int index)
 {
 	ffthread *it;
+	if (index >= 0) {
+		FF_ASSERT((unsigned)index < k->workers.len);
+		it = ffslice_itemT(&k->workers, index, ffthread);
+		if (*it != FFTHREAD_NULL)
+			return 0;
+		if (FFTHREAD_NULL == (*it = ffthread_create(_zzkcq_worker, k, 0))) {
+			// syserrlog("thread create");
+			return -1;
+		}
+
+		_zzkcq_thread_name(*it, index);
+		return 0;
+	}
+
 	FFSLICE_WALK(&k->workers, it) {
 		if (FFTHREAD_NULL == (*it = ffthread_create(_zzkcq_worker, k, 0))) {
 			// syserrlog("thread create");
 			return -1;
 		}
+		_zzkcq_thread_name(*it, it - (ffthread*)k->workers.ptr);
 	}
 	return 0;
 }

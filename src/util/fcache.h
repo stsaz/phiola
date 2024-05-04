@@ -2,15 +2,16 @@
 2022, Simon Zolin */
 
 /*
-fcache_init
-fcache_destroy
+fcache_init fcache_destroy
 fcache_reset
-fcache_nextbuf
+fcache_curbuf fcache_nextbuf
 fcache_find
+fbuf_write
+fbuf_str
 */
 
 #pragma once
-#include <ffbase/slice.h>
+#include <ffbase/string.h>
 
 // can cast to ffstr*
 struct fcache_buf {
@@ -20,8 +21,8 @@ struct fcache_buf {
 };
 
 struct fcache {
-	ffslice bufs; // struct fcache_buf[]
-	ffuint idx;
+	struct fcache_buf bufs[4];
+	ffuint n, idx;
 	struct {
 		ffuint64 hits, misses;
 	};
@@ -29,50 +30,54 @@ struct fcache {
 
 static inline int fcache_init(struct fcache *c, ffuint nbufs, ffuint bufsize, ffuint align)
 {
-	if (NULL == ffslice_zallocT(&c->bufs, nbufs, struct fcache_buf))
-		return 1;
-	c->bufs.len = nbufs;
+	FF_ASSERT(nbufs <= FF_COUNT(c->bufs));
 
-	struct fcache_buf *b;
-	FFSLICE_WALK(&c->bufs, b) {
-		if (NULL == (b->ptr = ffmem_align(bufsize, align)))
-			return 1;
-		b->off = (ffuint64)-1;
+	char *p = ffmem_align(bufsize * nbufs, align);
+	if (!p)
+		return 1;
+
+	c->n = nbufs;
+	for (uint i = 0;  i < c->n;  i++) {
+		struct fcache_buf *b = &c->bufs[i];
+		b->len = 0;
+		b->off = 0;
+		b->ptr = p;
+		p += bufsize;
 	}
 	return 0;
 }
 
 static inline void fcache_destroy(struct fcache *c)
 {
-	struct fcache_buf *b;
-	FFSLICE_WALK(&c->bufs, b) {
-		ffmem_alignfree(b->ptr);
-	}
-	ffslice_free(&c->bufs);
+	ffmem_alignfree(c->bufs[0].ptr);
 }
 
 static inline void fcache_reset(struct fcache *c)
 {
-	struct fcache_buf *b;
-	FFSLICE_WALK(&c->bufs, b) {
+	for (uint i = 0;  i < c->n;  i++) {
+		struct fcache_buf *b = &c->bufs[i];
 		b->off = 0;
 		b->len = 0;
 	}
 }
 
+static inline struct fcache_buf* fcache_curbuf(struct fcache *c)
+{
+	return &c->bufs[c->idx];
+}
+
 static inline struct fcache_buf* fcache_nextbuf(struct fcache *c)
 {
-	struct fcache_buf *b = c->bufs.ptr;
-	b = &b[c->idx];
-	c->idx = (c->idx + 1) % c->bufs.len;
+	struct fcache_buf *b = &c->bufs[c->idx];
+	c->idx = (c->idx + 1) % c->n;
 	return b;
 }
 
 /** Find cached buffer with data at `off`. */
 static inline struct fcache_buf* fcache_find(struct fcache *c, ffuint64 off)
 {
-	struct fcache_buf *b;
-	FFSLICE_WALK(&c->bufs, b) {
+	for (uint i = 0;  i < c->n;  i++) {
+		struct fcache_buf *b = &c->bufs[i];
 		if (off >= b->off  &&  off < b->off + b->len) {
 			c->hits++;
 			return b;
@@ -124,3 +129,5 @@ static inline ffint64 fbuf_write(struct fcache_buf *b, ffsize cap, ffstr *in, ui
 	b->off = off;
 	return -1;
 }
+
+static inline ffstr fbuf_str(struct fcache_buf *b) { return *(ffstr*)b; }

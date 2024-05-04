@@ -8,21 +8,33 @@
 #define ALIGN (4*1024)
 
 struct file_w {
-	phi_track *trk;
-	fffd fd;
-	uint64 off_cur, size;
-	struct fcache_buf wbuf;
-	ffsize buf_cap;
-	ffstr namebuf;
-	const char *name;
-	char *filename_tmp;
-	uint fin;
+	phi_track*	trk;
+	fffd		fd;
+	uint64		off_cur, size;
+	struct fcache bufs;
+
+	ffstr		namebuf;
+	const char*	name;
+	char*		filename_tmp;
+
+	phi_kevent*	kev;
+	size_t		len_pending;
+	uint64		offset_pending;
+	ffstr		input; // input data yet to be processed
+	fftime		t_start; // the time when we started blocking the track
+
+	uint		buf_cap;
+	uint		async :1; // expecting async signal
+	uint		signalled :1; // async operation is ready
+	uint		fin :1;
 
 	struct {
 		fftime t_open, t_io;
 		uint64 writes, cached_writes;
 	} stats;
 };
+
+static void fw_write_done(void *param);
 
 static void fw_close(void *ctx, phi_track *t)
 {
@@ -64,7 +76,8 @@ static void fw_close(void *ctx, phi_track *t)
 	infolog(t, "%s: written %UKB", f->name, ffint_align_ceil2(f->size, 1024) / 1024);
 
 end:
-	ffmem_alignfree(f->wbuf.ptr);
+	core->kev_free(t->worker, f->kev);
+	fcache_destroy(&f->bufs);
 	ffstr_free(&f->namebuf);
 	ffmem_free(f->filename_tmp);
 	phi_track_free(t, f);
@@ -191,8 +204,8 @@ static void* fw_open(phi_track *t)
 	f->fd = FFFILE_NULL;
 	f->name = fw_name(&f->namebuf, t->conf.ofile.name, t);
 	f->buf_cap = (t->conf.ofile.buf_size) ? t->conf.ofile.buf_size : 64*1024;
-
-	f->wbuf.ptr = ffmem_align(f->buf_cap, ALIGN);
+	if (fcache_init(&f->bufs, 2, f->buf_cap, ALIGN))
+		goto end;
 
 	const char *fn = f->name;
 	if (t->conf.ofile.name_tmp) {
@@ -204,6 +217,11 @@ static void* fw_open(phi_track *t)
 		f->filename_tmp = ffsz_allocfmt("%s.tmp", fn);
 		fn = f->filename_tmp;
 	}
+
+	if (NULL == (f->kev = core->kev_alloc(t->worker)))
+		goto end;
+	f->kev->kcall.handler = fw_write_done;
+	f->kev->kcall.param = f;
 
 	fftime t1;
 	frw_benchmark(&t1);
@@ -232,33 +250,83 @@ end:
 	return PHI_OPEN_ERR;
 }
 
-/** Pass data to kernel */
-static int fw_write(struct file_w *f, ffstr d, uint64 off)
+static void fw_write_done(void *param)
 {
-	fftime t1, t2;
-	frw_benchmark(&t1);
+	struct file_w *f = param;
+	FF_ASSERT(f->len_pending);
+	f->signalled = 1;
+	if (f->async) {
+		f->async = 0;
 
-	ffssize r = fffile_writeat(f->fd, d.ptr, d.len, off);
+		fftime t2;
+		if (frw_benchmark(&t2)) {
+			fftime_sub(&t2, &f->t_start);
+			fftime_add(&f->stats.t_io, &t2);
+		}
+
+		core->track->wake(f->trk);
+	}
+}
+
+/** Pass data to kernel */
+static int fw_write(struct file_w *f, ffstr d, uint64 off, uint async)
+{
+	async &= f->trk->output.allow_async;
+
+	ssize_t r;
+	if (async) {
+		r = fffile_writeat_async(f->fd, d.ptr, d.len, off, &f->kev->kcall);
+	} else {
+		fftime t1, t2;
+		frw_benchmark(&t1);
+
+		r = fffile_writeat(f->fd, d.ptr, d.len, off);
+
+		if (frw_benchmark(&t2)) {
+			fftime_sub(&t2, &t1);
+			fftime_add(&f->stats.t_io, &t2);
+		}
+	}
 	if (r < 0) {
+		if (fferr_last() == FFKCALL_EINPROGRESS) {
+			dbglog(f->trk, "file write: in progress");
+			return -1;
+		}
 		syserrlog(f->trk, "file write: %s %L @%U", f->name, d.len, off);
 		return 1;
 	}
+
 	dbglog(f->trk, "%s: written %L @%U", f->name, d.len, off);
 	if (off + d.len > f->size)
 		f->size = off + d.len;
 
-	if (frw_benchmark(&t2)) {
-		fftime_sub(&t2, &t1);
-		fftime_add(&f->stats.t_io, &t2);
-		f->stats.writes++;
-	}
-
+	f->stats.writes++;
 	return 0;
 }
 
 static int fw_process(void *ctx, phi_track *t)
 {
 	struct file_w *f = ctx;
+	ffstr in = {}, d = {};
+
+	FF_ASSERT(!(f->input.len && t->data_in.len));
+
+	if (f->signalled) {
+		f->signalled = 0;
+
+		// get the result of async operation
+		d.len = f->len_pending;
+		f->len_pending = 0;
+		if (fw_write(f, d, f->offset_pending, 1))
+			return PHI_ERR;
+	}
+
+	in = t->data_in;
+	t->data_in.len = 0;
+	if (f->input.len) {
+		in = f->input;
+		f->input.len = 0;
+	}
 
 	uint64 off = f->off_cur;
 	if (t->output.seek != ~0ULL) {
@@ -267,23 +335,25 @@ static int fw_process(void *ctx, phi_track *t)
 		dbglog(t, "%s: seek @%U", f->name, off);
 	}
 
-	ffstr in = t->data_in;
+	struct fcache_buf *b = fcache_curbuf(&f->bufs);
 	for (;;) {
-		ffstr d;
-		ffsize n = in.len;
-		int64 woff = fbuf_write(&f->wbuf, f->buf_cap, &in, off, &d);
+
+		size_t n = in.len,  blen = b->len;
+		int64 woff = fbuf_write(b, f->buf_cap, &in, off, &d);
 		off += n - in.len;
-		if (n != in.len) {
+		if (b->len > blen) {
 			f->stats.cached_writes++;
 			dbglog(t, "%s: write: bufferred %L bytes @%U+%L"
-				, f->name, n - in.len, f->wbuf.off, f->wbuf.len);
+				, f->name, n - in.len, b->off, b->len);
 		}
 
 		if (woff < 0) {
 			if (t->chain_flags & PHI_FFIRST) {
-				ffstr d;
-				ffstr_set(&d, f->wbuf.ptr, f->wbuf.len);
-				if (d.len != 0 && 0 != fw_write(f, d, f->wbuf.off))
+				if (f->len_pending)
+					goto async;
+
+				d = fbuf_str(b);
+				if (d.len != 0 && 0 != fw_write(f, d, b->off, 0))
 					return PHI_ERR;
 				f->fin = 1;
 				return PHI_DONE;
@@ -291,15 +361,43 @@ static int fw_process(void *ctx, phi_track *t)
 			break;
 		}
 
-		if (0 != fw_write(f, d, woff))
-			return PHI_ERR;
+		if (f->len_pending) {
+			if (!b->len) {
+				off -= n - in.len;
+				in = d;
+			}
+			goto async;
+		}
 
-		f->wbuf.len = 0;
-		f->wbuf.off = 0;
+		int r = fw_write(f, d, woff, 1);
+		if (r > 0)
+			return PHI_ERR;
+		if (r < 0) { // async
+			f->len_pending = d.len;
+			f->offset_pending = woff;
+			if (b->len) {
+				b->len = 0;
+				b->off = 0;
+				fcache_nextbuf(&f->bufs);
+				b = fcache_curbuf(&f->bufs);
+				// continue writing data to next buffer
+			}
+
+		} else {
+			b->len = 0;
+			b->off = 0;
+		}
 	}
 
 	f->off_cur = off;
 	return PHI_MORE;
+
+async:
+	frw_benchmark(&f->t_start);
+	f->off_cur = off;
+	f->input = in;
+	f->async = 1;
+	return PHI_ASYNC; // wait for pending operations to complete
 }
 
 const phi_filter phi_file_w = {

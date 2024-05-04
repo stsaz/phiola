@@ -37,6 +37,8 @@ do { \
 	#define PHI_VERSION_STR  "2.0.24"
 #endif
 
+static int core_wrk_creating(uint iw);
+
 #include <core/worker.h>
 
 extern void tracks_init();
@@ -60,6 +62,10 @@ struct core_mod {
 struct core_ctx {
 	fftime_zone tz;
 	struct wrk_ctx wx;
+
+	struct zzkcq kcq;
+	uint kcq_lazy_start :1;
+
 	fflock mods_lock;
 	ffvec mods; // struct core_mod[]
 #ifdef FF_WIN
@@ -333,13 +339,17 @@ static phi_kevent* core_kev_alloc(uint worker)
 	assert(worker < cc->wx.workers.len);
 	struct worker *w = ffslice_itemT(&cc->wx.workers, worker, struct worker);
 	phi_kevent *kev = (void*)zzkq_kev_alloc(&w->kq);
-	if (!!kev)
+	if (kev) {
+		((struct zzkevent*)kev)->kcall.q = &w->kq_kcq.kcq;
 		dbglog("kev alloc: %p", kev);
+	}
 	return kev;
 }
 
 static void core_kev_free(uint worker, phi_kevent *kev)
 {
+	if (!kev) return;
+
 	assert(worker < cc->wx.workers.len);
 	struct worker *w = ffslice_itemT(&cc->wx.workers, worker, struct worker);
 	zzkq_kev_free(&w->kq, (void*)kev);
@@ -401,6 +411,13 @@ static void core_worker_release(uint worker)
 	wrkx_release(&cc->wx, worker);
 }
 
+static int core_wrk_creating(uint iw)
+{
+	if (cc->kcq_lazy_start)
+		return zzkcq_start(&cc->kcq, iw);
+	return 0;
+}
+
 
 FF_EXPORT void phi_core_destroy()
 {
@@ -414,6 +431,7 @@ FF_EXPORT void phi_core_destroy()
 #endif
 
 	wrkx_stop(&cc->wx);
+	zzkcq_destroy(&cc->kcq);
 	wrkx_wait_stopped(&cc->wx);
 
 	struct core_mod *m;
@@ -433,6 +451,19 @@ static void core_logv(void *log_obj, uint flags, const char *module, phi_track *
 {}
 static void core_log(void *log_obj, uint flags, const char *module, phi_track *t, const char *fmt, ...)
 {}
+
+/** Normalize workers number */
+static uint wrk_n(uint n)
+{
+	if (n == 0)
+		return 1;
+	if (n == ~0U) {
+		ffsysconf sc;
+		ffsysconf_init(&sc);
+		return ffsysconf_get(&sc, FFSYSCONF_NPROCESSORS_ONLN);
+	}
+	return ffmin(n, 100);
+}
 
 FF_EXPORT phi_core* phi_core_create(struct phi_core_conf *conf)
 {
@@ -454,16 +485,41 @@ FF_EXPORT phi_core* phi_core_create(struct phi_core_conf *conf)
 	qm_init();
 	win_sleep_init();
 
-	if (!!wrkx_init(&cc->wx)) {
-		ffmem_free(cc);  cc = NULL;
-		return NULL;
+	core->conf.workers = wrk_n(core->conf.workers);
+	if (core->conf.io_workers == ~0U) {
+		core->conf.io_workers = core->conf.workers;
+		cc->kcq_lazy_start = 1;
+	}
+	if (core->conf.max_tasks == 0)
+		core->conf.max_tasks = 100;
+
+	if (core->conf.io_workers
+		&& zzkcq_create(&cc->kcq, core->conf.io_workers, core->conf.max_tasks, 0))
+		goto err;
+
+	struct wrk_conf wc = {
+		.max_tasks = core->conf.max_tasks,
+
+		.kcq_sq = cc->kcq.sq,
+		.kcq_sq_sem = cc->kcq.sem,
+	};
+	if (!!wrkx_init(&cc->wx, core->conf.workers, &wc)) {
+		goto err;
 	}
 
 	return core;
+
+err:
+	phi_core_destroy();
+	return NULL;
 }
 
 FF_EXPORT void phi_core_run()
 {
+	int ikcq = (cc->kcq_lazy_start) ? 0 : -1;
+	if (zzkcq_start(&cc->kcq, ikcq))
+		return;
+
 	wrkx_run(&cc->wx);
 }
 

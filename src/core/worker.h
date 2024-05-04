@@ -7,6 +7,7 @@
 #define ZZKQ_LOG_EXTRA  PHI_LOG_EXTRA
 
 #include <util/kq.h>
+#include <util/kq-kcq.h>
 #include <util/kq-tq.h>
 #include <util/kq-timer.h>
 #include <ffsys/sysconf.h>
@@ -15,26 +16,35 @@
 #include <ffsys/timerqueue.h>
 #include <ffbase/vector.h>
 
+struct wrk_conf {
+	uint			max_tasks;
+	ffringqueue*	kcq_sq;
+	ffsem			kcq_sq_sem;
+};
+
 struct wrk_ctx {
-	ffvec workers; // struct worker[]
-	fflock lock;
+	struct wrk_conf conf;
+	ffvec			workers; // struct worker[]
+	uint			n_reserved;
 };
 
 struct worker {
-	uint initialized;
-	ffthread th;
-	uint64 tid;
-	struct zzkq kq;
-	ffatomic njobs;
+	uint			initialized;
+	ffthread		th;
+	uint64			tid;
+	struct zzkq		kq;
+	ffatomic		njobs;
 
-	fftaskqueue tq;
-	struct zzkq_tq kq_tq;
+	struct zzkq_kcq kq_kcq;
 
-	fftimerqueue timerq;
-	struct zzkq_timer kq_timer;
-	fftime now;
-	uint now_msec;
-	fftimerqueue_node tmr_stop;
+	fftaskqueue		tq;
+	struct zzkq_tq	kq_tq;
+
+	fftimerqueue		timerq;
+	struct zzkq_timer	kq_timer;
+	fftime				now;
+	uint				now_msec;
+	fftimerqueue_node	tmr_stop;
 };
 
 void wrk_task(struct worker *w, phi_task *t, phi_task_func func, void *param)
@@ -99,6 +109,30 @@ void wrk_timer(struct worker *w, phi_timer *t, int interval_msec, phi_task_func 
 	fftimerqueue_add(&w->timerq, t, w->now_msec, interval_msec, func, param);
 }
 
+static void wrk_affinity(ffthread th, uint i, uint mask)
+{
+	if (!mask) return;
+
+	uint cpu;
+	for (uint j = 0;  ;  j++) {
+		cpu = ffbit_rfind32(mask);
+		if (!cpu)
+			return;
+		cpu--;
+		if (j == i)
+			break;
+		mask &= ~(1U << cpu);
+	}
+
+	ffthread_cpumask cm = {};
+	ffthread_cpumask_set(&cm, cpu);
+	if (ffthread_affinity(th, &cm)) {
+		syserrlog("set CPU affinity");
+		return;
+	}
+	dbglog("worker #%u CPU affinity: %u", i, cpu);
+}
+
 static int FFTHREAD_PROCCALL wrk_run(void *param)
 {
 	struct worker *w = param;
@@ -115,7 +149,7 @@ static int wrk_start(struct worker *w)
 	return 0;
 }
 
-static int wrk_create(struct worker *w)
+static int wrk_create(struct worker *w, const struct wrk_conf *conf)
 {
 	w->th = FFTHREAD_NULL;
 	zzkq_init(&w->kq);
@@ -130,10 +164,14 @@ static int wrk_create(struct worker *w)
 			.ctx = "core",
 		},
 
-		.max_objects = core->conf.max_tasks,
+		.max_objects = conf->max_tasks,
 		.events_wait = 64,
 	};
 	if (!!zzkq_create(&w->kq, &kc))
+		return -1;
+
+	if (conf->kcq_sq
+		&& zzkqkcq_connect(&w->kq_kcq, w->kq.kq, conf->max_tasks, conf->kcq_sq, conf->kcq_sq_sem))
 		return -1;
 
 	fftaskqueue_init(&w->tq);
@@ -163,35 +201,21 @@ static void wrk_destroy(struct worker *w)
 		ffthread_join(w->th, -1, NULL);  w->th = FFTHREAD_NULL;
 		dbglog("thread exited");
 	}
+	zzkqkcq_disconnect(&w->kq_kcq, w->kq.kq);
 	zzkq_tq_detach(&w->kq_tq, w->kq.kq);
 	zzkq_timer_destroy(&w->kq_timer, w->kq.kq);
 	zzkq_destroy(&w->kq);
 }
 
-/** Normalize workers number */
-static uint wrk_n(uint n)
+int wrkx_init(struct wrk_ctx *wx, uint n, struct wrk_conf *conf)
 {
-	if (n == 0) {
-		n = 1;
-	} else if (n == ~0U) {
-		ffsysconf sc;
-		ffsysconf_init(&sc);
-		n = ffsysconf_get(&sc, FFSYSCONF_NPROCESSORS_ONLN);
-	}
-	return ffmin(n, 100);
-}
-
-int wrkx_init(struct wrk_ctx *wx)
-{
-	core->conf.workers = wrk_n(core->conf.workers);
-	if (core->conf.max_tasks == 0)
-		core->conf.max_tasks = 100;
-
-	ffvec_zallocT(&wx->workers, core->conf.workers, struct worker);
+	ffvec_zallocT(&wx->workers, n, struct worker);
 
 	struct worker *w = ffslice_pushT(&wx->workers, wx->workers.cap, struct worker);
-	if (!!wrk_create(w))
+	if (!!wrk_create(w, conf))
 		return -1;
+	wx->n_reserved = 1;
+	wx->conf = *conf;
 	return 0;
 }
 
@@ -200,7 +224,8 @@ void wrkx_run(struct wrk_ctx *wx)
 	struct worker *w = ffslice_itemT(&wx->workers, 0, struct worker);
 	if (core->conf.run_detach)
 		wrk_start(w);
-	else
+	wrk_affinity(ffthread_current(), 0, core->conf.cpu_affinity);
+	if (!core->conf.run_detach)
 		wrk_run(w);
 }
 
@@ -227,7 +252,7 @@ void wrkx_destroy(struct wrk_ctx *wx)
 
 static int wrkx_available(struct wrk_ctx *wx)
 {
-	if (wx->workers.len < wx->workers.cap)
+	if (FFINT_READONCE(wx->workers.len) < wx->workers.cap)
 		return 1;
 
 	struct worker *w;
@@ -235,17 +260,32 @@ static int wrkx_available(struct wrk_ctx *wx)
 		if (0 == ffatomic_load(&w->njobs)) {
 			if (w == wx->workers.ptr && wx->workers.len > 1)
 				continue; // main worker must be free to manage the queue
+			dbglog("worker #%u is available"
+				, (int)(w - (struct worker*)wx->workers.ptr));
 			return 1;
 		}
 	}
 	return 0;
 }
 
+static void wrk_thread_name(ffthread th, uint i)
+{
+#ifdef FF_LINUX
+	char name[8] = "wk";
+	name[2] = i / 10 + '0';
+	name[3] = i % 10 + '0';
+	pthread_setname_np(th, name);
+#endif
+}
+
 /** Find the least busy worker; create thread if not initialized.
+Note: the algorithm doesn't really guarantee that the least busy worker is selected,
+ but currently only the main thread creates conversion tracks, so it's not a real problem.
 Return worker ID */
 uint wrkx_assign(struct wrk_ctx *wx, uint flags)
 {
 	struct worker *w = NULL, *it;
+	unsigned i_reserved = 0, failed = 0, wid, nj;
 
 	if (flags == 0) {
 		w = wx->workers.ptr;
@@ -265,32 +305,48 @@ uint wrkx_assign(struct wrk_ctx *wx, uint flags)
 		}
 	}
 
-	// The selected worker `w` is the least busy one.
+	// The selected worker `w` was the least busy one recently.
 
 	if (jobs_min != 0 && wx->workers.len < wx->workers.cap) {
 		// no free workers; activate one from pool
-		fflock_lock(&wx->lock);
-		if (wx->workers.len < wx->workers.cap) {
-			w = &((struct worker*)wx->workers.ptr)[wx->workers.len];
-			int failed = (wrk_create(w) || wrk_start(w));
+		i_reserved = ffint_fetch_add(&wx->n_reserved, 1);
+		if (i_reserved >= wx->workers.cap) {
+			i_reserved = 0;
+		} else {
+			struct worker *wn = (struct worker*)wx->workers.ptr + i_reserved;
+			failed = (core_wrk_creating(i_reserved)
+				|| wrk_create(wn, &wx->conf)
+				|| wrk_start(wn));
 			if (ff_unlikely(failed)) {
-				wrk_destroy(w);
-				w = wx->workers.ptr; // use main worker
+				wrk_destroy(wn);
+				ffatomic_store(&wn->njobs, ~0U);
+				// Note: this thread slot will never be used.
+				// And it's futile to do anything clever when the system is failing.
 			} else {
-				ffcpu_fence_release(); // the data is written before the counter
-				wx->workers.len++;
+				w = wn;
 			}
 		}
-		fflock_unlock(&wx->lock);
 	}
 
 done:
-	{
-	uint wid = w - (struct worker*)wx->workers.ptr;
-	uint nj = ffatomic_fetch_add(&w->njobs, 1) + 1;
+	wid = w - (struct worker*)wx->workers.ptr;
+	nj = ffatomic_fetch_add(&w->njobs, 1) + 1;
+
+	if (i_reserved) {
+		// Wait for others to complete the preparation of the worker slots reserved before us
+		ffintz_wait_until_equal(&wx->workers.len, i_reserved);
+
+		ffcpu_fence_release(); // the data is written before the counter
+		wx->workers.len = i_reserved + 1;
+
+		if (!failed) {
+			wrk_thread_name(w->th, wid);
+			wrk_affinity(w->th, wid, core->conf.cpu_affinity);
+		}
+	}
+
 	dbglog("worker #%u assign: jobs:%u", wid, nj);
 	return wid;
-	}
 }
 
 static void wrkx_release(struct wrk_ctx *wx, uint wid)

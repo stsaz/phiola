@@ -134,6 +134,7 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 	rx->on_finish_object = jni_global_ref(jcb);
 	t->udata = rx;
 
+	t->output.allow_async = 1;
 	track->start(t);
 	e = 0;
 

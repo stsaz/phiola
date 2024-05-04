@@ -41,6 +41,7 @@ struct exe {
 	u_char	debug;
 	u_char	verbose;
 	uint workers;
+	uint cpu_affinity;
 	uint timer_int_msec;
 	uint codepage_id;
 	uint mode_record :1;
@@ -205,6 +206,8 @@ static int core()
 		.mod_loading = mod_loading,
 
 		.workers = x->workers,
+		.cpu_affinity = x->cpu_affinity,
+		.io_workers = ~0U,
 		.timer_interval_msec = x->timer_int_msec,
 
 		.code_page = x->codepage_id,

@@ -13,7 +13,7 @@ extern const phi_meta_if *phi_metaif;
 
 static inline int frw_benchmark(fftime *t)
 {
-	if (core->conf.log_level >= PHI_LOG_DEBUG) {
+	if (ff_unlikely(core->conf.log_level >= PHI_LOG_DEBUG)) {
 		*t = core->time(NULL, PHI_CORE_TIME_MONOTONIC);
 		return 1;
 	}

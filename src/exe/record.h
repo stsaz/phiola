@@ -200,6 +200,7 @@ static int rec_action(struct cmd_rec *r)
 	ffvec_free(&r->meta);
 
 	x->mode_record = 1;
+	t->output.allow_async = 1;
 	track->start(t);
 
 	if (r->remote) {

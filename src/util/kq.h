@@ -150,6 +150,8 @@ static inline struct zzkevent* zzkq_kev_alloc(struct zzkq *k)
 
 static inline void zzkq_kev_free(struct zzkq *k, struct zzkevent *kev)
 {
+	if (!kev) return;
+
 	kev->rhandler = NULL;
 	kev->whandler = NULL;
 	kev->rtask.active = 0;

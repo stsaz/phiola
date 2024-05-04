@@ -207,6 +207,8 @@ static int core()
 		.logv = exe_logv,
 
 		.mod_loading = mod_loading,
+
+		.io_workers = 1,
 		.run_detach = 1,
 	};
 	if (NULL == (x->core = phi_core_create(&conf)))
