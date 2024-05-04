@@ -32,9 +32,6 @@ enum STATE {
 	/** Track is running normally */
 	ST_RUNNING, // ->(ST_FINISHED || ST_STOP)
 
-	/** Track has finished the work before user calls stop() */
-	ST_FINISHED,
-
 	/** User calls stop() on an active track */
 	ST_STOP, // ->ST_STOPPING
 
@@ -364,11 +361,6 @@ go_fwd:
 
 static void track_run(phi_track *t)
 {
-	if (t->state == ST_FINISHED) {
-		track_close(t);
-		return;
-	}
-
 	int r;
 	for (;;) {
 
@@ -429,36 +421,52 @@ err:
 
 fin:
 	dbglog(t, "finished: %u", t->error);
-	if (ST_RUNNING == ffint_cmpxchg(&t->state, ST_RUNNING, ST_FINISHED)) {
+	if (t->state == ST_RUNNING) {
 		t->chain_flags |= PHI_FFINISHED;
 		conveyor_close(&t->conveyor, t);
 		return; // waiting for stop()
 	}
-	track_close(t);
+	if (*(size_t*)&t->task_stop == (size_t)-1)
+		track_close(t);
 }
 
 static void track_start(phi_track *t)
+{
+	fflock_lock(&tx->tracks_lock);
+	fflist_add(&tx->tracks, &t->sib);
+	fflock_unlock(&tx->tracks_lock);
+
+	track_run(t);
+}
+
+static void track_xstart(phi_track *t)
 {
 	if (t->conveyor.n_active == 0)
 		return;
 	t->conveyor.cur = 0;
 
-	fflock_lock(&tx->tracks_lock);
-	fflist_add(&tx->tracks, &t->sib);
-	fflock_unlock(&tx->tracks_lock);
-
 	dbglog(t, "%p: starting (worker #%u)", t, t->worker);
-	core->task(t->worker, &t->task_wake, (phi_task_func)track_run, t);
+	core->task(t->worker, &t->task_wake, (phi_task_func)track_start, t);
+}
+
+static void track_stop(phi_track *t)
+{
+	if (t->chain_flags & PHI_FFINISHED) {
+		track_close(t);
+		return;
+	}
+
+	*(size_t*)&t->task_stop = (size_t)-1;
+	if (t->state == ST_STOP)
+		track_run(t);
 }
 
 static void track_xstop(phi_track *t)
 {
 	dbglog(t, "stop");
 	int st = ffint_cmpxchg(&t->state, ST_RUNNING, ST_STOP);
-	// ST_RUNNING: track filters will stop their work, then the track will be closed
-	// ST_FINISHED: just close the track
-	if (st == ST_RUNNING || st == ST_FINISHED)
-		core->task(t->worker, &t->task_wake, (phi_task_func)track_run, t);
+	if (st == ST_RUNNING)
+		core->task(t->worker, &t->task_stop, (phi_task_func)track_stop, t);
 }
 
 static void track_wake(phi_track *t)
@@ -503,7 +511,7 @@ phi_track_if phi_track_iface = {
 	track_create,
 	track_close,
 	track_filter,
-	track_start,
+	track_xstart,
 	track_xstop,
 	track_wake,
 	track_cmd,

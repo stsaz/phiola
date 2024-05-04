@@ -33,7 +33,9 @@ struct exe {
 	char*	cmd_line;
 	ffstr	root_dir;
 
-	uint	exit_code;
+	uint		exit_code;
+	uint		ctrl_c;
+	phi_task	task_stop_all;
 
 	u_char	background, background_child;
 	u_char	debug;
@@ -43,7 +45,6 @@ struct exe {
 	uint mode_record :1;
 	uint stdin_busy :1;
 	uint stdout_busy :1;
-	uint ctrl_c :1;
 	uint dont_exit :1;
 
 	ffstr codepage;
@@ -114,6 +115,9 @@ static void phi_guigrd_close(void *f, phi_track *t)
 
 static int phi_grd_process(void *f, phi_track *t)
 {
+	if (x->ctrl_c)
+		return PHI_ERR; // cancel the tracks that weren't stopped by PHI_TRACK_STOP_ALL handler
+
 #ifdef FF_LINUX
 	x->core->track->filter(t, x->core->mod("dbus.sleep"), 0);
 #elif defined FF_WIN
@@ -212,13 +216,18 @@ static int core()
 	return 0;
 }
 
+static void stop_all(void *param)
+{
+	if (0 == x->core->track->cmd(NULL, PHI_TRACK_STOP_ALL))
+		x->core->sig(PHI_CORE_STOP);
+}
+
 static void on_sig(struct ffsig_info *i)
 {
 	switch (i->sig) {
 	case FFSIG_INT:
 		x->ctrl_c = 1;
-		if (0 == x->core->track->cmd(NULL, PHI_TRACK_STOP_ALL))
-			x->core->sig(PHI_CORE_STOP);
+		x->core->task(0, &x->task_stop_all, stop_all, x);
 		break;
 	default:
 		crash_handler(&x->ci, i);

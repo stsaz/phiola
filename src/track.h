@@ -135,7 +135,7 @@ enum PHI_E {
 struct phi_track {
 	ffchain_item sib;
 	uint worker;
-	phi_task task_wake;
+	phi_task task_wake, task_stop;
 	struct phi_conveyor conveyor;
 	fftime t_start;
 	uint error; // enum PHI_E
