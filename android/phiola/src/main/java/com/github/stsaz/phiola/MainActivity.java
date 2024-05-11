@@ -414,7 +414,7 @@ public class MainActivity extends AppCompatActivity {
 		String e = track.record_stop();
 		rec_state_set(false);
 		stopService(new Intent(this, RecSvc.class));
-		state(GUI.STATE_RECORDING, 0);
+		state(GUI.STATE_RECORDING | GUI.STATE_REC_PAUSED, 0);
 		if (e != null)
 			core.errlog(TAG, String.format("%s: %s", getString(R.string.main_rec_err), e));
 		else
