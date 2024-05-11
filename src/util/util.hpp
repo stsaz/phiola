@@ -12,6 +12,7 @@ struct xxstr : ffstr {
 	void	operator=(const char *sz) { ptr = (char*)sz, len = ffsz_len(sz); }
 	bool	equals(xxstr s) const { return ffstr_eq2(this, &s); }
 	bool	equals_i(const char *sz) const { return ffstr_ieqz(this, sz); }
+	char	at(size_t i) const { FF_ASSERT(i < len); return ptr[i]; }
 	void	reset() { ptr = NULL;  len = 0; }
 	void	free() { ffmem_free(ptr);  ptr = NULL;  len = 0; }
 	xxstr&	shift(ffsize n) { ffstr_shift(this, n); return *this; }
@@ -61,6 +62,10 @@ template<uint N> struct xxstr_buf : ffstr {
 		va_start(va, fmt);
 		len = ffs_formatv(ptr, N, fmt, va);
 		va_end(va);
+		return *this;
+	}
+	xxstr_buf<N>& add_char(char ch) {
+		ffstr_addchar(this, N - len, ch);
 		return *this;
 	}
 };

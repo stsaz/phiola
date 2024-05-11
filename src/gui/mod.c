@@ -31,6 +31,7 @@ static void list_filter_close();
 #define O(m)  (void*)FF_OFF(struct gui_data, m)
 const struct ffarg guimod_args[] = {
 	{ "list.auto_sel",	'u',	O(auto_select) },
+	{ "play.auto_skip",	'd',	O(conf.auto_skip_sec_percent) },
 	{ "play.cursor",	'u',	O(cursor) },
 	{ "play.dev",		'u',	O(conf.odev) },
 	{ "play.random",	'u',	O(conf.random) },
@@ -46,6 +47,7 @@ const struct ffarg guimod_args[] = {
 void mod_userconf_write(ffconfw *cw)
 {
 	ffconfw_add2u(cw, "list.auto_sel", gd->auto_select);
+	ffconfw_add2u(cw, "play.auto_skip", (ffint64)gd->conf.auto_skip_sec_percent);
 	ffconfw_add2u(cw, "play.cursor", gd->cursor);
 	ffconfw_add2u(cw, "play.dev", gd->conf.odev);
 	ffconfw_add2u(cw, "play.random", gd->conf.random);

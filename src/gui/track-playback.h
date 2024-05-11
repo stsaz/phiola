@@ -13,7 +13,7 @@ struct gtrk {
 
 	int64 seek_msec;
 	uint last_pos_sec;
-	uint time_total;
+	uint duration_sec;
 
 	uint opened :1;
 	uint have_fmt :1;
@@ -101,13 +101,18 @@ static int gtrk_process(void *ctx, phi_track *t)
 		}
 
 		gt->sample_rate = t->audio.format.rate;
-		gt->time_total = samples_to_msec(t->audio.total, gt->sample_rate) / 1000;
+		gt->duration_sec = samples_to_msec(t->audio.total, gt->sample_rate) / 1000;
 	}
 
 	if (!gt->opened || t->meta_changed) {
-		if (!wmain_track_new(t, gt->time_total)) {
+		if (!wmain_track_new(t, gt->duration_sec)) {
 			gt->opened = 1;
 			t->meta_changed = 0;
+
+			if (gd->conf.auto_skip_sec_percent > 0)
+				gt->seek_msec = gd->conf.auto_skip_sec_percent * 1000;
+			else if (gd->conf.auto_skip_sec_percent < 0)
+				gt->seek_msec = gt->duration_sec * -gd->conf.auto_skip_sec_percent / 100 * 1000;
 		}
 	}
 
@@ -136,7 +141,7 @@ static int gtrk_process(void *ctx, phi_track *t)
 	gt->last_pos_sec = pos_sec;
 
 	if (gt == gd->playing_track)
-		wmain_track_update(pos_sec, gt->time_total);
+		wmain_track_update(pos_sec, gt->duration_sec);
 
 end:
 	t->data_out = t->data_in;

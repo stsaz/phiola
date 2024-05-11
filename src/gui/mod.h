@@ -143,6 +143,7 @@ struct gui_data {
 		uint	random;
 		uint	seek_step_delta;
 		uint	seek_leap_delta;
+		int		auto_skip_sec_percent;
 	} conf;
 };
 FF_EXTERN struct gui_data *gd;
