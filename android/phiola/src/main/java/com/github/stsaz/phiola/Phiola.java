@@ -121,6 +121,8 @@ class Phiola {
 	static final int QUFILTER_META = 2;
 	native long quFilter(long q, String filter, int flags);
 
+	native String quDisplayLine(long q, int i);
+
 	/** Load playlist from a file on disk */
 	native int quLoad(long q, String filepath);
 

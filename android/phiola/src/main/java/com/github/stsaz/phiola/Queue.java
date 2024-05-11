@@ -87,16 +87,6 @@ class AutoStop {
 	}
 }
 
-class QueueItemInfo {
-	QueueItemInfo() {
-		url = "";
-		artist = "";
-		title = "";
-	}
-	String url, artist, title;
-	int length_sec;
-}
-
 class PhiolaQueue {
 	Phiola phi;
 	long q;
@@ -518,15 +508,8 @@ class Queue {
 
 	String get(int i) { return queues.get(i_selected).url(i); }
 
-	QueueItemInfo info(int i) {
-		Phiola.Meta m = q_visible().meta(i);
-		QueueItemInfo info = new QueueItemInfo();
-		info.url = m.url;
-		info.artist = m.artist;
-		info.title = m.title;
-		info.length_sec = m.length_msec / 1000;
-		core.dbglog(TAG, "info: %s '%s' '%s'", info.url, info.artist, info.title);
-		return info;
+	String display_line(int i) {
+		return core.phiola.quDisplayLine(q_visible().q, i);
 	}
 
 	void remove(int pos) {

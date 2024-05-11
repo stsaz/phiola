@@ -153,6 +153,51 @@ Java_com_github_stsaz_phiola_Phiola_quMeta(JNIEnv *env, jobject thiz, jlong jq, 
 	return jmeta;
 }
 
+static void display_name_prepare(ffstr *val, ffsize cap, struct phi_queue_entry *qe, uint index, uint flags)
+{
+	ffstr artist = {}, title = {}, name;
+	x->metaif->find(&qe->conf.meta, FFSTR_Z("title"), &title, 0);
+	if (title.len) {
+		x->metaif->find(&qe->conf.meta, FFSTR_Z("artist"), &artist, 0);
+		if (flags & 1) { // conversion
+			ffstr_addfmt(val, cap, "%u. %S - %S"
+				, index + 1, &artist, &title);
+		} else {
+			uint sec = qe->length_msec / 1000;
+			uint min = sec / 60;
+			sec -= min * 60;
+			ffstr_addfmt(val, cap, "%u. %S - %S [%u:%02u]"
+				, index + 1, &artist, &title
+				, min, sec);
+		}
+	} else {
+		ffpath_splitpath_str(FFSTR_Z(qe->conf.ifile.name), NULL, &name);
+		ffstr_addfmt(val, cap, "%u. %S"
+			, index + 1, &name);
+	}
+}
+
+JNIEXPORT jstring JNICALL
+Java_com_github_stsaz_phiola_Phiola_quDisplayLine(JNIEnv *env, jobject thiz, jlong jq, jint i)
+{
+	dbglog("%s: enter", __func__);
+	phi_queue_id q = (phi_queue_id)jq;
+	char buf[256];
+	ffstr val = {};
+	struct phi_queue_entry *qe = x->queue->ref(q, i);
+	if (x->metaif->find(&qe->conf.meta, FFSTR_Z("_phi_display"), &val, PHI_META_PRIVATE)) {
+		val.ptr = buf;
+		uint flags = x->queue->conf(q)->conversion;
+		display_name_prepare(&val, sizeof(buf) - 1, qe, i, flags);
+		x->metaif->set(&qe->conf.meta, FFSTR_Z("_phi_display"), val, 0);
+		val.ptr[val.len] = '\0';
+	}
+	jstring js = jni_js_sz(val.ptr);
+	x->queue->unref(qe);
+	dbglog("%s: exit", __func__);
+	return js;
+}
+
 enum {
 	QUFILTER_URL = 1,
 	QUFILTER_META = 2,
