@@ -9,6 +9,41 @@ static inline int ffbit_test_array32(const uint *ar, uint bit)
 }
 
 
+/** Free aligned memory region. */
+static inline void ffvec_free_align(ffvec *v)
+{
+	if (v->cap != 0) {
+		FF_ASSERT(v->ptr != NULL);
+		FF_ASSERT(v->len <= v->cap);
+		ffmem_alignfree(v->ptr);
+		v->cap = 0;
+	}
+	v->ptr = NULL;
+	v->len = 0;
+}
+
+/** Allocate aligned memory region; call ffvec_free_align() to free.
+WARNING: don't call ffvec_free() */
+static inline void* ffvec_alloc_align(ffvec *v, ffsize n, ffsize align, ffsize elsize)
+{
+	ffvec_free_align(v);
+
+	if (n == 0)
+		n = 1;
+	ffsize bytes;
+	if (__builtin_mul_overflow(n, elsize, &bytes))
+		return NULL;
+
+	if (NULL == (v->ptr = ffmem_align(bytes, align)))
+		return NULL;
+
+	v->cap = n;
+	return v->ptr;
+}
+
+#define ffvec_alloc_alignT(v, n, align, T)  ((T*)ffvec_alloc_align(v, n, align, sizeof(T)))
+
+
 /** Process input string of the format "...text...$var...text...".
 out: either text chunk or variable name */
 static inline int ffstr_var_next(ffstr *in, ffstr *out, char c)

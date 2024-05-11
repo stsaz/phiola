@@ -40,6 +40,7 @@
 	<string name="mlist_trk_added">Added track to Playlist %d</string>
 	<string name="mlist_sort">List: Sort</string>
 	<string name="mlist_shuffle">List: Shuffle</string>
+	<string name="mlist_convert">List: Convert All...</string>
 
 	<string name="menu_about">About</string>
 
@@ -111,10 +112,8 @@
 	<string name="conv_trash_orig">Move Input File to Trash</string>
 	<string name="conv_pl_add">Add New File to Playlist</string>
 
-	<string name="conv_note">Note: the process may take up to a minute! Be patient.</string>
-	<string name="conv_go">Convert!</string>
+	<string name="conv_go">Begin Conversion</string>
 	<string name="conv_working">Working…</string>
-	<string name="conv_done">DONE!</string>
 
 	<string name="about_save_logs">Save system logs to file</string>
 	<string name="about_log_saved">Saved logs to %s</string>

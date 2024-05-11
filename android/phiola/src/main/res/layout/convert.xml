@@ -240,11 +240,6 @@
 			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/conv_pl_add" />
 
-		<TextView
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:text="@string/conv_note"
-			android:textColor="@color/text" />
 		<Button
 			android:id="@+id/b_start"
 			android:layout_width="wrap_content"

@@ -34,4 +34,7 @@
 
 	<item android:id="@+id/action_list_shuffle"
 		android:title="@string/mlist_shuffle" />
+
+	<item android:id="@+id/action_list_convert"
+		android:title="@string/mlist_convert" />
 </menu>

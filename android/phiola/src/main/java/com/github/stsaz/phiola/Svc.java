@@ -281,7 +281,7 @@ public class Svc extends MediaBrowserServiceCompat {
 			startService(new Intent(this, Svc.class));
 		}
 
-		pstate.setActiveQueueItemId(queue.cur());
+		pstate.setActiveQueueItemId(queue.active_track_pos());
 
 		String title = t.title;
 		if (t.title.isEmpty())

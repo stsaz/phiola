@@ -92,6 +92,19 @@ T: JNI_T... */
 #define jni_field(jclazz, name, T) \
 	(*env)->GetFieldID(env, jclazz, name, T)
 
+#define jni_field_str(jclazz, name) \
+	(*env)->GetFieldID(env, jclazz, name, JNI_TSTR)
+
+#define jni_field_long(jclazz, name) \
+	(*env)->GetFieldID(env, jclazz, name, JNI_TLONG)
+
+#define jni_field_int(jclazz, name) \
+	(*env)->GetFieldID(env, jclazz, name, JNI_TINT)
+
+#define jni_field_bool(jclazz, name) \
+	(*env)->GetFieldID(env, jclazz, name, JNI_TBOOL)
+
+
 
 /** jstring = char* */
 #define jni_js_sz(sz) \

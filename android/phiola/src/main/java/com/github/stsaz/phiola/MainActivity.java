@@ -159,10 +159,7 @@ public class MainActivity extends AppCompatActivity {
 			file_tags_show();  break;
 
 		case R.id.action_file_convert:
-			startActivity(new Intent(this, ConvertActivity.class)
-					.putExtra("iname", track.cur_url())
-					.putExtra("length", total_dur_msec));
-			break;
+			file_convert(); break;
 
 		case R.id.action_file_showcur:
 			explorer_file_current_show();  break;
@@ -205,7 +202,7 @@ public class MainActivity extends AppCompatActivity {
 		case R.id.action_list_showcur: {
 			if (view_explorer)
 				plist_click();
-			int pos = queue.cur();
+			int pos = queue.active_track_pos();
 			if (pos >= 0)
 				b.list.scrollToPosition(pos);
 			break;
@@ -219,6 +216,9 @@ public class MainActivity extends AppCompatActivity {
 
 		case R.id.action_list_shuffle:
 			queue.sort(Phiola.QU_SORT_RANDOM);  break;
+
+		case R.id.action_list_convert:
+			list_convert();  break;
 
 		default:
 			return false;
@@ -505,7 +505,7 @@ public class MainActivity extends AppCompatActivity {
 
 	/** Ask confirmation before deleting the currently playing file from storage */
 	private void file_del_cur() {
-		int pos = queue.cur();
+		int pos = queue.active_track_pos();
 		if (pos < 0)
 			return;
 		String fn = queue.get(pos);
@@ -533,7 +533,7 @@ public class MainActivity extends AppCompatActivity {
 			return;
 		}
 
-		int pos = queue.cur();
+		int pos = queue.active_track_pos();
 		if (pos < 0)
 			return;
 		String fn = queue.get(pos);
@@ -602,7 +602,11 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void bplaylist_text(int qi) {
-		String s = String.format(getString(R.string.main_playlist_n), qi + 1);
+		String s;
+		if (queue.conversion_list(qi))
+			s = "Conversion";
+		else
+			s = String.format(getString(R.string.main_playlist_n), qi + 1);
 		b.bplaylist.setText(s);
 		b.bplaylist.setTextOn(s);
 		b.bplaylist.setTextOff(s);
@@ -639,7 +643,11 @@ public class MainActivity extends AppCompatActivity {
 	private void list_close() {
 		if (view_explorer) return;
 
-		queue.close_current_list();
+		if (queue.close_current_list() != 0) {
+			core.errlog(TAG, "Please wait until the conversion is complete");
+			return;
+		}
+
 		gui.msg_show(this, getString(R.string.mlist_closed));
 		list_update();
 		bplaylist_text(queue.current_list_index());
@@ -647,7 +655,7 @@ public class MainActivity extends AppCompatActivity {
 
 	/** Remove currently playing track from playlist */
 	private void list_rm() {
-		int pos = queue.cur();
+		int pos = queue.active_track_pos();
 		if (pos < 0)
 			return;
 
@@ -673,6 +681,50 @@ public class MainActivity extends AppCompatActivity {
 		int qi = queue.next_list_add_cur();
 		if (qi >= 0)
 			gui.msg_show(this, String.format(getString(R.string.mlist_trk_added), qi+1));
+	}
+
+	private void list_convert() {
+		long qi_old = queue.current_list_id();
+		int trk_pos = queue.active_track_pos();
+		int qi = queue.convert_add(Queue.CONV_CUR_LIST);
+		if (qi < 0) {
+			if (qi == Queue.E_EXIST)
+				core.errlog(TAG, "Please close the existing Conversion list");
+			else if (qi == Queue.E_NOENT)
+				core.errlog(TAG, "Please navigate to a list you want to convert");
+			return;
+		}
+		if (view_explorer)
+			plist_click();
+		else
+			list_update();
+		bplaylist_text(qi);
+		startActivity(new Intent(this, ConvertActivity.class)
+			.putExtra("current_list_id", qi_old)
+			.putExtra("active_track_pos", trk_pos));
+	}
+
+	private void file_convert() {
+		long qi_old = queue.current_list_id();
+		int trk_pos = queue.active_track_pos();
+		int qi = queue.convert_add(Queue.CONV_CUR_FILE);
+		if (qi < 0) {
+			if (qi == Queue.E_EXIST)
+				core.errlog(TAG, "Please close the existing Conversion list");
+			else if (qi == Queue.E_NOENT)
+				core.errlog(TAG, "Please start playback of the file you want to convert");
+			return;
+		}
+		if (view_explorer)
+			plist_click();
+		else
+			list_update();
+		bplaylist_text(qi);
+		startActivity(new Intent(this, ConvertActivity.class)
+			.putExtra("current_list_id", qi_old)
+			.putExtra("active_track_pos", trk_pos)
+			.putExtra("iname", track.cur_url())
+			.putExtra("length", total_dur_msec));
 	}
 
 	/** Start recording */

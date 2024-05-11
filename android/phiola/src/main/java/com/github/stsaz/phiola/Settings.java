@@ -35,7 +35,7 @@ class CoreSettings {
 		"Opus-VOIP"
 	};
 
-	String	conv_out_dir;
+	String	conv_out_dir, conv_out_name;
 	String	conv_format;
 	int		conv_aac_quality;
 	int		conv_opus_quality;
@@ -77,7 +77,7 @@ class CoreSettings {
 		".ogg (Vorbis)",
 		".flac (FLAC)",
 		".wav (PCM)",
-		".mp3",
+		".mp3 (Copy)",
 	};
 
 	CoreSettings(Core core) {
@@ -96,7 +96,8 @@ class CoreSettings {
 		rec_buf_len_ms = 500;
 		rec_until_sec = 3600;
 
-		conv_out_dir = "";
+		conv_out_dir = "@filepath";
+		conv_out_name = "@filename";
 		conv_format = "m4a";
 		conv_aac_quality = 5;
 		conv_opus_quality = 192;
@@ -124,7 +125,8 @@ class CoreSettings {
 			+ "rec_gain %d\n"
 			+ "rec_exclusive %d\n"
 			+ "rec_longclick %d\n"
-			+ "conv_out_dir2 %s\n"
+			+ "conv_out_dir %s\n"
+			+ "conv_out_name %s\n"
 			+ "conv_outext %s\n"
 			+ "conv_aac_q %d\n"
 			+ "conv_opus_q %d\n"
@@ -152,6 +154,7 @@ class CoreSettings {
 			, core.bool_to_int(rec_exclusive)
 			, core.bool_to_int(rec_longclick)
 			, conv_out_dir
+			, conv_out_name
 			, conv_format
 			, conv_aac_quality
 			, conv_opus_quality
@@ -168,6 +171,11 @@ class CoreSettings {
 			codepage = val;
 		else
 			codepage = "cp1252";
+	}
+
+	void normalize_convert() {
+		if (conv_format.isEmpty())
+			conv_format = "m4a";
 	}
 
 	void normalize() {
@@ -192,8 +200,7 @@ class CoreSettings {
 		if (rec_until_sec < 0)
 			rec_until_sec = 3600;
 
-		if (conv_format.isEmpty())
-			conv_format = "m4a";
+		normalize_convert();
 	}
 
 	void conf_load(Conf.Entry[] kv) {
@@ -219,6 +226,7 @@ class CoreSettings {
 		rec_gain_db100 = core.str_to_int(kv[Conf.REC_GAIN].value, rec_gain_db100);
 
 		conv_out_dir = kv[Conf.CONV_OUT_DIR].value;
+		conv_out_name = kv[Conf.CONV_OUT_NAME].value;
 		conv_format = kv[Conf.CONV_FORMAT].value;
 		conv_aac_quality = core.str_to_uint(kv[Conf.CONV_AAC_Q].value, conv_aac_quality);
 		conv_opus_quality = core.str_to_uint(kv[Conf.CONV_OPUS_Q].value, conv_opus_quality);

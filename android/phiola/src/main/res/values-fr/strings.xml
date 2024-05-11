@@ -11,7 +11,6 @@
     <string name="conv_apos_start">Position de départ audio:</string>
     <string name="conv_copy">[.mp3/.m4a/.ogg] Copie du flux audio</string>
     <string name="conv_from_set_cur">Définir comme actuel</string>
-    <string name="conv_go">Convertir!</string>
     <string name="conv_input_file">Fichier d\'entrée:</string>
     <string name="conv_opus_q">[.opus] Qualité Opus (VBR, kbit/s):</string>
     <string name="conv_out_dir">Dossier de sortie:</string>

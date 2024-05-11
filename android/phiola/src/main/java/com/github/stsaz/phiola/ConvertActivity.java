@@ -16,7 +16,6 @@ public class ConvertActivity extends AppCompatActivity {
 	private static final String TAG = "phiola.ConvertActivity";
 	Core core;
 	private long length_msec;
-	private int qu_cur_pos;
 	private ConvertBinding b;
 
 	@Override
@@ -57,15 +56,8 @@ public class ConvertActivity extends AppCompatActivity {
 		b.sbAacQ.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
 				@Override
 				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser) {
-						int val = aac_q_value(progress);
-						String s;
-						if (val <= 5)
-							s = "VBR:" + core.int_to_str(val);
-						else
-							s = core.int_to_str(val);
-						b.eAacQ.setText(s);
-					}
+					if (fromUser)
+						b.eAacQ.setText(aac_q_write(aac_q_value(progress)));
 				}
 			});
 
@@ -105,22 +97,17 @@ public class ConvertActivity extends AppCompatActivity {
 		core = Core.getInstance();
 		load();
 
-		qu_cur_pos = core.queue().cur();
 		String iname = getIntent().getStringExtra("iname");
-		b.eInName.setText(iname);
-
-		length_msec = getIntent().getLongExtra("length", 0);
-
-		int pos_slash = iname.lastIndexOf('/');
-		if (pos_slash < 0)
-			pos_slash = 0;
-		else
-			pos_slash++;
-
-		int pos = iname.lastIndexOf('.');
-		if (pos < 0)
-			pos = 0;
-		b.eOutName.setText(iname.substring(pos_slash, pos));
+		b.eInName.setEnabled(false);
+		if (iname != null) {
+			b.eInName.setText(iname);
+			length_msec = getIntent().getLongExtra("length", 0);
+		} else {
+			b.eInName.setText("(multiple files)");
+			b.bFromSetCur.setEnabled(false);
+			b.bUntilSetCur.setEnabled(false);
+			length_msec = 10*60*1000;
+		}
 	}
 
 	private static abstract class SBOnSeekBarChangeListener implements SeekBar.OnSeekBarChangeListener {
@@ -132,6 +119,8 @@ public class ConvertActivity extends AppCompatActivity {
 	}
 
 	private int time_progress(long sec) {
+		if (length_msec == 0)
+			return 0;
 		return (int)(sec * 100 / (length_msec/1000));
 	}
 	private long time_value(int progress) {
@@ -160,6 +149,16 @@ public class ConvertActivity extends AppCompatActivity {
 			return (800 - 8) / 8 + q;
 		return (q - 8) / 8;
 	}
+	private String aac_q_write(int val) {
+		if (val <= 5)
+			return "VBR:" + core.int_to_str(val);
+		return core.int_to_str(val);
+	}
+	private int aac_q_read(String s) {
+		if (s.indexOf("VBR:") == 0)
+			s = s.substring(4);
+		return core.str_to_uint(s, 0);
+	}
 
 	// 8..504 by 8
 	private static int opus_q_value(int progress) { return 8 + progress * 8; }
@@ -171,7 +170,11 @@ public class ConvertActivity extends AppCompatActivity {
 
 	private void load() {
 		b.eOutDir.setText(core.setts.conv_out_dir);
+		b.eOutName.setText(core.setts.conv_out_name);
 		b.spOutExt.setSelection(conv_format_index(core.setts.conv_format));
+
+		if (false)
+			b.eUntil.setText("30");
 
 		b.sbAacQ.setProgress(aac_q_progress(core.setts.conv_aac_quality));
 		b.eAacQ.setText(core.int_to_str(core.setts.conv_aac_quality));
@@ -190,13 +193,11 @@ public class ConvertActivity extends AppCompatActivity {
 
 	private void save() {
 		core.setts.conv_out_dir = b.eOutDir.getText().toString();
+		core.setts.conv_out_name = b.eOutName.getText().toString();
 		core.setts.conv_format = CoreSettings.conv_formats[b.spOutExt.getSelectedItemPosition()];
 		core.setts.conv_copy = b.swCopy.isChecked();
 
-		String s = b.eAacQ.getText().toString();
-		if (s.indexOf("VBR:") == 0)
-			s = s.substring(4);
-		int v = core.str_to_uint(s, 0);
+		int v = aac_q_read(b.eAacQ.getText().toString());
 		if (v != 0)
 			core.setts.conv_aac_quality = v;
 
@@ -215,6 +216,7 @@ public class ConvertActivity extends AppCompatActivity {
 	@Override
 	protected void onDestroy() {
 		save();
+		core.setts.normalize_convert();
 		core.unref();
 		super.onDestroy();
 	}
@@ -257,63 +259,32 @@ public class ConvertActivity extends AppCompatActivity {
 		if (false)
 			p.flags |= Phiola.ConvertParams.F_OVERWRITE;
 
-		String in = b.eInName.getText().toString();
-		if (in.isEmpty()) {
-			b.lResult.setText("Please specify Input file name");
-			return;
+		if (b.swPlAdd.isChecked())
+			p.q_add_remove = getIntent().getLongExtra("current_list_id", 0);
+
+		if (b.swTrashOrig.isChecked()) {
+			p.trash_dir_rel = core.setts.trash_dir;
+			p.q_add_remove = getIntent().getLongExtra("current_list_id", 0);
+			p.q_pos = getIntent().getIntExtra("active_track_pos", 0);
 		}
 
 		String odir = b.eOutDir.getText().toString();
 		if (odir.isEmpty()) {
-			int i = in.lastIndexOf('/');
-			if (i < 0)
-				i = 0;
-			odir = in.substring(0, i);
+			b.eOutDir.setText("@filepath");
+			odir = "@filepath";
 		}
-
-		iname = in;
-		oname = String.format("%s/%s.%s"
-			, odir
-			, b.eOutName.getText().toString()
-			, CoreSettings.conv_extensions[iformat]);
-		core.phiola.convert(iname, oname, p,
-				(result) -> {
-					core.tq.post(() -> {
-						convert_done(result);
-					});
-				}
-			);
-	}
-
-	private void convert_done(String result) {
-		boolean ok = result.isEmpty();
-		if (ok)
-			b.lResult.setText(R.string.conv_done);
-		else
-			b.lResult.setText(result);
-
-		if (ok && b.swPlAdd.isChecked()) {
-			core.queue().add(oname);
+		String oname = b.eOutName.getText().toString();
+		if (oname.isEmpty()) {
+			b.eOutName.setText("@filename");
+			oname = "@filename";
 		}
+		p.out_name = String.format("%s/%s.%s"
+			, odir, oname, CoreSettings.conv_extensions[iformat]);
 
-		if (ok && b.swTrashOrig.isChecked() && !iname.equals(oname)) {
-			trash_input_file(iname);
+		String r = core.queue().convert_begin(p);
+		if (r != null) {
+			b.bStart.setEnabled(true);
+			b.lResult.setText(r);
 		}
-		b.bStart.setEnabled(true);
-	}
-
-	private void trash_input_file(String iname) {
-		String e = core.util.trash(core.setts.trash_dir, iname);
-		if (!e.isEmpty()) {
-			core.errlog(TAG, "Can't trash file %s: %s", iname, e);
-			return;
-		}
-
-		if (qu_cur_pos == -1) return;
-
-		String url = core.queue().get(qu_cur_pos);
-		if (url.equals(iname))
-			core.queue().remove(qu_cur_pos);
-		qu_cur_pos = -1;
 	}
 }

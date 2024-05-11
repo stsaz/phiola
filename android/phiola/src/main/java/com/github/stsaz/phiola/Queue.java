@@ -91,10 +91,11 @@ class PhiolaQueue {
 	Phiola phi;
 	long q;
 	boolean modified;
+	boolean conversion;
 
 	PhiolaQueue(Phiola _phi) {
 		phi = _phi;
-		q = phi.quNew();
+		q = phi.quNew(0);
 	}
 
 	PhiolaQueue(Phiola _phi, long _q) {
@@ -102,9 +103,22 @@ class PhiolaQueue {
 		q = _q;
 	}
 
+	PhiolaQueue(Phiola _phi, int flags, int dummy) {
+		phi = _phi;
+		q = phi.quNew(flags);
+		conversion = ((flags & Phiola.QUNF_CONVERSION) != 0);
+	}
+
 	void destroy() { phi.quDestroy(q); }
 
+	void dup(long q_src, int pos) {
+		phi.quDup(q, q_src, pos);
+		modified = true;
+	}
+
 	void add(String url, int flags) {
+		if (conversion) return;
+
 		String[] urls = new String[1];
 		urls[0] = url;
 		phi.quAdd(q, urls, flags);
@@ -112,6 +126,8 @@ class PhiolaQueue {
 	}
 
 	void add_many(String[] urls, int flags) {
+		if (conversion) return;
+
 		phi.quAdd(q, urls, flags);
 		modified = true;
 	}
@@ -119,16 +135,22 @@ class PhiolaQueue {
 	String url(int i) { return phi.quEntry(q, i); }
 
 	void remove(int i) {
+		if (conversion) return;
+
 		phi.quCmd(q, Phiola.QUCOM_REMOVE_I, i);
 		modified = true;
 	}
 
 	void remove_non_existing() {
+		if (conversion) return;
+
 		phi.quCmd(q, Phiola.QUCOM_REMOVE_NON_EXISTING, 0);
 		modified = true;
 	}
 
 	void clear() {
+		if (conversion) return;
+
 		phi.quCmd(q, Phiola.QUCOM_CLEAR, 0);
 		modified = true;
 	}
@@ -139,7 +161,11 @@ class PhiolaQueue {
 
 	Phiola.Meta meta(int i) { return phi.quMeta(q, i); }
 
-	void sort(int flags) { phi.quCmd(q, Phiola.QUCOM_SORT, flags); }
+	void sort(int flags) {
+		if (conversion) return;
+
+		phi.quCmd(q, Phiola.QUCOM_SORT, flags);
+	}
 
 	PhiolaQueue filter(String filter, int flags) {
 		return new PhiolaQueue(phi, phi.quFilter(q, filter, flags));
@@ -173,8 +199,12 @@ class Queue {
 	private PhiolaQueue q_filtered;
 	private int i_active; // Active queue index
 	private int i_selected; // Currently selected queue index
+	private int i_conversion = -1;
 	private int curpos = -1; // Last active track index
 	private int filter_len;
+
+	private boolean converting;
+	private Timer convert_update_timer;
 
 	private int consecutive_errors;
 	private boolean repeat;
@@ -225,6 +255,11 @@ class Queue {
 
 				case 'r':
 					nfy_all(QueueNotify.REMOVED, pos);  break;
+
+				case '.':
+					if (i_selected == i_conversion)
+						convert_update(true);
+					break;
 				}
 			});
 	}
@@ -235,10 +270,16 @@ class Queue {
 		return queues.size() - 1;
 	}
 
-	void close_current_list() {
-		if (queues.size() == 1) {
+	int close_current_list() {
+		if (i_selected == i_conversion && converting)
+			return E_BUSY; // can't close the conversion list while the conversion is in progress
+
+		int n_playlists = queues.size();
+		if (i_conversion >= 0)
+			n_playlists--;
+		if (n_playlists == 1 && i_selected != i_conversion) {
 			clear();
-			return;
+			return 0;
 		}
 
 		filter_close();
@@ -246,6 +287,12 @@ class Queue {
 		queues.remove(i_selected);
 		if (i_active == i_selected)
 			i_active = 0;
+
+		if (i_selected == i_conversion)
+			i_conversion = -1;
+		else if (i_selected < i_conversion)
+			i_conversion--;
+
 		i_selected--;
 		if (i_selected < 0)
 			i_selected = 0;
@@ -256,6 +303,7 @@ class Queue {
 			if (i++ >= i_selected)
 				q.modified = true;
 		}
+		return 0;
 	}
 
 	void close() {
@@ -265,6 +313,7 @@ class Queue {
 		}
 		queues.clear();
 		i_selected = -1;
+		i_conversion = -1;
 	}
 
 	private String list_file_name(int i) {
@@ -294,6 +343,8 @@ class Queue {
 		core.dir_make(core.setts.pub_data_dir);
 		int i = 0;
 		for (PhiolaQueue q : queues) {
+			if (q.conversion)
+				continue;
 			if (q.modified)
 				q.save(list_file_name(i));
 			i++;
@@ -325,9 +376,12 @@ class Queue {
 		return i_selected;
 	}
 
+	boolean conversion_list(int i) { return i == i_conversion; }
+
 	void switch_list(int i) { i_selected = i; }
 
 	int current_list_index() { return i_selected; }
+	long current_list_id() { return queues.get(i_selected).q; }
 
 	/** Add currently playing track to next list.
 	Return the modified list index. */
@@ -386,6 +440,9 @@ class Queue {
 	}
 
 	void visiblelist_play(int i) {
+		if (i_selected == i_conversion)
+			return; // ignore click on entry in Conversion list
+
 		_play(i_selected, q_visible().index_real(i));
 	}
 
@@ -610,7 +667,7 @@ class Queue {
 	}
 
 	/** Get currently playing track index */
-	int cur() {
+	int active_track_pos() {
 		if (i_selected != i_active)
 			return -1;
 		return trk_idx;
@@ -656,5 +713,68 @@ class Queue {
 
 		filter_close();
 		q_filtered = newqf;
+	}
+
+	static final int
+		E_EXIST = -1,
+		E_NOENT = -2,
+		E_BUSY = -3;
+
+	static final int
+		CONV_CUR_LIST = 0,
+		CONV_CUR_FILE = 1;
+
+	/** Create conversion queue and add tracks to it from the currently selected queue. */
+	int convert_add(int flags) {
+		if (i_conversion >= 0)
+			return E_EXIST; // conversion list exists already
+
+		int i = -1;
+		long q_src = 0;
+		if (flags == CONV_CUR_LIST) {
+			if (queues.get(i_selected).count() == 0)
+				return E_NOENT; // empty playlist
+			q_src = queues.get(i_selected).q;
+		} else if (flags == CONV_CUR_FILE) {
+			if (trk_idx < 0)
+				return E_NOENT; // no active track
+			q_src = queues.get(i_active).q;
+			i = trk_idx;
+		}
+
+		filter_close();
+		queues.add(new PhiolaQueue(core.phiola, Phiola.QUNF_CONVERSION, 0));
+		i_conversion = queues.size() - 1;
+
+		queues.get(i_conversion).dup(q_src, i);
+		i_selected = i_conversion;
+		return i_conversion;
+	}
+
+	/** Begin conversion and periodically send redraw signals to GUI. */
+	String convert_begin(Phiola.ConvertParams conf) {
+		String r = core.phiola.quConvertBegin(queues.get(i_conversion).q, conf);
+		if (!r.isEmpty())
+			return r;
+
+		converting = true;
+		convert_update_timer = new Timer();
+		convert_update_timer.schedule(new TimerTask() {
+				public void run() {
+					core.dbglog(TAG, "convert_update_timer fired");
+					core.tq.post(() -> convert_update(false));
+				}
+			}, 500, 500);
+		return null;
+	}
+
+	private void convert_update(boolean complete) {
+		if (complete) {
+			converting = false;
+			convert_update_timer.cancel();
+			convert_update_timer = null;
+		}
+		core.phiola.quConvertUpdate(queues.get(i_conversion).q);
+		nfy_all(QueueNotify.UPDATE, -1);
 	}
 }

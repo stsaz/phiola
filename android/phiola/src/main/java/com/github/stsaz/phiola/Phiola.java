@@ -38,27 +38,30 @@ class Phiola {
 
 	static class ConvertParams {
 		ConvertParams() {
+			out_name = "";
 			from_msec = "";
 			to_msec = "";
+			trash_dir_rel = "";
 		}
 
 		int format;
 
-		static final int F_DATE_PRESERVE = 1;
-		static final int F_OVERWRITE = 2;
+		static final int
+			F_DATE_PRESERVE = 1,
+			F_OVERWRITE = 2;
 		int flags;
 
+		String out_name;
 		String from_msec, to_msec;
 		boolean copy;
 		int sample_rate;
 		int aac_quality;
 		int opus_quality;
 		int vorbis_quality;
+		long q_add_remove;
+		int q_pos;
+		String trash_dir_rel;
 	}
-	interface ConvertCallback {
-		void on_finish(String result);
-	}
-	native int convert(String iname, String oname, ConvertParams conf, ConvertCallback cb);
 
 	static class RecordParams {
 		int format;
@@ -94,8 +97,12 @@ class Phiola {
 	}
 	native void quSetCallback(QueueCallback cb);
 
-	native long quNew();
+	static final int
+		QUNF_CONVERSION = 1;
+	native long quNew(int flags);
 	native void quDestroy(long q);
+
+	native void quDup(long q, long q_src, int pos);
 
 	static final int QUADD_RECURSE = 1;
 	native void quAdd(long q, String[] urls, int flags);
@@ -117,9 +124,15 @@ class Phiola {
 
 	native Meta quMeta(long q, int i);
 
-	static final int QUFILTER_URL = 1;
-	static final int QUFILTER_META = 2;
+	static final int
+		QUFILTER_URL = 1,
+		QUFILTER_META = 2;
 	native long quFilter(long q, String filter, int flags);
+
+	native String quConvertBegin(long q, ConvertParams conf);
+
+	/** Update current status of all entries. */
+	native void quConvertUpdate(long q);
 
 	native String quDisplayLine(long q, int i);
 

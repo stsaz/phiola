@@ -21,11 +21,15 @@ struct phiola_jni {
 	ffbyte debug;
 	ffvec storage_paths; // char*[]
 
+	ffvec conversion_tracks; // struct conv_track_info[]
+	phi_queue_id q_add_remove;
+	char *trash_dir_rel;
+	int q_pos;
+
 	jclass Phiola_class;
 	jclass Phiola_Meta;
 
 	jmethodID Phiola_lib_load;
-	jmethodID Phiola_ConvertCallback_on_finish;
 	jmethodID Phiola_MetaCallback_on_finish;
 
 	jobject obj_QueueCallback;
@@ -128,11 +132,11 @@ enum {
 	AF_OPUS_VOICE = 5,
 };
 
+#include <jni/android-utils.h>
 #include <jni/record.h>
 #include <jni/convert.h>
 #include <jni/info.h>
 #include <jni/queue.h>
-#include <jni/android-utils.h>
 
 static int conf()
 {
@@ -209,7 +213,8 @@ static int core()
 
 		.mod_loading = mod_loading,
 
-		.io_workers = 1,
+		.workers = ~0U,
+		.io_workers = ~0U,
 		.run_detach = 1,
 	};
 	if (NULL == (x->core = phi_core_create(&conf)))
@@ -260,6 +265,9 @@ Java_com_github_stsaz_phiola_Phiola_destroy(JNIEnv *env, jobject thiz)
 	}
 	ffvec_free(&x->storage_paths);
 
+	// ffmem_free(conv_track_info.error);
+	ffvec_free_align(&x->conversion_tracks);
+	ffmem_free(x->trash_dir_rel);
 	ffstr_free(&x->dir_libs);
 	ffmem_free(x);  x = NULL;
 }
