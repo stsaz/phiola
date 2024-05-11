@@ -39,6 +39,7 @@ endif
 $(DIR)/config.h: $(DIR)
 	cd $(DIR) && autoreconf -isf
 	cd $(DIR) && $(CONFIGURE_ENV) ./configure $(CONFIGURE_FLAGS)
+	$(SED) 's/PACKAGE_VERSION "unknown"/PACKAGE_VERSION "$(VER)"/' $(DIR)/config.h
 	cat $@
 	touch $@
 

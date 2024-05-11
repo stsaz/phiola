@@ -9,13 +9,16 @@ LIBS := \
 	DynamicAudioNormalizer \
 	fdk-aac \
 	FLAC \
-	MAC \
 	mpg123 \
-	musepack \
 	opus \
 	soxr \
-	vorbis \
-	wavpack
+	vorbis
+ifneq "$(SYS)" "android"
+	LIBS += \
+		MAC \
+		musepack \
+		wavpack
+endif
 
 default:
 	mkdir -p $(TGT_DIR)

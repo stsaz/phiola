@@ -12,7 +12,7 @@
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20100
+#define PHI_VERSION_CORE  20101
 
 typedef long long int64;
 typedef unsigned long long uint64;
@@ -478,7 +478,6 @@ struct phi_queue_if {
 	void (*qselect)(phi_queue_id q);
 
 	int (*add)(phi_queue_id q, struct phi_queue_entry *qe);
-	int (*clear)(phi_queue_id q);
 	int (*count)(phi_queue_id q);
 
 	/** Create a new virtual queue with the items matching a filter */
@@ -491,17 +490,23 @@ struct phi_queue_if {
 	int (*save)(phi_queue_id q, const char *filename, void (*on_complete)(void*, phi_track*), void *param);
 	int (*status)(phi_queue_id q);
 
-	int (*remove_at)(phi_queue_id q, uint pos, uint n);
-
-	/**
-	Generates on_change('u') event.
-	flags: enum PHI_Q_REMOVE */
-	void (*remove_multi)(phi_queue_id q, uint flags);
-
 	/**
 	Generates on_change('u') event.
 	flags: enum PHI_Q_SORT */
 	void (*sort)(phi_queue_id q, uint flags);
+
+	/** Remove all items.
+	Generates on_change('c') event. */
+	int (*clear)(phi_queue_id q);
+
+	/** Remove items at position.
+	Generates on_change('r') event. */
+	int (*remove_at)(phi_queue_id q, uint pos, uint n);
+
+	/** Remove items.
+	Generates on_change('u') event.
+	flags: enum PHI_Q_REMOVE */
+	void (*remove_multi)(phi_queue_id q, uint flags);
 
 	struct phi_queue_entry* (*at)(phi_queue_id q, uint pos);
 
@@ -518,6 +523,9 @@ struct phi_queue_if {
 
 	void* (*insert)(void *e, struct phi_queue_entry *qe);
 	int (*index)(void *e);
+
+	/** Remove item.
+	Generates on_change('r') event. */
 	int (*remove)(void *e);
 };
 

@@ -57,7 +57,8 @@ make -j8 \
 mkdir -p _android-arm64
 make -j8 lib-arm64 \
  -C _android-arm64 \
- -f ../Makefile \
+ -f ../android/Makefile \
+ -I ../android \
  ROOT_DIR=../.. \
  SDK_DIR=/Android \
  NDK_VER=$NDK_VER \

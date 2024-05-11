@@ -67,12 +67,12 @@ jobject meta_create(JNIEnv *env, ffvec *meta, const char *filename, uint64 msec)
 	jmethodID init = jni_func(jc, "<init>", "()V");
 	jobject jmeta = jni_obj_new(jc, init);
 
-	jni_obj_sz_set(env, jmeta, jni_field(jc, "url", JNI_TSTR), filename);
-	jni_obj_sz_set(env, jmeta, jni_field(jc, "artist", JNI_TSTR), artist);
-	jni_obj_sz_set(env, jmeta, jni_field(jc, "title", JNI_TSTR), title);
-	jni_obj_sz_set(env, jmeta, jni_field(jc, "album", JNI_TSTR), album);
-	jni_obj_sz_set(env, jmeta, jni_field(jc, "date", JNI_TSTR), (date) ? date : "");
-	jni_obj_int_set(jmeta, jni_field(jc, "length_msec", JNI_TINT), msec);
+	jni_obj_sz_set(env, jmeta, jni_field_str(jc, "url"), filename);
+	jni_obj_sz_set(env, jmeta, jni_field_str(jc, "artist"), artist);
+	jni_obj_sz_set(env, jmeta, jni_field_str(jc, "title"), title);
+	jni_obj_sz_set(env, jmeta, jni_field_str(jc, "album"), album);
+	jni_obj_sz_set(env, jmeta, jni_field_str(jc, "date"), (date) ? date : "");
+	jni_obj_int_set(jmeta, jni_field_int(jc, "length_msec"), msec);
 
 	ffmem_free(artist);
 	ffmem_free(title);

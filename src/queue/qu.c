@@ -633,7 +633,6 @@ const phi_queue_if phi_queueif = {
 	qm_qselect,
 
 	q_add,
-	q_clear,
 	q_count,
 	q_filter,
 
@@ -643,9 +642,11 @@ const phi_queue_if phi_queueif = {
 
 	q_save,
 	q_status,
+	q_sort,
+
+	q_clear,
 	q_remove_at,
 	q_remove_multi,
-	q_sort,
 
 	q_at,
 	q_ref,
