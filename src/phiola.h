@@ -428,12 +428,16 @@ struct phi_queue_conf {
 	char *name;
 	const phi_filter *first_filter;
 	const char *audio_module;
-	const char *ui_module;
+	union {
+		const char *ui_module;
+		const phi_filter *ui_module_if;
+	};
 	fftime last_mod_time;
 	uint conversion :1;
 	uint random :1;
 	uint repeat_all :1;
 	uint modified :1;
+	uint ui_module_if_set :1;
 };
 
 struct phi_queue_entry {

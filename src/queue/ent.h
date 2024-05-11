@@ -119,6 +119,7 @@ static int qe_play(struct q_entry *e)
 
 	struct phi_track_conf *c = &e->pub.conf;
 	c->cross_worker_assign = e->q->conf.conversion;
+	const phi_filter *ui_if = (e->q->conf.ui_module_if_set) ? e->q->conf.ui_module_if : core->mod(e->q->conf.ui_module);
 
 	const phi_track_if *track = core->track;
 	phi_track *t = track->create(c);
@@ -134,7 +135,7 @@ static int qe_play(struct q_entry *e)
 			|| !track->filter(t, core->mod("afilter.until"), 0)
 			|| (c->afilter.danorm
 				&& !track->filter(t, core->mod("danorm.f"), 0))
-			|| !track->filter(t, core->mod(e->q->conf.ui_module), 0)
+			|| !track->filter(t, ui_if, 0)
 			|| !track->filter(t, core->mod("afilter.gain"), 0)
 			|| !track->filter(t, core->mod("afilter.auto-conv"), 0)
 			|| !track->filter(t, core->mod("format.auto-write"), 0)
@@ -147,7 +148,7 @@ static int qe_play(struct q_entry *e)
 			|| !track->filter(t, core->mod("core.auto-input"), 0)
 			|| !track->filter(t, core->mod("format.detect"), 0)
 			|| !track->filter(t, core->mod("afilter.until"), 0)
-			|| !track->filter(t, core->mod(e->q->conf.ui_module), 0)
+			|| !track->filter(t, ui_if, 0)
 			|| !track->filter(t, core->mod("afilter.auto-conv"), 0)
 			|| (c->afilter.peaks_info
 				&& !track->filter(t, core->mod("afilter.peaks"), 0)))
@@ -162,7 +163,7 @@ static int qe_play(struct q_entry *e)
 			|| !track->filter(t, core->mod("afilter.until"), 0)
 			|| (c->afilter.danorm
 				&& !track->filter(t, core->mod("danorm.f"), 0))
-			|| !track->filter(t, core->mod(e->q->conf.ui_module), 0)
+			|| !track->filter(t, ui_if, 0)
 			|| !track->filter(t, core->mod("afilter.gain"), 0)
 			|| !track->filter(t, core->mod("afilter.auto-conv"), 0)
 			|| (c->tee_output
