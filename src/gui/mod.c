@@ -498,13 +498,21 @@ void lists_load()
 		if (fffile_info_path(fn, &fi))
 			break;
 
+		uint mt_set = 1;
 		phi_queue_id q = NULL;
-		if (i > 1)
+		if (i == 1) {
+			// Don't set `last_mod_time` if there are tracks added from command line.
+			// This prevents `m3u-read` from setting `modified=0` on the queue.
+			mt_set = (gd->queue->count(q) == 0);
+		} else {
 			q = list_new();
+		}
 
-		fftime mt = fffileinfo_mtime(&fi);
-		mt.sec += FFTIME_1970_SECONDS;
-		gd->queue->conf(q)->last_mod_time = mt;
+		if (mt_set) {
+			fftime mt = fffileinfo_mtime(&fi);
+			mt.sec += FFTIME_1970_SECONDS;
+			gd->queue->conf(q)->last_mod_time = mt;
+		}
 
 		struct phi_queue_entry qe = {
 			.conf.ifile.name = fn,
