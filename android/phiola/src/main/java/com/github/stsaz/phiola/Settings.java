@@ -127,7 +127,7 @@ class CoreSettings {
 			+ "rec_longclick %d\n"
 			+ "conv_out_dir %s\n"
 			+ "conv_out_name %s\n"
-			+ "conv_outext %s\n"
+			+ "conv_format %s\n"
 			+ "conv_aac_q %d\n"
 			+ "conv_opus_q %d\n"
 			+ "conv_vorbis_q %d\n"
