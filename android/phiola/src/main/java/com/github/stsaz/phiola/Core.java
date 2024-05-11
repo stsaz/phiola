@@ -68,7 +68,7 @@ class Core extends Util {
 		phiola = new Phiola(ctx.getApplicationInfo().nativeLibraryDir);
 		conf = new Conf(phiola);
 		util = new UtilNative(phiola);
-		util.storage_paths = storage_paths;
+		util.storagePaths(storage_paths);
 		setts = new CoreSettings(this);
 		gui = new GUI(this);
 		track = new Track(this);

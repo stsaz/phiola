@@ -63,7 +63,7 @@ class Conf {
 class UtilNative {
 	UtilNative(Phiola phi) {}
 
-	String[] storage_paths;
+	native void storagePaths(String[] paths);
 	native String trash(String trash_dir, String filepath);
 	native String fileMove(String filepath, String target_dir);
 }

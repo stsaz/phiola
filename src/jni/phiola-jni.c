@@ -19,6 +19,7 @@ struct phiola_jni {
 
 	ffstr dir_libs;
 	ffbyte debug;
+	ffvec storage_paths; // char*[]
 
 	jclass Phiola_class;
 	jclass Phiola_Meta;
@@ -252,6 +253,13 @@ Java_com_github_stsaz_phiola_Phiola_destroy(JNIEnv *env, jobject thiz)
 	jni_global_unref(x->obj_QueueCallback);
 	jni_global_unref(x->Phiola_Meta);
 	jni_global_unref(x->Phiola_class);
+
+	char **it;
+	FFSLICE_WALK(&x->storage_paths, it) {
+		ffmem_free(*it);
+	}
+	ffvec_free(&x->storage_paths);
+
 	ffstr_free(&x->dir_libs);
 	ffmem_free(x);  x = NULL;
 }

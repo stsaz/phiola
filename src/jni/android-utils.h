@@ -178,43 +178,46 @@ end:
 	return rc;
 }
 
-static char* trash_dir_abs(JNIEnv *env, jobjectArray jsa, const char *trash_dir_rel, const char *fn)
+JNIEXPORT void JNICALL
+Java_com_github_stsaz_phiola_UtilNative_storagePaths(JNIEnv *env, jobject thiz, jobjectArray jpaths)
 {
-	char *trash_dir = NULL;
-	// Select the storage root of the file to be moved
 	jstring jstg = NULL;
 	const char *stg = NULL;
-	uint n = jni_arr_len(jsa);
+	uint n = jni_arr_len(jpaths);
+	ffvec_allocT(&x->storage_paths, n, char*);
 	for (uint i = 0;  i != n;  i++) {
+		jstg = jni_joa_i(jpaths, i);
+		stg = jni_sz_js(jstg);
+		*ffvec_pushT(&x->storage_paths, char*) = ffsz_dup(stg);
 		jni_sz_free(stg, jstg);
 		jni_local_unref(jstg);
-		jstg = jni_joa_i(jsa, i);
-		stg = jni_sz_js(jstg);
+	}
+}
+
+static char* trash_dir_abs(const char *trash_dir_rel, const char *fn)
+{
+	const char **it;
+	FFSLICE_WALK(&x->storage_paths, it) {
+		const char *stg = *it;
 		if (ffsz_matchz(fn, stg)
 			&& stg[0] != '\0' && fn[ffsz_len(stg)] == '/') {
 			// e.g. "/storage/emulated/0/Music/file.mp3" starts with "/storage/emulated/0"
-			trash_dir = ffsz_allocfmt("%s/%s", stg, trash_dir_rel);
-			break;
+			return ffsz_allocfmt("%s/%s", stg, trash_dir_rel);
 		}
 	}
-	jni_sz_free(stg, jstg);
-	jni_local_unref(jstg);
-	return trash_dir;
+	return NULL;
 }
 
 JNIEXPORT jstring JNICALL
 Java_com_github_stsaz_phiola_UtilNative_trash(JNIEnv *env, jobject thiz, jstring jtrash_dir, jstring jfilepath)
 {
 	dbglog("%s: enter", __func__);
-	jclass jc = jni_class_obj(thiz);
 	const char *error = "";
 	const char *trash_dir_rel = jni_sz_js(jtrash_dir);
 	const char *fn = jni_sz_js(jfilepath);
 
 	// Select the storage root of the file to be moved
-	jobjectArray jsa = jni_obj_jo(thiz, jni_field(jc, "storage_paths", JNI_TARR JNI_TSTR));
-	char *trash_dir = trash_dir_abs(env, jsa, trash_dir_rel, fn);
-
+	char *trash_dir = trash_dir_abs(trash_dir_rel, fn);
 	if (trash_dir != NULL
 		&& 0 != file_trash(trash_dir, fn))
 		error = fferr_strptr(fferr_last());
