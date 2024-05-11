@@ -118,17 +118,6 @@ static void tui_help(uint cmd);
 static void tui_op(uint cmd);
 static void cmd_next();
 
-static const char *const _pcm_channelstr[] = {
-	"mono", "stereo",
-	"3-channel", "4-channel", "5-channel",
-	"5.1", "6.1", "7.1"
-};
-
-static const char* pcm_channelstr(uint channels)
-{
-	return _pcm_channelstr[ffmin(channels - 1, FF_COUNT(_pcm_channelstr) - 1)];
-}
-
 static void tui_print(const void *d, ffsize n)
 {
 	if (mod->use_stderr) {

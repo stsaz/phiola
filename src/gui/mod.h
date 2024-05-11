@@ -72,9 +72,10 @@ enum STATUS_ID {
 /**
 id: enum STATUS_ID */
 FF_EXTERN void wmain_status_id(uint id);
-FF_EXTERN int wmain_track_new(phi_track *t, uint time_total);
-FF_EXTERN void wmain_track_close(phi_track *t);
-FF_EXTERN void wmain_track_update(uint time_cur, uint time_total);
+FF_EXTERN int wmain_ready();
+FF_EXTERN void wmain_track_new(void *param);
+FF_EXTERN void wmain_track_close(void *param);
+FF_EXTERN void wmain_track_update(void *param);
 FF_EXTERN void wmain_conv_track_new(phi_track *t, uint time_total);
 FF_EXTERN void wmain_conv_track_close(phi_track *t);
 FF_EXTERN void wmain_conv_track_update(phi_track *t, uint time_cur, uint time_total);
@@ -97,6 +98,12 @@ struct list_info {
 	uint scroll_vpos;
 };
 
+struct gui_track_info {
+	uint index_old, index_new;
+	uint pos_sec, duration_sec;
+	char buf[256];
+};
+
 struct gui_data {
 	const phi_queue_if *queue;
 	const phi_meta_if *metaif;
@@ -105,6 +112,7 @@ struct gui_data {
 	const phi_filter *playback_first_filter;
 	const phi_adev_if *adev_if;
 
+	struct gui_track_info playback_track_info;
 	struct gtrk *playing_track;
 	struct phi_queue_entry *qe_active;
 	uint cursor;

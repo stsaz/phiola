@@ -39,3 +39,15 @@ static inline int phi_af_val(ffstr s)
 		return -1;
 	return phi_af_values[r];
 }
+
+
+static const char _pcm_channelstr[][10] = {
+	"mono", "stereo",
+	"3-channel", "4-channel", "5-channel",
+	"5.1", "6.1", "7.1"
+};
+
+static inline const char* pcm_channelstr(uint channels)
+{
+	return _pcm_channelstr[ffmin(channels - 1, FF_COUNT(_pcm_channelstr) - 1)];
+}

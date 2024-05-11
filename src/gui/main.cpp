@@ -5,7 +5,6 @@
 #include <track.h>
 #include <util/util.h>
 #include <util/util.hpp>
-#include <util/aformat.h>
 
 #define VOLUME_MAX 125
 
@@ -23,7 +22,6 @@ struct gui_wmain {
 #endif
 
 	ffui_icon ico_play, ico_pause;
-	uint playing_track_closing :1;
 
 	phi_timer tmr_redraw;
 	uint redraw_n, redraw_offset;
@@ -155,97 +153,58 @@ void wmain_status_id(uint id)
 	wmain_status((id == ST_PAUSED) ? "Paused" : "");
 }
 
-static const char _pcm_channelstr[][10] = {
-	"mono", "stereo",
-	"3-channel", "4-channel", "5-channel",
-	"5.1", "6.1", "7.1"
-};
-
-static const char* pcm_channelstr(uint channels)
-{
-	return _pcm_channelstr[ffmin(channels - 1, FF_COUNT(_pcm_channelstr) - 1)];
-}
-
-/** Thread: worker */
-int wmain_track_new(phi_track *t, uint time_total)
+int wmain_ready()
 {
 	gui_wmain *m = gg->wmain;
-	if (!m || !m->ready) return -1;
+	return (m && m->ready);
+}
 
-	wmain_status_id(ST_UNPAUSED);
+void wmain_track_new(void *param)
+{
+	gui_wmain *m = gg->wmain;
+	struct gui_track_info *ti = (struct gui_track_info*)param;
+	if (ti->index_old != ~0U)
+		m->vlist.update(ti->index_old, 0);
 
-	struct phi_queue_entry *qe = (struct phi_queue_entry*)t->qent;
-	char buf[1000];
-	ffsz_format(buf, sizeof(buf), "%u kbps, %s, %u Hz, %s, %s"
-		, (t->audio.bitrate + 500) / 1000
-		, t->audio.decoder
-		, t->audio.format.rate
-		, phi_af_name(t->audio.format.format)
-		, pcm_channelstr(t->audio.format.channels));
-	gd->metaif->set(&t->meta, FFSTR_Z("_phi_info"), FFSTR_Z(buf), 0);
-
-	m->tpos.range(time_total);
-	qe->length_msec = time_total * 1000;
-
-	void *qe_prev_active = gd->qe_active;
-	gd->qe_active = qe;
-
-	int idx;
-	if (qe_prev_active && -1 != (idx = gd->queue->index(qe_prev_active)) && !gd->q_filtered)
-		m->vlist.update(idx, 0);
-
-	if (-1 != (idx = gd->queue->index(qe))) {
-		if (!gd->q_filtered) { // 'idx' is the position within the original list, not filtered list
-			m->vlist.update(idx, 0);
-			if (gd->auto_select)
-				m->vlist.select(idx);
-		}
-		gd->cursor = idx;
+	if (ti->index_new != ~0U) {
+		m->vlist.update(ti->index_new, 0);
+		if (gd->auto_select)
+			m->vlist.select(ti->index_new);
 	}
 
-	ffstr artist = {}, title = {};
-	gd->metaif->find(&t->meta, FFSTR_Z("artist"), &artist, 0);
-	gd->metaif->find(&t->meta, FFSTR_Z("title"), &title, 0);
-	if (!title.len)
-		ffpath_split3_str(FFSTR_Z(qe->conf.ifile.name), NULL, &title, NULL); // use filename as a title
+	wmain_status_id(ST_UNPAUSED);
+	m->tpos.range(ti->duration_sec);
 
-	ffsz_format(buf, sizeof(buf), "%S - %S - phiola", &artist, &title);
-	m->wnd.title(buf);
-	return 0;
+	m->wnd.title(ti->buf);
 }
 
-/** Thread: worker */
-void wmain_track_close(phi_track *t)
+void wmain_track_close(void *param)
 {
 	gui_wmain *m = gg->wmain;
-	if (!m || !m->ready) return;
+	struct gui_track_info *ti = (struct gui_track_info*)param;
 
-	int idx = gd->queue->index(t->qent);
-	if (idx >= 0) {
-		m->playing_track_closing = 1;
-		m->vlist.update(idx, 0);
+	if (ti->index_new != ~0U) {
+		// TODO list_display() may read qe->conf.meta that has not yet been written in qe_close() by main thread
+		m->vlist.update(ti->index_new, 0);
 	}
 
 	m->wnd.title("phiola");
 	m->lpos.text("");
 	m->tpos.range(0);
 	wmain_status_id(ST_STOPPED);
-
-	m->playing_track_closing = 0;
 }
 
-/** Thread: worker */
-void wmain_track_update(uint time_cur, uint time_total)
+void wmain_track_update(void *param)
 {
+	struct gui_track_info *ti = (struct gui_track_info*)param;
 	gui_wmain *m = gg->wmain;
-	if (!m || !m->ready) return;
 
-	m->tpos.set(time_cur);
+	m->tpos.set(ti->pos_sec);
 
 	char buf[256];
 	ffsz_format(buf, sizeof(buf), "%u:%02u / %u:%02u"
-		, time_cur / 60, time_cur % 60
-		, time_total / 60, time_total % 60);
+		, ti->pos_sec / 60, ti->pos_sec % 60
+		, ti->duration_sec / 60, ti->duration_sec % 60);
 	m->lpos.text(buf);
 }
 
@@ -295,7 +254,7 @@ static void list_display(ffui_view_disp *disp)
 	uint i = ffui_view_dispinfo_index(disp);
 	uint sub = ffui_view_dispinfo_subindex(disp);
 
-	gui_wmain *m = gg->wmain;
+	// gui_wmain *m = gg->wmain;
 	xxstr_buf<1000> buf;
 	ffstr *val = NULL, s;
 	struct phi_queue_entry *qe = gd->queue->ref(list_id_visible(), i);
@@ -306,7 +265,7 @@ static void list_display(ffui_view_disp *disp)
 
 	switch (sub) {
 	case H_INDEX:
-		buf.zfmt("%s%u", (qe == gd->qe_active && !m->playing_track_closing) ? "> " : "", i + 1);
+		buf.zfmt("%s%u", (qe == gd->qe_active) ? "> " : "", i + 1);
 		val = &buf;
 		break;
 

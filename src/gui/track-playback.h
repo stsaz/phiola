@@ -3,6 +3,7 @@
 
 #include <track.h>
 #include <util/util.h>
+#include <util/aformat.h>
 
 #define dbglog1(t, ...)  phi_dbglog(core, NULL, t, __VA_ARGS__)
 #define errlog1(t, ...)  phi_errlog(core, NULL, t, __VA_ARGS__)
@@ -81,10 +82,14 @@ static void gtrk_close(void *ctx, phi_track *t)
 {
 	struct gtrk *gt = ctx;
 	if (gd->playing_track == gt) {
-		wmain_track_close(t);
 		gd->qe_active = NULL;
 		ffcpu_fence_release(); // sync with gui_qe_meta()
 		gd->playing_track = NULL;
+		if (wmain_ready()) {
+			struct gui_track_info *ti = &gd->playback_track_info;
+			ti->index_new = gd->queue->index(t->qent);
+			gui_task_ptr(wmain_track_close, ti);
+		}
 	}
 	phi_track_free(t, gt);
 }
@@ -104,16 +109,58 @@ static int gtrk_process(void *ctx, phi_track *t)
 		gt->duration_sec = samples_to_msec(t->audio.total, gt->sample_rate) / 1000;
 	}
 
-	if (!gt->opened || t->meta_changed) {
-		if (!wmain_track_new(t, gt->duration_sec)) {
-			gt->opened = 1;
-			t->meta_changed = 0;
+	if ((!gt->opened || t->meta_changed) && wmain_ready()) {
 
-			if (gd->conf.auto_skip_sec_percent > 0)
-				gt->seek_msec = gd->conf.auto_skip_sec_percent * 1000;
-			else if (gd->conf.auto_skip_sec_percent < 0)
-				gt->seek_msec = gt->duration_sec * -gd->conf.auto_skip_sec_percent / 100 * 1000;
+		struct phi_queue_entry *qe = (struct phi_queue_entry*)t->qent;
+		char buf[1000];
+		ffsz_format(buf, sizeof(buf), "%u kbps, %s, %u Hz, %s, %s"
+			, (t->audio.bitrate + 500) / 1000
+			, t->audio.decoder
+			, t->audio.format.rate
+			, phi_af_name(t->audio.format.format)
+			, pcm_channelstr(t->audio.format.channels));
+		gd->metaif->set(&t->meta, FFSTR_Z("_phi_info"), FFSTR_Z(buf), 0);
+
+		qe->length_msec = gt->duration_sec * 1000;
+
+		void *qe_prev_active = gd->qe_active;
+		gd->qe_active = qe;
+
+		struct gui_track_info *ti = &gd->playback_track_info;
+		ti->duration_sec = gt->duration_sec;
+		ti->pos_sec = 0;
+		ti->index_old = ~0U;
+		ti->index_new = ~0U;
+
+		int i;
+		if (qe_prev_active
+			&& -1 != (i = gd->queue->index(qe_prev_active))
+			&& !gd->q_filtered)
+			ti->index_old = i;
+
+		if (-1 != (i = gd->queue->index(qe))) {
+			if (!gd->q_filtered) // 'i' is the position within the original list, not filtered list
+				ti->index_new = i;
+			gd->cursor = i;
 		}
+
+		ffstr artist = {}, title = {};
+		gd->metaif->find(&t->meta, FFSTR_Z("artist"), &artist, 0);
+		gd->metaif->find(&t->meta, FFSTR_Z("title"), &title, 0);
+		if (!title.len)
+			ffpath_split3_str(FFSTR_Z(qe->conf.ifile.name), NULL, &title, NULL); // use filename as a title
+		ffsz_format(ti->buf, sizeof(ti->buf), "%S - %S - phiola"
+			, &artist, &title);
+
+		gui_task_ptr(wmain_track_new, ti);
+
+		gt->opened = 1;
+		t->meta_changed = 0;
+
+		if (gd->conf.auto_skip_sec_percent > 0)
+			gt->seek_msec = gd->conf.auto_skip_sec_percent * 1000;
+		else if (gd->conf.auto_skip_sec_percent < 0)
+			gt->seek_msec = gt->duration_sec * -gd->conf.auto_skip_sec_percent / 100 * 1000;
 	}
 
 	if (gt->seek_msec != -1) {
@@ -140,8 +187,11 @@ static int gtrk_process(void *ctx, phi_track *t)
 		goto end;
 	gt->last_pos_sec = pos_sec;
 
-	if (gt == gd->playing_track)
-		wmain_track_update(pos_sec, gt->duration_sec);
+	if (gt == gd->playing_track && wmain_ready()) {
+		struct gui_track_info *ti = (struct gui_track_info*)&gd->playback_track_info;
+		ti->pos_sec = pos_sec;
+		gui_task_ptr(wmain_track_update, ti);
+	}
 
 end:
 	t->data_out = t->data_in;
