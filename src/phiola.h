@@ -548,3 +548,13 @@ typedef struct phi_tag_if phi_tag_if;
 struct phi_tag_if {
 	int (*edit)(struct phi_tag_conf *conf);
 };
+
+
+/** GUI logging backend */
+
+typedef void (*phi_log_ctl)(uint flags);
+typedef struct phi_log_if phi_log_if;
+struct phi_log_if {
+	void (*setup)(phi_log_ctl func);
+	void (*log)(void *udata, ffstr s);
+};

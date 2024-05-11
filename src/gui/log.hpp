@@ -31,9 +31,9 @@ void wlog_userconf_write(ffconfw *cw)
 		ffconfw_add2z(cw, "wlog.pos", w->wnd_pos);
 }
 
-extern "C" void phi_gui_log(ffstr s)
+extern "C" void gui_log(void *udata, ffstr s)
 {
-	if (!gg || !gg->wlog || !gg->wlog->wnd.h) return;
+	FF_ASSERT(gg && gg->wlog && gg->wlog->wnd.h);
 
 	gui_wlog *w = gg->wlog;
 	w->tlog.add(s);

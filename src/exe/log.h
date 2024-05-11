@@ -1,6 +1,8 @@
 /** phiola: executor: logs
 2023, Simon Zolin */
 
+static __thread uint64 thread_id;
+
 static void exe_logv(void *log_obj, uint flags, const char *module, phi_track *t, const char *fmt, va_list va)
 {
 	const char *id = (t) ? t->id : NULL;
@@ -11,11 +13,17 @@ static void exe_logv(void *log_obj, uint flags, const char *module, phi_track *t
 		fftime tm = x->core->time(&dt, 0);
 		if (fftime_cmp(&tm, &x->time_last)) {
 			x->time_last = tm;
-			fftime_tostr1(&dt, x->log.date, sizeof(x->log.date), FFTIME_HMS_MSEC);
+			fftime_tostr1(&dt, x->log_date, sizeof(x->log_date), FFTIME_HMS_MSEC);
 		}
 	}
 
-	zzlog_printv(log_obj, flags, ctx, id, fmt, va);
+	uint64 tid = thread_id;
+	if (tid == 0) {
+		tid = ffthread_curid();
+		thread_id = tid;
+	}
+
+	zzlog_printv(log_obj, flags, x->log_date, tid, ctx, id, fmt, va);
 }
 
 static void exe_log(void *log_obj, uint flags, const char *module, phi_track *t, const char *fmt, ...)

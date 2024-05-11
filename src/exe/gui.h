@@ -23,6 +23,14 @@ static int gui_input(struct cmd_gui *g, ffstr s)
 	return 0;
 }
 
+static void gui_log_ctl(uint flags)
+{
+	if (flags)
+		x->log.func = x->logif->log; // GUI is ready to display logs
+	else
+		x->log.func = NULL;
+}
+
 static int gui_action(struct cmd_gui *g)
 {
 	struct phi_queue_conf qc = {
@@ -40,12 +48,13 @@ static int gui_action(struct cmd_gui *g)
 	}
 	ffvec_free(&g->input);
 
+	x->log.use_color = (x->log.use_color && x->debug);
 	x->core->mod("gui");
 
 	if (!x->debug) {
 		// show logs inside Logs window
-		x->log.use_color = 0;
-		x->log.func = x->core->mod("gui.log");
+		x->logif = x->core->mod("gui.log");
+		x->logif->setup(gui_log_ctl);
 	}
 
 	x->exit_code = 0;

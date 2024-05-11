@@ -26,8 +26,10 @@ struct exe {
 	const phi_queue_if*	queue;
 	const phi_meta_if*	metaif;
 
-	struct zzlog	log;
-	fftime			time_last;
+	struct zzlog		log;
+	fftime				time_last;
+	char				log_date[32];
+	const phi_log_if*	logif;
 
 	char	fn_buf[128], *fn;
 	char*	cmd_line;

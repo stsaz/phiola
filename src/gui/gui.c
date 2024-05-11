@@ -298,17 +298,23 @@ void gui_init()
 	wlog_init();
 }
 
+extern phi_log_ctl gui_log_ctl;
+
 int FFTHREAD_PROCCALL gui_worker(void *param)
 {
 	ffui_init();
 	if (load_ui())
 		goto end;
+	if (gui_log_ctl)
+		gui_log_ctl(1);
 
 	ffui_thd_post((void(*)(void*))wmain_show, NULL);
 
 	dbglog("entering GUI loop");
 	ffui_run();
 	dbglog("exited GUI loop");
+	if (gui_log_ctl)
+		gui_log_ctl(0);
 
 end:
 	ffui_uninit();
