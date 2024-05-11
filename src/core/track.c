@@ -105,6 +105,7 @@ static void track_close(phi_track *t)
 	}
 
 	conveyor_close(&t->conveyor, t);
+	ffmem_free(t->output.name);
 
 	if (t->conf.print_time)
 		track_busytime_print(t);

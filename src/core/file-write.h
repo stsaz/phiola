@@ -242,6 +242,9 @@ static void* fw_open(phi_track *t)
 	if (frw_benchmark(&f->stats.t_open))
 		fftime_sub(&f->stats.t_open, &t1);
 
+	ffmem_free(t->output.name);
+	t->output.name = f->namebuf.ptr;
+	ffstr_null(&f->namebuf);
 	dbglog(t, "%s: opened", f->name);
 	return f;
 

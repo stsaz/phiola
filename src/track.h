@@ -240,6 +240,7 @@ struct phi_track {
 	};
 
 	struct {
+		char *name;
 		uint64 seek; // Seek to offset and reset. -1:unset
 		uint cant_seek :1;
 		uint allow_async :1;
