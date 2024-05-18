@@ -212,6 +212,8 @@ static int conf_prepare(struct httpcl *h, struct nml_http_client_conf *c)
 	httpurl_split(&p, FFSTR_Z(h->trk->conf.ifile.name));
 	c->host = p.host;
 	c->host.len += p.port.len;
+	if (!p.port.len)
+		c->server_port = 80;
 	ffvec_alloc(&h->path, p.path.len * 3, 1);
 	h->path.len = httpurl_escape(h->path.ptr, h->path.cap, p.path);
 	c->path = *(ffstr*)&h->path;
