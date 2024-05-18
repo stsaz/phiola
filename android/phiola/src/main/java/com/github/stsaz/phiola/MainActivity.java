@@ -63,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
 		init_system();
 
 		b.list.setAdapter(pl_adapter);
+		b.list.setItemAnimator(null);
 		plist_show();
 
 		if (gui.cur_path.isEmpty())
@@ -686,15 +687,24 @@ public class MainActivity extends AppCompatActivity {
 			gui.msg_show(this, String.format(getString(R.string.mlist_trk_added), qi+1));
 	}
 
+	static String q_error(int e) {
+		switch (e) {
+		case Queue.E_EXIST:
+			return "Please close the existing Conversion list";
+		case Queue.E_NOENT:
+			return "Please navigate to a list you want to convert";
+		case Queue.E_BUSY:
+			return "Conversion is in progress";
+		}
+		return "";
+	}
+
 	private void list_convert() {
 		long qi_old = queue.current_list_id();
 		int trk_pos = queue.active_track_pos();
 		int qi = queue.convert_add(Queue.CONV_CUR_LIST);
 		if (qi < 0) {
-			if (qi == Queue.E_EXIST)
-				core.errlog(TAG, "Please close the existing Conversion list");
-			else if (qi == Queue.E_NOENT)
-				core.errlog(TAG, "Please navigate to a list you want to convert");
+			core.errlog(TAG, q_error(qi));
 			return;
 		}
 		if (view_explorer)
@@ -712,10 +722,10 @@ public class MainActivity extends AppCompatActivity {
 		int trk_pos = queue.active_track_pos();
 		int qi = queue.convert_add(Queue.CONV_CUR_FILE);
 		if (qi < 0) {
-			if (qi == Queue.E_EXIST)
-				core.errlog(TAG, "Please close the existing Conversion list");
-			else if (qi == Queue.E_NOENT)
-				core.errlog(TAG, "Please start playback of the file you want to convert");
+			String e = q_error(qi);
+			if (qi == Queue.E_NOENT)
+				e = "Please start playback of the file you want to convert";
+			core.errlog(TAG, e);
 			return;
 		}
 		if (view_explorer)

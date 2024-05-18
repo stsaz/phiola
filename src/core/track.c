@@ -30,7 +30,7 @@ static void conveyor_filters_rm(struct phi_conveyor *v, uint i, uint n)
 
 enum STATE {
 	/** Track is running normally */
-	ST_RUNNING, // ->(ST_FINISHED || ST_STOP)
+	ST_RUNNING, // ->ST_STOP
 
 	/** User calls stop() on an active track */
 	ST_STOP, // ->ST_STOPPING

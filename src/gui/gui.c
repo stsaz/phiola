@@ -45,7 +45,7 @@ void conf_wnd_pos_read(ffui_window *w, ffstr val)
 {
 	ffui_pos pos;
 	if (!ffstr_matchfmt(&val, "%d %d %u %u", &pos.x, &pos.y, &pos.cx, &pos.cy))
-		ffui_wnd_setplacement(w, SW_SHOWNORMAL, &pos);
+		ffui_post_wnd_place(w, SW_SHOWNORMAL, &pos);
 }
 
 extern const struct ffarg guimod_args[];

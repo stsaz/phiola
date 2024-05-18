@@ -133,7 +133,7 @@ class Phiola {
 	native String quConvertBegin(long q, ConvertParams conf);
 
 	/** Update current status of all entries. */
-	native void quConvertUpdate(long q);
+	native int quConvertUpdate(long q);
 
 	native String quDisplayLine(long q, int i);
 

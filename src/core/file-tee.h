@@ -193,7 +193,7 @@ static int tee_process(void *f, phi_track *t)
 	if (!c->brg)
 		c->brg = tee_brg_new(10*3000*1024/8); // 10 seconds of audio at 3000kbit/sec
 
-	if (t->data_in.len != ffring_writestr(c->brg->ring, t->data_in))
+	if (t->data_in.len != ffring_write_all_str(c->brg->ring, t->data_in))
 		warnlog(t, "ring buffer is full");
 	else
 		dbglog(t, "ring +%L [%L]", t->data_in.len, ffring_used(c->brg->ring));

@@ -178,11 +178,13 @@ static void* q_insert(struct phi_queue *q, uint pos, struct phi_queue_entry *qe)
 	struct q_entry *e = qe_new(qe);
 	e->q = q;
 	e->index = pos;
+	fflock_lock(&q->lock);
 	ffvec_pushT(&q->index, void*);
 	if (pos+1 == q->index.len)
 		*ffslice_lastT(&q->index, void*) = e;
 	else
 		*ffslice_moveT((ffslice*)&q->index, pos, pos + 1, q->index.len - 1 - pos, void*) = e;
+	fflock_unlock(&q->lock);
 	dbglog("added '%s' [%L]", qe->conf.ifile.name, q->index.len);
 	q_modified(q);
 	qm->on_change(q, 'a', pos);

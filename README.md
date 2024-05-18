@@ -53,7 +53,7 @@ Features and notes by platform:
 | Simple TUI           | ✅ | ✅ | ❌ |
 | Playback formats     | ✅ all supported | ✅ all supported | only those supported by OS |
 | Conversion formats   | ✅ all supported | ✅ all supported | all supported except `.mpc`, `.ape`, `.wv` |
-| Batch conversion     | ✅ | ✅ | ❌ |
+| Batch conversion     | ✅ | ✅ | ✅ |
 | Record from mic      | ✅ | ✅ | ✅ |
 | Record from Internet | ✅ | ✅ | ❌ |
 | Record what you hear | ✅ (PulseAudio) | ✅ | ❌ |
@@ -322,6 +322,18 @@ The best example how to use phiola software interface is to see the source code 
 * [src/phiola.h](src/phiola.h) describes all interfaces implemented either by phiola Core or dynamic modules
 * [android/.../Phiola.java](android/phiola/src/main/java/com/github/stsaz/phiola/Phiola.java) is a Java interface
 * [src/track.h](src/track.h) contains internal declarations for a phiola track, and you'll need it only if you want to write your own filter
+
+A short description of how phiola works:
+
+* User starts phiola app - the top-level module, which I call *Executor*, starts running.
+* Executor loads *Core* module that provides access to all phiola's functions.
+* Executor waits (if in graphical mode) and analyzes the user's command and decides what to do next.
+* Most commonly (i.e. for audio playback), Executor prepares the queue of tracks and starts the playback.
+* A *Track* represents a single job (a single file) and consists of several Filters linked together to form a conveyor.  While a track is running, Core consistently calls its Filters, going forth and back through the conveyor until all Filters complete their job.  Several Tracks can run in parallel.
+* A *Filter* is a piece of code located inside a Module, and it performs a single task on a particular Track.
+* A *Module* is a file (`.so/.dll`), it may contain one or several Filters, and it provides direct access for them to Executor, Core or other Modules.  All necessary Modules are loaded on-demand while the Tracks are running.
+* Before being started, each Track is assigned to a Worker.  A *Worker* is a system thread (a logical CPU core) that actually executes the Filters code.
+* When a Track is being started, stopped or updated, Executor's own Filters get called, so it can report the current status back to the user.
 
 
 ## External Libraries

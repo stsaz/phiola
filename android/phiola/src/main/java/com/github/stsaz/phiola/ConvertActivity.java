@@ -106,7 +106,7 @@ public class ConvertActivity extends AppCompatActivity {
 			b.eInName.setText("(multiple files)");
 			b.bFromSetCur.setEnabled(false);
 			b.bUntilSetCur.setEnabled(false);
-			length_msec = 10*60*1000;
+			length_msec = 5*60*1000;
 		}
 	}
 

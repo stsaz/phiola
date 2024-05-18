@@ -10,7 +10,7 @@ static void exe_logv(void *log_obj, uint flags, const char *module, phi_track *t
 
 	if (x->core) {
 		ffdatetime dt;
-		fftime tm = x->core->time(&dt, 0);
+		fftime tm = x->core->time(&dt, PHI_CORE_TIME_LOCAL);
 		if (fftime_cmp(&tm, &x->time_last)) {
 			x->time_last = tm;
 			fftime_tostr1(&dt, x->log_date, sizeof(x->log_date), FFTIME_HMS_MSEC);

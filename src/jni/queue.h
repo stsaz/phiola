@@ -321,12 +321,13 @@ end:
 	return js;
 }
 
-JNIEXPORT void JNICALL
+JNIEXPORT jint JNICALL
 Java_com_github_stsaz_phiola_Phiola_quConvertUpdate(JNIEnv *env, jobject thiz, jlong jq)
 {
 	dbglog("%s: enter", __func__);
 	phi_queue_id q = (phi_queue_id)jq;
 	struct phi_queue_entry *qe;
+	uint n = 0;
 	for (uint i = 0;  !!(qe = x->queue->at(q, i));  i++) {
 		if (i >= x->conversion_tracks.len)
 			break;
@@ -362,11 +363,13 @@ Java_com_github_stsaz_phiola_Phiola_quConvertUpdate(JNIEnv *env, jobject thiz, j
 			ffstr_addfmt(&val, cap, " [%u:%02u / %u:%02u]"
 				, cti->pos_sec / 60, cti->pos_sec % 60
 				, cti->duration_sec / 60, cti->duration_sec % 60);
+			n++;
 		}
 
 		x->metaif->set(meta, FFSTR_Z("_phi_display"), val, PHI_META_REPLACE);
 	}
 	dbglog("%s: exit", __func__);
+	return n;
 }
 
 JNIEXPORT jint JNICALL

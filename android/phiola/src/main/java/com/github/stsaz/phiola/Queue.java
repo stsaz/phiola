@@ -255,11 +255,6 @@ class Queue {
 
 				case 'r':
 					nfy_all(QueueNotify.REMOVED, pos);  break;
-
-				case '.':
-					if (i_selected == i_conversion)
-						convert_update(true);
-					break;
 				}
 			});
 	}
@@ -726,6 +721,8 @@ class Queue {
 
 	/** Create conversion queue and add tracks to it from the currently selected queue. */
 	int convert_add(int flags) {
+		if (converting)
+			return E_BUSY;
 		if (i_conversion >= 0)
 			return E_EXIST; // conversion list exists already
 
@@ -762,19 +759,19 @@ class Queue {
 		convert_update_timer.schedule(new TimerTask() {
 				public void run() {
 					core.dbglog(TAG, "convert_update_timer fired");
-					core.tq.post(() -> convert_update(false));
+					core.tq.post(() -> convert_update());
 				}
 			}, 500, 500);
 		return null;
 	}
 
-	private void convert_update(boolean complete) {
-		if (complete) {
+	private void convert_update() {
+		if (0 == core.phiola.quConvertUpdate(queues.get(i_conversion).q)) {
 			converting = false;
 			convert_update_timer.cancel();
 			convert_update_timer = null;
 		}
-		core.phiola.quConvertUpdate(queues.get(i_conversion).q);
-		nfy_all(QueueNotify.UPDATE, -1);
+		if (i_selected == i_conversion)
+			nfy_all(QueueNotify.UPDATE, -1);
 	}
 }
