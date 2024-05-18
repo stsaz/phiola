@@ -446,7 +446,9 @@ struct phi_queue_entry {
 };
 
 enum PHI_Q_SORT {
+	PHI_Q_SORT_FILENAME,
 	PHI_Q_SORT_RANDOM = 1,
+	PHI_Q_SORT_FILESIZE,
 };
 
 enum PHI_Q_REMOVE {

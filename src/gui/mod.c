@@ -377,6 +377,8 @@ static void list_random_toggle()
 
 void ctl_action(uint cmd)
 {
+	uint n;
+
 	switch (cmd) {
 
 	case A_LIST_NEW:
@@ -391,9 +393,18 @@ void ctl_action(uint cmd)
 		break;
 
 	case A_LIST_SORT:
+		n = PHI_Q_SORT_FILENAME;
+		goto list_sort;
+
+	case A_LIST_SORT_FILESIZE:
+		n = PHI_Q_SORT_FILESIZE;
+		goto list_sort;
+
 	case A_LIST_SHUFFLE:
+		n = PHI_Q_SORT_RANDOM;
+list_sort:
 		if (!gd->q_filtered) {
-			gd->queue->sort(gd->q_selected, (cmd == A_LIST_SHUFFLE) ? PHI_Q_SORT_RANDOM : 0);
+			gd->queue->sort(gd->q_selected, n);
 		}
 		break;
 

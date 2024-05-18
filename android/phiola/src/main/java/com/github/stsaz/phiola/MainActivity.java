@@ -214,6 +214,9 @@ public class MainActivity extends AppCompatActivity {
 		case R.id.action_list_sort:
 			queue.sort(Phiola.QU_SORT_FILENAME);  break;
 
+		case R.id.action_list_sort_filesize:
+			queue.sort(Phiola.QU_SORT_FILESIZE);  break;
+
 		case R.id.action_list_shuffle:
 			queue.sort(Phiola.QU_SORT_RANDOM);  break;
 

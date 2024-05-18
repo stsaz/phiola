@@ -558,10 +558,30 @@ static void sort_random(phi_queue_id q)
 	}
 }
 
+struct q_sort_params {
+	uint flags;
+	const struct q_entry **index;
+	ffvec file_sizes; // uint64[]
+};
+
+static void q_sort_params_destroy(struct q_sort_params *p)
+{
+	ffvec_free(&p->file_sizes);
+}
+
 static int q_sort_cmp(const void *_a, const void *_b, void *udata)
 {
-	// uint flags = (ffsize)udata;
 	const struct q_entry *a = *(struct q_entry**)_a, *b = *(struct q_entry**)_b;
+	const struct q_sort_params *p = udata;
+
+	if (p->flags == PHI_Q_SORT_FILESIZE) {
+		const uint64 *fs = p->file_sizes.ptr;
+		if (fs[a->index] > fs[b->index])
+			return -1;
+		else if (fs[a->index] < fs[b->index])
+			return 1;
+	}
+
 	return ffsz_icmp(a->pub.conf.ifile.name, b->pub.conf.ifile.name);
 }
 
@@ -569,10 +589,30 @@ static void q_sort(phi_queue_id q, uint flags)
 {
 	if (!q) q = qm_default();
 
-	if (flags & PHI_Q_SORT_RANDOM) {
+	if (flags == PHI_Q_SORT_RANDOM) {
 		sort_random(q);
 	} else {
-		ffsort(q->index.ptr, q->index.len, sizeof(void*), q_sort_cmp, (void*)(ffsize)flags);
+		struct q_sort_params p = {};
+		p.flags = flags;
+		p.index = (const struct q_entry**)q->index.ptr;
+
+		if (flags == PHI_Q_SORT_FILESIZE) {
+			ffvec_allocT(&p.file_sizes, q->index.len, void*);
+			struct q_entry **it;
+			uint i = 0;
+			FFSLICE_WALK(&q->index, it) {
+				fffileinfo fi;
+				uint64 fs = 0;
+				if (!fffile_info_path((*it)->pub.conf.ifile.name, &fi))
+					fs = fffileinfo_size(&fi);
+				*ffvec_pushT(&p.file_sizes, uint64) = fs;
+				(*it)->index = i++;
+			}
+		}
+
+		ffsort(q->index.ptr, q->index.len, sizeof(void*), q_sort_cmp, &p);
+
+		q_sort_params_destroy(&p);
 	}
 
 	dbglog("sorted %L entries", q->index.len);
