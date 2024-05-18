@@ -242,6 +242,7 @@ static int conf_prepare(struct httpcl *h, struct nml_http_client_conf *c)
 	if (1)
 		ffstr_growaddz(&c->headers, &headers_cap, "Icy-MetaData: 1\r\n");
 
+	c->max_redirect = 10;
 	return 0;
 }
 
