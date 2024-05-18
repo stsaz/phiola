@@ -11,6 +11,7 @@ struct icy {
 	icyread icy;
 	const phi_meta_if *metaif;
 	ffstr data;
+	ffvec meta;
 };
 
 static void* icy_open(phi_track *t)
@@ -24,12 +25,19 @@ static void* icy_open(phi_track *t)
 static void icy_close(void *ctx, phi_track *t)
 {
 	struct icy *c = ctx;
+	ffvec_free(&c->meta);
 	phi_track_free(t, c);
 }
 
 static int icy_meta(struct icy *c, ffstr data, phi_track *t)
 {
 	dbglog(t, "meta: [%L] \"%S\"", data.len, &data);
+	if (c->meta.len == data.len
+		&& !ffmem_cmp(c->meta.ptr, data.ptr, data.len)) {
+		return 0; // meta hasn't really changed
+	}
+	c->meta.len = 0;
+	ffvec_add2(&c->meta, &data, 1);
 
 	ffstr artist = {}, title = {};
 	for (;;) {
@@ -41,24 +49,30 @@ static int icy_meta(struct icy *c, ffstr data, phi_track *t)
 			icymeta_artist_title(v, &artist, &title);
 	}
 
-	ffvec utf = {};
+	ffvec utf = {}, utf2 = {};
 
 	if (!ffutf8_valid_str(artist)) {
 		ffstr_growadd_codepage((ffstr*)&utf, &utf.cap, artist.ptr, artist.len, FFUNICODE_WIN1252);
 		artist = *(ffstr*)&utf;
-		utf.len = 0;
 	}
-	c->metaif->destroy(&t->meta);
-	c->metaif->set(&t->meta, FFSTR_Z("artist"), artist, 0);
-
 	if (!ffutf8_valid_str(title)) {
-		ffstr_growadd_codepage((ffstr*)&utf, &utf.cap, title.ptr, title.len, FFUNICODE_WIN1252);
-		title = *(ffstr*)&utf;
+		ffstr_growadd_codepage((ffstr*)&utf2, &utf2.cap, title.ptr, title.len, FFUNICODE_WIN1252);
+		title = *(ffstr*)&utf2;
 	}
-	c->metaif->set(&t->meta, FFSTR_Z("title"), title, 0);
 
-	t->meta_changed = 1;
+	ffstr martist = {}, mtitle = {};
+	c->metaif->find(&t->meta, FFSTR_Z("title"), &mtitle, 0);
+	c->metaif->find(&t->meta, FFSTR_Z("artist"), &martist, 0);
+	if (!ffstr_ieq2(&title, &mtitle)
+		|| !ffstr_ieq2(&artist, &martist)) {
+		c->metaif->destroy(&t->meta);
+		c->metaif->set(&t->meta, FFSTR_Z("artist"), artist, 0);
+		c->metaif->set(&t->meta, FFSTR_Z("title"), title, 0);
+		t->meta_changed = 1;
+	}
+
 	ffvec_free(&utf);
+	ffvec_free(&utf2);
 	return 0;
 }
 
