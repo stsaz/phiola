@@ -329,8 +329,10 @@ Java_com_github_stsaz_phiola_Phiola_quConvertUpdate(JNIEnv *env, jobject thiz, j
 	struct phi_queue_entry *qe;
 	uint n = 0;
 	for (uint i = 0;  !!(qe = x->queue->at(q, i));  i++) {
-		if (i >= x->conversion_tracks.len)
+		if (i >= x->conversion_tracks.len) {
+			n++;
 			break;
+		}
 
 		struct conv_track_info *cti = (struct conv_track_info*)x->conversion_tracks.ptr + i;
 		if (cti->final)
