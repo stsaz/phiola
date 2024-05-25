@@ -412,7 +412,7 @@ static void tui_destroy()
 static void tui_conf(struct phi_ui_conf *c)
 {
 	if (c->volume_percent != 0xff)
-		mod->vol = ffmax((uint)c->volume_percent, VOL_MAX);
+		mod->vol = ffmin((uint)c->volume_percent, VOL_MAX);
 }
 
 static struct phi_ui_if phi_tui_if = {
