@@ -192,8 +192,20 @@ public class ConvertActivity extends AppCompatActivity {
 	}
 
 	private void save() {
-		core.setts.conv_out_dir = b.eOutDir.getText().toString();
-		core.setts.conv_out_name = b.eOutName.getText().toString();
+		String s = b.eOutDir.getText().toString();
+		if (s.isEmpty()) {
+			s = "@filepath";
+			b.eOutDir.setText(s);
+		}
+		core.setts.conv_out_dir = s;
+
+		s = b.eOutName.getText().toString();
+		if (s.isEmpty()) {
+			s = "@filename";
+			b.eOutName.setText(s);
+		}
+		core.setts.conv_out_name = s;
+
 		core.setts.conv_format = CoreSettings.conv_formats[b.spOutExt.getSelectedItemPosition()];
 		core.setts.conv_copy = b.swCopy.isChecked();
 
@@ -239,27 +251,26 @@ public class ConvertActivity extends AppCompatActivity {
 		b.bStart.setEnabled(false);
 		b.lResult.setText(R.string.conv_working);
 
+		save();
+
 		Phiola.ConvertParams p = new Phiola.ConvertParams();
 		p.from_msec = b.eFrom.getText().toString();
 		p.to_msec = b.eUntil.getText().toString();
-		p.copy = b.swCopy.isChecked();
+		p.copy = core.setts.conv_copy;
 		p.sample_rate = core.str_to_uint(b.eSampleRate.getText().toString(), 0);
-		p.aac_quality = core.str_to_uint(b.eAacQ.getText().toString(), 0);
-		p.opus_quality = core.str_to_uint(b.eOpusQ.getText().toString(), 0);
+		p.aac_quality = core.setts.conv_aac_quality;
+		p.opus_quality = core.setts.conv_opus_quality;
+		p.vorbis_quality = (core.setts.conv_vorbis_quality + 1) * 10;
 
 		int iformat = b.spOutExt.getSelectedItemPosition();
 		p.format = CoreSettings.conv_encoders[iformat];
 
-		int q = core.str_to_uint(b.eVorbisQ.getText().toString(), 0);
-		if (q != 0)
-			p.vorbis_quality = (q + 1) * 10;
-
-		if (b.swPreserveDate.isChecked())
+		if (core.setts.conv_file_date_preserve)
 			p.flags |= Phiola.ConvertParams.F_DATE_PRESERVE;
 		if (false)
 			p.flags |= Phiola.ConvertParams.F_OVERWRITE;
 
-		if (b.swPlAdd.isChecked())
+		if (core.setts.conv_new_add_list)
 			p.q_add_remove = getIntent().getLongExtra("current_list_id", 0);
 
 		if (b.swTrashOrig.isChecked()) {
@@ -268,18 +279,8 @@ public class ConvertActivity extends AppCompatActivity {
 			p.q_pos = getIntent().getIntExtra("active_track_pos", 0);
 		}
 
-		String odir = b.eOutDir.getText().toString();
-		if (odir.isEmpty()) {
-			b.eOutDir.setText("@filepath");
-			odir = "@filepath";
-		}
-		String oname = b.eOutName.getText().toString();
-		if (oname.isEmpty()) {
-			b.eOutName.setText("@filename");
-			oname = "@filename";
-		}
 		p.out_name = String.format("%s/%s.%s"
-			, odir, oname, CoreSettings.conv_extensions[iformat]);
+			, core.setts.conv_out_dir, core.setts.conv_out_name, CoreSettings.conv_extensions[iformat]);
 
 		String r = core.queue().convert_begin(p);
 		if (r != null) {
