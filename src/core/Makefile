@@ -17,7 +17,7 @@ CORE_O := \
 	auto.o \
 	dir-read.o \
 	file.o\
-	qu.o \
+	queue.o \
 	track.o
 ifeq "$(OS)" "windows"
 	CORE_O += sys-sleep-win.o
@@ -34,8 +34,6 @@ libphiola.$(SO): $(CORE_O)
 
 CFLAGS_CORE := $(CFLAGS) -DFFBASE_OPT_SIZE
 %.o: $(PHIOLA)/src/core/%.c
-	$(C) $(CFLAGS_CORE) $< -o $@
-%.o: $(PHIOLA)/src/queue/%.c
 	$(C) $(CFLAGS_CORE) $< -o $@
 %.o: $(PHIOLA)/src/jni/%.c
 	$(C) $(CFLAGS_CORE) $< -o $@

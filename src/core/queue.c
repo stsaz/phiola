@@ -53,7 +53,7 @@ enum Q_TKCL_F {
 static void q_ent_closed(struct phi_queue *q, uint flags);
 static void q_modified(struct phi_queue *q);
 
-#include <queue/ent.h>
+#include <core/queue-entry.h>
 
 static int q_play_next(struct phi_queue *q);
 static void q_on_change(phi_queue_id q, uint flags, uint pos){}
