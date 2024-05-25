@@ -358,7 +358,7 @@ go_fwd:
 
 	if (chain_modified) {
 		char buf[200];
-		dbglog(t, "chain (%L): [%s]"
+		dbglog(t, "chain (%u): [%s]"
 			, t->conveyor.n_active, conveyor_print(&t->conveyor, NULL, buf, sizeof(buf)));
 	}
 

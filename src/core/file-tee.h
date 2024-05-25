@@ -108,7 +108,7 @@ static void* tee_open(phi_track *t)
 		return PHI_OPEN_SKIP;
 	}
 
-	struct tee *c = ffmem_new(struct tee);
+	struct tee *c = phi_track_allocT(t, struct tee);
 	c->o_stdout = o_stdout;
 	if (!meta_if)
 		meta_if = core->mod("format.meta");
@@ -121,7 +121,7 @@ static void tee_close(void *f, phi_track *t)
 	if (c->out_trk)
 		core->track->stop(c->out_trk);
 	tee_brg_unref(c->brg);
-	ffmem_free(c);
+	phi_track_free(t, c);
 }
 
 static int tee_process(void *f, phi_track *t)

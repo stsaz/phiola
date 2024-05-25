@@ -74,7 +74,7 @@ static inline unsigned zzlog_build(struct zzlog *l, unsigned flags, char *buffer
 
 	if (tid != 0) {
 		d[r++] = '#';
-		r += ffs_fromint(tid, &d[r], cap - r, 0);
+		r += ffs_from_uint_10(tid, &d[r], cap - r);
 		d[r++] = ' ';
 	}
 
