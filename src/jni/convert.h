@@ -32,6 +32,7 @@ static const char* trk_errstr(uint e)
 		"Output file already exists", // PHI_E_DSTEXIST
 		"Unknown input file format", // PHI_E_UNKIFMT
 		"Input audio device problem", // PHI_E_AUDIO_INPUT
+		"Cancelled", // PHI_E_CANCELLED
 	};
 	const char *s = "Unknown";
 	if (e < FF_COUNT(errstr))
@@ -137,6 +138,12 @@ static void conv_ui_close(void *ctx, phi_track *t)
 static int conv_ui_process(void *ctx, phi_track *t)
 {
 	struct conv_track *c = ctx;
+
+	if (FFINT_READONCE(x->conversion_interrupt)) {
+		t->error = PHI_E_CANCELLED;
+		return PHI_ERR;
+	}
+
 	if (t->audio.pos != ~0ULL)
 		c->pos_sec = (uint)(samples_to_msec(t->audio.pos, c->sample_rate) / 1000);
 

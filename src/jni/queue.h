@@ -9,8 +9,13 @@ static void qu_on_change(phi_queue_id q, uint flags, uint pos)
 	case 'r':
 	case 'c':
 	case 'u':
-	case '.':
 		break;
+
+	case '.':
+		if (q == x->q_conversion && x->conversion_interrupt)
+			x->conversion_interrupt = 2;
+		break;
+
 	default:
 		return;
 	}
@@ -308,6 +313,8 @@ Java_com_github_stsaz_phiola_Phiola_quConvertBegin(JNIEnv *env, jobject thiz, jl
 	ffvec_free_align(&x->conversion_tracks);
 	ffvec_alloc_alignT(&x->conversion_tracks, i, 64, struct conv_track_info);
 
+	x->q_conversion = q;
+	x->conversion_interrupt = 0;
 	if (i)
 		x->queue->play(NULL, x->queue->at(q, 0));
 
@@ -330,7 +337,8 @@ Java_com_github_stsaz_phiola_Phiola_quConvertUpdate(JNIEnv *env, jobject thiz, j
 	uint n = 0;
 	for (uint i = 0;  !!(qe = x->queue->at(q, i));  i++) {
 		if (i >= x->conversion_tracks.len) {
-			n++;
+			if (x->conversion_interrupt != 2) // the queue was not stopped by interrupt signal
+				n++;
 			break;
 		}
 
@@ -372,6 +380,14 @@ Java_com_github_stsaz_phiola_Phiola_quConvertUpdate(JNIEnv *env, jobject thiz, j
 	}
 	dbglog("%s: exit", __func__);
 	return n;
+}
+
+JNIEXPORT void JNICALL
+Java_com_github_stsaz_phiola_Phiola_quConvertInterrupt(JNIEnv *env, jobject thiz)
+{
+	dbglog("%s: enter", __func__);
+	FFINT_WRITEONCE(x->conversion_interrupt, 1);
+	dbglog("%s: exit", __func__);
 }
 
 JNIEXPORT jint JNICALL

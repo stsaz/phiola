@@ -774,4 +774,8 @@ class Queue {
 		if (i_selected == i_conversion)
 			nfy_all(QueueNotify.UPDATE, -1);
 	}
+
+	void convert_cancel() {
+		core.phiola.quConvertInterrupt();
+	}
 }

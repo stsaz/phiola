@@ -127,6 +127,7 @@ enum PHI_E {
 	PHI_E_DSTEXIST, // target exists already
 	PHI_E_UNKIFMT, // unknown input format
 	PHI_E_AUDIO_INPUT,
+	PHI_E_CANCELLED,
 	PHI_E_OTHER = 255,
 	PHI_E_SYS = 0x80000000,
 };

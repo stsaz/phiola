@@ -25,6 +25,8 @@ struct phiola_jni {
 	phi_queue_id q_add_remove;
 	char *trash_dir_rel;
 	int q_pos;
+	phi_queue_id q_conversion;
+	uint conversion_interrupt;
 
 	jclass Phiola_class;
 	jclass Phiola_Meta;

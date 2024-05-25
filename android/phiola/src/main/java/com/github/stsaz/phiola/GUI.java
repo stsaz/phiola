@@ -3,7 +3,9 @@
 
 package com.github.stsaz.phiola;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.widget.Toast;
 
 class GUI {
@@ -86,5 +88,15 @@ class GUI {
 	 */
 	void msg_show(Context ctx, String fmt, Object... args) {
 		Toast.makeText(ctx, String.format(fmt, args), Toast.LENGTH_SHORT).show();
+	}
+
+	void dlg_question(Context ctx, String title, String msg, String btn_yes, String btn_no, DialogInterface.OnClickListener on_click) {
+		new AlertDialog.Builder(ctx)
+			.setTitle(title)
+			.setMessage(msg)
+			.setPositiveButton(btn_yes, on_click)
+			.setNegativeButton(btn_no, null)
+			.setIcon(android.R.drawable.ic_dialog_alert)
+			.show();
 	}
 }

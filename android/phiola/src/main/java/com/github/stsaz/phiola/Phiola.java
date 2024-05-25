@@ -136,6 +136,8 @@ class Phiola {
 	/** Update current status of all entries. */
 	native int quConvertUpdate(long q);
 
+	native void quConvertInterrupt();
+
 	native String quDisplayLine(long q, int i);
 
 	/** Load playlist from a file on disk */

@@ -696,8 +696,6 @@ public class MainActivity extends AppCompatActivity {
 			return "Please close the existing Conversion list";
 		case Queue.E_NOENT:
 			return "Please navigate to a list you want to convert";
-		case Queue.E_BUSY:
-			return "Conversion is in progress";
 		}
 		return "";
 	}
@@ -707,13 +705,21 @@ public class MainActivity extends AppCompatActivity {
 		int trk_pos = queue.active_track_pos();
 		int qi = queue.convert_add(Queue.CONV_CUR_LIST);
 		if (qi < 0) {
+
+			if (qi == Queue.E_BUSY) {
+				convert_busy();
+				return;
+			}
+
 			core.errlog(TAG, q_error(qi));
 			return;
 		}
+
 		if (view_explorer)
 			plist_click();
 		else
 			list_update();
+
 		bplaylist_text(qi);
 		startActivity(new Intent(this, ConvertActivity.class)
 			.putExtra("current_list_id", qi_old)
@@ -725,22 +731,43 @@ public class MainActivity extends AppCompatActivity {
 		int trk_pos = queue.active_track_pos();
 		int qi = queue.convert_add(Queue.CONV_CUR_FILE);
 		if (qi < 0) {
+
+			if (qi == Queue.E_BUSY) {
+				convert_busy();
+				return;
+			}
+
 			String e = q_error(qi);
 			if (qi == Queue.E_NOENT)
 				e = "Please start playback of the file you want to convert";
 			core.errlog(TAG, e);
 			return;
 		}
+
 		if (view_explorer)
 			plist_click();
 		else
 			list_update();
+
 		bplaylist_text(qi);
 		startActivity(new Intent(this, ConvertActivity.class)
 			.putExtra("current_list_id", qi_old)
 			.putExtra("active_track_pos", trk_pos)
 			.putExtra("iname", track.cur_url())
 			.putExtra("length", total_dur_msec));
+	}
+
+	private void convert_busy() {
+		gui.dlg_question(this, "Conversion in progress"
+			, "Conversion is already in progress.\nDo you want to interrupt it?"
+			, "Interrupt", "Do nothing"
+			, (dialog, which) -> { convert_cancel(); }
+			);
+	}
+
+	private void convert_cancel() {
+		queue.convert_cancel();
+		gui.msg_show(this, "Conversion has been interrupted");
 	}
 
 	/** Start recording */
