@@ -409,11 +409,24 @@ static void tui_destroy()
 	ffmem_free(mod);
 }
 
+static void tui_conf(struct phi_ui_conf *c)
+{
+	if (c->volume_percent != 0xff)
+		mod->vol = ffmax((uint)c->volume_percent, VOL_MAX);
+}
+
+static struct phi_ui_if phi_tui_if = {
+	.conf = tui_conf,
+};
+
 static const void* tui_iface(const char *name)
 {
-	if (ffsz_eq(name, "play")) return &phi_tuiplay;
-	else if (ffsz_eq(name, "rec")) return &phi_tuirec;
-	return NULL;
+	static const struct map_sz_vptr ifs[] = {
+		{"if",		&phi_tui_if},
+		{"play",	&phi_tuiplay},
+		{"rec",		&phi_tuirec},
+	};
+	return map_sz_vptr_findz2(ifs, FF_COUNT(ifs), name);
 }
 
 static const phi_mod phi_tui_mod = {

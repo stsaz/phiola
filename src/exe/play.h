@@ -50,6 +50,7 @@ Options:\n\
 \n\
   `-perf`                 Print performance counters\n\
   `-remote`               Listen for incoming remote commands\n\
+  `-volume` NUMBER        Set initial volume level: 0..100\n\
 ");
 	x->exit_code = 0;
 	return 1;
@@ -72,6 +73,7 @@ struct cmd_play {
 	uint	buffer;
 	uint	device;
 	uint	rbuffer_kb;
+	uint	volume;
 	uint64	seek;
 	uint64	until;
 };
@@ -136,6 +138,14 @@ static void play_qu_add(struct cmd_play *p, ffstr *fn)
 
 static int play_action(struct cmd_play *p)
 {
+	if (p->volume != ~0U) {
+		struct phi_ui_conf uc = {
+			.volume_percent = p->volume,
+		};
+		const phi_ui_if *uif = x->core->mod("tui.if");
+		uif->conf(&uc);
+	}
+
 	if (p->audio.len)
 		p->audio_module = ffsz_allocfmt("%S.play", &p->audio);
 
@@ -203,6 +213,7 @@ static const struct ffarg cmd_play[] = {
 	{ "-tee",		's',	O(tee) },
 	{ "-tracks",	'S',	play_tracks },
 	{ "-until",		'S',	play_until },
+	{ "-volume",	'u',	O(volume) },
 	{ "\0\1",		'S',	play_input },
 	{ "",			0,		play_check },
 };
@@ -218,5 +229,7 @@ static void cmd_play_free(struct cmd_play *p)
 
 static struct ffarg_ctx cmd_play_init(void *obj)
 {
-	return SUBCMD_INIT(ffmem_new(struct cmd_play), cmd_play_free, play_action, cmd_play);
+	struct cmd_play *p = ffmem_new(struct cmd_play);
+	p->volume = ~0U;
+	return SUBCMD_INIT(p, cmd_play_free, play_action, cmd_play);
 }

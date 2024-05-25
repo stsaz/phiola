@@ -564,6 +564,7 @@ struct phi_tag_if {
 
 typedef void (*phi_log_ctl)(uint flags);
 struct phi_ui_conf {
+	u_char volume_percent;
 	phi_log_ctl log_ctl;
 };
 
