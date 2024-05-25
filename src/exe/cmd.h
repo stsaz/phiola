@@ -166,6 +166,7 @@ Global options:\n\
   `-Background`   Create new process running in background\n\
   `-Codepage`     Codepage for non-Unicode text:\n\
                   win866 | win1251 | win1252\n\
+  `-Log` FILE     Append log messages to a file (default: stdout or stderr)\n\
   `-Debug`        Print debug log messages\n\
 \n\
 Commands:\n\
@@ -219,6 +220,20 @@ static int cmd_codepage(void *obj, ffstr s)
 	if (r < 0)
 		return _ffargs_err(&x->cmd, 1, "unknown codepage: '%S'", &s);
 	x->codepage_id = r;
+	return 0;
+}
+
+static int cmd_log_file(void *obj, const char *s)
+{
+	fffd f;
+	if (FFFILE_NULL == (f = fffile_open(s, FFFILE_CREATE | FFFILE_APPEND | FFFILE_WRITEONLY))) {
+		return _ffargs_err(&x->cmd, 1, "file open: '%s': (%u) %s"
+			, s, fferr_last(), fferr_strptr(fferr_last()));
+	}
+	x->log.fd = f;
+	x->log.use_color = 0;
+	x->log.fd_file = 1;
+	x->log_file = 1;
 	return 0;
 }
 
@@ -355,6 +370,7 @@ static const struct ffarg cmd_root[] = {
 	{ "-Background",'1',		O(background) },
 	{ "-Codepage",	'S',		cmd_codepage },
 	{ "-Debug",		'1',		O(debug) },
+	{ "-Log",		's',		cmd_log_file },
 
 	{ "-help",		0,			root_help },
 

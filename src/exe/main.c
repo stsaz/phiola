@@ -49,6 +49,7 @@ struct exe {
 	uint mode_record :1;
 	uint stdin_busy :1;
 	uint stdout_busy :1;
+	uint log_file :1;
 	uint dont_exit :1;
 
 	ffstr codepage;
@@ -315,7 +316,7 @@ int main(int argc, char **argv, char **env)
 #endif
 	if (cmd(argv, argc, x->cmd_line)) goto end;
 
-	if (x->stdout_busy)
+	if (x->stdout_busy && !x->log_file)
 		logs(&x->log);
 	if (core()) goto end;
 	version_print();
