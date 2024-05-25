@@ -14,8 +14,8 @@ ffui_exec
 #include <ffsys/process.h>
 #include <ffsys/dylib.h>
 
-#define LIBGIO_PATH  "/lib64/libgio-2.0.so"
-#define LIBGOBJECT_PATH  "/lib64/libgobject-2.0.so"
+#define LIBGIO_PATH  "/lib64/libgio-2.0.so.0"
+#define LIBGOBJECT_PATH  "/lib64/libgobject-2.0.so.0"
 
 /** Move file to Trash via libgio.
 error: (Optional) Error message
