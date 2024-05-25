@@ -576,7 +576,8 @@ static int q_sort_cmp(const void *_a, const void *_b, void *udata)
 	const struct q_entry *a = *(struct q_entry**)_a, *b = *(struct q_entry**)_b;
 	const struct q_sort_params *p = udata;
 
-	if (p->flags == PHI_Q_SORT_FILESIZE) {
+	if (p->flags == PHI_Q_SORT_FILESIZE
+		|| p->flags == PHI_Q_SORT_FILEDATE) {
 		const uint64 *fs = p->file_sizes.ptr;
 		if (fs[a->index] > fs[b->index])
 			return -1;
@@ -598,15 +599,19 @@ static void q_sort(phi_queue_id q, uint flags)
 		p.flags = flags;
 		p.index = (const struct q_entry**)q->index.ptr;
 
-		if (flags == PHI_Q_SORT_FILESIZE) {
+		if (flags == PHI_Q_SORT_FILESIZE
+			|| flags == PHI_Q_SORT_FILEDATE) {
 			ffvec_allocT(&p.file_sizes, q->index.len, void*);
 			struct q_entry **it;
 			uint i = 0;
 			FFSLICE_WALK(&q->index, it) {
 				fffileinfo fi;
 				uint64 fs = 0;
-				if (!fffile_info_path((*it)->pub.conf.ifile.name, &fi))
+				if (!fffile_info_path((*it)->pub.conf.ifile.name, &fi)) {
 					fs = fffileinfo_size(&fi);
+					if (flags == PHI_Q_SORT_FILEDATE)
+						fs = fffileinfo_mtime(&fi).sec;
+				}
 				*ffvec_pushT(&p.file_sizes, uint64) = fs;
 				(*it)->index = i++;
 			}

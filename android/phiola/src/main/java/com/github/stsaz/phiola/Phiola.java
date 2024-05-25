@@ -119,7 +119,8 @@ class Phiola {
 		QUCOM_SORT = 5,
 			QU_SORT_FILENAME = 0,
 			QU_SORT_FILESIZE = 1,
-			QU_SORT_RANDOM = 2,
+			QU_SORT_FILEDATE = 2,
+			QU_SORT_RANDOM = 3,
 		QUCOM_REMOVE_NON_EXISTING = 6;
 	native int quCmd(long q, int cmd, int i);
 

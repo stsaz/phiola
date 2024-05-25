@@ -35,6 +35,9 @@
 	<item android:id="@+id/action_list_sort_filesize"
 		android:title="@string/mlist_sort_filesize" />
 
+	<item android:id="@+id/action_list_sort_filedate"
+		android:title="@string/mlist_sort_filedate" />
+
 	<item android:id="@+id/action_list_shuffle"
 		android:title="@string/mlist_shuffle" />
 

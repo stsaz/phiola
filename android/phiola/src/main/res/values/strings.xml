@@ -40,6 +40,7 @@
 	<string name="mlist_trk_added">Added track to Playlist %d</string>
 	<string name="mlist_sort">List: Sort</string>
 	<string name="mlist_sort_filesize">List: Sort by File Size</string>
+	<string name="mlist_sort_filedate">List: Sort by File Date</string>
 	<string name="mlist_shuffle">List: Shuffle</string>
 	<string name="mlist_convert">List: Convert All...</string>
 

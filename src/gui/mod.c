@@ -400,6 +400,10 @@ void ctl_action(uint cmd)
 		n = PHI_Q_SORT_FILESIZE;
 		goto list_sort;
 
+	case A_LIST_SORT_FILEDATE:
+		n = PHI_Q_SORT_FILEDATE;
+		goto list_sort;
+
 	case A_LIST_SHUFFLE:
 		n = PHI_Q_SORT_RANDOM;
 list_sort:
