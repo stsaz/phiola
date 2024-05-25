@@ -352,6 +352,7 @@ static void core_kev_free(uint worker, phi_kevent *kev)
 
 	PHI_ASSERT(worker < cc->wx.workers.len);
 	struct worker *w = ffslice_itemT(&cc->wx.workers, worker, struct worker);
+	ffkcall_cancel(&((struct zzkevent*)kev)->kcall);
 	zzkq_kev_free(&w->kq, (void*)kev);
 	dbglog("kev free: %p", kev);
 }
