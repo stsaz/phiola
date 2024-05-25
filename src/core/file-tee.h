@@ -56,7 +56,8 @@ static int tee_brg_process(void *f, phi_track *t)
 		dbglog(t, "ring -%L [%L]", tb->rhead.nu - tb->rhead.old, ffring_used(tb->ring));
 	}
 
-	tb->rhead = ffring_read_begin(tb->ring, tb->ring->cap, &t->data_out, NULL);
+	uint chunk_size = tb->ring->cap / 10;
+	tb->rhead = ffring_read_begin(tb->ring, chunk_size, &t->data_out, NULL);
 	if (!t->data_out.len) {
 		if (t->chain_flags & PHI_FSTOP)
 			return PHI_DONE;
@@ -72,10 +73,12 @@ static const phi_filter phi_tee_brg = {
 
 
 struct tee {
-	uint			state;
+	uint	state;
+	uint	o_stdout :1;
+	uint	meta_change_seen :1;
+
 	phi_track*		out_trk;
 	struct tee_brg*	brg;
-	uint			o_stdout;
 };
 
 static void* tee_open(phi_track *t)
@@ -125,18 +128,17 @@ static int tee_process(void *f, phi_track *t)
 {
 	struct tee *c = f;
 	uint start_track = 0, wake_track = 0;
-	enum { I_INIT, I_WAIT_META, I_DATA };
+	enum { I_WAIT_META, I_DATA };
+
+	uint new_meta = (t->meta_changed && !c->meta_change_seen);
+	c->meta_change_seen = t->meta_changed;
+
+	if (!(t->chain_flags & PHI_FFWD))
+		return PHI_MORE;
 
 	switch (c->state) {
-	case I_INIT:
-		c->state = I_WAIT_META; // begin waiting for meta data
-		break;
-
 	case I_DATA:
-		if (!(t->chain_flags & PHI_FFWD))
-			return PHI_MORE;
-
-		if (!t->meta_changed) {
+		if (!new_meta) {
 			wake_track = 1;
 			break; // pass data through
 		}
@@ -145,20 +147,10 @@ static int tee_process(void *f, phi_track *t)
 		c->out_trk = NULL;
 		tee_brg_unref(c->brg);
 		c->brg = NULL;
+		break;
+	}
 
-		c->state = I_WAIT_META; // begin waiting for meta data
-		// fallthrough
-
-	case I_WAIT_META: {
-		if (!t->meta.len) {
-			if (!(t->chain_flags & PHI_FFWD))
-				return PHI_MORE;
-
-			break; // continue waiting for meta data
-		}
-
-		// new meta data
-
+	if (new_meta) {
 		/*
 		icy -> tee -> ... -> audio.output
 		          \
@@ -186,17 +178,16 @@ static int tee_process(void *f, phi_track *t)
 
 		start_track = 1;
 		c->state = I_DATA;
-		break;
-	}
 	}
 
 	if (!c->brg)
 		c->brg = tee_brg_new(10*3000*1024/8); // 10 seconds of audio at 3000kbit/sec
 
-	if (t->data_in.len != ffring_write_all_str(c->brg->ring, t->data_in))
-		warnlog(t, "ring buffer is full");
-	else
+	if (t->data_in.len != ffring_write_all_str(c->brg->ring, t->data_in)) {
+		warnlog(t, "ring buffer is full; skip chunk of size %L", t->data_in.len);
+	} else {
 		dbglog(t, "ring +%L [%L]", t->data_in.len, ffring_used(c->brg->ring));
+	}
 
 	if (start_track) {
 		c->brg->users = 2;
