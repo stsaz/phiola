@@ -143,7 +143,7 @@ static void fw_name_var(ffvec *buf, ffstr var, phi_track *t)
 	case VAR_NOWDATE:
 	case VAR_NOWTIME:
 		if (!dt.year)
-			core->time(&dt, 0);
+			core->time(&dt, PHI_CORE_TIME_LOCAL);
 		if (r == VAR_NOWDATE)
 			ffvec_addfmt(buf, "%04u%02u%02u", dt.year, dt.month, dt.day);
 		else
