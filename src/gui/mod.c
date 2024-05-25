@@ -878,25 +878,27 @@ static void gui_destroy()
 
 
 phi_log_ctl gui_log_ctl;
-static void gui_log_setup(phi_log_ctl func)
+static void gui_conf(struct phi_ui_conf *c)
 {
-	gui_log_ctl = func;
+	gui_log_ctl = c->log_ctl;
 }
 
 extern void gui_log(void *udata, ffstr s);
-static const phi_log_if phi_gui_log_if = {
-	gui_log_setup,
-	gui_log,
+static const phi_ui_if phi_gui_if = {
+	.conf = gui_conf,
+	.log = gui_log,
 };
 
 
 extern const phi_filter phi_gui_track;
 static const void* gui_iface(const char *name)
 {
-	if (ffsz_eq(name, "track")) return &phi_gui_track;
-	else if (ffsz_eq(name, "track-convert")) return &phi_gui_conv;
-	else if (ffsz_eq(name, "log")) return &phi_gui_log_if;
-	return NULL;
+	static const struct map_sz_vptr ifs[] = {
+		{"if",				&phi_gui_if},
+		{"track",			&phi_gui_track},
+		{"track-convert",	&phi_gui_conv},
+	};
+	return map_sz_vptr_findz2(ifs, FF_COUNT(ifs), name);
 }
 
 static const phi_mod phi_gui_mod = {

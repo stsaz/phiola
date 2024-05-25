@@ -560,11 +560,15 @@ struct phi_tag_if {
 };
 
 
-/** GUI logging backend */
+/** UI configuration */
 
 typedef void (*phi_log_ctl)(uint flags);
-typedef struct phi_log_if phi_log_if;
-struct phi_log_if {
-	void (*setup)(phi_log_ctl func);
+struct phi_ui_conf {
+	phi_log_ctl log_ctl;
+};
+
+typedef struct phi_ui_if phi_ui_if;
+struct phi_ui_if {
+	void (*conf)(struct phi_ui_conf *c);
 	void (*log)(void *udata, ffstr s);
 };

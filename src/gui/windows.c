@@ -15,11 +15,11 @@
 struct ctx {
 	const phi_core *core;
 	const phi_queue_if *queue;
+	const phi_ui_if	*uif;
 
 	struct zzlog		log;
 	fftime				time_last;
 	char				log_date[32];
-	const phi_log_if*	logif;
 
 	char	fn_buf[128], *fn;
 	ffstr	root_dir;
@@ -183,7 +183,7 @@ static int core()
 static void gui_log_ctl(uint flags)
 {
 	if (flags)
-		x->log.func = x->logif->log; // GUI is ready to display logs
+		x->log.func = x->uif->log; // GUI is ready to display logs
 	else
 		x->log.func = NULL;
 }
@@ -200,8 +200,11 @@ static void logs()
 		"DEBUG+",
 	};
 	ffmem_copy(x->log.levels, levels, sizeof(levels));
-	x->logif = x->core->mod("gui.log");
-	x->logif->setup(gui_log_ctl);
+	x->uif = x->core->mod("gui.if");
+	struct phi_ui_conf uc = {
+		.log_ctl = gui_log_ctl,
+	};
+	x->uif->conf(&uc);
 }
 
 static int input(struct ctx *x, char *s)
