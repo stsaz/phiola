@@ -299,19 +299,31 @@ static void tui_stdin_prepare(void *param)
 {
 	if (core->conf.stdin_busy) return;
 
+	uint kq_attach = 1;
+
+#ifdef FF_WIN
+	DWORD mode;
+	if (!GetConsoleMode(ffstdin, &mode)) {
+		infolog(NULL, "TUI commands won't work because stdin is not a console");
+		return; // Asynchronous reading from a pipe is not supported
+	}
+	kq_attach = 0;
+
+#else
 	uint attr = FFSTD_LINEINPUT;
 	ffstd_attr(ffstdin, attr, 0);
-
-#ifdef FF_UNIX
-	mod->kev = core->kev_alloc(0);
-	mod->kev->rhandler = tui_cmd_read;
-	mod->kev->obj = mod;
-	mod->kev->rtask.active = 1;
-	if (core->kq_attach(0, mod->kev, ffstdin, 1))
-		return;
-	if (fffile_nonblock(ffstdin, 1))
-		syswarnlog(NULL, "fffile_nonblock()");
 #endif
+
+	if (kq_attach) {
+		mod->kev = core->kev_alloc(0);
+		mod->kev->rhandler = tui_cmd_read;
+		mod->kev->obj = mod;
+		mod->kev->rtask.active = 1;
+		if (core->kq_attach(0, mod->kev, ffstdin, 1))
+			return;
+		if (ffpipe_nonblock(ffstdin, 1))
+			syswarnlog(NULL, "ffpipe_nonblock()");
+	}
 
 	tui_cmd_read(mod);
 }
