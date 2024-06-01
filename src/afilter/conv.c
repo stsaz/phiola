@@ -37,14 +37,6 @@ static void aconv_close(void *ctx, phi_track *t)
 	phi_track_free(t, c);
 }
 
-static inline char* af_print(const struct phi_af *af, char *buf, ffsize cap)
-{
-	int r = ffs_format_r0(buf, cap - 1, "%s/%u/%u/%s"
-		, phi_af_name(af->format), af->rate, af->channels, (af->interleaved) ? "i" : "ni");
-	buf[r] = '\0';
-	return buf;
-}
-
 static void log_pcmconv(int r, const struct phi_af *in, const struct phi_af *out, phi_track *t)
 {
 	int level = PHI_LOG_DEBUG;
@@ -58,7 +50,7 @@ static void log_pcmconv(int r, const struct phi_af *in, const struct phi_af *out
 
 	char bufi[100], bufo[100];
 	core->conf.log(core->conf.log_obj, level, NULL, t, "audio conversion%s: %s -> %s"
-		, unsupp, af_print(in, bufi, 100), af_print(out, bufo, 100));
+		, unsupp, phi_af_print(in, bufi, 100), phi_af_print(out, bufo, 100));
 }
 
 /** Set array elements to point to consecutive regions of one buffer */

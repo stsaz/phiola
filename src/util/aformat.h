@@ -40,6 +40,14 @@ static inline int phi_af_val(ffstr s)
 	return phi_af_values[r];
 }
 
+static inline char* phi_af_print(const struct phi_af *af, char *buf, ffsize cap)
+{
+	int r = ffs_format_r0(buf, cap - 1, "%s/%u/%u/%s"
+		, phi_af_name(af->format), af->rate, af->channels, (af->interleaved) ? "i" : "ni");
+	buf[r] = '\0';
+	return buf;
+}
+
 
 static const char _pcm_channelstr[][10] = {
 	"mono", "stereo",

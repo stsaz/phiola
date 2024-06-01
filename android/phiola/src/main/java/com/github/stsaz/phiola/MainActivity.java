@@ -378,7 +378,7 @@ public class MainActivity extends AppCompatActivity {
 
 	private void show_ui() {
 		int mode = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
-		if (core.gui().theme == GUI.THM_DARK)
+		if (gui.theme == GUI.THM_DARK)
 			mode = AppCompatDelegate.MODE_NIGHT_YES;
 		AppCompatDelegate.setDefaultNightMode(mode);
 
@@ -831,7 +831,7 @@ public class MainActivity extends AppCompatActivity {
 	// [Playing]
 	// [PLA,STP,REC|RPA,CON]
 	private String state_flags(int st) {
-		if (core.gui().state_hide) return "";
+		if (gui.state_hide) return "";
 
 		if ((st & (GUI.STATE_PLAYING | GUI.STATE_RECORDING | GUI.STATE_CONVERTING)) == 0)
 			return "";
@@ -890,7 +890,7 @@ public class MainActivity extends AppCompatActivity {
 		String title = t.name;
 		if (!t.date.isEmpty())
 			title = String.format("%s [%s]", title, t.date);
-		if (core.gui().ainfo_in_title && !t.info.isEmpty())
+		if (gui.ainfo_in_title && !t.info.isEmpty())
 			title = String.format("%s [%s]", title, t.info);
 		b.lname.setText(title);
 
