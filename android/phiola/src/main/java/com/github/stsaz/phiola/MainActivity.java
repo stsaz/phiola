@@ -33,9 +33,6 @@ import com.github.stsaz.phiola.databinding.MainBinding;
 
 public class MainActivity extends AppCompatActivity {
 	private static final String TAG = "phiola.MainActivity";
-	private static final int REQUEST_PERM_READ_STORAGE = 1;
-	private static final int REQUEST_PERM_RECORD = 2;
-	static final int REQUEST_STORAGE_ACCESS = 1;
 
 	private Core core;
 	private GUI gui;
@@ -233,6 +230,10 @@ public class MainActivity extends AppCompatActivity {
 		return true;
 	}
 
+	private static final int
+		REQUEST_PERM_READ_STORAGE = 1,
+		REQUEST_PERM_RECORD = 2;
+
 	/** Called by OS with the result of requestPermissions(). */
 	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
 		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -240,21 +241,17 @@ public class MainActivity extends AppCompatActivity {
 			core.dbglog(TAG, "onRequestPermissionsResult: %d: %d", requestCode, grantResults[0]);
 	}
 
-	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+	static final int
+		REQUEST_STORAGE_ACCESS = 1,
+		REQUEST_CONVERT = 2;
+
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		core.dbglog(TAG, "onActivityResult: requestCode:%d resultCode:%d", requestCode, resultCode);
 		super.onActivityResult(requestCode, resultCode, data);
 
-		if (resultCode != RESULT_OK) {
-			if (resultCode != RESULT_CANCELED)
-				core.errlog(TAG, "onActivityResult: requestCode:%d resultCode:%d", requestCode, resultCode);
-			return;
+		if (requestCode == REQUEST_CONVERT) {
+			convert_started();
 		}
-
-		/*switch (requestCode) {
-			case REQUEST_STORAGE_ACCESS:
-				if (Environment.isExternalStorageManager()) {
-				}
-				break;
-		}*/
 	}
 
 	/** Request system permissions */
@@ -293,9 +290,7 @@ public class MainActivity extends AppCompatActivity {
 		queue = core.queue();
 		quenfy = new QueueNotify() {
 			public void on_change(int how, int pos) {
-				if (view_explorer) return;
-
-				pl_adapter.on_change(how, pos);
+				list_on_change(how, pos);
 			}
 		};
 		queue.nfy_add(quenfy);
@@ -587,6 +582,16 @@ public class MainActivity extends AppCompatActivity {
 			b.list.scrollToPosition(pos);
 	}
 
+	private void list_on_change(int how, int pos) {
+		if (how == QueueNotify.CONVERT_COMPLETE) {
+			convert_complete();
+			return;
+		}
+
+		if (!view_explorer)
+			pl_adapter.on_change(how, pos);
+	}
+
 	private void list_update() {
 		pl_adapter.on_change(0, -1);
 	}
@@ -726,9 +731,10 @@ public class MainActivity extends AppCompatActivity {
 			list_update();
 
 		bplaylist_text(qi);
-		startActivity(new Intent(this, ConvertActivity.class)
-			.putExtra("current_list_id", qi_old)
-			.putExtra("active_track_pos", trk_pos));
+		startActivityForResult(new Intent(this, ConvertActivity.class)
+				.putExtra("current_list_id", qi_old)
+				.putExtra("active_track_pos", trk_pos)
+			, REQUEST_CONVERT);
 	}
 
 	private void file_convert() {
@@ -755,11 +761,22 @@ public class MainActivity extends AppCompatActivity {
 			list_update();
 
 		bplaylist_text(qi);
-		startActivity(new Intent(this, ConvertActivity.class)
-			.putExtra("current_list_id", qi_old)
-			.putExtra("active_track_pos", trk_pos)
-			.putExtra("iname", track.cur_url())
-			.putExtra("length", total_dur_msec));
+		startActivityForResult(new Intent(this, ConvertActivity.class)
+				.putExtra("current_list_id", qi_old)
+				.putExtra("active_track_pos", trk_pos)
+				.putExtra("iname", track.cur_url())
+				.putExtra("length", total_dur_msec)
+			, REQUEST_CONVERT);
+	}
+
+	private void convert_started() {
+		state(GUI.STATE_CONVERTING, GUI.STATE_CONVERTING);
+		startService(new Intent(this, RecSvc.class));
+	}
+
+	private void convert_complete() {
+		stopService(new Intent(this, RecSvc.class));
+		state(GUI.STATE_CONVERTING, 0);
 	}
 
 	private void convert_busy() {
@@ -812,35 +829,41 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	// [Playing]
-	// [PLA,STP,REC]
+	// [PLA,STP,REC|RPA,CON]
 	private String state_flags(int st) {
 		if (core.gui().state_hide) return "";
 
-		String s = "";
-		if ((st & (GUI.STATE_PLAYING | GUI.STATE_RECORDING)) != 0) {
-			s = "[";
+		if ((st & (GUI.STATE_PLAYING | GUI.STATE_RECORDING | GUI.STATE_CONVERTING)) == 0)
+			return "";
 
-			if ((st & GUI.STATE_PLAYING) != 0) {
-				if (st == GUI.STATE_PLAYING)
-					s += getString(R.string.main_st_playing);
-				else
-					s += "PLA";
+		String s = "[";
 
-				if ((st & GUI.STATE_AUTO_STOP) != 0)
-					s += ",STP";
-			}
+		if ((st & GUI.STATE_PLAYING) != 0) {
+			if (st == GUI.STATE_PLAYING)
+				s += getString(R.string.main_st_playing);
+			else
+				s += "PLA";
 
-			if ((st & GUI.STATE_RECORDING) != 0) {
-				if ((st & GUI.STATE_PLAYING) != 0)
-					s += ",";
-				if ((st & GUI.STATE_REC_PAUSED) != 0)
-					s += "RPA";
-				else
-					s += "REC";
-			}
-
-			s += "]";
+			if ((st & GUI.STATE_AUTO_STOP) != 0)
+				s += ",STP";
 		}
+
+		if ((st & GUI.STATE_RECORDING) != 0) {
+			if ((st & GUI.STATE_PLAYING) != 0)
+				s += ",";
+			if ((st & GUI.STATE_REC_PAUSED) != 0)
+				s += "RPA";
+			else
+				s += "REC";
+		}
+
+		if ((st & GUI.STATE_CONVERTING) != 0) {
+			if ((st & (GUI.STATE_PLAYING | GUI.STATE_RECORDING)) != 0)
+				s += ",";
+			s += "CON";
+		}
+
+		s += "]";
 		return s;
 	}
 

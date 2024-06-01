@@ -182,9 +182,11 @@ class PhiolaQueue {
 }
 
 interface QueueNotify {
-	static final int UPDATE = 0;
-	static final int ADDED = 1;
-	static final int REMOVED = 2;
+	static final int
+		UPDATE = 0,
+		ADDED = 1,
+		REMOVED = 2,
+		CONVERT_COMPLETE = 3;
 	/** Called when the queue is modified. */
 	void on_change(int how, int pos);
 }
@@ -770,6 +772,7 @@ class Queue {
 			converting = false;
 			convert_update_timer.cancel();
 			convert_update_timer = null;
+			nfy_all(QueueNotify.CONVERT_COMPLETE, 0);
 		}
 		if (i_selected == i_conversion)
 			nfy_all(QueueNotify.UPDATE, -1);

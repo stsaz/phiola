@@ -115,7 +115,6 @@
 	<string name="conv_pl_add">Add New File to Playlist</string>
 
 	<string name="conv_go">Begin Conversion</string>
-	<string name="conv_working">Working…</string>
 
 	<string name="about_save_logs">Save system logs to file</string>
 	<string name="about_log_saved">Saved logs to %s</string>

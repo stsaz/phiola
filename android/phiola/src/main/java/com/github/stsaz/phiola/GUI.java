@@ -30,7 +30,8 @@ class GUI {
 		MASK_PLAYBACK = 7,
 		STATE_AUTO_STOP = 8,
 		STATE_RECORDING = 0x10,
-		STATE_REC_PAUSED = 0x20;
+		STATE_REC_PAUSED = 0x20,
+		STATE_CONVERTING = 0x40;
 	int state;
 
 	GUI(Core core) {

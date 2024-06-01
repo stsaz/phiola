@@ -33,9 +33,9 @@ public class RecSvc extends Service {
 
 	private Notification notification_create() {
 		NotificationCompat.Builder nfy = new NotificationCompat.Builder(this
-				, notification_channel_create("phiola.chan-rec", "chanrecname"))
+				, notification_channel_create("phiola.chan-work", "chanworkname"))
 			.setContentTitle("phiola")
-			.setContentText("Recording audio")
+			.setContentText("Recording/converting audio")
 			;
 		return nfy.build();
 	}

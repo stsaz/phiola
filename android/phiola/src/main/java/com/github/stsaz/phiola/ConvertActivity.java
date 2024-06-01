@@ -249,7 +249,6 @@ public class ConvertActivity extends AppCompatActivity {
 	String iname, oname;
 	private void convert() {
 		b.bStart.setEnabled(false);
-		b.lResult.setText(R.string.conv_working);
 
 		save();
 
@@ -286,6 +285,10 @@ public class ConvertActivity extends AppCompatActivity {
 		if (r != null) {
 			b.bStart.setEnabled(true);
 			b.lResult.setText(r);
+			return;
 		}
+
+		setResult(RESULT_OK);
+		finish();
 	}
 }
