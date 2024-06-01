@@ -152,6 +152,13 @@ static int rec_action(struct cmd_rec *r)
 			.gain_db = r->gain,
 			.danorm = r->danorm,
 		},
+		.oaudio = {
+			.format = {
+				.format = r->aformat,
+				.rate = r->rate,
+				.channels = r->channels,
+			},
+		},
 		.aac = {
 			.profile = r->aac_profile[0],
 			.quality = r->aac_q,
