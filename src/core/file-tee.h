@@ -38,8 +38,9 @@ static void tee_brg_close(void *f, phi_track *t)
 {
 	struct tee_brg *tb = f;
 	tee_brg_unref(tb);
+	t->udata = NULL;
 	meta_if->destroy(&t->meta);
-	ffmem_free(t->conf.ofile.name);
+	ffmem_free(t->conf.ofile.name);  t->conf.ofile.name = NULL;
 }
 
 static inline ffsize ffring_used(ffring *b)
@@ -193,7 +194,7 @@ static int tee_process(void *f, phi_track *t)
 		c->brg->users = 2;
 		c->out_trk->udata = c->brg;
 		core->track->start(c->out_trk);
-	} else if (wake_track) {
+	} else if (wake_track && c->out_trk->udata) {
 		core->track->wake(c->out_trk);
 	}
 
