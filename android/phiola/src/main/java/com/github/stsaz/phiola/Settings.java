@@ -99,9 +99,6 @@ class CoreSettings {
 		conv_out_dir = "@filepath";
 		conv_out_name = "@filename";
 		conv_format = "m4a";
-		conv_aac_quality = 5;
-		conv_opus_quality = 192;
-		conv_vorbis_quality = 7;
 	}
 
 	String conf_write() {
@@ -176,6 +173,12 @@ class CoreSettings {
 	void normalize_convert() {
 		if (conv_format.isEmpty())
 			conv_format = "m4a";
+		if (conv_aac_quality <= 0)
+			conv_aac_quality = 5;
+		if (conv_opus_quality <= 0)
+			conv_opus_quality = 192;
+		if (conv_vorbis_quality <= 0)
+			conv_vorbis_quality = 7;
 	}
 
 	void normalize() {
@@ -215,22 +218,22 @@ class CoreSettings {
 
 		rec_path = kv[Conf.REC_PATH].value;
 		rec_enc = kv[Conf.REC_ENC].value;
-		rec_channels = core.str_to_uint(kv[Conf.REC_CHANNELS].value, 0);
-		rec_rate = core.str_to_uint(kv[Conf.REC_RATE].value, 0);
-		rec_bitrate = core.str_to_uint(kv[Conf.REC_BITRATE].value, rec_bitrate);
-		rec_buf_len_ms = core.str_to_uint(kv[Conf.REC_BUF_LEN].value, rec_buf_len_ms);
+		rec_channels = kv[Conf.REC_CHANNELS].number;
+		rec_rate = kv[Conf.REC_RATE].number;
+		rec_bitrate = kv[Conf.REC_BITRATE].number;
+		rec_buf_len_ms = kv[Conf.REC_BUF_LEN].number;
 		rec_danorm = kv[Conf.REC_DANORM].enabled;
 		rec_exclusive = kv[Conf.REC_EXCLUSIVE].enabled;
 		rec_longclick = kv[Conf.REC_LONGCLICK].enabled;
 		rec_until_sec = core.str_to_uint(kv[Conf.REC_UNTIL].value, rec_until_sec);
-		rec_gain_db100 = core.str_to_int(kv[Conf.REC_GAIN].value, rec_gain_db100);
+		rec_gain_db100 = kv[Conf.REC_GAIN].number;
 
 		conv_out_dir = kv[Conf.CONV_OUT_DIR].value;
 		conv_out_name = kv[Conf.CONV_OUT_NAME].value;
 		conv_format = kv[Conf.CONV_FORMAT].value;
-		conv_aac_quality = core.str_to_uint(kv[Conf.CONV_AAC_Q].value, conv_aac_quality);
-		conv_opus_quality = core.str_to_uint(kv[Conf.CONV_OPUS_Q].value, conv_opus_quality);
-		conv_vorbis_quality = core.str_to_uint(kv[Conf.CONV_VORBIS_Q].value, conv_vorbis_quality);
+		conv_aac_quality = kv[Conf.CONV_AAC_Q].number;
+		conv_opus_quality = kv[Conf.CONV_OPUS_Q].number;
+		conv_vorbis_quality = kv[Conf.CONV_VORBIS_Q].number;
 		conv_copy = kv[Conf.CONV_COPY].enabled;
 		conv_file_date_preserve = kv[Conf.CONV_FILE_DATE_PRES].enabled;
 		conv_new_add_list = kv[Conf.CONV_NEW_ADD_LIST].enabled;

@@ -642,8 +642,8 @@ class Queue {
 	}
 
 	void conf_load(Conf.Entry[] kv) {
-		curpos = core.str_to_uint(kv[Conf.LIST_CURPOS].value, 0);
-		i_active = core.str_to_uint(kv[Conf.LIST_ACTIVE].value, 0);
+		curpos = kv[Conf.LIST_CURPOS].number;
+		i_active = kv[Conf.LIST_ACTIVE].number;
 		i_selected = i_active;
 		random(kv[Conf.LIST_RANDOM].enabled);
 		repeat(kv[Conf.LIST_REPEAT].enabled);
@@ -653,7 +653,7 @@ class Queue {
 
 		auto_skip_beginning.parse(kv[Conf.PLAY_AUTO_SKIP].value);
 		auto_skip_tail.parse(kv[Conf.PLAY_AUTO_SKIP_TAIL].value);
-		auto_stop.value_min = core.str_to_uint(kv[Conf.PLAY_AUTO_STOP].value, 0);
+		auto_stop.value_min = kv[Conf.PLAY_AUTO_STOP].number;
 	}
 
 	void conf_normalize() {

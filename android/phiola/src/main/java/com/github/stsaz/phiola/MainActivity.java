@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
 			core.dbglog(TAG, "onStop()");
 			queue.saveconf();
 			if (!view_explorer)
-				pl_leave();
+				list_leave();
 			core.saveconf();
 		}
 		super.onStop();
@@ -464,7 +464,7 @@ public class MainActivity extends AppCompatActivity {
 		b.bexplorer.setChecked(true);
 		if (view_explorer) return;
 
-		pl_leave();
+		list_leave();
 		view_explorer = true;
 		b.bplaylist.setChecked(false);
 		b.tfilter.setVisibility(View.INVISIBLE);
@@ -474,7 +474,7 @@ public class MainActivity extends AppCompatActivity {
 		list_update();
 	}
 
-	void plist_click() {
+	private void plist_click() {
 		b.bplaylist.setChecked(true);
 		if (!view_explorer) {
 			list_switch();
@@ -592,14 +592,16 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void plist_show() {
-		b.list.scrollToPosition(gui.list_pos);
+		int n = gui.list_scroll_pos(queue.current_list_index());
+		if (n != 0)
+			b.list.scrollToPosition(n);
 	}
 
 	/** Called when we're leaving the playlist tab */
-	void pl_leave() {
+	void list_leave() {
 		queue.filter("");
 		LinearLayoutManager llm = (LinearLayoutManager)b.list.getLayoutManager();
-		gui.list_pos = llm.findLastCompletelyVisibleItemPosition();
+		gui.list_scroll_pos_set(queue.current_list_index(), llm.findLastCompletelyVisibleItemPosition());
 	}
 
 	private void plist_filter(String filter) {
@@ -676,12 +678,15 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void list_switch() {
+		list_leave();
+
 		int qi = queue.next_list_select();
-		if (view_explorer)
-			plist_click();
-		else
-			list_update();
+		list_update();
 		bplaylist_text(qi);
+
+		int n = gui.list_scroll_pos(qi);
+		if (n != 0)
+			b.list.scrollToPosition(n);
 	}
 
 	private void list_next_add_cur() {

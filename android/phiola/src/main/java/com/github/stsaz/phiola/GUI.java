@@ -17,7 +17,7 @@ class GUI {
 	boolean record_hide;
 	boolean ainfo_in_title;
 	String cur_path = ""; // current explorer path
-	int list_pos; // list scroll position
+	private int[] list_pos; // list scroll position
 
 	static final int THM_DEF = 0;
 	static final int THM_DARK = 1;
@@ -35,6 +35,7 @@ class GUI {
 
 	GUI(Core core) {
 		this.core = core;
+		list_pos = new int[3];
 	}
 
 	String conf_write() {
@@ -43,15 +44,19 @@ class GUI {
 			+ "ui_state_hide %d\n"
 			+ "ui_filter_hide %d\n"
 			+ "ui_record_hide %d\n"
-			+ "list_pos %d\n"
 			+ "ui_info_in_title %d\n"
+			+ "ui_list_scroll_pos0 %d\n"
+			+ "ui_list_scroll_pos1 %d\n"
+			+ "ui_list_scroll_pos2 %d\n"
 			+ "ui_theme %d\n"
 			, cur_path
 			, core.bool_to_int(state_hide)
 			, core.bool_to_int(filter_hide)
 			, core.bool_to_int(record_hide)
-			, list_pos
 			, core.bool_to_int(ainfo_in_title)
+			, list_pos[0]
+			, list_pos[1]
+			, list_pos[2]
 			, theme
 			);
 	}
@@ -61,9 +66,11 @@ class GUI {
 		state_hide = kv[Conf.UI_STATE_HIDE].enabled;
 		filter_hide = kv[Conf.UI_FILTER_HIDE].enabled;
 		record_hide = kv[Conf.UI_RECORD_HIDE].enabled;
-		list_pos = core.str_to_uint(kv[Conf.LIST_POS].value, 0);
 		ainfo_in_title = kv[Conf.UI_INFO_IN_TITLE].enabled;
-		theme = core.str_to_uint(kv[Conf.UI_THEME].value, 0);
+		list_pos[0] = kv[Conf.UI_LIST_SCROLL_POS0].number;
+		list_pos[1] = kv[Conf.UI_LIST_SCROLL_POS1].number;
+		list_pos[2] = kv[Conf.UI_LIST_SCROLL_POS2].number;
+		theme = kv[Conf.UI_THEME].number;
 	}
 
 	boolean state_test(int mask) { return (state & mask) != 0; }
@@ -75,6 +82,17 @@ class GUI {
 			core.dbglog(TAG, "state: %x -> %x", old, _new);
 		}
 		return old;
+	}
+
+	int list_scroll_pos(int i) {
+		if (i >= list_pos.length)
+			return 0;
+		return list_pos[i];
+	}
+
+	void list_scroll_pos_set(int i, int n) {
+		if (i < list_pos.length)
+			list_pos[i] = n;
 	}
 
 	void on_error(String fmt, Object... args) {

@@ -20,7 +20,6 @@ static const char setting_names[][20] = {
 	"list_active",
 	"list_add_rm_on_next",
 	"list_curpos",
-	"list_pos",
 	"list_random",
 	"list_repeat",
 	"list_rm_on_err",
@@ -48,6 +47,9 @@ static const char setting_names[][20] = {
 	"ui_curpath",
 	"ui_filter_hide",
 	"ui_info_in_title",
+	"ui_list_scroll_pos0",
+	"ui_list_scroll_pos1",
+	"ui_list_scroll_pos2",
 	"ui_record_hide",
 	"ui_state_hide",
 	"ui_svc_notfn_disable",
@@ -67,6 +69,7 @@ Java_com_github_stsaz_phiola_Conf_confRead(JNIEnv *env, jobject thiz, jstring jf
 	jclass jc = jni_class(PJC_CONF_ENTRY);
 	jmethodID jinit = jni_func(jc, "<init>", "()V");
 	jfieldID jf_value = jni_field(jc, "value", JNI_TSTR);
+	jfieldID jf_number = jni_field(jc, "number", JNI_TINT);
 	jfieldID jf_enabled = jni_field(jc, "enabled", JNI_TBOOL);
 
 	ffstr s = FFSTR_INITSTR(&d);
@@ -87,7 +90,11 @@ Java_com_github_stsaz_phiola_Conf_confRead(JNIEnv *env, jobject thiz, jstring jf
 		v.ptr[v.len] = '\0';
 		jni_obj_sz_set(env, jo, jf_value, v.ptr);
 
-		jni_obj_bool_set(jo, jf_enabled, ffstr_eqz(&v, "1"));
+		int n;
+		if (ffstr_to_int32(&v, &n)) {
+			jni_obj_int_set(jo, jf_number, n);
+			jni_obj_bool_set(jo, jf_enabled, (n == 1));
+		}
 
 		jni_joa_i_set(joa, r + 1, jo);
 		jni_local_unref(jo);
