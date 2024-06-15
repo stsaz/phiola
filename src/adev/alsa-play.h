@@ -156,7 +156,8 @@ static int alsa_write(audio_out *a, phi_track *t)
 		}
 	}
 
-	r = audio_out_write(a, t);
+	uint old_state = ~0U;
+	r = audio_out_write(a, t, &old_state);
 	return r;
 }
 

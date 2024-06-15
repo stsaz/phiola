@@ -153,7 +153,8 @@ static int wasapi_write(void *ctx, phi_track *t)
 		}
 	}
 
-	r = audio_out_write(w, t);
+	uint old_state = ~0U;
+	r = audio_out_write(w, t, &old_state);
 	if (r == PHI_ERR) {
 		wasapi_buf_close();
 		core->timer(t->worker, &mod->tmr, 0, NULL, NULL);

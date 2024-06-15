@@ -152,7 +152,7 @@ static inline void audio_out_stop(audio_out *a)
 	audio_out_onplay(a);
 }
 
-static int audio_out_write(audio_out *a, phi_track *t)
+static int audio_out_write(audio_out *a, phi_track *t, uint *old_state)
 {
 	int r;
 
@@ -174,6 +174,7 @@ static int audio_out_write(audio_out *a, phi_track *t)
 		t->oaudio.pause = 0;
 		if (0 != a->audio->stop(a->stream))
 			warnlog(t, "pause: audio.stop: %s", a->audio->error(a->stream));
+		*old_state = FF_SWAP(&a->state, ST_PAUSED);
 		return PHI_ASYNC;
 	}
 
@@ -189,7 +190,7 @@ static int audio_out_write(audio_out *a, phi_track *t)
 		if (r > 0) {
 			//
 		} else if (r == 0) {
-			a->state = ST_WAITING;
+			*old_state = FF_SWAP(&a->state, ST_WAITING);
 			return PHI_ASYNC;
 
 		} else if (r == -FFAUDIO_ESYNC) {
@@ -225,11 +226,11 @@ static int audio_out_write(audio_out *a, phi_track *t)
 			return PHI_ERR;
 		}
 
-		a->state = ST_WAITING;
+		*old_state = FF_SWAP(&a->state, ST_WAITING);
 		return PHI_ASYNC; //wait until all filled bytes are played
 	}
 
-	a->state = ST_FEEDING;
+	*old_state = FF_SWAP(&a->state, ST_FEEDING);
 	return PHI_MORE;
 }
 

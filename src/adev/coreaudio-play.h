@@ -86,7 +86,8 @@ static int coraud_write(void *ctx, phi_track *t)
 		}
 	}
 
-	r = audio_out_write(&c->out, t);
+	uint old_state = ~0U;
+	r = audio_out_write(&c->out, t, &old_state);
 	return r;
 }
 

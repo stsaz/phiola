@@ -146,7 +146,14 @@ static int pulse_write(void *ctx, phi_track *t)
 		}
 	}
 
-	r = audio_out_write(a, t);
+	uint old_state = ~0U;
+	r = audio_out_write(a, t, &old_state);
+	if (old_state != ~0U) {
+		if (a->state == ST_PAUSED)
+			core->timer(t->worker, &mod->tmr, 0, NULL, NULL);
+		else if (old_state == ST_PAUSED)
+			core->timer(t->worker, &mod->tmr, mod->buffer_length_msec / 2, audio_out_onplay, a);
+	}
 	return r;
 }
 
