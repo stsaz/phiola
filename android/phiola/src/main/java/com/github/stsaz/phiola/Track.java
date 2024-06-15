@@ -3,15 +3,12 @@
 
 package com.github.stsaz.phiola;
 
-import android.media.MediaPlayer;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
 import androidx.collection.SimpleArrayMap;
 
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
 
 abstract class PlaybackObserver {
 	/** Called for each new track.
@@ -66,170 +63,6 @@ class TrackHandle {
 	}
 }
 
-class MP {
-	private static final String TAG = "phiola.MP";
-	private MediaPlayer mp;
-	private Timer tmr;
-	private Core core;
-
-	MP(Core core) {
-		this.core = core;
-
-		core.track.filter_add(new Filter() {
-			public int open(TrackHandle t) {
-				return on_open(t);
-			}
-
-			public void close(TrackHandle t) {
-				on_close(t);
-			}
-
-			public int process(TrackHandle t) {
-				return on_process(t);
-			}
-		});
-	}
-
-	private int on_open(TrackHandle t) {
-		t.state = Track.STATE_OPENING;
-
-		if (mp == null)
-			mp = new MediaPlayer();
-		mp.setOnPreparedListener((mp) -> on_start(t));
-		mp.setOnCompletionListener((mp) -> on_complete(t));
-		mp.setOnSeekCompleteListener((mp) -> on_seek_complete(t));
-		mp.setOnErrorListener((mp, what, extra) -> {
-				on_error(t);
-				return false;
-			});
-		try {
-			mp.setDataSource(t.url);
-			mp.prepareAsync(); // -> on_start()
-		} catch (Exception e) {
-			core.errlog(TAG, "mp.setDataSource: %s", e);
-			return -1;
-		}
-		return 0;
-	}
-
-	private void on_close(TrackHandle t) {
-		if (tmr != null) {
-			tmr.cancel();
-			tmr = null;
-		}
-
-		if (mp != null) {
-			try {
-				mp.stop();
-			} catch (Exception ignored) {
-			}
-			mp.reset();
-		}
-	}
-
-	private void seek(long pos_msec) {
-		if (Build.VERSION.SDK_INT < 26) {
-			mp.seekTo((int)pos_msec);
-			return;
-		}
-
-		mp.seekTo(pos_msec, MediaPlayer.SEEK_PREVIOUS_SYNC);
-	}
-
-	private int on_process(TrackHandle t) {
-		if (t.seek_msec != -1) {
-			if (t.state == Track.STATE_PLAYING)
-				t.state = Track.STATE_SEEKING;
-
-			if (t.seek_msec >= t.time_total_msec - t.skip_tail_msec)
-				t.skip_tail_msec = 0; // disable auto-skip after manual seek in tail area
-
-			seek(t.seek_msec);
-			t.seek_msec = -1;
-		}
-
-		if (t.skip_tail_msec > 0
-			&& t.pos_msec >= t.time_total_msec - t.skip_tail_msec) {
-			on_complete(t);
-
-		} else if (t.state == Track.STATE_PAUSED) {
-			mp.pause();
-		} else if (t.state == Track.STATE_UNPAUSE) {
-			t.state = Track.STATE_PLAYING;
-			mp.start();
-		}
-		return 0;
-	}
-
-	/**
-	 * Called by MediaPlayer when it's ready to start
-	 */
-	private void on_start(TrackHandle t) {
-		core.dbglog(TAG, "prepared");
-
-		tmr = new Timer();
-		tmr.schedule(new TimerTask() {
-			public void run() {
-				on_timer(t);
-			}
-		}, 0, 500);
-
-		t.state = Track.STATE_PLAYING;
-		t.time_total_msec = mp.getDuration();
-
-		if (t.seek_msec > 0) {
-			t.seek_msec = Math.min(t.seek_msec, t.time_total_msec / 2);
-			core.dbglog(TAG, "initial seek: %d", t.seek_msec);
-			seek(t.seek_msec);
-			t.seek_msec = -1;
-		}
-
-		mp.start(); // ->on_complete(), ->on_error()
-	}
-
-	private void on_seek_complete(TrackHandle t) {
-		core.dbglog(TAG, "on_seek_complete");
-		if (t.state == Track.STATE_SEEKING)
-			t.state = Track.STATE_PLAYING;
-	}
-
-	/**
-	 * Called by MediaPlayer when it's finished playing
-	 */
-	private void on_complete(TrackHandle t) {
-		core.dbglog(TAG, "completed");
-		if (t.state == Track.STATE_NONE)
-			return;
-
-		t.stopped = false;
-		core.track.close(t);
-	}
-
-	private void on_error(TrackHandle t) {
-		core.dbglog(TAG, "onerror");
-		t.error = true;
-		// -> on_complete()
-	}
-
-	private void on_timer(TrackHandle t) {
-		core.tq.post(() -> update(t));
-	}
-
-	private void update(TrackHandle t) {
-		if (t.state != Track.STATE_PLAYING)
-			return;
-		t.pos_msec = mp.getCurrentPosition();
-		if (t.prev_pos_msec < 0
-				|| t.pos_msec / 1000 != t.prev_pos_msec / 1000) {
-			t.prev_pos_msec = t.pos_msec;
-			core.track.update(t);
-		}
-	}
-}
-
-/**
- * Chain: Queue -> MP -> SysJobs -> Svc
- */
 class Track {
 	private static final String TAG = "phiola.Track";
 	private Core core;

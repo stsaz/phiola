@@ -25,7 +25,6 @@ class Core extends Util {
 	private Queue qu;
 	Track track;
 	private SysJobs sysjobs;
-	private MP mp;
 	Phiola phiola;
 	UtilNative util;
 	private Conf conf;
@@ -73,7 +72,6 @@ class Core extends Util {
 		gui = new GUI(this);
 		track = new Track(this);
 		qu = new Queue(this);
-		mp = new MP(this);
 		sysjobs = new SysJobs();
 		sysjobs.init(this);
 
