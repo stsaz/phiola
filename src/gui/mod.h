@@ -46,7 +46,6 @@ FF_EXTERN void list_select(uint i);
 FF_EXTERN void list_filter(ffstr filter);
 FF_EXTERN phi_queue_id list_id_visible();
 
-FF_EXTERN ffvec* gui_qe_meta(struct phi_queue_entry *qe);
 FF_EXTERN void ctl_play(uint i);
 FF_EXTERN void volume_set(uint vol);
 FF_EXTERN void ctl_volume();

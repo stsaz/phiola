@@ -443,6 +443,7 @@ struct phi_queue_conf {
 struct phi_queue_entry {
 	struct phi_track_conf conf;
 	uint length_msec;
+	uint lock; // For synchronizing access to `conf.meta`
 };
 
 enum PHI_Q_SORT {

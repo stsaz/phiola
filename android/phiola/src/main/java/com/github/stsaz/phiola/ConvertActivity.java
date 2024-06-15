@@ -276,7 +276,7 @@ public class ConvertActivity extends AppCompatActivity {
 		if (b.swTrashOrig.isChecked()) {
 			p.trash_dir_rel = core.setts.trash_dir;
 			p.q_add_remove = getIntent().getLongExtra("current_list_id", 0);
-			p.q_pos = getIntent().getIntExtra("active_track_pos", 0);
+			p.q_pos = getIntent().getIntExtra("active_track_pos", -1);
 		}
 
 		p.out_name = String.format("%s/%s.%s"

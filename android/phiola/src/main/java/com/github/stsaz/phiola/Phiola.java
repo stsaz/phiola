@@ -42,6 +42,7 @@ class Phiola {
 			from_msec = "";
 			to_msec = "";
 			trash_dir_rel = "";
+			q_pos = -1;
 		}
 
 		int format;

@@ -14,9 +14,50 @@ struct crash_info {
 	const char *dump_file_dir;
 	char buf[512], fn[512];
 	ffthread_bt bt;
+
+	char **argv;
+	unsigned argc;
+	const char *cmd_line;
+
 	uint back_trace :1;
 	uint print_std_err :1;
+	uint strip_paths :1;
 };
+
+#ifdef FF_WIN
+#define xsz_len  ffwsz_len
+#define xs_rfindchar  ffws_rfindchar
+#else
+#define xsz_len  ffsz_len
+#define xs_rfindchar  ffs_rfindchar
+#endif
+
+static void _crash_back_trace(struct crash_info *ci, fffd f, unsigned std_err)
+{
+	ffstr s = FFSTR_INITN(ci->buf, 0);
+	unsigned n = ffthread_backtrace(&ci->bt);
+	for (unsigned i = 0;  i < n;  i++) {
+
+		const char *frame = ffthread_backtrace_frame(&ci->bt, i);
+		const char *modbase = ffthread_backtrace_modbase(&ci->bt, i);
+		ffsize offset = frame - modbase;
+
+		const ffsyschar *modname = ffthread_backtrace_modname(&ci->bt, i);
+		if (ci->strip_paths) {
+			ssize_t k = xs_rfindchar(modname, xsz_len(modname), FFPATH_SLASH);
+			if (k > 0)
+				modname += k;
+		}
+
+		ffstr_addfmt(&s, sizeof(ci->buf), "#%u: 0x%p  %q+0x%xL\n"
+			, i, frame, modname, offset);
+
+		fffile_write(f, s.ptr, s.len);
+		if (std_err)
+			fffile_write(ffstderr, s.ptr, s.len);
+		s.len = 0;
+	}
+}
 
 static inline void crash_handler(struct crash_info *ci, struct ffsig_info *si)
 {
@@ -35,6 +76,25 @@ static inline void crash_handler(struct crash_info *ci, struct ffsig_info *si)
 	} else if (ci->print_std_err) {
 		std_err = 1;
 		ffstr_addfmt(&s, sizeof(ci->buf), "%s crashed: %s\n", ci->app_name, ci->fn);
+		fffile_write(ffstderr, s.ptr, s.len);
+		s.len = 0;
+	}
+
+	// command line
+	if (ci->cmd_line || ci->argc) {
+		if (ci->cmd_line) {
+			s.len = _ffs_copyz(s.ptr, sizeof(ci->buf), ci->cmd_line);
+		} else {
+			for (unsigned i = 0;  i < ci->argc;  i++) {
+				ffstr_addfmt(&s, sizeof(ci->buf), "\"%s\" ", ci->argv[i]);
+			}
+		}
+
+		ffstr_addchar(&s, sizeof(ci->buf), '\n');
+		fffile_write(f, s.ptr, s.len);
+		if (std_err)
+			fffile_write(ffstderr, s.ptr, s.len);
+		s.len = 0;
 	}
 
 	// general info
@@ -48,23 +108,8 @@ static inline void crash_handler(struct crash_info *ci, struct ffsig_info *si)
 		fffile_write(ffstderr, s.ptr, s.len);
 	s.len = 0;
 
-	if (ci->back_trace) {
-		int n = ffthread_backtrace(&ci->bt);
-		for (int i = 0;  i < n;  i++) {
-
-			const char *frame = ffthread_backtrace_frame(&ci->bt, i);
-			const char *modbase = ffthread_backtrace_modbase(&ci->bt, i);
-			ffsize offset = frame - modbase;
-			const ffsyschar *modname = ffthread_backtrace_modname(&ci->bt, i);
-			ffstr_addfmt(&s, sizeof(ci->buf), "#%u: 0x%p +%xL %q [0x%p]\n"
-				, i, frame, offset, modname, modbase);
-
-			fffile_write(f, s.ptr, s.len);
-			if (std_err)
-				fffile_write(ffstderr, s.ptr, s.len);
-			s.len = 0;
-		}
-	}
+	if (ci->back_trace)
+		_crash_back_trace(ci, f, std_err);
 
 	if (f != ffstderr)
 		fffile_close(f);

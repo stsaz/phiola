@@ -184,7 +184,6 @@ void wmain_track_close(void *param)
 	struct gui_track_info *ti = (struct gui_track_info*)param;
 
 	if (ti->index_new != ~0U) {
-		// TODO list_display() may read qe->conf.meta that has not yet been written in qe_close() by main thread
 		m->vlist.update(ti->index_new, 0);
 	}
 
@@ -243,6 +242,11 @@ void wmain_conv_track_update(phi_track *t, uint time_cur, uint time_total)
 	conv_track_update(t, buf);
 }
 
+static int is_url(const char *s)
+{
+	return (ffsz_matchz(s, "http://")
+		|| ffsz_matchz(s, "https://"));
+}
 
 static void list_display(ffui_view_disp *disp)
 {
@@ -261,7 +265,8 @@ static void list_display(ffui_view_disp *disp)
 	if (!qe)
 		return;
 
-	ffvec *meta = gui_qe_meta(qe);
+	fflock_lock((fflock*)&qe->lock); // core thread may read or write `conf.meta` at this moment
+	ffvec *meta = &qe->conf.meta;
 
 	switch (sub) {
 	case H_INDEX:
@@ -282,7 +287,10 @@ static void list_display(ffui_view_disp *disp)
 	switch (sub) {
 	case H_TITLE:
 		if (!val || !val->len) {
-			ffpath_split3_str(FFSTR_Z(qe->conf.ifile.name), NULL, &s, NULL); // use filename as a title
+			if (is_url(qe->conf.ifile.name))
+				ffstr_setz(&s, qe->conf.ifile.name); // use URL as a title
+			else
+				ffpath_split3_str(FFSTR_Z(qe->conf.ifile.name), NULL, &s, NULL); // use filename as a title
 			val = &s;
 		}
 		break;
@@ -305,6 +313,7 @@ static void list_display(ffui_view_disp *disp)
 #endif
 	}
 
+	fflock_unlock((fflock*)&qe->lock);
 	gd->queue->unref(qe);
 }
 

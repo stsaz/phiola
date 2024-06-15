@@ -286,16 +286,6 @@ end:
 	ffstr_free(&filter);
 }
 
-ffvec* gui_qe_meta(struct phi_queue_entry *qe)
-{
-	ffvec *meta = &qe->conf.meta;
-	if (qe == gd->qe_active) {
-		FF_ASSERT(gd->playing_track);
-		meta = &gd->playing_track->t->meta;
-	}
-	return meta;
-}
-
 void ctl_play(uint i)
 {
 	if (!gd->q_filtered && !gd->tab_conversion) {

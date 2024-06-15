@@ -83,7 +83,6 @@ static void gtrk_close(void *ctx, phi_track *t)
 	struct gtrk *gt = ctx;
 	if (gd->playing_track == gt) {
 		gd->qe_active = NULL;
-		ffcpu_fence_release(); // sync with gui_qe_meta()
 		gd->playing_track = NULL;
 		if (wmain_ready()) {
 			struct gui_track_info *ti = &gd->playback_track_info;
@@ -171,6 +170,15 @@ static int gtrk_process(void *ctx, phi_track *t)
 			ffpath_split3_str(FFSTR_Z(qe->conf.ifile.name), NULL, &title, NULL); // use filename as a title
 		ffsz_format(ti->buf, sizeof(ti->buf), "%S - %S - phiola"
 			, &artist, &title);
+
+		// We need to display the currently active track's meta data before `queue` does this on track close
+		fflock_lock((fflock*)&qe->lock); // UI thread may read or write `conf.meta` at this moment
+		ffvec meta_old = qe->conf.meta;
+		qe->conf.meta = t->meta;
+		fflock_unlock((fflock*)&qe->lock);
+
+		gd->metaif->destroy(&meta_old);
+		ffvec_null(&t->meta);
 
 		gui_task_ptr(wmain_track_new, ti);
 

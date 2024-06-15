@@ -21,12 +21,14 @@ struct phiola_jni {
 	ffbyte debug;
 	ffvec storage_paths; // char*[]
 
-	ffvec conversion_tracks; // struct conv_track_info[]
-	phi_queue_id q_add_remove;
-	char *trash_dir_rel;
-	int q_pos;
-	phi_queue_id q_conversion;
-	uint conversion_interrupt;
+	struct {
+		ffvec tracks; // struct conv_track_info[]
+		phi_queue_id q, q_add_remove;
+		char *trash_dir_rel;
+		int q_pos;
+		uint interrupt;
+		uint n_tracks_updated;
+	} convert;
 
 	jclass Phiola_class;
 	jclass Phiola_Meta;
@@ -271,8 +273,8 @@ Java_com_github_stsaz_phiola_Phiola_destroy(JNIEnv *env, jobject thiz)
 	ffvec_free(&x->storage_paths);
 
 	// ffmem_free(conv_track_info.error);
-	ffvec_free_align(&x->conversion_tracks);
-	ffmem_free(x->trash_dir_rel);
+	ffvec_free_align(&x->convert.tracks);
+	ffmem_free(x->convert.trash_dir_rel);
 	ffstr_free(&x->dir_libs);
 	ffmem_free(x);  x = NULL;
 }

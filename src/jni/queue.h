@@ -12,8 +12,8 @@ static void qu_on_change(phi_queue_id q, uint flags, uint pos)
 		break;
 
 	case '.':
-		if (q == x->q_conversion && x->conversion_interrupt)
-			x->conversion_interrupt = 2;
+		if (q == x->convert.q && x->convert.interrupt)
+			x->convert.interrupt = 2;
 		break;
 
 	default:
@@ -224,6 +224,7 @@ Java_com_github_stsaz_phiola_Phiola_quDisplayLine(JNIEnv *env, jobject thiz, jlo
 	char buf[256];
 	ffstr val = {};
 	struct phi_queue_entry *qe = x->queue.ref(q, i);
+	fflock_lock((fflock*)&qe->lock); // core thread may read or write `conf.meta` at this moment
 	if (x->metaif.find(&qe->conf.meta, FFSTR_Z("_phi_display"), &val, PHI_META_PRIVATE)) {
 		val.ptr = buf;
 		uint flags = x->queue.conf(q)->conversion;
@@ -232,6 +233,7 @@ Java_com_github_stsaz_phiola_Phiola_quDisplayLine(JNIEnv *env, jobject thiz, jlo
 		val.ptr[val.len] = '\0';
 	}
 	jstring js = jni_js_sz(val.ptr);
+	fflock_unlock((fflock*)&qe->lock);
 	x->queue.unref(qe);
 	dbglog("%s: exit", __func__);
 	return js;
@@ -288,11 +290,11 @@ Java_com_github_stsaz_phiola_Phiola_quConvertBegin(JNIEnv *env, jobject thiz, jl
 		goto end;
 	}
 
-	ffmem_free(x->trash_dir_rel);
-	x->trash_dir_rel = (trash_dir_rel[0]) ? ffsz_dup(trash_dir_rel) : NULL;
+	ffmem_free(x->convert.trash_dir_rel);
+	x->convert.trash_dir_rel = (trash_dir_rel[0]) ? ffsz_dup(trash_dir_rel) : NULL;
 
-	x->q_add_remove = (phi_queue_id)jni_obj_long(jconf, jni_field_long(jc_conf, "q_add_remove"));
-	x->q_pos = jni_obj_int(jconf, jni_field_int(jc_conf, "q_pos"));
+	x->convert.q_add_remove = (phi_queue_id)jni_obj_long(jconf, jni_field_long(jc_conf, "q_add_remove"));
+	x->convert.q_pos = jni_obj_int(jconf, jni_field_int(jc_conf, "q_pos"));
 
 	phi_queue_id q = (phi_queue_id)jq;
 	uint i;
@@ -311,11 +313,12 @@ Java_com_github_stsaz_phiola_Phiola_quConvertBegin(JNIEnv *env, jobject thiz, jl
 		c->ofile.overwrite = conf.ofile.overwrite;
 	}
 
-	ffvec_free_align(&x->conversion_tracks);
-	ffvec_alloc_alignT(&x->conversion_tracks, i, 64, struct conv_track_info);
+	ffvec_free_align(&x->convert.tracks);
+	ffvec_alloc_alignT(&x->convert.tracks, i, 64, struct conv_track_info);
 
-	x->q_conversion = q;
-	x->conversion_interrupt = 0;
+	x->convert.q = q;
+	x->convert.interrupt = 0;
+	x->convert.n_tracks_updated = ~0U;
 	if (i)
 		x->queue.play(NULL, x->queue.at(q, 0));
 
@@ -329,25 +332,21 @@ end:
 	return js;
 }
 
-JNIEXPORT jint JNICALL
-Java_com_github_stsaz_phiola_Phiola_quConvertUpdate(JNIEnv *env, jobject thiz, jlong jq)
+static void qu_conv_update(struct core_data *d)
 {
-	dbglog("%s: enter", __func__);
-	phi_queue_id q = (phi_queue_id)jq;
+	phi_queue_id q = d->q;
 	struct phi_queue_entry *qe;
 	uint n = 0;
 	for (uint i = 0;  !!(qe = x->queue.at(q, i));  i++) {
-		if (i >= x->conversion_tracks.len) {
-			if (x->conversion_interrupt != 2) // the queue was not stopped by interrupt signal
+		if (i >= x->convert.tracks.len) {
+			if (x->convert.interrupt != 2) // the queue was not stopped by interrupt signal
 				n++;
 			break;
 		}
 
-		struct conv_track_info *cti = (struct conv_track_info*)x->conversion_tracks.ptr + i;
+		struct conv_track_info *cti = (struct conv_track_info*)x->convert.tracks.ptr + i;
 		if (cti->final)
 			continue;
-
-		ffvec *meta = &qe->conf.meta;
 
 		char buf[256];
 		uint cap = sizeof(buf);
@@ -377,17 +376,30 @@ Java_com_github_stsaz_phiola_Phiola_quConvertUpdate(JNIEnv *env, jobject thiz, j
 			n++;
 		}
 
-		x->metaif.set(meta, FFSTR_Z("_phi_display"), val, PHI_META_REPLACE);
+		fflock_lock((fflock*)&qe->lock); // UI thread may read or write `conf.meta` at this moment
+		x->metaif.set(&qe->conf.meta, FFSTR_Z("_phi_display"), val, PHI_META_REPLACE);
+		fflock_unlock((fflock*)&qe->lock);
 	}
+	ffmem_free(d);
+	FFINT_WRITEONCE(x->convert.n_tracks_updated, n);
+}
+
+JNIEXPORT jint JNICALL
+Java_com_github_stsaz_phiola_Phiola_quConvertUpdate(JNIEnv *env, jobject thiz, jlong jq)
+{
+	dbglog("%s: enter", __func__);
+	struct core_data *d = ffmem_new(struct core_data);
+	d->q = (phi_queue_id)jq;
+	core_task(d, qu_conv_update);
 	dbglog("%s: exit", __func__);
-	return n;
+	return FFINT_READONCE(x->convert.n_tracks_updated);
 }
 
 JNIEXPORT void JNICALL
 Java_com_github_stsaz_phiola_Phiola_quConvertInterrupt(JNIEnv *env, jobject thiz)
 {
 	dbglog("%s: enter", __func__);
-	FFINT_WRITEONCE(x->conversion_interrupt, 1);
+	FFINT_WRITEONCE(x->convert.interrupt, 1);
 	dbglog("%s: exit", __func__);
 }
 

@@ -2,6 +2,7 @@
 2023, Simon Zolin */
 
 #include <ffsys/file.h>
+#include <ffbase/lock.h>
 
 struct gui_winfo {
 	ffui_windowxx wnd;
@@ -69,7 +70,8 @@ static void winfo_display(struct phi_queue_entry *qe)
 	}
 	winfo_addpair("File date", data);
 
-	const ffvec *meta = gui_qe_meta(qe);
+	fflock_lock((fflock*)&qe->lock); // core thread may read or write `conf.meta` at this moment
+	const ffvec *meta = &qe->conf.meta;
 
 	gd->metaif->find(meta, FFSTR_Z("_phi_info"), &val, PHI_META_PRIVATE);
 	winfo_addpair("Info", val);
@@ -78,6 +80,7 @@ static void winfo_display(struct phi_queue_entry *qe)
 	while (gd->metaif->list(meta, &i, &name, &val, 0)) {
 		winfo_addpair(name, val);
 	}
+	fflock_unlock((fflock*)&qe->lock);
 }
 
 static void winfo_edit()

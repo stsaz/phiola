@@ -21,6 +21,7 @@ struct queue_mgr {
 	int dev_idx;
 	uint random_ready :1;
 	on_change_t on_change;
+	struct q_entry *cursor;
 };
 static struct queue_mgr *qm;
 
@@ -282,6 +283,7 @@ static struct q_entry* q_get(struct phi_queue *q, uint i)
 
 static int q_play(struct phi_queue *q, void *_e)
 {
+	dbglog("%s", __func__);
 	struct q_entry *e = _e;
 	if (!e) {
 		if (!q)
@@ -314,9 +316,10 @@ static int q_play(struct phi_queue *q, void *_e)
 		return 0;
 	}
 
-	if (q->cursor)
-		qe_stop(q->cursor);
+	if (qm->cursor)
+		qe_stop(qm->cursor);
 
+	qm->cursor = e;
 	q->cursor = e;
 	q->cursor_index = qe_index(e);
 	if (!!qe_play(e))
@@ -374,7 +377,7 @@ static void q_ent_closed(struct phi_queue *q, uint flags)
 	}
 
 	fflock_lock(&q->lock);
-	q->track_closed_flags |= flags;
+	q->track_closed_flags = flags;
 	uint signal = (q->finished_n == 0);
 	q->finished_n++;
 	FF_ASSERT(q->finished_n <= q->active_n);

@@ -58,7 +58,7 @@ struct conv_track_info {
 static void conv_grd_close(void *ctx, phi_track *t)
 {
 	uint i = x->queue.index(t->qent);
-	struct conv_track_info *cti = (struct conv_track_info*)x->conversion_tracks.ptr + i;
+	struct conv_track_info *cti = (struct conv_track_info*)x->convert.tracks.ptr + i;
 
 	if (t->chain_flags & PHI_FFINISHED) {
 		if (t->error) {
@@ -67,18 +67,25 @@ static void conv_grd_close(void *ctx, phi_track *t)
 		} else {
 			const char *oname = (t->output.name) ? t->output.name : t->conf.ofile.name;
 
-			if (x->q_add_remove) {
+			if (x->convert.q_add_remove) {
 				struct phi_queue_entry qe = {
 					.conf.ifile.name = ffsz_dup(oname),
 				};
-				x->queue.add(x->q_add_remove, &qe);
+				x->queue.add(x->convert.q_add_remove, &qe);
 			}
 
-			if (x->trash_dir_rel && !ffsz_eq(t->conf.ifile.name, oname)) {
-				char *trash_dir = trash_dir_abs(x->trash_dir_rel, t->conf.ifile.name);
+			if (x->convert.trash_dir_rel && !ffsz_eq(t->conf.ifile.name, oname)) {
+				char *trash_dir = trash_dir_abs(x->convert.trash_dir_rel, t->conf.ifile.name);
 				if (trash_dir) {
-					if (!file_trash(trash_dir, t->conf.ifile.name) && x->q_pos)
-						x->queue.remove_at(x->q_add_remove, x->q_pos, 1);
+					if (!file_trash(trash_dir, t->conf.ifile.name)
+						&& x->convert.q_pos >= 0) {
+						struct phi_queue_entry *qe = x->queue.ref(x->convert.q_add_remove, x->convert.q_pos);
+						if (qe) {
+							if (ffsz_eq(qe->conf.ifile.name, t->conf.ifile.name))
+								x->queue.remove(qe);
+							x->queue.unref(qe);
+						}
+					}
 				}
 				ffmem_free(trash_dir);
 			}
@@ -113,12 +120,12 @@ static void* conv_ui_open(phi_track *t)
 	c->duration_sec = samples_to_msec(t->audio.total, c->sample_rate) / 1000;
 	c->index = x->queue.index(t->qent);
 
-	struct conv_track_info *cti = (struct conv_track_info*)x->conversion_tracks.ptr + c->index;
+	struct conv_track_info *cti = (struct conv_track_info*)x->convert.tracks.ptr + c->index;
 	ffmem_zero_obj(cti);
 	cti->duration_sec = c->duration_sec;
 	cti->ct = c;
 	ffcpu_fence_release(); // write data before counter
-	x->conversion_tracks.len++;
+	x->convert.tracks.len++;
 
 	return c;
 }
@@ -127,7 +134,7 @@ static void conv_ui_close(void *ctx, phi_track *t)
 {
 	struct conv_track *c = ctx;
 
-	struct conv_track_info *cti = (struct conv_track_info*)x->conversion_tracks.ptr + c->index;
+	struct conv_track_info *cti = (struct conv_track_info*)x->convert.tracks.ptr + c->index;
 	fflock_lock(&cti->lock); // all pending reads on `cti->ct` are complete
 	cti->ct = NULL;
 	fflock_unlock(&cti->lock);
@@ -139,7 +146,7 @@ static int conv_ui_process(void *ctx, phi_track *t)
 {
 	struct conv_track *c = ctx;
 
-	if (FFINT_READONCE(x->conversion_interrupt)) {
+	if (FFINT_READONCE(x->convert.interrupt)) {
 		t->error = PHI_E_CANCELLED;
 		return PHI_ERR;
 	}

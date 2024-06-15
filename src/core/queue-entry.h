@@ -36,6 +36,8 @@ static void qe_free(struct q_entry *e)
 {
 	if (e->q && e == e->q->cursor)
 		e->q->cursor = NULL;
+	if (e == qm->cursor)
+		qm->cursor = NULL;
 
 	track_conf_destroy(&e->pub.conf);
 	ffmem_free(e);
@@ -76,9 +78,15 @@ static void qe_close(void *f, phi_track *t)
 
 		if (e->q && !e->q->conf.conversion && !e->have_user_meta) {
 			int mod = (e->pub.conf.meta.len || t->meta.len); // empty meta == not modified
-			meta_destroy(&e->pub.conf.meta);
-			e->pub.conf.meta = t->meta; // Remember the tags we read from file in this track
-			ffvec_null(&t->meta);
+			if (t->meta.len) {
+				fflock_lock((fflock*)&e->pub.lock); // UI thread may read or write `conf.meta` at this moment
+				ffvec meta_old = e->pub.conf.meta;
+				e->pub.conf.meta = t->meta; // Remember the tags we read from file in this track
+				fflock_unlock((fflock*)&e->pub.lock);
+
+				meta_destroy(&meta_old);
+				ffvec_null(&t->meta);
+			}
 			if (mod)
 				q_modified(e->q);
 		}

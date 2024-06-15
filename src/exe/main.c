@@ -252,14 +252,20 @@ static void on_sig(struct ffsig_info *i)
 	}
 }
 
-static void signals()
+static void signals(char **argv, int argc, const char *cmd_line)
 {
 	struct crash_info ci = {
 		.app_name = "phiola",
 		.full_name = ffsz_allocfmt("phiola v%s (" OS_STR "-" CPU_STR ")", x->core->version_str),
 		.dump_file_dir = "/tmp",
+
+		.argv = argv,
+		.argc = argc,
+		.cmd_line = cmd_line,
+
 		.back_trace = 1,
 		.print_std_err = 1,
+		.strip_paths = 1,
 	};
 
 #ifdef FF_WIN
@@ -320,7 +326,7 @@ int main(int argc, char **argv, char **env)
 		logs(&x->log);
 	if (core()) goto end;
 	version_print();
-	signals();
+	signals(argv, argc, x->cmd_line);
 	if (jobs()) goto end;
 	phi_core_run();
 
