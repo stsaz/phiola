@@ -22,6 +22,25 @@ struct phiola_jni {
 	ffvec storage_paths; // char*[]
 
 	struct {
+		jmethodID PlayObserver_on_create;
+		jmethodID PlayObserver_on_close;
+		jmethodID PlayObserver_on_update;
+		jobject obj_PlayObserver;
+
+		phi_timer auto_stop_timer;
+		phi_track *trk;
+		int64 seek_msec;
+		int auto_seek_sec_percent, auto_until_sec_percent;
+		uint pos_prev_sec;
+		uint opened :1;
+		uint paused :1;
+		uint remove_on_error :1;
+		uint auto_stop_timer_expired :1;
+		uint repeat_all :1;
+		uint random :1;
+	} play;
+
+	struct {
 		ffvec tracks; // struct conv_track_info[]
 		phi_queue_id q, q_add_remove;
 		char *trash_dir_rel;
@@ -31,14 +50,13 @@ struct phiola_jni {
 	} convert;
 
 	jclass Phiola_class;
-	jclass Phiola_Meta;
-
 	jmethodID Phiola_lib_load;
-	jmethodID Phiola_MetaCallback_on_finish;
+
+	jclass Phiola_Meta;
 	jmethodID Phiola_Meta_init;
 
-	jobject obj_QueueCallback;
 	jmethodID Phiola_QueueCallback_on_change;
+	jobject obj_QueueCallback;
 };
 static struct phiola_jni *x;
 static JavaVM *jvm;
@@ -114,11 +132,17 @@ do { \
 		exe_log(NULL, PHI_LOG_DEBUG, NULL, NULL, __VA_ARGS__); \
 } while (0)
 
+#define trk_dbglog(t, ...) \
+do { \
+	if (ff_unlikely(x->debug)) \
+		exe_log(NULL, PHI_LOG_DEBUG, NULL, t, __VA_ARGS__); \
+} while (0)
+
 
 struct core_data {
 	phi_task task;
 	uint cmd;
-	int param_int;
+	int64 param_int;
 	phi_queue_id q;
 };
 
@@ -140,7 +164,7 @@ enum {
 #include <jni/android-utils.h>
 #include <jni/record.h>
 #include <jni/convert.h>
-#include <jni/info.h>
+#include <jni/playback.h>
 #include <jni/queue.h>
 
 static int conf()
@@ -262,6 +286,7 @@ Java_com_github_stsaz_phiola_Phiola_destroy(JNIEnv *env, jobject thiz)
 
 	dbglog("%s: enter", __func__);
 	phi_core_destroy();
+	jni_global_unref(x->play.obj_PlayObserver);
 	jni_global_unref(x->obj_QueueCallback);
 	jni_global_unref(x->Phiola_Meta);
 	jni_global_unref(x->Phiola_class);

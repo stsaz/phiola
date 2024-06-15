@@ -49,7 +49,11 @@ JNIEXPORT jlong JNICALL
 Java_com_github_stsaz_phiola_Phiola_quNew(JNIEnv *env, jobject thiz, jint flags)
 {
 	dbglog("%s: enter", __func__);
-	struct phi_queue_conf c = {};
+	struct phi_queue_conf c = {
+		.first_filter = &phi_play_guard,
+		.ui_module_if = &phi_play_ui,
+		.ui_module_if_set = 1,
+	};
 	if (flags & QUNF_CONVERSION) {
 		c.first_filter = &phi_mconvert_guard;
 		c.conversion = 1;
@@ -129,6 +133,12 @@ enum {
 	QUCOM_INDEX = 4,
 	QUCOM_SORT = 5,
 	QUCOM_REMOVE_NON_EXISTING = 6,
+	QUCOM_PLAY = 7,
+	QUCOM_PLAY_NEXT = 8,
+	QUCOM_PLAY_PREV = 9,
+	QUCOM_REPEAT = 10,
+	QUCOM_RANDOM = 11,
+	QUCOM_REMOVE_ON_ERROR = 12,
 };
 
 static void qu_cmd(struct core_data *d)
@@ -146,6 +156,21 @@ static void qu_cmd(struct core_data *d)
 
 	case QUCOM_SORT:
 		x->queue.sort(q, d->param_int);  break;
+
+	case QUCOM_PLAY: {
+		x->queue.qselect(q);
+		struct phi_queue_conf *qc = x->queue.conf(NULL);
+		qc->repeat_all = x->play.repeat_all;
+		qc->random = x->play.random;
+		x->queue.play(NULL, x->queue.at(q, d->param_int));
+		break;
+	}
+
+	case QUCOM_PLAY_NEXT:
+		x->queue.play_next(NULL);  break;
+
+	case QUCOM_PLAY_PREV:
+		x->queue.play_previous(NULL);  break;
 	}
 
 	ffmem_free(d);
@@ -169,6 +194,15 @@ Java_com_github_stsaz_phiola_Phiola_quCmd(JNIEnv *env, jobject thiz, jlong jq, j
 		break;
 	}
 
+	case QUCOM_REMOVE_ON_ERROR:
+		x->play.remove_on_error = !!i;  break;
+
+	case QUCOM_REPEAT:
+		x->play.repeat_all = !!i;  break;
+
+	case QUCOM_RANDOM:
+		x->play.random = !!i;  break;
+
 	default: {
 		struct core_data *d = ffmem_new(struct core_data);
 		d->cmd = cmd;
@@ -182,13 +216,90 @@ Java_com_github_stsaz_phiola_Phiola_quCmd(JNIEnv *env, jobject thiz, jlong jq, j
 	return rc;
 }
 
+static ffvec info_prepare(const struct phi_queue_entry *qe)
+{
+	const ffvec *meta = &qe->conf.meta;
+	ffvec info = {};
+	ffvec_allocT(&info, 5*2 + meta->len, char*);
+	char **p = info.ptr;
+
+	*p++ = ffsz_dup("url");
+	*p++ = ffsz_dup(qe->conf.ifile.name);
+
+	*p++ = ffsz_dup("size");
+	*p++ = NULL;
+
+	*p++ = ffsz_dup("file time");
+	*p++ = NULL;
+
+	*p++ = ffsz_dup("length");
+	uint sec = qe->length_msec / 1000,  msec = qe->length_msec % 1000;
+	*p++ = ffsz_allocfmt("%u:%02u.%03u", sec/60, sec%60, msec);
+
+	*p++ = ffsz_dup("format");
+	ffstr val;
+	if (!x->metaif.find(meta, FFSTR_Z("_phi_info"), &val, PHI_META_PRIVATE))
+		*p++ = ffsz_dup(val.ptr);
+	else
+		*p++ = ffsz_dup("");
+
+	uint i = 0;
+	ffstr k, v;
+	while (x->metaif.list(meta, &i, &k, &v, 0)) {
+		*p++ = ffsz_dupstr(&k);
+		if (ffstr_eqz(&k, "picture")) {
+			*p++ = ffsz_dup("");
+			continue;
+		}
+		*p++ = ffsz_dupstr(&v);
+	}
+
+	info.len = p - (char**)info.ptr;
+	return info;
+}
+
 JNIEXPORT jobject JNICALL
 Java_com_github_stsaz_phiola_Phiola_quMeta(JNIEnv *env, jobject thiz, jlong jq, jint i)
 {
 	phi_queue_id q = (phi_queue_id)jq;
 	struct phi_queue_entry *qe = x->queue.ref(q, i);
-	jobject jmeta = meta_create(env, &qe->conf.meta, qe->conf.ifile.name, qe->length_msec);
+	if (!qe)
+		return NULL;
+	fflock_lock((fflock*)&qe->lock); // core thread may read or write `conf.meta` at this moment
+	ffvec info = info_prepare(qe);
+	fflock_unlock((fflock*)&qe->lock);
 	x->queue.unref(qe);
+
+	char **p = (char**)info.ptr;
+	enum {
+		I_URL,
+		I_SIZE,
+		I_MTIME,
+	};
+	const char *fn = p[I_URL*2+1];
+	fffileinfo fi;
+	if (!fffile_info_path(fn, &fi)) {
+		p[I_SIZE*2+1] = ffsz_allocfmt("%U KB", fffileinfo_size(&fi) / 1024);
+
+		char mtime[100];
+		ffdatetime dt = {};
+		fftime t = fffileinfo_mtime(&fi);
+		t.sec += FFTIME_1970_SECONDS; // UTC
+		fftime_split1(&dt, &t);
+		uint r = fftime_tostr1(&dt, mtime, sizeof(mtime), FFTIME_YMD);
+		p[I_MTIME*2+1] = ffsz_dupn(mtime, r);
+	} else {
+		p[I_SIZE*2+1] = ffsz_dup("");
+		p[I_MTIME*2+1] = ffsz_dup("");
+	}
+
+	jobject jmeta = jni_obj_new(x->Phiola_Meta, x->Phiola_Meta_init);
+	jobjectArray jsa = jni_jsa_sza(env, info.ptr, info.len);
+	jni_obj_jo_set(jmeta, jni_field(x->Phiola_Meta, "meta", JNI_TARR JNI_TSTR), jsa);
+
+	FFSLICE_FOREACH_PTR_T(&info, ffmem_free, char*);
+	ffvec_free(&info);
+
 	return jmeta;
 }
 

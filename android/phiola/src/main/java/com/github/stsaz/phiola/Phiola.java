@@ -19,14 +19,29 @@ class Phiola {
 	native void setCodepage(String codepage);
 
 	static class Meta {
-		int length_msec;
+		int queue_pos;
+		long length_msec;
 		String url, artist, title, album, date, info;
 		String[] meta;
 	}
-	interface MetaCallback {
-		void on_finish(Meta meta);
+	static final int
+		PCS_STOP = 1,
+		PCS_AUTOSTOP = 2;
+	interface PlayObserver {
+		void on_create(Meta meta);
+		void on_close(int status);
+		void on_update(long pos_msec);
 	}
-	native int meta(long q, int list_item, String filepath, MetaCallback cb);
+	native void playObserverSet(PlayObserver obs, int flags);
+
+	static final int
+		PC_PAUSE_TOGGLE = 1,
+		PC_STOP = 2,
+		PC_AUTO_SKIP_HEAD = 3,
+		PC_AUTO_SKIP_TAIL = 4,
+		PC_AUTO_STOP = 5,
+		PC_SEEK = 6;
+	native void playCmd(int cmd, long val);
 
 	static final int
 		AF_AAC_LC = 0,
@@ -122,7 +137,13 @@ class Phiola {
 			QU_SORT_FILESIZE = 1,
 			QU_SORT_FILEDATE = 2,
 			QU_SORT_RANDOM = 3,
-		QUCOM_REMOVE_NON_EXISTING = 6;
+		QUCOM_REMOVE_NON_EXISTING = 6,
+		QUCOM_PLAY = 7,
+		QUCOM_PLAY_NEXT = 8,
+		QUCOM_PLAY_PREV = 9,
+		QUCOM_REPEAT = 10,
+		QUCOM_RANDOM = 11,
+		QUCOM_REMOVE_ON_ERROR = 12;
 	native int quCmd(long q, int cmd, int i);
 
 	native Meta quMeta(long q, int i);

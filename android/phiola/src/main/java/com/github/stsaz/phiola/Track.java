@@ -28,44 +28,16 @@ abstract class PlaybackObserver {
 class TrackHandle {
 	long phi_trk;
 	int state;
-	boolean stopped; // stopped by user
-	boolean error; // processing error
-	String url;
-	String[] meta;
-	String artist, title, album, date, info;
 	String name; // track name shown in GUI
 	long pos_msec; // current progress (msec)
-	long prev_pos_msec; // previous progress position (msec)
-	long seek_msec; // default:-1
-	long skip_tail_msec;
-	long time_total_msec; // track duration (msec)
-
-	void reset() {
-		seek_msec = -1;
-		prev_pos_msec = -1;
-		time_total_msec = 0;
-		meta = new String[0];
-		artist = "";
-		title = "";
-		album = "";
-		date = "";
-		info = "";
-	}
-
-	void meta(Phiola.Meta m) {
-		meta = m.meta;
-		artist = m.artist;
-		title = m.title;
-		album = m.album;
-		date = m.date;
-		info = m.info;
-		time_total_msec = m.length_msec;
-	}
+	Phiola.Meta pmeta;
+	int close_status;
 }
 
 class Track {
 	private static final String TAG = "phiola.Track";
 	private Core core;
+	private Phiola phi;
 	private ArrayList<PlaybackObserver> observers;
 	private SimpleArrayMap<String, Boolean> supp_exts;
 
@@ -84,6 +56,24 @@ class Track {
 
 	Track(Core core) {
 		this.core = core;
+		phi = core.phiola;
+		phi.playObserverSet(new Phiola.PlayObserver() {
+				public void on_create(Phiola.Meta meta) {
+					core.tq.post(() -> {
+						play_on_create(meta);
+					});
+				}
+				public void on_close(int status) {
+					core.tq.post(() -> {
+						play_on_close(status);
+					});
+				}
+				public void on_update(long pos_msec) {
+					core.tq.post(() -> {
+						play_on_update(pos_msec);
+					});
+				}
+			}, 0);
 		tplay = new TrackHandle();
 		observers = new ArrayList<>();
 		tplay.state = STATE_NONE;
@@ -93,22 +83,16 @@ class Track {
 		for (String e : exts) {
 			supp_exts.put(e, true);
 		}
-
-		core.dbglog(TAG, "init");
 	}
 
 	String cur_url() {
 		if (tplay.state == STATE_NONE)
 			return "";
-		return tplay.url;
+		return tplay.pmeta.url;
 	}
 
 	long curpos_msec() {
 		return tplay.pos_msec;
-	}
-
-	String[] meta() {
-		return tplay.meta;
 	}
 
 	boolean supported_url(@NonNull String name) {
@@ -153,48 +137,13 @@ class Track {
 	}
 
 	private static String header(TrackHandle t) {
-		if (t.artist.isEmpty()) {
-			if (t.title.isEmpty()) {
-				return Util.path_split2(t.url)[1];
+		if (t.pmeta.artist.isEmpty()) {
+			if (t.pmeta.title.isEmpty()) {
+				return Util.path_split2(t.pmeta.url)[1];
 			}
-			return t.title;
+			return t.pmeta.title;
 		}
-		return String.format("%s - %s", t.artist, t.title);
-	}
-
-	/**
-	 * Start playing
-	 */
-	void start(int list_item, String url) {
-		core.dbglog(TAG, "play: %s", url);
-		if (tplay.state != STATE_NONE)
-			return;
-		tplay.state = STATE_PREPARING;
-		tplay.url = url;
-		tplay.reset();
-
-		core.phiola.meta(core.queue().q_active_id(), list_item, url,
-			(meta) -> {
-				core.tq.post(() -> {
-					tplay.meta(meta);
-					start_3();
-				});
-			});
-	}
-
-	private void start_3() {
-		tplay.name = header(tplay);
-
-		for (PlaybackObserver f : observers) {
-			core.dbglog(TAG, "opening observer %s", f);
-			int r = f.open(tplay);
-			if (r != 0) {
-				core.dbglog(TAG, "f.open(): %d", r);
-				tplay.error = true;
-				trk_close(tplay);
-				return;
-			}
-		}
+		return String.format("%s - %s", t.pmeta.artist, t.pmeta.title);
 	}
 
 	private int rec_fmt(String s) {
@@ -260,21 +209,18 @@ class Track {
 		return 0;
 	}
 
-	private void trk_close(TrackHandle t) {
-		t.state = STATE_NONE;
+	private void trk_close() {
+		tplay.state = STATE_NONE;
 		for (int i = observers.size() - 1; i >= 0; i--) {
 			PlaybackObserver f = observers.get(i);
 			core.dbglog(TAG, "closing observer %s", f);
-			f.close(t);
+			f.close(tplay);
 		}
 
 		for (int i = observers.size() - 1; i >= 0; i--) {
 			PlaybackObserver f = observers.get(i);
-			f.closed(t);
+			f.closed(tplay);
 		}
-
-		t.meta = new String[0];
-		t.error = false;
 	}
 
 	/**
@@ -282,46 +228,77 @@ class Track {
 	 */
 	void stop() {
 		core.dbglog(TAG, "stop");
-		tplay.stopped = true;
-		trk_close(tplay);
+		trk_close();
 	}
 
 	void close(TrackHandle t) {
 		core.dbglog(TAG, "close");
-		trk_close(t);
+		trk_close();
 	}
 
 	void pause() {
 		core.dbglog(TAG, "pause");
 		if (tplay.state == STATE_PLAYING) {
 			tplay.state = STATE_PAUSED;
-			update(tplay);
+			phi.playCmd(Phiola.PC_PAUSE_TOGGLE, 0);
+			update();
 		}
 	}
 
 	void unpause() {
 		core.dbglog(TAG, "unpause: %d", tplay.state);
 		if (tplay.state == STATE_PAUSED) {
-			tplay.state = STATE_UNPAUSE;
-			update(tplay);
+			tplay.state = STATE_PLAYING;
+			phi.playCmd(Phiola.PC_PAUSE_TOGGLE, 0);
+			update();
 		}
 	}
 
-	void seek(int msec) {
+	void seek(long msec) {
 		core.dbglog(TAG, "seek: %d", msec);
 		if (tplay.state == STATE_PLAYING || tplay.state == STATE_PAUSED) {
-			tplay.seek_msec = msec;
 			tplay.pos_msec = msec;
-			update(tplay);
+			phi.playCmd(Phiola.PC_SEEK, msec);
+			update();
 		}
 	}
 
 	/**
 	 * Notify observers on the track's progress
 	 */
-	void update(TrackHandle t) {
+	private void update() {
 		for (PlaybackObserver f : observers) {
-			f.process(t);
+			f.process(tplay);
 		}
+	}
+
+	private void play_on_create(Phiola.Meta m) {
+		tplay.state = STATE_PLAYING;
+		if (m.artist == null) m.artist = "";
+		if (m.title == null) m.title = "";
+		if (m.album == null) m.album = "";
+		if (m.date == null) m.date = "";
+		tplay.pmeta = m;
+		tplay.name = Track.header(tplay);
+
+		for (PlaybackObserver f : observers) {
+			core.dbglog(TAG, "opening observer %s", f);
+			int r = f.open(tplay);
+			if (r != 0) {
+				core.dbglog(TAG, "f.open(): %d", r);
+				trk_close();
+				return;
+			}
+		}
+	}
+
+	private void play_on_close(int status) {
+		tplay.close_status = status;
+		trk_close();
+	}
+
+	private void play_on_update(long pos_msec) {
+		tplay.pos_msec = pos_msec;
+		update();
 	}
 }

@@ -68,7 +68,7 @@ class SysJobs extends PlaybackObserver {
 	}
 
 	public void close(TrackHandle t) {
-		if (t.stopped && afocus)
+		if ((t.close_status & Phiola.PCS_STOP) != 0 && afocus)
 			core.tq.postDelayed(delayed_abandon_focus, 1000);
 	}
 

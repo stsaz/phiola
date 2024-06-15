@@ -3,6 +3,43 @@
 
 package com.github.stsaz.phiola;
 
+class AutoSkip {
+	int val;
+
+	String str() {
+		if (val < 0)
+			return String.format("%d%%", -val);
+		return Integer.toString(val);
+	}
+
+	static String user_str(int n) {
+		String s = "";
+		if (n < 0)
+			s = String.format("%d%%", -n);
+		else if (n > 0)
+			s = String.format("%d sec", n);
+		return s;
+	}
+
+	/** "N%", "N sec" or "N" */
+	static int parse(String s) {
+		if (s.isEmpty())
+			return 0;
+		int r;
+		if (s.charAt(s.length() - 1) == '%') {
+			r = Util.str_to_uint(s.substring(0, s.length() - 1), 0);
+			if (r >= 100)
+				r = 0;
+			r = -r;
+		} else {
+			if (s.indexOf(" sec") > 0)
+				s = s.substring(0, s.length() - 4);
+			r = Util.str_to_uint(s, 0);
+		}
+		return r;
+	}
+}
+
 class CoreSettings {
 	private Core core;
 
@@ -13,6 +50,22 @@ class CoreSettings {
 	String	pub_data_dir;
 	String	plist_save_dir;
 	String	quick_move_dir;
+
+	AutoSkip auto_skip_head, auto_skip_tail;
+	void auto_skip_head_set(String s) {
+		int n = AutoSkip.parse(s);
+		if (n == auto_skip_head.val)
+			return;
+		auto_skip_head.val = n;
+		core.phiola.playCmd(Phiola.PC_AUTO_SKIP_HEAD, n);
+	}
+	void auto_skip_tail_set(String s) {
+		int n = AutoSkip.parse(s);
+		if (n == auto_skip_tail.val)
+			return;
+		auto_skip_tail.val = n;
+		core.phiola.playCmd(Phiola.PC_AUTO_SKIP_TAIL, n);
+	}
 
 	String	rec_path; // directory for recordings
 	String	rec_enc, rec_fmt;
@@ -88,6 +141,9 @@ class CoreSettings {
 		quick_move_dir = "";
 		trash_dir = "Trash";
 
+		auto_skip_head = new AutoSkip();
+		auto_skip_tail = new AutoSkip();
+
 		rec_path = "";
 		rec_fmt = "m4a";
 		rec_enc = "AAC-LC";
@@ -109,6 +165,8 @@ class CoreSettings {
 			+ "op_plist_save_dir %s\n"
 			+ "op_quick_move_dir %s\n"
 			+ "op_trash_dir_rel %s\n"
+			+ "play_auto_skip %s\n"
+			+ "play_auto_skip_tail %s\n"
 			+ "rec_path %s\n"
 			+ "rec_enc %s\n"
 			+ "rec_channels %d\n"
@@ -136,6 +194,8 @@ class CoreSettings {
 			, plist_save_dir
 			, quick_move_dir
 			, trash_dir
+			, auto_skip_head.str()
+			, auto_skip_tail.str()
 			, rec_path
 			, rec_enc
 			, rec_channels
@@ -211,6 +271,9 @@ class CoreSettings {
 		quick_move_dir = kv[Conf.OP_QUICK_MOVE_DIR].value;
 		trash_dir = kv[Conf.OP_TRASH_DIR_REL].value;
 		set_codepage(kv[Conf.CODEPAGE].value);
+
+		auto_skip_head_set(kv[Conf.PLAY_AUTO_SKIP].value);
+		auto_skip_tail_set(kv[Conf.PLAY_AUTO_SKIP_TAIL].value);
 
 		rec_path = kv[Conf.REC_PATH].value;
 		rec_enc = kv[Conf.REC_ENC].value;

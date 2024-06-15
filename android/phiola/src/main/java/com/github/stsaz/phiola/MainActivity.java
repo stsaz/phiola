@@ -390,7 +390,7 @@ public class MainActivity extends AppCompatActivity {
 
 		int mask = GUI.MASK_PLAYBACK;
 		int st = GUI.STATE_DEF;
-		if (queue.auto_stop.armed()) {
+		if (queue.auto_stop_active) {
 			mask |= GUI.STATE_AUTO_STOP;
 			st |= GUI.STATE_AUTO_STOP;
 		}
@@ -629,7 +629,7 @@ public class MainActivity extends AppCompatActivity {
 	/** Toggle playback auto-stop timer */
 	private void play_auto_stop() {
 		String s;
-		int value_min = queue.auto_stop.toggle();
+		int value_min = queue.auto_stop_toggle();
 		if (value_min > 0) {
 			state(GUI.STATE_AUTO_STOP, GUI.STATE_AUTO_STOP);
 			s = String.format(getString(R.string.mplay_auto_stop_msg), value_min);
@@ -888,10 +888,10 @@ public class MainActivity extends AppCompatActivity {
 	/** Called by Track when a new track is initialized */
 	private int track_opening(TrackHandle t) {
 		String title = t.name;
-		if (!t.date.isEmpty())
-			title = String.format("%s [%s]", title, t.date);
-		if (gui.ainfo_in_title && !t.info.isEmpty())
-			title = String.format("%s [%s]", title, t.info);
+		if (!t.pmeta.date.isEmpty())
+			title = String.format("%s [%s]", title, t.pmeta.date);
+		if (gui.ainfo_in_title && !t.pmeta.info.isEmpty())
+			title = String.format("%s [%s]", title, t.pmeta.info);
 		b.lname.setText(title);
 
 		b.seekbar.setProgress(0);
@@ -912,7 +912,7 @@ public class MainActivity extends AppCompatActivity {
 
 	private void track_closed(TrackHandle t) {
 		int st = GUI.STATE_DEF;
-		if (queue.auto_stop.armed())
+		if (queue.auto_stop_active)
 			st |= GUI.STATE_AUTO_STOP;
 		state(GUI.MASK_PLAYBACK | GUI.STATE_AUTO_STOP, st);
 	}
@@ -931,8 +931,8 @@ public class MainActivity extends AppCompatActivity {
 		}
 
 		long pos = t.pos_msec / 1000;
-		total_dur_msec = t.time_total_msec;
-		long dur = t.time_total_msec / 1000;
+		total_dur_msec = t.pmeta.length_msec;
+		long dur = t.pmeta.length_msec / 1000;
 
 		int progress = 0;
 		if (dur != 0)

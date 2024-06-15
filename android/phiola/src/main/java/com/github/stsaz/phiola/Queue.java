@@ -5,98 +5,14 @@ package com.github.stsaz.phiola;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
-class AutoSkip {
-	private final Core core;
-	int msec, percent;
-
-	AutoSkip(Core core) { this.core = core; }
-
-	/** Set numeric values from string.
-	Supports "N%", "N sec" or just "N". */
-	void parse(String s) {
-		if (!s.isEmpty() && s.charAt(s.length() - 1) == '%') {
-			percent = core.str_to_uint(s.substring(0, s.length() - 1), 0);
-			if (percent >= 100)
-				percent = 0;
-			msec = 0;
-		} else {
-			if (s.indexOf(" sec") > 0)
-				s = s.substring(0, s.length() - 4);
-			percent = 0;
-			msec = core.str_to_uint(s, 0) * 1000;
-		}
-	}
-
-	String str() {
-		if (percent != 0)
-			return String.format("%d%%", percent);
-		return Integer.toString(msec / 1000);
-	}
-
-	long value(long total_msec) {
-		if (percent != 0)
-			return total_msec * percent / 100;
-		return msec;
-	}
-}
-
-class AutoStop {
-	private static final String TAG = "phiola.Queue";
-	private final Core core;
-	int				value_min;
-	private Timer	timer;
-	private boolean	active;
-
-	AutoStop(Core core) { this.core = core; }
-
-	boolean armed() { return (timer != null); }
-
-	private void disable() {
-		active = false;
-		timer.cancel();
-		timer = null;
-	}
-
-	int toggle() {
-		if (timer != null) {
-			disable();
-			return -1;
-		}
-
-		timer = new Timer();
-		timer.schedule(new TimerTask() {
-				public void run() {
-					core.dbglog(TAG, "auto-stop timer: expired");
-					active = true;
-				}
-			}, value_min*60*1000);
-		return value_min;
-	}
-
-	boolean expired() {
-		if (!active)
-			return false;
-
-		disable();
-		return true;
-	}
-}
-
 class PhiolaQueue {
-	Phiola phi;
+	private Phiola phi;
 	long q;
 	boolean modified;
 	boolean conversion;
-
-	PhiolaQueue(Phiola _phi) {
-		phi = _phi;
-		q = phi.quNew(0);
-	}
 
 	PhiolaQueue(Phiola _phi, long _q) {
 		phi = _phi;
@@ -132,8 +48,6 @@ class PhiolaQueue {
 		modified = true;
 	}
 
-	String url(int i) { return phi.quEntry(q, i); }
-
 	void remove(int i) {
 		if (conversion) return;
 
@@ -157,10 +71,6 @@ class PhiolaQueue {
 
 	int count() { return phi.quCmd(q, Phiola.QUCOM_COUNT, 0); }
 
-	int index_real(int i) { return phi.quCmd(q, Phiola.QUCOM_INDEX, i); }
-
-	Phiola.Meta meta(int i) { return phi.quMeta(q, i); }
-
 	void sort(int flags) {
 		if (conversion) return;
 
@@ -170,8 +80,6 @@ class PhiolaQueue {
 	PhiolaQueue filter(String filter, int flags) {
 		return new PhiolaQueue(phi, phi.quFilter(q, filter, flags));
 	}
-
-	void load(String filepath) { phi.quLoad(q, filepath); }
 
 	boolean save(String filepath) {
 		boolean b = phi.quSave(q, filepath);
@@ -194,7 +102,9 @@ interface QueueNotify {
 class Queue {
 	private static final String TAG = "phiola.Queue";
 	private Core core;
+	private Phiola phi;
 	private int trk_idx = -1; // Active track index
+	private boolean active;
 	private ArrayList<QueueNotify> nfy;
 
 	private ArrayList<PhiolaQueue> queues;
@@ -208,42 +118,82 @@ class Queue {
 	private boolean converting;
 	private Timer convert_update_timer;
 
-	private int consecutive_errors;
-	private boolean repeat;
-	private boolean random;
-	private boolean active;
-	private Random rnd;
-	private boolean random_split;
-	boolean add_rm_on_next, rm_on_next;
-	boolean rm_on_err;
-	AutoSkip auto_skip_beginning, auto_skip_tail;
-	AutoStop auto_stop;
+	static final int
+		F_REPEAT = 1,
+		F_RANDOM = 2,
+		F_MOVE_ON_NEXT = 4,
+		F_RM_ON_NEXT = 8,
+		F_RM_ON_ERR = 0x10;
+	private int flags;
+	void flags_set1(int mask, boolean val) {
+		int i = 0;
+		if (val)
+			i = mask;
+		flags_set(mask, i);
+	}
+	void flags_set(int mask, int val) {
+		if ((mask & F_REPEAT) != 0 && (val & F_REPEAT) != (this.flags & F_REPEAT))
+			phi.quCmd(-1, Phiola.QUCOM_REPEAT, val & F_REPEAT);
+
+		if ((mask & F_RANDOM) != 0 && (val & F_RANDOM) != (this.flags & F_RANDOM))
+			phi.quCmd(-1, Phiola.QUCOM_RANDOM, val & F_RANDOM);
+
+		if ((mask & F_RM_ON_ERR) != 0 && (val & F_RM_ON_ERR) != (this.flags & F_RM_ON_ERR))
+			phi.quCmd(-1, Phiola.QUCOM_REMOVE_ON_ERROR, val & F_RM_ON_ERR);
+
+		this.flags &= ~mask;
+		this.flags |= val;
+	}
+	boolean flags_test(int mask) {
+		return (this.flags & mask) != 0;
+	}
+
+	int		auto_stop_value_min;
+	boolean	auto_stop_active;
+	int auto_stop_toggle() {
+		auto_stop_active = !auto_stop_active;
+		int interval_msec = 0;
+		if (auto_stop_active)
+			interval_msec = auto_stop_value_min * 60*1000;
+		phi.playCmd(Phiola.PC_AUTO_STOP, interval_msec);
+		if (auto_stop_active)
+			return auto_stop_value_min;
+		return 0;
+	}
 
 	Queue(Core core) {
 		this.core = core;
-		core.phiola.quSetCallback(this::on_change);
+		phi = core.phiola;
 		core.track.observer_add(new PlaybackObserver() {
 				public int open(TrackHandle t) {
-					on_open(t);
+					play_on_open(t);
 					return 0;
 				}
-
-				public void close(TrackHandle t) {
-					on_close(t);
-				}
+				public void close(TrackHandle t) { play_on_close(t); }
 			});
-
 		queues = new ArrayList<>();
-		queues.add(new PhiolaQueue(core.phiola));
-
 		nfy = new ArrayList<>();
-		auto_skip_beginning = new AutoSkip(core);
-		auto_skip_tail = new AutoSkip(core);
-		auto_stop = new AutoStop(core);
 	}
 
 	private void on_change(long q, int flags, int pos) {
 		core.tq.post(() -> {
+				if (queues.size() == 0)
+					return;
+
+				switch (flags) {
+				case 'r':
+					if (q == queues.get(i_active).q) {
+						if (pos < curpos)
+							curpos--;
+
+						if (pos == trk_idx)
+							trk_idx = -1;
+						else if (pos < trk_idx)
+							trk_idx--;
+					}
+					break;
+				}
+
 				if (i_selected < 0 // after Queue.close()
 					|| q != queues.get(i_selected).q)
 					return;
@@ -263,7 +213,7 @@ class Queue {
 
 	int new_list() {
 		filter_close();
-		queues.add(new PhiolaQueue(core.phiola));
+		queues.add(new PhiolaQueue(core.phiola, 0, 0));
 		return queues.size() - 1;
 	}
 
@@ -318,22 +268,35 @@ class Queue {
 	}
 
 	void load() {
-		for (int i = 0;;  i++) {
+		int i;
+		for (i = 0;;  i++) {
 			String fn = list_file_name(i);
 
 			if (!new File(fn).exists())
 				break;
 
-			if (i != 0)
-				queues.add(new PhiolaQueue(core.phiola));
-
-			queues.get(i).load(fn);
+			new_list();
+			phi.quLoad(queues.get(i).q, fn);
 		}
 
-		if (i_active >= queues.size())
+		if (i == 0) {
+			new_list();
+			i = 1;
+		}
+
+		if (i_active >= i)
 			i_active = 0;
-		if (i_selected >= queues.size())
+		if (i_selected >= i)
 			i_selected = 0;
+
+		if (flags_test(F_REPEAT))
+			phi.quCmd(-1, Phiola.QUCOM_REPEAT, 1);
+		if (flags_test(F_RANDOM))
+			phi.quCmd(-1, Phiola.QUCOM_RANDOM, 1);
+		if (flags_test(F_RM_ON_ERR))
+			phi.quCmd(-1, Phiola.QUCOM_REMOVE_ON_ERROR, 1);
+
+		core.phiola.quSetCallback(this::on_change);
 	}
 
 	void saveconf() {
@@ -412,7 +375,7 @@ class Queue {
 	/** Play track at cursor */
 	void playcur() {
 		int pos = curpos;
-		if (pos < 0 || pos >= queues.get(i_active).count())
+		if (pos < 0)
 			pos = 0;
 		_play(i_active, pos);
 	}
@@ -422,13 +385,11 @@ class Queue {
 		if (active)
 			core.track.stop();
 
-		if (it < 0 || it >= queues.get(iq).count())
+		if (it < 0)
 			return;
 
 		i_active = iq;
-		trk_idx = it;
-		curpos = it;
-		core.track.start(it, queues.get(iq).url(it));
+		core.phiola.quCmd(queues.get(iq).q, Phiola.QUCOM_PLAY, it);
 	}
 
 	/** Play track at the specified position */
@@ -440,140 +401,69 @@ class Queue {
 		if (i_selected == i_conversion)
 			return; // ignore click on entry in Conversion list
 
-		_play(i_selected, q_visible().index_real(i));
+		_play(i_selected, phi.quCmd(q_visible().q, Phiola.QUCOM_INDEX, i));
 	}
 
-	/** Get random index */
-	private int next_random(int n) {
-		if (n == 1)
-			return 0;
-		int i = rnd.nextInt();
-		i &= 0x7fffffff;
-		if (!random_split)
-			i %= n / 2;
-		else
-			i = n / 2 + (i % (n - (n / 2)));
-		random_split = !random_split;
-		return i;
+	private int next_playlist(int i) {
+		int n = i + 1;
+		if (n == queues.size())
+			n = 0;
+		if (queues.get(n).conversion)
+			n++;
+		if (n == queues.size())
+			n = 0;
+		if (n == i)
+			return -1;
+		return n;
 	}
-
-	/** Play next or previous track */
-	private void play_delta(int delta) {
-		int n = queues.get(i_active).count();
-		if (n == 0)
-			return;
-
-		int i = curpos + delta;
-		if (random) {
-			i = next_random(n);
-		} else if (repeat) {
-			if (i >= n)
-				i = 0;
-			else if (i < 0)
-				i = n - 1;
-		}
-		_play(i_active, i);
-	}
-
-	private void next() { play_delta(1); }
 
 	/** Next track by user command */
 	void order_next() {
-		int delta = 1;
-		if (active) {
-			if (trk_idx < 0) {
-				delta = 0; // user pressed Next after the currently playing track has been removed
-			} else if (add_rm_on_next || rm_on_next) {
-				if (add_rm_on_next)
-					next_list_add_cur();
-				remove(trk_idx);
-				delta = 0;
-			}
+		if (flags_test(F_MOVE_ON_NEXT) && trk_idx >= 0) {
+			String url = phi.quEntry(queues.get(i_active).q, trk_idx);
+			queues.get(i_active).remove(trk_idx);
+			int npl = next_playlist(i_active);
+			if (npl >= 0)
+				queues.get(npl).add(url, 0);
+
+		} else if (flags_test(F_RM_ON_NEXT) && trk_idx >= 0) {
+			queues.get(i_active).remove(trk_idx);
 		}
-		play_delta(delta);
+
+		phi.quCmd(queues.get(i_active).q, Phiola.QUCOM_PLAY_NEXT, -1);
 	}
 
 	/** Previous track by user command */
 	void order_prev() {
-		play_delta(-1);
+		phi.quCmd(queues.get(i_active).q, Phiola.QUCOM_PLAY_PREV, -1);
 	}
 
-	private void on_open(TrackHandle t) {
+	private void play_on_open(TrackHandle t) {
+		trk_idx = t.pmeta.queue_pos;
+		curpos = trk_idx;
 		active = true;
-
-		t.seek_msec = auto_skip_beginning.value(t.time_total_msec);
-		t.skip_tail_msec = auto_skip_tail.value(t.time_total_msec);
-
 		queues.get(i_active).modified = true;
 		nfy_all(QueueNotify.UPDATE, trk_idx); // redraw item to display artist-title info
 	}
 
 	/** Called after a track has been finished. */
-	private void on_close(TrackHandle t) {
+	private void play_on_close(TrackHandle t) {
 		active = false;
-		boolean play_next = !t.stopped;
-
-		if (trk_idx >= 0 && t.error && rm_on_err) {
-			String url = queues.get(i_active).url(trk_idx);
-			if (url.equals(t.url))
-				remove(trk_idx);
-		}
-
-		if (auto_stop.expired()) {
-			core.dbglog(TAG, "auto-stop timer: Stopping playback");
-			play_next = false;
-		}
-
-		if (t.error) {
-			this.consecutive_errors++;
-			if (this.consecutive_errors >= 20) {
-				core.errlog(TAG, "Stopped after %d consecutive errors", this.consecutive_errors);
-				this.consecutive_errors = 0;
-				play_next = false;
-			}
-		} else {
-			this.consecutive_errors = 0;
-		}
-
-		if (play_next) {
-			if (trk_idx < 0)
-				core.tq.post(this::playcur); // play at current position after the track has been removed
-			else
-				core.tq.post(this::next);
-		}
-
 		trk_idx = -1;
+		if ((t.close_status & Phiola.PCS_AUTOSTOP) != 0)
+			auto_stop_active = false;
 	}
 
-	/** Set Random switch */
-	void random(boolean val) {
-		random = val;
-		if (val)
-			rnd = new Random(new Date().getTime());
-	}
-
-	boolean is_random() { return random; }
-
-	void repeat(boolean val) { repeat = val; }
-
-	boolean is_repeat() { return repeat; }
-
-	String get(int i) { return queues.get(i_selected).url(i); }
+	String get(int i) { return phi.quEntry(queues.get(i_selected).q, i); }
 
 	String display_line(int i) {
-		return core.phiola.quDisplayLine(q_visible().q, i);
+		return phi.quDisplayLine(q_visible().q, i);
 	}
 
 	void remove(int pos) {
 		core.dbglog(TAG, "remove: %d:%d", i_active, pos);
 		filter_close();
 		queues.get(i_active).remove(pos);
-		if (pos < curpos)
-			curpos--;
-		if (pos == trk_idx)
-			trk_idx = -1;
-		else if (pos < trk_idx)
-			trk_idx--;
 	}
 
 	/** Clear playlist */
@@ -625,19 +515,15 @@ class Queue {
 			+ "list_add_rm_on_next %d\n"
 			+ "list_rm_on_next %d\n"
 			+ "list_rm_on_err %d\n"
-			+ "play_auto_skip %s\n"
-			+ "play_auto_skip_tail %s\n"
 			+ "play_auto_stop %d\n"
 			, curpos
 			, i_active
-			, core.bool_to_int(random)
-			, core.bool_to_int(repeat)
-			, core.bool_to_int(add_rm_on_next)
-			, core.bool_to_int(rm_on_next)
-			, core.bool_to_int(rm_on_err)
-			, auto_skip_beginning.str()
-			, auto_skip_tail.str()
-			, auto_stop.value_min
+			, core.bool_to_int(flags_test(F_RANDOM))
+			, core.bool_to_int(flags_test(F_REPEAT))
+			, core.bool_to_int(flags_test(F_MOVE_ON_NEXT))
+			, core.bool_to_int(flags_test(F_RM_ON_NEXT))
+			, core.bool_to_int(flags_test(F_RM_ON_ERR))
+			, auto_stop_value_min
 			);
 	}
 
@@ -645,20 +531,21 @@ class Queue {
 		curpos = kv[Conf.LIST_CURPOS].number;
 		i_active = kv[Conf.LIST_ACTIVE].number;
 		i_selected = i_active;
-		random(kv[Conf.LIST_RANDOM].enabled);
-		repeat(kv[Conf.LIST_REPEAT].enabled);
-		add_rm_on_next = kv[Conf.LIST_ADD_RM_ON_NEXT].enabled;
-		rm_on_next = kv[Conf.LIST_RM_ON_NEXT].enabled;
-		rm_on_err = kv[Conf.LIST_RM_ON_ERR].enabled;
 
-		auto_skip_beginning.parse(kv[Conf.PLAY_AUTO_SKIP].value);
-		auto_skip_tail.parse(kv[Conf.PLAY_AUTO_SKIP_TAIL].value);
-		auto_stop.value_min = kv[Conf.PLAY_AUTO_STOP].number;
+		int f = 0;
+		if (kv[Conf.LIST_RANDOM].enabled) f |= F_RANDOM;
+		if (kv[Conf.LIST_REPEAT].enabled) f |= F_REPEAT;
+		if (kv[Conf.LIST_ADD_RM_ON_NEXT].enabled) f |= F_MOVE_ON_NEXT;
+		if (kv[Conf.LIST_RM_ON_NEXT].enabled) f |= F_RM_ON_NEXT;
+		if (kv[Conf.LIST_RM_ON_ERR].enabled) f |= F_RM_ON_ERR;
+		this.flags = f;
+
+		auto_stop_value_min = kv[Conf.PLAY_AUTO_STOP].number;
 	}
 
 	void conf_normalize() {
-		if (auto_stop.value_min == 0)
-			auto_stop.value_min = 60;
+		if (auto_stop_value_min == 0)
+			auto_stop_value_min = 60;
 	}
 
 	/** Get currently playing track index */
@@ -666,6 +553,15 @@ class Queue {
 		if (i_selected != i_active)
 			return -1;
 		return trk_idx;
+	}
+
+	String[] meta(int i) {
+		if (i == -1)
+			i = trk_idx;
+		Phiola.Meta m = phi.quMeta(queues.get(i_active).q, i);
+		if (m == null)
+			return null;
+		return m.meta;
 	}
 
 	void sort(int flags) {

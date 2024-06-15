@@ -118,7 +118,7 @@ public class Svc extends MediaBrowserServiceCompat {
 		sess.setPlaybackState(pstate.build());
 
 		int mode = PlaybackStateCompat.SHUFFLE_MODE_NONE;
-		if (queue.is_random())
+		if (queue.flags_test(Queue.F_RANDOM))
 			mode = PlaybackStateCompat.SHUFFLE_MODE_ALL;
 		sess.setShuffleMode(mode);
 
@@ -167,14 +167,13 @@ public class Svc extends MediaBrowserServiceCompat {
 
 			public void onSetShuffleMode(int shuffleMode) {
 				core.dbglog(TAG, "MediaSessionCompat.onSetShuffleMode");
+				queue.flags_set1(Queue.F_RANDOM, (shuffleMode == PlaybackStateCompat.SHUFFLE_MODE_ALL));
 				sess.setShuffleMode(shuffleMode);
-				queue.random(shuffleMode == PlaybackStateCompat.SHUFFLE_MODE_ALL);
 			}
 
 			public void onSetRepeatMode(int repeatMode) {
 				core.dbglog(TAG, "MediaSessionCompat.onSetRepeatMode");
-				boolean val = (repeatMode == PlaybackStateCompat.REPEAT_MODE_ALL);
-				queue.repeat(val);
+				queue.flags_set1(Queue.F_REPEAT, (repeatMode == PlaybackStateCompat.REPEAT_MODE_ALL));
 				sess.setRepeatMode(repeatMode);
 			}
 		});
@@ -283,18 +282,18 @@ public class Svc extends MediaBrowserServiceCompat {
 
 		pstate.setActiveQueueItemId(queue.active_track_pos());
 
-		String title = t.title;
-		if (t.title.isEmpty())
+		String title = t.pmeta.title;
+		if (t.pmeta.title.isEmpty())
 			title = t.name;
 
 		MediaMetadataCompat.Builder meta = new MediaMetadataCompat.Builder();
-		meta.putLong(MediaMetadataCompat.METADATA_KEY_DURATION, t.time_total_msec);
-		meta.putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, t.url);
+		meta.putLong(MediaMetadataCompat.METADATA_KEY_DURATION, t.pmeta.length_msec);
+		meta.putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, t.pmeta.url);
 		meta.putString(MediaMetadataCompat.METADATA_KEY_TITLE, title);
-		if (!t.artist.isEmpty())
-			meta.putString(MediaMetadataCompat.METADATA_KEY_ARTIST, t.artist);
-		if (!t.album.isEmpty())
-			meta.putString(MediaMetadataCompat.METADATA_KEY_ALBUM, t.album);
+		if (!t.pmeta.artist.isEmpty())
+			meta.putString(MediaMetadataCompat.METADATA_KEY_ARTIST, t.pmeta.artist);
+		if (!t.pmeta.album.isEmpty())
+			meta.putString(MediaMetadataCompat.METADATA_KEY_ALBUM, t.pmeta.album);
 		// meta.putString(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, );
 		// meta.putString(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, );
 		sess.setMetadata(meta.build());
@@ -303,7 +302,7 @@ public class Svc extends MediaBrowserServiceCompat {
 
 		if (!core.setts.svc_notification_disable) {
 			nfy.setContentTitle(title);
-			nfy.setContentText(t.artist);
+			nfy.setContentText(t.pmeta.artist);
 		}
 
 		fg();

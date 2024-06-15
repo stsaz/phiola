@@ -29,22 +29,22 @@ public class SettingsActivity extends AppCompatActivity {
 		if (actionBar != null)
 			actionBar.setDisplayHomeAsUpEnabled(true);
 
-		b.sbPlayAutoSkip.setMax(auto_skip_progress(0, 200));
+		b.sbPlayAutoSkip.setMax(auto_skip_progress(200));
 		b.sbPlayAutoSkip.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
 				@Override
 				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 					if (fromUser) {
-						b.eAutoSkip.setText(auto_skip_str(auto_skip_value(progress)));
+						b.eAutoSkip.setText(AutoSkip.user_str(auto_skip_value(progress)));
 					}
 				}
 			});
 
-		b.sbPlayAutoSkipTail.setMax(auto_skip_progress(0, 200));
+		b.sbPlayAutoSkipTail.setMax(auto_skip_progress(200));
 		b.sbPlayAutoSkipTail.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
 				@Override
 				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 					if (fromUser) {
-						b.eAutoSkipTail.setText(auto_skip_str(auto_skip_value(progress)));
+						b.eAutoSkipTail.setText(AutoSkip.user_str(auto_skip_value(progress)));
 					}
 				}
 			});
@@ -54,7 +54,7 @@ public class SettingsActivity extends AppCompatActivity {
 				@Override
 				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 					if (fromUser) {
-						b.eAutoStop.setText(auto_stop_str(auto_stop_value(progress)));
+						b.eAutoStop.setText(Util.int_to_str(auto_stop_value(progress)));
 					}
 				}
 			});
@@ -168,20 +168,21 @@ public class SettingsActivity extends AppCompatActivity {
 		b.swUiInfoInTitle.setChecked(core.gui().ainfo_in_title);
 
 		// Playlist
-		b.swRandom.setChecked(core.queue().is_random());
-		b.swRepeat.setChecked(core.queue().is_repeat());
-		b.swListAddRmOnNext.setChecked(core.queue().add_rm_on_next);
-		b.swListRmOnNext.setChecked(core.queue().rm_on_next);
-		b.swListRmOnErr.setChecked(core.queue().rm_on_err);
-		b.sbPlayAutoStop.setProgress(auto_stop_progress(core.queue().auto_stop.value_min));
-		b.eAutoStop.setText(core.int_to_str(core.queue().auto_stop.value_min));
+		Queue queue = core.queue();
+		b.swRandom.setChecked(queue.flags_test(Queue.F_RANDOM));
+		b.swRepeat.setChecked(queue.flags_test(Queue.F_REPEAT));
+		b.swListAddRmOnNext.setChecked(queue.flags_test(Queue.F_MOVE_ON_NEXT));
+		b.swListRmOnNext.setChecked(queue.flags_test(Queue.F_RM_ON_NEXT));
+		b.swListRmOnErr.setChecked(queue.flags_test(Queue.F_RM_ON_ERR));
+		b.sbPlayAutoStop.setProgress(auto_stop_progress(queue.auto_stop_value_min));
+		b.eAutoStop.setText(core.int_to_str(queue.auto_stop_value_min));
 
 		// Playback
 		b.eCodepage.setText(core.setts.codepage);
-		b.sbPlayAutoSkip.setProgress(auto_skip_progress(core.queue().auto_skip_beginning.percent, core.queue().auto_skip_beginning.msec / 1000));
-		b.eAutoSkip.setText(core.queue().auto_skip_beginning.str());
-		b.sbPlayAutoSkipTail.setProgress(auto_skip_progress(core.queue().auto_skip_tail.percent, core.queue().auto_skip_tail.msec / 1000));
-		b.eAutoSkipTail.setText(core.queue().auto_skip_tail.str());
+		b.sbPlayAutoSkip.setProgress(auto_skip_progress(core.setts.auto_skip_head.val));
+		b.eAutoSkip.setText(core.setts.auto_skip_head.str());
+		b.sbPlayAutoSkipTail.setProgress(auto_skip_progress(core.setts.auto_skip_tail.val));
+		b.eAutoSkipTail.setText(core.setts.auto_skip_tail.str());
 
 		// Operation
 		b.eDataDir.setText(core.setts.pub_data_dir);
@@ -190,6 +191,12 @@ public class SettingsActivity extends AppCompatActivity {
 		b.eQuickMoveDir.setText(core.setts.quick_move_dir);
 
 		rec_load();
+	}
+
+	private static int flag(int mask, boolean val) {
+		if (val)
+			return mask;
+		return 0;
 	}
 
 	private void save() {
@@ -205,18 +212,24 @@ public class SettingsActivity extends AppCompatActivity {
 		core.gui().ainfo_in_title = b.swUiInfoInTitle.isChecked();
 
 		// Playlist
-		core.queue().random(b.swRandom.isChecked());
-		core.queue().repeat(b.swRepeat.isChecked());
-		core.queue().add_rm_on_next = b.swListAddRmOnNext.isChecked();
-		core.queue().rm_on_next = b.swListRmOnNext.isChecked();
-		core.queue().rm_on_err = b.swListRmOnErr.isChecked();
-		core.queue().auto_stop.value_min = core.str_to_uint(b.eAutoStop.getText().toString(), 0);
+		Queue queue = core.queue();
+
+		int f = 0;
+		f |= flag(Queue.F_RANDOM, b.swRandom.isChecked());
+		f |= flag(Queue.F_REPEAT, b.swRepeat.isChecked());
+		f |= flag(Queue.F_MOVE_ON_NEXT, b.swListAddRmOnNext.isChecked());
+		f |= flag(Queue.F_RM_ON_NEXT, b.swListRmOnNext.isChecked());
+		f |= flag(Queue.F_RM_ON_ERR, b.swListRmOnErr.isChecked());
+		int mask = Queue.F_RANDOM | Queue.F_REPEAT | Queue.F_MOVE_ON_NEXT | Queue.F_RM_ON_NEXT | Queue.F_RM_ON_ERR;
+		queue.flags_set(mask, f);
+
+		queue.auto_stop_value_min = core.str_to_uint(b.eAutoStop.getText().toString(), 0);
 
 		// Playback
 		core.setts.set_codepage(b.eCodepage.getText().toString());
 		core.phiola.setCodepage(core.setts.codepage);
-		core.queue().auto_skip_beginning.parse(b.eAutoSkip.getText().toString());
-		core.queue().auto_skip_tail.parse(b.eAutoSkipTail.getText().toString());
+		core.setts.auto_skip_head_set(b.eAutoSkip.getText().toString());
+		core.setts.auto_skip_tail_set(b.eAutoSkipTail.getText().toString());
 
 		// Operation
 		String s = b.eDataDir.getText().toString();
@@ -241,28 +254,17 @@ public class SettingsActivity extends AppCompatActivity {
 			return progress;
 		return progress * 10;
 	}
-	private int auto_skip_progress(int percent, int sec) {
-		if (percent > 0)
-			return 20 - percent;
+	private int auto_skip_progress(int n) {
+		if (n < 0)
+			return 20 - -n;
 
-		if (sec <= 200)
-			return 20 + sec / 10;
+		if (n <= 200)
+			return 20 + n / 10;
 		return 20;
-	}
-	private String auto_skip_str(int value) {
-		String s = "";
-		if (value < 0)
-			s = String.format("%d%%", -value);
-		else if (value > 0)
-			s = String.format("%d sec", value);
-		return s;
 	}
 
 	private int auto_stop_value(int progress) { return progress * 6; }
 	private int auto_stop_progress(int min) { return min / 6; }
-	private String auto_stop_str(int value) {
-		return String.format("%d", value);
-	}
 
 	private int rec_format_index(String s) {
 		for (int i = 0; i < CoreSettings.rec_formats.length; i++) {
