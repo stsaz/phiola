@@ -34,7 +34,7 @@ do { \
 } while (0)
 
 #ifndef PHI_VERSION_STR
-	#define PHI_VERSION_STR  "2.1-rc4"
+	#define PHI_VERSION_STR  "2.1.5"
 #endif
 
 static int core_wrk_creating(uint iw);
