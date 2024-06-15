@@ -4,7 +4,6 @@
 package com.github.stsaz.phiola;
 
 import android.media.MediaPlayer;
-import android.media.MediaRecorder;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
@@ -31,7 +30,6 @@ abstract class PlaybackObserver {
 
 class TrackHandle {
 	long phi_trk;
-	MediaRecorder mr;
 	int state;
 	boolean stopped; // stopped by user
 	boolean error; // processing error
@@ -381,9 +379,7 @@ class Track {
 	}
 
 	TrackHandle rec_start(String out, Phiola.RecordCallback cb) {
-		if (Build.VERSION.SDK_INT < 26) {
-			return rec_start_compat(out, cb);
-		}
+		if (Build.VERSION.SDK_INT < 26) return null;
 
 		Phiola.RecordParams p = new Phiola.RecordParams();
 		p.format = rec_fmt(core.setts.rec_enc);
@@ -411,51 +407,13 @@ class Track {
 		return trec;
 	}
 
-	private TrackHandle rec_start_compat(String out, Phiola.RecordCallback cb) {
-		trec = new TrackHandle();
-		trec.mr = new MediaRecorder();
-		try {
-			trec.mr.setAudioSource(MediaRecorder.AudioSource.MIC);
-			trec.mr.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-			trec.mr.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-			trec.mr.setAudioEncodingBitRate(core.setts.rec_bitrate * 1000);
-			trec.mr.setOutputFile(out);
-			trec.mr.prepare();
-			trec.mr.start();
-		} catch (Exception e) {
-			core.errlog(TAG, "mr.prepare(): %s", e);
-			trec = null;
-			return null;
-		}
-		return trec;
-	}
-
 	String record_stop() {
-		if (Build.VERSION.SDK_INT < 26) {
-			return record_stop_compat(trec);
-		}
-
 		String e = core.phiola.recCtrl(trec.phi_trk, Phiola.RECL_STOP);
 		trec = null;
 		return e;
 	}
 
-	private String record_stop_compat(TrackHandle t) {
-		String err = null;
-		try {
-			t.mr.stop();
-			t.mr.reset();
-			t.mr.release();
-		} catch (Exception e) {
-			err = String.format("mr.stop(): %s", e);
-		}
-		t.mr = null;
-		trec = null;
-		return err;
-	}
-
 	int record_pause_toggle() {
-		if (Build.VERSION.SDK_INT < 26) return -1;
 		if (trec == null) return -1;
 
 		int cmd = Phiola.RECL_PAUSE;
