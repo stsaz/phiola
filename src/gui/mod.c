@@ -78,7 +78,7 @@ static int file_del_trash(const char **names, ffsize n)
 #endif
 
 /** Trash all selected files */
-void file_del(ffslice indexes)
+void file_del(ffslice indices)
 {
 	if (gd->q_filtered) goto end;
 
@@ -86,7 +86,7 @@ void file_del(ffslice indexes)
 	struct phi_queue_entry *qe;
 	uint *it;
 
-	FFSLICE_WALK(&indexes, it) {
+	FFSLICE_WALK(&indices, it) {
 		qe = gd->queue->at(gd->q_selected, *it);
 		*ffvec_pushT(&names, char*) = qe->conf.ifile.name;
 	}
@@ -97,7 +97,7 @@ void file_del(ffslice indexes)
 	int r = file_del_trash((const char**)names.ptr, names.len);
 #endif
 
-	FFSLICE_RWALK(&indexes, it) {
+	FFSLICE_RWALK(&indices, it) {
 		qe = gd->queue->at(gd->q_selected, *it);
 		gd->queue->remove(qe);
 	}
@@ -109,7 +109,7 @@ void file_del(ffslice indexes)
 
 	ffvec_free(&names);
 end:
-	ffslice_free(&indexes);
+	ffslice_free(&indices);
 }
 
 #ifdef FF_LINUX
@@ -128,10 +128,10 @@ static void dir_show(const char *dir)
 #endif
 
 /** Open/explore directory in UI for the first selected file */
-void file_dir_show(ffslice indexes)
+void file_dir_show(ffslice indices)
 {
 	uint *it;
-	FFSLICE_WALK(&indexes, it) {
+	FFSLICE_WALK(&indices, it) {
 		const struct phi_queue_entry *qe = gd->queue->at(list_id_visible(), *it);
 
 #ifdef FF_WIN
@@ -148,7 +148,7 @@ void file_dir_show(ffslice indexes)
 
 		break;
 	}
-	ffslice_free(&indexes);
+	ffslice_free(&indices);
 }
 
 /** Create a new queue */
@@ -597,7 +597,7 @@ static phi_queue_id list_next_playback()
 }
 
 /** Add selected tracks to the next playback list */
-void list_add_to_next(ffslice indexes)
+void list_add_to_next(ffslice indices)
 {
 	phi_queue_id q_target = list_next_playback();
 	if (!q_target)
@@ -605,27 +605,27 @@ void list_add_to_next(ffslice indexes)
 
 	phi_queue_id q_src = list_id_visible();
 	uint *it;
-	FFSLICE_WALK(&indexes, it) {
+	FFSLICE_WALK(&indices, it) {
 		struct phi_queue_entry *qe = gd->queue->at(q_src, *it), nqe = {};
 		nqe.conf.ifile.name = ffsz_dup(qe->conf.ifile.name);
 		gd->queue->add(q_target, &nqe);
 	}
 
 end:
-	ffslice_free(&indexes);
+	ffslice_free(&indices);
 }
 
-void list_remove(ffslice indexes)
+void list_remove(ffslice indices)
 {
 	if (gd->q_filtered) goto end;
 
 	uint *it;
-	FFSLICE_RWALK(&indexes, it) {
+	FFSLICE_RWALK(&indices, it) {
 		gd->queue->remove(gd->queue->at(gd->q_selected, *it));
 	}
 
 end:
-	ffslice_free(&indexes);
+	ffslice_free(&indices);
 }
 
 
@@ -691,7 +691,7 @@ static const phi_filter phi_gui_convert_guard = {
 };
 
 /** Create conversion queue and add tracks to it */
-void convert_add(ffslice indexes)
+void convert_add(ffslice indices)
 {
 	phi_queue_id q = list_id_visible();
 
@@ -707,7 +707,7 @@ void convert_add(ffslice indexes)
 	}
 
 	uint *it;
-	FFSLICE_WALK(&indexes, it) {
+	FFSLICE_WALK(&indices, it) {
 		const struct phi_queue_entry *iqe = gd->queue->at(q, *it);
 
 		struct phi_queue_entry qe = {};
@@ -717,7 +717,7 @@ void convert_add(ffslice indexes)
 		gd->queue->add(gd->q_convert, &qe);
 	}
 
-	ffslice_free(&indexes);
+	ffslice_free(&indices);
 }
 
 /** Set config for each track and begin conversion */

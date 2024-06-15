@@ -102,5 +102,5 @@ static inline void conf_wnd_pos_write(ffconfw *cw, const char *name, ffui_window
 }
 FF_EXTERN void theme_switch(uint i);
 FF_EXTERN void gui_dragdrop(ffstr data);
-FF_EXTERN void file_del(ffslice indexes);
+FF_EXTERN void file_del(ffslice indices);
 FF_EXTERN void gui_quit();

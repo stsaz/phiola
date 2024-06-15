@@ -167,20 +167,22 @@ public class SettingsActivity extends AppCompatActivity {
 		b.swSvcNotifDisable.setChecked(core.setts.svc_notification_disable);
 		b.swUiInfoInTitle.setChecked(core.gui().ainfo_in_title);
 
-		// Playback
+		// Playlist
 		b.swRandom.setChecked(core.queue().is_random());
 		b.swRepeat.setChecked(core.queue().is_repeat());
-		b.swNotags.setChecked(core.setts.play_no_tags);
 		b.swListAddRmOnNext.setChecked(core.queue().add_rm_on_next);
 		b.swListRmOnNext.setChecked(core.queue().rm_on_next);
 		b.swListRmOnErr.setChecked(core.queue().rm_on_err);
+		b.sbPlayAutoStop.setProgress(auto_stop_progress(core.queue().auto_stop.value_min));
+		b.eAutoStop.setText(core.int_to_str(core.queue().auto_stop.value_min));
+
+		// Playback
+		b.swNotags.setChecked(core.setts.play_no_tags);
 		b.eCodepage.setText(core.setts.codepage);
 		b.sbPlayAutoSkip.setProgress(auto_skip_progress(core.queue().auto_skip_beginning.percent, core.queue().auto_skip_beginning.msec / 1000));
 		b.eAutoSkip.setText(core.queue().auto_skip_beginning.str());
 		b.sbPlayAutoSkipTail.setProgress(auto_skip_progress(core.queue().auto_skip_tail.percent, core.queue().auto_skip_tail.msec / 1000));
 		b.eAutoSkipTail.setText(core.queue().auto_skip_tail.str());
-		b.sbPlayAutoStop.setProgress(auto_stop_progress(core.queue().auto_stop.value_min));
-		b.eAutoStop.setText(core.int_to_str(core.queue().auto_stop.value_min));
 
 		// Operation
 		b.eDataDir.setText(core.setts.pub_data_dir);
@@ -203,18 +205,20 @@ public class SettingsActivity extends AppCompatActivity {
 		core.gui().record_hide = b.swShowrec.isChecked();
 		core.gui().ainfo_in_title = b.swUiInfoInTitle.isChecked();
 
-		// Playback
+		// Playlist
 		core.queue().random(b.swRandom.isChecked());
 		core.queue().repeat(b.swRepeat.isChecked());
-		core.setts.play_no_tags = b.swNotags.isChecked();
 		core.queue().add_rm_on_next = b.swListAddRmOnNext.isChecked();
 		core.queue().rm_on_next = b.swListRmOnNext.isChecked();
 		core.queue().rm_on_err = b.swListRmOnErr.isChecked();
+		core.queue().auto_stop.value_min = core.str_to_uint(b.eAutoStop.getText().toString(), 0);
+
+		// Playback
 		core.setts.set_codepage(b.eCodepage.getText().toString());
+		core.setts.play_no_tags = b.swNotags.isChecked();
 		core.phiola.setCodepage(core.setts.codepage);
 		core.queue().auto_skip_beginning.parse(b.eAutoSkip.getText().toString());
 		core.queue().auto_skip_tail.parse(b.eAutoSkipTail.getText().toString());
-		core.queue().auto_stop.value_min = core.str_to_uint(b.eAutoStop.getText().toString(), 0);
 
 		// Operation
 		String s = b.eDataDir.getText().toString();

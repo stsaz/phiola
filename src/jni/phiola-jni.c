@@ -14,8 +14,8 @@
 
 struct phiola_jni {
 	phi_core *core;
-	const phi_queue_if *queue;
-	const phi_meta_if *metaif;
+	phi_queue_if queue;
+	phi_meta_if metaif;
 
 	ffstr dir_libs;
 	ffbyte debug;
@@ -33,6 +33,7 @@ struct phiola_jni {
 
 	jmethodID Phiola_lib_load;
 	jmethodID Phiola_MetaCallback_on_finish;
+	jmethodID Phiola_Meta_init;
 
 	jobject obj_QueueCallback;
 	jmethodID Phiola_QueueCallback_on_change;
@@ -221,9 +222,8 @@ static int core()
 	};
 	if (NULL == (x->core = phi_core_create(&conf)))
 		return -1;
-	x->queue = x->core->mod("core.queue");
-	if (!(x->metaif = x->core->mod("format.meta")))
-		return -1;
+	x->queue = *(phi_queue_if*)x->core->mod("core.queue");
+	x->metaif = *(phi_meta_if*)x->core->mod("format.meta");
 	return 0;
 }
 
@@ -242,7 +242,10 @@ Java_com_github_stsaz_phiola_Phiola_init(JNIEnv *env, jobject thiz, jstring jlib
 
 	x->Phiola_class = jni_global_ref(jni_class(PJC_PHIOLA));
 	x->Phiola_lib_load = jni_sfunc(x->Phiola_class, "lib_load", "(" JNI_TSTR ")" JNI_TBOOL);
+
 	x->Phiola_Meta = jni_global_ref(jni_class(PJC_META));
+	x->Phiola_Meta_init = jni_func(x->Phiola_Meta, "<init>", "()V");
+
 	FF_ASSERT(x->Phiola_class && x->Phiola_Meta && x->Phiola_lib_load);
 
 	if (core()) return;

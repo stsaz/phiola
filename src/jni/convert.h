@@ -57,7 +57,7 @@ struct conv_track_info {
 
 static void conv_grd_close(void *ctx, phi_track *t)
 {
-	uint i = x->queue->index(t->qent);
+	uint i = x->queue.index(t->qent);
 	struct conv_track_info *cti = (struct conv_track_info*)x->conversion_tracks.ptr + i;
 
 	if (t->chain_flags & PHI_FFINISHED) {
@@ -71,14 +71,14 @@ static void conv_grd_close(void *ctx, phi_track *t)
 				struct phi_queue_entry qe = {
 					.conf.ifile.name = ffsz_dup(oname),
 				};
-				x->queue->add(x->q_add_remove, &qe);
+				x->queue.add(x->q_add_remove, &qe);
 			}
 
 			if (x->trash_dir_rel && !ffsz_eq(t->conf.ifile.name, oname)) {
 				char *trash_dir = trash_dir_abs(x->trash_dir_rel, t->conf.ifile.name);
 				if (trash_dir) {
 					if (!file_trash(trash_dir, t->conf.ifile.name) && x->q_pos)
-						x->queue->remove_at(x->q_add_remove, x->q_pos, 1);
+						x->queue.remove_at(x->q_add_remove, x->q_pos, 1);
 				}
 				ffmem_free(trash_dir);
 			}
@@ -111,7 +111,7 @@ static void* conv_ui_open(phi_track *t)
 	struct conv_track *c = phi_track_allocT(t, struct conv_track);
 	c->sample_rate = t->audio.format.rate;
 	c->duration_sec = samples_to_msec(t->audio.total, c->sample_rate) / 1000;
-	c->index = x->queue->index(t->qent);
+	c->index = x->queue.index(t->qent);
 
 	struct conv_track_info *cti = (struct conv_track_info*)x->conversion_tracks.ptr + c->index;
 	ffmem_zero_obj(cti);
@@ -156,5 +156,8 @@ static const phi_filter phi_convert_ui = {
 	"conv-ui"
 };
 
-#define F_DATE_PRESERVE  1
-#define F_OVERWRITE  2
+enum {
+	F_DATE_PRESERVE = 1,
+	F_OVERWRITE = 2,
+	F_COPY = 4,
+};

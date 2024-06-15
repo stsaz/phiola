@@ -355,6 +355,8 @@ static void q_trk_closed(void *param)
 Thread: worker */
 static void q_ent_closed(struct phi_queue *q, uint flags)
 {
+	dbglog("%s  flags:%u", __func__, flags);
+
 	/* Don't start the next track when there are too many consecutive errors.
 	When in Random or Repeat-All mode we may waste CPU resources without making any progress, e.g.:
 	* input: storage isn't online, files were moved, etc.

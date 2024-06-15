@@ -333,7 +333,7 @@ class Track {
 		return tplay.state;
 	}
 
-	private String header(TrackHandle t) {
+	private static String header(TrackHandle t) {
 		if (t.artist.isEmpty()) {
 			if (t.title.isEmpty()) {
 				return Util.path_split2(t.url)[1];

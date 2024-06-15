@@ -56,10 +56,11 @@
 			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/sett_svc_notif_disable" />
 
+
 		<TextView
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:text="@string/sett_playback"
+			android:text="@string/sett_playlist"
 			android:textColor="@color/sett_group" />
 
 		<androidx.appcompat.widget.SwitchCompat
@@ -88,7 +89,7 @@
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_margin="@dimen/sett_margin"
-			android:text="@string/sett_list_add_rm_on_next" />
+			android:text="@string/sett_list_move_on_next" />
 
 		<androidx.appcompat.widget.SwitchCompat
 			android:id="@+id/sw_list_rm_on_next"
@@ -103,6 +104,34 @@
 			android:layout_height="wrap_content"
 			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/sett_list_rm_on_err" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:layout_marginTop="@dimen/sett_margin"
+			android:text="@string/sett_auto_stop"
+			android:textColor="@color/text" />
+		<SeekBar
+			android:id="@+id/sb_play_auto_stop"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content" />
+		<EditText
+			android:id="@+id/e_auto_stop"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:autofillHints=""
+			android:hint=""
+			android:inputType="text"
+			android:textSize="@dimen/text_editbox" />
+
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:text="@string/sett_playback"
+			android:textColor="@color/sett_group" />
 
 		<TextView
 			android:layout_width="match_parent"
@@ -156,27 +185,6 @@
 			android:layout_height="wrap_content" />
 		<EditText
 			android:id="@+id/e_auto_skip_tail"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="@dimen/sett_margin"
-			android:autofillHints=""
-			android:hint=""
-			android:inputType="text"
-			android:textSize="@dimen/text_editbox" />
-
-		<TextView
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="@dimen/sett_margin"
-			android:layout_marginTop="@dimen/sett_margin"
-			android:text="@string/sett_auto_stop"
-			android:textColor="@color/text" />
-		<SeekBar
-			android:id="@+id/sb_play_auto_stop"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content" />
-		<EditText
-			android:id="@+id/e_auto_stop"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"

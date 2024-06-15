@@ -54,17 +54,19 @@
 	<string name="sett_ui_info_in_title">Show Audio Info in Title</string>
 	<string name="sett_svc_notif_disable">Disable System Notification (requires restart)</string>
 
-	<string name="sett_playback">Playback</string>
+	<string name="sett_playlist">Playlist</string>
 	<string name="sett_random">Random</string>
 	<string name="sett_repeat_all">Repeat All</string>
-	<string name="sett_no_tags">Don\'t Read Tags</string>
-	<string name="sett_list_add_rm_on_next">After Tap on \'Next\': Add Track to Next Playlist and Remove from Current Playlist</string>
+	<string name="sett_list_move_on_next">After Tap on \'Next\': Move Track to Next Playlist</string>
 	<string name="sett_list_rm_on_next">After Tap on \'Next\': Remove Track from Playlist</string>
 	<string name="sett_list_rm_on_err">Remove Track from Playlist on Error</string>
-	<string name="sett_codepage">Codepage for Non-Unicode Tags</string>
-	<string name="sett_auto_skip">Auto-Skip the Beginning of Each Track (sec or %):</string>
-	<string name="sett_auto_skip_tail">Auto-Skip the Ending of Each Track (sec or %):</string>
 	<string name="sett_auto_stop">Auto-Stop Timer (min):</string>
+
+	<string name="sett_playback">Playback</string>
+	<string name="sett_no_tags">Don\'t Read Tags</string>
+	<string name="sett_codepage">Codepage for Non-Unicode Tags</string>
+	<string name="sett_auto_skip">Auto-Skip the Beginning of Each Track (% or sec):</string>
+	<string name="sett_auto_skip_tail">Auto-Skip the Ending of Each Track (% or sec):</string>
 
 	<string name="sett_operation">Operation</string>
 	<string name="sett_file_del">Don\'t Move Files to Trash</string>

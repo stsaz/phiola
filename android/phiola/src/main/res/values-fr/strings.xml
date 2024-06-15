@@ -42,15 +42,14 @@
     <string name="mlist_shuffle">Liste: Mélanger</string>
     <string name="mlist_sort">Liste: Trier</string>
     <string name="mplay_auto_stop">Minuteur d\'arrêt automatique: activateur</string>
-    <string name="sett_auto_skip">Passe automatiquement le début de la piste (secondes ou %):</string>
-    <string name="sett_auto_skip_tail">Passe automatiquement la fin de la piste (secondes ou %):</string>
+    <string name="sett_auto_skip">Passe automatiquement le début de la piste (% ou secondes):</string>
+    <string name="sett_auto_skip_tail">Passe automatiquement la fin de la piste (% ou secondes):</string>
     <string name="sett_auto_stop">Arrêt automatique de la lecture (minutes):</string>
     <string name="sett_codepage">Code de page pour les tags qui ne sont pas au format Unicode</string>
     <string name="sett_dark">Thème sombre</string>
     <string name="sett_data_dir">Dossier des données de l\'application:</string>
     <string name="sett_file_del">Ne pas déplacer les fichiers dans la corbeille</string>
     <string name="sett_interface">Interface</string>
-    <string name="sett_list_add_rm_on_next">Après un clic sur \"Suivant\": ajouter la piste à la liste de lecture suivante et la retirer de la liste actuelle</string>
     <string name="sett_list_rm_on_err">Retirer la piste de la liste de lecture si il y a erreur de lecture</string>
     <string name="sett_list_rm_on_next">Après un clic sur \"Suivant\": retirer la piste de la liste de lecture</string>
     <string name="sett_no_tags">Ne pas lire les tags</string>

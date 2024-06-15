@@ -174,6 +174,26 @@ static void tuiplay_vol(tui_track *u, uint cmd)
 	userlog(u->t, "Volume: %.02FdB", db);
 }
 
+static int handle_seek(tui_track *u, phi_track *t)
+{
+	if (u->seek_msec != -1) {
+		t->audio.seek = u->seek_msec;
+		u->seek_msec = -1;
+		return PHI_MORE; // new seek request
+
+	} else if (!(t->chain_flags & PHI_FFWD)) {
+		return PHI_MORE; // going back without seeking
+
+	} else if (t->data_in.len == 0 && !(t->chain_flags & PHI_FFIRST)) {
+		return PHI_MORE; // waiting for audio data
+
+	} else if (t->audio.seek != -1 && !t->audio.seek_req) {
+		dbglog(u->t, "seek: done");
+		t->audio.seek = ~0ULL; // prev. seek is complete
+	}
+	return 0;
+}
+
 static int tuiplay_process(void *ctx, phi_track *t)
 {
 	tui_track *u = ctx;
@@ -196,18 +216,8 @@ static int tuiplay_process(void *ctx, phi_track *t)
 		tui_info(u);
 	}
 
-	if (u->seek_msec != -1) {
-		t->audio.seek = u->seek_msec;
-		u->seek_msec = -1;
-		return PHI_MORE; // new seek request
-	} else if (!(t->chain_flags & PHI_FFWD)) {
-		return PHI_MORE; // going back without seeking
-	} else if (t->data_in.len == 0 && !(t->chain_flags & PHI_FFIRST)) {
-		return PHI_MORE; // waiting for audio data
-	} else if (t->audio.seek != -1 && !t->audio.seek_req) {
-		dbglog(u->t, "seek: done");
-		t->audio.seek = ~0ULL; // prev. seek is complete
-	}
+	if (handle_seek(u, t))
+		return PHI_MORE;
 
 	if (mod->curtrk_rec != NULL)
 		goto done; //don't show playback bar while recording in another track

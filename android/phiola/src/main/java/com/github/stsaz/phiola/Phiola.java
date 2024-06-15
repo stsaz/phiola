@@ -48,12 +48,12 @@ class Phiola {
 
 		static final int
 			F_DATE_PRESERVE = 1,
-			F_OVERWRITE = 2;
+			F_OVERWRITE = 2,
+			F_COPY = 4;
 		int flags;
 
 		String out_name;
 		String from_msec, to_msec;
-		boolean copy;
 		int sample_rate;
 		int aac_quality;
 		int opus_quality;

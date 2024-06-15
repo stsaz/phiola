@@ -255,7 +255,6 @@ public class ConvertActivity extends AppCompatActivity {
 		Phiola.ConvertParams p = new Phiola.ConvertParams();
 		p.from_msec = b.eFrom.getText().toString();
 		p.to_msec = b.eUntil.getText().toString();
-		p.copy = core.setts.conv_copy;
 		p.sample_rate = core.str_to_uint(b.eSampleRate.getText().toString(), 0);
 		p.aac_quality = core.setts.conv_aac_quality;
 		p.opus_quality = core.setts.conv_opus_quality;
@@ -264,6 +263,8 @@ public class ConvertActivity extends AppCompatActivity {
 		int iformat = b.spOutExt.getSelectedItemPosition();
 		p.format = CoreSettings.conv_encoders[iformat];
 
+		if (core.setts.conv_copy)
+			p.flags |= Phiola.ConvertParams.F_COPY;
 		if (core.setts.conv_file_date_preserve)
 			p.flags |= Phiola.ConvertParams.F_DATE_PRESERVE;
 		if (false)

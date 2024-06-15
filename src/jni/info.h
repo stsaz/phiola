@@ -46,26 +46,25 @@ jobject meta_create(JNIEnv *env, ffvec *meta, const char *filename, uint64 msec)
 {
 	char *artist, *title, *album, *date;
 	ffstr val;
-	if (!x->metaif->find(meta, FFSTR_Z("artist"), &val, 0))
+	if (!x->metaif.find(meta, FFSTR_Z("artist"), &val, 0))
 		artist = ffsz_dupstr(&val);
 	else
 		artist = ffsz_dup("");
 
-	if (!x->metaif->find(meta, FFSTR_Z("title"), &val, 0))
+	if (!x->metaif.find(meta, FFSTR_Z("title"), &val, 0))
 		title = ffsz_dupstr(&val);
 	else
 		title = ffsz_dup("");
 
-	if (!x->metaif->find(meta, FFSTR_Z("album"), &val, 0))
+	if (!x->metaif.find(meta, FFSTR_Z("album"), &val, 0))
 		album = ffsz_dupstr(&val);
 	else
 		album = ffsz_dup("");
 
-	date = (!x->metaif->find(meta, FFSTR_Z("date"), &val, 0)) ? ffsz_dupstr(&val) : NULL;
+	date = (!x->metaif.find(meta, FFSTR_Z("date"), &val, 0)) ? ffsz_dupstr(&val) : NULL;
 
 	jclass jc = x->Phiola_Meta;
-	jmethodID init = jni_func(jc, "<init>", "()V");
-	jobject jmeta = jni_obj_new(jc, init);
+	jobject jmeta = jni_obj_new(jc, x->Phiola_Meta_init);
 
 	jni_obj_sz_set(env, jmeta, jni_field_str(jc, "url"), filename);
 	jni_obj_sz_set(env, jmeta, jni_field_str(jc, "artist"), artist);
@@ -117,7 +116,7 @@ static ffvec info_prepare(JNIEnv *env, jobject jmeta, jclass jc_meta, phi_track 
 static void meta_queue_store(phi_track *t)
 {
 	struct phi_queue_entry *qe = t->qent;
-	x->metaif->destroy(&qe->conf.meta);
+	x->metaif.destroy(&qe->conf.meta);
 	qe->conf.meta = t->meta; // Remember the tags we read from file in this track
 	qe->length_msec = (t->audio.format.rate) ? pcm_time(t->audio.total, t->audio.format.rate) : 0;
 	ffvec_null(&t->meta);
@@ -156,7 +155,7 @@ static void infotrk_close(void *ctx, phi_track *t)
 end:
 	jni_global_unref(t->udata);
 	jni_vm_detach(jvm);
-	x->queue->unref(t->qent);
+	x->queue.unref(t->qent);
 	x->core->track->stop(t);
 }
 
@@ -190,7 +189,7 @@ Java_com_github_stsaz_phiola_Phiola_meta(JNIEnv *env, jobject thiz, jlong q, jin
 		|| !track->filter(t, x->core->mod("format.detect"), 0))
 		goto end;
 
-	t->qent = x->queue->ref((phi_queue_id)q, list_item);
+	t->qent = x->queue.ref((phi_queue_id)q, list_item);
 
 	x->Phiola_MetaCallback_on_finish = jni_func(jni_class_obj(jcb), "on_finish", "(" PJT_META ")V");
 	t->udata = jni_global_ref(jcb);

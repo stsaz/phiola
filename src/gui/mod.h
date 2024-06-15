@@ -30,14 +30,14 @@ static inline void gui_task(void (*func)()) {
 	gui_task_ptr((void(*)(void*))(void*)func, NULL);
 }
 
-FF_EXTERN void file_dir_show(ffslice indexes);
+FF_EXTERN void file_dir_show(ffslice indices);
 
 FF_EXTERN void list_created(phi_queue_id q);
 FF_EXTERN void list_add(ffstr fn);
 FF_EXTERN void list_add_sz(void *sz);
 FF_EXTERN void list_add_multi(ffslice names);
-FF_EXTERN void list_add_to_next(ffslice indexes);
-FF_EXTERN void list_remove(ffslice indexes);
+FF_EXTERN void list_add_to_next(ffslice indices);
+FF_EXTERN void list_remove(ffslice indices);
 FF_EXTERN void list_save(void *sz);
 FF_EXTERN void lists_save();
 FF_EXTERN void lists_load();
@@ -58,7 +58,7 @@ FF_EXTERN void gui_stop();
 FF_EXTERN void record_begin(void *param);
 FF_EXTERN int record_stop();
 
-FF_EXTERN void convert_add(ffslice indexes);
+FF_EXTERN void convert_add(ffslice indices);
 FF_EXTERN void convert_begin(void *param);
 
 FF_EXTERN const phi_adev_if* adev_find_mod();

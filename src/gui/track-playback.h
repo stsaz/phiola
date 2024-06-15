@@ -94,6 +94,26 @@ static void gtrk_close(void *ctx, phi_track *t)
 	phi_track_free(t, gt);
 }
 
+static int handle_seek(struct gtrk *gt, phi_track *t)
+{
+	if (gt->seek_msec != -1) {
+		t->audio.seek = gt->seek_msec;
+		gt->seek_msec = -1;
+		return PHI_MORE; // new seek request
+
+	} else if (!(t->chain_flags & PHI_FFWD)) {
+		return PHI_MORE; // going back without seeking
+
+	} else if (t->data_in.len == 0 && !(t->chain_flags & PHI_FFIRST)) {
+		return PHI_MORE; // waiting for audio data
+
+	} else if (t->audio.seek != -1 && !t->audio.seek_req) {
+		dbglog1(gt->t, "seek: done");
+		t->audio.seek = ~0ULL; // prev. seek is complete
+	}
+	return 0;
+}
+
 static int gtrk_process(void *ctx, phi_track *t)
 {
 	struct gtrk *gt = ctx;
@@ -163,21 +183,8 @@ static int gtrk_process(void *ctx, phi_track *t)
 			gt->seek_msec = gt->duration_sec * -gd->conf.auto_skip_sec_percent / 100 * 1000;
 	}
 
-	if (gt->seek_msec != -1) {
-		t->audio.seek = gt->seek_msec;
-		gt->seek_msec = -1;
-		return PHI_MORE; // new seek request
-
-	} else if (!(t->chain_flags & PHI_FFWD)) {
-		return PHI_MORE; // going back without seeking
-
-	} else if (t->data_in.len == 0 && !(t->chain_flags & PHI_FFIRST)) {
-		return PHI_MORE; // waiting for audio data
-
-	} else if (t->audio.seek != -1 && !t->audio.seek_req) {
-		dbglog1(gt->t, "seek: done");
-		t->audio.seek = ~0ULL; // prev. seek is complete
-	}
+	if (handle_seek(gt, t))
+		return PHI_MORE;
 
 	if (t->audio.pos == ~0ULL)
 		goto end;

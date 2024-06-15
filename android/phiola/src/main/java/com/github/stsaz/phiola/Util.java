@@ -15,15 +15,15 @@ abstract class Util {
 
 	abstract void errlog(String mod, String fmt, Object... args);
 
-	String int_to_str(int v) {
+	static String int_to_str(int v) {
 		return String.format("%d", v);
 	}
 
-	String float_to_str(float v) {
+	static String float_to_str(float v) {
 		return String.format("%.02f", v);
 	}
 
-	float str_to_float(String s, float def) {
+	static float str_to_float(String s, float def) {
 		try {
 			return Float.parseFloat(s);
 		} catch (Exception e) {
@@ -31,7 +31,7 @@ abstract class Util {
 		return def;
 	}
 
-	int str_to_uint(String s, int def) {
+	static int str_to_uint(String s, int def) {
 		try {
 			int i = Integer.decode(s);
 			if (i >= 0)
@@ -41,7 +41,7 @@ abstract class Util {
 		return def;
 	}
 
-	int str_to_int(String s, int def) {
+	static int str_to_int(String s, int def) {
 		try {
 			return Integer.decode(s);
 		} catch (Exception e) {
@@ -49,7 +49,7 @@ abstract class Util {
 		return def;
 	}
 
-	int bool_to_int(boolean b) {
+	static int bool_to_int(boolean b) {
 		if (b)
 			return 1;
 		return 0;
@@ -95,7 +95,7 @@ abstract class Util {
 	/**
 	 * Find string in array (case-insensitive)
 	 */
-	int array_ifind(String[] array, String search) {
+	static int array_ifind(String[] array, String search) {
 		for (int i = 0; i != array.length; i++) {
 			if (search.equalsIgnoreCase(array[i]))
 				return i;
