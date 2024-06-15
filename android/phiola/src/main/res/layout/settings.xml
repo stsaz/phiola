@@ -78,13 +78,6 @@
 			android:text="@string/sett_repeat_all" />
 
 		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/sw_notags"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:layout_margin="@dimen/sett_margin"
-			android:text="@string/sett_no_tags" />
-
-		<androidx.appcompat.widget.SwitchCompat
 			android:id="@+id/sw_list_add_rm_on_next"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"

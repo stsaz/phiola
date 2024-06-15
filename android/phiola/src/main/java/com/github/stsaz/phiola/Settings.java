@@ -9,7 +9,6 @@ class CoreSettings {
 	boolean	svc_notification_disable;
 	String	trash_dir;
 	boolean	file_del;
-	boolean	play_no_tags;
 	String	codepage;
 	String	pub_data_dir;
 	String	plist_save_dir;
@@ -104,7 +103,6 @@ class CoreSettings {
 	String conf_write() {
 		return String.format(
 			"ui_svc_notfn_disable %d\n"
-			+ "play_no_tags %d\n"
 			+ "codepage %s\n"
 			+ "op_file_delete %d\n"
 			+ "op_data_dir %s\n"
@@ -132,7 +130,6 @@ class CoreSettings {
 			+ "conv_file_date_pres %d\n"
 			+ "conv_new_add_list %d\n"
 			, core.bool_to_int(svc_notification_disable)
-			, core.bool_to_int(play_no_tags)
 			, codepage
 			, core.bool_to_int(file_del)
 			, pub_data_dir
@@ -213,7 +210,6 @@ class CoreSettings {
 		plist_save_dir = kv[Conf.OP_PLIST_SAVE_DIR].value;
 		quick_move_dir = kv[Conf.OP_QUICK_MOVE_DIR].value;
 		trash_dir = kv[Conf.OP_TRASH_DIR_REL].value;
-		play_no_tags = kv[Conf.PLAY_NO_TAGS].enabled;
 		set_codepage(kv[Conf.CODEPAGE].value);
 
 		rec_path = kv[Conf.REC_PATH].value;

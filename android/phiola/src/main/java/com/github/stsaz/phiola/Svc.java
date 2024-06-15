@@ -72,7 +72,7 @@ public class Svc extends MediaBrowserServiceCompat {
 		queue = core.queue();
 		queue.nfy_add(this::sess_setqueue);
 		track = core.track;
-		track.filter_add(new Filter() {
+		track.observer_add(new PlaybackObserver() {
 			public int open(TrackHandle t) {
 				return new_track(t);
 			}

@@ -14,7 +14,7 @@ import android.media.AudioManager;
 import android.os.Build;
 import android.os.Handler;
 
-class SysJobs extends Filter {
+class SysJobs extends PlaybackObserver {
 	private static final String TAG = "phiola.SysJobs";
 	private Core core;
 	private Track track;
@@ -41,7 +41,7 @@ class SysJobs extends Filter {
 	void init(Core core) {
 		this.core = core;
 		track = core.track;
-		track.filter_add(this);
+		track.observer_add(this);
 
 		// be notified when headphones are unplugged
 		IntentFilter f = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);

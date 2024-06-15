@@ -222,7 +222,7 @@ class Queue {
 	Queue(Core core) {
 		this.core = core;
 		core.phiola.quSetCallback(this::on_change);
-		core.track.filter_add(new Filter() {
+		core.track.observer_add(new PlaybackObserver() {
 				public int open(TrackHandle t) {
 					on_open(t);
 					return 0;
@@ -504,10 +504,8 @@ class Queue {
 		t.seek_msec = auto_skip_beginning.value(t.time_total_msec);
 		t.skip_tail_msec = auto_skip_tail.value(t.time_total_msec);
 
-		if (!core.setts.play_no_tags) {
-			queues.get(i_active).modified = true;
-			nfy_all(QueueNotify.UPDATE, trk_idx); // redraw item to display artist-title info
-		}
+		queues.get(i_active).modified = true;
+		nfy_all(QueueNotify.UPDATE, trk_idx); // redraw item to display artist-title info
 	}
 
 	/** Called after a track has been finished. */

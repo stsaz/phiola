@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
 	private Queue queue;
 	private QueueNotify quenfy;
 	private Track track;
-	private Filter trk_nfy;
+	private PlaybackObserver trk_nfy;
 	private TrackCtl trackctl;
 	private long total_dur_msec;
 
@@ -77,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
 		show_ui();
 
 		// If already playing - get in sync
-		track.filter_notify(trk_nfy);
+		track.observer_notify(trk_nfy);
 	}
 
 	protected void onResume() {
@@ -101,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
 	public void onDestroy() {
 		if (core != null) {
 			core.dbglog(TAG, "onDestroy()");
-			track.filter_rm(trk_nfy);
+			track.observer_rm(trk_nfy);
 			trackctl.close();
 			queue.nfy_rm(quenfy);
 			core.close();
@@ -295,13 +295,13 @@ public class MainActivity extends AppCompatActivity {
 		};
 		queue.nfy_add(quenfy);
 		track = core.track;
-		trk_nfy = new Filter() {
+		trk_nfy = new PlaybackObserver() {
 			public int open(TrackHandle t) { return track_opening(t); }
 			public void close(TrackHandle t) { track_closing(t); }
 			public void closed(TrackHandle t) { track_closed(t); }
 			public int process(TrackHandle t) { return track_update(t); }
 		};
-		track.filter_add(trk_nfy);
+		track.observer_add(trk_nfy);
 		trackctl = new TrackCtl(core, this);
 		trackctl.connect();
 		return 0;

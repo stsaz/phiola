@@ -63,7 +63,6 @@
 	<string name="sett_auto_stop">Auto-Stop Timer (min):</string>
 
 	<string name="sett_playback">Playback</string>
-	<string name="sett_no_tags">Don\'t Read Tags</string>
 	<string name="sett_codepage">Codepage for Non-Unicode Tags</string>
 	<string name="sett_auto_skip">Auto-Skip the Beginning of Each Track (% or sec):</string>
 	<string name="sett_auto_skip_tail">Auto-Skip the Ending of Each Track (% or sec):</string>

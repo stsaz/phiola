@@ -52,7 +52,6 @@
     <string name="sett_interface">Interface</string>
     <string name="sett_list_rm_on_err">Retirer la piste de la liste de lecture si il y a erreur de lecture</string>
     <string name="sett_list_rm_on_next">Après un clic sur \"Suivant\": retirer la piste de la liste de lecture</string>
-    <string name="sett_no_tags">Ne pas lire les tags</string>
     <string name="sett_operation">Opération</string>
     <string name="sett_playback">Lecture</string>
     <string name="sett_quick_move_dir">Dossier de déplacement rapide:</string>

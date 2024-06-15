@@ -177,7 +177,6 @@ public class SettingsActivity extends AppCompatActivity {
 		b.eAutoStop.setText(core.int_to_str(core.queue().auto_stop.value_min));
 
 		// Playback
-		b.swNotags.setChecked(core.setts.play_no_tags);
 		b.eCodepage.setText(core.setts.codepage);
 		b.sbPlayAutoSkip.setProgress(auto_skip_progress(core.queue().auto_skip_beginning.percent, core.queue().auto_skip_beginning.msec / 1000));
 		b.eAutoSkip.setText(core.queue().auto_skip_beginning.str());
@@ -215,7 +214,6 @@ public class SettingsActivity extends AppCompatActivity {
 
 		// Playback
 		core.setts.set_codepage(b.eCodepage.getText().toString());
-		core.setts.play_no_tags = b.swNotags.isChecked();
 		core.phiola.setCodepage(core.setts.codepage);
 		core.queue().auto_skip_beginning.parse(b.eAutoSkip.getText().toString());
 		core.queue().auto_skip_tail.parse(b.eAutoSkipTail.getText().toString());

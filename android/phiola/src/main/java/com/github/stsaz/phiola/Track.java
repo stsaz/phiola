@@ -14,31 +14,19 @@ import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
-abstract class Filter {
-	/**
-	 * Open filter track context.  Called for each new track.
-	 * Return -1: close the track.
-	 */
-	public int open(TrackHandle t) {
-		return 0;
-	}
+abstract class PlaybackObserver {
+	/** Called for each new track.
+	Return -1: close the track. */
+	public int open(TrackHandle t) { return 0; }
 
-	/**
-	 * Close filter track context.
-	 */
-	public void close(TrackHandle t) {
-	}
+	/** Called when track is being closed */
+	public void close(TrackHandle t) {}
 
-	/** Called after all filters have been closed */
-	public void closed(TrackHandle t) {
-	}
+	/** Called after all observers have been closed */
+	public void closed(TrackHandle t) {}
 
-	/**
-	 * Update track progress.  Called periodically by timer.
-	 */
-	public int process(TrackHandle t) {
-		return 0;
-	}
+	/** Called periodically while track is playing. */
+	public int process(TrackHandle t) { return 0; }
 }
 
 class TrackHandle {
@@ -247,7 +235,7 @@ class MP {
 class Track {
 	private static final String TAG = "phiola.Track";
 	private Core core;
-	private ArrayList<Filter> filters;
+	private ArrayList<PlaybackObserver> observers;
 	private SimpleArrayMap<String, Boolean> supp_exts;
 
 	private TrackHandle tplay;
@@ -266,7 +254,7 @@ class Track {
 	Track(Core core) {
 		this.core = core;
 		tplay = new TrackHandle();
-		filters = new ArrayList<>();
+		observers = new ArrayList<>();
 		tplay.state = STATE_NONE;
 
 		String[] exts = {"mp3", "ogg", "opus", "m4a", "wav", "flac", "mp4", "mkv", "avi"};
@@ -314,19 +302,19 @@ class Track {
 		return supp_exts.containsKey(ext);
 	}
 
-	void filter_add(Filter f) {
-		filters.add(f);
+	void observer_add(PlaybackObserver f) {
+		observers.add(f);
 	}
 
-	void filter_notify(Filter f) {
+	void observer_notify(PlaybackObserver f) {
 		if (tplay.state != STATE_NONE) {
 			f.open(tplay);
 			f.process(tplay);
 		}
 	}
 
-	void filter_rm(Filter f) {
-		filters.remove(f);
+	void observer_rm(PlaybackObserver f) {
+		observers.remove(f);
 	}
 
 	int state() {
@@ -354,25 +342,20 @@ class Track {
 		tplay.url = url;
 		tplay.reset();
 
-		if (!core.setts.play_no_tags) {
-			core.phiola.meta(core.queue().q_active_id(), list_item, url,
-				(meta) -> {
-					core.tq.post(() -> {
-						tplay.meta(meta);
-						start_3();
-					});
+		core.phiola.meta(core.queue().q_active_id(), list_item, url,
+			(meta) -> {
+				core.tq.post(() -> {
+					tplay.meta(meta);
+					start_3();
 				});
-			return;
-		}
-
-		start_3();
+			});
 	}
 
 	private void start_3() {
 		tplay.name = header(tplay);
 
-		for (Filter f : filters) {
-			core.dbglog(TAG, "opening filter %s", f);
+		for (PlaybackObserver f : observers) {
+			core.dbglog(TAG, "opening observer %s", f);
 			int r = f.open(tplay);
 			if (r != 0) {
 				core.dbglog(TAG, "f.open(): %d", r);
@@ -488,14 +471,14 @@ class Track {
 
 	private void trk_close(TrackHandle t) {
 		t.state = STATE_NONE;
-		for (int i = filters.size() - 1; i >= 0; i--) {
-			Filter f = filters.get(i);
-			core.dbglog(TAG, "closing filter %s", f);
+		for (int i = observers.size() - 1; i >= 0; i--) {
+			PlaybackObserver f = observers.get(i);
+			core.dbglog(TAG, "closing observer %s", f);
 			f.close(t);
 		}
 
-		for (int i = filters.size() - 1; i >= 0; i--) {
-			Filter f = filters.get(i);
+		for (int i = observers.size() - 1; i >= 0; i--) {
+			PlaybackObserver f = observers.get(i);
 			f.closed(t);
 		}
 
@@ -504,7 +487,7 @@ class Track {
 	}
 
 	/**
-	 * Stop playing and notifiy filters
+	 * Stop playing and notifiy observers
 	 */
 	void stop() {
 		core.dbglog(TAG, "stop");
@@ -543,10 +526,10 @@ class Track {
 	}
 
 	/**
-	 * Notify filters on the track's progress
+	 * Notify observers on the track's progress
 	 */
 	void update(TrackHandle t) {
-		for (Filter f : filters) {
+		for (PlaybackObserver f : observers) {
 			f.process(t);
 		}
 	}
