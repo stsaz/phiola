@@ -267,7 +267,7 @@ public class ConvertActivity extends AppCompatActivity {
 			p.flags |= Phiola.ConvertParams.F_COPY;
 		if (core.setts.conv_file_date_preserve)
 			p.flags |= Phiola.ConvertParams.F_DATE_PRESERVE;
-		if (false)
+		if (b.swOutOverwrite.isChecked() && b.swOutOverwriteConfirm.isChecked())
 			p.flags |= Phiola.ConvertParams.F_OVERWRITE;
 
 		if (core.setts.conv_new_add_list)

@@ -421,6 +421,7 @@ Java_com_github_stsaz_phiola_Phiola_quConvertBegin(JNIEnv *env, jobject thiz, jl
 		c->vorbis.quality = conf.vorbis.quality;
 		c->opus.bitrate = conf.opus.bitrate;
 		c->ofile.name = ffsz_dup(ofn);
+		c->ofile.name_tmp = 1;
 		c->ofile.overwrite = conf.ofile.overwrite;
 	}
 

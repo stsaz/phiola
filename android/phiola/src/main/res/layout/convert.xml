@@ -227,6 +227,19 @@
 			android:text="@string/conv_preserve_date" />
 
 		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/sw_out_overwrite"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:layout_margin="@dimen/sett_margin"
+			android:text="@string/conv_overwrite" />
+		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/sw_out_overwrite_confirm"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:layout_margin="@dimen/sett_margin"
+			android:text="@string/conv_overwrite2" />
+
+		<androidx.appcompat.widget.SwitchCompat
 			android:id="@+id/sw_trash_orig"
 			android:layout_width="match_parent"
 			android:layout_height="match_parent"
