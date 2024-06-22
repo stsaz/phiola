@@ -138,16 +138,16 @@ public class ConvertActivity extends AppCompatActivity {
 		return -1;
 	}
 
-	// 8..800 by 8; 1..5
+	// 16..800 by 16; 1..5
 	private static int aac_q_value(int progress) {
-		if (progress > (800 - 8) / 8)
-			return progress - (800 - 8) / 8;
-		return 8 + progress * 8;
+		if (progress > (800 - 16) / 16)
+			return progress - (800 - 16) / 16;
+		return 16 + progress * 16;
 	}
 	private static int aac_q_progress(int q) {
 		if (q <= 5)
-			return (800 - 8) / 8 + q;
-		return (q - 8) / 8;
+			return (800 - 16) / 16 + q;
+		return (q - 16) / 16;
 	}
 	private String aac_q_write(int val) {
 		if (val <= 5)
@@ -160,9 +160,9 @@ public class ConvertActivity extends AppCompatActivity {
 		return core.str_to_uint(s, 0);
 	}
 
-	// 8..504 by 8
-	private static int opus_q_value(int progress) { return 8 + progress * 8; }
-	private static int opus_q_progress(int q) { return (q - 8) / 8; }
+	// 16..496 by 16
+	private static int opus_q_value(int progress) { return 16 + progress * 16; }
+	private static int opus_q_progress(int q) { return (q - 16) / 16; }
 
 	// 1..10
 	private static int vorbis_q_value(int progress) { return 1 + progress; }
@@ -172,9 +172,6 @@ public class ConvertActivity extends AppCompatActivity {
 		b.eOutDir.setText(core.setts.conv_out_dir);
 		b.eOutName.setText(core.setts.conv_out_name);
 		b.spOutExt.setSelection(conv_format_index(core.setts.conv_format));
-
-		if (false)
-			b.eUntil.setText("30");
 
 		b.sbAacQ.setProgress(aac_q_progress(core.setts.conv_aac_quality));
 		b.eAacQ.setText(core.int_to_str(core.setts.conv_aac_quality));

@@ -188,7 +188,8 @@ dt_add:
 
 	case VAR_COUNTER: {
 		static uint counter;
-		ffvec_addfmt(buf, "%u", ++counter);
+		uint n = ffint_fetch_add(&counter, 1) + 1;
+		ffvec_addfmt(buf, "%u", n);
 		return;
 	}
 	}
@@ -246,6 +247,7 @@ static void* fw_open(phi_track *t)
 	const char *fn = f->name;
 	if (t->conf.ofile.name_tmp) {
 		if (!t->conf.ofile.overwrite && fffile_exists(fn)) {
+			t->error = PHI_E_DSTEXIST;
 			errlog(t, "%s: file already exists", fn);
 			goto end;
 		}
