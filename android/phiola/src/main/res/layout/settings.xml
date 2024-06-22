@@ -282,6 +282,23 @@
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:layout_marginTop="@dimen/sett_margin"
+			android:text="@string/sett_rec_name"
+			android:textColor="@color/text" />
+		<EditText
+			android:id="@+id/e_rec_name"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:autofillHints=""
+			android:hint=""
+			android:inputType="text"
+			android:textSize="@dimen/text_editbox" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:layout_marginTop="@dimen/sett_margin"
 			android:text="@string/sett_rec_chan"
 			android:textColor="@color/text" />
 		<Spinner
@@ -405,6 +422,13 @@
 			android:layout_height="wrap_content"
 			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/sett_rec_exclusive" />
+
+		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/sw_rec_list_add"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="@dimen/sett_margin"
+			android:text="@string/sett_rec_list_add" />
 
 	</LinearLayout>
 </ScrollView>

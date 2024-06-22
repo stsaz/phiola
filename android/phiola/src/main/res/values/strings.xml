@@ -76,6 +76,7 @@
 	<string name="sett_recording">Recording</string>
 	<string name="sett_rec_longclick">Long-click for Start/Stop; Short-click for Pause/Resume</string>
 	<string name="sett_rec_dir">Directory for Recordings:</string>
+	<string name="sett_rec_name">File Name Template:</string>
 	<string name="sett_rec_chan">Channels:</string>
 	<string name="sett_rec_rate">Sample Rate (Hz):</string>
 	<string name="sett_rec_enc">Encoder:</string>
@@ -85,6 +86,7 @@
 	<string name="sett_rec_danorm">Dynamic Audio Normalizer</string>
 	<string name="sett_rec_gain">Gain/attenuate (dB):</string>
 	<string name="sett_rec_exclusive">Exclusive Mode</string>
+	<string name="sett_rec_list_add">Add Recorded File to Playlist</string>
 
 	<string name="lssv_ldir">Output directory:</string>
 	<string name="lssv_lname">Playlist name:</string>

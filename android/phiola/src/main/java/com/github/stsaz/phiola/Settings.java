@@ -68,6 +68,7 @@ class CoreSettings {
 	}
 
 	String	rec_path; // directory for recordings
+	String	rec_name_template;
 	String	rec_enc, rec_fmt;
 	int		rec_channels;
 	int		rec_rate;
@@ -78,6 +79,7 @@ class CoreSettings {
 	boolean	rec_danorm;
 	boolean	rec_exclusive;
 	boolean	rec_longclick;
+	boolean	rec_list_add;
 	static final String[] rec_formats = {
 		"AAC-LC",
 		"AAC-HE",
@@ -168,6 +170,7 @@ class CoreSettings {
 			+ "play_auto_skip %s\n"
 			+ "play_auto_skip_tail %s\n"
 			+ "rec_path %s\n"
+			+ "rec_name %s\n"
 			+ "rec_enc %s\n"
 			+ "rec_channels %d\n"
 			+ "rec_rate %d\n"
@@ -177,6 +180,7 @@ class CoreSettings {
 			+ "rec_danorm %d\n"
 			+ "rec_gain %d\n"
 			+ "rec_exclusive %d\n"
+			+ "rec_list_add %d\n"
 			+ "rec_longclick %d\n"
 			+ "conv_out_dir %s\n"
 			+ "conv_out_name %s\n"
@@ -197,6 +201,7 @@ class CoreSettings {
 			, auto_skip_head.str()
 			, auto_skip_tail.str()
 			, rec_path
+			, rec_name_template
 			, rec_enc
 			, rec_channels
 			, rec_rate
@@ -206,6 +211,7 @@ class CoreSettings {
 			, core.bool_to_int(rec_danorm)
 			, rec_gain_db100
 			, core.bool_to_int(rec_exclusive)
+			, core.bool_to_int(rec_list_add)
 			, core.bool_to_int(rec_longclick)
 			, conv_out_dir
 			, conv_out_name
@@ -242,6 +248,9 @@ class CoreSettings {
 		if (trash_dir.isEmpty())
 			trash_dir = "Trash";
 
+		if (rec_name_template.isEmpty())
+			rec_name_template = "rec-@year@month@day-@hour@minute@second";
+
 		if (rec_enc.equals("AAC-LC") || rec_enc.equals("AAC-HE") || rec_enc.equals("AAC-HEv2")) {
 			rec_fmt = "m4a";
 		} else if (rec_enc.equals("FLAC")) {
@@ -276,6 +285,7 @@ class CoreSettings {
 		auto_skip_tail_set(kv[Conf.PLAY_AUTO_SKIP_TAIL].value);
 
 		rec_path = kv[Conf.REC_PATH].value;
+		rec_name_template = kv[Conf.REC_NAME].value;
 		rec_enc = kv[Conf.REC_ENC].value;
 		rec_channels = kv[Conf.REC_CHANNELS].number;
 		rec_rate = kv[Conf.REC_RATE].number;
@@ -283,6 +293,7 @@ class CoreSettings {
 		rec_buf_len_ms = kv[Conf.REC_BUF_LEN].number;
 		rec_danorm = kv[Conf.REC_DANORM].enabled;
 		rec_exclusive = kv[Conf.REC_EXCLUSIVE].enabled;
+		rec_list_add = kv[Conf.REC_LIST_ADD].enabled;
 		rec_longclick = kv[Conf.REC_LONGCLICK].enabled;
 		rec_until_sec = core.str_to_uint(kv[Conf.REC_UNTIL].value, rec_until_sec);
 		rec_gain_db100 = kv[Conf.REC_GAIN].number;

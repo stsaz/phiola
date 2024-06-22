@@ -22,9 +22,10 @@ static void rectrk_close(void *ctx, phi_track *t)
 		errlog("jni_vm_attach: %d", r);
 		goto end;
 	}
-	if (t->chain_flags & PHI_FFINISHED) {
-		jni_call_void(rx->on_finish_object, rx->Phiola_RecordCallback_on_finish);
-	}
+
+	const char *fn = (t->output.name) ? t->output.name : t->conf.ofile.name;
+	jstring joname = jni_js_sz(fn);
+	jni_call_void(rx->on_finish_object, rx->Phiola_RecordCallback_on_finish, t->error, joname);
 
 end:
 	jni_global_unref(rx->on_finish_object);
@@ -130,7 +131,7 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 		goto end;
 
 	struct rec_ctx *rx = ffmem_new(struct rec_ctx);
-	rx->Phiola_RecordCallback_on_finish = jni_func(jni_class_obj(jcb), "on_finish", "()V");
+	rx->Phiola_RecordCallback_on_finish = jni_func(jni_class_obj(jcb), "on_finish", "(" JNI_TINT JNI_TSTR ")V");
 	rx->on_finish_object = jni_global_ref(jcb);
 	t->udata = rx;
 

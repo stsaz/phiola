@@ -102,17 +102,29 @@ static void fw_name_var(ffvec *buf, ffstr var, phi_track *t)
 {
 	enum VARS {
 		VAR_COUNTER,
+		VAR_DAY,
 		VAR_FILENAME,
 		VAR_FILEPATH,
+		VAR_HOUR,
+		VAR_MINUTE,
+		VAR_MONTH,
 		VAR_NOWDATE,
 		VAR_NOWTIME,
+		VAR_SECOND,
+		VAR_YEAR,
 	};
 	static const char vars[][9] = {
 		"counter",
+		"day",
 		"filename",
 		"filepath",
+		"hour",
+		"minute",
+		"month",
 		"nowdate",
 		"nowtime",
+		"second",
+		"year",
 	};
 
 	int r;
@@ -142,13 +154,37 @@ static void fw_name_var(ffvec *buf, ffstr var, phi_track *t)
 
 	case VAR_NOWDATE:
 	case VAR_NOWTIME:
+	case VAR_YEAR:
+	case VAR_MONTH:
+	case VAR_DAY:
+	case VAR_HOUR:
+	case VAR_MINUTE:
+	case VAR_SECOND: {
 		if (!dt.year)
 			core->time(&dt, PHI_CORE_TIME_LOCAL);
-		if (r == VAR_NOWDATE)
-			ffvec_addfmt(buf, "%04u%02u%02u", dt.year, dt.month, dt.day);
-		else
-			ffvec_addfmt(buf, "%02u%02u%02u", dt.hour, dt.minute, dt.second);
+		uint n = 0;
+		switch (r) {
+		case VAR_NOWDATE:
+			ffvec_addfmt(buf, "%04u%02u%02u", dt.year, dt.month, dt.day);  break;
+		case VAR_NOWTIME:
+			ffvec_addfmt(buf, "%02u%02u%02u", dt.hour, dt.minute, dt.second);  break;
+		case VAR_YEAR:
+			ffvec_addfmt(buf, "%04u", dt.year);  break;
+		case VAR_MONTH:
+			n = dt.month;  goto dt_add;
+		case VAR_DAY:
+			n = dt.day;  goto dt_add;
+		case VAR_HOUR:
+			n = dt.hour;  goto dt_add;
+		case VAR_MINUTE:
+			n = dt.minute;  goto dt_add;
+		case VAR_SECOND:
+			n = dt.second;
+dt_add:
+			ffvec_addfmt(buf, "%02u", n);  break;
+		}
 		return;
+	}
 
 	case VAR_COUNTER: {
 		static uint counter;

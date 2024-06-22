@@ -160,8 +160,14 @@ class Track {
 		return Phiola.AF_AAC_LC;
 	}
 
-	TrackHandle rec_start(String out, Phiola.RecordCallback cb) {
+	TrackHandle rec_start(Phiola.RecordCallback cb) {
 		if (Build.VERSION.SDK_INT < 26) return null;
+
+		core.dir_make(core.setts.rec_path);
+		String oname = String.format("%s/%s.%s"
+			, core.setts.rec_path
+			, core.setts.rec_name_template
+			, core.setts.rec_fmt);
 
 		Phiola.RecordParams p = new Phiola.RecordParams();
 		p.format = rec_fmt(core.setts.rec_enc);
@@ -181,7 +187,7 @@ class Track {
 		p.until_sec = core.setts.rec_until_sec;
 
 		trec = new TrackHandle();
-		trec.phi_trk = core.phiola.recStart(out, p, cb);
+		trec.phi_trk = core.phiola.recStart(oname, p, cb);
 		if (trec.phi_trk == 0) {
 			trec = null;
 			return null;

@@ -289,6 +289,7 @@ public class SettingsActivity extends AppCompatActivity {
 	private void rec_load() {
 		b.swRecLongclick.setChecked(core.setts.rec_longclick);
 		b.eRecDir.setText(core.setts.rec_path);
+		b.eRecName.setText(core.setts.rec_name_template);
 		b.spRecChannels.setSelection(core.setts.rec_channels);
 		if (core.setts.rec_rate != 0) {
 			b.eRecRate.setText(core.int_to_str(core.setts.rec_rate));
@@ -304,11 +305,13 @@ public class SettingsActivity extends AppCompatActivity {
 		b.eRecGain.setText(core.float_to_str((float)core.setts.rec_gain_db100 / 100));
 		b.sbRecGain.setProgress((int)core.setts.rec_gain_db100 / 100);
 		b.swRecExclusive.setChecked(core.setts.rec_exclusive);
+		b.swRecListAdd.setChecked(core.setts.rec_list_add);
 	}
 
 	private void rec_save() {
 		core.setts.rec_longclick = b.swRecLongclick.isChecked();
 		core.setts.rec_path = b.eRecDir.getText().toString();
+		core.setts.rec_name_template = b.eRecName.getText().toString();
 		core.setts.rec_bitrate = core.str_to_uint(b.eRecBitrate.getText().toString(), -1);
 		core.setts.rec_channels = b.spRecChannels.getSelectedItemPosition();
 		core.setts.rec_rate = core.str_to_uint(b.eRecRate.getText().toString(), 0);
@@ -318,5 +321,6 @@ public class SettingsActivity extends AppCompatActivity {
 		core.setts.rec_danorm = b.swRecDanorm.isChecked();
 		core.setts.rec_gain_db100 = (int)(core.str_to_float(b.eRecGain.getText().toString(), 0) * 100);
 		core.setts.rec_exclusive = b.swRecExclusive.isChecked();
+		core.setts.rec_list_add = b.swRecListAdd.isChecked();
 	}
 }

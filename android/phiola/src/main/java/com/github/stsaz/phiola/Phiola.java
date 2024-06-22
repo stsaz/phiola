@@ -97,7 +97,7 @@ class Phiola {
 		int until_sec;
 	}
 	interface RecordCallback {
-		void on_finish();
+		void on_finish(int code, String filename);
 	}
 	native long recStart(String oname, RecordParams conf, RecordCallback cb);
 	static final int

@@ -25,9 +25,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import java.io.File;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
 
 import com.github.stsaz.phiola.databinding.MainBinding;
 
@@ -412,15 +409,24 @@ public class MainActivity extends AppCompatActivity {
 		b.brec.setImageTintList(ColorStateList.valueOf(color));
 	}
 
-	private void rec_stop() {
-		String e = track.record_stop();
+	private void rec_fin(int code, String filename) {
 		rec_state_set(false);
 		stopService(new Intent(this, RecSvc.class));
+		if (code == 0) {
+			if (core.setts.rec_list_add)
+				queue.add(filename);
+			gui.msg_show(this, getString(R.string.main_rec_fin));
+		}
+
+		if (gui.state_test(GUI.STATE_RECORDING))
+			rec_stop();
+	}
+
+	private void rec_stop() {
 		state(GUI.STATE_RECORDING | GUI.STATE_REC_PAUSED, 0);
+		String e = track.record_stop();
 		if (e != null)
 			core.errlog(TAG, String.format("%s: %s", getString(R.string.main_rec_err), e));
-		else
-			gui.msg_show(this, getString(R.string.main_rec_fin));
 	}
 
 	private void rec_start_stop() {
@@ -797,23 +803,10 @@ public class MainActivity extends AppCompatActivity {
 		if (!user_ask_record())
 			return;
 
-		core.dir_make(core.setts.rec_path);
-		Date d = new Date();
-		Calendar cal = new GregorianCalendar();
-		cal.setTime(d);
-		int dt[] = {
-				cal.get(Calendar.YEAR),
-				cal.get(Calendar.MONTH) + 1,
-				cal.get(Calendar.DAY_OF_MONTH),
-				cal.get(Calendar.HOUR_OF_DAY),
-				cal.get(Calendar.MINUTE),
-				cal.get(Calendar.SECOND),
-		};
-		String fname = String.format("%s/rec_%04d%02d%02d_%02d%02d%02d.%s"
-				, core.setts.rec_path, dt[0], dt[1], dt[2], dt[3], dt[4], dt[5]
-				, core.setts.rec_fmt);
-		TrackHandle trec = track.rec_start(fname, () -> {
-				core.tq.post(this::rec_stop);
+		TrackHandle trec = track.rec_start((code, filename) -> {
+				core.tq.post(() -> {
+						rec_fin(code, filename);
+					});
 			});
 		if (trec == null)
 			return;
