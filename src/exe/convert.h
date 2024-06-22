@@ -51,6 +51,8 @@ Options:\n\
                           `HE2` AAC-HEv2\n\
   `-aac_quality` NUMBER   AAC encoding quality:\n\
                           1..5 (VBR) or 8..800 (CBR, kbit/s)\n\
+  `-aac_bandwidth` NUMBER\n\
+                          AAC cut-off frequency, Hz (<=20000)\n\
   `-opus_quality` NUMBER  Opus encoding bitrate:\n\
                           6..510 (VBR)\n\
   `-opus_mode` CHAR       Opus mode:\n\
@@ -108,6 +110,7 @@ struct cmd_conv {
 	u_char	copy;
 	u_char	cue_gaps;
 	u_char	perf;
+	uint	aac_bandwidth;
 	uint	aac_q;
 	uint	aformat;
 	uint	channels;
@@ -225,6 +228,7 @@ static void conv_qu_add(struct cmd_conv *v, ffstr *fn)
 		.aac = {
 			.profile = v->aac_profile[0],
 			.quality = v->aac_q,
+			.bandwidth = (ushort)v->aac_bandwidth,
 		},
 		.vorbis.quality = (v->vorbis_q + 1) * 10,
 		.opus = {
@@ -289,6 +293,7 @@ static int conv_prepare(struct cmd_conv *v)
 
 #define O(m)  (void*)FF_OFF(struct cmd_conv, m)
 static const struct ffarg cmd_conv[] = {
+	{ "-aac_bandwidth",	'u',	O(aac_bandwidth) },
 	{ "-aac_profile",	's',	O(aac_profile) },
 	{ "-aac_quality",	'u',	O(aac_q) },
 	{ "-aformat",		'S',	conv_aformat },
