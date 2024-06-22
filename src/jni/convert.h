@@ -62,7 +62,9 @@ static void conv_grd_close(void *ctx, phi_track *t)
 
 	if (t->chain_flags & PHI_FFINISHED) {
 		if (t->error) {
-			cti->error = ffsz_dup(trk_errstr(t->error));
+			char *s = ffsz_dup(trk_errstr(t->error));
+			ffcpu_fence_release(); // write data before pointer
+			FFINT_WRITEONCE(cti->error, s);
 
 		} else {
 			const char *oname = (t->output.name) ? t->output.name : t->conf.ofile.name;
@@ -121,11 +123,10 @@ static void* conv_ui_open(phi_track *t)
 	c->index = x->queue.index(t->qent);
 
 	struct conv_track_info *cti = (struct conv_track_info*)x->convert.tracks.ptr + c->index;
-	ffmem_zero_obj(cti);
 	cti->duration_sec = c->duration_sec;
 	cti->ct = c;
 	ffcpu_fence_release(); // write data before counter
-	x->convert.tracks.len++;
+	ffint_fetch_add(&x->convert.tracks.len, 1); // multiple workers may increment the counter in parallel
 
 	return c;
 }

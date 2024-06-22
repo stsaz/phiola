@@ -426,6 +426,7 @@ Java_com_github_stsaz_phiola_Phiola_quConvertBegin(JNIEnv *env, jobject thiz, jl
 
 	ffvec_free_align(&x->convert.tracks);
 	ffvec_alloc_alignT(&x->convert.tracks, i, 64, struct conv_track_info);
+	ffmem_zero(x->convert.tracks.ptr, i * sizeof(struct conv_track_info));
 
 	x->convert.q = q;
 	x->convert.interrupt = 0;
