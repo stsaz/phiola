@@ -60,15 +60,15 @@ cd phiola
 
 * Cross-Build on Linux for Android/ARM64:
 
-	First, install Android SDK & NDK, and then:
-
 	```sh
-	SDK_DIR=/home/USER/Android/Sdk \
-		NDK_VER=YOUR_NDK_VERSION \
+	ANDROID_CLT_URL=https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip \
+	ANDROID_HOME=/home/USER/Android \
+	ANDROID_BT_VER=33.0.0 \
+	ANDROID_PF_VER=33 \
+	ANDROID_NDK_VER=25.1.8937393 \
+	GRADLE_DIR=/home/USER/.gradle \
+	CPU=arm64 \
 		bash xbuild-android.sh
-	make build-java \
-		-C android \
-		SDK_DIR=/home/USER/Android/Sdk
 	```
 
 

@@ -2,10 +2,10 @@
 2020, Simon Zolin */
 
 /*
-ffui_fop_del
-ffui_openfolder
+ffui_file_del
+ffui_openfolder ffui_openfolder1
 ffui_createlink
-ffui_shellexec
+ffui_shellexec ffui_exec
 ffui_clipbd_set ffui_clipbd_setfile
 */
 
@@ -45,17 +45,17 @@ static ffsize _ff_arrzz_copy(wchar_t *dst, ffsize cap, const char *const *arr, f
 	return k+1;
 }
 
-enum FFUI_FOP_F {
-	FFUI_FOP_ALLOWUNDO = FOF_ALLOWUNDO,
+enum FFUI_FILE_F {
+	FFUI_FILE_TRASH = FOF_ALLOWUNDO,
 };
 
 /** Delete a file
-flags: enum FFUI_FOP_F */
-static inline int ffui_fop_del(const char *const *names, ffsize cnt, ffuint flags)
+flags: enum FFUI_FILE_F */
+static inline int ffui_file_del(const char *const *names, ffsize cnt, ffuint flags)
 {
 	if (!cnt) return 0;
 
-	if (flags & FFUI_FOP_ALLOWUNDO) {
+	if (flags & FFUI_FILE_TRASH) {
 		for (ffsize i = 0;  i != cnt;  i++) {
 			if (!ffpath_abs(names[i], ffsz_len(names[i]))) {
 				fferr_set(ERROR_INVALID_PARAMETER);
@@ -135,6 +135,8 @@ static inline int ffui_shellexec(const char *filename, ffuint flags)
 		ffmem_free(w);
 	return (r <= 32) ? -1 : 0;
 }
+
+#define ffui_exec(filename)  ffui_shellexec(filename, SW_SHOWNORMAL)
 
 /** Return 0 on success. */
 static inline int ffui_clipbd_set(const char *s, ffsize len)
@@ -266,4 +268,9 @@ done:
 	ffvec_free(&norm);
 	ffmem_free(pathz);
 	return r;
+}
+
+static inline int ffui_openfolder1(const char *path)
+{
+	return ffui_openfolder(&path, 0);
 }

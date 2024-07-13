@@ -309,21 +309,21 @@ static void display_name_prepare(ffstr *val, ffsize cap, struct phi_queue_entry 
 	x->metaif.find(&qe->conf.meta, FFSTR_Z("title"), &title, 0);
 	if (title.len) {
 		x->metaif.find(&qe->conf.meta, FFSTR_Z("artist"), &artist, 0);
-		if (flags & 1) { // conversion
-			ffstr_addfmt(val, cap, "%u. %S - %S"
-				, index + 1, &artist, &title);
-		} else {
-			uint sec = qe->length_msec / 1000;
-			uint min = sec / 60;
-			sec -= min * 60;
-			ffstr_addfmt(val, cap, "%u. %S - %S [%u:%02u]"
-				, index + 1, &artist, &title
-				, min, sec);
-		}
+		ffstr_addfmt(val, cap, "%u. %S - %S"
+			, index + 1, &artist, &title);
 	} else {
 		ffpath_splitpath_str(FFSTR_Z(qe->conf.ifile.name), NULL, &name);
 		ffstr_addfmt(val, cap, "%u. %S"
 			, index + 1, &name);
+	}
+
+	if (!(flags & 1) // not a conversion track
+		&& qe->length_msec) {
+		uint sec = qe->length_msec / 1000;
+		uint min = sec / 60;
+		sec -= min * 60;
+		ffstr_addfmt(val, cap, " [%u:%02u]"
+			, min, sec);
 	}
 }
 

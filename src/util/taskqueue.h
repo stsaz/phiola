@@ -44,7 +44,7 @@ struct fftaskqueue_conf_log {
 	#undef fftaskqueue_extralog
 	#define fftaskqueue_extralog(tq, ...) \
 	do { \
-		if (tq->log.level >= FFTASKQUEUE_LOG_DEBUG) \
+		if (ff_unlikely(tq->log.level >= FFTASKQUEUE_LOG_DEBUG)) \
 			tq->log.func(tq->log.obj, FFTASKQUEUE_LOG_EXTRA, tq->log.ctx, NULL, __VA_ARGS__); \
 	} while (0)
 #endif
@@ -118,7 +118,7 @@ static inline ffuint fftaskqueue_run(fftaskqueue *tq)
 		fflist_rm(&tq->tasks, it);
 		fflock_unlock(&tq->lk);
 
-		fftask *t = FF_STRUCTPTR(fftask, sib, it);
+		fftask *t = FF_CONTAINER(fftask, sib, it);
 		fftaskqueue_extralog(tq, "task:%p  handler:%p  param:%p", t, t->handler, t->param);
 		t->handler(t->param);
 

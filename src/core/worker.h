@@ -6,6 +6,9 @@
 #define ZZKQ_LOG_DEBUG  PHI_LOG_DEBUG
 #define ZZKQ_LOG_EXTRA  PHI_LOG_EXTRA
 
+#define FFTASKQUEUE_LOG_DEBUG  PHI_LOG_DEBUG
+#define FFTASKQUEUE_LOG_EXTRA  PHI_LOG_EXTRA
+
 #include <util/kq.h>
 #include <util/kq-kcq.h>
 #include <util/kq-tq.h>

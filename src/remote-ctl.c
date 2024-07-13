@@ -3,6 +3,7 @@
 
 #include <track.h>
 #include <ffsys/pipe.h>
+#include <ffsys/globals.h>
 #include <ffbase/args.h>
 
 #define syserrlog(c, ...)  phi_syserrlog(c->core, "remote-ctl", NULL, __VA_ARGS__)

@@ -1,3 +1,4 @@
+# Android NDK environment for 'make'
 
 # Set compiler
 C_DIR := $(NDK_DIR)/toolchains/llvm/prebuilt/linux-x86_64/bin

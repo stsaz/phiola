@@ -2,16 +2,21 @@
 
 # phiola: cross-build on Linux for Windows/AMD64
 
+IMAGE_NAME=phiola-win64-builder
+CONTAINER_NAME=phiola_win64_build
+ARGS=${@@Q}
+
 set -xe
 
+# Ensure we're inside phiola directory
 if ! test -d "../phiola" ; then
 	exit 1
 fi
 
-if ! podman container exists phiola_win64_build ; then
-	if ! podman image exists phiola-win64-builder ; then
+if ! podman container exists $CONTAINER_NAME ; then
+	if ! podman image exists $IMAGE_NAME ; then
 		# Create builder image
-		cat <<EOF | podman build -t phiola-win64-builder -f - .
+		cat <<EOF | podman build -t $IMAGE_NAME -f - .
 FROM debian:bookworm-slim
 RUN apt update && \
  apt install -y \
@@ -34,8 +39,8 @@ EOF
 	# Create builder container
 	podman create --attach --tty \
 	 -v `pwd`/..:/src \
-	 --name phiola_win64_build \
-	 phiola-win64-builder \
+	 --name $CONTAINER_NAME \
+	 $IMAGE_NAME \
 	 bash -c 'cd /src/phiola && source ./build_mingw64.sh'
 fi
 
@@ -70,15 +75,8 @@ make -j8 \
  COMPILER=gcc \
  CROSS_PREFIX=x86_64-w64-mingw32- \
  CFLAGS_USER=-fno-diagnostics-color \
- $@
-make -j8 app \
- -C _windows-amd64 \
- -f ../Makefile \
- ROOT_DIR=../.. \
- OS=windows \
- COMPILER=gcc \
- CROSS_PREFIX=x86_64-w64-mingw32-
+ $ARGS
 EOF
 
 # Build inside the container
-podman start --attach phiola_win64_build
+podman start --attach $CONTAINER_NAME

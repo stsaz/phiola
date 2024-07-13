@@ -237,6 +237,8 @@ static int audio_out_write(audio_out *a, phi_track *t, uint *old_state)
 static void audio_stop(void *ctx)
 {
 	audio_out *a = ctx;
+	if (a->state == ST_PAUSED)
+		return;
 	dbglog(a->trk, "stop");
 	if (a->audio->stop(a->stream))
 		warnlog(a->trk, "audio.stop: %s", a->audio->error(a->stream));

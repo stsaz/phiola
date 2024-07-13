@@ -22,11 +22,6 @@ typedef unsigned char u_char;
 
 #define PHI_ASSERT  assert
 
-#ifdef FF_WIN
-typedef HANDLE fffd;
-#else
-typedef int fffd;
-#endif
 struct phi_track_if;
 typedef struct phi_filter phi_filter;
 typedef struct phi_track phi_track;
@@ -46,9 +41,6 @@ enum PHI_LOG {
 
 	PHI_LOG_SYS = 0x10,
 };
-
-#define FFTASKQUEUE_LOG_DEBUG  PHI_LOG_DEBUG
-#define FFTASKQUEUE_LOG_EXTRA  PHI_LOG_EXTRA
 
 /** phiola Core.
 Usage:

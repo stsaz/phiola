@@ -92,7 +92,7 @@ void file_del(ffslice indices)
 	}
 
 #ifdef FF_WIN
-	int r = ffui_fop_del((const char *const *)names.ptr, names.len, FFUI_FOP_ALLOWUNDO);
+	int r = ffui_file_del((const char *const *)names.ptr, names.len, FFUI_FILE_TRASH);
 #else
 	int r = file_del_trash((const char**)names.ptr, names.len);
 #endif

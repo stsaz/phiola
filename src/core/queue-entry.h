@@ -17,9 +17,9 @@ struct q_entry {
 static void meta_destroy(ffvec *meta)
 {
 	char **it;
-	FFSLICE_WALK(meta, it) {
+	FFSLICE_FOR(meta, it) {
 		ffmem_free(*it);
-		it++;
+		it += 2;
 	}
 	ffvec_free(meta);
 }

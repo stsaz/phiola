@@ -6,9 +6,9 @@
 static void meta_destroy(ffvec *meta)
 {
 	char **it;
-	FFSLICE_WALK(meta, it) {
+	FFSLICE_FOR(meta, it) {
 		ffmem_free(*it);
-		it++;
+		it += 2;
 	}
 	ffvec_free(meta);
 }
@@ -22,14 +22,14 @@ static void meta_set(ffvec *meta, ffstr name, ffstr val, uint flags)
 
 	if (flags & PHI_META_REPLACE) {
 		char **it;
-		FFSLICE_WALK(meta, it) {
+		FFSLICE_FOR(meta, it) {
 			if (ffstr_eqz(&name, it[0])) {
 				ffmem_free(*it);
 				it[0] = s;
 				it[1] = s + name.len + 1;
 				return;
 			}
-			it++;
+			it += 2;
 		}
 	}
 
@@ -40,9 +40,9 @@ static void meta_set(ffvec *meta, ffstr name, ffstr val, uint flags)
 static void meta_copy(ffvec *dst, const ffvec *src)
 {
 	char **it;
-	FFSLICE_WALK(src, it) {
+	FFSLICE_FOR(src, it) {
 		meta_set(dst, FFSTR_Z(it[0]), FFSTR_Z(it[1]), 0);
-		it++;
+		it += 2;
 	}
 }
 
@@ -64,14 +64,14 @@ static int meta_list(const ffvec *meta, uint *i, ffstr *name, ffstr *val, uint f
 		int skip = 0;
 		if (flags & PHI_META_UNIQUE) {
 			char **it;
-			FFSLICE_WALK(meta, it) {
+			FFSLICE_FOR(meta, it) {
 				if (k == *it)
 					break;
 				if (ffstr_ieqz(name, *it)) {
 					skip = 1; // skip current k-v pair because same key is found before
 					break;
 				}
-				it++; // skip value
+				it += 2;
 			}
 		}
 

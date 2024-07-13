@@ -84,10 +84,13 @@ template<uint N> struct xxwstr_buf {
 struct xxvec : ffvec {
 	xxvec() { ffvec_null(this); }
 	xxvec(ffstr s) {
-		ptr = s.ptr, len = s.len, cap = (s.len == 0 && s.ptr != NULL) ? 1 : s.len;
+		ptr = s.ptr, len = s.len, cap = !(s.len == 0 && s.ptr != NULL) ? s.len : 1;
+	}
+	xxvec(const char *sz) {
+		ptr = (char*)sz, len = (ptr != NULL) ? ffsz_len(sz) : 0, cap = (ptr != NULL) ? len + 1 : 0;
 	}
 	xxvec(ffslice s) {
-		ptr = s.ptr, len = s.len, cap = (s.len == 0 && s.ptr != NULL) ? 1 : s.len;
+		ptr = s.ptr, len = s.len, cap = !(s.len == 0 && s.ptr != NULL) ? s.len : 1;
 	}
 	~xxvec() { ffvec_free(this); }
 	void free() { ffvec_free(this); }
@@ -99,7 +102,7 @@ struct xxvec : ffvec {
 	}
 	xxvec& acquire(ffstr s) {
 		ffvec_free(this);
-		ptr = s.ptr, len = s.len, cap = s.len;
+		ptr = s.ptr, len = s.len, cap = !(s.len == 0 && s.ptr != NULL) ? s.len : 1;
 		return *this;
 	}
 	xxvec& copy(ffstr s) {
@@ -118,7 +121,7 @@ struct xxvec : ffvec {
 		va_end(va);
 		return *this;
 	}
-	template<class T> T at(ffsize i) { return *ffslice_itemT(this, i, T); }
+	template<class T> T* at(ffsize i) { return ffslice_itemT(this, i, T); }
 	template<class T> T* alloc(ffsize n) { return ffvec_allocT(this, n, T); }
 	template<class T> T* push() { return ffvec_pushT(this, T); }
 	template<class T> T* push_z() { return ffvec_zpushT(this, T); }

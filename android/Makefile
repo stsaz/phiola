@@ -4,19 +4,25 @@
 MAKEFLAGS += -Rr
 
 # Set utils
-SUBMAKE := $(MAKE) -f $(firstword $(MAKEFILE_LIST))
+SUBMAKE := +$(MAKE) -f $(firstword $(MAKEFILE_LIST))
 MKDIR := mkdir -p
 RM := rm -rf
 CP := cp -au
 LS := ls -l
 
-# SDK_DIR := /Android/Sdk
+ANDROID_HOME ?= /Android
 SDK_API := 33.0.0
 NDK_VER := 25.1.8937393
-NDK_DIR := $(SDK_DIR)/ndk/$(NDK_VER)
+NDK_DIR := $(ANDROID_HOME)/ndk/$(NDK_VER)
 # ADB_FLAGS := -d
 
 CPU := amd64
+LIB_DIR_CPU := x86_64
+ifeq "$(CPU)" "arm64"
+	LIB_DIR_CPU := arm64-v8a
+else ifeq "$(CPU)" "arm"
+	LIB_DIR_CPU := armeabi-v7a
+endif
 APK_ID := com.github.stsaz.phiola
 APK := phiola/build/outputs/apk/release/phiola-release-unsigned.apk
 ifeq "$(DEBUG)" "1"
@@ -24,9 +30,8 @@ ifeq "$(DEBUG)" "1"
 	APK := phiola/build/outputs/apk/debug/phiola-debug.apk
 endif
 
-build:
-	$(MAKE) SDK_DIR=$(SDK_DIR) lib-arm64
-	$(MAKE) SDK_DIR=$(SDK_DIR) build-java
+default: libs
+	$(SUBMAKE) apk
 
 
 # Build .apk
@@ -37,12 +42,11 @@ ifeq "$(DEBUG)" "1"
 	GRADLE_BUILD := assembleDebug
 endif
 
-build-java:
-	$(GRADLE) $(GRADLE_BUILD)
-	$(LS) $(APK)
+apk:
+	cd $(PHIOLA)/android && $(GRADLE) $(GRADLE_BUILD)
 
 clean-java:
-	$(GRADLE) clean
+	cd $(PHIOLA)/android && $(GRADLE) clean
 
 apk-list:
 	unzip -l $(APK)
@@ -56,21 +60,24 @@ APK_VER := test
 APK_SIGNED := phiola-$(APK_VER)-android-$(CPU).apk
 
 sign:
-	$(SDK_DIR)/build-tools/$(SDK_API)/zipalign -v -f 4 $(APK) $(APK_SIGNED)
-	$(SDK_DIR)/build-tools/$(SDK_API)/apksigner sign --ks $(APK_KEY_STORE) --ks-pass pass:$(APK_KEY_PASS) $(APK_SIGNED)
-	$(SDK_DIR)/build-tools/$(SDK_API)/apksigner verify $(APK_SIGNED)
+	cd $(PHIOLA)/android && $(ANDROID_HOME)/build-tools/$(SDK_API)/zipalign -v -f 4 $(APK) $(APK_SIGNED)
+	cd $(PHIOLA)/android && $(ANDROID_HOME)/build-tools/$(SDK_API)/apksigner sign \
+		--ks $(APK_KEY_STORE) \
+		--ks-pass pass:$(APK_KEY_PASS) \
+		$(APK_SIGNED)
+	cd $(PHIOLA)/android && $(ANDROID_HOME)/build-tools/$(SDK_API)/apksigner verify $(APK_SIGNED)
 
 install-signed:
-	$(SDK_DIR)/platform-tools/adb $(ADB_FLAGS) install -r $(APK_SIGNED)
+	$(ANDROID_HOME)/platform-tools/adb $(ADB_FLAGS) install -r $(APK_SIGNED)
 
 
 # Upload and install .apk on Android device
 
 install:
-	$(SDK_DIR)/platform-tools/adb $(ADB_FLAGS) install -r $(APK)
+	$(ANDROID_HOME)/platform-tools/adb $(ADB_FLAGS) install -r $(APK)
 
 uninstall:
-	$(SDK_DIR)/platform-tools/adb $(ADB_FLAGS) uninstall $(APK_ID)
+	$(ANDROID_HOME)/platform-tools/adb $(ADB_FLAGS) uninstall $(APK_ID)
 
 build-install: build
 	$(MAKE) install
@@ -79,30 +86,16 @@ build-install: build
 # Show logs
 
 log:
-	$(SDK_DIR)/platform-tools/adb $(ADB_FLAGS) logcat -v time | grep --color=auto --line-buffered '/phiola'
+	$(ANDROID_HOME)/platform-tools/adb $(ADB_FLAGS) logcat -v time | grep --color=auto --line-buffered '/phiola'
 
 log-error:
-	$(SDK_DIR)/platform-tools/adb $(ADB_FLAGS) logcat -v time | grep -E --color=auto --line-buffered '/phiola|W/|E/'
+	$(ANDROID_HOME)/platform-tools/adb $(ADB_FLAGS) logcat -v time | grep -E --color=auto --line-buffered '/phiola|W/|E/'
 
 log-clear:
-	$(SDK_DIR)/platform-tools/adb $(ADB_FLAGS) logcat -c
+	$(ANDROID_HOME)/platform-tools/adb $(ADB_FLAGS) logcat -c
 
-LIB_DIR_CPU := x86_64
-ifeq "$(CPU)" "arm64"
-	LIB_DIR_CPU := arm64-v8a
-else ifeq "$(CPU)" "arm"
-	LIB_DIR_CPU := armeabi-v7a
-endif
 log-bt:
-	$(SDK_DIR)/platform-tools/adb $(ADB_FLAGS) logcat -v time | $(NDK_DIR)/ndk-stack -sym phiola/libs/$(LIB_DIR_CPU)
-
-
-# Start Android emulator
-
-AVD := @Pixel_6_API_33
-emulator:
-	$(SDK_DIR)/emulator/emulator -list-avds
-	$(SDK_DIR)/emulator/emulator $(AVD)
+	$(ANDROID_HOME)/platform-tools/adb $(ADB_FLAGS) logcat -v time | $(NDK_DIR)/ndk-stack -sym phiola/libs/$(LIB_DIR_CPU)
 
 
 # Directories
@@ -119,32 +112,10 @@ LIB_DIR_AMD64 := $(PHIOLA)/android/phiola/libs/x86_64
 LIB_DIR_ARM64 := $(PHIOLA)/android/phiola/libs/arm64-v8a
 LIB_DIR_ARM := $(PHIOLA)/android/phiola/libs/armeabi-v7a
 
-lib-amd64:
-	$(MKDIR) ../_android-amd64 $(LIB_DIR_AMD64)
-	$(MAKE) libs \
-		-C ../_android-amd64 \
-		-f $(PHIOLA)/android/Makefile \
-		-I $(PHIOLA)/android \
-		CPU=amd64
-
-lib-arm64:
-	$(MKDIR) ../_android-arm64 $(LIB_DIR_ARM64)
-	$(MAKE) libs \
-		-C ../_android-arm64 \
-		-f $(PHIOLA)/android/Makefile \
-		-I $(PHIOLA)/android \
-		CPU=arm64
-
 clean-lib:
 	$(RM) ../_android-arm64 ../_android-amd64 $(LIB_DIR_AMD64) $(LIB_DIR_ARM64)
 
 
-LIB_DIR := $(LIB_DIR_AMD64)
-ifeq "$(CPU)" "arm64"
-	LIB_DIR := $(LIB_DIR_ARM64)
-else ifeq "$(CPU)" "arm"
-	LIB_DIR := $(LIB_DIR_ARM)
-endif
 CFLAGS := $(A_CFLAGS)
 CFLAGS += -DFFBASE_MEM_ASSERT
 CFLAGS += -MMD -MP
@@ -175,8 +146,13 @@ include $(PHIOLA)/src/format/Makefile
 include $(PHIOLA)/src/acodec/Makefile
 include $(PHIOLA)/src/dfilter/Makefile
 
-libs: libphiola.so.debug \
-		$(MODS:.so=.so.debug)
+LIB_DIR := $(PHIOLA)/android/phiola/libs/$(LIB_DIR_CPU)
+ifeq "$(TARGETS)" ""
+override TARGETS := libphiola.so $(MODS)
+endif
+libs:
+	$(MKDIR) $(LIB_DIR)
+	$(SUBMAKE) strip-debug
 	cp -u $(LIBS3) *.so *.debug \
 		$(LIB_DIR)
 	bash ../android/build-rename-libs.sh $(LIB_DIR) $(MODS)
@@ -184,8 +160,26 @@ libs: libphiola.so.debug \
 
 OBJCOPY := $(C_DIR)/llvm-objcopy
 STRIP := $(C_DIR)/llvm-strip
+strip-debug: $(addsuffix .debug,$(TARGETS))
 %.debug: %
 	$(OBJCOPY) --only-keep-debug $< $@
 	$(STRIP) $<
 	$(OBJCOPY) --add-gnu-debuglink=$@ $<
 	touch $@
+
+PKG_ARCH := $(CPU)
+PKG_PACKER := tar -c --owner=0 --group=0 --numeric-owner -v --zstd -f
+PKG_EXT := tar.zst
+ifeq "$(OS)" "windows"
+	PKG_PACKER := zip -r -v
+	PKG_EXT := zip
+endif
+
+PKG_DEBUG_NAME := phiola-$(APK_VER)-android-$(PKG_ARCH)-debug.$(PKG_EXT)
+$(PKG_DEBUG_NAME): $(wildcard $(PHIOLA)/android/phiola/libs/$(LIB_DIR_CPU)/*.debug)
+	cd $(PHIOLA) && $(PKG_PACKER) $@ android/phiola/libs/$(LIB_DIR_CPU)/*.debug
+package-debug: $(PKG_DEBUG_NAME)
+
+release: default
+	$(SUBMAKE) package-debug
+	$(SUBMAKE) sign

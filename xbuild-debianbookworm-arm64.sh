@@ -2,16 +2,20 @@
 
 # phiola: cross-build on Linux for Debian-bookworm ARM64
 
+IMAGE_NAME=phiola-debianbookworm-arm64-builder
+CONTAINER_NAME=phiola_debianbookworm_arm64_build
+ARGS=${@@Q}
+
 set -xe
 
 if ! test -d "../phiola" ; then
 	exit 1
 fi
 
-if ! podman container exists phiola_debianbookworm_arm64_build ; then
-	if ! podman image exists phiola-debianbookworm-arm64-builder ; then
+if ! podman container exists $CONTAINER_NAME ; then
+	if ! podman image exists $IMAGE_NAME ; then
 		# Create builder image
-		cat <<EOF | podman build -t phiola-debianbookworm-arm64-builder -f - .
+		cat <<EOF | podman build -t $IMAGE_NAME -f - .
 FROM debian:bookworm-slim
 RUN apt update && \
  apt install -y \
@@ -41,8 +45,8 @@ EOF
 	# Create builder container
 	podman create --attach --tty \
 	 -v `pwd`/..:/src \
-	 --name phiola_debianbookworm_arm64_build \
-	 phiola-debianbookworm-arm64-builder \
+	 --name $CONTAINER_NAME \
+	 $IMAGE_NAME \
 	 bash -c 'cd /src/phiola && source ./build_linux.sh'
 fi
 
@@ -70,16 +74,8 @@ make -j8 \
  CFLAGS_USER=-fno-diagnostics-color \
  CPU=arm64 \
  CROSS_PREFIX=aarch64-linux-gnu- \
- $@
-
-make -j8 app \
- -C _linux-arm64 \
- -f ../Makefile \
- ROOT_DIR=../.. \
- PHI_HTTP_SSL=0 \
- CPU=arm64 \
- CROSS_PREFIX=aarch64-linux-gnu-
+ $ARGS
 EOF
 
 # Build inside the container
-podman start --attach phiola_debianbookworm_arm64_build
+podman start --attach $CONTAINER_NAME

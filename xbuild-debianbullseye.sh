@@ -2,16 +2,20 @@
 
 # phiola: cross-build on Linux for Debian-bullseye
 
+IMAGE_NAME=phiola-debianbullseye-builder
+CONTAINER_NAME=phiola_debianbullseye_build
+ARGS=${@@Q}
+
 set -xe
 
 if ! test -d "../phiola" ; then
 	exit 1
 fi
 
-if ! podman container exists phiola_debianbullseye_build ; then
-	if ! podman image exists phiola-debianbullseye-builder ; then
+if ! podman container exists $CONTAINER_NAME ; then
+	if ! podman image exists $IMAGE_NAME ; then
 		# Create builder image
-		cat <<EOF | podman build -t phiola-debianbullseye-builder -f - .
+		cat <<EOF | podman build -t $IMAGE_NAME -f - .
 FROM debian:bullseye-slim
 RUN apt update && \
  apt install -y \
@@ -39,8 +43,8 @@ EOF
 	# Create builder container
 	podman create --attach --tty \
 	 -v `pwd`/..:/src \
-	 --name phiola_debianbullseye_build \
-	 phiola-debianbullseye-builder \
+	 --name $CONTAINER_NAME \
+	 $IMAGE_NAME \
 	 bash -c 'cd /src/phiola && source ./build_linux.sh'
 fi
 
@@ -64,12 +68,8 @@ make -j8 \
  -f ../Makefile \
  ROOT_DIR=../.. \
  CFLAGS_USER=-fno-diagnostics-color \
- $@
-make -j8 app \
- -C _linux-amd64 \
- -f ../Makefile \
- ROOT_DIR=../..
+ $ARGS
 EOF
 
 # Build inside the container
-podman start --attach phiola_debianbullseye_build
+podman start --attach $CONTAINER_NAME

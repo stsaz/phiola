@@ -8,8 +8,6 @@ APP_DIR := phiola-2
 
 include $(FFBASE)/conf.mk
 
-SUBMAKE := $(MAKE) -f $(firstword $(MAKEFILE_LIST))
-
 # COMPILER
 
 CFLAGS += -DFFBASE_MEM_ASSERT \
@@ -32,6 +30,7 @@ CFLAGS_BASE := $(CFLAGS)
 CFLAGS += -I$(PHIOLA)/src -I$(FFSYS)
 CXXFLAGS := -std=c++11 $(CFLAGS) -fno-exceptions -fno-rtti
 CFLAGS := -std=c99 $(CFLAGS)
+LINKFLAGS += $(LINKFLAGS_USER)
 ifeq "$(OS)" "windows"
 	LINKFLAGS += -lws2_32
 endif
@@ -42,18 +41,13 @@ endif
 
 # MODULES
 
-ifneq "$(DEBUG)" "1"
-default: strip-debug
-	$(SUBMAKE) app
-else
 default: build
-	$(SUBMAKE) app
+ifneq "$(DEBUG)" "1"
+	$(SUBMAKE) strip-debug
 endif
+	$(SUBMAKE) app
 
 -include $(wildcard *.d)
-
-DEPS := $(PHIOLA)/src/phiola.h \
-	$(PHIOLA)/src/track.h
 
 %.o: $(PHIOLA)/src/%.c
 	$(C) $(CFLAGS) $< -o $@
@@ -92,14 +86,12 @@ include $(PHIOLA)/src/gui/Makefile
 include $(PHIOLA)/src/net/Makefile
 include $(PHIOLA)/src/dfilter/Makefile
 
-build: libphiola.$(SO) \
-		$(EXES) \
-		$(MODS)
+ifeq "$(TARGETS)" ""
+override TARGETS := libphiola.$(SO) $(EXES) $(MODS)
+endif
+build: $(TARGETS)
 
-strip-debug: libphiola.$(SO).debug \
-		phiola$(DOTEXE).debug \
-		$(EXES:.exe=.exe.debug) \
-		$(MODS:.$(SO)=.$(SO).debug)
+strip-debug: $(addsuffix .debug,$(TARGETS))
 %.debug: %
 	$(OBJCOPY) --only-keep-debug $< $@
 	$(STRIP) $<
@@ -147,3 +139,7 @@ PKG_DEBUG_NAME := phiola-$(PKG_VER)-$(OS)-$(PKG_ARCH)-debug.$(PKG_EXT)
 $(PKG_DEBUG_NAME):
 	$(PKG_PACKER) $@ *.debug
 package-debug: $(PKG_DEBUG_NAME)
+
+release: default
+	$(SUBMAKE) package
+	$(SUBMAKE) package-debug

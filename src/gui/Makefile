@@ -91,6 +91,7 @@ gui-exe.coff: $(PHIOLA)/res/exe.rc \
 
 phiola-gui.exe: gui-windows.o \
 		$(GUIEXE_O) \
+		str-format.o \
 		libphiola.$(SO)
 	$(LINK) $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) $(LINK_DL) -mwindows -o $@
 
