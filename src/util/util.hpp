@@ -3,7 +3,6 @@
 
 #include <ffbase/string.h>
 #include <ffbase/vector.h>
-#include <new>
 
 struct xxstr : ffstr {
 	xxstr() { ptr = NULL;  len = 0; }

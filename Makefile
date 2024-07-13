@@ -30,7 +30,7 @@ CFLAGS += $(CFLAGS_USER)
 CFLAGS_BASE := $(CFLAGS)
 CFLAGS += -I$(PHIOLA)/src -I$(FFSYS)
 CXXFLAGS := -std=c++11 $(CFLAGS) -fno-exceptions -fno-rtti
-CFLAGS := -std=c99 $(CFLAGS)
+CFLAGS := -std=c11 $(CFLAGS)
 LINKFLAGS += $(LINKFLAGS_USER)
 ifeq "$(OS)" "windows"
 	LINKFLAGS += -lws2_32
