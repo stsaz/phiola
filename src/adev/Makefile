@@ -24,7 +24,7 @@ else ifeq "$(OS)" "apple"
 else ifeq "$(OS)" "freebsd"
 	MODS += oss.$(SO)
 else ifeq "$(SYS)" "android"
-ifneq "$(A_API)" "21"
+ifneq "$(A_API)" "23"
 	MODS += aaudio.$(SO)
 endif
 else ifeq "$(OS)" "linux"
