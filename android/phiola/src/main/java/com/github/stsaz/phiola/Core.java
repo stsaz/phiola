@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 import android.content.ClipboardManager;
 import android.content.ClipData;
 import android.content.Context;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
@@ -23,6 +24,8 @@ class Core extends Util {
 
 	private GUI gui;
 	private Queue qu;
+	APlayer aplayer;
+	ARecorder arecorder;
 	Track track;
 	private SysJobs sysjobs;
 	Phiola phiola;
@@ -70,7 +73,11 @@ class Core extends Util {
 		util.storagePaths(storage_paths);
 		setts = new CoreSettings(this);
 		gui = new GUI(this);
-		track = new Track(this);
+		if (Build.VERSION.SDK_INT < 26) {
+			aplayer = new APlayer(this);
+			arecorder = new ARecorder(this);
+		}
+		track = new Track(this, aplayer);
 		qu = new Queue(this);
 		sysjobs = new SysJobs();
 		sysjobs.init(this);

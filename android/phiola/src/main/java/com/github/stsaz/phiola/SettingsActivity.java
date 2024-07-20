@@ -3,7 +3,6 @@
 
 package com.github.stsaz.phiola;
 
-import android.os.Build;
 import android.os.Bundle;
 
 import android.widget.ArrayAdapter;
@@ -146,7 +145,23 @@ public class SettingsActivity extends AppCompatActivity {
 				}
 			});
 
-		if (Build.VERSION.SDK_INT < 26) {
+		core = Core.getInstance();
+
+		if (core.aplayer != null) {
+			b.swUiInfoInTitle.setEnabled(false);
+			b.swListRmOnErr.setEnabled(false);
+			b.sbPlayAutoSkip.setEnabled(false);
+			b.eAutoSkip.setEnabled(false);
+			b.sbPlayAutoSkipTail.setEnabled(false);
+			b.eAutoSkipTail.setEnabled(false);
+			b.sbPlayAutoStop.setEnabled(false);
+			b.eAutoStop.setEnabled(false);
+			b.swRgNorm.setEnabled(false);
+			b.swAutoNorm.setEnabled(false);
+		}
+
+		if (core.arecorder != null) {
+			b.eRecName.setEnabled(false);
 			b.spRecChannels.setEnabled(false);
 			b.sbRecRate.setEnabled(false);
 			b.eRecRate.setEnabled(false);

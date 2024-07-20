@@ -3,8 +3,6 @@
 
 package com.github.stsaz.phiola;
 
-import android.os.Build;
-
 import java.util.ArrayList;
 
 abstract class PlaybackObserver {
@@ -50,10 +48,10 @@ class Track {
 		STATE_PAUSED = 5, // -> STATE_UNPAUSE
 		STATE_UNPAUSE = 6; // -> STATE_PLAYING
 
-	Track(Core core) {
+	Track(Core core, APlayer aplayer) {
 		this.core = core;
 		phi = core.phiola;
-		phi.playObserverSet(new Phiola.PlayObserver() {
+		Phiola.PlayObserver pobs = new Phiola.PlayObserver() {
 				public void on_create(Phiola.Meta meta) {
 					core.tq.post(() -> {
 						play_on_create(meta);
@@ -69,7 +67,11 @@ class Track {
 						play_on_update(pos_msec);
 					});
 				}
-			}, 0);
+			};
+		if (aplayer != null)
+			aplayer.pobs = pobs;
+		else
+			phi.playObserverSet(pobs, 0);
 		tplay = new TrackHandle();
 		observers = new ArrayList<>();
 		tplay.state = STATE_NONE;
@@ -136,8 +138,6 @@ class Track {
 	}
 
 	TrackHandle rec_start(Phiola.RecordCallback cb) {
-		if (Build.VERSION.SDK_INT < 26) return null;
-
 		core.dir_make(core.setts.rec_path);
 		String oname = String.format("%s/%s.%s"
 			, core.setts.rec_path
@@ -161,6 +161,12 @@ class Track {
 		p.gain_db100 = core.setts.rec_gain_db100;
 		p.until_sec = core.setts.rec_until_sec;
 
+		if (core.arecorder != null) {
+			if (!core.arecorder.start(oname, p, cb))
+				return null;
+			return new TrackHandle();
+		}
+
 		trec = new TrackHandle();
 		trec.phi_trk = core.phiola.recStart(oname, p, cb);
 		if (trec.phi_trk == 0) {
@@ -171,12 +177,16 @@ class Track {
 	}
 
 	String record_stop() {
+		if (core.arecorder != null)
+			return core.arecorder.stop();
+
 		String e = core.phiola.recCtrl(trec.phi_trk, Phiola.RECL_STOP);
 		trec = null;
 		return e;
 	}
 
 	int record_pause_toggle() {
+		if (core.arecorder != null) return -1;
 		if (trec == null) return -1;
 
 		int cmd = Phiola.RECL_PAUSE;
@@ -188,6 +198,12 @@ class Track {
 		if (rec_paused)
 			return 1;
 		return 0;
+	}
+
+	void play_start_compat(String url) {
+		tplay.state = STATE_OPENING;
+		if (core.aplayer.start(url) != 0)
+			play_on_close(0);
 	}
 
 	private void trk_close() {
@@ -209,6 +225,10 @@ class Track {
 	 */
 	void stop() {
 		core.dbglog(TAG, "stop");
+		if (core.aplayer != null) {
+			core.aplayer.stop();
+			return;
+		}
 		trk_close();
 	}
 
@@ -221,7 +241,10 @@ class Track {
 		core.dbglog(TAG, "pause");
 		if (tplay.state == STATE_PLAYING) {
 			tplay.state = STATE_PAUSED;
-			phi.playCmd(Phiola.PC_PAUSE_TOGGLE, 0);
+			if (core.aplayer != null)
+				core.aplayer.pause();
+			else
+				phi.playCmd(Phiola.PC_PAUSE_TOGGLE, 0);
 			update();
 		}
 	}
@@ -230,7 +253,10 @@ class Track {
 		core.dbglog(TAG, "unpause: %d", tplay.state);
 		if (tplay.state == STATE_PAUSED) {
 			tplay.state = STATE_PLAYING;
-			phi.playCmd(Phiola.PC_PAUSE_TOGGLE, 0);
+			if (core.aplayer != null)
+				core.aplayer.unpause();
+			else
+				phi.playCmd(Phiola.PC_PAUSE_TOGGLE, 0);
 			update();
 		}
 	}
@@ -239,7 +265,10 @@ class Track {
 		core.dbglog(TAG, "seek: %d", msec);
 		if (tplay.state == STATE_PLAYING || tplay.state == STATE_PAUSED) {
 			tplay.pos_msec = msec;
-			phi.playCmd(Phiola.PC_SEEK, msec);
+			if (core.aplayer != null)
+				core.aplayer.seek(msec);
+			else
+				phi.playCmd(Phiola.PC_SEEK, msec);
 			update();
 		}
 	}
