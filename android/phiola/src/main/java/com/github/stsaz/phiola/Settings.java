@@ -137,25 +137,26 @@ class CoreSettings {
 	CoreSettings(Core core) {
 		this.core = core;
 
-		codepage = "cp1252";
+		trash_dir = "";
+		codepage = "";
 		pub_data_dir = "";
 		plist_save_dir = "";
 		quick_move_dir = "";
-		trash_dir = "Trash";
 
 		auto_skip_head = new AutoSkip();
 		auto_skip_tail = new AutoSkip();
 
 		rec_path = "";
-		rec_fmt = "m4a";
-		rec_enc = "AAC-LC";
+		rec_fmt = "";
+		rec_enc = "";
 		rec_bitrate = 192;
 		rec_buf_len_ms = 500;
 		rec_until_sec = 3600;
+		rec_name_template = "";
 
-		conv_out_dir = "@filepath";
-		conv_out_name = "@filename";
-		conv_format = "m4a";
+		conv_format = "";
+		conv_out_dir = "";
+		conv_out_name = "";
 	}
 
 	String conf_write() {
@@ -236,6 +237,10 @@ class CoreSettings {
 	void normalize_convert() {
 		if (conv_format.isEmpty())
 			conv_format = "m4a";
+		if (conv_out_dir.isEmpty())
+			conv_out_dir = "@filepath";
+		if (conv_out_name.isEmpty())
+			conv_out_name = "@filename";
 		if (conv_aac_quality <= 0)
 			conv_aac_quality = 5;
 		if (conv_opus_quality <= 0)
@@ -244,10 +249,7 @@ class CoreSettings {
 			conv_vorbis_quality = 7;
 	}
 
-	void normalize() {
-		if (trash_dir.isEmpty())
-			trash_dir = "Trash";
-
+	void normalize_rec() {
 		if (rec_name_template.isEmpty())
 			rec_name_template = "rec-@year@month@day-@hour@minute@second";
 
@@ -268,7 +270,21 @@ class CoreSettings {
 			rec_buf_len_ms = 500;
 		if (rec_until_sec < 0)
 			rec_until_sec = 3600;
+	}
 
+	void normalize() {
+		if (pub_data_dir.isEmpty())
+			pub_data_dir = core.storage_path + "/" + Core.PUB_DATA_DIR;
+		if (plist_save_dir.isEmpty())
+			plist_save_dir = pub_data_dir;
+
+		if (codepage.isEmpty())
+			codepage = "cp1252";
+
+		if (trash_dir.isEmpty())
+			trash_dir = "Trash";
+
+		normalize_rec();
 		normalize_convert();
 	}
 

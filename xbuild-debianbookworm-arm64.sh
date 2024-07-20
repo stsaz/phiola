@@ -26,7 +26,8 @@ RUN apt install -y \
  cmake \
  patch \
  dos2unix \
- curl \
+ curl
+RUN apt install -y \
  autoconf libtool libtool-bin \
  gettext \
  pkg-config
@@ -54,13 +55,19 @@ fi
 cat >build_linux.sh <<EOF
 set -xe
 
+mkdir -p ../ffpack/_linux-arm64
 make -j8 zstd \
- -C ../ffpack \
+ -C ../ffpack/_linux-arm64 \
+ -f ../Makefile \
+ -I .. \
  CPU=arm64 \
  CROSS_PREFIX=aarch64-linux-gnu-
 
+mkdir -p alib3/_linux-arm64
 make -j8 \
- -C alib3 \
+ -C alib3/_linux-arm64 \
+ -f ../Makefile \
+ -I .. \
  CPU=arm64 \
  CROSS_PREFIX=aarch64-linux-gnu-
 

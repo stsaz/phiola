@@ -19,7 +19,7 @@ class Core extends Util {
 
 	private static final String TAG = "phiola.Core";
 	private static final String CONF_FN = "phiola-user.conf";
-	private static String PUB_DATA_DIR = "phiola";
+	static String PUB_DATA_DIR = "phiola";
 
 	private GUI gui;
 	private Queue qu;
@@ -76,10 +76,6 @@ class Core extends Util {
 		sysjobs.init(this);
 
 		loadconf();
-		if (setts.pub_data_dir.isEmpty())
-			setts.pub_data_dir = storage_path + "/" + PUB_DATA_DIR;
-		if (setts.plist_save_dir.isEmpty())
-			setts.plist_save_dir = setts.pub_data_dir;
 		qu.load();
 		return 0;
 	}
@@ -129,17 +125,15 @@ class Core extends Util {
 	private void loadconf() {
 		String fn = work_dir + "/" + CONF_FN;
 		Conf.Entry[] kv = conf.confRead(fn);
-		if (kv == null)
-			return;
-
-		setts.conf_load(kv);
-		qu.conf_load(kv);
-		gui.conf_load(kv);
+		if (kv != null) {
+			setts.conf_load(kv);
+			qu.conf_load(kv);
+			gui.conf_load(kv);
+		}
 
 		setts.normalize();
 		qu.conf_normalize();
 		phiola.setCodepage(setts.codepage);
-		dbglog(TAG, "loadconf: %s", fn);
 	}
 
 	void clipboard_text_set(Context ctx, String s) {

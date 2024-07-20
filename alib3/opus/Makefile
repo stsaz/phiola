@@ -4,14 +4,14 @@ include ../config.mk
 
 VER := 1.5.2
 URL := https://github.com/xiph/opus/archive/refs/tags/v$(VER).zip
-PKG := opus-$(VER).zip
+PKG := $(ALIB3)/opus/opus-$(VER).zip
 DIR := opus-$(VER)
 LIB := libopus-phi.$(SO)
 
 default: $(DIR)/config.h
 	cd $(DIR) && sed -n '/CELT_SOURCES = /,/src\/mlp_data.c/p' Makefile.in >phi.mk
 	#cd $(DIR) && make -j8 V=1 >LOG
-	$(MAKE) $(LIB)
+	$(SUBMAKE) $(LIB)
 
 # download
 $(PKG):
@@ -20,7 +20,6 @@ $(PKG):
 # unpack
 $(DIR): $(PKG)
 	$(UNZIP) $(PKG)
-	touch $(DIR)
 
 # config
 _:=
@@ -92,6 +91,9 @@ OPUS_SOURCES += $(OPUS_SOURCES_FLOAT)
 
 SRC := $(CELT_SOURCES) $(SILK_SOURCES) $(OPUS_SOURCES)
 OBJ := opus-phi.o $(addprefix $(DIR)/,$(SRC:.c=.o))
+
+%.o: $(ALIB3)/opus/%.c
+	$(C) $(CFLAGS) $< -o $@
 
 %.o: %.c
 	$(C) $(CFLAGS) $< -o $@

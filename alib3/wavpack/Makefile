@@ -4,12 +4,12 @@ include ../config.mk
 
 VER := 4.75.0
 URL := http://www.wavpack.com/wavpack-$(VER).tar.bz2
-PKG := $(notdir $(URL))
+PKG := $(ALIB3)/wavpack/$(notdir $(URL))
 DIR := wavpack-$(VER)
 LIB := libwavpack-phi.$(SO)
 
 default: $(DIR)
-	$(MAKE) $(LIB)
+	$(SUBMAKE) $(LIB)
 
 # download
 $(PKG):
@@ -18,11 +18,10 @@ $(PKG):
 # unpack
 $(DIR): $(PKG)
 	$(UNTAR_BZ2) $(PKG)
-	cd $(DIR) && cat ../*.patch | patch -p1
-	touch $(DIR)
+	cat $(ALIB3)/wavpack/*.patch | patch -d $(DIR) -p1
 
 # build
-CFLAGS += -I. \
+CFLAGS += -I$(ALIB3)/wavpack \
 	-DWVPK_EXP -DHAVE___BUILTIN_CLZ=1 -DHAVE___BUILTIN_CTZ=1 \
 	-DVER4_ONLY -DNO_SEEKING -DNO_TAGS -DNO_USE_FSTREAMS
 

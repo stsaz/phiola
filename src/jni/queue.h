@@ -1,6 +1,8 @@
 /** phiola/Android: queue
 2023, Simon Zolin */
 
+static void qu_conv_update(phi_queue_id q);
+
 static void qu_on_change(phi_queue_id q, uint flags, uint pos)
 {
 	dbglog("%s: '%c' q:%p", __func__, flags, (size_t)q);
@@ -139,6 +141,8 @@ enum {
 	QUCOM_REPEAT = 10,
 	QUCOM_RANDOM = 11,
 	QUCOM_REMOVE_ON_ERROR = 12,
+	QUCOM_CONV_CANCEL = 13,
+	QUCOM_CONV_UPDATE = 14,
 };
 
 static void qu_cmd(struct core_data *d)
@@ -171,6 +175,9 @@ static void qu_cmd(struct core_data *d)
 
 	case QUCOM_PLAY_PREV:
 		x->queue.play_previous(NULL);  break;
+
+	case QUCOM_CONV_UPDATE:
+		qu_conv_update(q);  break;
 	}
 
 	ffmem_free(d);
@@ -202,6 +209,13 @@ Java_com_github_stsaz_phiola_Phiola_quCmd(JNIEnv *env, jobject thiz, jlong jq, j
 
 	case QUCOM_RANDOM:
 		x->play.random = !!i;  break;
+
+	case QUCOM_CONV_CANCEL:
+		FFINT_WRITEONCE(x->convert.interrupt, 1);  break;
+
+	case QUCOM_CONV_UPDATE:
+		rc = FFINT_READONCE(x->convert.n_tracks_updated);
+		// fallthrough
 
 	default: {
 		struct core_data *d = ffmem_new(struct core_data);
@@ -445,9 +459,8 @@ end:
 	return js;
 }
 
-static void qu_conv_update(struct core_data *d)
+static void qu_conv_update(phi_queue_id q)
 {
-	phi_queue_id q = d->q;
 	struct phi_queue_entry *qe;
 	uint n = 0;
 	for (uint i = 0;  !!(qe = x->queue.at(q, i));  i++) {
@@ -493,27 +506,7 @@ static void qu_conv_update(struct core_data *d)
 		x->metaif.set(&qe->conf.meta, FFSTR_Z("_phi_display"), val, PHI_META_REPLACE);
 		fflock_unlock((fflock*)&qe->lock);
 	}
-	ffmem_free(d);
 	FFINT_WRITEONCE(x->convert.n_tracks_updated, n);
-}
-
-JNIEXPORT jint JNICALL
-Java_com_github_stsaz_phiola_Phiola_quConvertUpdate(JNIEnv *env, jobject thiz, jlong jq)
-{
-	dbglog("%s: enter", __func__);
-	struct core_data *d = ffmem_new(struct core_data);
-	d->q = (phi_queue_id)jq;
-	core_task(d, qu_conv_update);
-	dbglog("%s: exit", __func__);
-	return FFINT_READONCE(x->convert.n_tracks_updated);
-}
-
-JNIEXPORT void JNICALL
-Java_com_github_stsaz_phiola_Phiola_quConvertInterrupt(JNIEnv *env, jobject thiz)
-{
-	dbglog("%s: enter", __func__);
-	FFINT_WRITEONCE(x->convert.interrupt, 1);
-	dbglog("%s: exit", __func__);
 }
 
 JNIEXPORT jint JNICALL

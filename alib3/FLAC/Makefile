@@ -4,14 +4,14 @@ include ../config.mk
 
 VER := 1.4.3
 URL := https://github.com/xiph/flac/archive/refs/tags/$(VER).zip
-PKG := $(notdir $(URL))
+PKG := $(ALIB3)/FLAC/$(notdir $(URL))
 DIR := flac-$(VER)
 LIB := libFLAC-phi.$(SO)
 
 default: $(DIR)/config.h
 	cd $(DIR) && sed -n '/libFLAC_sources = /,/libFLAC_la_SOURCES = /p' src/libFLAC/Makefile.in >phi.mk
 	#cd $(DIR) && make -j8 V=1 >LOG
-	$(MAKE) $(LIB)
+	$(SUBMAKE) $(LIB)
 
 # download
 $(PKG):
@@ -41,13 +41,13 @@ endif
 $(DIR)/config.h: $(DIR)
 	cd $(DIR) && bash autogen.sh
 	cd $(DIR) && $(CONFIGURE_ENV) ./configure --disable-ogg $(CONFIGURE_FLAGS)
-	cd $(DIR) && cat ../*.patch | patch -p1
+	cat $(ALIB3)/FLAC/*.patch | patch -d $(DIR) -p1
 	cat $@
 	touch $@
 
 # build
 CFLAGS += \
-	-I. -I$(DIR) -I$(DIR)/src/libFLAC/include -I$(DIR)/include \
+	-I$(ALIB3)/FLAC -I$(DIR) -I$(DIR)/src/libFLAC/include -I$(DIR)/include \
 	-DHAVE_CONFIG_H -D_FORTIFY_SOURCE=2 -DDLL_EXPORT \
 	-Wall -Wextra -Wstrict-prototypes -Wmissing-prototypes -Waggregate-return -Wcast-align -Wnested-externs -Wshadow -Wundef -Wmissing-declarations -Winline -Wdeclaration-after-statement \
 	-fassociative-math -fno-signed-zeros -fno-trapping-math -freciprocal-math -funroll-loops
@@ -63,6 +63,9 @@ endif
 
 SRC := $(libFLAC_sources)
 OBJ := FLAC-phi.o $(addprefix $(DIR)/src/libFLAC/,$(SRC:.c=.o))
+
+%.o: $(ALIB3)/FLAC/%.c
+	$(C) $(CFLAGS) $< -o $@
 
 %.o: %.c
 	$(C) $(CFLAGS) $< -o $@

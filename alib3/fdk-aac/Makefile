@@ -4,12 +4,12 @@ include ../config.mk
 
 VER := 0.1.6
 URL := https://github.com/mstorsjo/fdk-aac/archive/refs/tags/v$(VER).tar.gz
-PKG := $(notdir $(URL))
+PKG := $(ALIB3)/fdk-aac/$(notdir $(URL))
 DIR := fdk-aac-$(VER)
 LIB := libfdk-aac-phi.$(SO)
 
 default: $(DIR)
-	$(MAKE) $(LIB)
+	$(SUBMAKE) $(LIB)
 
 # download
 $(PKG):
@@ -18,7 +18,6 @@ $(PKG):
 # unpack
 $(DIR): $(PKG)
 	$(UNTAR_GZ) $(PKG)
-	touch $(DIR)
 
 # build
 CF += -fno-exceptions -fno-rtti \
@@ -164,7 +163,7 @@ SRC := $(AACDEC_SRC) $(MPEGTPDEC_SRC) $(SBRDEC_SRC) \
 	$(FDK_SRC) $(PCMUTILS_SRC) $(SYS_SRC)
 OBJ := fdk-aac-phi.o $(SRC:.cpp=.o)
 
-%.o: %.c fdk-aac-phi.h
+%.o: $(ALIB3)/fdk-aac/%.c $(ALIB3)/fdk-aac/fdk-aac-phi.h
 	$(C) $(CFLAGS) $(CF) $< -o $@
 
 %.o: %.cpp

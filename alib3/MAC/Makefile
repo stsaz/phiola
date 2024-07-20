@@ -4,12 +4,12 @@ include ../config.mk
 
 VER := 433
 URL := https://github.com/stsaz/phiola/raw/alib3/alib3/MAC/MAC_SDK_433.zip
-PKG := $(notdir $(URL))
+PKG := $(ALIB3)/MAC/$(notdir $(URL))
 DIR := mac
 LIB := libMAC-phi.$(SO)
 
 default: $(DIR)
-	$(MAKE) $(LIB)
+	$(SUBMAKE) $(LIB)
 
 # download
 $(PKG):
@@ -20,15 +20,14 @@ $(DIR): $(PKG)
 	$(UNZIP) $(PKG) -d $(DIR)
 	find $(DIR) -name '*.cpp' -print0 | xargs -0 dos2unix
 	find $(DIR) -name '*.h' -print0 | xargs -0 dos2unix
-	cd $(DIR) && cat ../0001-*.patch ../0003-*.patch | patch -p1
+	cat $(ALIB3)/MAC/0001-*.patch $(ALIB3)/MAC/0003-*.patch | patch -d $(DIR) -p1
 ifeq "$(CPU)" "x86"
-	cd $(DIR) && cat ../0002-*.patch | patch -p1
+	cat $(ALIB3)/MAC/0002-*.patch | patch -d $(DIR) -p1
 endif
-	touch $(DIR)
 
 # build
 CXXFLAGS += \
-	-I. -I$(DIR)/Source/Shared -I$(DIR)/Source/MACLib
+	-I$(ALIB3)/MAC -I$(DIR)/Source/Shared -I$(DIR)/Source/MACLib
 ifeq ($(OS),windows)
 	CXXFLAGS += -DPLATFORM_WINDOWS -DWINVER=0x0501
 else
@@ -58,6 +57,9 @@ OBJ := MAC-phi.o $(SRC:.cpp=.o)
 
 $(DIR)/Source/MACLib/NNFilter.o: $(DIR)/Source/MACLib/NNFilter.cpp
 	$(CXX) $(CXXFLAGS) $(CFLAGS_CPU) $< -o $@
+
+%.o: $(ALIB3)/MAC/%.cpp
+	$(CXX) $(CXXFLAGS) $< -o $@
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $< -o $@

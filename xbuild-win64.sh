@@ -27,7 +27,8 @@ RUN apt install -y \
  cmake \
  patch \
  dos2unix \
- curl \
+ curl
+RUN apt install -y \
  autoconf libtool libtool-bin \
  gettext \
  pkg-config
@@ -54,14 +55,20 @@ make -j8 openssl \
  COMPILER=gcc \
  CROSS_PREFIX=x86_64-w64-mingw32-
 
+mkdir -p ../ffpack/_windows-amd64
 make -j8 zstd \
- -C ../ffpack \
+ -C ../ffpack/_windows-amd64 \
+ -f ../Makefile \
+ -I .. \
  OS=windows \
  COMPILER=gcc \
  CROSS_PREFIX=x86_64-w64-mingw32-
 
+mkdir -p alib3/_windows-amd64
 make -j8 \
- -C alib3 \
+ -C alib3/_windows-amd64 \
+ -f ../Makefile \
+ -I .. \
  OS=windows \
  COMPILER=gcc \
  CROSS_PREFIX=x86_64-w64-mingw32-

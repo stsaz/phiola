@@ -4,12 +4,12 @@ include ../config.mk
 
 VER :=
 URL := https://github.com/macosforge/alac/archive/refs/heads/master.zip
-PKG := $(notdir $(URL))
+PKG := $(ALIB3)/ALAC/$(notdir $(URL))
 DIR := alac-master
 LIB := libALAC-phi.$(SO)
 
 default: $(DIR)
-	$(MAKE) $(LIB)
+	$(SUBMAKE) $(LIB)
 
 # download
 $(PKG):
@@ -18,8 +18,7 @@ $(PKG):
 # unpack
 $(DIR): $(PKG)
 	$(UNZIP) -n $(PKG)
-	cd $(DIR) && cat ../*.patch | patch -p1
-	touch $(DIR)
+	cat $(ALIB3)/ALAC/*.patch | patch -d $(DIR) -p1
 
 # build
 CF := -I$(DIR)/codec
@@ -42,6 +41,9 @@ OBJ := ALAC-phi.o $(SRC_CPP:.cpp=.o) $(SRC:.c=.o)
 
 %.o: %.c
 	$(C) $(CFLAGS) $(CF) $< -o $@
+
+%.o: $(ALIB3)/ALAC/%.cpp
+	$(CXX) $(CXXFLAGS) $(CF) $< -o $@
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(CF) $< -o $@

@@ -1,7 +1,7 @@
 # alib3 level-2 builder
 
+export ALIB3 := $(dir $(firstword $(MAKEFILE_LIST)))
 include config.mk
-TGT_DIR := _$(SYS)-$(CPU)
 ROOT := ../..
 
 LIBS := \
@@ -20,86 +20,56 @@ ifneq "$(SYS)" "android"
 		wavpack
 endif
 
-default:
-	mkdir -p $(TGT_DIR)
-	$(MAKE) build
+default: $(LIBS)
+	$(SUBMAKE) md5check
 
-build: $(LIBS)
+libALAC-phi.$(SO):
+	$(MAKE) -f $(ALIB3)/ALAC/Makefile
+ALAC: libALAC-phi.$(SO)
 
-$(TGT_DIR)/libALAC-phi.$(SO):
-	$(MAKE) -C ALAC -I..
-	cp ALAC/*.$(SO) $(TGT_DIR)
-ALAC: $(TGT_DIR)/libALAC-phi.$(SO)
+libDynamicAudioNormalizer-phi.$(SO):
+	$(MAKE) -f $(ALIB3)/DynamicAudioNormalizer/Makefile
+DynamicAudioNormalizer: libDynamicAudioNormalizer-phi.$(SO)
 
-$(TGT_DIR)/libDynamicAudioNormalizer-phi.$(SO):
-	$(MAKE) -C DynamicAudioNormalizer -I..
-	cp DynamicAudioNormalizer/*.$(SO) $(TGT_DIR)
-DynamicAudioNormalizer: $(TGT_DIR)/libDynamicAudioNormalizer-phi.$(SO)
+libfdk-aac-phi.$(SO):
+	$(MAKE) -f $(ALIB3)/fdk-aac/Makefile
+fdk-aac: libfdk-aac-phi.$(SO)
 
-$(TGT_DIR)/libfdk-aac-phi.$(SO):
-	$(MAKE) -C fdk-aac -I..
-	cp fdk-aac/*.$(SO) $(TGT_DIR)
-fdk-aac: $(TGT_DIR)/libfdk-aac-phi.$(SO)
+libFLAC-phi.$(SO):
+	$(MAKE) -f $(ALIB3)/FLAC/Makefile
+FLAC: libFLAC-phi.$(SO)
 
-$(TGT_DIR)/libFLAC-phi.$(SO):
-	$(MAKE) -C FLAC -I..
-	cp FLAC/*.$(SO) $(TGT_DIR)
-FLAC: $(TGT_DIR)/libFLAC-phi.$(SO)
+libMAC-phi.$(SO):
+	$(MAKE) -f $(ALIB3)/MAC/Makefile
+MAC: libMAC-phi.$(SO)
 
-$(TGT_DIR)/libMAC-phi.$(SO):
-	$(MAKE) -C MAC -I..
-	cp MAC/*.$(SO) $(TGT_DIR)
-MAC: $(TGT_DIR)/libMAC-phi.$(SO)
+libmpg123-phi.$(SO):
+	$(MAKE) -f $(ALIB3)/mpg123/Makefile
+mpg123: libmpg123-phi.$(SO)
 
-$(TGT_DIR)/libmpg123-phi.$(SO):
-	$(MAKE) -C mpg123 -I..
-	cp mpg123/*.$(SO) $(TGT_DIR)
-mpg123: $(TGT_DIR)/libmpg123-phi.$(SO)
+libmusepack-phi.$(SO):
+	$(MAKE) -f $(ALIB3)/musepack/Makefile
+musepack: libmusepack-phi.$(SO)
 
-$(TGT_DIR)/libmusepack-phi.$(SO):
-	$(MAKE) -C musepack -I..
-	cp musepack/*.$(SO) $(TGT_DIR)
-musepack: $(TGT_DIR)/libmusepack-phi.$(SO)
+libopus-phi.$(SO):
+	$(MAKE) -f $(ALIB3)/opus/Makefile
+opus: libopus-phi.$(SO)
 
-$(TGT_DIR)/libopus-phi.$(SO):
-	$(MAKE) -C opus -I..
-	cp opus/*.$(SO) $(TGT_DIR)
-opus: $(TGT_DIR)/libopus-phi.$(SO)
+libsoxr-phi.$(SO):
+	$(MAKE) -f $(ALIB3)/soxr/Makefile
+soxr: libsoxr-phi.$(SO)
 
-$(TGT_DIR)/libsoxr-phi.$(SO):
-	$(MAKE) -C soxr -I..
-	cp soxr/*.$(SO) $(TGT_DIR)
-soxr: $(TGT_DIR)/libsoxr-phi.$(SO)
+libvorbis-phi.$(SO):
+	$(MAKE) -f $(ALIB3)/ogg/Makefile
+	$(MAKE) -f $(ALIB3)/vorbis/Makefile
+vorbis: libvorbis-phi.$(SO)
 
-ogg/libogg.a:
-	$(MAKE) -C ogg -I..
-$(TGT_DIR)/libvorbis-phi.$(SO):
-	$(MAKE) ogg/libogg.a
-	$(MAKE) -C vorbis -I..
-	cp vorbis/*.$(SO) $(TGT_DIR)
-vorbis: $(TGT_DIR)/libvorbis-phi.$(SO)
-
-$(TGT_DIR)/libwavpack-phi.$(SO):
-	$(MAKE) -C wavpack -I..
-	cp wavpack/*.$(SO) $(TGT_DIR)
-wavpack: $(TGT_DIR)/libwavpack-phi.$(SO)
-
-clean:
-	$(MAKE) clean -C ALAC -I..
-	$(MAKE) clean -C DynamicAudioNormalizer -I..
-	$(MAKE) clean -C fdk-aac -I..
-	$(MAKE) clean -C FLAC -I..
-	$(MAKE) clean -C MAC -I..
-	$(MAKE) clean -C mpg123 -I..
-	$(MAKE) clean -C musepack -I..
-	$(MAKE) clean -C ogg -I..
-	$(MAKE) clean -C opus -I..
-	$(MAKE) clean -C soxr -I..
-	$(MAKE) clean -C vorbis -I..
-	$(MAKE) clean -C wavpack -I..
+libwavpack-phi.$(SO):
+	$(MAKE) -f $(ALIB3)/wavpack/Makefile
+wavpack: libwavpack-phi.$(SO)
 
 md5:
-	md5sum -b \
+	cd $(ALIB3) && md5sum -b \
 		ALAC/master.zip \
 		DynamicAudioNormalizer/2.10.tar.gz \
 		fdk-aac/v0.1.6.tar.gz \
@@ -115,4 +85,4 @@ md5:
 		>packages.md5
 
 md5check:
-	md5sum -c packages.md5 --ignore-missing
+	cd $(ALIB3) && md5sum -c packages.md5 --ignore-missing

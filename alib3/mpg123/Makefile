@@ -4,12 +4,12 @@ include ../config.mk
 
 VER := 1.32.3
 URL := http://mpg123.de/download/mpg123-$(VER).tar.bz2
-PKG := $(notdir $(URL))
+PKG := $(ALIB3)/mpg123/$(notdir $(URL))
 DIR := mpg123-$(VER)
 LIB := libmpg123-phi.$(SO)
 
 default: $(DIR)/src/config.h
-	$(MAKE) $(LIB)
+	$(SUBMAKE) $(LIB)
 
 # download
 $(PKG):
@@ -18,7 +18,6 @@ $(PKG):
 # unpack
 $(DIR): $(PKG)
 	$(UNTAR_BZ2) $(PKG)
-	touch $(DIR)
 
 _:=
 ifeq "$(OS)" "windows"
@@ -54,7 +53,7 @@ CONFIGURE_FLAGS += \
 
 $(DIR)/src/config.h: $(DIR)
 	cd $(DIR) && $(CONFIGURE_ENV) ./configure $(CONFIGURE_FLAGS)
-	cd $(DIR) && cat ../*.patch | patch -p1
+	cat $(ALIB3)/mpg123/*.patch | patch -d $(DIR) -p1
 	cat $@
 	cd $(DIR) && make phi
 
@@ -168,6 +167,9 @@ OBJ := mpg123-phi.o \
 	$(SRC:.c=.o) \
 	$(SRC_AS:.S=.o)
 
+%.o: $(ALIB3)/mpg123/%.c
+	$(C) $(CFLAGS) $< -o $@
+
 %.o: %.c
 	$(C) $(CFLAGS) $< -o $@
 
@@ -183,7 +185,6 @@ ifeq "$(OS)" "linux"
 	ldd $@
 endif
 	objdump -T $@
-endif
 endif
 	ls -l $@
 

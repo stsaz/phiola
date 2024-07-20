@@ -4,13 +4,13 @@ include ../config.mk
 
 VER := 1.3.3
 URL := http://downloads.xiph.org/releases/ogg/libogg-$(VER).tar.xz
-PKG := $(notdir $(URL))
+PKG := $(ALIB3)/ogg/$(notdir $(URL))
 DIR := libogg-$(VER)
 LIB := libogg.a
 
 default: $(DIR)
 	cd $(DIR) && ./configure
-	$(MAKE) $(LIB)
+	$(SUBMAKE) $(LIB)
 
 # download
 $(PKG):
@@ -19,7 +19,6 @@ $(PKG):
 # unpack
 $(DIR): $(PKG)
 	$(UNTAR_XZ) $(PKG)
-	touch $(DIR)
 
 # build
 CFLAGS += -I$(DIR)/include \

@@ -143,7 +143,12 @@ class Phiola {
 		QUCOM_PLAY_PREV = 9,
 		QUCOM_REPEAT = 10,
 		QUCOM_RANDOM = 11,
-		QUCOM_REMOVE_ON_ERROR = 12;
+		QUCOM_REMOVE_ON_ERROR = 12,
+		QUCOM_CONV_CANCEL = 13,
+
+		/** Update current status of all entries.
+		Return 0 when conversion is complete. */
+		QUCOM_CONV_UPDATE = 14;
 	native int quCmd(long q, int cmd, int i);
 
 	native Meta quMeta(long q, int i);
@@ -154,11 +159,6 @@ class Phiola {
 	native long quFilter(long q, String filter, int flags);
 
 	native String quConvertBegin(long q, ConvertParams conf);
-
-	/** Update current status of all entries. */
-	native int quConvertUpdate(long q);
-
-	native void quConvertInterrupt();
 
 	native String quDisplayLine(long q, int i);
 

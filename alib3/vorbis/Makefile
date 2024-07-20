@@ -4,11 +4,11 @@ include ../config.mk
 
 VER := 1.3.7
 URL := http://downloads.xiph.org/releases/vorbis/libvorbis-$(VER).tar.xz
-PKG := $(notdir $(URL))
+PKG := $(ALIB3)/vorbis/$(notdir $(URL))
 DIR := libvorbis-$(VER)
 
 default: $(DIR)
-	$(MAKE) libvorbis-phi.$(SO) libvorbisenc-phi.$(SO)
+	$(SUBMAKE) libvorbis-phi.$(SO) libvorbisenc-phi.$(SO)
 
 # download
 $(PKG):
@@ -17,12 +17,11 @@ $(PKG):
 # unpack
 $(DIR): $(PKG)
 	$(UNTAR_XZ) $(PKG)
-	cd $(DIR) && cat ../*.patch | patch -p1
-	touch $(DIR)
+	cat $(ALIB3)/vorbis/*.patch | patch -d $(DIR) -p1
 
 # build
 CFLAGS += \
-	-I$(DIR)/lib -I$(DIR)/include -I../ogg/libogg-1.3.3/include \
+	-I$(DIR)/lib -I$(DIR)/include -Ilibogg-1.3.3/include \
 	-DUSE_MEMORY_H -DVORB_EXP
 ifeq ($(OS),linux)
 	CFLAGS += -DHAVE_ALLOCA_H=1 -ffast-math
@@ -56,6 +55,9 @@ OBJ := vorbis-phi.o $(SRC:.c=.o)
 SRC_ENC := $(DIR)/lib/vorbisenc.c
 OBJ_ENC := vorbisenc-phi.o $(SRC_ENC:.c=.o)
 
+%.o: $(ALIB3)/vorbis/%.c
+	$(C) $(CFLAGS) $< -o $@
+
 %.o: %.c
 	$(C) $(CFLAGS) $< -o $@
 
@@ -64,7 +66,7 @@ ifeq "$(OS)" "linux"
 	LINKFLAGS_VORBIS := -Wl,--exclude-libs,ALL
 endif
 libvorbis-phi.$(SO): $(OBJ)
-	$(LINK) -shared $+ $(LINKFLAGS) $(LINKFLAGS_VORBIS) ../ogg/libogg.a -o $@
+	$(LINK) -shared $+ $(LINKFLAGS) $(LINKFLAGS_VORBIS) libogg.a -o $@
 
 libvorbisenc-phi.$(SO): $(OBJ_ENC) libvorbis-phi.$(SO)
 	$(LINK) -shared $(OBJ_ENC) $(LINKFLAGS) -L. -lvorbis-phi -o $@

@@ -662,7 +662,7 @@ class Queue {
 	}
 
 	private void convert_update() {
-		if (0 == core.phiola.quConvertUpdate(queues.get(i_conversion).q)) {
+		if (0 == core.phiola.quCmd(queues.get(i_conversion).q, Phiola.QUCOM_CONV_UPDATE, 0)) {
 			converting = false;
 			convert_update_timer.cancel();
 			convert_update_timer = null;
@@ -673,6 +673,6 @@ class Queue {
 	}
 
 	void convert_cancel() {
-		core.phiola.quConvertInterrupt();
+		core.phiola.quCmd(-1, Phiola.QUCOM_CONV_CANCEL, 0);
 	}
 }

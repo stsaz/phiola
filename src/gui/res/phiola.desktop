@@ -6,4 +6,4 @@ Icon=~/bin/phiola-2/mod/gui/phiola.ico
 MimeType=audio/x-wav;audio/x-opus+ogg;audio/ogg;audio/mpeg;audio/mp4;audio/flac;
 Name=phiola
 Type=Application
-Categories=Audio
+Categories=AudioVideo;Audio

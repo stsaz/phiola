@@ -4,12 +4,12 @@ include ../config.mk
 
 VER := r475
 URL := https://files.musepack.net/source/musepack_src_$(VER).tar.gz
-PKG := $(notdir $(URL))
+PKG := $(ALIB3)/musepack/$(notdir $(URL))
 DIR := musepack_src_$(VER)
 LIB := libmusepack-phi.$(SO)
 
 default: $(DIR)
-	$(MAKE) $(LIB)
+	$(SUBMAKE) $(LIB)
 
 # download
 $(PKG):
@@ -18,8 +18,7 @@ $(PKG):
 # unpack
 $(DIR): $(PKG)
 	$(UNTAR_GZ) $(PKG)
-	cd $(DIR) && cat ../*.patch | patch -p1
-	touch $(DIR)
+	cat $(ALIB3)/musepack/*.patch | patch -d $(DIR) -p1
 
 # build
 CFLAGS += \
@@ -76,6 +75,9 @@ SRC_ENC := \
 OBJ := mpc-phi.o $(SRC_DECLIB:.c=.o)
 OBJ_DEC := $(SRC_DEC:.c=.o) $(SRC_COMM:.c=.o) $(SRC_DECLIB:.c=.o) $(SRC_WF:.c=.o)
 OBJ_ENC := $(SRC_ENC:.c=.o) $(SRC_COMM:.c=.o) $(SRC_ENCLIB:.c=.o) $(SRC_PSY:.c=.o)
+
+%.o: $(ALIB3)/musepack/%.c
+	$(C) $(CFLAGS) $< -o $@
 
 %.o: %.c
 	$(C) $(CFLAGS) $< -o $@

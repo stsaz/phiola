@@ -4,12 +4,12 @@ include ../config.mk
 
 VER := 0.1.3
 URL := https://github.com/stsaz/phiola/raw/alib3/alib3/soxr/soxr-0.1.3-Source.tar.xz
-PKG := $(notdir $(URL))
+PKG := $(ALIB3)/soxr/$(notdir $(URL))
 DIR := soxr-$(VER)-Source
 LIB := libsoxr-phi.$(SO)
 
 default: $(DIR)
-	$(MAKE) $(LIB)
+	$(SUBMAKE) $(LIB)
 
 # download
 $(PKG):
@@ -19,7 +19,7 @@ $(PKG):
 $(DIR): $(PKG)
 	$(UNTAR_XZ) $(PKG)
 	cd $(DIR) && cmake -Wno-dev -DCMAKE_BUILD_TYPE="Release" $(CMAKE_FLAGS) .
-	cd $(DIR) && cat ../*.patch | patch -p1
+	cat $(ALIB3)/soxr/*.patch | patch -d $(DIR) -p1
 	# cd $(DIR) && make VERBOSE=1
 	$(SED) 's/AVUTIL_FOUND 1/AVUTIL_FOUND 0/' $(DIR)/soxr-config.h
 ifeq "$(CPU)" "amd64"
@@ -29,7 +29,6 @@ else
 	$(SED) 's/WITH_CR64S 1/WITH_CR64S 0/' $(DIR)/soxr-config.h
 endif
 	cat $(DIR)/soxr-config.h
-	touch $(DIR)
 
 # build
 CFLAGS += \

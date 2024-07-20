@@ -26,7 +26,8 @@ RUN apt install -y \
  cmake \
  patch \
  dos2unix \
- curl \
+ curl
+RUN apt install -y \
  autoconf libtool libtool-bin \
  gettext \
  pkg-config
@@ -53,14 +54,23 @@ fi
 cat >build_linux.sh <<EOF
 set -xe
 
+mkdir -p ../netmill/3pt/_linux-amd64
 make -j8 openssl \
- -C ../netmill/3pt
+ -C ../netmill/3pt/_linux-amd64 \
+ -f ../Makefile \
+ -I ..
 
+mkdir -p ../ffpack/_linux-amd64
 make -j8 zstd \
- -C ../ffpack
+ -C ../ffpack/_linux-amd64 \
+ -f ../Makefile \
+ -I ..
 
+mkdir -p alib3/_linux-amd64
 make -j8 \
- -C alib3
+ -C alib3/_linux-amd64 \
+ -f ../Makefile \
+ -I ..
 
 mkdir -p _linux-amd64
 make -j8 \

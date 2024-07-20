@@ -4,12 +4,12 @@ include ../config.mk
 
 VER := 2.10
 URL := https://github.com/lordmulder/DynamicAudioNormalizer/archive/refs/tags/$(VER).tar.gz
-PKG := $(notdir $(URL))
+PKG := $(ALIB3)/DynamicAudioNormalizer/$(notdir $(URL))
 DIR := DynamicAudioNormalizer-$(VER)
 LIB := libDynamicAudioNormalizer-phi.$(SO)
 
 default: $(DIR)
-	$(MAKE) $(LIB)
+	$(SUBMAKE) $(LIB)
 
 # download
 $(PKG):
@@ -18,7 +18,6 @@ $(PKG):
 # unpack
 $(DIR): $(PKG)
 	$(UNTAR_GZ) $(PKG)
-	touch $(DIR)
 
 # build
 CXXFLAGS += -std=gnu++11 \
@@ -35,6 +34,9 @@ SRC := \
 	$(DIR)/DynamicAudioNormalizerAPI/src/GaussianFilter.cpp \
 	$(DIR)/DynamicAudioNormalizerAPI/src/FrameBuffer.cpp
 OBJ := DynamicAudioNormalizer-phi.o $(SRC:.cpp=.o)
+
+%.o: $(ALIB3)/DynamicAudioNormalizer/%.cpp
+	$(CXX) $(CXXFLAGS) $< -o $@
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $< -o $@
