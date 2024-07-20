@@ -89,6 +89,7 @@ static int aao_write(void *ctx, phi_track *t)
 	switch (a->state) {
 	case 0:
 	case 1:
+		a->try_open = (a->state == 0);
 		r = aao_create(a, t);
 		if (r == PHI_ERR) {
 			return PHI_ERR;
