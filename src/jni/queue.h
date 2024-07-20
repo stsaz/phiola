@@ -122,6 +122,8 @@ JNIEXPORT jstring JNICALL
 Java_com_github_stsaz_phiola_Phiola_quEntry(JNIEnv *env, jobject thiz, jlong q, jint i)
 {
 	struct phi_queue_entry *qe = x->queue.ref((phi_queue_id)q, i);
+	if (!qe)
+		return NULL;
 	const char *url = qe->conf.ifile.name;
 	jstring s = jni_js_sz(url);
 	x->queue.unref(qe);
