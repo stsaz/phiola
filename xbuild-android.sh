@@ -115,16 +115,18 @@ set -xe
 
 export PATH=/Android/ndk/$ANDROID_NDK_VER/toolchains/llvm/prebuilt/linux-x86_64/bin:\$PATH
 
-export ANDROID_NDK_ROOT=/Android/ndk/$ANDROID_NDK_VER
-mkdir -p ../netmill/3pt/_android-$CPU
-make -j8 openssl \
- -C ../netmill/3pt/_android-$CPU \
- -f ../Makefile \
- -I .. \
- COMPILER=clang \
- SYS=android \
- CPU=$CPU \
- NDK_DIR=/Android/ndk/$ANDROID_NDK_VER
+if test "$CPU" != "arm" ; then
+	export ANDROID_NDK_ROOT=/Android/ndk/$ANDROID_NDK_VER
+	mkdir -p ../netmill/3pt/_android-$CPU
+	make -j8 openssl \
+	 -C ../netmill/3pt/_android-$CPU \
+	 -f ../Makefile \
+	 -I .. \
+	 COMPILER=clang \
+	 SYS=android \
+	 CPU=$CPU \
+	 NDK_DIR=/Android/ndk/$ANDROID_NDK_VER
+fi
 
 mkdir -p ../ffpack/_android-$CPU
 make -j8 zstd \

@@ -34,7 +34,7 @@ CORE_O += \
 libphiola.$(SO): $(CORE_O)
 	$(LINK) -shared $+ $(LINKFLAGS_CORE) $(LINK_PTHREAD) $(LINK_DL) -o $@
 
-CFLAGS_CORE := $(CFLAGS) -DFFBASE_OPT_SIZE
+CFLAGS_CORE := $(CFLAGS) $(CFLAGS_OPT) -DFFBASE_OPT_SIZE
 %.o: $(PHIOLA)/src/core/%.c
 	$(C) $(CFLAGS_CORE) $< -o $@
 %.o: $(PHIOLA)/src/jni/%.c
