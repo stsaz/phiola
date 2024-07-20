@@ -246,7 +246,7 @@ public class MainActivity extends AppCompatActivity {
 		core.dbglog(TAG, "onActivityResult: requestCode:%d resultCode:%d", requestCode, resultCode);
 		super.onActivityResult(requestCode, resultCode, data);
 
-		if (requestCode == REQUEST_CONVERT) {
+		if (requestCode == REQUEST_CONVERT && resultCode == RESULT_OK) {
 			convert_started();
 		}
 	}
