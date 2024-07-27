@@ -267,6 +267,8 @@ Currently supported commands:
 
 > For the details on each command you can click on the links above or execute `phiola COMMAND -h` on your PC.
 
+See also: [phiola Wiki](https://github.com/stsaz/phiola/wiki)
+
 
 ## How to Use GUI
 
