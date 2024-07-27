@@ -115,10 +115,15 @@ static int aac_adts_process(void *ctx, phi_track *t)
 	}
 
 data:
+	if (t->conf.info_only && a->frno > 32) { // # of frames to detect real AAC format
+		return PHI_LASTOUT;
+	}
+
 	t->audio.pos = apos;
 	dbglog(t, "passing frame #%u  samples:%u @%U  size:%u"
-		, a->frno++, aacread_frame_samples(&a->adts), t->audio.pos
+		, a->frno, aacread_frame_samples(&a->adts), t->audio.pos
 		, out.len);
+	a->frno++;
 	t->data_out = out;
 	return PHI_DATA;
 }
