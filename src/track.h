@@ -264,8 +264,8 @@ static inline void* phi_track_alloc(phi_track *t, uint n)
 	t->area_size = sz;
 	// ffmem_zero(p, n);
 	return p;
-
 }
+
 #define phi_track_allocT(t, T)  phi_track_alloc(t, sizeof(T))
 
 static inline void phi_track_free(phi_track *t, void *ptr)

@@ -72,24 +72,22 @@ static int soxr_conv(void *ctx, phi_track *t)
 		break;
 	}
 
-	c->soxr.in_i = t->data_in.ptr;
-	c->soxr.inlen = t->data_in.len;
-	if (t->chain_flags & PHI_FFIRST)
-		c->soxr.fin = 1;
-	if (0 != ffsoxr_convert(&c->soxr)) {
+	if (t->chain_flags & PHI_FFWD) {
+		c->soxr.in_i = t->data_in.ptr;
+		c->soxr.inlen = t->data_in.len;
+		c->soxr.inoff = 0;
+	}
+	c->soxr.fin = !!(t->chain_flags & PHI_FFIRST);
+	if (ffsoxr_convert(&c->soxr, &t->data_out)) {
 		errlog(t, "ffsoxr_convert(): %s", ffsoxr_errstr(&c->soxr));
 		return PHI_ERR;
 	}
 
-	ffstr_set(&t->data_out, c->soxr.out, c->soxr.outlen);
-
-	if (c->soxr.outlen == 0) {
-		if (t->chain_flags & PHI_FFIRST)
-			return PHI_DONE;
+	if (t->data_out.len == 0) {
+		return (t->chain_flags & PHI_FFIRST) ? PHI_DONE : PHI_MORE;
 	}
 
-	ffstr_set(&t->data_in, c->soxr.in_i, c->soxr.inlen);
-	return PHI_OK;
+	return PHI_DATA;
 }
 
 const phi_filter phi_soxr = {

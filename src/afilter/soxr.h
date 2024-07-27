@@ -22,7 +22,6 @@ typedef struct ffsoxr {
 	void *out;
 	void **outni;
 	};
-	uint outlen;
 	uint outcap;
 
 	uint quality; // 0..4. default:3 (High quality)
@@ -117,7 +116,7 @@ static inline void ffsoxr_destroy(ffsoxr *soxr)
 	soxr_delete(soxr->soxr);
 }
 
-static inline int ffsoxr_convert(ffsoxr *soxr)
+static inline int ffsoxr_convert(ffsoxr *soxr, ffstr *out)
 {
 	size_t idone, odone;
 	uint i, fin = 0;
@@ -128,7 +127,7 @@ static inline int ffsoxr_convert(ffsoxr *soxr)
 
 		if (soxr->inlen == 0) {
 			if (!soxr->fin) {
-				soxr->outlen = 0;
+				out->len = 0;
 				return 0;
 			}
 			in = NULL;
@@ -153,10 +152,11 @@ static inline int ffsoxr_convert(ffsoxr *soxr)
 		soxr->inlen -= idone * soxr->isampsize;
 		if (soxr->inlen == 0)
 			soxr->inoff = 0;
-		soxr->outlen = odone * soxr->osampsize;
 
-		if (odone != 0 || fin)
+		if (odone != 0 || fin) {
+			ffstr_set(out, soxr->out, odone * soxr->osampsize);
 			break;
+		}
 	}
 	return 0;
 }
