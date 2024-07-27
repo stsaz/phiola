@@ -20,8 +20,12 @@ $(DIR): $(PKG)
 	$(UNTAR_BZ2) $(PKG)
 
 _:=
-ifeq "$(OS)" "windows"
-	CONFIGURE_FLAGS := --host=x86_64-w64-mingw32
+ifeq "$(CPU)" "amd64"
+	ifeq "$(SYS)" "android"
+		CONFIGURE_FLAGS := --host=x86_64
+	else ifeq "$(OS)" "windows"
+		CONFIGURE_FLAGS := --host=x86_64-w64-mingw32
+	endif
 else ifeq "$(CPU)" "arm64"
 	ifeq "$(SYS)" "android"
 		CONFIGURE_FLAGS := --host=aarch64
@@ -51,7 +55,7 @@ CONFIGURE_FLAGS += \
 	--disable-components \
 	--enable-libmpg123
 
-$(DIR)/src/config.h: $(DIR)
+$(DIR)/src/config.h: | $(DIR)
 	cd $(DIR) && $(CONFIGURE_ENV) ./configure $(CONFIGURE_FLAGS)
 	cat $(ALIB3)/mpg123/*.patch | patch -d $(DIR) -p1
 	cat $@
@@ -183,8 +187,8 @@ ifeq "$(SYS)" "android"
 else ifeq "$(CPU)" "amd64"
 ifeq "$(OS)" "linux"
 	ldd $@
-endif
 	objdump -T $@
+endif
 endif
 	ls -l $@
 

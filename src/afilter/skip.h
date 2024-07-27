@@ -63,19 +63,18 @@ static int pcm_skip_process(void *ctx, phi_track *t)
 
 	if (c->sample_size == 0) {
 		c->sample_size = phi_af_size(&t->audio.format);
-		if (t->audio.start_delay
-			&& t->audio.start_delay < t->audio.pos + t->data_out.len / c->sample_size) {
+	}
+
+	if (t->audio.start_delay) {
+		if (t->audio.start_delay >= t->audio.pos
+			&& t->audio.start_delay <= t->audio.pos + t->data_out.len / c->sample_size) {
 			audio_skip(c, t, &t->data_out, t->audio.start_delay);
 			dbglog(t, "@%U  skipped:%u"
 				, t->audio.pos, (int)t->audio.start_delay);
-			t->audio.pos += t->audio.start_delay;
 		} else {
-			c->ignore_delay = 1;
+			t->audio.pos = ffmax((int64)t->audio.pos - t->audio.start_delay, 0);
 		}
 	}
-
-	if (!c->ignore_delay)
-		t->audio.pos -= t->audio.start_delay;
 
 	if (!t->audio.seek_req && t->audio.seek != -1) {
 		uint64 seek_samples = pcm_samples(t->audio.seek, t->audio.format.rate);

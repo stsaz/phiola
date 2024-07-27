@@ -8,7 +8,7 @@ PKG := $(ALIB3)/soxr/$(notdir $(URL))
 DIR := soxr-$(VER)-Source
 LIB := libsoxr-phi.$(SO)
 
-default: $(DIR)
+default: $(DIR)/soxr-config.h
 	$(SUBMAKE) $(LIB)
 
 # download
@@ -18,6 +18,8 @@ $(PKG):
 # unpack
 $(DIR): $(PKG)
 	$(UNTAR_XZ) $(PKG)
+
+$(DIR)/soxr-config.h: | $(DIR)
 	cd $(DIR) && cmake -Wno-dev -DCMAKE_BUILD_TYPE="Release" $(CMAKE_FLAGS) .
 	cat $(ALIB3)/soxr/*.patch | patch -d $(DIR) -p1
 	# cd $(DIR) && make VERBOSE=1

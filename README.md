@@ -71,26 +71,17 @@ See also: [phiola Architecture](doc/arch/arch.md).
 
 ### Linux
 
-* Unpack the archive somewhere, e.g. to `~/bin`:
+For example, here's how you can install the latest release for AMD64 into `~/bin` directory:
 
-	```sh
-	mkdir -p ~/bin
-	tar xf phiola-VERSION-linux-amd64.tar.zst -C ~/bin
-	```
+```sh
+wget https://github.com/stsaz/phiola/releases/download/v2.1.5/phiola-2.1.5-linux-amd64.tar.zst
+mkdir -p ~/bin
+tar xf phiola-2.1.5-linux-amd64.tar.zst -C ~/bin
+ln -s ~/bin/phiola-2/phiola ~/bin/phiola
+cp ~/bin/phiola-2/mod/gui/phiola.desktop ~/.local/share/applications
+```
 
-* Create a symbolic link:
-
-	```sh
-	ln -s ~/bin/phiola-2/phiola ~/bin/phiola
-	```
-
-* Optionally, add phiola app launcher to KDE Applications:
-
-	```sh
-	cp ~/bin/phiola-2/mod/gui/phiola.desktop ~/.local/share/applications
-	```
-
-	Then edit `Exec=` and `Icon=` rows in `~/.local/share/applications/phiola.desktop` if necessary.
+If you choose another directory rather than `~/bin`, then you should also edit `Icon=` value in `~/.local/share/applications/phiola.desktop`.
 
 ### Windows
 
@@ -403,4 +394,3 @@ phiola is not (and most likely will never be) a competitor to large commercial p
 phiola is licensed under BSD-2.
 But consider licenses of the third party libraries before commercial use.
 Playback control icons by [Icons8](https://icons8.com).
-[Translations for Android](https://hosted.weblate.org/projects/phiola/android/) are powered by [Weblate](https://weblate.org).

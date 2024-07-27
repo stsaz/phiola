@@ -60,10 +60,7 @@ void phi_mpg123_free(phi_mpg123 *m)
 
 void phi_mpg123_reset(phi_mpg123 *m)
 {
-	m->h->rdat.buffer.fileoff = 1;
-	m->h->rdat.filepos = 0;
-	INT123_feed_set_pos(m->h, 0);
-	INT123_frame_buffers_reset(m->h);
+	mpg123_open_feed(m->h);
 }
 
 int phi_mpg123_decode(phi_mpg123 *m, const char *data, size_t size, unsigned char **audio)
@@ -78,10 +75,10 @@ int phi_mpg123_decode(phi_mpg123 *m, const char *data, size_t size, unsigned cha
 		return 0;
 
 	size_t bytes;
-	r = mpg123_decode_frame(m->h, NULL, audio, &bytes);
+	r = mpg123_decode_frame64(m->h, NULL, audio, &bytes);
 	if (m->new_fmt && r == MPG123_NEW_FORMAT) {
 		m->new_fmt = 0;
-		r = mpg123_decode_frame(m->h, NULL, audio, &bytes);
+		r = mpg123_decode_frame64(m->h, NULL, audio, &bytes);
 	}
 	if (r == MPG123_NEED_MORE)
 		return 0;

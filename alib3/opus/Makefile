@@ -35,7 +35,7 @@ endif
 ifeq "$(SYS)" "android"
 	CONFIGURE_ENV := CC="$(C_DIR)/clang" CFLAGS="$(A_CFLAGS)"
 endif
-$(DIR)/config.h: $(DIR)
+$(DIR)/config.h: | $(DIR)
 	cd $(DIR) && autoreconf -isf
 	cd $(DIR) && $(CONFIGURE_ENV) ./configure $(CONFIGURE_FLAGS)
 	$(SED) 's/PACKAGE_VERSION "unknown"/PACKAGE_VERSION "$(VER)"/' $(DIR)/config.h

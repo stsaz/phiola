@@ -136,10 +136,14 @@ static void auto_skip(phi_track *t)
 
 	uint64 dur_msec = pcm_samples_to_time_msec(t->audio.total, t->audio.format.rate);
 
-	x->play.seek_msec = (as > 0) ? (uint64)as * 1000
-		: dur_msec * -as / 100;
-	t->conf.until_msec = (au > 0) ? dur_msec - au * 1000
-		: dur_msec - (dur_msec * -au / 100);
+	if (as) {
+		x->play.seek_msec = (as > 0) ? (uint64)as * 1000
+			: dur_msec * -as / 100;
+	}
+	if (au) {
+		t->conf.until_msec = (au > 0) ? dur_msec - au * 1000
+			: dur_msec - (dur_msec * -au / 100);
+	}
 }
 
 static int play_ui_process(void *f, phi_track *t)
@@ -152,6 +156,8 @@ static int play_ui_process(void *f, phi_track *t)
 			pos_sec = t->audio.pos / t->audio.format.rate;
 		}
 	}
+
+	trk_dbglog(t, "@%U (%Umsec)", t->audio.pos, pos_msec);
 
 	if (!x->play.opened) {
 		x->play.opened = 1;
@@ -198,7 +204,7 @@ static int play_ui_process(void *f, phi_track *t)
 	if (pos_sec != x->play.pos_prev_sec) {
 		x->play.pos_prev_sec = pos_sec;
 
-		if (t->conf.until_msec && pos_sec * 1000 >= t->conf.until_msec) {
+		if (t->conf.until_msec && pos_msec >= t->conf.until_msec) {
 			trk_dbglog(t, "reached position %U", t->conf.until_msec / 1000);
 			return PHI_LASTOUT;
 		}

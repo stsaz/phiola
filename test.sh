@@ -44,11 +44,6 @@ test_record() {
 
 	# STDOUT
 	rm rec.wav ; ./phiola rec -o @stdout.wav -u 2 >rec.wav ; test -f rec.wav
-
-	# ALSA
-	sleep 7 # let PulseAudio unlock devices
-	./phiola rec -o rec.wav -f -u 2 -au alsa
-	./phiola rec -o rec.wav -f -u 2 -au alsa -dev 1
 }
 
 test_record_split() {
@@ -86,11 +81,13 @@ test_play() {
 	./phiola pl @stdin <pl.wav
 
 	./phiola pl pl.wav -perf
+}
 
-	# ALSA
-	sleep 10 # let PulseAudio unlock devices
-	./phiola pl pl.wav -au alsa
-	./phiola pl pl.wav -au alsa -dev 1
+test_rec_play_alsa() {
+	./phiola rec -o rec.wav -f -u 2 -au alsa
+	./phiola rec -o rec.wav -f -u 2 -au alsa -dev 1
+	./phiola pl rec.wav -au alsa
+	./phiola pl rec.wav -au alsa -dev 1
 }
 
 test_wasapi_exclusive() {
@@ -670,6 +667,7 @@ TESTS=(
 	tag
 	# http
 	clean
+	# rec_play_alsa
 	# wasapi_exclusive
 	# wasapi_loopback
 	help

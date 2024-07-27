@@ -22,10 +22,9 @@ public class AboutActivity extends AppCompatActivity {
 
 		core = Core.getInstance();
 
-		b.lAbout.setText(String.format("v%s\n\n%s\n\nTranslations:\n%s",
+		b.lAbout.setText(String.format("v%s\n\n%s",
 			core.phiola.version(),
-			"https://github.com/stsaz/phiola",
-			"https://hosted.weblate.org/projects/phiola/android/"));
+			"https://github.com/stsaz/phiola"));
 		b.bSaveLogs.setOnClickListener((v) -> logs_save_file());
 	}
 
