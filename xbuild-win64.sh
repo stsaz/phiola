@@ -51,6 +51,8 @@ set -xe
 
 make -j8 openssl \
  -C ../netmill/3pt \
+ -f ../Makefile \
+ -I .. \
  OS=windows \
  COMPILER=gcc \
  CROSS_PREFIX=x86_64-w64-mingw32-
