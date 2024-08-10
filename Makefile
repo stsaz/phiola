@@ -7,6 +7,7 @@ FFBASE := $(ROOT_DIR)/ffbase
 APP_DIR := phiola-2
 
 include $(FFBASE)/conf.mk
+SYS := $(OS)
 
 # COMPILER
 

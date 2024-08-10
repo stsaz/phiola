@@ -121,6 +121,13 @@ static inline const void* map_sz_vptr_findstr(const struct map_sz_vptr *m, ffsiz
 }
 
 
+static inline int url_checkz(const char *s)
+{
+	return (ffsz_matchz(s, "http://")
+		|| ffsz_matchz(s, "https://"));
+}
+
+
 #include <ffsys/path.h>
 static inline void ffpath_split3_str(ffstr fullname, ffstr *path, ffstr *name, ffstr *ext)
 {

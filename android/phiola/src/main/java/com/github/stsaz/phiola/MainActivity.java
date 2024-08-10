@@ -923,17 +923,27 @@ public class MainActivity extends AppCompatActivity {
 				break;
 		}
 
-		long pos = t.pos_msec / 1000;
-		total_dur_msec = t.pmeta.length_msec;
-		long dur = t.pmeta.length_msec / 1000;
-
+		String s;
 		int progress = 0;
-		if (dur != 0)
-			progress = (int)(pos * 100 / dur);
-		b.seekbar.setProgress(progress);
+		long pos = t.pos_msec / 1000;
+		long pos_min = pos / 60;
+		int pos_sec = (int)(pos % 60);
+		total_dur_msec = t.pmeta.length_msec;
 
-		String s = String.format("%d:%02d / %d:%02d"
-				, pos / 60, pos % 60, dur / 60, dur % 60);
+		if (t.pmeta.length_msec == 0) {
+			s = String.format("%d:%02d / --"
+				, pos_min, pos_sec);
+
+		} else {
+			long dur = t.pmeta.length_msec / 1000;
+			if (dur != 0)
+				progress = (int)(pos * 100 / dur);
+
+			s = String.format("%d:%02d / %d:%02d"
+				, pos_min, pos_sec, dur / 60, dur % 60);
+		}
+
+		b.seekbar.setProgress(progress);
 		b.lpos.setText(s);
 		return 0;
 	}

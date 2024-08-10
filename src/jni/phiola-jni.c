@@ -7,6 +7,7 @@
 #include <util/util.h>
 #include <ffsys/process.h>
 #include <android/log.h>
+#include <android/asset_manager_jni.h>
 
 #define PJC_PHIOLA  "com/github/stsaz/phiola/Phiola"
 #define PJC_META  "com/github/stsaz/phiola/Phiola$Meta"
@@ -20,6 +21,7 @@ struct phiola_jni {
 	ffstr dir_libs;
 	ffbyte debug;
 	ffvec storage_paths; // char*[]
+	AAssetManager *am;
 
 	struct {
 		jmethodID PlayObserver_on_create;
@@ -233,6 +235,29 @@ end:
 	return znames[0];
 }
 
+static inline ffstr android_asset_read(AAssetManager *am, const char *path)
+{
+	ffstr s = {};
+
+	AAsset *f = AAssetManager_open(am, path, AASSET_MODE_BUFFER);
+	if (!f)
+		goto end;
+
+	uint64 n = AAsset_getLength64(f);
+	ffstr_alloc(&s, n);
+	s.len = AAsset_read(f, s.ptr, n);
+	AAsset_close(f);
+
+end:
+	dbglog("%s: %s: %L", __func__, path, s.len);
+	return s;
+}
+
+static ffstr resource_load(const char *name)
+{
+	return android_asset_read(x->am, name);
+}
+
 static int core()
 {
 	struct phi_core_conf conf = {
@@ -241,6 +266,7 @@ static int core()
 		.logv = exe_logv,
 
 		.mod_loading = mod_loading,
+		.resource_load = resource_load,
 
 		.workers = ~0U,
 		.io_workers = ~0U,
@@ -254,7 +280,7 @@ static int core()
 }
 
 JNIEXPORT void JNICALL
-Java_com_github_stsaz_phiola_Phiola_init(JNIEnv *env, jobject thiz, jstring jlibdir)
+Java_com_github_stsaz_phiola_Phiola_init(JNIEnv *env, jobject thiz, jstring jlibdir, jobject jasset_mgr)
 {
 	if (x != NULL) return;
 
@@ -273,6 +299,8 @@ Java_com_github_stsaz_phiola_Phiola_init(JNIEnv *env, jobject thiz, jstring jlib
 	x->Phiola_Meta_init = jni_func(x->Phiola_Meta, "<init>", "()V");
 
 	FF_ASSERT(x->Phiola_class && x->Phiola_Meta && x->Phiola_lib_load);
+
+	x->am = AAssetManager_fromJava(env, jasset_mgr);
 
 	if (core()) return;
 	phi_core_run();

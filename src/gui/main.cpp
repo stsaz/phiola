@@ -242,12 +242,6 @@ void wmain_conv_track_update(phi_track *t, uint time_cur, uint time_total)
 	conv_track_update(t, buf);
 }
 
-static int is_url(const char *s)
-{
-	return (ffsz_matchz(s, "http://")
-		|| ffsz_matchz(s, "https://"));
-}
-
 static void list_display(ffui_view_disp *disp)
 {
 #ifdef FF_WIN
@@ -287,7 +281,7 @@ static void list_display(ffui_view_disp *disp)
 	switch (sub) {
 	case H_TITLE:
 		if (!val || !val->len) {
-			if (is_url(qe->conf.ifile.name))
+			if (url_checkz(qe->conf.ifile.name))
 				ffstr_setz(&s, qe->conf.ifile.name); // use URL as a title
 			else
 				ffpath_split3_str(FFSTR_Z(qe->conf.ifile.name), NULL, &s, NULL); // use filename as a title

@@ -12,6 +12,7 @@
 # SO
 # SYS
 
+LINKFLAGS_CORE := $(LINKFLAGS)
 CORE_O := \
 	core.o \
 	auto.o \
@@ -24,13 +25,14 @@ ifeq "$(OS)" "windows"
 endif
 ifeq "$(SYS)" "android"
 	CORE_O += phiola-jni.o
+	LINKFLAGS_CORE += -llog -landroid
 endif
 CORE_O += \
 	sort.o \
 	str-format.o
 
 libphiola.$(SO): $(CORE_O)
-	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_PTHREAD) $(LINK_DL) -o $@
+	$(LINK) -shared $+ $(LINKFLAGS_CORE) $(LINK_PTHREAD) $(LINK_DL) -o $@
 
 CFLAGS_CORE := $(CFLAGS) -DFFBASE_OPT_SIZE
 %.o: $(PHIOLA)/src/core/%.c

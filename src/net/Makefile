@@ -37,13 +37,18 @@ ifeq "$(PHI_HTTP_SSL)" "0"
 	CFLAGS_NETMILL += -DPHI_HTTP_NO_SSL
 else
 	HTTP_OBJ += ffssl.o
-	CFLAGS_NETMILL += -I$(NETMILL)/3pt/openssl/openssl-3.1.3/include
-	LINKFLAGS_NETMILL := -L$(NETMILL)/3pt/_$(OS)-$(CPU)
+	CFLAGS_NETMILL += -I$(NETMILL)/3pt/_$(SYS)-$(CPU)/openssl-3.1.3/include
+	LINKFLAGS_NETMILL := -L$(NETMILL)/3pt/_$(SYS)-$(CPU)
 	ifeq "$(OS)" "windows"
 		LINKFLAGS_NETMILL += -lssl-3-x64 -lcrypto-3-x64
 		LIBS3 += \
 			$(NETMILL)/3pt/_$(OS)-$(CPU)/libssl-3-x64.$(SO) \
 			$(NETMILL)/3pt/_$(OS)-$(CPU)/libcrypto-3-x64.$(SO)
+	else ifeq "$(SYS)" "android"
+		LINKFLAGS_NETMILL += -lssl -lcrypto
+		LIBS3 += \
+			$(NETMILL)/3pt/_$(SYS)-$(CPU)/libssl.$(SO) \
+			$(NETMILL)/3pt/_$(SYS)-$(CPU)/libcrypto.$(SO)
 	else
 		LINKFLAGS_NETMILL += -lssl -lcrypto
 		LIBS3 += \

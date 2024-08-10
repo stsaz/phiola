@@ -124,15 +124,14 @@ CFLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-for-loop-analysis
 CFLAGS += -g
 CFLAGS += -fPIC
 ifeq "$(DEBUG)" "1"
-	CFLAGS += -DFF_DEBUG -O0 -Werror
+	CFLAGS += -DFF_DEBUG -O0 -Werror -Wno-deprecated-declarations
 else
 	CFLAGS += -O3 -fno-strict-aliasing -fvisibility=hidden
 endif
 CFLAGS += $(CFLAGS_USER)
 CFLAGS_BASE := $(CFLAGS)
 CFLAGS += -I$(PHIOLA)/src -I$(FFSYS)
-LINKFLAGS := $(A_LINKFLAGS) \
-	-llog
+LINKFLAGS := $(A_LINKFLAGS)
 
 %.o: $(FFBASE)/ffbase/%.c
 	$(C) $(CFLAGS) -DFFBASE_OPT_SIZE $< -o $@
@@ -144,6 +143,7 @@ include $(PHIOLA)/src/adev/Makefile
 include $(PHIOLA)/src/afilter/Makefile
 include $(PHIOLA)/src/format/Makefile
 include $(PHIOLA)/src/acodec/Makefile
+include $(PHIOLA)/src/net/Makefile
 include $(PHIOLA)/src/dfilter/Makefile
 
 LIB_DIR := $(PHIOLA)/android/phiola/libs/$(LIB_DIR_CPU)
@@ -157,9 +157,10 @@ libs:
 		$(LIB_DIR)
 	bash ../android/build-rename-libs.sh $(LIB_DIR) $(MODS)
 
+	$(MKDIR) $(PHIOLA)/android/phiola/src/main/assets
+	$(CP) $(PHIOLA)/src/net/client.pem $(PHIOLA)/android/phiola/src/main/assets/http-client.pem
 
-OBJCOPY := $(C_DIR)/llvm-objcopy
-STRIP := $(C_DIR)/llvm-strip
+
 strip-debug: $(addsuffix .debug,$(TARGETS))
 %.debug: %
 	$(OBJCOPY) --only-keep-debug $< $@

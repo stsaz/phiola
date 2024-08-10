@@ -326,7 +326,9 @@ static void display_name_prepare(ffstr *val, ffsize cap, struct phi_queue_entry 
 		ffstr_addfmt(val, cap, "%u. %S - %S"
 			, index + 1, &artist, &title);
 	} else {
-		ffpath_splitpath_str(FFSTR_Z(qe->conf.ifile.name), NULL, &name);
+		ffstr_setz(&name, qe->conf.ifile.name);
+		if (!url_checkz(qe->conf.ifile.name))
+			ffpath_splitpath_str(name, NULL, &name);
 		ffstr_addfmt(val, cap, "%u. %S"
 			, index + 1, &name);
 	}

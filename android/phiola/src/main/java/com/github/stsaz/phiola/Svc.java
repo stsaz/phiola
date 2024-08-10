@@ -287,7 +287,8 @@ public class Svc extends MediaBrowserServiceCompat {
 			title = t.name;
 
 		MediaMetadataCompat.Builder meta = new MediaMetadataCompat.Builder();
-		meta.putLong(MediaMetadataCompat.METADATA_KEY_DURATION, t.pmeta.length_msec);
+		if (t.pmeta.length_msec != 0)
+			meta.putLong(MediaMetadataCompat.METADATA_KEY_DURATION, t.pmeta.length_msec);
 		meta.putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, t.pmeta.url);
 		meta.putString(MediaMetadataCompat.METADATA_KEY_TITLE, title);
 		if (!t.pmeta.artist.isEmpty())

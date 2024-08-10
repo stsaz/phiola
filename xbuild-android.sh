@@ -113,11 +113,25 @@ fi
 cat >build_android.sh <<EOF
 set -xe
 
+export PATH=/Android/ndk/$ANDROID_NDK_VER/toolchains/llvm/prebuilt/linux-x86_64/bin:\$PATH
+
+export ANDROID_NDK_ROOT=/Android/ndk/$ANDROID_NDK_VER
+mkdir -p ../netmill/3pt/_android-$CPU
+make -j8 openssl \
+ -C ../netmill/3pt/_android-$CPU \
+ -f ../Makefile \
+ -I .. \
+ COMPILER=clang \
+ SYS=android \
+ CPU=$CPU \
+ NDK_DIR=/Android/ndk/$ANDROID_NDK_VER
+
 mkdir -p ../ffpack/_android-$CPU
 make -j8 zstd \
  -C ../ffpack/_android-$CPU \
  -f ../Makefile \
  -I .. \
+ COMPILER=clang \
  SYS=android \
  CPU=$CPU \
  NDK_DIR=/Android/ndk/$ANDROID_NDK_VER
@@ -127,6 +141,7 @@ make -j8 \
  -C alib3/_android-$CPU \
  -f ../Makefile \
  -I .. \
+ COMPILER=clang \
  SYS=android \
  CPU=$CPU \
  NDK_DIR=/Android/ndk/$ANDROID_NDK_VER
@@ -137,6 +152,7 @@ make -j8 \
  -C _android-$CPU \
  -f ../android/Makefile \
  -I ../android \
+ COMPILER=clang \
  ROOT_DIR=../.. \
  NDK_VER=$ANDROID_NDK_VER \
  CPU=$CPU \

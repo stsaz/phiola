@@ -99,7 +99,7 @@ static void meta_fill(JNIEnv *env, jobject jmeta, const phi_track *t)
 			jni_obj_sz_set(env, jmeta, jni_field_str(x->Phiola_Meta, "info"), v.ptr);
 	}
 
-	if (t->audio.format.rate) {
+	if (t->audio.total != ~0ULL && t->audio.format.rate) {
 		uint64 duration_msec = pcm_samples_to_time_msec(t->audio.total, t->audio.format.rate);
 		jni_obj_long_set(jmeta, jni_field_long(x->Phiola_Meta, "length_msec"), duration_msec);
 		qe->length_msec = duration_msec;

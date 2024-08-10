@@ -71,6 +71,9 @@ struct phi_core_conf {
 	Return newly allocated file name or NULL */
 	char* (*mod_loading)(ffstr name);
 
+	/** Get data from resource file. */
+	ffstr (*resource_load)(const char *name);
+
 	char language[2];
 	uint code_page; // enum FFUNICODE_CP
 	ffstr root; // phiola app directory

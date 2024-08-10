@@ -64,7 +64,7 @@ class Core extends Util {
 		storage_paths = system_storage_dirs(ctx);
 
 		tq = new Handler(Looper.getMainLooper());
-		phiola = new Phiola(ctx.getApplicationInfo().nativeLibraryDir);
+		phiola = new Phiola(ctx.getApplicationInfo().nativeLibraryDir, ctx.getAssets());
 		conf = new Conf(phiola);
 		util = new UtilNative(phiola);
 		util.storagePaths(storage_paths);

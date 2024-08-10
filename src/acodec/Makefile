@@ -19,10 +19,7 @@
 AVPACK := $(ROOT_DIR)/avpack
 
 ALIB3 := $(PHIOLA)/alib3
-ALIB3_BIN := $(ALIB3)/_$(OS)-$(CPU)
-ifeq "$(SYS)" "android"
-	ALIB3_BIN := $(ALIB3)/_android-$(CPU)
-endif
+ALIB3_BIN := $(ALIB3)/_$(SYS)-$(CPU)
 
 # LOSSY
 

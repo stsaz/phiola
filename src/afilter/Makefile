@@ -17,10 +17,7 @@
 # MODS
 
 ALIB3 := $(PHIOLA)/alib3
-ALIB3_BIN := $(ALIB3)/_$(OS)-$(CPU)
-ifeq "$(SYS)" "android"
-	ALIB3_BIN := $(ALIB3)/_android-$(CPU)
-endif
+ALIB3_BIN := $(ALIB3)/_$(SYS)-$(CPU)
 
 MODS += afilter.$(SO)
 %.o: $(PHIOLA)/src/afilter/%.c

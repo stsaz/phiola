@@ -168,26 +168,36 @@ extern const nml_http_cl_component
 
 #ifndef PHI_HTTP_NO_SSL
 #include <util/ssl.h>
-static struct nml_ssl_ctx* ssl_prepare(struct nml_http_client_conf *c, char *cert_file)
+static struct nml_ssl_ctx* ssl_prepare(struct nml_http_client_conf *c)
 {
 	struct nml_ssl_ctx *sc = ffmem_new(struct nml_ssl_ctx);
 	struct ffssl_ctx_conf *scc = ffmem_new(struct ffssl_ctx_conf);
 	sc->ctx_conf = scc;
 
+	char *cert_file = NULL;
+	ffstr cert_data = {};
+#ifdef FF_ANDROID
+	cert_data = core->conf.resource_load("http-client.pem");
+	scc->cert_data = cert_data;
+	scc->pkey_data = cert_data;
+#else
+	cert_file = ffsz_allocfmt("%S/mod/http-client.pem", &core->conf.root);
 	scc->cert_file = cert_file;
 	scc->pkey_file = cert_file;
+#endif
 
 	sc->log_level = c->log_level;
 	sc->log_obj = c->log_obj;
 	sc->log = c->log;
 
 	if (nml_ssl_init(sc)) {
-		ffmem_free(cert_file);
 		ffmem_free(scc);
 		ffmem_free(sc);
-		return NULL;
+		sc = NULL;
 	}
 
+	ffstr_free(&cert_data);
+	ffmem_free(cert_file);
 	return sc;
 }
 #endif
@@ -224,7 +234,7 @@ static int conf_prepare(struct httpcl *h, struct nml_http_client_conf *c, phi_tr
 	if (ffstr_ieqz(&p.scheme, "https://")) {
 #ifndef PHI_HTTP_NO_SSL
 		if (!phi_ssl_ctx
-			&& !(phi_ssl_ctx = ssl_prepare(c, ffsz_allocfmt("%S/mod/http-client.pem", &core->conf.root)))) {
+			&& !(phi_ssl_ctx = ssl_prepare(c))) {
 			errlog(h->trk, "can't initialize SSL context");
 			return -1;
 		}

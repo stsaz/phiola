@@ -18,10 +18,7 @@
 # MODS
 
 FFPACK := $(ROOT_DIR)/ffpack
-FFPACK_BIN := $(FFPACK)/_$(OS)-$(CPU)
-ifeq "$(SYS)" "android"
-	FFPACK_BIN := $(FFPACK)/_android-$(CPU)
-endif
+FFPACK_BIN := $(FFPACK)/_$(SYS)-$(CPU)
 
 MODS += zstd.$(SO)
 LIBS3 += $(FFPACK_BIN)/libzstd-ffpack.$(SO)
