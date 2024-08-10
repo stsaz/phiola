@@ -52,6 +52,9 @@ struct exe {
 	uint stdout_busy :1;
 	uint log_file :1;
 	uint dont_exit :1;
+	uint sum_duration :1;
+
+	uint64 total_dur_msec;
 
 	ffstr codepage;
 	struct ffargs cmd;
@@ -92,13 +95,24 @@ static void version_print()
 
 static void q_on_change(phi_queue_id q, uint flags, uint pos)
 {
-	if ((flags & 0xff) == '.' // the whole queue is processed
-		&& (!x->dont_exit || x->ctrl_c))
-		x->core->sig(PHI_CORE_STOP);
+	if ((flags & 0xff) == '.') { // the whole queue is processed
+
+		if (x->sum_duration) {
+			uint64 n = x->total_dur_msec / 1000;
+			userlog("Total duration: %U:%02U:%02U\n"
+				, n / 3600, (n % 3600) / 60, n % 60);
+		}
+
+		if (!x->dont_exit || x->ctrl_c)
+			x->core->sig(PHI_CORE_STOP);
+	}
 }
 
 static void phi_grd_close(void *f, phi_track *t)
 {
+	if (x->sum_duration && t->audio.format.rate)
+		x->total_dur_msec += t->audio.total * 1000 / t->audio.format.rate;
+
 	x->core->track->stop(t);
 
 	if (x->exit_code == ~0U || t->error)

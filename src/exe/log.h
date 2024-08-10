@@ -38,6 +38,7 @@ static void exe_log(void *log_obj, uint flags, const char *module, phi_track *t,
 #define errlog(...)  exe_log(&x->log, PHI_LOG_ERR, NULL, NULL, __VA_ARGS__)
 #define warnlog(...)  exe_log(&x->log, PHI_LOG_WARN, NULL, NULL, __VA_ARGS__)
 #define infolog(...)  exe_log(&x->log, PHI_LOG_INFO, NULL, NULL, __VA_ARGS__)
+#define userlog(...)  exe_log(&x->log, PHI_LOG_USER, NULL, NULL, __VA_ARGS__)
 #define dbglog(...) \
 do { \
 	if (x->debug) \

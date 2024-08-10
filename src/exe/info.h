@@ -15,6 +15,7 @@ Options:\n\
   `-include` WILDCARD     Only include files matching a wildcard (case-insensitive)\n\
   `-exclude` WILDCARD     Exclude files & directories matching a wildcard (case-insensitive)\n\
 \n\
+  `-duration`             Print total duration\n\
   `-tags`                 Print all meta tags\n\
 \n\
   `-tracks` NUMBER[,...]  Select only specific tracks in a .cue list\n\
@@ -33,6 +34,7 @@ Options:\n\
 }
 
 struct cmd_info {
+	u_char	duration;
 	u_char	pcm_crc;
 	u_char	pcm_peaks;
 	u_char	perf;
@@ -111,6 +113,7 @@ static int info_action(struct cmd_info *p)
 	}
 	ffvec_free(&p->input);
 
+	x->sum_duration = p->duration;
 	x->queue->play(NULL, NULL);
 	return 0;
 }
@@ -124,6 +127,7 @@ static int info_check(struct cmd_info *p)
 
 #define O(m)  (void*)FF_OFF(struct cmd_info, m)
 static const struct ffarg cmd_info[] = {
+	{ "-duration",	'1',	O(duration) },
 	{ "-exclude",	'S',	info_exclude },
 	{ "-help",		0,		info_help },
 	{ "-include",	'S',	info_include },
