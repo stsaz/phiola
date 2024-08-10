@@ -12,7 +12,7 @@
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20105
+#define PHI_VERSION_CORE  20204
 
 typedef long long int64;
 typedef unsigned long long uint64;
@@ -255,7 +255,10 @@ struct phi_track_conf {
 		char*	name;
 		uint	buf_size;
 		ffslice	include, exclude; // ffstr[]
+		u_char	connect_timeout_sec;
+		u_char	recv_timeout_sec;
 		uint	preserve_date :1;
+		uint	no_meta :1;
 	} ifile;
 
 	ffslice tracks; // uint[]

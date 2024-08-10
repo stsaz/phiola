@@ -192,7 +192,7 @@ static struct nml_ssl_ctx* ssl_prepare(struct nml_http_client_conf *c, char *cer
 }
 #endif
 
-static int conf_prepare(struct httpcl *h, struct nml_http_client_conf *c)
+static int conf_prepare(struct httpcl *h, struct nml_http_client_conf *c, phi_track *t)
 {
 	nml_http_client_conf(NULL, c);
 	c->opaque = h;
@@ -242,9 +242,13 @@ static int conf_prepare(struct httpcl *h, struct nml_http_client_conf *c)
 	ffsize headers_cap = 0;
 	ffstr_growaddz(&c->headers, &headers_cap, "User-Agent: phiola/2\r\n");
 
-	if (1)
+	if (!t->conf.ifile.no_meta)
 		ffstr_growaddz(&c->headers, &headers_cap, "Icy-MetaData: 1\r\n");
 
+	if (t->conf.ifile.connect_timeout_sec)
+		c->connect_timeout_msec = t->conf.ifile.connect_timeout_sec * 1000;
+	if (t->conf.ifile.recv_timeout_sec)
+		c->receive.timeout_msec = t->conf.ifile.recv_timeout_sec * 1000;
 	c->max_redirect = 10;
 	return 0;
 }
@@ -256,7 +260,7 @@ static void* httpcl_open(phi_track *t)
 	h->cl = nml_http_client_create();
 
 	struct nml_http_client_conf *c = &h->conf;
-	if (conf_prepare(h, c))
+	if (conf_prepare(h, c, t))
 		return PHI_OPEN_ERR;
 	nml_http_client_conf(h->cl, c);
 	h->state = ST_PROCESSING;

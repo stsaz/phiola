@@ -51,6 +51,10 @@ Options:\n\
   `-perf`                 Print performance counters\n\
   `-remote`               Listen for incoming remote commands\n\
   `-volume` NUMBER        Set initial volume level: 0..100\n\
+  `-connect_timeout` NUMBER\n\
+                          Connection timeout (in seconds): 1..255\n\
+  `-recv_timeout` NUMBER  Receive timeout (in seconds): 1..255\n\
+  `-no_meta`              Disable ICY meta data\n\
 ");
 	x->exit_code = 0;
 	return 1;
@@ -66,13 +70,16 @@ struct cmd_play {
 	ffvec	input; // ffstr[]
 	ffvec	tracks; // uint[]
 	u_char	exclusive;
+	u_char	no_meta;
 	u_char	perf;
 	u_char	random;
 	u_char	remote;
 	u_char	repeat_all;
 	uint	buffer;
+	uint	connect_timeout;
 	uint	device;
 	uint	rbuffer_kb;
+	uint	recv_timeout;
 	uint	volume;
 	uint64	seek;
 	uint64	until;
@@ -113,6 +120,9 @@ static void play_qu_add(struct cmd_play *p, ffstr *fn)
 			.buf_size = p->rbuffer_kb * 1024,
 			.include = *(ffslice*)&p->include,
 			.exclude = *(ffslice*)&p->exclude,
+			.connect_timeout_sec = ffmin(p->connect_timeout, 0xff),
+			.recv_timeout_sec = ffmin(p->recv_timeout, 0xff),
+			.no_meta = p->no_meta,
 		},
 		.tee = p->tee,
 		.tee_output = p->dup,
@@ -197,6 +207,7 @@ static int play_check(struct cmd_play *p)
 static const struct ffarg cmd_play[] = {
 	{ "-audio",		'S',	O(audio) },
 	{ "-buffer",	'u',	O(buffer) },
+	{ "-connect_timeout",	'u',	O(connect_timeout) },
 	{ "-danorm",	's',	O(danorm) },
 	{ "-device",	'u',	O(device) },
 	{ "-dup",		's',	O(dup) },
@@ -204,9 +215,11 @@ static const struct ffarg cmd_play[] = {
 	{ "-exclusive",	'1',	O(exclusive) },
 	{ "-help",		0,		play_help },
 	{ "-include",	'S',	play_include },
+	{ "-no_meta",	'1',	O(no_meta) },
 	{ "-perf",		'1',	O(perf) },
 	{ "-random",	'1',	O(random) },
 	{ "-rbuffer",	'u',	O(rbuffer_kb) },
+	{ "-recv_timeout",	'u',	O(recv_timeout) },
 	{ "-remote",	'1',	O(remote) },
 	{ "-repeat_all",'1',	O(repeat_all) },
 	{ "-seek",		'S',	play_seek },
