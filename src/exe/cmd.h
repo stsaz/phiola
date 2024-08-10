@@ -67,6 +67,42 @@ static void cmd_meta_set(ffvec *dst, const ffvec *src)
 	}
 }
 
+/** Read lines from file and add to array. */
+static int cmd_input_names(ffvec *input, fffd f)
+{
+	int rc = -1;
+	ffvec buf = {};
+	for (;;) {
+		ffvec_grow(&buf, 8*1024, 1);
+		ssize_t r = ffstdin_read(ffslice_end(&buf, 1), ffvec_unused(&buf));
+		if (r == 0) {
+			break;
+		} else if (r < 0) {
+			syserrlog("reading input names");
+			goto end;
+		}
+		buf.len += r;
+		dbglog("input names: read %L bytes [%L]", r, buf.len);
+	}
+
+	ffstr view = FFSTR_INITSTR(&buf), ln;
+	while (view.len) {
+		ffstr_splitby(&view, '\n', &ln, &view);
+		ffstr_trimwhite(&ln);
+		if (ln.len)
+			*ffvec_pushT(input, ffstr) = ln;
+	}
+
+	rc = 0;
+
+end:
+	if (rc)
+		ffvec_free(&buf);
+	else
+		x->in_fnames = buf.ptr;
+	return rc;
+}
+
 #ifdef FF_WIN
 static int wildcard_expand(ffvec *input, ffstr s)
 {
@@ -104,6 +140,9 @@ err:
 
 static int cmd_input(ffvec *input, ffstr s)
 {
+	if (ffstr_eqz(&s, "@names"))
+		return cmd_input_names(input, ffstdin);
+
 #ifdef FF_WIN
 	if (ffstr_findany(&s, "*?", 2) >= 0
 		&& !ffstr_matchz(&s, "\\\\?\\")) {

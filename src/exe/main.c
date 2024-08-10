@@ -34,6 +34,7 @@ struct exe {
 	char	fn_buf[128], *fn;
 	char*	cmd_line;
 	ffstr	root_dir;
+	char*	in_fnames;
 
 	uint		exit_code;
 	uint		ctrl_c;
@@ -302,6 +303,7 @@ static void cleanup()
 	ffmem_free(x->cmd_line);
 	ffmem_free((char*)x->ci.full_name);
 	ffmem_free(x->fn);
+	ffmem_free(x->in_fnames);
 	ffmem_free(x);
 #endif
 }

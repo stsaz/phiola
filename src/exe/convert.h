@@ -9,6 +9,7 @@ Convert audio:\n\
 \n\
 INPUT                   File name, directory or URL\n\
                           `@stdin`  Read from standard input\n\
+                          `@names`  Read file names from standard input\n\
 \n\
 Options:\n\
   `-include` WILDCARD     Only include files matching a wildcard (case-insensitive)\n\

@@ -79,6 +79,7 @@ test_play() {
 
 	# STDIN
 	./phiola pl @stdin <pl.wav
+	echo pl.wav | ./phiola pl @names
 
 	./phiola pl pl.wav -perf
 }
