@@ -4,6 +4,7 @@ include ../config.mk
 
 VER := r475
 URL := https://files.musepack.net/source/musepack_src_$(VER).tar.gz
+MD5SUM := 754d67be67f713e54baf70fcfdb2817e
 PKG := $(ALIB3)/musepack/$(notdir $(URL))
 DIR := musepack_src_$(VER)
 LIB := libmusepack-phi.$(SO)
@@ -17,6 +18,7 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
+	echo "$(MD5SUM) *$(PKG)" | md5sum -c -
 	$(UNTAR_GZ) $(PKG)
 	cat $(ALIB3)/musepack/*.patch | patch -d $(DIR) -p1
 

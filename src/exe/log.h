@@ -17,7 +17,19 @@ static void exe_logv(void *log_obj, uint flags, const char *module, phi_track *t
 		}
 	}
 
+#ifdef FF_WIN
+	int e;
+	if (flags & PHI_LOG_SYS)
+		e = GetLastError();
+#endif
+
 	uint64 tid = thread_id;
+
+#ifdef FF_WIN
+	if (flags & PHI_LOG_SYS)
+		SetLastError(e);
+#endif
+
 	if (tid == 0) {
 		tid = ffthread_curid();
 		thread_id = tid;

@@ -4,6 +4,7 @@ include ../config.mk
 
 VER := 4.75.0
 URL := http://www.wavpack.com/wavpack-$(VER).tar.bz2
+MD5SUM := 14e49c65efd0f3b0dea708e176a112d2
 PKG := $(ALIB3)/wavpack/$(notdir $(URL))
 DIR := wavpack-$(VER)
 LIB := libwavpack-phi.$(SO)
@@ -17,6 +18,7 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
+	echo "$(MD5SUM) *$(PKG)" | md5sum -c -
 	$(UNTAR_BZ2) $(PKG)
 	cat $(ALIB3)/wavpack/*.patch | patch -d $(DIR) -p1
 

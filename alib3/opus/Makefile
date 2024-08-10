@@ -4,6 +4,7 @@ include ../config.mk
 
 VER := 1.5.2
 URL := https://github.com/xiph/opus/archive/refs/tags/v$(VER).zip
+MD5SUM := 7173ac4cb6fb4177a2a7e6a6ab1b6e19
 PKG := $(ALIB3)/opus/opus-$(VER).zip
 DIR := opus-$(VER)
 LIB := libopus-phi.$(SO)
@@ -19,6 +20,7 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
+	echo "$(MD5SUM) *$(PKG)" | md5sum -c -
 	$(UNZIP) $(PKG)
 
 # config

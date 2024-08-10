@@ -4,6 +4,7 @@ include ../config.mk
 
 VER := 1.4.3
 URL := https://github.com/xiph/flac/archive/refs/tags/$(VER).zip
+MD5SUM := 21451360ee87ba8c9fdb891e09ac9dd7
 PKG := $(ALIB3)/FLAC/$(notdir $(URL))
 DIR := flac-$(VER)
 LIB := libFLAC-phi.$(SO)
@@ -19,6 +20,7 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
+	echo "$(MD5SUM) *$(PKG)" | md5sum -c -
 	$(UNZIP) $(PKG)
 	touch $@
 

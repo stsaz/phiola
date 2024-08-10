@@ -4,6 +4,7 @@ include ../config.mk
 
 VER := 0.1.6
 URL := https://github.com/mstorsjo/fdk-aac/archive/refs/tags/v$(VER).tar.gz
+MD5SUM := 223d5f579d29fb0d019a775da4e0e061
 PKG := $(ALIB3)/fdk-aac/$(notdir $(URL))
 DIR := fdk-aac-$(VER)
 LIB := libfdk-aac-phi.$(SO)
@@ -17,6 +18,7 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
+	echo "$(MD5SUM) *$(PKG)" | md5sum -c -
 	$(UNTAR_GZ) $(PKG)
 
 # build

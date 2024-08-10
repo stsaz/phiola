@@ -121,3 +121,63 @@ Case 2.  Input is OGG with only end-position value of each page.
 	END=.,FLUSH -> write()     -> *
 	DONE        -> write(last) -> *
 ```
+
+
+## Build
+
+Global call+include+targets map:
+
+```sh
+	xbuild-debian....sh ARGS=...
+		podman
+			! /netmill/3pt/Makefile
+				+ config.mk
+					+ /ffbase/conf.mk
+				! openssl/Makefile
+					> libssl.so
+			! /ffpack/Makefile
+				+ config.mk
+					+ /ffbase/conf.mk
+				! zstd/Makefile
+					> libzstd.so
+			! alib3/Makefile
+				> lib...-phi.so
+					! alib3/.../Makefile
+						+ alib3/config.mk
+			! Makefile $ARGS
+				+ /ffbase/conf.mk
+				> ....so
+					+ src/.../Makefile
+				app
+					> phiola-2
+				package
+					> phiola...tar.zst
+	xbuild-android.sh ARGS=...
+		podman
+			! /netmill/3pt/Makefile
+				+ config.mk
+					+ /ffbase/conf.mk
+					+ android/andk.mk
+				! openssl/Makefile
+					> libssl.so
+			! /ffpack/Makefile
+				+ config.mk
+					+ /ffbase/conf.mk
+					+ andk.mk
+				! zstd/Makefile
+					> libzstd.so
+			! alib3/Makefile
+				> lib...-phi.so
+					! alib3/.../Makefile
+						+ alib3/config.mk
+							+ android/andk.mk
+			! android/Makefile $ARGS
+				+ /ffbase/conf.mk
+				+ android/andk.mk
+				libs
+					> ....so
+						+ src/.../Makefile
+					*.so -> lib*.so
+				apk
+					gradle
+```

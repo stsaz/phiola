@@ -42,8 +42,9 @@ static void* fr_open(phi_track *t)
 	frw_benchmark(&t1);
 
 	if (FFFILE_NULL == (f->fd = fffile_open(t->conf.ifile.name, FFFILE_READONLY))) {
-		t->error = PHI_E_SYS | fferr_last();
-		if (fferr_notexist(fferr_last()))
+		int e = fferr_last();
+		t->error = PHI_E_SYS | e;
+		if (fferr_notexist(e))
 			t->error = PHI_E_NOSRC;
 		syserrlog(t, "fffile_open: %s", t->conf.ifile.name);
 		goto end;

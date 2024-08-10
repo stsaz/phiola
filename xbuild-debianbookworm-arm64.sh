@@ -14,6 +14,7 @@ fi
 
 if ! podman container exists $CONTAINER_NAME ; then
 	if ! podman image exists $IMAGE_NAME ; then
+
 		# Create builder image
 		cat <<EOF | podman build -t $IMAGE_NAME -f - .
 FROM debian:bookworm-slim

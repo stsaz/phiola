@@ -21,7 +21,6 @@ ifneq "$(SYS)" "android"
 endif
 
 default: $(LIBS)
-	$(SUBMAKE) md5check
 
 libALAC-phi.$(SO):
 	$(MAKE) -f $(ALIB3)/ALAC/Makefile
@@ -67,22 +66,3 @@ vorbis: libvorbis-phi.$(SO)
 libwavpack-phi.$(SO):
 	$(MAKE) -f $(ALIB3)/wavpack/Makefile
 wavpack: libwavpack-phi.$(SO)
-
-md5:
-	cd $(ALIB3) && md5sum -b \
-		ALAC/master.zip \
-		DynamicAudioNormalizer/2.10.tar.gz \
-		fdk-aac/v0.1.6.tar.gz \
-		FLAC/1.4.3.zip \
-		MAC/MAC_SDK_433.zip \
-		mpg123/mpg123-1.32.3.tar.bz2 \
-		musepack/musepack_src_r475.tar.gz \
-		ogg/libogg-1.3.3.tar.xz \
-		opus/opus-1.5.2.zip \
-		soxr/soxr-0.1.3-Source.tar.xz \
-		vorbis/libvorbis-1.3.7.tar.xz \
-		wavpack/wavpack-4.75.0.tar.bz2 \
-		>packages.md5
-
-md5check:
-	cd $(ALIB3) && md5sum -c packages.md5 --ignore-missing

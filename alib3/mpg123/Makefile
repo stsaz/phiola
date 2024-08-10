@@ -4,6 +4,7 @@ include ../config.mk
 
 VER := 1.32.3
 URL := http://mpg123.de/download/mpg123-$(VER).tar.bz2
+MD5SUM := 5517c4c18d896da6f57a3c3b5cf317cc
 PKG := $(ALIB3)/mpg123/$(notdir $(URL))
 DIR := mpg123-$(VER)
 LIB := libmpg123-phi.$(SO)
@@ -17,6 +18,7 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
+	echo "$(MD5SUM) *$(PKG)" | md5sum -c -
 	$(UNTAR_BZ2) $(PKG)
 
 _:=

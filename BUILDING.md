@@ -173,8 +173,6 @@ make hash-check \
 	-C ../netmill/3pt
 make md5check \
 	-C ../ffpack
-make md5check \
-	-C alib3
 ```
 
 

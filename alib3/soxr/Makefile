@@ -4,6 +4,7 @@ include ../config.mk
 
 VER := 0.1.3
 URL := https://github.com/stsaz/phiola/raw/alib3/alib3/soxr/soxr-0.1.3-Source.tar.xz
+MD5SUM := 3f16f4dcb35b471682d4321eda6f6c08
 PKG := $(ALIB3)/soxr/$(notdir $(URL))
 DIR := soxr-$(VER)-Source
 LIB := libsoxr-phi.$(SO)
@@ -17,6 +18,7 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
+	echo "$(MD5SUM) *$(PKG)" | md5sum -c -
 	$(UNTAR_XZ) $(PKG)
 
 $(DIR)/soxr-config.h: | $(DIR)

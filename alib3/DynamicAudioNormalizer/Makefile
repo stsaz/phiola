@@ -4,6 +4,7 @@ include ../config.mk
 
 VER := 2.10
 URL := https://github.com/lordmulder/DynamicAudioNormalizer/archive/refs/tags/$(VER).tar.gz
+MD5SUM := 2a27236053172ab934ac1f43b6e6742e
 PKG := $(ALIB3)/DynamicAudioNormalizer/$(notdir $(URL))
 DIR := DynamicAudioNormalizer-$(VER)
 LIB := libDynamicAudioNormalizer-phi.$(SO)
@@ -17,6 +18,7 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
+	echo "$(MD5SUM) *$(PKG)" | md5sum -c -
 	$(UNTAR_GZ) $(PKG)
 
 # build

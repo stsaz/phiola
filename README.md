@@ -29,7 +29,7 @@ Contents:
 
 ## Features
 
-* Play audio: `.mp3`, `.ogg`(Vorbis/Opus), `.mp4`/`.mov`(AAC/ALAC/MPEG), `.mkv`/`.webm`(AAC/ALAC/MPEG/Vorbis/Opus/PCM), `.caf`(AAC/ALAC/PCM), `.avi`(AAC/MPEG/PCM), `.aac`, `.mpc`; `.flac`, `.ape`, `.wv`, `.wav`.  Note: on Android phiola can play only what your Android supports!
+* Play audio: `.mp3`, `.ogg`(Vorbis/Opus), `.mp4`/`.mov`(AAC/ALAC/MPEG), `.mkv`/`.webm`(AAC/ALAC/MPEG/Vorbis/Opus/PCM), `.caf`(AAC/ALAC/PCM), `.avi`(AAC/MPEG/PCM), `.aac`, `.mpc`; `.flac`, `.ape`, `.wv`, `.wav`.
 * Record audio: `.m4a`(AAC), `.ogg`, `.opus`; `.flac`, `.wav`
 * Convert audio
 * List/search file meta tags; edit MP3 tags
@@ -51,7 +51,7 @@ Features and notes by platform:
 | Dark themed GUI      | ✅ (GTK default) | incomplete | ✅ |
 | Powerful CLI         | ✅ | ✅ | ❌ |
 | Simple TUI           | ✅ | ✅ | ❌ |
-| Playback formats     | ✅ all supported | ✅ all supported | only those supported by OS |
+| Playback formats     | ✅ all supported | ✅ all supported | all supported except `.mpc`, `.ape`, `.wv` |
 | Conversion formats   | ✅ all supported | ✅ all supported | all supported except `.mpc`, `.ape`, `.wv` |
 | Batch conversion     | ✅ | ✅ | ✅ |
 | Record from mic      | ✅ | ✅ | ✅ |

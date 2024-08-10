@@ -149,6 +149,9 @@ again:
 		// fallthrough
 
 	case I_DATA:
+		if (t->conf.info_only)
+			return PHI_LASTOUT;
+
 		if (t->audio.seek_req && t->audio.seek != -1) {
 			t->audio.seek_req = 0;
 			mkvread_seek(&m->mkv, t->audio.seek);
