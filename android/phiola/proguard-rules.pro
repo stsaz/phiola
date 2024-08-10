@@ -8,3 +8,4 @@
 -keep class com.github.stsaz.phiola.Conf {*;}
 -keep class com.github.stsaz.phiola.Conf$Entry {*;}
 -keep class com.github.stsaz.phiola.UtilNative {*;}
+-keep class com.github.stsaz.phiola.UtilNative$Files {*;}

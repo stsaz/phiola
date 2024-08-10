@@ -64,7 +64,7 @@ class PlaylistAdapter extends RecyclerView.Adapter<PlaylistViewHolder> {
 		if (!view_explorer) {
 			s = queue.display_line(position);
 		} else {
-			s = explorer.get(position);
+			s = explorer.display_line(position);
 		}
 		holder.text.setText(s);
 	}

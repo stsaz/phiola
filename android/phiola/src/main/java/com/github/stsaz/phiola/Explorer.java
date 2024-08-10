@@ -21,11 +21,10 @@ class Explorer {
 	private final GUI gui;
 	private final MainActivity main;
 
-	private String[] rows;
-	private String[] fns; // file names
-	private boolean updir; // "UP" directory link is shown
-	private boolean uproot;
-	private int ndirs; // number of directories shown
+	private boolean up_dir; // Show "UP" directory link
+	private String parent, display_path;
+	private String[] display_rows, file_names;
+	private int n_dirs;
 
 	Explorer(Core core, MainActivity main) {
 		this.core = core;
@@ -34,39 +33,59 @@ class Explorer {
 	}
 
 	int count() {
-		return rows.length;
+		int n = 1;
+		if (up_dir)
+			n++;
+		return display_rows.length + n;
 	}
 
-	String get(int pos) {
-		return rows[pos];
+	String display_line(int pos) {
+		if (pos == 0)
+			return display_path;
+		pos--;
+
+		if (up_dir) {
+			if (pos == 0)
+				return main.getString(R.string.explorer_up);
+			pos--;
+		}
+
+		return display_rows[pos];
 	}
 
 	void event(int ev, int pos) {
+		core.dbglog(TAG, "click on %d", pos);
 		if (pos == 0)
-			return; // click on our current directory path
+			return; // click on the current directory path
 		pos--;
 
-		if (ev == PlaylistAdapter.EV_LONGCLICK) {
-			add_files_r(pos);
-			return;
-		}
-
-		if (uproot) {
+		if (up_dir) {
 			if (pos == 0) {
-				list_show_root();
+				if (ev == PlaylistAdapter.EV_LONGCLICK)
+					return; // long click on "<UP>"
+
+				if (parent == null)
+					list_show_root();
+				else
+					list_show(parent);
 				main.explorer_event(null, 0);
 				return;
 			}
 			pos--;
 		}
 
-		if (pos < ndirs) {
-			list_show(fns[pos]);
+		if (ev == PlaylistAdapter.EV_LONGCLICK) {
+			main.explorer_event(file_names[pos], Queue.ADD_RECURSE);
+			return;
+		}
+
+		if (pos < n_dirs) {
+			list_show(file_names[pos]);
 			main.explorer_event(null, 0);
 			return;
 		}
 
-		main.explorer_event(fns[pos], Queue.ADD);
+		main.explorer_event(file_names[pos], Queue.ADD);
 	}
 
 	void fill() {
@@ -76,10 +95,11 @@ class Explorer {
 			list_show(gui.cur_path);
 	}
 
-	/**
-	 * Read directory contents and update listview
-	 */
+	/** Read directory contents.
+	Request user permission to access file system. */
 	private void list_show(String path) {
+		core.dbglog(TAG, "list_show: %s", path);
+
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
 			if (!Environment.isExternalStorageManager()) {
 				Intent it = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION
@@ -88,108 +108,38 @@ class Explorer {
 			}
 		}
 
-		core.dbglog(TAG, "list_show: %s", path);
-		ArrayList<String> fnames = new ArrayList<>();
-		ArrayList<String> names = new ArrayList<>();
-		boolean updir = false;
-		boolean uproot = false;
-		int ndirs = 0;
-		try {
-			File fdir = new File(path);
-			File[] files = fdir.listFiles();
+		UtilNative.Files f = core.util.dirList(path, 0);
+		file_names = f.file_names;
+		display_rows = f.display_rows;
+		n_dirs = f.n_directories;
+		core.dbglog(TAG, "%d entries, %d directories", file_names.length, n_dirs);
 
-			names.add(String.format("[%s]", path));
-
-			/* Prevent from going upper than sdcard because
-			 it may be impossible to come back (due to file permissions) */
-			if (core.array_ifind(core.storage_paths, path) >= 0) {
-				names.add(main.getString(R.string.explorer_up));
-				updir = true;
-				uproot = true;
-			} else {
-				String parent = fdir.getParent();
-				if (parent != null) {
-					fnames.add(parent);
-					names.add(main.getString(R.string.explorer_up));
-					updir = true;
-					ndirs++;
-				}
-			}
-
-			if (files != null) {
-				// sort file names (directories first)
-				Arrays.sort(files, (File f1, File f2) -> {
-					if (f1.isDirectory() == f2.isDirectory())
-						return f1.getName().compareToIgnoreCase(f2.getName());
-					if (f1.isDirectory())
-						return -1;
-					return 1;
-				});
-
-				for (File f : files) {
-					String s;
-					if (f.isDirectory()) {
-						s = "<DIR> ";
-						s += f.getName();
-						names.add(s);
-						fnames.add(f.getPath());
-						ndirs++;
-						continue;
-					}
-
-					s = f.getName();
-					names.add(s);
-					fnames.add(f.getPath());
-				}
-			}
-		} catch (Exception e) {
-			core.errlog(TAG, "list_show: %s", e);
-			return;
-		}
-
-		fns = fnames.toArray(new String[0]);
+		display_path = String.format("[%s]", path);
 		gui.cur_path = path;
-		rows = names.toArray(new String[0]);
-		this.updir = updir;
-		this.uproot = uproot;
-		this.ndirs = ndirs;
-		core.dbglog(TAG, "added %d files", fns.length - 1);
+
+		/* Prevent from going upper than sdcard because
+		 it may be impossible to come back (due to file permissions) */
+		parent = null;
+		if (core.array_ifind(core.storage_paths, path) < 0)
+			parent = Util.path_split2(path)[0];
+
+		up_dir = true;
 	}
 
-	/**
-	 * Show the list of all available storage directories
-	 */
+	/** Show the list of all available storage directories. */
 	private void list_show_root() {
-		fns = core.storage_paths;
+		file_names = core.storage_paths;
+		n_dirs = core.storage_paths.length;
+		display_rows = core.storage_paths;
+
+		display_path = main.getString(R.string.explorer_stg_dirs);
 		gui.cur_path = "";
-		updir = false;
-		uproot = false;
-		ndirs = fns.length;
-
-		ArrayList<String> names = new ArrayList<>();
-		names.add(main.getString(R.string.explorer_stg_dirs));
-		names.addAll(Arrays.asList(fns));
-		rows = names.toArray(new String[0]);
-	}
-
-	/**
-	 * UI event on listview long click.
-	 * Add files to the playlist.  Recursively add directory contents.
-	 */
-	private boolean add_files_r(int pos) {
-		if (uproot)
-			pos--;
-
-		if (pos == 0 && updir)
-			return false; // no action for a long click on "<UP>"
-
-		main.explorer_event(fns[pos], Queue.ADD_RECURSE);
-		return true;
+		up_dir = false;
 	}
 
 	int file_idx(String fn) {
-		for (int i = 0; i != fns.length; i++) {
-			if (fns[i].equalsIgnoreCase(fn)) {
+		for (int i = 0; i != file_names.length; i++) {
+			if (file_names[i].equalsIgnoreCase(fn)) {
 				return i;
 			}
 		}

@@ -12,6 +12,7 @@
 #define PJC_PHIOLA  "com/github/stsaz/phiola/Phiola"
 #define PJC_META  "com/github/stsaz/phiola/Phiola$Meta"
 #define PJT_META  "Lcom/github/stsaz/phiola/Phiola$Meta;"
+#define PJC_UN_FILES  "com/github/stsaz/phiola/UtilNative$Files"
 
 struct phiola_jni {
 	phi_core *core;
@@ -56,6 +57,9 @@ struct phiola_jni {
 
 	jclass Phiola_Meta;
 	jmethodID Phiola_Meta_init;
+
+	jclass UtilNative_Files;
+	jmethodID UtilNative_Files_init;
 
 	jmethodID Phiola_QueueCallback_on_change;
 	jobject obj_QueueCallback;
@@ -297,6 +301,9 @@ Java_com_github_stsaz_phiola_Phiola_init(JNIEnv *env, jobject thiz, jstring jlib
 
 	x->Phiola_Meta = jni_global_ref(jni_class(PJC_META));
 	x->Phiola_Meta_init = jni_func(x->Phiola_Meta, "<init>", "()V");
+
+	x->UtilNative_Files = jni_global_ref(jni_class(PJC_UN_FILES));
+	x->UtilNative_Files_init = jni_func(x->UtilNative_Files, "<init>", "()V");
 
 	FF_ASSERT(x->Phiola_class && x->Phiola_Meta && x->Phiola_lib_load);
 

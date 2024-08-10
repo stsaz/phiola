@@ -3,6 +3,7 @@
 
 #include <ffsys/path.h>
 #include <ffsys/dir.h>
+#include <ffsys/dirscan.h>
 
 #define PJC_CONF_ENTRY  "com/github/stsaz/phiola/Conf$Entry"
 
@@ -264,4 +265,58 @@ Java_com_github_stsaz_phiola_UtilNative_fileMove(JNIEnv *env, jobject thiz, jstr
 	jstring js = jni_js_sz(error);
 	dbglog("%s: exit", __func__);
 	return js;
+}
+
+JNIEXPORT jobject JNICALL
+Java_com_github_stsaz_phiola_UtilNative_dirList(JNIEnv *env, jobject thiz, jstring jpath, jint flags)
+{
+	dbglog("%s: enter", __func__);
+	const char *path = jni_sz_js(jpath);
+	char *fullname = NULL, *fullname_name;
+	size_t i = 0, n = 0, ndirs = 0;
+	ffdirscanx dx = {};
+
+	if (!ffdirscanx_open(&dx, path, FFDIRSCANX_SORT_DIRS))
+		n = ffdirscan_count(&dx.ds);
+
+	ffstr s_path = FFSTR_INITZ(path);
+	fullname = ffmem_alloc(s_path.len + 1 + 255);
+	ffmem_copy(fullname, s_path.ptr, s_path.len);
+	fullname[s_path.len] = '/';
+	fullname_name = fullname + s_path.len + 1;
+
+	jclass jcs = jni_class(JNI_CSTR);
+	jobjectArray jsa_names = jni_joa(n, jcs);
+	jobjectArray jsa_rows = jni_joa(n, jcs);
+
+	const char *fn;
+	while ((fn = ffdirscanx_next(&dx))) {
+		ffsz_copyz(fullname_name, 255, fn);
+		jstring js = jni_js_sz(fullname);
+		jni_joa_i_set(jsa_names, i, js);
+		jni_local_unref(js);
+
+		uint off = *(uint*)((char*)dx.ds.names + dx.ds.cur - sizeof(uint));
+		if (off & 0x80000000) {
+			js = jni_js_szf(env, "<DIR> %s", fn);
+			ndirs++;
+		} else {
+			js = jni_js_sz(fn);
+		}
+		jni_joa_i_set(jsa_rows, i, js);
+		jni_local_unref(js);
+
+		i++;
+	}
+
+	jobject jo = jni_obj_new(x->UtilNative_Files, x->UtilNative_Files_init);
+	jni_obj_jo_set(jo, jni_field(x->UtilNative_Files, "file_names", JNI_TARR JNI_TSTR), jsa_names);
+	jni_obj_jo_set(jo, jni_field(x->UtilNative_Files, "display_rows", JNI_TARR JNI_TSTR), jsa_rows);
+	jni_obj_int_set(jo, jni_field_int(x->UtilNative_Files, "n_directories"), ndirs);
+
+	ffdirscanx_close(&dx);
+	jni_sz_free(path, jpath);
+	ffmem_free(fullname);
+	dbglog("%s: exit", __func__);
+	return jo;
 }
