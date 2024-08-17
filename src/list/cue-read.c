@@ -10,11 +10,10 @@ extern const phi_core *core;
 static const phi_queue_if *queue;
 static const phi_meta_if *metaif;
 #define dbglog(t, ...)  phi_dbglog(core, NULL, t, __VA_ARGS__)
-#define errlog(t, ...)  phi_errlog(core, NULL, t, __VA_ARGS__)
+#define warnlog(t, ...)  phi_warnlog(core, NULL, t, __VA_ARGS__)
 
 struct ffcuetrk {
-	uint from,
-		to;
+	uint from, to;
 };
 
 struct ffcue {
@@ -30,6 +29,7 @@ struct cue {
 	struct ffcue cu;
 	ffstr url;
 	void *qu_cur;
+	ffvec val;
 
 	ffvec gmetas;
 	ffvec metas;
@@ -39,6 +39,9 @@ struct cue {
 	uint have_gmeta :1;
 	uint utf8 :1;
 	uint removed :1;
+	uint finalizing :1;
+	uint done :1;
+	uint next_file :1;
 };
 
 static void cue_close(void *ctx, phi_track *t)
@@ -50,6 +53,7 @@ static void cue_close(void *ctx, phi_track *t)
 	FFSLICE_FOREACH_T(&c->metas, ffvec_free, ffvec);
 	ffvec_free(&c->gmetas);
 	ffvec_free(&c->metas);
+	ffvec_free(&c->val);
 	phi_track_free(t, c);
 }
 
@@ -143,8 +147,132 @@ static struct ffcuetrk* ffcue_index(struct ffcue *c, uint type, uint val)
 	return NULL;
 }
 
-static void add(struct cue *c, struct ffcuetrk *ctrk, phi_track *t)
+/**
+Return PHI_DATA when a track is ready;
+	PHI_ERR, PHI_MORE */
+static int cue_parse(struct cue *c, phi_track *t)
 {
+	ffvec *meta;
+	ffstr metaname, in = t->data_in, out = {};
+	int rc = PHI_ERR, r;
+
+	if (c->next_file) {
+		c->next_file = 0;
+		ffmem_zero_obj(&c->cu);
+		c->cu.options = t->conf.cue_gaps;
+		r = CUEREAD_FILE;
+		goto file;
+	}
+
+	for (;;) {
+		r = cueread_process(&c->cue, &in, &out);
+
+		switch (r) {
+		case CUEREAD_MORE:
+			if (!(t->chain_flags & PHI_FFIRST)) {
+				rc = PHI_MORE;
+				goto end;
+			}
+
+			if (c->finalizing) {
+				// end of .cue file
+				c->done = 1;
+				ffcue_index(&c->cu, 0xa11, 0);
+				c->nmeta = c->metas.len;
+				rc = PHI_DATA;
+				goto end;
+			}
+
+			c->finalizing = 1;
+			ffstr_setcz(&in, "\n");
+			continue;
+
+		case CUEREAD_WARN:
+			warnlog(t, "parse error at line %u: %s"
+				, (int)cueread_line(&c->cue), cueread_error(&c->cue));
+			continue;
+		}
+
+		ffstr *v = &out;
+		if (c->utf8 && ffutf8_valid(v->ptr, v->len)) {
+			c->val.len = 0;
+			ffvec_addstr(&c->val, v);
+		} else {
+			c->utf8 = 0;
+			ffsize n = ffutf8_from_cp(NULL, 0, v->ptr, v->len, core->conf.code_page);
+			ffvec_realloc(&c->val, n, 1);
+			c->val.len = ffutf8_from_cp(c->val.ptr, c->val.cap, v->ptr, v->len, core->conf.code_page);
+		}
+
+		switch (r) {
+		case CUEREAD_TITLE:
+			ffstr_setcz(&metaname, "album");
+			goto add_metaname;
+
+		case CUEREAD_PERFORMER:
+			ffstr_setcz(&metaname, "artist");
+			goto add_metaname;
+
+		case CUEREAD_TRK_NUM:
+			c->nmeta = c->metas.len;
+			ffstr_setcz(&metaname, "tracknumber");
+			goto add_metaname;
+
+		case CUEREAD_TRK_TITLE:
+			ffstr_setcz(&metaname, "title");
+			goto add_metaname;
+
+		case CUEREAD_TRK_PERFORMER:
+			ffstr_setcz(&metaname, "artist");
+
+		add_metaname:
+			meta = ffvec_pushT(&c->metas, ffvec);
+			ffstr_set2(meta, &metaname);
+			meta->cap = 0;
+			// fallthrough
+
+		case CUEREAD_REM_VAL:
+		case CUEREAD_REM_NAME:
+			*ffvec_pushT(&c->metas, ffvec) = c->val;
+			ffvec_null(&c->val);
+			break;
+
+		case CUEREAD_FILE:
+			if (c->url.len) {
+				// got next FILE entry -> finalize the current track
+				c->next_file = 1;
+				ffcue_index(&c->cu, 0xa11, 0);
+				c->nmeta = c->metas.len;
+				rc = PHI_DATA;
+				goto end;
+			}
+
+		file:
+			if (!c->have_gmeta) {
+				c->have_gmeta = 1;
+				c->gmetas = c->metas;
+				ffvec_null(&c->metas);
+			}
+			ffstr_free(&c->url);
+			if (plist_fullname(t, *(ffstr*)&c->val, &c->url))
+				goto end;
+			break;
+		}
+
+		if (ffcue_index(&c->cu, r, cueread_cdframes(&c->cue))) {
+			rc = PHI_DATA;
+			goto end;
+		}
+	}
+
+end:
+	t->data_in = in;
+	return rc;
+}
+
+static void add_track(struct cue *c, struct ffcuetrk *ctrk, phi_track *t)
+{
+	dbglog(t, "add '%S' %d..%d", &c->url, ctrk->from, ctrk->to);
 	struct phi_queue_entry qe = {
 		.length_msec = (ctrk->to) ? (ctrk->to - ctrk->from) * 1000 / 75 : 0,
 	};
@@ -184,118 +312,31 @@ static void add(struct cue *c, struct ffcuetrk *ctrk, phi_track *t)
 static int cue_process(void *ctx, phi_track *t)
 {
 	struct cue *c = ctx;
-	int rc = PHI_ERR, r, done = 0, fin = 0;
-	ffvec *meta;
-	ffstr metaname, in = t->data_in, out = {};
-	ffvec val = {}, *m;
-	struct ffcuetrk *ctrk;
-	uint codepage = core->conf.code_page;
+	int r;
+	ffvec *m;
 
-	while (!done) {
-		r = cueread_process(&c->cue, &in, &out);
+	while (!c->done) {
 
-		if (r == CUEREAD_MORE) {
-			if (!(t->chain_flags & PHI_FFIRST)) {
-				rc = PHI_MORE;
-				goto err;
-			}
+		if (PHI_DATA != (r = cue_parse(c, t)))
+			return r;
 
-			if (fin) {
-				// end of .cue file
-				if (NULL == (ctrk = ffcue_index(&c->cu, 0xa11, 0)))
-					break;
-				done = 1;
-				c->nmeta = c->metas.len;
-				goto add;
-			}
-
-			fin = 1;
-			ffstr_setcz(&in, "\n");
-			continue;
-
-		} else if (r == CUEREAD_WARN) {
-			errlog(t, "parse error at line %u: %s"
-				, (int)cueread_line(&c->cue), cueread_error(&c->cue));
-			continue;
-		}
-
-		ffstr *v = &out;
-		if (c->utf8 && ffutf8_valid(v->ptr, v->len)) {
-			val.len = 0;
-			ffvec_addstr(&val, v);
-		} else {
-			c->utf8 = 0;
-			ffsize n = ffutf8_from_cp(NULL, 0, v->ptr, v->len, codepage);
-			ffvec_realloc(&val, n, 1);
-			val.len = ffutf8_from_cp(val.ptr, val.cap, v->ptr, v->len, codepage);
-		}
-
-		switch (r) {
-		case CUEREAD_TITLE:
-			ffstr_setcz(&metaname, "album");
-			goto add_metaname;
-
-		case CUEREAD_TRK_NUM:
-			c->nmeta = c->metas.len;
-			ffstr_setcz(&metaname, "tracknumber");
-			goto add_metaname;
-
-		case CUEREAD_TRK_TITLE:
-			ffstr_setcz(&metaname, "title");
-			goto add_metaname;
-
-		case CUEREAD_TRK_PERFORMER:
-			ffstr_setcz(&metaname, "artist");
-			goto add_metaname;
-
-		case CUEREAD_PERFORMER:
-			ffstr_setcz(&metaname, "artist");
-
-add_metaname:
-			meta = ffvec_pushT(&c->metas, ffvec);
-			ffstr_set2(meta, &metaname);
-			meta->cap = 0;
-			// fallthrough
-
-		case CUEREAD_REM_VAL:
-		case CUEREAD_REM_NAME:
-			*ffvec_pushT(&c->metas, ffvec) = val;
-			ffvec_null(&val);
-			break;
-
-		case CUEREAD_FILE:
-			if (!c->have_gmeta) {
-				c->have_gmeta = 1;
-				c->gmetas = c->metas;
-				ffvec_null(&c->metas);
-			}
-			ffstr_free(&c->url);
-			if (0 != plist_fullname(t, *(ffstr*)&val, &c->url))
-				goto err;
-			break;
-		}
-
-		if (NULL == (ctrk = ffcue_index(&c->cu, r, cueread_cdframes(&c->cue))))
-			continue;
-
-add:
 		c->curtrk++;
 		if (t->conf.tracks.len) {
 			ffsize n = ffarrint32_binfind((uint*)t->conf.tracks.ptr, t->conf.tracks.len, c->curtrk);
 			if ((ffssize)n < 0)
 				goto next;
 			if (n == t->conf.tracks.len - 1)
-				done = 1;
+				c->done = 1; // Don't parse the rest
 		}
 
-		if (ctrk->to != 0 && ctrk->from >= ctrk->to) {
-			errlog(t, "invalid INDEX values");
+		if (c->cu.trk.to != 0 && c->cu.trk.from >= c->cu.trk.to) {
+			warnlog(t, "invalid INDEX values");
 			continue;
 		}
 
-		add(c, ctrk, t);
+		add_track(c, &c->cu.trk, t);
 
-next:
+	next:
 		/* 'metas': TRACK_N TRACK_N+1
 		Remove the items for TRACK_N. */
 		m = (void*)c->metas.ptr;
@@ -306,11 +347,7 @@ next:
 		c->nmeta = c->metas.len;
 	}
 
-	rc = PHI_FIN;
-
-err:
-	ffvec_free(&val);
-	return rc;
+	return PHI_FIN;
 }
 
 const phi_filter phi_cue_read = {

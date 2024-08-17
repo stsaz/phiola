@@ -513,10 +513,19 @@ FILE "rec6.wav" WAVE
  TRACK 03 AUDIO
   TITLE T3
   INDEX 01 00:04:00
+FILE "rec6.wav" WAVE
+ TRACK 04 AUDIO
+  TITLE T4
+  INDEX 01 00:01:00
+ TRACK 05 AUDIO
+  TITLE T5
+  INDEX 01 00:04:00
 EOF
 	./phiola i cue.cue | grep 'A1 - T1'
 	./phiola i cue.cue | grep 'Artist - T2'
 	./phiola i cue.cue | grep 'Artist - T3'
+	./phiola i cue.cue | grep 'Artist - T4'
+	./phiola i cue.cue | grep 'Artist - T5'
 	./phiola cue.cue
 	if ./phiola i cue.cue -tracks 2,3 | grep 'A1 - T1' ; then
 		false
