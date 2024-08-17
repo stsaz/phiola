@@ -39,7 +39,6 @@ FF_EXTERN void list_add_multi(ffslice names);
 FF_EXTERN void list_add_to_next(ffslice indices);
 FF_EXTERN void list_remove(ffslice indices);
 FF_EXTERN void list_save(void *sz);
-FF_EXTERN void lists_save();
 FF_EXTERN void lists_load();
 FF_EXTERN void list_deleted(phi_queue_id q);
 FF_EXTERN void list_select(uint i);
@@ -52,7 +51,7 @@ FF_EXTERN void ctl_volume();
 FF_EXTERN void ctl_action(uint id);
 FF_EXTERN void mod_userconf_write(ffconfw *cw);
 FF_EXTERN void userconf_save(ffstr data);
-FF_EXTERN void gui_stop();
+FF_EXTERN void gui_stop(uint flags);
 
 FF_EXTERN void record_begin(void *param);
 FF_EXTERN int record_stop();
@@ -139,9 +138,11 @@ struct gui_data {
 	uint filter_len; // Length of the current filter text
 	uint current_scroll_vpos;
 	uint auto_select;
+	uint list_save_pending; // N of lists that are being saved to disk
 	uint tab_conversion :1;
 	uint filtering :1;
 	uint quit :1;
+	uint ui_thread_busy :1;
 
 	struct {
 		char*	theme;

@@ -27,6 +27,7 @@ struct gui_data *gd;
 #define USER_CONF_NAME_ALT  "user.conf"
 
 static void list_filter_close();
+static void gui_finish();
 
 #define O(m)  (void*)FF_OFF(struct gui_data, m)
 const struct ffarg guimod_args[] = {
@@ -467,8 +468,14 @@ void list_save(void *sz)
 	ffmem_free(fn);
 }
 
+static void list_save_complete(void *param, phi_track *t)
+{
+	if (--gd->list_save_pending == 0)
+		gui_finish();
+}
+
 /** Save playlists to disk */
-void lists_save()
+static void lists_save()
 {
 	if (!!ffdir_make(gd->user_conf_dir) && !fferr_exist(fferr_last()))
 		syserrlog("dir make: %s", gd->user_conf_dir);
@@ -482,7 +489,8 @@ void lists_save()
 
 		ffmem_free(fn);
 		fn = ffsz_allocfmt("%s" AUTO_LIST_FN, gd->user_conf_dir, i++);
-		gd->queue->save(li->q, fn, NULL, NULL);
+		if (!gd->queue->save(li->q, fn, list_save_complete, NULL))
+			gd->list_save_pending++;
 	}
 
 	ffmem_free(fn);
@@ -624,7 +632,7 @@ static void grd_rec_close(void *f, phi_track *t)
 	core->track->stop(t);
 	gd->recording_track = NULL;
 	if (gd->quit) {
-		core->sig(PHI_CORE_STOP);
+		gui_finish();
 		return;
 	}
 	gui_task(wrecord_done);
@@ -855,16 +863,28 @@ static void gui_start(void *param)
 		ctl_play(0);
 }
 
-void gui_stop()
+void gui_stop(uint flags)
 {
+	gd->ui_thread_busy = !!flags;
 	gd->quit = 1;
-	if (record_stop())
-		core->sig(PHI_CORE_STOP);
+	lists_save();
+	record_stop();
+	gui_finish();
+}
+
+static void gui_finish()
+{
+	if (gd->recording_track
+		|| gd->list_save_pending)
+		return;
+
+	core->sig(PHI_CORE_STOP);
 }
 
 static void gui_destroy()
 {
-	ffthread_join(gd->th, -1, NULL);
+	if (!gd->ui_thread_busy)
+		ffthread_join(gd->th, -1, NULL);
 	ffmem_free(gd->user_conf_dir);
 	ffvec_free(&gd->lists);
 	ffmem_free(gd);

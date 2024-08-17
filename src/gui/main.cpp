@@ -678,7 +678,16 @@ static void wmain_action(ffui_window *wnd, int id)
 		wabout_show(1);  break;
 
 	case A_CLOSE:
-		gui_quit();  break;
+		gui_quit();
+
+#ifdef FF_WIN
+		if (m->wnd.close_forced) {
+			gui_core_task_uint(gui_stop, 1);
+			// Wait until process's main() exits, but note that the UI thread is hanging now
+			ffthread_sleep(3000);
+		}
+#endif
+		break;
 
 	case A_FILE_DRAGDROP:
 		on_drop_files();  break;

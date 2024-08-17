@@ -153,7 +153,7 @@ static void gui_userconf_save()
 
 	ffconfw_fin(&cw);
 
-	gui_core_task_data(userconf_save, *(ffstr*)&cw.buf);
+	userconf_save(*(ffstr*)&cw.buf);
 }
 
 extern const ffui_ldr_ctl
@@ -318,13 +318,12 @@ int FFTHREAD_PROCCALL gui_worker(void *param)
 
 end:
 	ffui_uninit();
-	gui_stop();
+	gui_core_task_uint(gui_stop, 0);
 	return 0;
 }
 
 void gui_quit()
 {
-	gui_core_task(lists_save);
 	gui_userconf_save();
 	wmain_fin();
 	ffui_post_quitloop();
