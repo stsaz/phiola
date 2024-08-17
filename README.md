@@ -67,7 +67,7 @@ See also: [phiola Architecture](doc/arch/arch.md).
 
 ## Install
 
-* Download the latest package for your OS and CPU from [phiola Releases](https://github.com/stsaz/phiola/releases)
+Download the latest package for your OS and CPU from [phiola Releases](https://github.com/stsaz/phiola/releases)
 
 ### Linux
 

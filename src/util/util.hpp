@@ -9,6 +9,8 @@ struct xxstr : ffstr {
 	xxstr() { ptr = NULL;  len = 0; }
 	xxstr(ffstr s) { ptr = s.ptr;  len = s.len; }
 	xxstr(const char *sz) { ptr = (char*)sz;  len = ffsz_len(sz); }
+	xxstr(const char *s, size_t n) { ptr = (char*)s;  len = n; }
+	void	set(const char *s, size_t n) { ptr = (char*)s;  len = n; }
 	void	operator=(const char *sz) { ptr = (char*)sz, len = ffsz_len(sz); }
 	bool	equals(xxstr s) const { return ffstr_eq2(this, &s); }
 	bool	equals_i(const char *sz) const { return ffstr_ieqz(this, sz); }
@@ -20,6 +22,7 @@ struct xxstr : ffstr {
 	ffssize	split_at(ffssize index, xxstr *left, xxstr *right) const { return ffstr_split(this, index, left, right); }
 	ffssize	find_char(char c) const { return ffstr_findchar(this, c); }
 	ffssize	find_str(xxstr s) const { return ffstr_findstr(this, &s); }
+	ffssize	find_str_i(xxstr s) const { return ffstr_ifindstr(this, &s); }
 	ffssize	match_f(const char *fmt, ...) const {
 		va_list va;
 		va_start(va, fmt);
@@ -105,6 +108,11 @@ struct xxvec : ffvec {
 		ptr = s.ptr, len = s.len, cap = !(s.len == 0 && s.ptr != NULL) ? s.len : 1;
 		return *this;
 	}
+	xxvec& acquire(const char *sz) {
+		ffvec_free(this);
+		ptr = (char*)sz, len = (ptr) ? ffsz_len(sz) : 0, cap = (ptr) ? len + 1 : 0;
+		return *this;
+	}
 	xxvec& copy(ffstr s) {
 		len = 0;
 		ffvec_addstr(this, &s);
@@ -127,6 +135,7 @@ struct xxvec : ffvec {
 	template<class T> T* push_z() { return ffvec_zpushT(this, T); }
 	const xxstr& str() const { return *(xxstr*)this; }
 	const ffslice& slice() const { return *(ffslice*)this; }
+	char* sz() { return (char*)ptr; }
 	char* strz() {
 		if (len && ((char*)ptr)[len-1] != '\0')
 			ffvec_addchar(this, '\0');

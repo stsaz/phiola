@@ -19,7 +19,7 @@ struct gui_data *gd;
 
 #define AUTO_LIST_FN  "list%u.m3uz"
 #ifdef FF_WIN
-	#define USER_CONF_DIR  "%APPDATA%/phiola/"
+	#define USER_CONF_DIR  "%APPDATA%\\phiola\\"
 #else
 	#define USER_CONF_DIR  "$HOME/.config/phiola/"
 #endif
@@ -772,32 +772,41 @@ const phi_adev_if* adev_find_mod()
 
 struct cmd {
 	phi_task task;
+	uint flags;
+	union {
 	void (*func)();
 	void (*func_uint)(uint);
 	void (*func_ptr)(void*);
 	void (*func_ffstr)(ffstr);
+	};
+	union {
 	ffstr data;
 	uint data_uint;
 	void *data_ptr;
+	};
 };
 
 static void corecmd_handler(void *param)
 {
 	struct cmd *c = param;
-	if (c->func)
-		c->func();
-	else if (c->func_ptr)
-		c->func_ptr(c->data_ptr);
-	else if (c->func_uint)
-		c->func_uint(c->data_uint);
-	else if (c->func_ffstr)
-		c->func_ffstr(c->data);
+	dbglog("%s %p", __func__, c->func);
+	switch (c->flags & 3) {
+	case 0:
+		c->func();  break;
+	case 1:
+		c->func_uint(c->data_uint);  break;
+	case 2:
+		c->func_ptr(c->data_ptr);  break;
+	case 3:
+		c->func_ffstr(c->data);  break;
+	}
 	ffmem_free(c);
 }
 
 void gui_core_task(void (*func)())
 {
 	struct cmd *c = ffmem_new(struct cmd);
+	c->flags = 0;
 	c->func = func;
 	core->task(0, &c->task, corecmd_handler, c);
 }
@@ -805,6 +814,7 @@ void gui_core_task(void (*func)())
 void gui_core_task_uint(void (*func)(uint), uint i)
 {
 	struct cmd *c = ffmem_new(struct cmd);
+	c->flags = 1;
 	c->func_uint = func;
 	c->data_uint = i;
 	core->task(0, &c->task, corecmd_handler, c);
@@ -813,6 +823,7 @@ void gui_core_task_uint(void (*func)(uint), uint i)
 void gui_core_task_ptr(void (*func)(void*), void *ptr)
 {
 	struct cmd *c = ffmem_new(struct cmd);
+	c->flags = 2;
 	c->func_ptr = func;
 	c->data_ptr = ptr;
 	core->task(0, &c->task, corecmd_handler, c);
@@ -821,6 +832,7 @@ void gui_core_task_ptr(void (*func)(void*), void *ptr)
 void gui_core_task_data(void (*func)(ffstr), ffstr d)
 {
 	struct cmd *c = ffmem_new(struct cmd);
+	c->flags = 3;
 	c->func_ffstr = func;
 	c->data = d;
 	core->task(0, &c->task, corecmd_handler, c);

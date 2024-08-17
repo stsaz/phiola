@@ -82,29 +82,28 @@ done:
 	return PHI_DONE;
 }
 
-static int aao_write(void *ctx, phi_track *t)
+static int aao_write(audio_out *a, phi_track *t)
 {
-	audio_out *a = ctx;
 	int r;
 
 	switch (a->state) {
-	case 0:
-	case 1:
-		a->try_open = (a->state == 0);
+	case ST_TRY:
+	case ST_OPEN:
+		a->try_open = (a->state == ST_TRY);
 		r = aao_create(a, t);
 		if (r == PHI_ERR) {
 			return PHI_ERR;
 
 		} else if (r == PHI_MORE) {
-			if (a->state == 1) {
+			if (a->state == ST_OPEN) {
 				errlog(t, "need input audio conversion");
 				return PHI_ERR;
 			}
-			a->state = 1;
+			a->state = ST_OPEN;
 			return PHI_MORE;
 		}
 
-		a->state = 2;
+		a->state = ST_WAITING;
 
 		if (!t->oaudio.format.interleaved) {
 			t->oaudio.conv_format.interleaved = 1;

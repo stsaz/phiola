@@ -5,6 +5,9 @@ struct gui_wlog {
 	ffui_windowxx	wnd;
 	ffui_textxx		tlog;
 
+	fflock	lock;
+	xxvec	buf;
+
 	char *wnd_pos;
 	uint initialized :1;
 };
@@ -31,12 +34,17 @@ void wlog_userconf_write(ffconfw *cw)
 		ffconfw_add2z(cw, "wlog.pos", w->wnd_pos);
 }
 
-extern "C" void gui_log(void *udata, ffstr s)
+static void wlog_add()
 {
-	FF_ASSERT(gg && gg->wlog && gg->wlog->wnd.h);
-
 	gui_wlog *w = gg->wlog;
-	w->tlog.add(s);
+
+	fflock_lock(&w->lock);
+	xxstr d = w->buf.str();
+	w->buf.reset();
+	fflock_unlock(&w->lock);
+
+	w->tlog.add(d);
+	d.free();
 
 	if (!w->initialized) {
 		w->initialized = 1;
@@ -47,6 +55,20 @@ extern "C" void gui_log(void *udata, ffstr s)
 	}
 
 	w->wnd.show(1);
+}
+
+/**
+Thread: worker */
+extern "C" void gui_log(void *udata, ffstr s)
+{
+	FF_ASSERT(gg && gg->wlog && gg->wlog->wnd.h);
+
+	gui_wlog *w = gg->wlog;
+
+	fflock_lock(&w->lock);
+	w->buf.add(s);
+	fflock_unlock(&w->lock);
+	gui_task(wlog_add);
 }
 
 static void wlog_action(ffui_window *wnd, int id)

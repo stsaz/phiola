@@ -7,6 +7,7 @@ ffui_openfolder ffui_openfolder1
 ffui_createlink
 ffui_shellexec ffui_exec
 ffui_clipbd_set ffui_clipbd_setfile
+ffui_res_load ffui_res_close
 */
 
 #pragma once
@@ -273,4 +274,24 @@ done:
 static inline int ffui_openfolder1(const char *path)
 {
 	return ffui_openfolder(&path, 0);
+}
+
+
+/** Load resource data. */
+static inline HGLOBAL ffui_res_load(HMODULE hmod, const char *name, const char *type, ffstr *data)
+{
+	HRSRC hr;
+	HGLOBAL h;
+	if (!(hr = FindResourceA(hmod, name, type)))
+		return NULL;
+	if (!(h = LoadResource(hmod, hr)))
+		return NULL;
+	data->ptr = (char*)LockResource(h);
+	data->len = SizeofResource(hmod, hr);
+	return h;
+}
+
+static inline void ffui_res_close(HGLOBAL h)
+{
+	FreeResource(h);
 }

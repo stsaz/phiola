@@ -47,15 +47,14 @@ static int qu_add_dir_r(const char *fn, phi_track *t)
 	void *qcur = t->qent;
 	ffdirscan ds = {};
 	fntree_block *root = NULL;
-	fffd f = FFFILE_NULL;
 	char *fpath = NULL;
 	int rc = -1;
 	int dir_removed = 0;
 
-	if (0 != ffdirscan_open(&ds, fn, 0))
+	if (ffdirscan_open(&ds, fn, 0))
 		goto end;
 
-	if (NULL == (root = fntree_from_dirscan(FFSTR_Z(fn), &ds, 0)))
+	if (!(root = fntree_from_dirscan(FFSTR_Z(fn), &ds, 0)))
 		goto end;
 	ffdirscan_close(&ds);
 
@@ -63,43 +62,29 @@ static int qu_add_dir_r(const char *fn, phi_track *t)
 	fntree_cursor cur = {};
 	for (;;) {
 		fntree_entry *e;
-		if (NULL == (e = fntree_cur_next_r_ctx(&cur, &blk)))
+		if (!(e = fntree_cur_next_r_ctx(&cur, &blk)))
 			break;
 
 		ffstr path = fntree_path(blk);
 		ffstr name = fntree_name(e);
 		ffmem_free(fpath);
-		fpath = ffsz_allocfmt("%S/%S", &path, &name);
-
-		fffile_close(f);
-		if (FFFILE_NULL == (f = fffile_open(fpath, FFFILE_READONLY))) {
-			syswarnlog(t, "file open: %s", fpath);
-			continue;
-		}
+		fpath = ffsz_allocfmt("%S%c%S", &path, FFPATH_SLASH, &name);
 
 		fffileinfo fi;
-		if (0 != fffile_info(f, &fi))
+		if (fffile_info_path(fpath, &fi))
+			continue;
+		uint isdir = fffile_isdir(fffileinfo_attr(&fi));
+
+		if (!file_matches(t, fpath, isdir))
 			continue;
 
-		if (!file_matches(t, fpath, fffile_isdir(fffileinfo_attr(&fi))))
-			continue;
-
-		if (fffile_isdir(fffileinfo_attr(&fi))) {
-
+		if (isdir) {
 			ffmem_zero_obj(&ds);
-			uint flags = 0;
-#ifdef FF_WIN
-			fffile_close(f);  f = FFFILE_NULL;
-#else
-			flags = FFDIRSCAN_USEFD;
-			ds.fd = f;
-			f = FFFILE_NULL;
-#endif
-			if (0 != ffdirscan_open(&ds, fpath, flags))
+			if (ffdirscan_open(&ds, fpath, 0))
 				continue;
 
 			ffstr_setz(&path, fpath);
-			if (NULL == (blk = fntree_from_dirscan(path, &ds, 0)))
+			if (!(blk = fntree_from_dirscan(path, &ds, 0)))
 				continue;
 			ffdirscan_close(&ds);
 
@@ -132,7 +117,6 @@ end:
 	}
 
 	ffmem_free(fpath);
-	fffile_close(f);
 	ffdirscan_close(&ds);
 	fntree_free_all(root);
 	return rc;
