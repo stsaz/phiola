@@ -56,6 +56,7 @@ static int aao_create(audio_out *a, phi_track *t)
 		aa_buf_close(NULL);
 	}
 
+	a->handle_dev_offline = 1;
 	r = audio_out_open(a, t, &t->oaudio.format);
 	if (r == FFAUDIO_EFORMAT) {
 		t->oaudio.conv_format.interleaved = 1;
@@ -118,6 +119,13 @@ static int aao_write(void *ctx, phi_track *t)
 			core->timer(t->worker, &mod->tmr, 0, NULL, NULL);
 		else if (old_state == ST_PAUSED)
 			core->timer(t->worker, &mod->tmr, mod->buf_len_msec / 2, audio_out_onplay, a);
+	}
+	if (r == PHI_ERR
+		&& a->err_code == FFAUDIO_EDEV_OFFLINE) {
+		// Note: this works only because the audio format doesn't change
+		aa_buf_close(NULL);
+		a->state = ST_OPEN;
+		return aao_write(a, t);
 	}
 	return r;
 }
