@@ -126,6 +126,11 @@ static int qu_add_dir_r(const char *fn, phi_track *t)
 	rc = 0;
 
 end:
+	if (!dir_removed) {
+		dir_removed = 1;
+		phi_queueif.remove(t->qent);
+	}
+
 	ffmem_free(fpath);
 	fffile_close(f);
 	ffdirscan_close(&ds);

@@ -410,7 +410,7 @@ test_list() {
 		./phiola co list1.wav -m artist=A3 -m title=T3 -f -o list3.ogg
 	fi
 
-	./phiola list create . -include "list*.ogg" -o test.m3u
+	./phiola list create . -include "./list*.ogg" -o test.m3u
 	./phiola info test.m3u | grep '#1 "A2 - T2" "./list2.ogg"'
 
 	./phiola list create list3.ogg list2.ogg -o test-sort.m3u
