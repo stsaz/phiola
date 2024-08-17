@@ -261,7 +261,15 @@ static void on_sig(struct ffsig_info *i)
 	case FFSIG_INT:
 		x->ctrl_c = 1;
 		x->core->task(0, &x->task_stop_all, stop_all, x);
+
+#ifdef FF_WIN
+		if (i->flags == CTRL_CLOSE_EVENT) {
+			// This is a separate signal handler thread - just wait until main() exits.
+			ffthread_sleep(-1);
+		}
+#endif
 		break;
+
 	default:
 		crash_handler(&x->ci, i);
 	}
