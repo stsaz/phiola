@@ -59,7 +59,7 @@ make -j8 openssl \
  CROSS_PREFIX=x86_64-w64-mingw32-
 
 mkdir -p ../ffpack/_windows-amd64
-make -j8 zstd \
+make -j8 zstd zlib \
  -C ../ffpack/_windows-amd64 \
  -f ../Makefile \
  -I .. \

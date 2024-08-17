@@ -85,9 +85,9 @@ If you choose another directory rather than `~/bin`, then you should also edit `
 
 ### Windows
 
-* Unpack the archive somewhere, e.g. to `C:\Program Files`
-* Add `C:\Program Files\phiola-2` to your `PATH` environment
-* Optionally, create a desktop shortcut to `phiola-gui.exe`
+The easiest way to install phiola on Windows is to execute `phiola-...-windows-x64-setup.exe` and specify the installation directory.
+
+Another option is to manually unpack `phiola-...-windows-x64.zip` and add phiola directory to your `PATH` environment.
 
 ### Android
 

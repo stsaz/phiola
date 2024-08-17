@@ -147,3 +147,6 @@ package-debug: $(PKG_DEBUG_NAME)
 release: default
 	$(SUBMAKE) package
 	$(SUBMAKE) package-debug
+ifeq "$(OS)" "windows"
+	$(MAKE) -f ../installer/Makefile
+endif

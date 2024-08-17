@@ -1,0 +1,58 @@
+# phiola installer GUI
+
+window wmain {
+	position	300 200 400 200
+	icon {
+		resource 2
+	}
+
+	label ldir {
+		text	"Install phiola here:"
+	}
+	editbox edir {
+	}
+
+	button bbrowse {
+		text	"Browse..."
+		action	A_BROWSE
+	}
+
+	checkbox cbshortcut {
+		text	"Create Desktop shortcut"
+		style	checked
+	}
+
+	checkbox cbenviron {
+		text	"Add phiola directory to PATH environment"
+		style	checked
+	}
+
+	checkbox cbstart {
+		text	"Start phiola GUI"
+		style	checked
+	}
+
+	button binstall {
+		text	"Install"
+		action	A_INSTALL
+	}
+
+	label lurl {
+		font {
+			name	Arial
+			height	10
+			style	underline
+		}
+		cursor	hand
+		color	blue
+		onclick	A_HOMEPAGE
+	}
+
+	image ico {
+		size 32 32
+		icon {
+			resource 2
+			size 32 32
+		}
+	}
+}
