@@ -106,7 +106,11 @@ static int ogg_w_encode(void *ctx, phi_track *t)
 
 		case I_CONF: {
 			o->state = I_PKT;
+
 			uint max_page_samples = (t->oaudio.format.rate) ? t->oaudio.format.rate : 44100;
+			if (t->conf.ogg.max_page_length_msec)
+				max_page_samples = max_page_samples * t->conf.ogg.max_page_length_msec / 1000;
+
 			if (ffsz_eq(t->data_type, "OGG")) {
 				max_page_samples = 0; // ogg->ogg copy must replicate the pages exactly
 				o->state = I_PAGE_EXACT;

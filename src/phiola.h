@@ -12,7 +12,7 @@
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20204
+#define PHI_VERSION_CORE  20206
 
 typedef long long int64;
 typedef unsigned long long uint64;
@@ -308,6 +308,10 @@ struct phi_track_conf {
 		u_char	mode; // 0:audio; 1:voip
 		u_char	bandwidth; // either 4, 6, 8, 12, 20kHz
 	} opus;
+
+	struct {
+		u_char	max_page_length_msec;
+	} ogg;
 
 	struct {
 		struct phi_af format;
