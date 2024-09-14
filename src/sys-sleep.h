@@ -60,4 +60,8 @@ static void sys_sleep_close(void *ctx, phi_track *t)
 	}
 }
 
-static int sys_sleep_process(void *ctx, phi_track *d) { return PHI_DONE; }
+static int sys_sleep_process(void *ctx, phi_track *t)
+{
+	t->data_out = t->data_in;
+	return PHI_DONE;
+}

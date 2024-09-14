@@ -3,6 +3,7 @@
 
 #include <ffsys/backtrace.h>
 #include <ffsys/file.h>
+#include <ffsys/std.h>
 #include <ffsys/path.h>
 #include <ffsys/process.h>
 #include <ffsys/signal.h>
