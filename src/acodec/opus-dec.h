@@ -113,7 +113,7 @@ static int opus_in_decode(void *ctx, phi_track *t)
 				t->audio.format.format = PHI_PCM_FLOAT32;
 				t->audio.format.interleaved = 1;
 				o->sample_size = phi_af_size(&t->audio.format);
-				t->audio.start_delay = o->opus.info.preskip;
+				t->audio.start_delay = ffmin(o->opus.info.preskip, 4800);
 				t->data_type = "pcm";
 				break;
 

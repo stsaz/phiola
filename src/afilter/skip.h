@@ -66,13 +66,14 @@ static int pcm_skip_process(void *ctx, phi_track *t)
 	}
 
 	if (t->audio.start_delay) {
-		if (t->audio.start_delay >= t->audio.pos
-			&& t->audio.start_delay <= t->audio.pos + t->data_out.len / c->sample_size) {
-			audio_skip(c, t, &t->data_out, t->audio.start_delay);
-			dbglog(t, "@%U  skipped:%u"
-				, t->audio.pos, (int)t->audio.start_delay);
+		if (t->audio.start_delay >= t->audio.pos) {
+			uint64 skip = t->audio.start_delay - t->audio.pos;
+			if (audio_skip(c, t, &t->data_out, skip))
+				return PHI_MORE;
+			t->audio.pos = 0;
+			dbglog(t, "skipped:%u", (int)skip);
 		} else {
-			t->audio.pos = ffmax((int64)t->audio.pos - t->audio.start_delay, 0);
+			t->audio.pos -= t->audio.start_delay;
 		}
 	}
 
