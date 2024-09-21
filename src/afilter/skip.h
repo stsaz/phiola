@@ -8,7 +8,7 @@ struct pcm_skip {
 	uint ignore_delay;
 };
 
-static int audio_skip(struct pcm_skip *c, phi_track *t, ffstr *buf, uint64 skip)
+static int audio_skip(const struct pcm_skip *c, const phi_track *t, ffstr *buf, uint64 skip)
 {
 	uint64 bytes = skip * c->sample_size;
 	buf->len -= bytes;

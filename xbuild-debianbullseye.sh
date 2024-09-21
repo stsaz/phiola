@@ -50,6 +50,18 @@ EOF
 	 bash -c 'cd /src/phiola && source ./build_linux.sh'
 fi
 
+if ! podman container top $CONTAINER_NAME ; then
+	cat >build_linux.sh <<EOF
+sleep 600
+EOF
+	# Start container in background
+	podman start --attach $CONTAINER_NAME &
+	sleep .5
+	while ! podman container top $CONTAINER_NAME ; do
+		sleep .5
+	done
+fi
+
 # Prepare build script
 # Note that openssl-3 must be built from source.
 cat >build_linux.sh <<EOF
@@ -83,4 +95,5 @@ make -j8 \
 EOF
 
 # Build inside the container
-podman start --attach $CONTAINER_NAME
+podman exec $CONTAINER_NAME \
+ bash -c 'cd /src/phiola && source ./build_linux.sh'

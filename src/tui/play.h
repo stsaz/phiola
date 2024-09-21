@@ -83,7 +83,7 @@ static void tui_info(tui_track *u)
 		, mod->color.filename, t->conf.ifile.name, mod->color.reset
 		, (double)tsize / (1024 * 1024)
 		, tmsec / 60, tmsec % 60, (uint)(total_time % 1000)
-		, u->total_samples
+		, (u->total_samples != ~0ULL) ? u->total_samples : 0ULL
 		, (t->audio.bitrate + 500) / 1000
 		, t->audio.decoder
 		, phi_af_name(fmt->format)

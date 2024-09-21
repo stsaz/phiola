@@ -94,7 +94,7 @@ static uint file_bitrate(phi_track *t, oggread *og, uint sample_rate)
 . p1.x -> vorbis-tags
 . px.x -> vorbis-data
 */
-static int ogg_decode(void *ctx, phi_track *t)
+static int ogg_read(void *ctx, phi_track *t)
 {
 	enum { I_HDR, I_INFO, I_DATA, };
 	struct ogg_r *o = ctx;
@@ -137,7 +137,8 @@ static int ogg_decode(void *ctx, phi_track *t)
 		case OGGREAD_DATA:
 			if (o->state == I_HDR) {
 				o->state = I_INFO;
-				t->audio.total = oggread_info(&o->og)->total_samples;
+				const struct oggread_info *i = oggread_info(&o->og);
+				t->audio.total = (i->total_samples) ? i->total_samples : ~0ULL;
 				if (0 != add_decoder(o, t, t->data_out))
 					return PHI_ERR;
 			}
@@ -181,6 +182,6 @@ data:
 }
 
 const phi_filter phi_ogg_read = {
-	ogg_open, ogg_close, ogg_decode,
+	ogg_open, ogg_close, ogg_read,
 	"ogg-read"
 };
