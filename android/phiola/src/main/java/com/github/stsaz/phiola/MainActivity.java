@@ -221,6 +221,9 @@ public class MainActivity extends AppCompatActivity {
 		case R.id.action_list_convert:
 			list_convert();  break;
 
+		case R.id.action_list_fmove:
+			list_files_move();  break;
+
 		default:
 			return false;
 		}
@@ -736,6 +739,27 @@ public class MainActivity extends AppCompatActivity {
 		int qi = queue.next_list_add_cur();
 		if (qi >= 0)
 			gui.msg_show(this, String.format(getString(R.string.mlist_trk_added), qi+1));
+	}
+
+	private void list_files_move() {
+		if (core.setts.quick_move_dir.isEmpty()) {
+			core.errlog(TAG, "Please set move-directory in Settings");
+			return;
+		}
+
+		gui.dlg_question(this, "Move files"
+			, String.format("Move all files in the current list to %s ?", core.setts.quick_move_dir)
+			, "Move All", "Do nothing"
+			, (dialog, which) -> { list_files_move_confirmed(); }
+			);
+	}
+
+	private void list_files_move_confirmed() {
+		int n = queue.move_all(core.setts.quick_move_dir);
+		String s = String.format("Moved %d files", n);
+		if (n < 0)
+			s = "Some files were NOT moved";
+		gui.msg_show(this, s);
 	}
 
 	static String q_error(int e) {

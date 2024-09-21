@@ -460,6 +460,10 @@ class Queue {
 		return phi.quDisplayLine(q_visible().q, i);
 	}
 
+	int move_all(String dst_dir) {
+		return phi.quMoveAll(q_visible().q, dst_dir);
+	}
+
 	void remove(int pos) {
 		core.dbglog(TAG, "remove: %d:%d", i_active, pos);
 		filter_close();

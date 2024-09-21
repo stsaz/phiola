@@ -43,4 +43,7 @@
 
 	<item android:id="@+id/action_list_convert"
 		android:title="@string/mlist_convert" />
+
+	<item android:id="@+id/action_list_fmove"
+		android:title="@string/mlist_files_move" />
 </menu>

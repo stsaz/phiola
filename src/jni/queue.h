@@ -128,6 +128,48 @@ Java_com_github_stsaz_phiola_Phiola_quEntry(JNIEnv *env, jobject thiz, jlong q, 
 	return s;
 }
 
+JNIEXPORT jint JNICALL
+Java_com_github_stsaz_phiola_Phiola_quMoveAll(JNIEnv *env, jobject thiz, jlong q, jstring jdst_dir)
+{
+	dbglog("%s: enter", __func__);
+	uint n = 0, err = 0;
+	const char *dst_dir = jni_sz_js(jdst_dir);
+	char *newfn = NULL;
+
+	for (uint i = 0;;  i++) {
+		struct phi_queue_entry *qe = x->queue.ref((phi_queue_id)q, i);
+		if (!qe)
+			break;
+		const char *url = qe->conf.ifile.name;
+
+		ffstr name;
+		ffpath_splitpath_str(FFSTR_Z(url), NULL, &name);
+		ffmem_free(newfn);
+		newfn = ffsz_allocfmt("%s/%S", dst_dir, &name);
+
+		if (fffile_exists(newfn)) {
+			errlog("%s: '%s': target already exists", __func__, newfn);
+			err++;
+			goto next;
+		}
+
+		if (fffile_rename(url, newfn)) {
+			syserrlog("fffile_rename: '%s' -> '%s'", url, newfn);
+			err++;
+			goto next;
+		}
+		n++;
+
+next:
+		x->queue.unref(qe);
+	}
+
+	ffmem_free(newfn);
+	jni_sz_free(dst_dir, jdst_dir);
+	dbglog("%s: exit", __func__);
+	return (!err) ? n : -1;
+}
+
 enum {
 	QUCOM_CLEAR = 1,
 	QUCOM_REMOVE_I = 2,
