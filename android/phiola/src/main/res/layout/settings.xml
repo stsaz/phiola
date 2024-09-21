@@ -116,7 +116,7 @@
 			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:autofillHints=""
 			android:hint=""
-			android:inputType="text"
+			android:inputType="number"
 			android:textSize="@dimen/text_editbox" />
 
 
@@ -323,7 +323,7 @@
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
-			android:inputType="text"
+			android:inputType="number"
 			android:textSize="@dimen/text_editbox" />
 
 		<TextView
@@ -356,7 +356,7 @@
 			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:autofillHints=""
 			android:hint=""
-			android:inputType="text"
+			android:inputType="number"
 			android:textSize="@dimen/text_editbox" />
 
 		<TextView
@@ -370,7 +370,7 @@
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
-			android:inputType="text"
+			android:inputType="number"
 			android:textSize="@dimen/text_editbox" />
 
 		<TextView
@@ -388,7 +388,7 @@
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
-			android:inputType="text"
+			android:inputType="number"
 			android:textSize="@dimen/text_editbox" />
 
 		<androidx.appcompat.widget.SwitchCompat

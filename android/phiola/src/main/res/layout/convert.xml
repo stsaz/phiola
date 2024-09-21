@@ -92,7 +92,7 @@
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
-			android:inputType="text"
+			android:inputType="time"
 			android:textSize="@dimen/text_editbox" />
 		<Button
 			android:id="@+id/b_from_set_cur"
@@ -117,7 +117,7 @@
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
-			android:inputType="text"
+			android:inputType="time"
 			android:textSize="@dimen/text_editbox" />
 		<Button
 			android:id="@+id/b_until_set_cur"
@@ -143,7 +143,7 @@
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
-			android:inputType="text"
+			android:inputType="number"
 			android:textSize="@dimen/text_editbox" />
 
 		<TextView
@@ -167,7 +167,7 @@
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
-			android:inputType="text"
+			android:inputType="number"
 			android:textSize="@dimen/text_editbox" />
 
 		<TextView
@@ -185,7 +185,7 @@
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
-			android:inputType="text"
+			android:inputType="number"
 			android:textSize="@dimen/text_editbox" />
 
 		<TextView
@@ -203,7 +203,7 @@
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
-			android:inputType="text"
+			android:inputType="number"
 			android:textSize="@dimen/text_editbox" />
 
 		<TextView

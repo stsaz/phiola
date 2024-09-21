@@ -189,7 +189,7 @@ public class MainActivity extends AppCompatActivity {
 			queue.rm_non_existing();  break;
 
 		case R.id.action_list_clear:
-			queue.clear();  break;
+			list_clear();  break;
 
 		case R.id.action_list_save:
 			list_save();  break;
@@ -541,6 +541,14 @@ public class MainActivity extends AppCompatActivity {
 			return;
 		}
 
+		gui.dlg_question(this, "Move file"
+			, String.format("Move the current file to %s ?", core.setts.quick_move_dir)
+			, "Move", "Do nothing"
+			, (dialog, which) -> { file_move_cur_confirmed(); }
+			);
+	}
+
+	private void file_move_cur_confirmed() {
 		int pos = queue.active_track_pos();
 		if (pos < 0)
 			return;
@@ -663,6 +671,19 @@ public class MainActivity extends AppCompatActivity {
 	private void list_close() {
 		if (view_explorer) return;
 
+		if (0 == queue.count()) {
+			list_close_confirmed();
+			return;
+		}
+
+		gui.dlg_question(this, "Close playlist"
+			, "Close the current playlist?"
+			, "Close list", "Do nothing"
+			, (dialog, which) -> { list_close_confirmed(); }
+			);
+	}
+
+	private void list_close_confirmed() {
 		if (queue.close_current_list() != 0) {
 			core.errlog(TAG, "Please wait until the conversion is complete");
 			return;
@@ -671,6 +692,17 @@ public class MainActivity extends AppCompatActivity {
 		gui.msg_show(this, getString(R.string.mlist_closed));
 		list_update();
 		bplaylist_text(queue.current_list_index());
+	}
+
+	private void list_clear() {
+		if (0 == queue.count())
+			return;
+
+		gui.dlg_question(this, "Clear playlist"
+			, "Remove all items from the current playlist?"
+			, "Clear", "Do nothing"
+			, (dialog, which) -> { queue.clear(); }
+			);
 	}
 
 	/** Remove currently playing track from playlist */
