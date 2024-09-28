@@ -61,8 +61,10 @@ static int soxr_conv(void *ctx, phi_track *t)
 		if (0 != (val = ffsoxr_create(&c->soxr, &inpcm, &outpcm))
 			|| (core->conf.log_level >= PHI_LOG_DEBUG)) {
 			log_pcmconv(val, &inpcm, &outpcm, t);
-			if (val != 0)
+			if (val != 0) {
+				t->error = PHI_E_ACONV;
 				return PHI_ERR;
+			}
 		}
 
 		c->state = 3;

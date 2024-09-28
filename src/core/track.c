@@ -214,8 +214,9 @@ static int trk_filter_add(phi_track *t, const phi_filter *iface, uint pos)
 	t->conveyor.n_active++;
 
 	char buf[200];
-	dbglog(t, "%s: added to chain [%s]"
-		, f->iface->name, conveyor_print(v, f, buf, sizeof(buf)));
+	dbglog(t, "%s: added to chain [%u/%u] {%s}"
+		, f->iface->name, t->conveyor.n_active, v->i_fpool
+		, conveyor_print(v, f, buf, sizeof(buf)));
 	return pos;
 }
 
@@ -358,7 +359,7 @@ go_fwd:
 
 	if (chain_modified) {
 		char buf[200];
-		dbglog(t, "chain (%u): [%s]"
+		dbglog(t, "chain [%u] {%s}"
 			, t->conveyor.n_active, conveyor_print(&t->conveyor, NULL, buf, sizeof(buf)));
 	}
 

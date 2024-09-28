@@ -11,10 +11,6 @@ import android.provider.Settings;
 
 import androidx.core.app.ActivityCompat;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-
 class Explorer {
 	private static final String TAG = "phiola.Explorer";
 	private final Core core;

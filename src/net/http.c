@@ -336,7 +336,6 @@ static void net_close()
 #ifndef PHI_HTTP_NO_SSL
 	nml_ssl_uninit(phi_ssl_ctx);
 	if (phi_ssl_ctx) {
-		ffmem_free(phi_ssl_ctx->ctx_conf->cert_file);
 		ffmem_free(phi_ssl_ctx->ctx_conf);
 		ffmem_free(phi_ssl_ctx);
 	}

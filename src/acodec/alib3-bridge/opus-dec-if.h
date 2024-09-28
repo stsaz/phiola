@@ -155,8 +155,10 @@ int ffopus_decode(ffopus *o, ffstr *input, ffstr *output, uint64 *pos)
 
 	float *pcm = (void*)o->pcmbuf.ptr;
 	r = opus_decode_f(o->dec, input->ptr, input->len, pcm);
-	if (r < 0)
-		return ERR(o, r);
+	if (r < 0) {
+		o->err = r;
+		return FFOPUS_RWARN;
+	}
 	input->len = 0;
 
 	ffstr_set(output, pcm, r * o->info.channels * sizeof(float));

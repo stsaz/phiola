@@ -23,7 +23,7 @@ static void* ogg_w_open(phi_track *t)
 		seed = 1;
 		fftime t;
 		fftime_now(&t);
-		ffrand_seed(fftime_sec(&t));
+		ffrand_seed(fftime_sec(&t) + fftime_nsec(&t));
 	}
 
 	return o;
