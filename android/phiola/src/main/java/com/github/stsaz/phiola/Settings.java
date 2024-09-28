@@ -99,6 +99,20 @@ class CoreSettings {
 	boolean	conv_copy;
 	boolean	conv_file_date_preserve;
 	boolean	conv_new_add_list;
+	static final int[] conv_sample_formats = {
+		0,
+		8, // PHI_PCM_8
+		16, // PHI_PCM_16
+		24, // PHI_PCM_24
+		32, // PHI_PCM_32
+	};
+	static final String[] conv_sample_formats_str = {
+		"As Source",
+		"int8",
+		"int16",
+		"int24",
+		"int32",
+	};
 	static final int conv_encoders[] = {
 		Phiola.AF_AAC_LC,
 		Phiola.AF_AAC_HE,

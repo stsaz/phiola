@@ -136,6 +136,18 @@
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:text="@string/conv_sample_format"
+			android:textColor="@color/text" />
+		<Spinner
+			android:id="@+id/sp_sample_format"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/conv_sample_rate"
 			android:textColor="@color/text" />
 		<EditText

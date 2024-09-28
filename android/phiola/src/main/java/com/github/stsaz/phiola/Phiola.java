@@ -70,6 +70,7 @@ class Phiola {
 
 		String out_name;
 		String from_msec, to_msec;
+		int sample_format;
 		int sample_rate;
 		int aac_quality;
 		int opus_quality;

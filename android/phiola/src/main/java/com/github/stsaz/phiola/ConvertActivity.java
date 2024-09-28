@@ -61,6 +61,11 @@ public class ConvertActivity extends AppCompatActivity {
 			});
 		b.bUntilSetCur.setOnClickListener((v) -> pos_set_cur(false));
 
+		adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item
+			, CoreSettings.conv_sample_formats_str);
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		b.spSampleFormat.setAdapter(adapter);
+
 		b.sbAacQ.setMax(aac_q_progress(5));
 		b.sbAacQ.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
 				@Override
@@ -89,6 +94,7 @@ public class ConvertActivity extends AppCompatActivity {
 			});
 
 		b.swCopy.setOnCheckedChangeListener((v, checked) -> {
+				b.spSampleFormat.setEnabled(!checked);
 				b.eSampleRate.setEnabled(!checked);
 
 				b.sbAacQ.setEnabled(!checked);
@@ -261,6 +267,7 @@ public class ConvertActivity extends AppCompatActivity {
 		Phiola.ConvertParams p = new Phiola.ConvertParams();
 		p.from_msec = b.eFrom.getText().toString();
 		p.to_msec = b.eUntil.getText().toString();
+		p.sample_format = CoreSettings.conv_sample_formats[b.spSampleFormat.getSelectedItemPosition()];
 		p.sample_rate = core.str_to_uint(b.eSampleRate.getText().toString(), 0);
 		p.aac_quality = core.setts.conv_aac_quality;
 		p.opus_quality = core.setts.conv_opus_quality;

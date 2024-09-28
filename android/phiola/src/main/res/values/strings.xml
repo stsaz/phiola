@@ -105,6 +105,7 @@
 	<string name="conv_apos_end">End Audio Position:</string>
 
 	<string name="conv_filters">Filters</string>
+	<string name="conv_sample_format">Sample Format</string>
 	<string name="conv_sample_rate">Sample rate (Hz):</string>
 
 	<string name="conv_encoding">Encoding</string>

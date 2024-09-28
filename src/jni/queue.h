@@ -443,6 +443,7 @@ Java_com_github_stsaz_phiola_Phiola_quConvertBegin(JNIEnv *env, jobject thiz, jl
 	struct phi_track_conf conf = {
 		.ifile.preserve_date = !!(flags & F_DATE_PRESERVE),
 		.stream_copy = !!(flags & F_COPY),
+		.oaudio.format.format = jni_obj_int(jconf, jni_field_int(jc_conf, "sample_format")),
 		.oaudio.format.rate = jni_obj_int(jconf, jni_field_int(jc_conf, "sample_rate")),
 		.aac.quality = jni_obj_int(jconf, jni_field_int(jc_conf, "aac_quality")),
 		.vorbis.quality = jni_obj_int(jconf, jni_field_int(jc_conf, "vorbis_quality")),
@@ -470,14 +471,19 @@ Java_com_github_stsaz_phiola_Phiola_quConvertBegin(JNIEnv *env, jobject thiz, jl
 	struct phi_queue_entry *qe;
 	for (i = 0;  !!(qe = x->queue.at(q, i));  i++) {
 		struct phi_track_conf *c = &qe->conf;
+
 		c->ifile.preserve_date = conf.ifile.preserve_date;
 		c->seek_msec = conf.seek_msec;
 		c->until_msec = conf.until_msec;
 		c->stream_copy = conf.stream_copy;
+
+		c->oaudio.format.format = conf.oaudio.format.format;
 		c->oaudio.format.rate = conf.oaudio.format.rate;
+
 		c->aac.quality = conf.aac.quality;
 		c->vorbis.quality = conf.vorbis.quality;
 		c->opus.bitrate = conf.opus.bitrate;
+
 		c->ofile.name = ffsz_dup(ofn);
 		c->ofile.name_tmp = 1;
 		c->ofile.overwrite = conf.ofile.overwrite;
