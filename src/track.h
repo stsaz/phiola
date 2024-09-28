@@ -165,6 +165,7 @@ struct phi_track {
 		uint64	pos, total; // samples; -1:unset/unknown
 		int64	seek; // >0:msec; -1:unset
 		uint	seek_req :1; // New seek request is received (UI -> fmt.read)
+		uint	ogg_reset :1; // ogg.read -> opus.meta
 		uint	bitrate;
 		double	gain_db; // Audio gain/attenuation
 		double	maxpeak_db;

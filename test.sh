@@ -208,6 +208,18 @@ test_seek() {
 	./phiola i -peaks -s 1 fm_wv.wv       | grep '48,000 total'
 }
 
+test_ogg() {
+	if ! test -f pl.wav ; then
+		./phiola rec -rate 48000 -o pl.wav -f -u 2
+	fi
+
+	# Chained OGG(Opus) stream
+	./phiola co pl.wav -o ogg1.opus -f
+	./phiola co pl.wav -o ogg2.opus -f
+	cat ogg1.opus ogg2.opus >ogg3.opus
+	./phiola pl ogg3.opus
+}
+
 test_convert_af() {
 	O=co_wav_i24.wav          ; ./phiola co co.wav -af int24                   -f -o $O ; ./phiola i $O | grep 'int24' ; ./phiola pl $O
 	O=co_wav_mono.wav         ; ./phiola co co.wav                       -ch 1 -f -o $O ; ./phiola i $O | grep 'mono' ; ./phiola pl $O
@@ -664,6 +676,7 @@ TESTS=(
 	info
 	until
 	seek
+	ogg
 	copy
 	meta
 	danorm

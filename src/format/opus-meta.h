@@ -4,6 +4,7 @@
 #include <track.h>
 #include <avpack/vorbistag.h>
 
+extern const phi_meta_if phi_metaif;
 extern int vorbistag_read(phi_track *t, ffstr vc);
 
 struct opus_hdr {
@@ -52,6 +53,7 @@ static int opuscomment_read(ffstr pkt, ffstr *body)
 
 struct opusmeta {
 	uint state;
+	uint reset :1;
 	ffvec hdr;
 	ffstr tags;
 };
@@ -72,43 +74,71 @@ static void opusmeta_close(void *ctx, phi_track *t)
 static int opusmeta_read(void *ctx, phi_track *t)
 {
 	struct opusmeta *o = ctx;
-	switch (o->state) {
-	case 0: {
-		struct opus_info info;
-		if (0 != opusinfo_read(&info, t->data_in)) {
-			errlog(t, "opusinfo_read");
-			return PHI_ERR;
+	for (;;) {
+		switch (o->state) {
+		case 0: {
+			struct opus_info info;
+			if (0 != opusinfo_read(&info, t->data_in)) {
+				errlog(t, "opusinfo_read");
+				return PHI_ERR;
+			}
+			t->audio.decoder = "Opus";
+
+			if (o->reset) {
+				if (!(info.channels == t->audio.format.channels
+					&& info.rate == t->audio.format.rate)) {
+					errlog(t, "changing the audio format on-the-fly is not supported");
+					return PHI_ERR;
+				}
+				t->meta_changed = 1;
+			}
+
+			struct phi_af f = {
+				.format = PHI_PCM_FLOAT32,
+				.channels = info.channels,
+				.rate = info.rate,
+			};
+			t->audio.format = f;
+
+			ffvec_addstr(&o->hdr, &t->data_in);
+			o->state = 1;
+			return PHI_MORE;
 		}
-		t->audio.decoder = "Opus";
-		struct phi_af f = {
-			.format = PHI_PCM_FLOAT32,
-			.channels = info.channels,
-			.rate = info.rate,
-		};
-		t->audio.format = f;
 
-		ffvec_addstr(&o->hdr, &t->data_in);
-		o->state = 1;
-		return PHI_MORE;
-	}
+		case 1: {
+			ffstr vc;
+			if (0 != opuscomment_read(t->data_in, &vc)) {
+				errlog(t, "opuscomment_read");
+				return PHI_ERR;
+			}
+			vorbistag_read(t, vc);
 
-	case 1: {
-		ffstr vc;
-		if (0 != opuscomment_read(t->data_in, &vc)) {
-			errlog(t, "opuscomment_read");
-			return PHI_ERR;
+			o->tags = t->data_in;
+			t->data_out = *(ffstr*)&o->hdr;
+			o->state = 2;
+			return PHI_DATA;
 		}
-		vorbistag_read(t, vc);
 
-		o->tags = t->data_in;
-		t->data_out = *(ffstr*)&o->hdr;
-		o->state = 2;
-		return PHI_DATA;
-	}
-	}
+		case 2:
+			t->audio.ogg_reset = 0;
+			ffvec_free(&o->hdr);
+			o->state = 3;
+			t->data_out = o->tags;
+			return (t->conf.info_only) ? PHI_LASTOUT
+				: (t->chain_flags & PHI_FFIRST) ? PHI_DONE
+				: PHI_OK;
 
-	t->data_out = o->tags;
-	return (t->conf.info_only) ? PHI_LASTOUT : PHI_DONE;
+		case 3:
+			if (t->audio.ogg_reset) {
+				phi_metaif.destroy(&t->meta);
+				o->reset = 1;
+				o->state = 0;
+				continue;
+			}
+			t->data_out = t->data_in;
+			return (t->chain_flags & PHI_FFIRST) ? PHI_DONE : PHI_OK;
+		}
+	}
 }
 
 const phi_filter phi_opusmeta_read = {

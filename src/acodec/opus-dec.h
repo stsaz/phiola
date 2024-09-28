@@ -17,14 +17,6 @@ static void* opus_open(phi_track *t)
 		return PHI_OPEN_ERR;
 
 	struct opus_dec *o = phi_track_allocT(t, struct opus_dec);
-
-	if (ffopus_open(&o->opus)) {
-		errlog(t, "ffopus_open(): %s", ffopus_errstr(&o->opus));
-		phi_track_free(t, o);
-		return PHI_OPEN_ERR;
-	}
-
-	o->prev_page_pos = ~0ULL;
 	return o;
 }
 
@@ -46,7 +38,7 @@ static const char* opus_pkt_mode(const char *d)
 
 static int opus_in_decode(void *ctx, phi_track *t)
 {
-	enum { R_HDR, R_TAGS, R_DATA1, R_DATA };
+	enum { R_INIT, R_HDR, R_TAGS, R_DATA1, R_DATA };
 	struct opus_dec *o = ctx;
 	int r;
 	const char *opus_mode = NULL;
@@ -63,6 +55,15 @@ static int opus_in_decode(void *ctx, phi_track *t)
 	ffstr out;
 	for (;;) {
 		switch (o->state) {
+		case R_INIT:
+			if (ffopus_open(&o->opus)) {
+				errlog(t, "ffopus_open(): %s", ffopus_errstr(&o->opus));
+				return PHI_ERR;
+			}
+			o->prev_page_pos = ~0ULL;
+			o->state = R_HDR;
+			// fallthrough
+
 		case R_HDR:
 		case R_TAGS:
 			if (!(t->chain_flags & PHI_FFWD))
@@ -84,6 +85,12 @@ static int opus_in_decode(void *ctx, phi_track *t)
 			// fallthrough
 
 		case R_DATA:
+			if (t->audio.ogg_reset) {
+				ffopus_close(&o->opus);
+				ffmem_zero_obj(o);
+				continue;
+			}
+
 			if (t->audio.seek_req) {
 				// a new seek request is received, pass control to UI module
 				o->reset_decoder = 1;

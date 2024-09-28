@@ -85,6 +85,24 @@ Key factor: 'fmt' and 'dec' know nothing about `abs_seek`;
 `AS` - audio offset for the current .cue track (`abs_seek`).
 
 
+## .ogg chained stream reading
+
+```C
+ogg.wr        opus-meta      opus.dec
+=======================================
+...
+* detects new stream
+RST=1 -hdr->  ?RST
+              *hdr
+          ->  *tag    -hdr-> ?RST
+              RST=0    <-    *skip
+          ->  *data   -tag-> *skip
+                     -data-> *decode
+```
+
+`RST` flag is set when a new logical stream is detected; it signifies that the next 2 packets are opus-info and vorbis-tags.
+
+
 ## .ogg write
 
 Case 1.  Add packets normally with known audio position of every packet.

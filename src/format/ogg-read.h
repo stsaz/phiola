@@ -7,6 +7,7 @@ struct ogg_r {
 	oggread og;
 	ffstr in;
 	void *trk;
+	uint page_serial;
 	uint sample_rate;
 	uint state;
 	uint stmcopy :1;
@@ -133,15 +134,24 @@ static int ogg_read(void *ctx, phi_track *t)
 			}
 			return PHI_MORE;
 
-		case OGGREAD_HEADER:
-		case OGGREAD_DATA:
+		case OGGREAD_HEADER: {
+			const struct oggread_info *i = oggread_info(&o->og);
 			if (o->state == I_HDR) {
 				o->state = I_INFO;
-				const struct oggread_info *i = oggread_info(&o->og);
 				t->audio.total = (i->total_samples) ? i->total_samples : ~0ULL;
 				if (0 != add_decoder(o, t, t->data_out))
 					return PHI_ERR;
+			} else {
+				if (o->page_serial != i->serial) {
+					dbglog(t, "new logical stream");
+					t->audio.ogg_reset = 1;
+				}
 			}
+			o->page_serial = i->serial;
+			goto data;
+		}
+
+		case OGGREAD_DATA:
 			goto data;
 
 		case OGGREAD_DONE:
