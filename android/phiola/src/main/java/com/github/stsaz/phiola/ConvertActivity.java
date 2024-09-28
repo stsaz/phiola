@@ -15,6 +15,8 @@ import com.github.stsaz.phiola.databinding.ConvertBinding;
 public class ConvertActivity extends AppCompatActivity {
 	private static final String TAG = "phiola.ConvertActivity";
 	Core core;
+	private VarMenu varmenu;
+	private ExplorerMenu explorer;
 	private long length_msec;
 	private ConvertBinding b;
 
@@ -23,6 +25,13 @@ public class ConvertActivity extends AppCompatActivity {
 		super.onCreate(savedInstanceState);
 		b = ConvertBinding.inflate(getLayoutInflater());
 		setContentView(b.getRoot());
+
+		varmenu = new VarMenu(this);
+		explorer = new ExplorerMenu(this);
+		b.eOutDir.setOnClickListener(v -> explorer.show(b.eOutDir));
+		b.eOutName.setOnClickListener(v -> varmenu.show(b.eOutName, new String[]{
+				"@filename", "@album", "@artist", "@title", "@tracknumber",
+			}));
 
 		ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item
 			, CoreSettings.conv_format_display);

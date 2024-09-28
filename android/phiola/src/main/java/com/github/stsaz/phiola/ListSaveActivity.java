@@ -13,7 +13,8 @@ import com.github.stsaz.phiola.databinding.ListSaveBinding;
 
 public class ListSaveActivity extends AppCompatActivity {
 	private static final String TAG = "phiola.ListSaveActivity";
-	Core core;
+	private Core core;
+	private ExplorerMenu explorer;
 	private ListSaveBinding b;
 
 	protected void onCreate(Bundle savedInstanceState) {
@@ -21,7 +22,10 @@ public class ListSaveActivity extends AppCompatActivity {
 		b = ListSaveBinding.inflate(getLayoutInflater());
 		setContentView(b.getRoot());
 
+		explorer = new ExplorerMenu(this);
+
 		b.bSave.setOnClickListener((v) -> save());
+		b.eDir.setOnClickListener(v -> explorer.show(b.eDir));
 
 		core = Core.getInstance();
 		load();

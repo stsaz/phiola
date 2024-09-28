@@ -18,6 +18,7 @@ public class SettingsActivity extends AppCompatActivity {
 	private static final String TAG = "phiola.SettingsActivity";
 	private Core core;
 	private SettingsBinding b;
+	private ExplorerMenu explorer;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +30,20 @@ public class SettingsActivity extends AppCompatActivity {
 		if (actionBar != null)
 			actionBar.setDisplayHomeAsUpEnabled(true);
 
+		explorer = new ExplorerMenu(this);
+
+		play_init();
+
+		b.eDataDir.setOnClickListener(v -> explorer.show(b.eDataDir));
+		b.eQuickMoveDir.setOnClickListener(v -> explorer.show(b.eQuickMoveDir));
+
+		rec_init();
+
+		core = Core.getInstance();
+		load();
+	}
+
+	private void play_init() {
 		b.sbPlayAutoSkip.setMax(auto_skip_progress(200));
 		b.sbPlayAutoSkip.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
 				@Override
@@ -58,6 +73,10 @@ public class SettingsActivity extends AppCompatActivity {
 					}
 				}
 			});
+	}
+
+	private void rec_init() {
+		b.eRecDir.setOnClickListener(v -> explorer.show(b.eRecDir));
 
 		ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item
 			, new String[] {
@@ -131,9 +150,6 @@ public class SettingsActivity extends AppCompatActivity {
 			b.eRecGain.setEnabled(false);
 			b.swRecExclusive.setEnabled(false);
 		}
-
-		core = Core.getInstance();
-		load();
 	}
 
 	@Override
