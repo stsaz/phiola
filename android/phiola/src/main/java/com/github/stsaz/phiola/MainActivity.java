@@ -331,9 +331,17 @@ public class MainActivity extends AppCompatActivity {
 
 		b.bplay.setOnClickListener((v) -> play_pause_click());
 
-		b.bnext.setOnClickListener((v) -> trackctl.next());
-
 		b.bprev.setOnClickListener((v) -> trackctl.prev());
+		b.bprev.setOnLongClickListener((v) -> {
+				seek_back();
+				return true;
+			});
+
+		b.bnext.setOnClickListener((v) -> trackctl.next());
+		b.bnext.setOnLongClickListener((v) -> {
+				seek_fwd();
+				return true;
+			});
 
 		b.bexplorer.setOnClickListener((v) -> explorer_click());
 
@@ -875,6 +883,20 @@ public class MainActivity extends AppCompatActivity {
 	/** UI event from seek bar */
 	private void seek(int percent) {
 		trackctl.seek((total_dur_msec / 1000) * percent / 100 * 1000);
+	}
+
+	private void seek_back() {
+		int percent = b.seekbar.getProgress() - core.setts.play_seek_back_percent;
+		if (percent < 0)
+			percent = 0;
+		seek(percent);
+	}
+
+	private void seek_fwd() {
+		int percent = b.seekbar.getProgress() + core.setts.play_seek_fwd_percent;
+		if (percent >= 100)
+			percent = 99;
+		seek(percent);
 	}
 
 	// [Playing]

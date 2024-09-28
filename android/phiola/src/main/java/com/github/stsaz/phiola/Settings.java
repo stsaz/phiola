@@ -67,6 +67,8 @@ class CoreSettings {
 		core.phiola.playCmd(Phiola.PC_AUTO_SKIP_TAIL, n);
 	}
 
+	int		play_seek_fwd_percent, play_seek_back_percent;
+
 	String	rec_path; // directory for recordings
 	String	rec_name_template;
 	String	rec_enc, rec_fmt;
@@ -283,6 +285,11 @@ class CoreSettings {
 
 		if (trash_dir.isEmpty())
 			trash_dir = "Trash";
+
+		if (play_seek_fwd_percent <= 0 || play_seek_fwd_percent > 50)
+			play_seek_fwd_percent = 5;
+		if (play_seek_back_percent <= 0 || play_seek_back_percent > 50)
+			play_seek_back_percent = 5;
 
 		normalize_rec();
 		normalize_convert();
