@@ -97,7 +97,7 @@ struct phi_filter {
 	char name[16];
 };
 
-#define MAX_FILTERS 20
+#define MAX_FILTERS 24
 
 struct filter {
 	void *obj;
