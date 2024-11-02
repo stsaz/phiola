@@ -66,8 +66,10 @@ int mpeg_out_process(void *ctx, phi_track *t)
 			return PHI_ERR;
 		}
 
-		if (!core->track->filter(t, core->mod("mpeg.encode"), PHI_TF_PREV))
+		if (!core->track->filter(t, core->mod("mpeg.encode"), PHI_TF_PREV)) {
+			t->error = PHI_E_OUT_FMT;
 			return PHI_ERR;
+		}
 		return PHI_MORE;
 
 	case 2:
