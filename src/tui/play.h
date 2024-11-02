@@ -151,7 +151,7 @@ static double tui_setvol(tui_track *u, uint vol)
 
 static void tuiplay_vol(tui_track *u, uint cmd)
 {
-	uint vol = 0;
+	uint vol = mod->vol;
 
 	switch (cmd & ~FFKEY_MODMASK) {
 	case CMD_VOLUP:

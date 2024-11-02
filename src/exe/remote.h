@@ -14,6 +14,7 @@ Commands:\n\
   `next`              Play next track\n\
   `previous`          Play previous track\n\
   `stop`              Stop all tracks\n\
+  `volume` NUMBER     Set playback volume level: 0..100\n\
   `quit`              Exit\n\
 ");
 	x->exit_code = 0;

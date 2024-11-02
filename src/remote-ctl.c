@@ -62,6 +62,15 @@ static int cmd_quit() {
 	return 0;
 }
 
+static int cmd_volume(void *o, uint64 n) {
+	struct phi_ui_conf uc = {
+		.volume_percent = n,
+	};
+	const phi_ui_if *uif = g->core->mod("tui.if");
+	uif->conf(&uc);
+	return 0;
+}
+
 static const struct ffarg args[] = {
 	{ "clear",		'1',	cmd_clear },
 	{ "next",		'1',	cmd_next },
@@ -70,6 +79,7 @@ static const struct ffarg args[] = {
 	{ "quit",		'1',	cmd_quit },
 	{ "start",		'S',	cmd_start },
 	{ "stop",		'1',	cmd_stop },
+	{ "volume",		'u',	cmd_volume },
 	{}
 };
 
