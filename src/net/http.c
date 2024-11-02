@@ -225,6 +225,8 @@ static int conf_prepare(struct httpcl *h, struct nml_http_client_conf *c, phi_tr
 	c->host.len += p.port.len;
 	if (!p.port.len)
 		c->server_port = 80;
+	if (p.query.len)
+		p.path.len += p.query.len; // = "/path?query"
 	ffvec_alloc(&h->path, p.path.len * 3, 1);
 	h->path.len = httpurl_escape(h->path.ptr, h->path.cap, p.path);
 	c->path = *(ffstr*)&h->path;

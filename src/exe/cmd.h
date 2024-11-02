@@ -144,8 +144,10 @@ static int cmd_input(ffvec *input, ffstr s)
 		return cmd_input_names(input, ffstdin);
 
 #ifdef FF_WIN
-	if (ffstr_findany(&s, "*?", 2) >= 0
-		&& !ffstr_matchz(&s, "\\\\?\\")) {
+	if (!(ffstr_matchz(&s, "http://")
+			|| ffstr_matchz(&s, "https://")
+			|| ffstr_matchz(&s, "\\\\?\\"))
+		&& ffstr_findany(&s, "*?", 2) >= 0) {
 		if (!!wildcard_expand(input, s))
 			return 1;
 	} else
