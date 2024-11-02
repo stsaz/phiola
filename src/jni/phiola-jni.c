@@ -356,6 +356,13 @@ Java_com_github_stsaz_phiola_Phiola_setCodepage(JNIEnv *env, jobject thiz, jstri
 	jni_sz_free(sz, jcodepage);
 }
 
+JNIEXPORT void JNICALL
+Java_com_github_stsaz_phiola_Phiola_setDebug(JNIEnv *env, jobject thiz, jboolean enable)
+{
+	x->debug = !!enable;
+	x->core->conf.log_level = (x->debug) ? PHI_LOG_EXTRA : PHI_LOG_VERBOSE;
+}
+
 JNIEXPORT jint JNI_OnLoad(JavaVM *_jvm, void *reserved)
 {
 	jvm = _jvm;

@@ -123,6 +123,7 @@
 
 	<string name="conv_go">Begin Conversion</string>
 
+	<string name="about_enable_debug_log">Enable debug logging</string>
 	<string name="about_save_logs">Save system logs to file</string>
 	<string name="about_log_saved">Saved logs to %s</string>
 </resources>

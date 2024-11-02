@@ -43,6 +43,7 @@ class AutoSkip {
 class CoreSettings {
 	private Core core;
 
+	boolean	debug_logs;
 	boolean	svc_notification_disable;
 	String	trash_dir;
 	boolean	file_del;

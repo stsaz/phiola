@@ -18,6 +18,13 @@
 		android:gravity="center_horizontal"
 		android:textAlignment="center" />
 
+	<ToggleButton
+		android:id="@+id/b_debug_log"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:textOff="@string/about_enable_debug_log"
+		android:textOn="@string/about_enable_debug_log" />
+
 	<Button
 		android:id="@+id/b_save_logs"
 		android:layout_width="wrap_content"

@@ -25,12 +25,21 @@ public class AboutActivity extends AppCompatActivity {
 		b.lAbout.setText(String.format("v%s\n\n%s",
 			core.phiola.version(),
 			"https://github.com/stsaz/phiola"));
+
+		b.bDebugLog.setChecked(core.setts.debug_logs);
+		b.bDebugLog.setOnClickListener((v) -> logs_debug());
+
 		b.bSaveLogs.setOnClickListener((v) -> logs_save_file());
 	}
 
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
+	}
+
+	private void logs_debug() {
+		core.setts.debug_logs = !core.setts.debug_logs;
+		core.phiola.setDebug(core.setts.debug_logs);
 	}
 
 	private void logs_save_file() {

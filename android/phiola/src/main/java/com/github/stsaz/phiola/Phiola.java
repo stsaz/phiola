@@ -17,6 +17,7 @@ class Phiola {
 
 	native String version();
 	native void setCodepage(String codepage);
+	native void setDebug(boolean enable);
 
 	static class Meta {
 		int queue_pos;
