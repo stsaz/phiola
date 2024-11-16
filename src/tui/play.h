@@ -182,6 +182,7 @@ static int handle_seek(tui_track *u, phi_track *t)
 		return PHI_MORE; // new seek request
 
 	} else if (!(t->chain_flags & PHI_FFWD)) {
+		t->meta_changed = 0;
 		return PHI_MORE; // going back without seeking
 
 	} else if (t->data_in.len == 0 && !(t->chain_flags & PHI_FFIRST)) {
@@ -203,14 +204,15 @@ static int tuiplay_process(void *ctx, phi_track *t)
 	if (t->chain_flags & PHI_FSTOP)
 		return PHI_FIN;
 
-	if (u->show_info || t->meta_changed) {
+	uint new_meta = (t->meta_changed && !u->meta_change_seen);
+	u->meta_change_seen = t->meta_changed;
+	if (u->show_info || new_meta) {
 		if (!t->audio.format.rate) {
 			errlog(t, "audio sample rate is not set");
 			return PHI_ERR;
 		}
 
 		u->show_info = 0;
-		t->meta_changed = 0;
 		u->total_samples = t->audio.total;
 		u->played_samples = 0;
 		tui_info(u);
