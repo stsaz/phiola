@@ -29,7 +29,7 @@ Contents:
 
 ## Features
 
-* Play audio: `.mp3`, `.ogg`(Vorbis/Opus), `.mp4`/`.mov`(AAC/ALAC/MPEG), `.mkv`/`.webm`(AAC/ALAC/MPEG/Vorbis/Opus/PCM), `.caf`(AAC/ALAC/PCM), `.avi`(AAC/MPEG/PCM), `.aac`, `.mpc`; `.flac`, `.ape`, `.wv`, `.wav`.
+* Play audio: `.mp3`, `.ogg`(Vorbis/Opus), `.mp4`/`.mov`(AAC/ALAC/MPEG), `.mkv`/`.webm`(AAC/ALAC/MPEG/Vorbis/Opus/PCM), `.caf`(AAC/ALAC/PCM), `.avi`(AAC/MPEG/PCM), `.ts`(AAC), `.aac`, `.mpc`; `.flac`, `.ape`, `.wv`, `.wav`.
 * Record audio: `.m4a`(AAC), `.ogg`, `.opus`; `.flac`, `.wav`
 * Convert audio
 * List/search file meta tags; edit MP3 tags

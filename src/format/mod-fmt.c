@@ -33,6 +33,7 @@ extern const phi_filter
 	phi_mpc_read,
 	phi_ogg_read,
 	phi_opusmeta_read,
+	phi_ts_read,
 	phi_vorbismeta_read,
 	phi_wav_read,
 	phi_wv_read;
@@ -100,6 +101,7 @@ static const void* fmt_mod_iface_input(const char *name)
 		{ "ogg",	&phi_ogg_read },
 		{ "opus",	&phi_ogg_read },
 		{ "pls",	&phi_pls_read },
+		{ "ts",		&phi_ts_read },
 		{ "wav",	&phi_wav_read },
 		{ "wv",		&phi_wv_read },
 	};
@@ -130,6 +132,7 @@ static const void* fmt_mod_iface(const char *name)
 		{ "opusmeta",	&phi_opusmeta_read },
 		{ "pls",		&phi_pls_read },
 		{ "tag",		&phi_tag },
+		{ "ts",			&phi_ts_read },
 		{ "vorbismeta",	&phi_vorbismeta_read },
 		{ "wav",		&phi_wav_read },
 		{ "wav-write",	&phi_wav_write },

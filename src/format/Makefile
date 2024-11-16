@@ -33,6 +33,7 @@ format.$(SO): mod-fmt.o \
 		mp4.o \
 		mpc-read.o \
 		ogg.o \
+		ts-read.o \
 		wav.o \
 		wv.o \
 		\
