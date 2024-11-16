@@ -205,6 +205,9 @@ static int qe_expand(struct q_entry *e)
 	struct phi_track_conf *c = &e->pub.conf;
 	const phi_track_if *track = core->track;
 
+	if (url_checkz(c->ifile.name))
+		return -1;
+
 	ffbool dir = 0, decompress = 0;
 	fffileinfo fi;
 	if (!fffile_info_path(c->ifile.name, &fi)

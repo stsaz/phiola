@@ -121,6 +121,19 @@ static inline const void* map_sz_vptr_findstr(const struct map_sz_vptr *m, ffsiz
 }
 
 
+struct map_sz24_vptr {
+	char key[24];
+	const void *val;
+};
+static inline const void* map_sz24_vptr_findstr(const struct map_sz24_vptr *m, ffsize n, ffstr name)
+{
+	ffssize i = ffcharr_findsorted_padding(m, n, sizeof(m->key), sizeof(m->val), name.ptr, name.len);
+	if (i < 0)
+		return NULL;
+	return m[i].val;
+}
+
+
 static inline int url_checkz(const char *s)
 {
 	return (ffsz_matchz(s, "http://")

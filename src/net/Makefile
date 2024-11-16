@@ -24,6 +24,7 @@ MODS += http.$(SO)
 
 HTTP_OBJ := http.o \
 	icy.o \
+	netmill-core-cache.o \
 	netmill-http-client.o \
 	netmill-http-filters.o
 
@@ -68,6 +69,8 @@ icy.o: $(PHIOLA)/src/net/icy.c
 netmill-http-filters.o: $(PHIOLA)/src/net/http-filters.c
 	$(C) $(CFLAGS_NETMILL) -I$(PHIOLA)/src -I$(FFSYS) $< -o $@
 netmill-http-client.o: $(NETMILL)/src/http-client/client.c
+	$(C) $(CFLAGS_NETMILL) -I$(FFSYS) $< -o $@
+netmill-core-cache.o: $(NETMILL)/src/core/cache.c
 	$(C) $(CFLAGS_NETMILL) -I$(FFSYS) $< -o $@
 ffssl.o: $(NETMILL)/src/util/ffssl.c
 	$(C) $(CFLAGS_NETMILL) -I$(FFSYS) $< -o $@

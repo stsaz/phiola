@@ -2,6 +2,7 @@
 
 #include <http-client/resolve.h>
 #include <http-client/connect.h>
+#include <http-client/connect-cache.h>
 #include <http-client/request.h>
 #include <http-client/request-send.h>
 #include <http-client/response-receive.h>
@@ -47,6 +48,7 @@ static const nml_http_cl_component nml_http_cl_phi_bridge = {
 
 const nml_http_cl_component *hc_chain[] = {
 	&nml_http_cl_resolve,
+	&nml_http_cl_connection_cache,
 	&nml_http_cl_connect,
 	&nml_http_cl_request,
 	&nml_http_cl_send,
@@ -67,6 +69,7 @@ const nml_http_cl_component *hc_chain[] = {
 #include <ssl/htcl-response.h>
 const nml_http_cl_component *hc_ssl_chain[] = {
 	&nml_http_cl_resolve,
+	&nml_http_cl_connection_cache,
 	&nml_http_cl_connect,
 	&nml_htcl_ssl_recv,
 	&nml_htcl_ssl_handshake,

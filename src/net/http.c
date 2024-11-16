@@ -8,26 +8,35 @@
 #include <util/util.h>
 #include <net/http-bridge.h>
 #include <ffsys/globals.h>
+#include <ffbase/ring.h>
 
 const phi_core *core;
 extern const phi_filter phi_icy;
 #ifndef PHI_HTTP_NO_SSL
 static struct nml_ssl_ctx *phi_ssl_ctx;
 #endif
-#define errlog(t, ...)  phi_errlog(core, "http-client", t, __VA_ARGS__)
-#define warnlog(t, ...)  phi_warnlog(core, "http-client", t, __VA_ARGS__)
+#define MOD_NAME  "http-client"
+#define errlog(t, ...)  phi_errlog(core, MOD_NAME, t, __VA_ARGS__)
+#define warnlog(t, ...)  phi_warnlog(core, MOD_NAME, t, __VA_ARGS__)
+#define dbglog(t, ...)  phi_dbglog(core, MOD_NAME, t, __VA_ARGS__)
 
 struct httpcl {
 	nml_http_client *cl;
 	struct nml_http_client_conf conf;
 	phi_track *trk;
 	ffvec path;
+	nml_cache_ctx *conn_cache;
+
+	ffring *buf;
+	ffring_head rhead;
 
 	ffstr data;
 	uint state; // enum ST
-	uint fstate;
+	uint cl_state;
 	uint done :1;
 	uint icy :1;
+
+	struct hlsread *hls;
 };
 
 enum ST {
@@ -35,7 +44,12 @@ enum ST {
 	ST_WAIT,
 	ST_DATA,
 	ST_ERR,
+	ST_HLS_HAVE_DATA,
+	ST_HLS_PROCESSING,
 };
+
+static int conf_prepare(struct httpcl *h, struct nml_http_client_conf *c, phi_track *t, ffstr url);
+#include <net/hls.h>
 
 static void nml_log(void *log_obj, uint level, const char *ctx, const char *id, const char *format, ...)
 {
@@ -55,7 +69,7 @@ static void nml_log(void *log_obj, uint level, const char *ctx, const char *id, 
 
 	va_list va;
 	va_start(va, format);
-	core->conf.logv(core->conf.log_obj, level, NULL, h->trk, format, va);
+	core->conf.logv(core->conf.log_obj, level, MOD_NAME, h->trk, format, va);
 	va_end(va);
 }
 
@@ -100,6 +114,7 @@ static fftime nmlcore_date(void *boss, ffstr *dts)
 	return t;
 }
 
+/** Bridge between netmill and phiola Core */
 static const struct nml_core nmlcore = {
 	.kev_new = nmlcore_kev_new,
 	.kev_free = nmlcore_kev_free,
@@ -109,6 +124,7 @@ static const struct nml_core nmlcore = {
 	.date = nmlcore_date,
 };
 
+/** Received HTTP response headers */
 int phi_hc_resp(void *ctx, struct phi_http_data *d)
 {
 	struct httpcl *h = ctx;
@@ -118,39 +134,97 @@ int phi_hc_resp(void *ctx, struct phi_http_data *d)
 		return NMLR_ERR;
 	}
 
-	static const struct map_sz_vptr ct_ext[] = {
+	static const struct map_sz24_vptr ct_ext[] = {
 		{ "application/ogg",	"ogg" },
+		{ "application/x-mpegURL",	"m3u" },
 		{ "audio/aac",	"aac" },
 		{ "audio/aacp",	"aac" },
 		{ "audio/mpeg",	"mp3" },
 		{ "audio/ogg",	"ogg" },
 	};
-	h->trk->data_type = map_sz_vptr_findstr(ct_ext, FF_COUNT(ct_ext), d->ct); // help format.detector in case it didn't detect format
+	h->trk->data_type = map_sz24_vptr_findstr(ct_ext, FF_COUNT(ct_ext), d->ct); // help format.detector in case it didn't detect format
+	if (!h->trk->data_type
+		&& ffstr_eqz(&d->ct, "application/vnd.apple.mpegurl")
+		&& !h->hls) {
+		h->hls = hls_new(h);
+		size_t cap = (h->trk->conf.ifile.buf_size) ? h->trk->conf.ifile.buf_size : 64*1024;
+		h->buf = ffring_alloc(cap, FFRING_1_READER | FFRING_1_WRITER);
+	}
 
-	h->trk->icy_meta_interval = d->icy_meta_interval;
-	h->icy = !!d->icy_meta_interval;
-	h->trk->meta_changed = !d->icy_meta_interval;
+	if (!h->hls) {
+		h->trk->icy_meta_interval = d->icy_meta_interval;
+		h->icy = !!d->icy_meta_interval;
+		h->trk->meta_changed = !d->icy_meta_interval;
+	}
 
 	return NMLR_OPEN;
 }
 
+enum {
+	CLST_RECEIVING,
+	CLST_PROCESSING,
+};
+
+static inline ffsize _ffring_writestr(ffring *b, ffstr data, ffsize *free)
+{
+	ffstr d;
+	ffring_head wh = ffring_write_begin(b, data.len, &d, free);
+	if (d.len == 0)
+		return 0;
+
+	ffmem_copy(d.ptr, data.ptr, d.len);
+	ffring_write_finish(b, wh, NULL);
+	return d.len;
+}
+
+/** New data chunk is available for reading */
 int phi_hc_data(void *ctx, ffstr data, uint flags)
 {
 	struct httpcl *h = ctx;
+	int r;
 
-	switch (h->fstate) {
-	case 0:
+	if (h->hls) {
+		switch (h->cl_state) {
+		case CLST_RECEIVING:
+			h->done = !!(flags & 1);
+			if (hls_data(h, data))
+				return (flags & 1) ? NMLR_FIN : NMLR_BACK;
+
+			h->data = data;
+			h->cl_state = CLST_PROCESSING;
+			// fallthrough
+
+		case CLST_PROCESSING: {
+			size_t nfree;
+			r = _ffring_writestr(h->buf, h->data, &nfree);
+			dbglog(h->trk, "buffer:%L", h->buf->cap - nfree);
+			ffstr_shift(&h->data, r);
+			if (FF_SWAP(&h->state, ST_HLS_HAVE_DATA) == ST_WAIT)
+				core->track->wake(h->trk);
+
+			if (h->data.len)
+				return NMLR_ASYNC;
+			h->cl_state = CLST_RECEIVING;
+			return (flags & 1) ? NMLR_FIN : NMLR_BACK;
+		}
+		}
+
+		return NMLR_ERR;
+	}
+
+	switch (h->cl_state) {
+	case CLST_RECEIVING:
 		h->data = data;
 		h->done = !!(flags & 1);
 		if (FF_SWAP(&h->state, ST_DATA) == ST_WAIT) {
 			core->track->wake(h->trk);
-			h->fstate = 1;
+			h->cl_state = CLST_PROCESSING;
 		}
 		return NMLR_ASYNC;
 
-	case 1:
-		h->fstate = 0;
-		return NMLR_BACK;
+	case CLST_PROCESSING:
+		h->cl_state = CLST_RECEIVING;
+		return (flags & 1) ? NMLR_FIN : NMLR_BACK;
 	}
 	return NMLR_ERR;
 }
@@ -158,6 +232,11 @@ int phi_hc_data(void *ctx, ffstr data, uint flags)
 static void on_complete(void *param)
 {
 	struct httpcl *h = param;
+
+	if (h->hls
+		&& !hls_f_complete(h))
+		return;
+
 	if (FF_SWAP(&h->state, ST_ERR) == ST_WAIT)
 		core->track->wake(h->trk);
 }
@@ -165,6 +244,7 @@ static void on_complete(void *param)
 extern const nml_http_cl_component
 	*hc_chain[],
 	*hc_ssl_chain[];
+extern const struct nml_cache_if nml_cache_interface;
 
 #ifndef PHI_HTTP_NO_SSL
 #include <util/ssl.h>
@@ -202,7 +282,31 @@ static struct nml_ssl_ctx* ssl_prepare(struct nml_http_client_conf *c)
 }
 #endif
 
-static int conf_prepare(struct httpcl *h, struct nml_http_client_conf *c, phi_track *t)
+static nml_cache_ctx* conn_cache_new(struct httpcl *h)
+{
+	struct nml_cache_conf *cc = ffmem_new(struct nml_cache_conf);
+	nml_cache_interface.conf(NULL, cc);
+
+	if (core->conf.log_level >= PHI_LOG_EXTRA)
+		cc->log_level = NML_LOG_EXTRA;
+	else if (core->conf.log_level >= PHI_LOG_DEBUG)
+		cc->log_level = NML_LOG_DEBUG;
+	cc->log = nml_log;
+	cc->log_obj = h;
+
+	cc->max_items = 2;
+	cc->ttl_sec = 30;
+	cc->destroy = nml_http_cl_conn_cache_destroy;
+	cc->opaque = NULL;
+
+	nml_cache_ctx *cx = nml_cache_interface.create();
+	if (!cx)
+		return NULL;
+	nml_cache_interface.conf(cx, cc);
+	return cx;
+}
+
+static int conf_prepare(struct httpcl *h, struct nml_http_client_conf *c, phi_track *t, ffstr url)
 {
 	nml_http_client_conf(NULL, c);
 	c->opaque = h;
@@ -219,8 +323,11 @@ static int conf_prepare(struct httpcl *h, struct nml_http_client_conf *c, phi_tr
 	c->core = nmlcore;
 	c->boss = h;
 
+	c->connect.cache = h->conn_cache;
+	c->connect.cif = &nml_cache_interface;
+
 	struct httpurl_parts p = {};
-	httpurl_split(&p, FFSTR_Z(h->trk->conf.ifile.name));
+	httpurl_split(&p, url);
 	c->host = p.host;
 	c->host.len += p.port.len;
 	if (!p.port.len)
@@ -254,7 +361,7 @@ static int conf_prepare(struct httpcl *h, struct nml_http_client_conf *c, phi_tr
 	ffsize headers_cap = 0;
 	ffstr_growaddz(&c->headers, &headers_cap, "User-Agent: phiola/2\r\n");
 
-	if (!t->conf.ifile.no_meta)
+	if (!t->conf.ifile.no_meta && !h->hls)
 		ffstr_growaddz(&c->headers, &headers_cap, "Icy-MetaData: 1\r\n");
 
 	if (t->conf.ifile.connect_timeout_sec)
@@ -269,10 +376,12 @@ static void* httpcl_open(phi_track *t)
 {
 	struct httpcl *h = phi_track_allocT(t, struct httpcl);
 	h->trk = t;
+	h->conn_cache = conn_cache_new(h);
+
 	h->cl = nml_http_client_create();
 
 	struct nml_http_client_conf *c = &h->conf;
-	if (conf_prepare(h, c, t))
+	if (conf_prepare(h, c, t, FFSTR_Z(t->conf.ifile.name)))
 		return PHI_OPEN_ERR;
 	nml_http_client_conf(h->cl, c);
 	h->state = ST_PROCESSING;
@@ -288,6 +397,9 @@ static void httpcl_close(struct httpcl *h, phi_track *t)
 	nml_http_client_free(h->cl);
 	ffvec_free(&h->path);
 	ffstr_free(&h->conf.headers);
+	hls_free(h, h->hls);
+	ffring_free(h->buf);
+	nml_cache_interface.destroy(h->conn_cache);
 	phi_track_free(t, h);
 }
 
@@ -314,6 +426,23 @@ static int httpcl_process(struct httpcl *h, phi_track *t)
 		h->state = ST_WAIT;
 		nml_http_client_run(h->cl);
 		return PHI_ASYNC;
+
+	case ST_HLS_HAVE_DATA:
+		h->rhead = ffring_read_begin(h->buf, h->buf->cap, &t->data_out, NULL);
+		h->state = ST_HLS_PROCESSING;
+		return PHI_DATA;
+
+	case ST_HLS_PROCESSING: {
+		h->state = ST_WAIT;
+
+		size_t used;
+		ffring_read_finish_status(h->buf, h->rhead, &used);
+		dbglog(h->trk, "buffer:%L", used - (h->rhead.nu - h->rhead.old));
+
+		if (h->cl_state == CLST_PROCESSING)
+			nml_http_client_run(h->cl);
+		return PHI_ASYNC;
+	}
 
 	case ST_ERR:
 	default:

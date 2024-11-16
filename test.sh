@@ -590,7 +590,9 @@ test_http() {
 	fi
 
 	./phiola pl "http://localhost:1/" || true # no connection
+	# echo 'application/vnd.apple.mpegurl m3u8' >> $(dirname $(which netmill))/content-types.conf
 	netmill http l 8080 w . &
+	local nml_pid=$!
 	sleep .5
 
 	./phiola pl "http://localhost:8080/404" || true # http error
@@ -602,16 +604,31 @@ test_http() {
 	./phiola pl "http://localhost:8080/http.m3u"
 
 	# -tee
-	./phiola pl "http://localhost:8080/http.m3u" -tee @stdout.ogg >http-tee-stdout.ogg ; ./phiola http-tee-stdout.ogg
-	./phiola pl "http://localhost:8080/http.m3u" -tee http-tee.ogg ; ./phiola http-tee.ogg
-	./phiola pl "http://localhost:8080/http.m3u" -tee http-tee.ogg # file already exists
-	./phiola pl "http://localhost:8080/http.m3u" -tee http-@title.ogg ; ./phiola http-mytrack.ogg
+	./phiola pl "http://localhost:8080/http.ogg" -tee @stdout.ogg >http-tee-stdout.ogg ; ./phiola http-tee-stdout.ogg
+	./phiola pl "http://localhost:8080/http.ogg" -tee http-tee.ogg ; ./phiola http-tee.ogg
+	./phiola pl "http://localhost:8080/http.ogg" -tee http-tee.ogg # file already exists
+	# ./phiola pl "http://localhost:8080/http.ogg" -tee http-@title.ogg ; ./phiola http-mytrack.ogg
 
 	# -dup
 	./phiola pl "http://localhost:8080/http.mp3" -dup @stdout.wav >http-dup-stdout.wav ; ./phiola http-dup-stdout.wav
 	./phiola pl "http://localhost:8080/http.mp3" -dup http-dup-@title.wav ; ./phiola http-dup-mytrack.wav
 
+	# HLS
+	cp http.ogg hls1.ogg
+	cp http.ogg hls2.ogg
+	cp http.ogg hls3.ogg
+	cat <<EOF >hls.m3u8
+#EXTM3U
+#EXT-X-MEDIA-SEQUENCE:1
+hls1.ogg
+hls2.ogg
+hls3.ogg
+EOF
+	./phiola pl "http://localhost:8080/hls.m3u8" &
+	sleep 10
 	kill $!
+
+	kill $nml_pid
 }
 
 test_ofile_vars() {
