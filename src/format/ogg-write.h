@@ -43,8 +43,8 @@ static const char* ogg_enc_mod(const char *fn)
 	ffpath_splitpath(fn, ffsz_len(fn), NULL, &name);
 	ffstr_rsplitby(&name, '.', NULL, &ext);
 	if (ffstr_eqcz(&ext, "opus"))
-		return "opus.encode";
-	return "vorbis.encode";
+		return "ac-opus.encode";
+	return "ac-vorbis.encode";
 }
 
 static int pkt_write(struct ogg_w *o, phi_track *t, ffstr *in, ffstr *out, uint64 endpos, uint flags)

@@ -61,7 +61,7 @@ static int mp4w_write(struct mp4_w *m, phi_track *t)
 			m->state = 1;
 
 		} else if (ffsz_eq(t->data_type, "pcm")) {
-			if (!core->track->filter(t, core->mod("aac.encode"), PHI_TF_PREV))
+			if (!core->track->filter(t, core->mod("ac-aac.encode"), PHI_TF_PREV))
 				return PHI_ERR;
 			m->state = 1;
 			return PHI_MORE;

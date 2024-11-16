@@ -88,7 +88,7 @@ static int ape_in_process(void *ctx, phi_track *t)
 			break;
 
 		case APEREAD_HEADER:
-			if (!core->track->filter(t, core->mod("ape.decode"), 0))
+			if (!core->track->filter(t, core->mod("ac-ape.decode"), 0))
 				return PHI_ERR;
 			a->state = I_HDR_PARSED;
 			return PHI_DATA;

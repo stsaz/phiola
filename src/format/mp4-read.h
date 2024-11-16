@@ -109,12 +109,12 @@ static const char* mp4r_info(struct mp4_r *m, phi_track *t, const struct mp4read
 	const char *filter = NULL;
 	switch (ai->codec) {
 	case MP4_A_ALAC:
-		filter = "alac.decode";
+		filter = "ac-alac.decode";
 		t->audio.bitrate = ai->real_bitrate;
 		break;
 
 	case MP4_A_AAC:
-		filter = "aac.decode";
+		filter = "ac-aac.decode";
 		if (!t->conf.stream_copy) {
 			t->audio.start_delay = ai->enc_delay;
 			t->audio.end_padding = ai->end_padding;
@@ -123,7 +123,7 @@ static const char* mp4r_info(struct mp4_r *m, phi_track *t, const struct mp4read
 		break;
 
 	case MP4_A_MPEG1:
-		filter = "mpeg.decode";
+		filter = "ac-mpeg.decode";
 		t->audio.bitrate = (ai->aac_bitrate != 0) ? ai->aac_bitrate : 0;
 		break;
 	}

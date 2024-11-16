@@ -103,7 +103,7 @@ static int wv_in_process(void *ctx, phi_track *t)
 				w->hdr_done = 1;
 				const struct wvread_info *info = wvread_info(&w->wv);
 				t->audio.total = info->total_samples;
-				if (!core->track->filter(t, core->mod("wavpack.decode"), 0))
+				if (!core->track->filter(t, core->mod("ac-wavpack.decode"), 0))
 					return PHI_ERR;
 				w->state = I_HDR_PARSED;
 			}

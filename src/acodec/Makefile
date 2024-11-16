@@ -21,68 +21,70 @@ AVPACK := $(ROOT_DIR)/avpack
 ALIB3 := $(PHIOLA)/alib3
 ALIB3_BIN := $(ALIB3)/_$(SYS)-$(CPU)
 
+PFX := ac-
+
 # LOSSY
 
 %.o: $(PHIOLA)/src/acodec/%.c
 	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
 
-MODS += aac.$(SO)
+MODS += $(PFX)aac.$(SO)
 LIBS3 += $(ALIB3_BIN)/libfdk-aac-phi.$(SO)
-aac.$(SO): aac.o
+$(PFX)aac.$(SO): aac.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lfdk-aac-phi -o $@
 
-MODS += mpeg.$(SO)
+MODS += $(PFX)mpeg.$(SO)
 LIBS3 += $(ALIB3_BIN)/libmpg123-phi.$(SO)
-mpeg.$(SO): mpeg.o
+$(PFX)mpeg.$(SO): mpeg.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lmpg123-phi -o $@
 
-MODS += vorbis.$(SO)
+MODS += $(PFX)vorbis.$(SO)
 LIBS3 += $(ALIB3_BIN)/libvorbis-phi.$(SO) $(ALIB3_BIN)/libvorbisenc-phi.$(SO)
 vorbis.o: $(PHIOLA)/src/acodec/vorbis.c
 	$(C) $(CFLAGS) -I$(ALIB3) -I$(AVPACK) $< -o $@
-vorbis.$(SO): vorbis.o
+$(PFX)vorbis.$(SO): vorbis.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lvorbis-phi -lvorbisenc-phi -o $@
 
-MODS += opus.$(SO)
+MODS += $(PFX)opus.$(SO)
 LIBS3 += $(ALIB3_BIN)/libopus-phi.$(SO)
 opus.o: $(PHIOLA)/src/acodec/opus.c
 	$(C) $(CFLAGS) -I$(ALIB3) -I$(AVPACK) $< -o $@
-opus.$(SO): opus.o
+$(PFX)opus.$(SO): opus.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lopus-phi -o $@
 
 ifneq "$(SYS)" "android"
-MODS += mpc.$(SO)
+MODS += $(PFX)mpc.$(SO)
 LIBS3 += $(ALIB3_BIN)/libmusepack-phi.$(SO)
 endif
-mpc.$(SO): mpc.o
+$(PFX)mpc.$(SO): mpc.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lmusepack-phi -o $@
 
 # LOSSLESS
 
-MODS += alac.$(SO)
+MODS += $(PFX)alac.$(SO)
 LIBS3 += $(ALIB3_BIN)/libALAC-phi.$(SO)
-alac.$(SO): alac.o
+$(PFX)alac.$(SO): alac.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lALAC-phi -o $@
 
 ifneq "$(SYS)" "android"
-MODS += ape.$(SO)
+MODS += $(PFX)ape.$(SO)
 LIBS3 += $(ALIB3_BIN)/libMAC-phi.$(SO)
 endif
 ape.o: $(PHIOLA)/src/acodec/ape.c
 	$(C) $(CFLAGS) -I$(ALIB3) -I$(AVPACK) $< -o $@
-ape.$(SO): ape.o
+$(PFX)ape.$(SO): ape.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lMAC-phi -o $@
 
-MODS += flac.$(SO)
+MODS += $(PFX)flac.$(SO)
 LIBS3 += $(ALIB3_BIN)/libFLAC-phi.$(SO)
 flac.o: $(PHIOLA)/src/acodec/flac.c
 	$(C) $(CFLAGS) -I$(ALIB3) -I$(AVPACK) $< -o $@
-flac.$(SO): flac.o
+$(PFX)flac.$(SO): flac.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lFLAC-phi -o $@
 
 ifneq "$(SYS)" "android"
-MODS += wavpack.$(SO)
+MODS += $(PFX)wavpack.$(SO)
 LIBS3 += $(ALIB3_BIN)/libwavpack-phi.$(SO)
 endif
-wavpack.$(SO): wavpack.o
+$(PFX)wavpack.$(SO): wavpack.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lwavpack-phi -o $@

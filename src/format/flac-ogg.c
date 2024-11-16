@@ -107,7 +107,7 @@ static int flacogg_in_read(void *ctx, phi_track *t)
 
 			f->fr_samples = t->audio.flac_minblock;
 
-			if (!core->track->filter(t, core->mod("flac.decode"), 0))
+			if (!core->track->filter(t, core->mod("ac-flac.decode"), 0))
 				return PHI_ERR;
 			break;
 

@@ -122,7 +122,7 @@ static int mp3_process(struct mp3_r *m, phi_track *t)
 				return PHI_LASTOUT;
 
 			if (!t->conf.stream_copy
-				&& !core->track->filter(t, core->mod("mpeg.decode"), 0))
+				&& !core->track->filter(t, core->mod("ac-mpeg.decode"), 0))
 				return PHI_ERR;
 
 			break;

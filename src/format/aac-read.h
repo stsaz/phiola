@@ -72,7 +72,7 @@ static int aac_adts_process(void *ctx, phi_track *t)
 			a->sample_rate = t->audio.format.rate;
 
 			if (!t->conf.stream_copy) {
-				if (!core->track->filter(t, core->mod("aac.decode"), 0))
+				if (!core->track->filter(t, core->mod("ac-aac.decode"), 0))
 					return PHI_ERR;
 			}
 

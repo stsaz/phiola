@@ -125,7 +125,7 @@ static int flac_out_encode(void *ctx, phi_track *t)
 
 	switch (f->state) {
 	case I_FIRST:
-		if (!core->track->filter(t, core->mod("flac.encode"), PHI_TF_PREV))
+		if (!core->track->filter(t, core->mod("ac-flac.encode"), PHI_TF_PREV))
 			return PHI_ERR;
 		f->state = I_INIT;
 		return PHI_MORE;

@@ -59,7 +59,7 @@ static const ushort mkv_codecs[] = {
 	MKV_A_AAC, MKV_A_ALAC, MKV_A_MPEGL3, MKV_A_OPUS, MKV_A_VORBIS, MKV_A_PCM,
 };
 static const char* const mkv_codecs_str[] = {
-	"aac.decode", "alac.decode", "mpeg.decode", "opus.decode", "vorbis.decode", "",
+	"ac-aac.decode", "ac-alac.decode", "ac-mpeg.decode", "ac-opus.decode", "ac-vorbis.decode", "",
 };
 static const ushort mkv_vcodecs[] = {
 	MKV_V_AVC, MKV_V_HEVC,

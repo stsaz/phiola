@@ -123,7 +123,7 @@ static int flac_in_read(void *ctx, phi_track *t)
 			if (t->conf.info_only)
 				return PHI_LASTOUT;
 
-			if (!core->track->filter(t, core->mod("flac.decode"), 0))
+			if (!core->track->filter(t, core->mod("ac-flac.decode"), 0))
 				return PHI_ERR;
 			break;
 

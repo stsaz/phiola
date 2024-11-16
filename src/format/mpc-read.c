@@ -89,7 +89,7 @@ static int mpc_process(void *ctx, phi_track *t)
 		case MPCREAD_HEADER:
 			mpc_info(m, t, mpcread_info(&m->mpc));
 
-			if (!core->track->filter(t, core->mod("mpc.decode"), 0))
+			if (!core->track->filter(t, core->mod("ac-mpc.decode"), 0))
 				return PHI_ERR;
 
 			m->sample_rate = t->audio.format.rate;

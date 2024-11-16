@@ -55,7 +55,7 @@ static const ushort avi_codecs[] = {
 	AVI_A_AAC, AVI_A_MP3,
 };
 static const char* const avi_codecs_str[] = {
-	"aac.decode", "mpeg.decode",
+	"ac-aac.decode", "ac-mpeg.decode",
 };
 
 static const struct avi_audio_info* get_first_audio_track(struct avi_r *a)

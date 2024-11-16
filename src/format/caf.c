@@ -43,7 +43,7 @@ static const ffbyte caf_codecs[] = {
 	CAF_AAC, CAF_ALAC, CAF_LPCM,
 };
 static const char* const caf_codecs_str[] = {
-	"aac.decode", "alac.decode", "",
+	"ac-aac.decode", "ac-alac.decode", "",
 };
 
 static int caf_process(void *ctx, phi_track *t)

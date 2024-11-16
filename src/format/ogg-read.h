@@ -53,12 +53,12 @@ static int add_decoder(struct ogg_r *o, phi_track *t, ffstr data)
 	if (ffstr_matchz(&data, VORBIS_HEAD_STR)) {
 		meta_filter_name = "format.vorbismeta";
 		if (!t->conf.stream_copy && !t->conf.info_only)
-			dec = "vorbis.decode";
+			dec = "ac-vorbis.decode";
 
 	} else if (ffstr_matchz(&data, OPUS_HEAD_STR)) {
 		meta_filter_name = "format.opusmeta";
 		if (!t->conf.stream_copy && !t->conf.info_only)
-			dec = "opus.decode";
+			dec = "ac-opus.decode";
 
 	} else if (ffstr_matchz(&data, FLAC_HEAD_STR)) {
 		dec = "format.flacogg";
