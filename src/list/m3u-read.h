@@ -102,7 +102,7 @@ static int m3u_process(void *ctx, phi_track *t)
 
 		r = m3uread_process(&m->m3u, &data, &val);
 
-		switch (r) {
+		switch ((enum M3UREAD_R)r) {
 		case M3UREAD_MORE:
 			if (!(t->chain_flags & PHI_FFIRST)) {
 				_ffvec_copyself(&m->pls_ent.artist);
@@ -138,6 +138,9 @@ static int m3u_process(void *ctx, phi_track *t)
 
 		case M3UREAD_WARN:
 			warnlog(t, "parse error: %s", m3uread_error(&m->m3u));
+			continue;
+
+		case M3UREAD_EXT:
 			continue;
 
 		default:

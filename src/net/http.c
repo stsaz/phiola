@@ -255,17 +255,9 @@ static struct nml_ssl_ctx* ssl_prepare(struct nml_http_client_conf *c)
 	struct ffssl_ctx_conf *scc = ffmem_new(struct ffssl_ctx_conf);
 	sc->ctx_conf = scc;
 
-	char *cert_file = NULL;
-	ffstr cert_data = {};
-#ifdef FF_ANDROID
-	cert_data = core->conf.resource_load("http-client.pem");
+	ffstr cert_data = core->conf.resource_load("http-client.pem");
 	scc->cert_data = cert_data;
 	scc->pkey_data = cert_data;
-#else
-	cert_file = ffsz_allocfmt("%S/mod/http-client.pem", &core->conf.root);
-	scc->cert_file = cert_file;
-	scc->pkey_file = cert_file;
-#endif
 
 	sc->log_level = c->log_level;
 	sc->log_obj = c->log_obj;
@@ -278,7 +270,6 @@ static struct nml_ssl_ctx* ssl_prepare(struct nml_http_client_conf *c)
 	}
 
 	ffstr_free(&cert_data);
-	ffmem_free(cert_file);
 	return sc;
 }
 #endif

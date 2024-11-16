@@ -155,6 +155,16 @@ static char* mod_loading(ffstr name)
 		, &x->root_dir, FFPATH_SLASH, &name, FFDL_EXT);
 }
 
+static ffstr resource_load(const char *name)
+{
+	char *fn = ffsz_allocfmt("%Smod%c%s"
+		, &x->root_dir, FFPATH_SLASH, name);
+	ffvec d = {};
+	fffile_readwhole(fn, &d, 100*1024*1024);
+	ffmem_free(fn);
+	return *(ffstr*)&d;
+}
+
 static int core()
 {
 	struct phi_core_conf conf = {
@@ -165,6 +175,7 @@ static int core()
 
 		.env_expand = env_expand,
 		.mod_loading = mod_loading,
+		.resource_load = resource_load,
 
 		.workers = ~0U,
 		.io_workers = ~0U,

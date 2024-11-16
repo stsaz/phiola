@@ -26,9 +26,6 @@ ifeq "$(ASAN)" "1"
 	CFLAGS += -fsanitize=address
 	LINKFLAGS += -fsanitize=address
 endif
-ifdef PHI_VERSION_STR
-	CFLAGS += -DPHI_VERSION_STR=\"$(PHI_VERSION_STR)\"
-endif
 CFLAGS += $(CFLAGS_USER)
 CFLAGS_BASE := $(CFLAGS)
 CFLAGS += -I$(PHIOLA)/src -I$(FFSYS)
