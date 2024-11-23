@@ -5,8 +5,8 @@
 
 struct gui_wconvert {
 	ffui_windowxx		wnd;
-	ffui_labelxx		ldir, lname, lext, lfrom, luntil, laacq, lvorbisq, lopusq;
-	ffui_editxx			edir, ename, efrom, euntil, eaacq, evorbisq, eopusq;
+	ffui_labelxx		ldir, lname, lext, lfrom, luntil, ltags, laacq, lvorbisq, lopusq;
+	ffui_editxx			edir, ename, efrom, euntil, etags, eaacq, evorbisq, eopusq;
 	ffui_comboboxxx		cbext;
 	ffui_checkboxxx		cbcopy;
 	ffui_buttonxx		bbrowse, bstart;
@@ -27,6 +27,7 @@ FF_EXTERN const ffui_ldr_ctl wconvert_ctls[] = {
 	_(bbrowse),
 	_(lfrom),	_(efrom),
 	_(luntil),	_(euntil),
+	_(ltags),	_(etags),
 	_(cbcopy),
 	_(laacq),	_(eaacq),
 	_(lvorbisq),_(evorbisq),
@@ -187,6 +188,15 @@ static struct phi_track_conf* conv_conf_create()
 	tc->seek_msec = time_value(xxvec(c->efrom.text()).str());
 	tc->until_msec = time_value(xxvec(c->euntil.text()).str());
 	tc->stream_copy = c->conf_copy;
+
+	xxvec tags = c->etags.text();
+	xxstr s = tags.str(), name, val;
+	while (s.len) {
+		s.split_by(';', &name, &s);
+		name.split_by('=', &name, &val);
+		if (name.len)
+			gd->metaif->set(&tc->meta, name, val, 0);
+	}
 
 	tc->aac.quality = c->conf_aacq;
 	tc->vorbis.quality = c->conf_vorbisq;

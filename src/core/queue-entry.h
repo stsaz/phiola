@@ -180,7 +180,7 @@ static int qe_play(struct q_entry *e)
 			goto err;
 	}
 
-	if (e->have_user_meta) {
+	if ((e->have_user_meta = (e->pub.conf.meta.len && !e->pub.conf.meta_transient))) {
 		phi_metaif->copy(&t->meta, &t->conf.meta);
 	}
 

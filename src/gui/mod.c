@@ -735,6 +735,12 @@ void convert_begin(void *param)
 		qe->conf.vorbis.quality = c->vorbis.quality;
 		qe->conf.opus.bitrate = c->opus.bitrate;
 		qe->conf.stream_copy = c->stream_copy;
+
+		if (c->meta.len) {
+			qe->conf.meta_transient = 0;
+			gd->metaif->destroy(&qe->conf.meta);
+			gd->metaif->copy(&qe->conf.meta, &c->meta);
+		}
 	}
 	if (i)
 		gd->queue->play(NULL, gd->queue->at(gd->q_convert, 0));
