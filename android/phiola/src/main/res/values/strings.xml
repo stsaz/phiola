@@ -38,7 +38,8 @@
 	<string name="mlist_show_track">List: Show Current Track</string>
 	<string name="mlist_next_add">List: Add Current to Next</string>
 	<string name="mlist_trk_added">Added track to Playlist %d</string>
-	<string name="mlist_sort">List: Sort</string>
+	<string name="mlist_sort">List: Sort...</string>
+	<string name="mlist_sort_filename">List: Sort by File Path</string>
 	<string name="mlist_sort_filesize">List: Sort by File Size</string>
 	<string name="mlist_sort_filedate">List: Sort by File Date</string>
 	<string name="mlist_shuffle">List: Shuffle</string>

@@ -109,6 +109,11 @@ static int hls_q_update(struct httpcl *h, ffstr d)
 			continue;
 		}
 
+		if (!ffutf8_valid(ln.ptr, ln.len)) {
+			errlog(h->trk, "bad UTF-8 URL");
+			return -1;
+		}
+
 		if (ffstr_irmatchcz(&ln, ".m3u8")) {
 			// m3u8 inside m3u8: redirect to the first sublist
 

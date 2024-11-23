@@ -216,16 +216,7 @@ public class MainActivity extends AppCompatActivity {
 			list_next_add_cur();  break;
 
 		case R.id.action_list_sort:
-			queue.sort(Phiola.QU_SORT_FILENAME);  break;
-
-		case R.id.action_list_sort_filesize:
-			queue.sort(Phiola.QU_SORT_FILESIZE);  break;
-
-		case R.id.action_list_sort_filedate:
-			queue.sort(Phiola.QU_SORT_FILEDATE);  break;
-
-		case R.id.action_list_shuffle:
-			queue.sort(Phiola.QU_SORT_RANDOM);  break;
+			sort_menu_show();  break;
 
 		case R.id.action_list_convert:
 			list_convert();  break;
@@ -237,6 +228,19 @@ public class MainActivity extends AppCompatActivity {
 			return false;
 		}
 		return true;
+	}
+
+	private void sort_menu_show() {
+		PopupMenu m = new PopupMenu(this, b.list);
+		m.setOnMenuItemClickListener((item) -> {
+				queue.sort(item.getItemId());
+				return true;
+			});
+		m.getMenu().add(0, Phiola.QU_SORT_FILENAME, 0, getString(R.string.mlist_sort_filename));
+		m.getMenu().add(0, Phiola.QU_SORT_FILESIZE, 0, getString(R.string.mlist_sort_filesize));
+		m.getMenu().add(0, Phiola.QU_SORT_FILEDATE, 0, getString(R.string.mlist_sort_filedate));
+		m.getMenu().add(0, Phiola.QU_SORT_RANDOM, 0, getString(R.string.mlist_shuffle));
+		m.show();
 	}
 
 	private static final int

@@ -131,6 +131,11 @@ static int m3u_process(void *ctx, phi_track *t)
 			break;
 
 		case M3UREAD_URL:
+			if (!ffutf8_valid(val.ptr, val.len)) {
+				warnlog(t, "incorrect UTF-8 data in URL");
+				continue;
+			}
+
 			ffstr_set2(&m->pls_ent.url, &val);
 			if (0 != m3u_add(m, t))
 				return PHI_ERR;

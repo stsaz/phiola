@@ -14,6 +14,7 @@ enum FILE_FORMAT {
 	FILE_MP4,
 	FILE_OGG,
 	FILE_PLS,
+	FILE_TS,
 	FILE_WAV,
 	FILE_WV,
 	FILE_ID3,
@@ -29,6 +30,7 @@ const char file_ext[][5] = {
 	"mp4",
 	"ogg",
 	"pls",
+	"ts",
 	"wav",
 	"wv",
 	"",
@@ -44,11 +46,18 @@ const char* file_ext_str(uint i)
 }
 
 /** Detect file format by first several bytes
-len: >=12
 Return enum FILE_FORMAT */
 int file_format_detect(const void *data, ffsize len)
 {
 	const ffbyte *d = data;
+
+	if (len >= 189) {
+		// byte sync // 0x47
+		if (d[0] == 0x47
+			&& d[188] == 0x47)
+			return FILE_TS;
+	}
+
 	if (len >= 12) {
 		// byte id[4]; // "RIFF"
 		// byte size[4];
