@@ -103,6 +103,7 @@
 	<string name="conv_apos_start">Start Audio Position:</string>
 	<string name="conv_from_set_cur">Set To Current</string>
 	<string name="conv_apos_end">End Audio Position:</string>
+	<string name="conv_tags">Tags (NAME=VALUE;...):</string>
 
 	<string name="conv_filters">Filters</string>
 	<string name="conv_sample_format">Sample Format</string>

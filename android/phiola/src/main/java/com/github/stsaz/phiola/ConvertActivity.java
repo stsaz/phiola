@@ -267,6 +267,7 @@ public class ConvertActivity extends AppCompatActivity {
 		Phiola.ConvertParams p = new Phiola.ConvertParams();
 		p.from_msec = b.eFrom.getText().toString();
 		p.to_msec = b.eUntil.getText().toString();
+		p.tags = b.eTags.getText().toString();
 		p.sample_format = CoreSettings.conv_sample_formats[b.spSampleFormat.getSelectedItemPosition()];
 		p.sample_rate = core.str_to_uint(b.eSampleRate.getText().toString(), 0);
 		p.aac_quality = core.setts.conv_aac_quality;

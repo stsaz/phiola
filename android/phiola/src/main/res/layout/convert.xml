@@ -129,6 +129,19 @@
 		<TextView
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:text="@string/conv_tags"
+			android:textColor="@color/text" />
+		<EditText
+			android:id="@+id/e_tags"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:textSize="@dimen/text_editbox" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
 			android:text="@string/conv_filters"
 			android:textColor="@color/sett_group" />
 

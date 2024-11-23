@@ -454,11 +454,13 @@ Java_com_github_stsaz_phiola_Phiola_quConvertBegin(JNIEnv *env, jobject thiz, jl
 	jstring jout_name = jni_obj_jo(jconf, jni_field_str(jc_conf, "out_name"));
 	jstring jfrom = jni_obj_jo(jconf, jni_field_str(jc_conf, "from_msec"));
 	jstring jto = jni_obj_jo(jconf, jni_field_str(jc_conf, "to_msec"));
+	jstring jtags = jni_obj_jo(jconf, jni_field_str(jc_conf, "tags"));
 	jstring jtrash_dir_rel = jni_obj_jo(jconf, jni_field_str(jc_conf, "trash_dir_rel"));
 	uint flags = jni_obj_int(jconf, jni_field_int(jc_conf, "flags"));
 	const char *ofn = jni_sz_js(jout_name)
 		, *from = jni_sz_js(jfrom)
 		, *to = jni_sz_js(jto)
+		, *tags = jni_sz_js(jtags)
 		, *trash_dir_rel = jni_sz_js(jtrash_dir_rel);
 
 	struct phi_track_conf conf = {
@@ -479,6 +481,14 @@ Java_com_github_stsaz_phiola_Phiola_quConvertBegin(JNIEnv *env, jobject thiz, jl
 	if (msec_apos(to, (int64*)&conf.until_msec)) {
 		error = "Incorrect 'until' value";
 		goto end;
+	}
+
+	ffstr s = FFSTR_INITZ(tags), name, val;
+	while (s.len) {
+		ffstr_splitby(&s, ';', &name, &s);
+		ffstr_splitby(&name, '=', &name, &val);
+		if (name.len)
+			x->metaif.set(&conf.meta, name, val, 0);
 	}
 
 	ffmem_free(x->convert.trash_dir_rel);
@@ -508,6 +518,12 @@ Java_com_github_stsaz_phiola_Phiola_quConvertBegin(JNIEnv *env, jobject thiz, jl
 		c->ofile.name = ffsz_dup(ofn);
 		c->ofile.name_tmp = 1;
 		c->ofile.overwrite = conf.ofile.overwrite;
+
+		if (conf.meta.len) {
+			qe->conf.meta_transient = 0;
+			x->metaif.destroy(&c->meta);
+			x->metaif.copy(&c->meta, &conf.meta);
+		}
 	}
 
 	ffvec_free_align(&x->convert.tracks);
@@ -525,6 +541,7 @@ end:
 	jni_sz_free(ofn, jout_name);
 	jni_sz_free(from, jfrom);
 	jni_sz_free(to, jto);
+	jni_sz_free(tags, jtags);
 	jstring js = jni_js_sz(error);
 	dbglog("%s: exit", __func__);
 	return js;

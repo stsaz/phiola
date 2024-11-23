@@ -57,6 +57,7 @@ class Phiola {
 			out_name = "";
 			from_msec = "";
 			to_msec = "";
+			tags = "";
 			trash_dir_rel = "";
 			q_pos = -1;
 		}
@@ -71,6 +72,7 @@ class Phiola {
 
 		String out_name;
 		String from_msec, to_msec;
+		String tags;
 		int sample_format;
 		int sample_rate;
 		int aac_quality;
