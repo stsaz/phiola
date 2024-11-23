@@ -72,6 +72,23 @@ abstract class Util {
 		return a.toArray(new String[0]);
 	}
 
+	/** Convert content provider URL to an absolute file system path.
+	e.g. "/document/primary:Music/1.mp3" -> "/storage/emulated/0/Music/1.mp3" */
+	static String path_real(String s, String[] storage_paths) {
+		int pos = s.indexOf(':');
+		if (pos < 0 || pos + 1 == s.length())
+			return null;
+
+		String path = s.substring(pos + 1);
+		for (String stg : storage_paths) {
+			s = stg + "/" + path;
+			if (new File(s).exists())
+				return s;
+		}
+
+		return null;
+	}
+
 	boolean file_delete(String path) {
 		try {
 			File f = new File(path);

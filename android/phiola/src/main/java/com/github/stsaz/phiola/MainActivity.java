@@ -65,6 +65,15 @@ public class MainActivity extends AppCompatActivity {
 
 		if (core.setts.rec_path.isEmpty())
 			core.setts.rec_path = core.storage_path + "/Recordings";
+
+		// Add file to the playlist and start playback if executed from an external file manager app
+		if (getIntent().getAction().equals(Intent.ACTION_VIEW)) {
+			String fn = getIntent().getData().getPath();
+			core.dbglog(TAG, "Intent.ACTION_VIEW: %s", fn);
+			fn = Util.path_real(fn, core.storage_paths);
+			if (fn != null)
+				explorer_event(fn, Queue.ADD);
+		}
 	}
 
 	protected void onStart() {
