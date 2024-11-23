@@ -231,7 +231,7 @@ static void conv_qu_add(struct cmd_conv *v, ffstr *fn)
 			.quality = v->aac_q,
 			.bandwidth = (ushort)v->aac_bandwidth,
 		},
-		.vorbis.quality = (v->vorbis_q + 1) * 10,
+		.vorbis.quality = (v->vorbis_q) ? (v->vorbis_q + 1) * 10 : 0,
 		.opus = {
 			.bitrate = v->opus_q,
 			.mode = v->opus_mode_n,

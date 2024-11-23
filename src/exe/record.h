@@ -163,7 +163,7 @@ static int rec_action(struct cmd_rec *r)
 			.profile = r->aac_profile[0],
 			.quality = r->aac_q,
 		},
-		.vorbis.quality = (r->vorbis_q + 1) * 10,
+		.vorbis.quality = (r->vorbis_q) ? (r->vorbis_q + 1) * 10 : 0,
 		.opus = {
 			.bitrate = r->opus_q,
 			.mode = r->opus_mode_n,
