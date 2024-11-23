@@ -13,6 +13,7 @@ class PhiolaQueue {
 	long q;
 	boolean modified;
 	boolean conversion;
+	String file_name;
 
 	PhiolaQueue(Phiola _phi, long _q) {
 		phi = _phi;
@@ -79,6 +80,13 @@ class PhiolaQueue {
 
 	PhiolaQueue filter(String filter, int flags) {
 		return new PhiolaQueue(phi, phi.quFilter(q, filter, flags));
+	}
+
+	void load_once() {
+		if (file_name == null) return;
+
+		phi.quLoad(q, file_name);
+		file_name = null;
 	}
 
 	boolean save(String filepath) {
@@ -205,6 +213,9 @@ class Queue {
 				case 'c':
 					nfy_all(QueueNotify.REMOVED, -1);  break;
 
+				case 'a':
+					nfy_all(QueueNotify.ADDED, pos);  break;
+
 				case 'r':
 					nfy_all(QueueNotify.REMOVED, pos);  break;
 				}
@@ -243,6 +254,7 @@ class Queue {
 		i_selected--;
 		if (i_selected < 0)
 			i_selected = 0;
+		queues.get(i_selected).load_once();
 
 		// As positions of all next lists have just been changed, we must rewrite the files on disk accordingly
 		int i = 0;
@@ -276,7 +288,7 @@ class Queue {
 				break;
 
 			new_list();
-			phi.quLoad(queues.get(i).q, fn);
+			queues.get(i).file_name = fn;
 		}
 
 		if (i == 0) {
@@ -288,6 +300,7 @@ class Queue {
 			i_active = 0;
 		if (i_selected >= i)
 			i_selected = 0;
+		queues.get(i_selected).load_once();
 
 		if (flags_test(F_REPEAT))
 			phi.quCmd(-1, Phiola.QUCOM_REPEAT, 1);
@@ -333,12 +346,16 @@ class Queue {
 	int next_list_select() {
 		filter("");
 		i_selected = index_next(i_selected);
+		queues.get(i_selected).load_once();
 		return i_selected;
 	}
 
 	boolean conversion_list(int i) { return i == i_conversion; }
 
-	void switch_list(int i) { i_selected = i; }
+	void switch_list(int i) {
+		i_selected = i;
+		queues.get(i_selected).load_once();
+	}
 
 	int current_list_index() { return i_selected; }
 	long current_list_id() { return queues.get(i_selected).q; }
@@ -494,22 +511,18 @@ class Queue {
 	static final int ADD = 2;
 
 	void addmany(String[] urls, int flags) {
-		int pos = count();
 		filter_close();
 		int f = 0;
 		if (flags == ADD_RECURSE)
 			f = Phiola.QUADD_RECURSE;
 		queues.get(i_selected).add_many(urls, f);
-		nfy_all(QueueNotify.ADDED, pos);
 	}
 
 	/** Add an entry */
 	void add(String url) {
 		core.dbglog(TAG, "add: %s", url);
-		int pos = count();
 		filter_close();
 		queues.get(i_selected).add(url, 0);
-		nfy_all(QueueNotify.ADDED, pos);
 	}
 
 	String conf_write() {

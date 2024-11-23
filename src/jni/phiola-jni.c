@@ -148,7 +148,10 @@ do { \
 struct core_data {
 	phi_task task;
 	uint cmd;
-	int64 param_int;
+	union {
+		int64 param_int;
+		char *param_str;
+	};
 	phi_queue_id q;
 };
 

@@ -8,6 +8,7 @@ static void qu_on_change(phi_queue_id q, uint flags, uint pos)
 	dbglog("%s: '%c' q:%p", __func__, flags, (size_t)q);
 
 	switch (flags) {
+	case 'a':
 	case 'r':
 	case 'c':
 	case 'u':
@@ -75,11 +76,21 @@ Java_com_github_stsaz_phiola_Phiola_quDestroy(JNIEnv *env, jobject thiz, jlong q
 	dbglog("%s: exit", __func__);
 }
 
-JNIEXPORT void JNICALL
-Java_com_github_stsaz_phiola_Phiola_quDup(JNIEnv *env, jobject thiz, jlong jq, jlong q_src, jint pos)
+#define QUADD_RECURSE  1
+
+static void qu_cmd_add(struct core_data *d)
 {
-	dbglog("%s: enter", __func__);
-	phi_queue_id q = (phi_queue_id)jq, iq = (phi_queue_id)q_src;
+	struct phi_queue_entry qe = {
+		.conf.ifile.name = d->param_str,
+	};
+	x->queue.add(d->q, &qe);
+	ffmem_free(d);
+}
+
+static void qu_cmd_dup(struct core_data *d)
+{
+	phi_queue_id iq = (phi_queue_id)d->param_int;
+	int pos = d->cmd;
 	const struct phi_queue_entry *iqe;
 	uint i = (pos >= 0) ? pos : 0;
 	for (;  (iqe = x->queue.at(iq, i));  i++) {
@@ -87,14 +98,24 @@ Java_com_github_stsaz_phiola_Phiola_quDup(JNIEnv *env, jobject thiz, jlong jq, j
 		phi_track_conf_assign(&qe.conf, &iqe->conf);
 		qe.conf.ifile.name = ffsz_dup(iqe->conf.ifile.name);
 		x->metaif.copy(&qe.conf.meta, &iqe->conf.meta);
-		x->queue.add(q, &qe);
+		x->queue.add(d->q, &qe);
 		if (pos >= 0)
 			break;
 	}
-	dbglog("%s: exit", __func__);
+	ffmem_free(d);
 }
 
-#define QUADD_RECURSE  1
+JNIEXPORT void JNICALL
+Java_com_github_stsaz_phiola_Phiola_quDup(JNIEnv *env, jobject thiz, jlong jq, jlong q_src, jint pos)
+{
+	dbglog("%s: enter", __func__);
+	struct core_data *d = ffmem_new(struct core_data);
+	d->q = (phi_queue_id)jq;
+	d->cmd = pos;
+	d->param_int = q_src;
+	core_task(d, qu_cmd_dup);
+	dbglog("%s: exit", __func__);
+}
 
 JNIEXPORT void JNICALL
 Java_com_github_stsaz_phiola_Phiola_quAdd(JNIEnv *env, jobject thiz, jlong q, jobjectArray jurls, jint flags)
@@ -108,10 +129,10 @@ Java_com_github_stsaz_phiola_Phiola_quAdd(JNIEnv *env, jobject thiz, jlong q, jo
 		js = jni_joa_i(jurls, i);
 		fn = jni_sz_js(js);
 
-		struct phi_queue_entry qe = {
-			.conf.ifile.name = ffsz_dup(fn),
-		};
-		x->queue.add((phi_queue_id)q, &qe);
+		struct core_data *d = ffmem_new(struct core_data);
+		d->q = (phi_queue_id)q;
+		d->param_str = ffsz_dup(fn);
+		core_task(d, qu_cmd_add);
 	}
 
 	jni_sz_free(fn, js);
@@ -564,10 +585,12 @@ Java_com_github_stsaz_phiola_Phiola_quLoad(JNIEnv *env, jobject thiz, jlong q, j
 {
 	dbglog("%s: enter", __func__);
 	const char *fn = jni_sz_js(jfilepath);
-	struct phi_queue_entry qe = {
-		.conf.ifile.name = ffsz_dup(fn),
-	};
-	x->queue.add((phi_queue_id)q, &qe);
+
+	struct core_data *d = ffmem_new(struct core_data);
+	d->q = (phi_queue_id)q;
+	d->param_str = ffsz_dup(fn);
+	core_task(d, qu_cmd_add);
+
 	jni_sz_free(fn, jfilepath);
 	dbglog("%s: exit", __func__);
 	return 0;
