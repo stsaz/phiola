@@ -46,7 +46,9 @@ struct hlsread {
 	phi_task	task;
 	uint		worker;
 	uint		n_fail_tries;
+	uint		n_redirect;
 	uint		data_file :1;
+	uint		m3u_file :1;
 };
 
 static struct hlsread* hls_new(struct httpcl *h)
@@ -107,6 +109,26 @@ static int hls_q_update(struct httpcl *h, ffstr d)
 			continue;
 		}
 
+		if (ffstr_irmatchcz(&ln, ".m3u8")) {
+			// m3u8 inside m3u8: redirect to the first sublist
+
+			if (l->seq_last) {
+				errlog(h->trk, "unexpected m3u file: %S", &ln);
+				return -1;
+			}
+
+			if (l->n_redirect++ == 10) {
+				errlog(h->trk, "couldn't reach the leaf m3u sublist.  Last: %S", &ln);
+				return -1;
+			}
+
+			ffstr *ps = ffvec_zpushT(&l->q, ffstr);
+			ffstr_dupstr(ps, &ln);
+			l->m3u_file = 1;
+			n++;
+			break;
+		}
+
 		if (l->seq_last < seq) {
 			l->seq_last = seq;
 			ffstr *ps = ffvec_zpushT(&l->q, ffstr);
@@ -152,6 +174,14 @@ static void hls_f_request(struct httpcl *h, ffstr name)
 		ffstr_free(&name);
 		url = *(ffstr*)&l->url;
 		l->data_file = 1;
+
+		if (l->m3u_file) {
+			l->m3u_file = 0;
+			l->data_file = 0;
+			// set the m3u sublist as main URL
+			ffmem_free(h->trk->conf.ifile.name);
+			h->trk->conf.ifile.name = ffsz_dupstr(&url);
+		}
 	}
 
 	conf_prepare(h, c, h->trk, url);
@@ -184,7 +214,9 @@ static int hls_f_complete(struct httpcl *h)
 	if (!l->data_file) {
 		int r = hls_q_update(h, *(ffstr*)&l->data);
 		l->data.len = 0;
-		if (r) {
+		if (r < 0) {
+			return -1;
+		} else if (r) {
 			if (!l->seq_last
 				|| l->n_fail_tries == 10) {
 				errlog(h->trk, "no more files in m3u");
