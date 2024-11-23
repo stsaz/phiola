@@ -8,6 +8,7 @@
 
 extern const phi_core *core;
 #define errlog(t, ...)  phi_errlog(core, NULL, t, __VA_ARGS__)
+#define warnlog(t, ...)  phi_warnlog(core, NULL, t, __VA_ARGS__)
 #define dbglog(t, ...)  phi_dbglog(core, NULL, t, __VA_ARGS__)
 
 struct ts_r {
@@ -32,6 +33,7 @@ static void* ts_open(phi_track *t)
 	c->pos_start_msec = ~0ULL;
 	uint64 tsize = (t->input.size != ~0ULL) ? t->input.size : 0;
 	tsread_open(&c->ts, tsize);
+	t->input.size = ~0ULL; // prevent file seek requests from the format filter
 	c->ts.log = ts_log;
 	c->ts.udata = c;
 	return c;
@@ -48,6 +50,8 @@ static int ts_info(struct ts_r *c, phi_track *t, const struct _tsr_pm *info)
 {
 	const char *mod;
 	switch (info->stream_type) {
+	case TS_STREAM_AUDIO_MP3:
+		mod = "format.mp3";  break;
 	case TS_STREAM_AUDIO_AAC:
 		mod = "format.aac";  break;
 	default:
@@ -79,7 +83,7 @@ static int ts_process(void *ctx, phi_track *t)
 	for (;;) {
 		r = tsread_process(&c->ts, &c->in, &pkt);
 
-		switch (r) {
+		switch ((enum TSREAD_R)r) {
 
 		case TSREAD_DATA:
 			if (c->n_pkt == 0) {
@@ -101,6 +105,11 @@ static int ts_process(void *ctx, phi_track *t)
 
 		// case TSREAD_DONE:
 		// 	return PHI_LASTOUT;
+
+		case TSREAD_WARN:
+			warnlog(t, "tsread_process(): %s.  Offset: %U"
+				, tsread_error(&c->ts), tsread_offset(&c->ts));
+			continue;
 
 		case TSREAD_ERROR:
 			errlog(t, "tsread_process(): %s.  Offset: %U"
