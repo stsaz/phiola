@@ -483,6 +483,8 @@ class Queue {
 		queues.get(i_selected).remove_non_existing();
 	}
 
+	int number() { return queues.size(); }
+
 	/** Get tracks number in the currently selected (not filtered) list */
 	int count() { return queues.get(i_selected).count(); }
 

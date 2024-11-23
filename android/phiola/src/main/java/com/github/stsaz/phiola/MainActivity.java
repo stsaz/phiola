@@ -346,6 +346,10 @@ public class MainActivity extends AppCompatActivity {
 		b.bexplorer.setOnClickListener((v) -> explorer_click());
 
 		b.bplaylist.setOnClickListener((v) -> plist_click());
+		b.bplaylist.setOnLongClickListener((v) -> {
+				playlist_menu_show();
+				return true;
+			});
 		b.bplaylist.setChecked(true);
 		bplaylist_text(queue.current_list_index());
 
@@ -501,6 +505,20 @@ public class MainActivity extends AppCompatActivity {
 		pl_adapter.view_explorer = false;
 		list_update();
 		plist_show();
+	}
+
+	private void playlist_menu_show() {
+		PopupMenu m = new PopupMenu(this, b.bplaylist);
+		m.setOnMenuItemClickListener((item) -> {
+				list_switch_i(item.getItemId());
+				return true;
+			});
+		int n = queue.number();
+		for (int i = 0;  i < n;  i++) {
+			String s = String.format(getString(R.string.main_playlist_n), i + 1);
+			m.getMenu().add(0, i, 0, s);
+		}
+		m.show();
 	}
 
 	private void file_tags_show() { startActivity(new Intent(this, TagsActivity.class)); }
@@ -731,16 +749,25 @@ public class MainActivity extends AppCompatActivity {
 		startActivity(new Intent(this, ListSaveActivity.class));
 	}
 
-	private void list_switch() {
-		list_leave();
-
-		int qi = queue.next_list_select();
+	private void list_switched(int i) {
 		list_update();
-		bplaylist_text(qi);
+		bplaylist_text(i);
 
-		int n = gui.list_scroll_pos(qi);
+		int n = gui.list_scroll_pos(i);
 		if (n != 0)
 			b.list.scrollToPosition(n);
+	}
+
+	private void list_switch() {
+		list_leave();
+		int qi = queue.next_list_select();
+		list_switched(qi);
+	}
+
+	private void list_switch_i(int i) {
+		list_leave();
+		queue.switch_list(i);
+		list_switched(i);
 	}
 
 	private void list_next_add_cur() {
