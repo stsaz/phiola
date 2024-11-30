@@ -20,6 +20,9 @@ Down    Volume down
 m       Mute
 
 i       Show tags
+d       Remove current track from playlist
+x       Remove current track from playlist and play next track
 r       "Choose random track" setting: on/off
+Shift+l Save playlist to disk
 h       Show help
 q       Quit

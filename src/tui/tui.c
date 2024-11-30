@@ -408,6 +408,8 @@ static void tui_cmd_read(void *param)
 			void *udata = NULL;
 			if (k->cmd & _CMD_F3)
 				udata = (void*)(ffsize)key;
+			else if (key & FFKEY_MODMASK)
+				continue;
 			tui_corecmd_add(k, udata);
 
 		} else if (k->cmd & _CMD_F1) {

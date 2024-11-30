@@ -8,6 +8,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+
 class GUI {
 	private static final String TAG = "phiola.GUI";
 	private Core core;
@@ -17,10 +19,11 @@ class GUI {
 	boolean record_hide;
 	boolean ainfo_in_title;
 	String cur_path = ""; // current explorer path
-	private int[] list_pos; // list scroll position
+	private ArrayList<Integer> list_pos; // list scroll position
 
-	static final int THM_DEF = 0;
-	static final int THM_DARK = 1;
+	static final int
+		THM_DEF = 0,
+		THM_DARK = 1;
 	int theme;
 
 	static final int
@@ -36,28 +39,29 @@ class GUI {
 
 	GUI(Core core) {
 		this.core = core;
-		list_pos = new int[3];
+		list_pos = new ArrayList<>();
 	}
 
 	String conf_write() {
+		String list_pos_str = "";
+		for (Integer it : list_pos) {
+			list_pos_str += String.format("%d ", it);
+		}
+
 		return String.format(
 			"ui_curpath %s\n"
 			+ "ui_state_hide %d\n"
 			+ "ui_filter_hide %d\n"
 			+ "ui_record_hide %d\n"
 			+ "ui_info_in_title %d\n"
-			+ "ui_list_scroll_pos0 %d\n"
-			+ "ui_list_scroll_pos1 %d\n"
-			+ "ui_list_scroll_pos2 %d\n"
+			+ "ui_list_scroll_pos %s\n"
 			+ "ui_theme %d\n"
 			, cur_path
 			, core.bool_to_int(state_hide)
 			, core.bool_to_int(filter_hide)
 			, core.bool_to_int(record_hide)
 			, core.bool_to_int(ainfo_in_title)
-			, list_pos[0]
-			, list_pos[1]
-			, list_pos[2]
+			, list_pos_str
 			, theme
 			);
 	}
@@ -68,10 +72,14 @@ class GUI {
 		filter_hide = kv[Conf.UI_FILTER_HIDE].enabled;
 		record_hide = kv[Conf.UI_RECORD_HIDE].enabled;
 		ainfo_in_title = kv[Conf.UI_INFO_IN_TITLE].enabled;
-		list_pos[0] = kv[Conf.UI_LIST_SCROLL_POS0].number;
-		list_pos[1] = kv[Conf.UI_LIST_SCROLL_POS1].number;
-		list_pos[2] = kv[Conf.UI_LIST_SCROLL_POS2].number;
+		String list_pos_str = kv[Conf.UI_LIST_SCROLL_POS].value;
 		theme = kv[Conf.UI_THEME].number;
+
+		String[] v = list_pos_str.split(" ");
+		for (String s : v) {
+			if (!s.isEmpty())
+				list_pos.add(Util.str_to_uint(s, 0));
+		}
 	}
 
 	boolean state_test(int mask) { return (state & mask) != 0; }
@@ -86,14 +94,16 @@ class GUI {
 	}
 
 	int list_scroll_pos(int i) {
-		if (i >= list_pos.length)
+		if (i >= list_pos.size())
 			return 0;
-		return list_pos[i];
+		return list_pos.get(i);
 	}
 
 	void list_scroll_pos_set(int i, int n) {
-		if (i < list_pos.length)
-			list_pos[i] = n;
+		for (int j = list_pos.size();  j <= i;  j++) {
+			list_pos.add(0);
+		}
+		list_pos.set(i, n);
 	}
 
 	void on_error(String fmt, Object... args) {

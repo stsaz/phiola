@@ -38,7 +38,7 @@ public class AddURLActivity extends AppCompatActivity {
 			core.gui().msg_show(AddURLActivity.this, "Unsupported URL");
 			return;
 		}
-		core.queue().add(fn);
+		core.queue().current_add(fn, 0);
 		finish();
 	}
 }

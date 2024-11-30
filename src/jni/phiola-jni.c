@@ -52,6 +52,9 @@ struct phiola_jni {
 		uint n_tracks_updated;
 	} convert;
 
+	phi_timer tmr_q_draw;
+	phi_queue_id q_adding;
+
 	jclass Phiola_class;
 	jmethodID Phiola_lib_load;
 

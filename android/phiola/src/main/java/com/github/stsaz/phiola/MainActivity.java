@@ -195,7 +195,7 @@ public class MainActivity extends AppCompatActivity {
 			list_rm();  break;
 
 		case R.id.action_list_rm_non_existing:
-			queue.rm_non_existing();  break;
+			queue.current_remove_non_existing();  break;
 
 		case R.id.action_list_clear:
 			list_clear();  break;
@@ -206,7 +206,7 @@ public class MainActivity extends AppCompatActivity {
 		case R.id.action_list_showcur: {
 			if (view_explorer)
 				plist_click();
-			int pos = queue.active_track_pos();
+			int pos = queue.active_pos();
 			if (pos >= 0)
 				b.list.scrollToPosition(pos);
 			break;
@@ -216,7 +216,7 @@ public class MainActivity extends AppCompatActivity {
 			list_next_add_cur();  break;
 
 		case R.id.action_list_sort:
-			sort_menu_show();  break;
+			list_sort_menu_show();  break;
 
 		case R.id.action_list_convert:
 			list_convert();  break;
@@ -230,10 +230,10 @@ public class MainActivity extends AppCompatActivity {
 		return true;
 	}
 
-	private void sort_menu_show() {
+	private void list_sort_menu_show() {
 		PopupMenu m = new PopupMenu(this, b.list);
 		m.setOnMenuItemClickListener((item) -> {
-				queue.sort(item.getItemId());
+				queue.current_sort(item.getItemId());
 				return true;
 			});
 		m.getMenu().add(0, Phiola.QU_SORT_FILENAME, 0, getString(R.string.mlist_sort_filename));
@@ -364,7 +364,7 @@ public class MainActivity extends AppCompatActivity {
 				return true;
 			});
 		b.bplaylist.setChecked(true);
-		bplaylist_text(queue.current_list_index());
+		bplaylist_text(queue.current_index());
 
 		b.seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 			int val; // last value
@@ -442,7 +442,7 @@ public class MainActivity extends AppCompatActivity {
 		stopService(new Intent(this, RecSvc.class));
 		if (code == 0) {
 			if (core.setts.rec_list_add)
-				queue.add(filename);
+				queue.current_add(filename, 0);
 			gui.msg_show(this, getString(R.string.main_rec_fin));
 		}
 
@@ -550,15 +550,15 @@ public class MainActivity extends AppCompatActivity {
 				return;
 			gui.msg_show(this, "Deleted file");
 		}
-		queue.remove(pos);
+		queue.active_remove(pos);
 	}
 
 	/** Ask confirmation before deleting the currently playing file from storage */
 	private void file_del_cur() {
-		int pos = queue.active_track_pos();
-		if (pos < 0)
+		int pos = queue.active_pos();
+		String fn = queue.active_track_url();
+		if (fn == null)
 			return;
-		String fn = queue.get(pos);
 
 		AlertDialog.Builder b = new AlertDialog.Builder(this);
 		b.setIcon(android.R.drawable.ic_dialog_alert);
@@ -591,10 +591,9 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void file_move_cur_confirmed() {
-		int pos = queue.active_track_pos();
-		if (pos < 0)
+		String fn = queue.active_track_url();
+		if (fn == null)
 			return;
-		String fn = queue.get(pos);
 
 		String e = core.util.fileMove(fn, core.setts.quick_move_dir);
 		if (!e.isEmpty()) {
@@ -611,14 +610,11 @@ public class MainActivity extends AppCompatActivity {
 			return;
 		}
 
-		int n = queue.count();
-		String[] ents = new String[1];
-		ents[0] = fn;
-		queue.addmany(ents, flags);
-		core.dbglog(TAG, "added %d items", ents.length);
-		gui.msg_show(this, "Added %d items to playlist", ents.length);
+		int n = queue.current_items();
+		queue.current_add(fn, flags);
+		gui.msg_show(this, "Added %d items to playlist", 1);
 		if (flags == Queue.ADD)
-			queue.play(n);
+			queue.current_play(n);
 	}
 
 	private void explorer_file_current_show() {
@@ -653,21 +649,21 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void plist_show() {
-		int n = gui.list_scroll_pos(queue.current_list_index());
+		int n = gui.list_scroll_pos(queue.current_index());
 		if (n != 0)
 			b.list.scrollToPosition(n);
 	}
 
 	/** Called when we're leaving the playlist tab */
 	void list_leave() {
-		queue.filter("");
+		queue.current_filter("");
 		LinearLayoutManager llm = (LinearLayoutManager)b.list.getLayoutManager();
-		gui.list_scroll_pos_set(queue.current_list_index(), llm.findLastCompletelyVisibleItemPosition());
+		gui.list_scroll_pos_set(queue.current_index(), llm.findLastCompletelyVisibleItemPosition());
 	}
 
 	private void plist_filter(String filter) {
 		core.dbglog(TAG, "list_filter: %s", filter);
-		queue.filter(filter);
+		queue.current_filter(filter);
 		list_update();
 	}
 
@@ -713,7 +709,7 @@ public class MainActivity extends AppCompatActivity {
 	private void list_close() {
 		if (view_explorer) return;
 
-		if (0 == queue.count()) {
+		if (0 == queue.current_items()) {
 			list_close_confirmed();
 			return;
 		}
@@ -726,34 +722,34 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void list_close_confirmed() {
-		if (queue.close_current_list() != 0) {
+		if (queue.current_close() != 0) {
 			core.errlog(TAG, "Please wait until the conversion is complete");
 			return;
 		}
 
 		gui.msg_show(this, getString(R.string.mlist_closed));
 		list_update();
-		bplaylist_text(queue.current_list_index());
+		bplaylist_text(queue.current_index());
 	}
 
 	private void list_clear() {
-		if (0 == queue.count())
+		if (0 == queue.current_items())
 			return;
 
 		gui.dlg_question(this, "Clear playlist"
 			, "Remove all items from the current playlist?"
 			, "Clear", "Do nothing"
-			, (dialog, which) -> { queue.clear(); }
+			, (dialog, which) -> { queue.current_clear(); }
 			);
 	}
 
 	/** Remove currently playing track from playlist */
 	private void list_rm() {
-		int pos = queue.active_track_pos();
+		int pos = queue.active_pos();
 		if (pos < 0)
 			return;
 
-		queue.remove(pos);
+		queue.active_remove(pos);
 		gui.msg_show(this, getString(R.string.mlist_trk_rm));
 	}
 
@@ -821,8 +817,8 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void list_convert() {
-		long qi_old = queue.current_list_id();
-		int trk_pos = queue.active_track_pos();
+		long qi_old = queue.current_id();
+		int trk_pos = queue.active_pos();
 		int qi = queue.convert_add(Queue.CONV_CUR_LIST);
 		if (qi < 0) {
 
@@ -848,8 +844,8 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void file_convert() {
-		long qi_old = queue.current_list_id();
-		int trk_pos = queue.active_track_pos();
+		long qi_old = queue.current_id();
+		int trk_pos = queue.active_pos();
 		int qi = queue.convert_add(Queue.CONV_CUR_FILE);
 		if (qi < 0) {
 

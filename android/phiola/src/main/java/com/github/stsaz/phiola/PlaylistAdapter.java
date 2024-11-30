@@ -1,7 +1,5 @@
-/**
- * phiola/Android
- * 2023, Simon Zolin
- */
+/** phiola/Android
+2023, Simon Zolin */
 
 package com.github.stsaz.phiola;
 
@@ -41,6 +39,7 @@ class PlaylistViewHolder extends RecyclerView.ViewHolder
 
 class PlaylistAdapter extends RecyclerView.Adapter<PlaylistViewHolder> {
 
+	private static final String TAG = "phiola.PlaylistAdapter";
 	private final Core core;
 	private final Queue queue;
 	private final LayoutInflater inflater;
@@ -73,7 +72,7 @@ class PlaylistAdapter extends RecyclerView.Adapter<PlaylistViewHolder> {
 		if (view_explorer)
 			return explorer.count();
 
-		return queue.visiblelist_itemcount();
+		return queue.visible_items();
 	}
 
 	static final int EV_LONGCLICK = 1;
@@ -87,10 +86,11 @@ class PlaylistAdapter extends RecyclerView.Adapter<PlaylistViewHolder> {
 		if (ev == EV_LONGCLICK)
 			return;
 
-		queue.visiblelist_play(i);
+		queue.visible_play(i);
 	}
 
 	void on_change(int how, int pos) {
+		core.dbglog(TAG, "on_change: %d %d", how, pos);
 		if (pos < 0)
 			notifyDataSetChanged();
 		else if (how == QueueNotify.UPDATE)

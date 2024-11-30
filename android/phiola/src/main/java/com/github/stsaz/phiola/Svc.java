@@ -126,7 +126,7 @@ public class Svc extends MediaBrowserServiceCompat {
 			public void onPlay() {
 				core.dbglog(TAG, "MediaSessionCompat.onPlay");
 				if (track.state() == Track.STATE_NONE) {
-					queue.playcur();
+					queue.active_play();
 					return;
 				}
 				track.unpause();
@@ -280,7 +280,7 @@ public class Svc extends MediaBrowserServiceCompat {
 			startService(new Intent(this, Svc.class));
 		}
 
-		pstate.setActiveQueueItemId(queue.active_track_pos());
+		pstate.setActiveQueueItemId(queue.active_pos());
 
 		String title = t.pmeta.title;
 		if (t.pmeta.title.isEmpty())

@@ -3,12 +3,42 @@
 
 static void qu_conv_update(phi_queue_id q);
 
+static void list_redraw_delayed(void *param)
+{
+	JNIEnv *env;
+	int r = jni_vm_attach(jvm, &env);
+	if (r) {
+		errlog("jni_vm_attach: %d", r);
+		goto end;
+	}
+
+	jni_call_void(x->obj_QueueCallback, x->Phiola_QueueCallback_on_change, (jlong)x->q_adding, 'u', 0);
+
+end:
+	jni_vm_detach(jvm);
+	x->q_adding = 0;
+}
+
 static void qu_on_change(phi_queue_id q, uint flags, uint pos)
 {
-	dbglog("%s: '%c' q:%p", __func__, flags, (size_t)q);
+	dbglog("%s: '%c' q:%p pos:%u", __func__, flags, (size_t)q, pos);
 
 	switch (flags) {
 	case 'a':
+		if (q == x->q_adding)
+			return; // redraw timer is already set
+		if (!x->q_adding)  {
+			x->q_adding = q;
+			x->core->timer(0, &x->tmr_q_draw, -50, list_redraw_delayed, NULL);
+			return; // delay redrawing this list
+		}
+
+		// redraw the previously modified list
+		q = FF_SWAP(&x->q_adding, q);
+		flags = 'u';
+		pos = 0;
+		break;
+
 	case 'r':
 	case 'c':
 	case 'u':
@@ -409,7 +439,7 @@ static void display_name_prepare(ffstr *val, ffsize cap, struct phi_queue_entry 
 JNIEXPORT jstring JNICALL
 Java_com_github_stsaz_phiola_Phiola_quDisplayLine(JNIEnv *env, jobject thiz, jlong jq, jint i)
 {
-	dbglog("%s: enter", __func__);
+	dbglog("%s: enter %p %d", __func__, jq, i);
 	phi_queue_id q = (phi_queue_id)jq;
 	char buf[256];
 	ffstr val = {};

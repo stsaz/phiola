@@ -55,7 +55,7 @@ static int ts_info(struct ts_r *c, phi_track *t, const struct _tsr_pm *info)
 	case TS_STREAM_AUDIO_AAC:
 		mod = "format.aac";  break;
 	default:
-		dbglog(t, "codec not supported: %u", info->stream_type);
+		errlog(t, "codec not supported: %u", info->stream_type);
 		return 1;
 	}
 	if (!core->track->filter(t, core->mod(mod), 0))
@@ -87,12 +87,8 @@ static int ts_process(void *ctx, phi_track *t)
 
 		case TSREAD_DATA:
 			if (c->n_pkt == 0) {
-				// select the first audio track with a recognized codec
-				r = ts_info(c, t, tsread_info(&c->ts));
-				if (r < 0)
+				if (ts_info(c, t, tsread_info(&c->ts)))
 					return PHI_ERR;
-				else if (r > 0)
-					continue;
 			}
 
 			if (c->track_id != tsread_info(&c->ts)->pid)

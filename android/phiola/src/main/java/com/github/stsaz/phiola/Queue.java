@@ -28,7 +28,7 @@ class PhiolaQueue {
 
 	void destroy() { phi.quDestroy(q); }
 
-	void dup(long q_src, int pos) {
+	void copy_entries(long q_src, int pos) {
 		phi.quDup(q, q_src, pos);
 		modified = true;
 	}
@@ -228,7 +228,7 @@ class Queue {
 		return queues.size() - 1;
 	}
 
-	int close_current_list() {
+	int current_close() {
 		if (i_selected == i_conversion && converting)
 			return E_BUSY; // can't close the conversion list while the conversion is in progress
 
@@ -236,7 +236,7 @@ class Queue {
 		if (i_conversion >= 0)
 			n_playlists--;
 		if (n_playlists == 1 && i_selected != i_conversion) {
-			clear();
+			current_clear();
 			return 0;
 		}
 
@@ -245,6 +245,8 @@ class Queue {
 		queues.remove(i_selected);
 		if (i_active == i_selected)
 			i_active = 0;
+		else if (i_active > i_selected)
+			i_active--;
 
 		if (i_selected == i_conversion)
 			i_conversion = -1;
@@ -327,7 +329,7 @@ class Queue {
 	}
 
 	/** Save playlist to a file */
-	boolean save(String fn) {
+	boolean current_save(String fn) {
 		if (!q_selected().save(fn))
 			return false;
 		core.dbglog(TAG, "saved %s", fn);
@@ -344,7 +346,7 @@ class Queue {
 
 	/** Change to next playlist */
 	int next_list_select() {
-		filter("");
+		current_filter("");
 		i_selected = index_next(i_selected);
 		queues.get(i_selected).load_once();
 		return i_selected;
@@ -357,8 +359,8 @@ class Queue {
 		queues.get(i_selected).load_once();
 	}
 
-	int current_list_index() { return i_selected; }
-	long current_list_id() { return queues.get(i_selected).q; }
+	int current_index() { return i_selected; }
+	long current_id() { return queues.get(i_selected).q; }
 
 	/** Add currently playing track to next list.
 	Return the modified list index. */
@@ -390,7 +392,7 @@ class Queue {
 	}
 
 	/** Play track at cursor */
-	void playcur() {
+	void active_play() {
 		int pos = curpos;
 		if (pos < 0)
 			pos = 0;
@@ -410,11 +412,11 @@ class Queue {
 	}
 
 	/** Play track at the specified position */
-	void play(int index) {
+	void current_play(int index) {
 		_play(i_selected, index);
 	}
 
-	void visiblelist_play(int i) {
+	void visible_play(int i) {
 		if (i_selected == i_conversion)
 			return; // ignore click on entry in Conversion list
 
@@ -471,7 +473,12 @@ class Queue {
 			auto_stop_active = false;
 	}
 
-	String get(int i) { return phi.quEntry(queues.get(i_selected).q, i); }
+	String active_track_url() {
+		if (i_selected != i_active
+			|| trk_idx < 0)
+			return null;
+		return phi.quEntry(queues.get(i_selected).q, trk_idx);
+	}
 
 	String display_line(int i) {
 		return phi.quDisplayLine(q_visible().q, i);
@@ -481,14 +488,13 @@ class Queue {
 		return phi.quMoveAll(q_visible().q, dst_dir);
 	}
 
-	void remove(int pos) {
+	void active_remove(int pos) {
 		core.dbglog(TAG, "remove: %d:%d", i_active, pos);
 		filter_close();
 		queues.get(i_active).remove(pos);
 	}
 
-	/** Clear playlist */
-	void clear() {
+	void current_clear() {
 		core.dbglog(TAG, "clear");
 		filter_close();
 		queues.get(i_selected).clear();
@@ -496,22 +502,24 @@ class Queue {
 		trk_idx = -1;
 	}
 
-	void rm_non_existing() {
+	void current_remove_non_existing() {
 		queues.get(i_selected).remove_non_existing();
 	}
 
 	int number() { return queues.size(); }
 
 	/** Get tracks number in the currently selected (not filtered) list */
-	int count() { return queues.get(i_selected).count(); }
+	int current_items() { return queues.get(i_selected).count(); }
 
-	int visiblelist_itemcount() { return q_visible().count(); }
+	int visible_items() { return q_visible().count(); }
 
-	static final int ADD_RECURSE = 1;
-	static final int ADD = 2;
+	static final int
+		ADD_RECURSE = 1,
+		ADD = 2;
 
-	void addmany(String[] urls, int flags) {
+	void current_addmany(String[] urls, int flags) {
 		filter_close();
+		queues.get(i_selected).load_once();
 		int f = 0;
 		if (flags == ADD_RECURSE)
 			f = Phiola.QUADD_RECURSE;
@@ -519,10 +527,10 @@ class Queue {
 	}
 
 	/** Add an entry */
-	void add(String url) {
-		core.dbglog(TAG, "add: %s", url);
-		filter_close();
-		queues.get(i_selected).add(url, 0);
+	void current_add(String url, int flags) {
+		String[] urls = new String[1];
+		urls[0] = url;
+		current_addmany(urls, flags);
 	}
 
 	String conf_write() {
@@ -568,28 +576,24 @@ class Queue {
 	}
 
 	/** Get currently playing track index */
-	int active_track_pos() {
+	int active_pos() {
 		if (i_selected != i_active)
 			return -1;
 		return trk_idx;
 	}
 
-	String[] meta(int i) {
-		if (i == -1)
-			i = trk_idx;
-		Phiola.Meta m = phi.quMeta(queues.get(i_active).q, i);
+	String[] active_meta() {
+		Phiola.Meta m = phi.quMeta(queues.get(i_active).q, trk_idx);
 		if (m == null)
 			return null;
 		return m.meta;
 	}
 
-	void sort(int flags) {
+	void current_sort(int flags) {
 		if (q_filtered != null) return;
 
 		q_selected().sort(flags);
 	}
-
-	long q_active_id() { return queues.get(i_active).q; }
 
 	/** Currently selected (not filtered) list */
 	private PhiolaQueue q_selected() { return queues.get(i_selected); }
@@ -609,7 +613,7 @@ class Queue {
 	}
 
 	/** Create filtered list */
-	void filter(String filter) {
+	void current_filter(String filter) {
 		PhiolaQueue newqf = null;
 		if (!filter.isEmpty()) {
 			PhiolaQueue qcur = queues.get(i_selected);
@@ -658,7 +662,7 @@ class Queue {
 		queues.add(new PhiolaQueue(core.phiola, Phiola.QUNF_CONVERSION, 0));
 		i_conversion = queues.size() - 1;
 
-		queues.get(i_conversion).dup(q_src, i);
+		queues.get(i_conversion).copy_entries(q_src, i);
 		i_selected = i_conversion;
 		return i_conversion;
 	}

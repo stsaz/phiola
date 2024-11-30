@@ -164,13 +164,6 @@ static int hls_q_get(struct httpcl *h, ffstr *name)
 static void hls_f_request(struct httpcl *h, ffstr name)
 {
 	struct hlsread *l = h->hls;
-	nml_http_client_free(h->cl);
-	ffstr_free(&h->conf.headers);
-	ffmem_zero_obj(&h->conf);
-
-	h->cl = nml_http_client_create();
-
-	struct nml_http_client_conf *c = &h->conf;
 	ffstr url = FFSTR_Z(h->trk->conf.ifile.name);
 	l->data_file = 0;
 	if (name.len) {
@@ -189,10 +182,7 @@ static void hls_f_request(struct httpcl *h, ffstr name)
 		}
 	}
 
-	conf_prepare(h, c, h->trk, url);
-	dbglog(h->trk, "requesting %S", &url);
-	nml_http_client_conf(h->cl, c);
-	nml_http_client_run(h->cl);
+	http_request(h, url);
 }
 
 static void hls_f_next(void *param)

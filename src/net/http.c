@@ -50,6 +50,7 @@ enum ST {
 };
 
 static int conf_prepare(struct httpcl *h, struct nml_http_client_conf *c, phi_track *t, ffstr url);
+static void http_request(struct httpcl *h, ffstr url);
 #include <net/hls.h>
 
 static void nml_log(void *log_obj, uint level, const char *ctx, const char *id, const char *format, ...)
