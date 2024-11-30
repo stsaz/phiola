@@ -59,6 +59,9 @@ struct tui_mod {
 	uint vol;
 	uint progress_dots;
 
+	uint activating_track_n;
+	phi_timer activating_track_n_tmr;
+
 	struct {
 		const char *progress,
 			*filename,
@@ -95,6 +98,11 @@ enum CMDS {
 	CMD_VOLUP,
 	CMD_VOLDOWN,
 	CMD_MUTE,
+	CMD_NEXT,
+	CMD_PREV,
+	CMD_FIRST,
+	CMD_LAST,
+	CMD_ACTIVATE_N,
 
 	CMD_SHOWTAGS,
 
@@ -117,7 +125,7 @@ typedef void (*cmdfunc1)(uint cmd);
 static void tui_cmd_read(void *param);
 static void tui_help(uint cmd);
 static void tui_op(uint cmd);
-static void cmd_next();
+static void cmd_activate(uint cmd);
 
 static void tui_print(const void *d, ffsize n)
 {
@@ -146,14 +154,31 @@ static void cmd_play()
 	tuiplay_pause_resume(mod->curtrk);
 }
 
-static void cmd_next()
+static void cmd_activate(uint cmd)
 {
-	mod->queue->play_next(NULL);
-}
+	uint i = 0;
+	switch (cmd) {
+	case CMD_NEXT:
+		mod->queue->play_next(NULL);  return;
 
-static void cmd_prev()
-{
-	mod->queue->play_previous(NULL);
+	case CMD_PREV:
+		mod->queue->play_previous(NULL);  return;
+
+	case CMD_FIRST:
+		break;
+
+	case CMD_LAST:
+		i = mod->queue->count(NULL) - 1;
+		break;
+
+	case CMD_ACTIVATE_N:
+		i = mod->activating_track_n - 1;
+		break;
+	}
+
+	void *qe = mod->queue->at(NULL, i);
+	if (qe)
+		mod->queue->play(NULL, qe);
 }
 
 static void cmd_random()
@@ -210,8 +235,8 @@ static const struct key hotkeys[] = {
 	{ 'h', _CMD_F1,									tui_help },
 	{ 'i', CMD_SHOWTAGS | _CMD_CURTRK | _CMD_CORE,	tui_op_trk },
 	{ 'm', CMD_MUTE | _CMD_CURTRK | _CMD_CORE,		tuiplay_vol },
-	{ 'n', _CMD_PLAYBACK | _CMD_F1 | _CMD_CORE,		cmd_next },
-	{ 'p', _CMD_PLAYBACK | _CMD_F1 | _CMD_CORE,		cmd_prev },
+	{ 'n', CMD_NEXT | _CMD_PLAYBACK | _CMD_F1 | _CMD_CORE,		cmd_activate },
+	{ 'p', CMD_PREV | _CMD_PLAYBACK | _CMD_F1 | _CMD_CORE,		cmd_activate },
 	{ 'q', CMD_QUIT | _CMD_F1 | _CMD_CORE,			tui_op },
 	{ 'r', _CMD_PLAYBACK | _CMD_F1 | _CMD_CORE,		cmd_random },
 	{ 's', CMD_STOP | _CMD_F1 | _CMD_CORE,			tui_op },
@@ -221,6 +246,8 @@ static const struct key hotkeys[] = {
 	{ FFKEY_DOWN,	CMD_VOLDOWN | _CMD_CURTRK | _CMD_CORE,				tuiplay_vol },
 	{ FFKEY_RIGHT,	CMD_SEEKRIGHT | _CMD_CURTRK | _CMD_F3 | _CMD_CORE,	tuiplay_seek },
 	{ FFKEY_LEFT,	CMD_SEEKLEFT | _CMD_CURTRK | _CMD_F3 | _CMD_CORE,	tuiplay_seek },
+	{ FFKEY_HOME,	CMD_FIRST | _CMD_PLAYBACK | _CMD_F1 | _CMD_CORE,	cmd_activate },
+	{ FFKEY_END,	CMD_LAST | _CMD_PLAYBACK | _CMD_F1 | _CMD_CORE,		cmd_activate },
 };
 
 static const struct key* key2cmd(int key)
@@ -329,6 +356,22 @@ static void tui_stdin_prepare(void *param)
 	tui_cmd_read(mod);
 }
 
+static void act_trk_tmr(void *param)
+{
+	cmd_activate(CMD_ACTIVATE_N);
+	mod->activating_track_n = 0;
+}
+
+static int act_trk_key_process(uint k)
+{
+	if (k >= '0' && k <= '9') {
+		mod->activating_track_n = (mod->activating_track_n * 10) + (k - '0');
+		core->timer(0, &mod->activating_track_n_tmr, -800, act_trk_tmr, NULL);
+		return 0;
+	}
+	return -1;
+}
+
 static void tui_cmd_read(void *param)
 {
 	ffstd_ev ev = {};
@@ -352,10 +395,13 @@ static void tui_cmd_read(void *param)
 
 		const struct key *k = key2cmd(key);
 		if (k == NULL) {
+			if (!act_trk_key_process(key & ~FFKEY_MODMASK))
+				continue;
 			dbglog(NULL, "unknown key seq %*xb"
 				, (ffsize)keydata.len, keydata.ptr);
 			continue;
 		}
+
 		dbglog(NULL, "received command %u", k->cmd & CMD_MASK);
 
 		if (k->cmd & _CMD_CORE) {
@@ -419,6 +465,7 @@ static void tui_destroy()
 	uint attr = FFSTD_LINEINPUT;
 	ffstd_attr(ffstdin, attr, attr);
 
+	core->timer(0, &mod->activating_track_n_tmr, 0, NULL, NULL);
 	ffmem_free(mod);
 }
 

@@ -325,7 +325,7 @@ static void tuiplay_rm_playnext(tui_track *u)
 	if (!u->t) return;
 
 	tuiplay_rm(u);
-	cmd_next();
+	cmd_activate(CMD_NEXT);
 }
 
 static const phi_filter phi_tuiplay = {

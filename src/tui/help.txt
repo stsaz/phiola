@@ -6,6 +6,9 @@ Space   Play/Pause
 s       Stop
 n       Next track
 p       Previous track
+Home    First track
+End     Last track
+[0-9]...  Play track at index
 
 Right   Seek forward
           +Alt   medium step
