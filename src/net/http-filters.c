@@ -45,6 +45,15 @@ static const nml_http_cl_component nml_http_cl_phi_bridge = {
 	"phiola-output"
 };
 
+const char* http_e_redirect(nml_http_client *c)
+{
+	if (c->error == NML_HC_E_REDIRECT) {
+		c->error = 0;
+		return c->redirect_location;
+	}
+	return NULL;
+}
+
 
 const nml_http_cl_component *hc_chain[] = {
 	&nml_http_cl_resolve,

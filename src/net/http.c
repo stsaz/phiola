@@ -35,6 +35,7 @@ struct httpcl {
 	uint cl_state;
 	uint done :1;
 	uint icy :1;
+	uint n_redirect;
 
 	struct hlsread *hls;
 };
@@ -231,9 +232,42 @@ int phi_hc_data(void *ctx, ffstr data, uint flags)
 	return NMLR_ERR;
 }
 
+static void http_request(struct httpcl *h, ffstr url)
+{
+	nml_http_client_free(h->cl);
+	ffstr_free(&h->conf.headers);
+	ffmem_zero_obj(&h->conf);
+
+	dbglog(h->trk, "requesting %S", &url);
+	h->cl = nml_http_client_create();
+	conf_prepare(h, &h->conf, h->trk, url);
+	nml_http_client_conf(h->cl, &h->conf);
+	nml_http_client_run(h->cl);
+}
+
+static int http_redirect(struct httpcl *h, const char *location)
+{
+	if (h->n_redirect++ == 10) {
+		errlog(h->trk, "reached max. number of full redirects");
+		return -1;
+	}
+
+	ffmem_free(h->trk->conf.ifile.name);
+	h->trk->conf.ifile.name = ffsz_dup(location);
+
+	http_request(h, FFSTR_Z(h->trk->conf.ifile.name));
+	return 0;
+}
+
 static void on_complete(void *param)
 {
 	struct httpcl *h = param;
+
+	const char *redirect_location;
+	if (!h->hls && (redirect_location = http_e_redirect(h->cl))) {
+		if (!http_redirect(h, redirect_location))
+			return;
+	}
 
 	if (h->hls
 		&& !hls_f_complete(h))

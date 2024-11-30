@@ -11,3 +11,6 @@ struct phi_http_data {
 
 extern int phi_hc_resp(void *ctx, struct phi_http_data *d);
 extern int phi_hc_data(void *ctx, ffstr data, uint flags);
+
+/** Get necessary info for handling HTTP<->HTTPS redirection */
+extern const char* http_e_redirect(nml_http_client *c);
