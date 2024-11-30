@@ -478,8 +478,18 @@ static void tui_conf(struct phi_ui_conf *c)
 	}
 }
 
+static void tui_play_seek(uint val, uint flags)
+{
+	if (!mod->curtrk) return;
+
+	uint cmd = CMD_SEEKRIGHT;
+	if (flags & 1) cmd = CMD_SEEKLEFT;
+	tuiplay_seek(mod->curtrk, cmd, (void*)0);
+}
+
 static struct phi_ui_if phi_tui_if = {
 	.conf = tui_conf,
+	.seek = tui_play_seek,
 };
 
 static const void* tui_iface(const char *name)

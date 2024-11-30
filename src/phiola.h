@@ -576,4 +576,5 @@ typedef struct phi_ui_if phi_ui_if;
 struct phi_ui_if {
 	void (*conf)(struct phi_ui_conf *c);
 	void (*log)(void *udata, ffstr s);
+	void (*seek)(uint val, uint flags);
 };

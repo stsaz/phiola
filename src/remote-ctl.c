@@ -13,6 +13,7 @@
 struct remote_ctl {
 	const phi_core*		core;
 	const phi_queue_if*	queue;
+	const phi_ui_if*	ui;
 
 	phi_kevent	server_kev;
 	fffd		server_pipe;
@@ -62,12 +63,28 @@ static int cmd_quit() {
 	return 0;
 }
 
+static int cmd_seek(void *o, ffstr s) {
+	uint f;
+	if (ffstr_eqz(&s, "forward"))
+		f = 0;
+	else if (ffstr_eqz(&s, "back"))
+		f = 1;
+	else
+		return 0;
+
+	if (!g->ui)
+		g->ui = g->core->mod("tui.if");
+	g->ui->seek(0, f);
+	return 0;
+}
+
 static int cmd_volume(void *o, uint64 n) {
 	struct phi_ui_conf uc = {
 		.volume_percent = n,
 	};
-	const phi_ui_if *uif = g->core->mod("tui.if");
-	uif->conf(&uc);
+	if (!g->ui)
+		g->ui = g->core->mod("tui.if");
+	g->ui->conf(&uc);
 	return 0;
 }
 
@@ -77,6 +94,7 @@ static const struct ffarg args[] = {
 	{ "play",		'1',	cmd_play },
 	{ "previous",	'1',	cmd_previous },
 	{ "quit",		'1',	cmd_quit },
+	{ "seek",		'S',	cmd_seek },
 	{ "start",		'S',	cmd_start },
 	{ "stop",		'1',	cmd_stop },
 	{ "volume",		'u',	cmd_volume },
