@@ -729,6 +729,7 @@ void convert_begin(void *param)
 	struct phi_queue_entry *qe;
 	for (i = 0;  !!(qe = gd->queue->at(gd->q_convert, i));  i++) {
 		qe->conf.ofile.name = ffsz_dup(c->ofile.name);
+		qe->conf.ifile.preserve_date = c->ifile.preserve_date;
 		qe->conf.seek_msec = c->seek_msec;
 		qe->conf.until_msec = c->until_msec;
 		qe->conf.aac.quality = c->aac.quality;
