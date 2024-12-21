@@ -658,22 +658,26 @@ test_tag() {
 		./phiola rec -o tag.wav -f -u 2
 		ffmpeg -i tag.wav -y -c:a libmp3lame tag.mp3 2>/dev/null
 		./phiola co tag.wav -o .ogg
+		./phiola co tag.wav -o .opus
 	fi
 
-	# unsupported format
-	./phiola tag -m 'artist=Great Artist' tag.ogg || true
+	# add new tags
+	./phiola tag -m 'artist=Great Artist' -m 'title=Cool Song' tag.mp3 tag.ogg tag.opus
+	./phiola i tag.mp3 | grep "Great Artist - Cool Song"
+	./phiola i tag.ogg | grep "Great Artist - Cool Song"
+	./phiola i tag.opus | grep "Great Artist - Cool Song"
 
-	cp tag.mp3 tag_a.mp3
-	./phiola tag -m 'artist=Great Artist' tag_a.mp3 ; ./phiola i tag_a.mp3 | grep "Great Artist - "
+	# replace tag
+	./phiola tag -m 'title=Very Cool Song' tag.mp3 tag.ogg tag.opus
+	./phiola i tag.mp3 | grep "Great Artist - Very Cool Song"
+	./phiola i tag.ogg | grep "Great Artist - Very Cool Song"
+	./phiola i tag.opus | grep "Great Artist - Very Cool Song"
 
-	cp tag_a.mp3 tag_at.mp3
-	./phiola tag -m 'title=Cool Song' tag_at.mp3 ; ./phiola i tag_at.mp3 | grep "Great Artist - Cool Song"
-
-	cp tag.mp3 tag_at2.mp3
-	./phiola tag -m 'artist=Great Artist' -m 'title=Cool Song' tag_at2.mp3 ; ./phiola i tag_at2.mp3 | grep "Great Artist - Cool Song"
-
-	cp tag_at.mp3 tag_t.mp3
-	./phiola tag -clear -m 'title=T2' tag_t.mp3 ; ./phiola i tag_t.mp3 | grep " - T2"
+	# set tag
+	./phiola tag -clear -m 'title=Cool Song' tag.mp3 tag.ogg tag.opus
+	./phiola i tag.mp3 | grep " - Cool Song"
+	./phiola i tag.ogg | grep " - Cool Song"
+	./phiola i tag.opus | grep " - Cool Song"
 }
 
 test_clean() {

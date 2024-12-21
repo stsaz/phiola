@@ -6,6 +6,11 @@
 #include <format/mmtag.h>
 #include <avpack/id3v1.h>
 #include <avpack/id3v2.h>
+#include <avpack/ogg-read.h>
+#include <avpack/ogg-write.h>
+#include <avpack/vorbistag.h>
+#include <avpack/opus-fmt.h>
+#include <avpack/vorbis-fmt.h>
 #include <ffsys/file.h>
 #include <ffsys/path.h>
 
@@ -319,6 +324,235 @@ static int tag_mp3_id3v1(struct tag_edit *t)
 	return 0;
 }
 
+/** Read Vorbis tags region.
+Require Vorbis/Opus info packet on a separate page;
+ require tags packet on a separate page,
+ but allow tags packet on the same page with Vorbis Codebook.
+vtags: tags body (including framing bit for Vorbis)
+vcb: full Vorbis Codebook packet
+Return packet format: 'o', 'v' */
+static int tag_ogg_vtag_read(oggread *ogg, ffstr in, ffstr *page, uint *page_off, uint *page_num, ffstr *vtags, ffstr *vcb)
+{
+	enum {
+		I_HDR, I_OPUS_TAGS, I_VORBIS_TAGS, I_VORBIS_CB,
+	};
+	uint state = 0;
+	for (;;) {
+		ffstr pkt;
+		int r = oggread_process(ogg, &in, &pkt);
+		switch (r) {
+		case OGGREAD_HEADER:
+			switch (state) {
+			case I_HDR:
+				if (ogg->page_counter != 1)
+					goto err;
+				if (pkt.len >= 7
+					&& !ffmem_cmp(pkt.ptr, "\x01vorbis", 7))
+					state = I_VORBIS_TAGS;
+				else if (pkt.len >= 8
+					&& !ffmem_cmp(pkt.ptr, "OpusHead", 8))
+					state = I_OPUS_TAGS;
+				else
+					goto err;
+				continue;
+
+			case I_OPUS_TAGS:
+				if (ogg->page_counter != 2)
+					goto err;
+				if (!(r = opus_tags_read(pkt.ptr, pkt.len)))
+					goto err;
+				ffstr_shift(&pkt, r);
+				*vtags = pkt;
+				break;
+
+			case I_VORBIS_TAGS:
+				if (ogg->page_counter != 2)
+					goto err;
+				if (!(r = vorbis_tags_read(pkt.ptr, pkt.len)))
+					goto err;
+				ffstr_shift(&pkt, r);
+				*vtags = pkt;
+				if (oggread_pkt_last(ogg))
+					break;
+				state = I_VORBIS_CB;
+				continue;
+
+			case I_VORBIS_CB:
+				if (!(pkt.len >= 7
+					&& !ffmem_cmp(pkt.ptr, "\x05vorbis", 7)))
+					goto err;
+				*vcb = pkt;
+				break;
+			}
+
+			if (!oggread_pkt_last(ogg))
+				goto err;
+			*page = ogg->chunk;
+			*page_off = ogg->off - _avp_stream_used(&ogg->stream);
+			*page_num = oggread_page_num(ogg);
+			return (state == I_OPUS_TAGS) ? 'o' : 'v';
+
+		case OGGREAD_MORE:
+			errlog("couldn't find Vorbis Tags");
+			break;
+
+		default:
+			errlog("ogg parser returned code %d", r);
+		}
+		break;
+	}
+
+err:
+	errlog("file format not supported");
+	return 0;
+}
+
+static int tag_vorbis(struct tag_edit *t)
+{
+	int r, rc = 'e', format;
+	uint tags_page_off, tags_page_num, vtags_len;
+	ffstr vtag, vorbis_codebook = {}, page, *kv, k, v, k2, v2;
+	oggwrite ogw = {};
+	oggread ogg = {};
+	vorbistagwrite vtw = {
+		.left_zone = 8,
+	};
+	vorbistagread vtr = {};
+	u_char tags_added[_MMTAG_N] = {};
+
+	ffvec_realloc(&t->buf, 64*1024, 1);
+	if (0 > (r = fffile_readat(t->fd, t->buf.ptr, t->buf.cap, 0))) {
+		syserrlog("file read");
+		return 'e';
+	}
+	t->buf.len = r;
+
+	oggread_open(&ogg, -1);
+	if (!(format = tag_ogg_vtag_read(&ogg, *(ffstr*)&t->buf, &page, &tags_page_off, &tags_page_num, &vtag, &vorbis_codebook)))
+		goto end;
+	vtags_len = vtag.len - (format == 'v') ? 1 : 0;
+
+	// Copy "Vendor" field
+	int tag = vorbistagread_process(&vtr, &vtag, &k, &v);
+	if (tag != MMTAG_VENDOR) {
+		errlog("parsing Vorbis tag");
+		goto end;
+	}
+	vorbistagwrite_create(&vtw);
+	if (!vorbistagwrite_add(&vtw, MMTAG_VENDOR, v))
+		dbglog("vorbistag: written vendor = %S", &v);
+
+	if (!t->conf.clear) {
+		// Replace tags, copy existing tags preserving the original order
+		for (;;) {
+			tag = vorbistagread_process(&vtr, &vtag, &k, &v);
+			if (tag == VORBISTAGREAD_DONE) {
+				break;
+			} else if (tag == VORBISTAGREAD_ERROR) {
+				errlog("parsing Vorbis tags");
+				goto end;
+			}
+
+			if (user_meta_find(&t->conf.meta, tag, &k2, &v2)) {
+				// Write user tag
+				if (!vorbistagwrite_add(&vtw, tag, v2))
+					dbglog("vorbistag: written %S = %S", &k2, &v2);
+
+			} else {
+				// Copy existing tag
+				if (tag != 0) {
+					vorbistagwrite_add(&vtw, tag, v);
+				} else {
+					// Unknown tag
+					vorbistagwrite_add_name(&vtw, k, v);
+				}
+			}
+
+			tags_added[tag] = 1;
+		}
+	}
+
+	// Add new tags
+	FFSLICE_WALK(&t->conf.meta, kv) {
+		if (!kv->len)
+			continue;
+		tag = user_meta_split(*kv, &k, &v);
+		if (tag < 0)
+			goto end;
+		if (!tag)
+			continue;
+		if (tags_added[tag])
+			continue;
+		if (!vorbistagwrite_add(&vtw, tag, v))
+			dbglog("vorbistag: written %S = %S", &k, &v);
+	}
+
+	// Prepare OGG packet with Opus/Vorbis header, tags data and padding
+	uint tags_len = vorbistagwrite_fin(&vtw).len;
+	int padding = vtags_len - tags_len;
+	if (padding < 0)
+		padding = 1000 - tags_len;
+	if (padding < 0)
+		padding = 0;
+	ffvec_grow(&vtw.out, 1 + padding, 1);
+	ffstr vt = *(ffstr*)&vtw.out;
+	if (format == 'o') {
+		vt.len = opus_tags_write(vt.ptr, -1, tags_len);
+	} else {
+		ffstr_shift(&vt, 1);
+		vt.len = vorbis_tags_write(vt.ptr, -1, tags_len);
+	}
+	ffmem_zero(vt.ptr + vt.len, padding);
+	vt.len += padding;
+
+	// Prepare OGG page with Vorbis Tags and maybe Vorbis Codebook
+	ogw.page.number = tags_page_num;
+	oggwrite_create(&ogw, ogg.info.serial, 0);
+	ffstr wpage;
+	uint f = (vorbis_codebook.len) ? 0 : OGGWRITE_FFLUSH;
+	r = oggwrite_process(&ogw, &vt, &wpage, 0, f);
+	if (vt.len) {
+		errlog("resulting OGG page is too large");
+		goto end;
+	}
+	if (vorbis_codebook.len) {
+		r = oggwrite_process(&ogw, &vorbis_codebook, &wpage, 0, OGGWRITE_FFLUSH);
+		if (vorbis_codebook.len) {
+			errlog("resulting OGG page is too large");
+			goto end;
+		}
+	}
+	FF_ASSERT(r == OGGWRITE_DATA);
+	FF_ASSERT(wpage.len >= page.len);
+
+	if (wpage.len == page.len) {
+		// Rewrite OGG page in-place
+		if (0 > (r = fffile_writeat(t->fdw, wpage.ptr, wpage.len, tags_page_off))) {
+			syserrlog("file write");
+			goto end;
+		}
+		dbglog("written %L bytes @%U", wpage.len, tags_page_off);
+
+	} else {
+		if (t->conf.no_expand) {
+			errlog("File rewrite is disabled");
+			goto end;
+		}
+
+		ffstr head = FFSTR_INITN(t->buf.ptr, tags_page_off);
+		if (tag_file_write(t, head, wpage, tags_page_off + page.len))
+			goto end;
+	}
+
+	rc = 0;
+
+end:
+	oggwrite_close(&ogw);
+	vorbistagwrite_destroy(&vtw);
+	oggread_close(&ogg);
+	return rc;
+}
+
 static int tag_edit_process(struct tag_edit *t)
 {
 	int r;
@@ -353,6 +587,10 @@ static int tag_edit_process(struct tag_edit *t)
 	if (ffsz_eq(ext, "mp3")) {
 		if (0 == (r = tag_mp3_id3v2(t)))
 			r = tag_mp3_id3v1(t);
+
+	} else if (ffsz_eq(ext, "ogg")) {
+		r = tag_vorbis(t);
+
 	} else {
 		errlog("unsupported format");
 		r = -1;
