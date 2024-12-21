@@ -35,17 +35,15 @@ class PhiolaQueue {
 	}
 
 	void add(String url, int flags) {
-		if (conversion) return;
-
 		String[] urls = new String[1];
 		urls[0] = url;
-		phi.quAdd(q, urls, flags);
-		modified = true;
+		add_many(urls, flags);
 	}
 
 	void add_many(String[] urls, int flags) {
 		if (conversion) return;
 
+		load_once();
 		phi.quAdd(q, urls, flags);
 		modified = true;
 	}
@@ -346,19 +344,16 @@ class Queue {
 	}
 
 	/** Change to next playlist */
-	int next_list_select() {
+	int switch_list_next() { return switch_list(index_next(i_selected)); }
+
+	int switch_list(int i) {
 		current_filter("");
-		i_selected = index_next(i_selected);
-		queues.get(i_selected).load_once();
-		return i_selected;
+		queues.get(i).load_once();
+		i_selected = i;
+		return i;
 	}
 
 	boolean conversion_list(int i) { return i == i_conversion; }
-
-	void switch_list(int i) {
-		i_selected = i;
-		queues.get(i_selected).load_once();
-	}
 
 	int current_index() { return i_selected; }
 	long current_id() { return queues.get(i_selected).q; }
@@ -520,7 +515,6 @@ class Queue {
 
 	void current_addmany(String[] urls, int flags) {
 		filter_close();
-		queues.get(i_selected).load_once();
 		int f = 0;
 		if (flags == ADD_RECURSE)
 			f = Phiola.QUADD_RECURSE;

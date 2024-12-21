@@ -67,7 +67,7 @@ static int aconv_prepare(struct aconv *c, phi_track *t)
 	c->fo = t->aconv.out;
 
 	if (c->fi.rate != c->fo.rate) {
-		if (!core->track->filter(t, core->mod("soxr.conv"), 0))
+		if (!core->track->filter(t, core->mod("af-soxr.conv"), 0))
 			return PHI_ERR;
 
 		if (c->fi.channels == c->fo.channels

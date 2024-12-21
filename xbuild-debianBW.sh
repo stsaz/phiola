@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# phiola: cross-build on Linux for Debian-bullseye
+# phiola: cross-build on Linux for Debian-bookworm
 
-IMAGE_NAME=phiola-debianbullseye-builder
-CONTAINER_NAME=phiola_debianbullseye_build
+IMAGE_NAME=phiola-debianBW-builder
+CONTAINER_NAME=phiola_debianBW_build
 ARGS=${@@Q}
 
 set -xe
@@ -17,7 +17,7 @@ if ! podman container exists $CONTAINER_NAME ; then
 
 		# Create builder image
 		cat <<EOF | podman build -t $IMAGE_NAME -f - .
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 RUN apt update && \
  apt install -y \
   make

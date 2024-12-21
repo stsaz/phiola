@@ -475,10 +475,8 @@ public class MainActivity extends AppCompatActivity {
 
 	private void rec_pause_toggle() {
 		int r = track.record_pause_toggle();
-		String s = null;
-		if (r < 0) {
-			s = "Long press to start recording";
-		} else {
+		String s = "Long press to start recording";
+		if (r >= 0) {
 			s = "Paused Recording";
 			int st = GUI.STATE_REC_PAUSED;
 			if (r == 0) {
@@ -778,7 +776,7 @@ public class MainActivity extends AppCompatActivity {
 
 	private void list_switch() {
 		list_leave();
-		int qi = queue.next_list_select();
+		int qi = queue.switch_list_next();
 		list_switched(qi);
 	}
 
@@ -1037,13 +1035,13 @@ public class MainActivity extends AppCompatActivity {
 	private int track_update(TrackHandle t) {
 		core.dbglog(TAG, "track_update: state:%d pos:%d", t.state, t.pos_msec);
 		switch (t.state) {
-			case Track.STATE_PAUSED:
-				state(GUI.MASK_PLAYBACK, GUI.STATE_PAUSED);
-				break;
+		case Track.STATE_PAUSED:
+			state(GUI.MASK_PLAYBACK, GUI.STATE_PAUSED);
+			break;
 
-			case Track.STATE_PLAYING:
-				state(GUI.MASK_PLAYBACK, GUI.STATE_PLAYING);
-				break;
+		case Track.STATE_PLAYING:
+			state(GUI.MASK_PLAYBACK, GUI.STATE_PLAYING);
+			break;
 		}
 
 		String s;

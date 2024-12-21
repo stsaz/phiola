@@ -190,7 +190,7 @@ static int rec_action(struct cmd_rec *r)
 		|| !track->filter(t, x->core->mod("afilter.rtpeak"), 0)
 		|| !track->filter(t, x->core->mod("tui.rec"), 0)
 		|| (r->danorm
-			&& !track->filter(t, x->core->mod("danorm.f"), 0))
+			&& !track->filter(t, x->core->mod("af-danorm.f"), 0))
 		|| !track->filter(t, x->core->mod("afilter.gain"), 0)
 		|| !track->filter(t, x->core->mod("afilter.auto-conv"), 0)
 		|| (r->split

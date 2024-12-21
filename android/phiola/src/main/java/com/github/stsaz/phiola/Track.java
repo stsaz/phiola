@@ -5,9 +5,6 @@ package com.github.stsaz.phiola;
 
 import android.os.Build;
 
-import androidx.annotation.NonNull;
-import androidx.collection.SimpleArrayMap;
-
 import java.util.ArrayList;
 
 abstract class PlaybackObserver {
@@ -39,7 +36,6 @@ class Track {
 	private Core core;
 	private Phiola phi;
 	private ArrayList<PlaybackObserver> observers;
-	private SimpleArrayMap<String, Boolean> supp_exts;
 
 	private TrackHandle tplay;
 	private TrackHandle trec;
@@ -77,12 +73,6 @@ class Track {
 		tplay = new TrackHandle();
 		observers = new ArrayList<>();
 		tplay.state = STATE_NONE;
-
-		String[] exts = {"mp3", "ogg", "opus", "m4a", "wav", "flac", "mp4", "mkv", "avi"};
-		supp_exts = new SimpleArrayMap<>(exts.length);
-		for (String e : exts) {
-			supp_exts.put(e, true);
-		}
 	}
 
 	String cur_url() {
@@ -95,26 +85,11 @@ class Track {
 		return tplay.pos_msec;
 	}
 
-	boolean supported_url(@NonNull String name) {
+	boolean supported_url(String name) {
 		if (name.startsWith("/")
 			|| name.startsWith("http://") || name.startsWith("https://"))
 			return true;
 		return false;
-	}
-
-	/**
-	 * Return TRUE if file name's extension is supported
-	 */
-	boolean supported(@NonNull String name) {
-		if (supported_url(name))
-			return true;
-
-		int dot = name.lastIndexOf('.');
-		if (dot <= 0)
-			return false;
-		dot++;
-		String ext = name.substring(dot);
-		return supp_exts.containsKey(ext);
 	}
 
 	void observer_add(PlaybackObserver f) {

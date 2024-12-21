@@ -199,7 +199,7 @@ static void* q_insert(struct phi_queue *q, uint pos, struct phi_queue_entry *qe)
 	else
 		*ffslice_moveT((ffslice*)&q->index, pos, pos + 1, q->index.len - 1 - pos, void*) = e;
 	fflock_unlock(&q->lock);
-	dbglog("added '%s' [%L]", qe->conf.ifile.name, q->index.len);
+	dbglog("added '%s' [%u/%L]", qe->conf.ifile.name, pos, q->index.len);
 	q_modified(q);
 	qm->on_change(q, 'a', pos);
 	return e;

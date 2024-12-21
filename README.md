@@ -39,7 +39,7 @@ Contents:
 * Terminal/Console UI for interaction at runtime
 * GUI for Windows, Linux, Android
 * Instant startup time: very short initial delay until the audio starts playing (e.g. Linux/PulseAudio: TUI: `~25ms`, GUI: `~50ms`)
-* Fast (low footprint): keeps your CPU, memory & disk I/O at absolute minimum; spends 99% of time inside codec algorithms
+* Fast (small footprint, low overhead): keeps your CPU, memory & disk I/O at absolute minimum; spends 99% of time inside codec algorithms
 
 **Bonus:** Convenient API with plugin support which allows using all the above features from any C/C++/Java app!
 
@@ -51,13 +51,10 @@ Features and notes by platform:
 | Dark themed GUI      | ✅ (GTK default) | incomplete | ✅ |
 | Powerful CLI         | ✅ | ✅ | ❌ |
 | Simple TUI           | ✅ | ✅ | ❌ |
-| Playback formats     | ✅ all supported | ✅ all supported | all supported except `.mpc`, `.ape`, `.wv` |
-| Conversion formats   | ✅ all supported | ✅ all supported | all supported except `.mpc`, `.ape`, `.wv` |
-| Batch conversion     | ✅ | ✅ | ✅ |
-| Record from mic      | ✅ | ✅ | ✅ |
+| File formats         | ✅ all supported | ✅ all supported | all supported except `.mpc`, `.ape`, `.wv` |
 | Record from Internet | ✅ | ✅ | ❌ |
 | Record what you hear | ✅ (PulseAudio) | ✅ | ❌ |
-| Requirements         | glibc-2.31(AMD64), glibc-2.36(ARM64) | Windows 7 | Android 8 (ARM64), Android 6 (ARM) |
+| Requirements         | glibc-2.36 | Windows 7 | Android 8 (ARM64), Android 6 (ARM) |
 | HW Requirements      | AMD64, ARM64 | AMD64 | ARM64, ARM(incomplete) |
 
 > Although not officially supported, phiola should build fine for **macOS**, **FreeBSD** and **Windows XP** after tweaking the build script.

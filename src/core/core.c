@@ -167,6 +167,8 @@ static int mod_load(struct core_mod *m, ffstr file)
 		goto end;
 	}
 
+	dbglog("loading module: %s", fn);
+
 	if (FFDL_NULL == (dl = ffdl_open(fn, FFDL_SELFDIR))) {
 		errlog("%s: ffdl_open: %s", fn, ffdl_errstr());
 		goto end;
@@ -178,8 +180,6 @@ static int mod_load(struct core_mod *m, ffstr file)
 			, fn, "phi_mod", ffdl_errstr());
 		goto end;
 	}
-
-	dbglog("%s: calling phi_mod_init()", fn);
 
 	const phi_mod *mod;
 	if (NULL == (mod = mod_init(core)))

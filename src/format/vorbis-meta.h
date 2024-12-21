@@ -3,65 +3,9 @@
 
 #include <track.h>
 #include <avpack/vorbistag.h>
+#include <avpack/vorbis-fmt.h>
 
 extern const phi_meta_if phi_metaif;
-
-enum VORBIS_HDR_T {
-	VORBIS_HDR_INFO = 1,
-	VORBIS_HDR_COMMENT = 3,
-};
-
-struct vorbis_hdr {
-	ffbyte type; // enum VORBIS_HDR_T
-	char vorbis[6]; // ="vorbis"
-};
-
-struct vorbis_info {
-	ffbyte ver[4]; // =0
-	ffbyte channels;
-	ffbyte rate[4];
-	ffbyte br_max[4];
-	ffbyte br_nominal[4];
-	ffbyte br_min[4];
-	ffbyte blocksize;
-	ffbyte framing_bit; // =1
-};
-
-/** Read Vorbis-info packet */
-static int vorbisinfo_read(ffstr pkt, ffuint *channels, ffuint *rate, ffuint *br_nominal)
-{
-	const struct vorbis_hdr *h = (struct vorbis_hdr*)pkt.ptr;
-	if (sizeof(struct vorbis_hdr) + sizeof(struct vorbis_info) > pkt.len
-		|| !(h->type == VORBIS_HDR_INFO && !ffmem_cmp(h->vorbis, "vorbis", 6)))
-		return -1;
-
-	const struct vorbis_info *vi = (struct vorbis_info*)(pkt.ptr + sizeof(struct vorbis_hdr));
-	*channels = vi->channels;
-	*rate = ffint_le_cpu32_ptr(vi->rate);
-	*br_nominal = ffint_le_cpu32_ptr(vi->br_nominal);
-	if (0 != ffint_le_cpu32_ptr(vi->ver)
-		|| *channels == 0
-		|| *rate == 0
-		|| vi->framing_bit != 1)
-		return -2;
-
-	return 0;
-}
-
-/** Check Vorbis-comment packet.
-body: Vorbis-tag data */
-static int vorbiscomment_read(ffstr pkt, ffstr *body)
-{
-	const struct vorbis_hdr *h = (struct vorbis_hdr*)pkt.ptr;
-	if (sizeof(struct vorbis_hdr) > pkt.len
-		|| !(h->type == VORBIS_HDR_COMMENT && !ffmem_cmp(h->vorbis, "vorbis", 6)))
-		return -1;
-
-	*body = pkt;
-	ffstr_shift(body, sizeof(struct vorbis_hdr));
-	return 0;
-}
-
 
 struct vorbismeta {
 	uint state;
@@ -109,8 +53,8 @@ static int vorbismeta_read(void *ctx, phi_track *t)
 	switch (v->state) {
 	case 0: {
 		uint chan, rate, br;
-		if (0 != vorbisinfo_read(t->data_in, &chan, &rate, &br)) {
-			errlog(t, "vorbisinfo_read");
+		if (!vorbis_info_read(t->data_in.ptr, t->data_in.len, &chan, &rate, &br)) {
+			errlog(t, "vorbis_info_read");
 			return PHI_ERR;
 		}
 		t->audio.decoder = "Vorbis";
@@ -128,11 +72,13 @@ static int vorbismeta_read(void *ctx, phi_track *t)
 	}
 
 	case 1: {
-		ffstr vc;
-		if (0 != vorbiscomment_read(t->data_in, &vc)) {
+		int r;
+		if (!(r = vorbis_tags_read(t->data_in.ptr, t->data_in.len))) {
 			errlog(t, "vorbiscomment_read");
 			return PHI_ERR;
 		}
+		ffstr vc = t->data_in;
+		ffstr_shift(&vc, r);
 		vorbistag_read(t, vc);
 
 		v->tags = t->data_in;

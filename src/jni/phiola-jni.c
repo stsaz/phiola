@@ -195,15 +195,15 @@ static char* mod_loading(ffstr name)
 	char* znames[3] = {};
 
 	static const struct map_sz_vptr mod_deps[] = {
-		{ "aac",	"libfdk-aac-phi" },
-		{ "alac",	"libALAC-phi" },
-		{ "danorm",	"libDynamicAudioNormalizer-phi" },
-		{ "flac",	"libFLAC-phi" },
-		{ "mpeg",	"libmpg123-phi" },
-		{ "opus",	"libopus-phi" },
-		{ "soxr",	"libsoxr-phi" },
-		{ "vorbis",	"libvorbis-phi" },
-		{ "zstd",	"libzstd-ffpack" },
+		{ "ac-aac",		"libfdk-aac-phi" },
+		{ "ac-alac",	"libALAC-phi" },
+		{ "ac-flac",	"libFLAC-phi" },
+		{ "ac-mpeg",	"libmpg123-phi" },
+		{ "ac-opus",	"libopus-phi" },
+		{ "ac-vorbis",	"libvorbis-phi" },
+		{ "af-danorm",	"libDynamicAudioNormalizer-phi" },
+		{ "af-soxr",	"libsoxr-phi" },
+		{ "zstd",		"libzstd-ffpack" },
 		{}
 	};
 	const char *dep = map_sz_vptr_findstr(mod_deps, FF_COUNT(mod_deps), name);

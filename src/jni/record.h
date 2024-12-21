@@ -123,7 +123,7 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 		|| !track->filter(t, x->core->mod("afilter.until"), 0)
 		|| !track->filter(t, &phi_android_rec_ctl, 0)
 		|| ((flags & RECF_DANORM)
-			&& !track->filter(t, x->core->mod("danorm.f"), 0))
+			&& !track->filter(t, x->core->mod("af-danorm.f"), 0))
 		|| !track->filter(t, x->core->mod("afilter.gain"), 0)
 		|| !track->filter(t, x->core->mod("afilter.auto-conv"), 0)
 		|| !track->filter(t, x->core->mod("format.auto-write"), 0)
