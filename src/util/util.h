@@ -196,3 +196,29 @@ static inline void phi_af_update(struct phi_af *dst, const struct phi_af *src)
 	if (src->channels)
 		dst->channels = src->channels;
 }
+
+
+#include <ffsys/file.h>
+
+static inline int file_copydata(fffd src, ffuint64 offsrc, fffd dst, ffuint64 offdst, ffuint64 size)
+{
+	int rc = -1, r;
+	ffvec v = {};
+	ffvec_alloc(&v, 8*1024*1024, 1);
+
+	while (size != 0) {
+		if (0 >= (r = fffile_readat(src, v.ptr, ffmin(size, v.cap), offsrc)))
+			goto end;
+		offsrc += r;
+		if (0 > (r = fffile_writeat(dst, v.ptr, r, offdst)))
+			goto end;
+		offdst += r;
+		size -= r;
+	}
+
+	rc = 0;
+
+end:
+	ffvec_free(&v);
+	return rc;
+}

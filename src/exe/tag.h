@@ -4,7 +4,7 @@
 static int tag_help()
 {
 	help_info_write("\
-Edit .mp3 file tags:\n\
+Edit file tags:\n\
     `phiola tag` OPTIONS FILE...\n\
 \n\
 Options:\n\
@@ -12,6 +12,7 @@ Options:\n\
   `-meta` NAME=VALUE      Meta data\n\
                           .mp3 supports: album, albumartist, artist, comment, date, genre, picture, publisher, title, tracknumber, tracktotal.\n\
   `-preserve_date`        Preserve file modification date\n\
+  `-fast`                 Fail if need to rewrite whole file\n\
 ");
 	x->exit_code = 0;
 	return 1;
@@ -22,6 +23,7 @@ struct cmd_tag {
 	ffvec	meta;
 	u_char	clear;
 	u_char	preserve_date;
+	u_char	fast;
 };
 
 static int tag_input(struct cmd_tag *t, ffstr s)
@@ -53,6 +55,7 @@ static int tag_action(struct cmd_tag *t)
 			.meta = t->meta,
 			.clear = t->clear,
 			.preserve_date = t->preserve_date,
+			.no_expand = t->fast,
 		};
 		r |= tag->edit(&conf);
 	}
@@ -72,6 +75,7 @@ static int tag_prepare(struct cmd_tag *t)
 #define O(m)  (void*)FF_OFF(struct cmd_tag, m)
 static const struct ffarg cmd_tag_args[] = {
 	{ "-clear",			'1',	O(clear) },
+	{ "-fast",			'1',	O(fast) },
 	{ "-help",			0,		tag_help },
 	{ "-meta",			'+S',	tag_meta },
 	{ "-preserve_date",	'1',	O(preserve_date) },

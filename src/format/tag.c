@@ -2,6 +2,7 @@
 2022, Simon Zolin */
 
 #include <phiola.h>
+#include <util/util.h>
 #include <format/mmtag.h>
 #include <avpack/id3v1.h>
 #include <avpack/id3v2.h>
@@ -57,29 +58,6 @@ static void tag_edit_close(struct tag_edit *t)
 	ffvec_free(&t->meta2);
 }
 
-static int file_copydata(fffd src, ffuint64 offsrc, fffd dst, ffuint64 offdst, ffuint64 size)
-{
-	int rc = -1, r;
-	ffvec v = {};
-	ffvec_alloc(&v, 8*1024*1024, 1);
-
-	while (size != 0) {
-		if (0 > (r = fffile_readat(src, v.ptr, ffmin(size, v.cap), offsrc)))
-			goto end;
-		offsrc += r;
-		if (0 > (r = fffile_writeat(dst, v.ptr, r, offdst)))
-			goto end;
-		offdst += r;
-		size -= r;
-	}
-
-	rc = 0;
-
-end:
-	ffvec_free(&v);
-	return rc;
-}
-
 static int user_meta_split(ffstr kv, ffstr *k, ffstr *v)
 {
 	if (0 > ffstr_splitby(&kv, '=', k, v)) {
@@ -106,7 +84,45 @@ static int user_meta_find(const ffvec *m, uint tag, ffstr *k, ffstr *v)
 	return 0;
 }
 
-static int mp3_id3v2(struct tag_edit *t)
+static int tag_file_write(struct tag_edit *t, ffstr head, ffstr tags, uint64 tail_off_src)
+{
+	uint64 src_tail_size = fffile_size(t->fd) - tail_off_src;
+
+	t->fnw = ffsz_allocfmt("%s.phiolatemp", t->conf.filename);
+	if (FFFILE_NULL == (t->fdw = fffile_open(t->fnw, FFFILE_CREATENEW | FFFILE_WRITEONLY))) {
+		syserrlog("file create: %s", t->fnw);
+		return -1;
+	}
+	fffile_trunc(t->fdw, head.len + tags.len + src_tail_size);
+	dbglog("created file: %s", t->fnw);
+
+	// Copy header
+	if (head.len) {
+		if (0 > fffile_writeat(t->fdw, head.ptr, head.len, 0)) {
+			syserrlog("file write: %s", t->fnw);
+			return -1;
+		}
+		dbglog("written %L bytes @%U", head.len, 0ULL);
+	}
+
+	// Write tags
+	if (0 > fffile_writeat(t->fdw, tags.ptr, tags.len, head.len)) {
+		syserrlog("file write: %s", t->fnw);
+		return -1;
+	}
+	dbglog("written %L bytes @%U", tags.len, (uint64)head.len);
+
+	// Copy tail
+	uint64 woff = head.len + tags.len;
+	if (file_copydata(t->fd, tail_off_src, t->fdw, woff, src_tail_size)) {
+		syserrlog("file read/write: %s -> %s", t->conf.filename, t->fnw);
+		return -1;
+	}
+	dbglog("written %U bytes @%U", src_tail_size, woff);
+	return 0;
+}
+
+static int tag_mp3_id3v2(struct tag_edit *t)
 {
 	int rc = 'e', r;
 	uint id3v2_size = 0;
@@ -221,23 +237,14 @@ static int mp3_id3v2(struct tag_edit *t)
 		}
 
 	} else {
-		t->fnw = ffsz_allocfmt("%s.phiolatemp", t->conf.filename);
-		if (FFFILE_NULL == (t->fdw = fffile_open(t->fnw, FFFILE_CREATENEW | FFFILE_WRITEONLY))) {
-			syserrlog("file create: %s", t->fnw);
-			goto end;
-		}
-		dbglog("created file: %s", t->fnw);
-
-		if (0 > (r = fffile_writeat(t->fdw, t->buf.ptr, t->buf.len, 0))) {
-			syserrlog("file write:%s", t->fnw);
+		if (t->conf.no_expand) {
+			errlog("File rewrite is disabled");
 			goto end;
 		}
 
-		ffint64 sz = fffile_size(t->fd) - id3v2_size;
-		if (0 != file_copydata(t->fd, id3v2_size, t->fdw, t->buf.len, sz)) {
-			syserrlog("file read/write: %s -> %s", t->conf.filename, t->fnw);
+		ffstr head = {};
+		if (tag_file_write(t, head, *(ffstr*)&t->buf, id3v2_size))
 			goto end;
-		}
 	}
 
 	rc = 0;
@@ -248,7 +255,7 @@ end:
 	return rc;
 }
 
-static int mp3_id3v1(struct tag_edit *t)
+static int tag_mp3_id3v1(struct tag_edit *t)
 {
 	int r, have_id3v1 = 0;
 	ffint64 sz = fffile_size(t->fd);
@@ -344,8 +351,8 @@ static int tag_edit_process(struct tag_edit *t)
 
 	const char *ext = file_ext_str(fmt);
 	if (ffsz_eq(ext, "mp3")) {
-		if (0 == (r = mp3_id3v2(t)))
-			r = mp3_id3v1(t);
+		if (0 == (r = tag_mp3_id3v2(t)))
+			r = tag_mp3_id3v1(t);
 	} else {
 		errlog("unsupported format");
 		r = -1;

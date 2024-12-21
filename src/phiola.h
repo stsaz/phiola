@@ -559,6 +559,7 @@ struct phi_tag_conf {
 	ffvec meta; // ffstr[]
 	uint clear :1;
 	uint preserve_date :1;
+	uint no_expand :1;
 };
 
 typedef struct phi_tag_if phi_tag_if;
