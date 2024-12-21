@@ -135,6 +135,23 @@ static void qu_cmd_dup(struct core_data *d)
 	ffmem_free(d);
 }
 
+static void qu_cmd_move(struct core_data *d)
+{
+	x->queue.move(d->cmd, d->param_int);
+	ffmem_free(d);
+}
+
+JNIEXPORT void JNICALL
+Java_com_github_stsaz_phiola_Phiola_quMove(JNIEnv *env, jobject thiz, jint from, jint to)
+{
+	dbglog("%s: enter", __func__);
+	struct core_data *d = ffmem_new(struct core_data);
+	d->cmd = from;
+	d->param_int = to;
+	core_task(d, qu_cmd_move);
+	dbglog("%s: exit", __func__);
+}
+
 JNIEXPORT void JNICALL
 Java_com_github_stsaz_phiola_Phiola_quDup(JNIEnv *env, jobject thiz, jlong jq, jlong q_src, jint pos)
 {

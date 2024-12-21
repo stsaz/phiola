@@ -218,6 +218,15 @@ public class MainActivity extends AppCompatActivity {
 		case R.id.action_list_sort:
 			list_sort_menu_show();  break;
 
+		case R.id.action_move_left: {
+			int i = queue.current_move_left();
+			if (i >= 0) {
+				gui.list_scroll_pos_swap(i, i + 1);
+				bplaylist_text(i);
+			}
+			break;
+		}
+
 		case R.id.action_list_convert:
 			list_convert();  break;
 

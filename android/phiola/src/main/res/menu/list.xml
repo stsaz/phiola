@@ -32,6 +32,9 @@
 	<item android:id="@+id/action_list_sort"
 		android:title="@string/mlist_sort" />
 
+	<item android:id="@+id/action_move_left"
+		android:title="@string/mlist_move_left" />
+
 	<item android:id="@+id/action_list_convert"
 		android:title="@string/mlist_convert" />
 

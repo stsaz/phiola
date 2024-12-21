@@ -12,7 +12,7 @@
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20300
+#define PHI_VERSION_CORE  20303
 
 typedef long long int64;
 typedef unsigned long long uint64;
@@ -482,6 +482,9 @@ struct phi_queue_if {
 	phi_queue_id (*select)(uint pos);
 	struct phi_queue_conf* (*conf)(phi_queue_id q);
 	void (*qselect)(phi_queue_id q);
+
+	/** Move list to a new position. */
+	void (*move)(uint from, uint to);
 
 	int (*add)(phi_queue_id q, struct phi_queue_entry *qe);
 	int (*count)(phi_queue_id q);

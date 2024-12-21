@@ -127,6 +127,19 @@ static void qm_set_on_change(on_change_t cb)
 	qm->on_change = cb;
 }
 
+static void qm_move(uint from, uint to)
+{
+	if (ffmax(from, to) >= qm->lists.len
+		|| !(from - 1 == to)) // move left
+		return;
+
+	struct phi_queue **l = qm->lists.ptr;
+	l[to] = FF_SWAP(&l[from], l[to]);
+	if (qm->selected == from)
+		qm->selected = to;
+	dbglog("move: %u -> %u", from, to);
+}
+
 
 static void q_free(struct phi_queue *q)
 {
@@ -683,6 +696,7 @@ const phi_queue_if phi_queueif = {
 	qm_select,
 	q_conf,
 	qm_qselect,
+	qm_move,
 
 	q_add,
 	q_count,

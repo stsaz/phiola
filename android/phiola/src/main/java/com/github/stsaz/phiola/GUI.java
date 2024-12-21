@@ -106,6 +106,13 @@ class GUI {
 		list_pos.set(i, n);
 	}
 
+	void list_scroll_pos_swap(int a, int b) {
+		int aa = list_scroll_pos(a);
+		int bb = list_scroll_pos(b);
+		list_scroll_pos_set(a, bb);
+		list_scroll_pos_set(b, aa);
+	}
+
 	void on_error(String fmt, Object... args) {
 		if (cur_activity == null)
 			return;

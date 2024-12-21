@@ -43,6 +43,7 @@
 	<string name="mlist_sort_filesize">List: Sort by File Size</string>
 	<string name="mlist_sort_filedate">List: Sort by File Date</string>
 	<string name="mlist_shuffle">List: Shuffle</string>
+	<string name="mlist_move_left">List: Move Left</string>
 	<string name="mlist_convert">List: Convert All...</string>
 	<string name="mlist_files_move">List: Quick Move All Files</string>
 

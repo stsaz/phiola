@@ -5,6 +5,7 @@ package com.github.stsaz.phiola;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -531,6 +532,25 @@ class Queue {
 		String[] urls = new String[1];
 		urls[0] = url;
 		current_addmany(urls, flags);
+	}
+
+	int current_move_left() {
+		if (i_selected == 0) return -1;
+
+		int nu = i_selected - 1;
+		phi.quMove(i_selected, nu);
+		queues.get(i_selected).modified = true;
+		queues.get(nu).load_once();
+		queues.get(nu).modified = true;
+		Collections.swap(queues, i_selected, nu);
+
+		if (i_active == i_selected)
+			i_active--;
+		else if (i_active == nu)
+			i_active++;
+
+		i_selected--;
+		return nu;
 	}
 
 	String conf_write() {

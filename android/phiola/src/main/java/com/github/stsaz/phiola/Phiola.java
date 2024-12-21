@@ -122,6 +122,12 @@ class Phiola {
 	native long quNew(int flags);
 	native void quDestroy(long q);
 
+	/** Move the list to a new position. */
+	native void quMove(int from, int to);
+
+	/** Copy entries from another queue (asynchronous).
+	pos: Source entry index
+		-1: Copy all entries */
 	native void quDup(long q, long q_src, int pos);
 
 	static final int QUADD_RECURSE = 1;
