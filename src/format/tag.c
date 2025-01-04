@@ -430,7 +430,7 @@ static int tag_vorbis(struct tag_edit *t)
 	oggread_open(&ogg, -1);
 	if (!(format = tag_ogg_vtag_read(&ogg, *(ffstr*)&t->buf, &page, &tags_page_off, &tags_page_num, &vtag, &vorbis_codebook)))
 		goto end;
-	vtags_len = vtag.len - (format == 'v') ? 1 : 0;
+	vtags_len = vtag.len - ((format == 'v') ? 1 : 0);
 
 	// Copy "Vendor" field
 	int tag = vorbistagread_process(&vtr, &vtag, &k, &v);

@@ -179,6 +179,7 @@ static void* gui_getctl(void *udata, const ffstr *name)
 		FFUI_LDR_CTL(struct gui, mhelp),
 		FFUI_LDR_CTL(struct gui, mpopup),
 		FFUI_LDR_CTL(struct gui, dlg),
+		FFUI_LDR_CTL(struct gui, mminfo_addtag),
 		FFUI_LDR_CTL3_PTR(struct gui, wmain, wmain_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, winfo, winfo_ctls),
 		FFUI_LDR_CTL3_PTR(struct gui, wsettings, wsettings_ctls),
@@ -325,6 +326,7 @@ end:
 void gui_quit()
 {
 	gui_userconf_save();
+	winfo_fin();
 	wmain_fin();
 	ffui_post_quitloop();
 }

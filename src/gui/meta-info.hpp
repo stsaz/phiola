@@ -5,15 +5,25 @@
 #include <ffbase/lock.h>
 
 struct gui_winfo {
-	ffui_windowxx wnd;
-	ffui_viewxx vinfo;
+	ffui_windowxx	wnd;
+	ffui_menu		mm;
+	ffui_viewxx		vinfo;
+
+	xxvec keys; // ffstr[]
+	uint changed;
+	struct phi_queue_entry *qe;
+
+	uint edit_idx;
 
 	char *wnd_pos;
 	uint initialized :1;
 };
 
+#define META_N  4
+
 FF_EXTERN const ffui_ldr_ctl winfo_ctls[] = {
 	FFUI_LDR_CTL(gui_winfo, wnd),
+	FFUI_LDR_CTL(gui_winfo, mm),
 	FFUI_LDR_CTL(gui_winfo, vinfo),
 	FFUI_LDR_CTL_END
 };
@@ -49,6 +59,8 @@ static void winfo_display(struct phi_queue_entry *qe)
 	data.ptr = buf;
 
 	w->vinfo.clear();
+	w->keys.reset();
+	w->changed = 0;
 
 	winfo_addpair("File path", qe->conf.ifile.name);
 
@@ -79,27 +91,18 @@ static void winfo_display(struct phi_queue_entry *qe)
 	uint i = 0;
 	while (gd->metaif->list(meta, &i, &name, &val, 0)) {
 		winfo_addpair(name, val);
+		ffstr_dupstr(w->keys.push_z<ffstr>(), &name);
 	}
 	fflock_unlock((fflock*)&qe->lock);
-}
-
-static void winfo_edit()
-{
-#ifdef FF_WIN
-	gui_winfo *w = gg->winfo;
-	int i, isub;
-	ffui_point pt;
-	ffui_cur_pos(&pt);
-	if (-1 == (i = ffui_view_hittest(&w->vinfo, &pt, &isub))
-		|| isub != 1)
-		return;
-	ffui_view_edit(&w->vinfo, i, 1);
-#endif
 }
 
 void winfo_show(uint show, uint idx)
 {
 	gui_winfo *w = gg->winfo;
+
+	if (w->qe)
+		gd->queue->unref(w->qe);
+	w->qe = NULL;
 
 	if (!show) {
 		w->wnd.show(0);
@@ -119,16 +122,124 @@ void winfo_show(uint show, uint idx)
 
 	w->wnd.title(qe->conf.ifile.name);
 	winfo_display(qe);
-	gd->queue->unref(qe);
+	w->qe = qe;
+	// keep the entry locked
 
 	w->wnd.show(1);
 }
 
+static void winfo_edit(uint idx, const char *new_text)
+{
+	gui_winfo *w = gg->winfo;
+	ffstr val = FFSTR_Z(new_text);
+	uint ki = idx - META_N;
+	if ((int)ki < 0)
+		return;
+	ffstr name = *w->keys.at<ffstr>(ki);
+	gd->metaif->set(&w->qe->conf.meta, name, val, PHI_META_REPLACE);
+	if (ki >= 32)
+		warnlog("can write only up to 32 tags");
+	ffbit_set32(&w->changed, ki);
+	w->vinfo.set(idx, 0, xxvec().add_f("%S (*)", &name).str());
+	w->vinfo.set(idx, 1, val);
+}
+
+static void winfo_tag_add(ffstr name)
+{
+	gui_winfo *w = gg->winfo;
+	if (!w->qe) return;
+
+	ffstr val;
+	if (!gd->metaif->find(&w->qe->conf.meta, name, &val, 0)) {
+		warnlog("tag already exists: %S", &name);
+		return;
+	}
+	val = FFSTR_Z("");
+	gd->metaif->set(&w->qe->conf.meta, name, val, 0);
+	winfo_addpair(name, val);
+	ffstr_dupstr(w->keys.push_z<ffstr>(), &name);
+	ffbit_set32(&w->changed, w->keys.len - 1);
+}
+
+/** Get the list of modified or newly added tags and write them to file */
+static void winfo_write()
+{
+	gui_winfo *w = gg->winfo;
+	if (!w->qe) return;
+
+	const phi_tag_if *tag = (phi_tag_if*)core->mod("format.tag");
+
+	xxvec m;
+	ffstr k, v;
+	uint bits = w->changed, i;
+	while (bits) {
+		i = ffbit_rfind32(bits) - 1;
+		ffbit_reset32(&bits, i);
+		k = *w->keys.at<ffstr>(i);
+		if (!gd->metaif->find(&w->qe->conf.meta, k, &v, 0)) {
+			ffvec s = {};
+			ffvec_addfmt(&s, "%S=%S", &k, &v);
+			*m.push<ffstr>() = *(ffstr*)&s;
+		}
+	}
+
+	if (!m.len)
+		return;
+
+	struct phi_tag_conf conf = {};
+	conf.filename = w->qe->conf.ifile.name;
+	conf.meta = m.slice();
+	if (!tag->edit(&conf)) {
+		gd->metaif->destroy(&w->qe->conf.meta);
+		w->keys.reset();
+		w->changed = 0;
+		w->vinfo.clear();
+		if (w->qe)
+			gd->queue->unref(w->qe);
+		w->qe = NULL;
+	}
+
+	FFSLICE_FOREACH_T(&m, ffstr_free, ffstr);
+}
+
 static void winfo_action(ffui_window *wnd, int id)
 {
+	gui_winfo *w = gg->winfo;
+	ffstr name;
+
 	switch (id) {
-	case A_INFO_EDIT:
-		winfo_edit();  break;
+	case A_INFO_EDIT: {
+#ifdef FF_WIN
+		int i, isub;
+		ffui_point pt;
+		ffui_cur_pos(&pt);
+		if (-1 == (i = ffui_view_hittest(&w->vinfo, &pt, &isub))
+			|| isub != 1)
+			break;
+		ffui_view_edit(&w->vinfo, i, 1);
+		w->edit_idx = i;
+#endif
+		break;
+	}
+
+	case A_INFO_EDIT_DONE:
+#ifdef FF_WIN
+		winfo_edit(w->edit_idx, w->vinfo.text);
+#else
+		winfo_edit(w->vinfo.edited.idx, w->vinfo.edited.new_text);
+#endif
+		break;
+
+	case A_INFO_ADD_ARTIST:
+		ffstr_setz(&name, "artist");  goto tag_add;
+	case A_INFO_ADD_TITLE:
+		ffstr_setz(&name, "title");  goto tag_add;
+	tag_add:
+		winfo_tag_add(name);
+		break;
+
+	case A_INFO_WRITE:
+		gui_core_task(winfo_write);  break;
 	}
 }
 
@@ -137,5 +248,14 @@ void winfo_init()
 	gui_winfo *w = ffmem_new(gui_winfo);
 	w->wnd.hide_on_close = 1;
 	w->wnd.on_action = winfo_action;
+	w->vinfo.edit_id = A_INFO_EDIT_DONE;
 	gg->winfo = w;
+}
+
+void winfo_fin()
+{
+	gui_winfo *w = gg->winfo;
+	FFSLICE_FOREACH_T(&w->keys, ffstr_free, ffstr);
+	if (w->qe)
+		gd->queue->unref(w->qe);
 }

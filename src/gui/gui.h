@@ -23,6 +23,7 @@ FF_EXTERN void wmain_fin();
 
 struct gui_winfo;
 FF_EXTERN void winfo_init();
+FF_EXTERN void winfo_fin();
 FF_EXTERN void winfo_show(uint show, uint idx);
 FF_EXTERN void winfo_userconf_write(ffconfw *cw);
 FF_EXTERN const struct ffarg winfo_args[];
@@ -77,7 +78,8 @@ struct gui {
 		, mplay
 		, mrecord
 		, mconvert
-		, mhelp;
+		, mhelp
+		, mminfo_addtag;
 	ffui_menu mpopup;
 	ffui_dialog dlg;
 	struct gui_wmain*		wmain;
