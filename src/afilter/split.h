@@ -65,6 +65,7 @@ static void split_brg_close(void *f, phi_track *t)
 	g->state = S_NONE;
 	split_brg_unref(g);
 	meta_if->destroy(&t->meta);
+	ffmem_free(t->conf.ofile.name);  t->conf.ofile.name = NULL;
 }
 
 static int split_brg_process(void *f, phi_track *t)

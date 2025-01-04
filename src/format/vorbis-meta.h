@@ -89,10 +89,10 @@ static int vorbismeta_read(void *ctx, phi_track *t)
 	}
 
 	t->data_out = v->tags;
-	return (t->conf.info_only) ? PHI_LASTOUT : PHI_DONE;
+	return PHI_DONE;
 }
 
 const phi_filter phi_vorbismeta_read = {
 	vorbismeta_open, vorbismeta_close, vorbismeta_read,
-	"vorbis-meta-read"
+	"vorbismeta-read"
 };

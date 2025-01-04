@@ -40,6 +40,7 @@ struct tag_edit {
 	fftime	mtime;
 	char*	fnw;
 	int		done;
+	uint	written;
 };
 
 static void tag_edit_close(struct tag_edit *t)
@@ -56,7 +57,8 @@ static void tag_edit_close(struct tag_edit *t)
 		}
 	}
 	if (t->done) {
-		infolog("saved file %s", t->conf.filename);
+		infolog("%uKB written to file %s"
+			, t->written / 1024, t->conf.filename);
 	}
 	ffmem_free(t->fnw);
 	ffvec_free(&t->buf);
@@ -76,8 +78,11 @@ static int user_meta_split(ffstr kv, ffstr *k, ffstr *v)
 	return tag;
 }
 
-static int user_meta_find(const ffvec *m, uint tag, ffstr *k, ffstr *v)
+static int user_meta_find(const ffslice *m, uint tag, ffstr *k, ffstr *v)
 {
+	if (tag == MMTAG_UNKNOWN)
+		return 0;
+
 	ffstr *kv;
 	FFSLICE_WALK(m, kv) {
 		if (kv->len) {
@@ -124,6 +129,8 @@ static int tag_file_write(struct tag_edit *t, ffstr head, ffstr tags, uint64 tai
 		return -1;
 	}
 	dbglog("written %U bytes @%U", src_tail_size, woff);
+
+	t->written += head.len + tags.len + src_tail_size;
 	return 0;
 }
 
@@ -214,6 +221,10 @@ static int tag_mp3_id3v2(struct tag_edit *t)
 		tag = user_meta_split(*kv, &k, &v);
 		if (tag < 0)
 			goto end;
+		if (tag == 0) {
+			warnlog("skipping unknown tag: %S", &k);
+			continue;
+		}
 		if (tags_added[tag])
 			continue; // already added
 		dbglog("id3v2: writing %S = %S", &k, &v);
@@ -240,6 +251,7 @@ static int tag_mp3_id3v2(struct tag_edit *t)
 			syserrlog("file write");
 			goto end;
 		}
+		t->written += r;
 
 	} else {
 		if (t->conf.no_expand) {
@@ -321,6 +333,7 @@ static int tag_mp3_id3v1(struct tag_edit *t)
 		syserrlog("file write");
 		return 'e';
 	}
+	t->written += r;
 	return 0;
 }
 
@@ -411,7 +424,7 @@ static int tag_vorbis(struct tag_edit *t)
 {
 	int r, rc = 'e', format;
 	uint tags_page_off, tags_page_num, vtags_len;
-	ffstr vtag, vorbis_codebook = {}, page, *kv, k, v, k2, v2;
+	ffstr vtag = {}, vorbis_codebook = {}, page, *kv, k, v, k2, v2;
 	oggwrite ogw = {};
 	oggread ogg = {};
 	vorbistagwrite vtw = {
@@ -441,6 +454,7 @@ static int tag_vorbis(struct tag_edit *t)
 	vorbistagwrite_create(&vtw);
 	if (!vorbistagwrite_add(&vtw, MMTAG_VENDOR, v))
 		dbglog("vorbistag: written vendor = %S", &v);
+	tags_added[MMTAG_VENDOR] = 1;
 
 	if (!t->conf.clear) {
 		// Replace tags, copy existing tags preserving the original order
@@ -531,6 +545,7 @@ static int tag_vorbis(struct tag_edit *t)
 			syserrlog("file write");
 			goto end;
 		}
+		t->written += r;
 		dbglog("written %L bytes @%U", wpage.len, tags_page_off);
 
 	} else {

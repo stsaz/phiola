@@ -23,6 +23,49 @@ Example of a track chain for audio conversion:
 3. `aconv` applies the conversion format specified by output filter.  The resulting conversion will be `float32/stereo => int16/mono`.  Adds `conv` filter to the chain.
 4. `conv` performs the conversion and supplies data to output filter.
 
+Playback with filtering (single converter):
+
+```
+                   oa.f:
+   a.f:     oa.f:  oa.cf:
+    i24      i24    f64
+    48k      48k
+    ni       ni     i
+dec -> aconv -> af -> adev.play
+
+                   oa.cf:
+                    i16
+                    96k
+          *  <------- *
+
+            oa.f:
+             i16
+             96k
+             i
+          *  -> *
+```
+
+Playback with filtering (double converter):
+
+```
+   a.f:      oa.f:
+    i24        f64
+    48k
+    ni         i
+dec -> aconv-f -> af -> aconv -> adev.play
+
+                          oa.cf:
+                           i16
+                           96k
+            *  <------- *  <-- *
+
+            oa.f:          oa.f:
+             f64            i16
+             48k            96k
+             i
+          *  -> * ->    *   -> *
+```
+
 
 ## Seeking
 

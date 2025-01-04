@@ -485,7 +485,7 @@ static void tui_play_seek(uint val, uint flags)
 	if (!mod->curtrk) return;
 
 	uint cmd = CMD_SEEKRIGHT;
-	if (flags & 1) cmd = CMD_SEEKLEFT;
+	if (flags & PHI_UI_SEEK_BACK) cmd = CMD_SEEKLEFT;
 	tuiplay_seek(mod->curtrk, cmd, (void*)0);
 }
 

@@ -160,7 +160,7 @@ phiola record -aformat int16 -rate 48000 -channels 2 -o audio.flac
 # * WASAPI:
 phiola record -loopback -o audio.flac
 # * PulseAudio:
-phiola record -dev `phiola dev list -f Monitor -n` -o audio.flac
+phiola record -dev $(phiola dev list -f Monitor -n) -o audio.flac
 
 # Start recording in background, then stop recording from another process:
 #   Step 1: record while listening for system-wide commands
@@ -231,16 +231,20 @@ phiola info -peaks file.mp3
 phiola info -loudness file.mp3
 ```
 
-Other use-cases:
+Edit file tags:
 
 ```sh
-# List all available audio playback and recording devices
-phiola device list
-
 # Replace/add MP3 tags in-place
 # WARNING: please test first before actually using on real files (or at least make backups)!
 phiola tag -m "artist=Great Artist" -m "title=Cool Song" file.mp3
 
+# Remove all existing tags; add new tags
+phiola tag -clear -m "artist=Great Artist" -m "title=Cool Song" file.mp3
+```
+
+Create/edit playlist files:
+
+```sh
 # Create a playlist from all .mp3 files in the directory
 phiola list create "My Music" -include "*.mp3" -o my-music.m3u
 
@@ -249,6 +253,13 @@ phiola list sort *.m3u
 
 # Automatically correct the file paths inside playlist (e.g. after some files were moved)
 phiola list heal Music/playlist.m3u
+```
+
+Other use-cases:
+
+```sh
+# List all available audio playback and recording devices
+phiola device list
 ```
 
 Currently supported commands:
@@ -263,7 +274,7 @@ Currently supported commands:
 | [play](src/exe/play.h)       | Play audio |
 | [record](src/exe/record.h)   | Record audio |
 | [remote](src/exe/remote.h)   | Send remote command |
-| [tag](src/exe/tag.h)         | Edit .mp3 file tags |
+| [tag](src/exe/tag.h)         | Edit file tags |
 
 > For the details on each command you can click on the links above or execute `phiola COMMAND -h` on your PC.
 
@@ -339,7 +350,6 @@ phiola uses modified versions of these third party libraries:
 libMAC,
 [libmpg123](https://mpg123.de),
 libmpc,
-[libogg](https://github.com/xiph/ogg),
 [libopus](https://github.com/xiph/opus),
 [libvorbis](https://github.com/xiph/vorbis),
 libwavpack,

@@ -101,7 +101,7 @@ static int danorm_f_process(void *ctx, phi_track *t)
 			t->aconv.out.interleaved = 0;
 			if (!t->conf.oaudio.format.format)
 				t->conf.oaudio.format.format = t->audio.format.format;
-			t->audio.format = t->aconv.out;
+			t->oaudio.format = t->aconv.out;
 			t->data_out = t->data_in;
 			c->state = 1;
 			return PHI_BACK;
@@ -121,7 +121,7 @@ static int danorm_f_process(void *ctx, phi_track *t)
 			return PHI_ERR;
 		c->buf.len = cap;
 		arrp_setbuf((void**)c->buf.ptr, ch, c->buf.ptr + sizeof(void*) * ch, cap * sizeof(double));
-		c->fmt = t->audio.format;
+		c->fmt = t->oaudio.format;
 		c->state = 2;
 		break;
 	}

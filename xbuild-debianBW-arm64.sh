@@ -2,8 +2,8 @@
 
 # phiola: cross-build on Linux for Debian-bookworm ARM64
 
-IMAGE_NAME=phiola-debianbookworm-arm64-builder
-CONTAINER_NAME=phiola_debianbookworm_arm64_build
+IMAGE_NAME=phiola-debianbw-arm64-builder
+CONTAINER_NAME=phiola_debianBW_arm64_build
 ARGS=${@@Q}
 
 set -xe

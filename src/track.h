@@ -169,7 +169,6 @@ struct phi_track {
 		uint	seek_req :1; // New seek request is received (UI -> fmt.read)
 		uint	ogg_reset :1; // ogg.read -> opus.meta
 		uint	bitrate;
-		double	gain_db; // Audio gain/attenuation
 		double	maxpeak_db;
 		const char *decoder;
 
@@ -209,6 +208,7 @@ struct phi_track {
 		struct {
 			struct phi_af format;
 			struct phi_af conv_format;
+			double gain_db;
 			double loudness, loudness_momentary;
 
 			// ui -> audio.play

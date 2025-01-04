@@ -2,9 +2,12 @@
 2020, Simon Zolin */
 
 #include <track.h>
+#include <avpack/mpeg1-fmt.h>
+#include <avpack/aac-read.h>
 
 enum FILE_FORMAT {
 	FILE_UNK,
+	FILE_AAC,
 	FILE_AVI,
 	FILE_CAF,
 	FILE_FLAC,
@@ -21,6 +24,7 @@ enum FILE_FORMAT {
 };
 
 const char file_ext[][5] = {
+	"aac",
 	"avi",
 	"caf",
 	"flac",
@@ -113,6 +117,12 @@ int file_format_detect(const void *data, ffsize len)
 			return FILE_M3U;
 	}
 
+	if (len >= 7) {
+		struct aacadts_hdr h;
+		if (!aacadts_parse(&h, d))
+			return FILE_AAC;
+	}
+
 	if (len >= 5) {
 		// byte sync[4]; // "OggS"
 		// byte ver; // 0x0
@@ -145,12 +155,8 @@ int file_format_detect(const void *data, ffsize len)
 			return FILE_MKV;
 	}
 
-	if (len >= 2) {
-		// byte sync1; // 0xff
-		// byte sync2_ver_layer_noprotect; // [3]=0x7 [2]=0x3 [2]=0x1 [1]
-		if (d[0] == 0xff && (d[1] & 0xe0) == 0xe0
-			&& (d[1] & 0x18) == 0x18
-			&& (d[1] & 0x06) == 2)
+	if (len >= 4) {
+		if (mpeg1_valid(d))
 			return FILE_MP3;
 	}
 
@@ -193,7 +199,7 @@ static void* fdetcr_open(phi_track *t)
 		if (t->conf.seek_cdframes) {
 			if (t->audio.seek == -1)
 				t->audio.seek = 0;
-			t->audio.seek += t->conf.seek_cdframes * 1000 / 75;
+			t->audio.seek += (uint64)t->conf.seek_cdframes * 1000 / 75;
 			t->audio.seek_req = 1;
 		}
 

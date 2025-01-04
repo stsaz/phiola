@@ -103,9 +103,6 @@ class Core extends Util {
 		return gui;
 	}
 
-	/**
-	 * Save configuration
-	 */
 	void saveconf() {
 		String fn = work_dir + "/" + CONF_FN;
 		StringBuilder sb = new StringBuilder();
@@ -119,9 +116,6 @@ class Core extends Util {
 			dbglog(TAG, "saveconf ok: %s", fn);
 	}
 
-	/**
-	 * Load configuration
-	 */
 	private void loadconf() {
 		String fn = work_dir + "/" + CONF_FN;
 		Conf.Entry[] kv = conf.confRead(fn);

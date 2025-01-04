@@ -67,7 +67,7 @@ static void mp3_info(struct mp3_r *m, phi_track *t, const struct mpeg1read_info 
 	t->audio.format = f;
 	t->audio.bitrate = info->bitrate;
 	t->audio.total = info->total_samples;
-	t->audio.decoder = "MPEG1-L3";
+	t->audio.decoder = "MP3";
 	t->data_type = "mpeg";
 	t->audio.start_delay = info->delay;
 	t->audio.end_padding = info->padding;

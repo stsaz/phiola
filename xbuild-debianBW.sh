@@ -2,7 +2,7 @@
 
 # phiola: cross-build on Linux for Debian-bookworm
 
-IMAGE_NAME=phiola-debianBW-builder
+IMAGE_NAME=phiola-debianbw-builder
 CONTAINER_NAME=phiola_debianBW_build
 ARGS=${@@Q}
 

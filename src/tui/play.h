@@ -145,7 +145,7 @@ static double tui_setvol(tui_track *u, uint vol)
 		db = vol2db(vol, VOL_LO);
 	else
 		db = vol2db_inc(vol - 100, VOL_MAX - 100, VOL_HI);
-	u->t->audio.gain_db = db;
+	u->t->oaudio.gain_db = db;
 	return db;
 }
 

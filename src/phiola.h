@@ -587,9 +587,17 @@ struct phi_ui_conf {
 	phi_log_ctl log_ctl;
 };
 
+enum PHI_UI_SEEK {
+	PHI_UI_SEEK_FWD,
+	PHI_UI_SEEK_BACK,
+};
+
 typedef struct phi_ui_if phi_ui_if;
 struct phi_ui_if {
 	void (*conf)(struct phi_ui_conf *c);
 	void (*log)(void *udata, ffstr s);
+
+	/**
+	flags: enum PHI_UI_SEEK */
 	void (*seek)(uint val, uint flags);
 };

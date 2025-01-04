@@ -1,4 +1,5 @@
 
+	X(A_PLAY),
 // File
 	X(A_FILE_INFO),
 		X(A_INFO_ADD_ARTIST),
@@ -35,7 +36,6 @@
 	X(A_LIST_AUTOSELECT),
 
 // Playback
-	X(A_PLAY),
 	X(A_PLAYPAUSE),
 	X(A_STOP),
 	X(A_NEXT),

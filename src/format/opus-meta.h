@@ -83,9 +83,7 @@ static int opusmeta_read(void *ctx, phi_track *t)
 			ffvec_free(&o->hdr);
 			o->state = 3;
 			t->data_out = o->tags;
-			return (t->conf.info_only) ? PHI_LASTOUT
-				: (t->chain_flags & PHI_FFIRST) ? PHI_DONE
-				: PHI_OK;
+			return (t->conf.info_only || (t->chain_flags & PHI_FFIRST)) ? PHI_DONE : PHI_OK;
 
 		case 3:
 			if (t->audio.ogg_reset) {

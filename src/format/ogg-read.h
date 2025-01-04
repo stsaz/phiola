@@ -152,6 +152,8 @@ static int ogg_read(void *ctx, phi_track *t)
 		}
 
 		case OGGREAD_DATA:
+			if (t->conf.info_only)
+				return PHI_LASTOUT;
 			goto data;
 
 		case OGGREAD_DONE:

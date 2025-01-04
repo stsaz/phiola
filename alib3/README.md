@@ -11,6 +11,8 @@ In order to be used by phiola all these libraries must be built in a specific wa
 
 ## Libs
 
+Codecs:
+
 * alac-rev2
 * fdk-aac-0.1.6
 * flac-1.4.3
@@ -21,6 +23,12 @@ In order to be used by phiola all these libraries must be built in a specific wa
 * opus-1.5.2
 * vorbis-1.3.7
 * wavpack-4.75.0
+
+Filters:
+
+* DynamicAudioNormalizer-2.10
+* libebur128-1.2.6
+* soxr-0.1.3
 
 
 ## Requirements

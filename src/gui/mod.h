@@ -164,7 +164,7 @@ FF_EXTERN struct gui_data *gd;
 	core->conf.log(core->conf.log_obj, PHI_LOG_ERR, "gui", NULL, __VA_ARGS__)
 
 #define warnlog(...) \
-	core->conf.log(core->conf.log_obj, PHI_LOG_ERR, "gui", NULL, __VA_ARGS__)
+	core->conf.log(core->conf.log_obj, PHI_LOG_WARN, "gui", NULL, __VA_ARGS__)
 
 #define dbglog(...) \
 do { \

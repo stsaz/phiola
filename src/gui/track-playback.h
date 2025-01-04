@@ -24,7 +24,7 @@ struct gtrk {
 /** Set volume */
 void gtrk_vol_apply(struct gtrk *gt, double db)
 {
-	gt->t->audio.gain_db = db;
+	gt->t->oaudio.gain_db = db;
 }
 
 /** Set/reset 'pause' flag */

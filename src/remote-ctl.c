@@ -67,9 +67,9 @@ static int cmd_quit() {
 static int cmd_seek(void *o, ffstr s) {
 	uint f;
 	if (ffstr_eqz(&s, "forward"))
-		f = 0;
+		f = PHI_UI_SEEK_FWD;
 	else if (ffstr_eqz(&s, "back"))
-		f = 1;
+		f = PHI_UI_SEEK_BACK;
 	else
 		return 0;
 

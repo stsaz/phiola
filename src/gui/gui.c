@@ -168,28 +168,32 @@ extern const ffui_ldr_ctl
 
 static void* gui_getctl(void *udata, const ffstr *name)
 {
+	#define _(m)  FFUI_LDR_CTL(struct gui, m)
+	#define _w(w, ctls)  FFUI_LDR_CTL3_PTR(struct gui, w, ctls)
 	static const ffui_ldr_ctl top_ctls[] = {
-		FFUI_LDR_CTL(struct gui, mfile),
-		FFUI_LDR_CTL(struct gui, mlist),
-		FFUI_LDR_CTL(struct gui, mplay),
-		FFUI_LDR_CTL(struct gui, mrecord),
-		FFUI_LDR_CTL(struct gui, mconvert),
-		FFUI_LDR_CTL(struct gui, mhelp),
-		FFUI_LDR_CTL(struct gui, mpopup),
-		FFUI_LDR_CTL(struct gui, dlg),
-		FFUI_LDR_CTL(struct gui, mminfo_addtag),
-		FFUI_LDR_CTL3_PTR(struct gui, wmain, wmain_ctls),
-		FFUI_LDR_CTL3_PTR(struct gui, winfo, winfo_ctls),
-		FFUI_LDR_CTL3_PTR(struct gui, wsettings, wsettings_ctls),
-		FFUI_LDR_CTL3_PTR(struct gui, wgoto, wgoto_ctls),
-		FFUI_LDR_CTL3_PTR(struct gui, wlistfilter, wlistfilter_ctls),
-		FFUI_LDR_CTL3_PTR(struct gui, wlistadd, wlistadd_ctls),
-		FFUI_LDR_CTL3_PTR(struct gui, wrecord, wrecord_ctls),
-		FFUI_LDR_CTL3_PTR(struct gui, wconvert, wconvert_ctls),
-		FFUI_LDR_CTL3_PTR(struct gui, wabout, wabout_ctls),
-		FFUI_LDR_CTL3_PTR(struct gui, wlog, wlog_ctls),
+		_(mfile),
+		_(mlist),
+		_(mplay),
+		_(mrecord),
+		_(mconvert),
+		_(mhelp),
+		_(mpopup),
+		_(dlg),
+		_(mminfo_addtag),
+		_w(wmain, wmain_ctls),
+		_w(winfo, winfo_ctls),
+		_w(wsettings, wsettings_ctls),
+		_w(wgoto, wgoto_ctls),
+		_w(wlistfilter, wlistfilter_ctls),
+		_w(wlistadd, wlistadd_ctls),
+		_w(wrecord, wrecord_ctls),
+		_w(wconvert, wconvert_ctls),
+		_w(wabout, wabout_ctls),
+		_w(wlog, wlog_ctls),
 		FFUI_LDR_CTL_END
 	};
+	#undef _
+	#undef _w
 
 	struct gui *g = udata;
 	return ffui_ldr_findctl(top_ctls, g, name);
