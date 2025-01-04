@@ -186,9 +186,6 @@ static int qe_play(struct q_entry *e)
 		phi_metaif->copy(&t->meta, &t->conf.meta);
 	}
 
-	if (qm->dev_idx >= 0)
-		t->conf.oaudio.device_index = qm->dev_idx;
-
 	e->trk = t;
 	e->used++;
 	e->q->active_n++;

@@ -57,10 +57,17 @@ static void wsettings_ui_to_conf()
 	if (w->cbdarktheme.h)
 		theme_switch(w->cbdarktheme.checked());
 
-	uint odev = w->cbdev.get();
-	if (gd->conf.odev != odev) {
-		gd->conf.odev = odev;
-		playback_device_set();
+	uint mod = 0, r;
+
+	if (gd->conf.odev != (r = w->cbdev.get())) {
+		gd->conf.odev = r;
+		mod = 1;
+	}
+
+	if (mod) {
+		// Apply settings for the active playlist
+		struct phi_queue_conf *qc = gd->queue->conf(NULL);
+		qc->tconf.oaudio.device_index = gd->conf.odev;
 	}
 
 	gd->conf.seek_step_delta = xxvec(w->eseek_by.text()).str().uint32(10);
@@ -78,7 +85,6 @@ static void wsettings_ui_from_conf()
 	uint odev = adevices_fill(PHI_ADEV_PLAYBACK, w->cbdev, gd->conf.odev);
 	if (gd->conf.odev != odev) {
 		gd->conf.odev = odev;
-		playback_device_set();
 	}
 
 	xxstr_buf<100> s;

@@ -291,9 +291,11 @@ void ctl_play(uint i)
 {
 	if (!gd->q_filtered && !gd->tab_conversion) {
 		gd->queue->qselect(gd->q_selected); // set the visible list as default
+		// Apply settings for the list that we're activating
 		struct phi_queue_conf *qc = gd->queue->conf(NULL);
 		qc->repeat_all = gd->conf.repeat;
 		qc->random = gd->conf.random;
+		qc->tconf.oaudio.device_index = gd->conf.odev;
 	}
 	phi_queue_id q = (gd->q_filtered) ? gd->q_filtered : NULL;
 	gd->queue->play(NULL, gd->queue->at(q, i));
@@ -346,24 +348,6 @@ static void ctl_seek(uint cmd)
 		seek = ffmax((int)gd->playing_track->last_pos_sec + delta, 0);
 
 	gtrk_seek(gd->playing_track, seek);
-}
-
-/** Toggle 'repeat all/none' setting for the default playlist */
-static void list_repeat_toggle()
-{
-	struct phi_queue_conf *qc = gd->queue->conf(NULL);
-	gd->conf.repeat = !gd->conf.repeat;
-	qc->repeat_all = gd->conf.repeat;
-	wmain_status("Repeat: %s", (gd->conf.repeat) ? "All" : "None");
-}
-
-/** Toggle 'random on/off' setting for the default playlist */
-static void list_random_toggle()
-{
-	struct phi_queue_conf *qc = gd->queue->conf(NULL);
-	gd->conf.random = !gd->conf.random;
-	qc->random = gd->conf.random;
-	wmain_status("Random: %s", (gd->conf.random) ? "On" : "Off");
 }
 
 void ctl_action(uint cmd)
@@ -445,10 +429,23 @@ list_sort:
 		break;
 
 	case A_REPEAT_TOGGLE:
-		list_repeat_toggle();  break;
+	case A_RANDOM_TOGGLE: {
+		// Apply settings for the active playlist
+		struct phi_queue_conf *qc = gd->queue->conf(NULL);
+		int r;
+		switch (cmd) {
+		case A_REPEAT_TOGGLE:
+			r = qc->repeat_all = gd->conf.repeat = !gd->conf.repeat;
+			wmain_status("Repeat: %s", (r) ? "All" : "None");
+			break;
 
-	case A_RANDOM_TOGGLE:
-		list_random_toggle();  break;
+		case A_RANDOM_TOGGLE:
+			r = qc->random = gd->conf.random = !gd->conf.random;
+			wmain_status("Random: %s", (r) ? "On" : "Off");
+			break;
+		}
+	}
+		break;
 	}
 }
 
@@ -871,9 +868,14 @@ static void gui_start(void *param)
 		return;
 
 	phi_queue_id q = gd->queue->select(0);
+
 	struct phi_queue_conf *qc = gd->queue->conf(q);
 	gd->playback_first_filter = qc->first_filter;
 	qc->name = ffsz_dup("Playlist 1");
+	qc->repeat_all = gd->conf.repeat;
+	qc->random = gd->conf.random;
+	qc->tconf.oaudio.device_index = gd->conf.odev;
+
 	struct list_info *li = ffvec_zpushT(&gd->lists, struct list_info);
 	li->q = q;
 	gd->q_selected = q;

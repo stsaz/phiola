@@ -475,9 +475,6 @@ struct phi_queue_if {
 	*/
 	void (*on_change)(void (*cb)(phi_queue_id q, uint flags, uint pos));
 
-	/** Override output device index for all tracks */
-	void (*device)(uint device);
-
 	phi_queue_id (*create)(struct phi_queue_conf *conf);
 	void (*destroy)(phi_queue_id q);
 	phi_queue_id (*select)(uint pos);

@@ -18,7 +18,6 @@ struct queue_mgr {
 	ffvec lists; // struct phi_queue*[]
 	uint selected;
 	uint errors;
-	int dev_idx;
 	uint random_ready :1;
 	on_change_t on_change;
 	struct q_entry *cursor;
@@ -73,7 +72,6 @@ void qm_destroy()
 void qm_init()
 {
 	qm = ffmem_new(struct queue_mgr);
-	qm->dev_idx = -1;
 	qm->on_change = q_on_change;
 }
 
@@ -645,11 +643,6 @@ static void q_sort(phi_queue_id q, uint flags)
 	qm->on_change(q, 'u', 0);
 }
 
-static void qm_device(uint device)
-{
-	qm->dev_idx = device;
-}
-
 static void q_remove_multi(phi_queue_id q, uint flags)
 {
 	if (!q) q = qm_default();
@@ -689,7 +682,6 @@ static void q_remove_multi(phi_queue_id q, uint flags)
 
 const phi_queue_if phi_queueif = {
 	qm_set_on_change,
-	qm_device,
 
 	q_create,
 	q_destroy,
