@@ -15,7 +15,7 @@ In order to be used by phiola all these libraries must be built in a specific wa
 * fdk-aac-0.1.6
 * flac-1.4.3
 * MAC-433
-* mpg123-1.32.3
+* mpg123-1.32.10
 * musepack-r475
 * ogg-1.3.3
 * opus-1.5.2

@@ -2,9 +2,9 @@
 
 include ../config.mk
 
-VER := 1.32.3
+VER := 1.32.10
 URL := http://mpg123.de/download/mpg123-$(VER).tar.bz2
-MD5SUM := 5517c4c18d896da6f57a3c3b5cf317cc
+MD5SUM := f6d1a69dbf340c8d889b64772e8e0a61
 PKG := $(ALIB3)/mpg123/$(notdir $(URL))
 DIR := mpg123-$(VER)
 LIB := libmpg123-phi.$(SO)
@@ -65,7 +65,7 @@ $(DIR)/src/config.h: | $(DIR)
 
 # build
 CFLAGS += \
-	-I. -I$(DIR) -I$(DIR)/src -I$(DIR)/src/libmpg123 -I$(DIR)/src/compat \
+	-I. -I$(DIR) -I$(DIR)/src -I$(DIR)/src/include -I$(DIR)/src/libmpg123 -I$(DIR)/src/compat \
 	-DMPG123_EXPORT="" -DHAVE_CONFIG_H \
 	-DOPT_MULTI -DOPT_GENERIC -DOPT_GENERIC_DITHER -DREAL_IS_FLOAT \
 	-fomit-frame-pointer -funroll-all-loops -finline-functions -ffast-math
