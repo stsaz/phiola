@@ -4,7 +4,7 @@
 static int info_help()
 {
 	help_info_write("\
-Show file meta data:\n\
+Analyze audio files:\n\
     `phiola info` [OPTIONS] INPUT...\n\
 \n\
 INPUT                   File name, directory or URL\n\
@@ -24,8 +24,8 @@ Options:\n\
                           [[HH:]MM:]SS[.MSC]\n\
   `-until` TIME           Stop at time\n\
 \n\
+  `-loudness`             Analyze audio loudness\n\
   `-peaks`                Analyze audio and print some details\n\
-  `-peaks_crc`            Print audio data CRC (use with `-peaks`)\n\
 \n\
   `-perf`                 Print performance counters\n\
 ");
@@ -35,7 +35,7 @@ Options:\n\
 
 struct cmd_info {
 	u_char	duration;
-	u_char	pcm_crc;
+	u_char	loudness;
 	u_char	pcm_peaks;
 	u_char	perf;
 	u_char	tags;
@@ -86,9 +86,9 @@ static void info_qu_add(struct cmd_info *p, ffstr *fn)
 		.until_msec = p->until,
 		.afilter = {
 			.peaks_info = p->pcm_peaks,
-			.peaks_crc = p->pcm_crc,
+			.loudness_summary = p->loudness,
 		},
-		.info_only = !p->pcm_peaks,
+		.info_only = !(p->pcm_peaks || p->loudness),
 		.print_tags = p->tags,
 		.print_time = p->perf,
 	};
@@ -105,6 +105,7 @@ static int info_action(struct cmd_info *p)
 	struct phi_queue_conf qc = {
 		.first_filter = &phi_guard,
 		.ui_module = "tui.play",
+		.analyze = 1,
 	};
 	x->queue->create(&qc);
 	ffstr *it;
@@ -131,8 +132,8 @@ static const struct ffarg cmd_info[] = {
 	{ "-exclude",	'S',	info_exclude },
 	{ "-help",		0,		info_help },
 	{ "-include",	'S',	info_include },
+	{ "-loudness",	'1',	O(loudness) },
 	{ "-peaks",		'1',	O(pcm_peaks) },
-	{ "-peaks_crc",	'1',	O(pcm_crc) },
 	{ "-perf",		'1',	O(perf) },
 	{ "-seek",		'S',	info_seek },
 	{ "-tags",		'1',	O(tags) },

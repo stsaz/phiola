@@ -23,10 +23,7 @@ AFPFX := af-
 MODS += afilter.$(SO)
 %.o: $(PHIOLA)/src/afilter/%.c
 	$(C) $(CFLAGS) -DFFBASE_OPT_SIZE $< -o $@
-crc.o: $(PHIOLA)/3pt/crc/crc.c
-	$(C) $(CFLAGS) $< -o $@
 afilter.$(SO): afilter.o \
-		crc.o \
 		peaks.o \
 		gain.o \
 		rtpeak.o \
@@ -48,3 +45,10 @@ dynanorm.o: $(PHIOLA)/src/afilter/dynanorm.c
 	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
 $(AFPFX)danorm.$(SO): dynanorm.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lDynamicAudioNormalizer-phi -o $@
+
+MODS += $(AFPFX)loudness.$(SO)
+LIBS3 += $(ALIB3_BIN)/libebur128-phi.$(SO)
+loudness.o: $(PHIOLA)/src/afilter/loudness.c
+	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
+$(AFPFX)loudness.$(SO): loudness.o
+	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lebur128-phi -lm -o $@

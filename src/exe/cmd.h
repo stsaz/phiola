@@ -227,7 +227,7 @@ Commands:\n\
   `convert`   Convert audio\n\
   `device`    List audio devices\n\
   `gui`       Show graphical interface\n\
-  `info`      Show file meta data\n\
+  `info`      Analyze audio files\n\
   `list`      Process playlist files\n\
   `play`      Play audio [Default command]\n\
   `record`    Record audio\n\

@@ -27,6 +27,7 @@ static const void* af_iface(const char *name)
 {
 	static const struct map_sz_vptr mods[] = {
 		{ "auto-conv",	&phi_autoconv },
+		{ "auto-conv-f",&phi_autoconv_f },
 		{ "conv",		&phi_aconv },
 		{ "gain",		&phi_gain },
 		{ "peaks",		&phi_peaks },

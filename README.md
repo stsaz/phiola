@@ -226,6 +226,9 @@ phiola info -tags -inc "*.mp3" . | grep -B10 "Purple Haze"
 
 # Analyze and show PCM info
 phiola info -peaks file.mp3
+
+# Analyze audio loudness
+phiola info -loudness file.mp3
 ```
 
 Other use-cases:
@@ -255,7 +258,7 @@ Currently supported commands:
 | [convert](src/exe/convert.h) | Convert audio |
 | [device](src/exe/device.h)   | List audio devices |
 | [gui](src/exe/gui.h)         | Start graphical interface |
-| [info](src/exe/info.h)       | Show file meta data |
+| [info](src/exe/info.h)       | Analyze audio files |
 | [list](src/exe/list.h)       | Process playlist files |
 | [play](src/exe/play.h)       | Play audio |
 | [record](src/exe/record.h)   | Record audio |
@@ -332,6 +335,7 @@ phiola uses modified versions of these third party libraries:
 [libALAC](https://github.com/macosforge/alac),
 [libfdk-aac](https://github.com/mstorsjo/fdk-aac),
 [libFLAC](https://github.com/xiph/flac),
+[libebur128](https://github.com/jiixyj/libebur128),
 libMAC,
 [libmpg123](https://mpg123.de),
 libmpc,

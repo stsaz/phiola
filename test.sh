@@ -112,7 +112,7 @@ test_info() {
 	./phiola i pl.wav -tags
 
 	./phiola i pl.wav -peaks
-	./phiola i pl.wav -peaks -peaks_crc
+	./phiola i pl.wav -loudness
 
 	if ! test -f fm_wv.wv ; then
 		ffmpeg_encode pl.wav

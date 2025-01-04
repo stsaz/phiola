@@ -9,6 +9,7 @@ LIBS := \
 	DynamicAudioNormalizer \
 	fdk-aac \
 	FLAC \
+	EBUR128 \
 	mpg123 \
 	opus \
 	soxr \
@@ -37,6 +38,10 @@ fdk-aac: libfdk-aac-phi.$(SO)
 libFLAC-phi.$(SO):
 	$(MAKE) -f $(ALIB3)/FLAC/Makefile
 FLAC: libFLAC-phi.$(SO)
+
+libebur128-phi.$(SO):
+	$(MAKE) -f $(ALIB3)/EBUR128/Makefile
+EBUR128: libebur128-phi.$(SO)
 
 libMAC-phi.$(SO):
 	$(MAKE) -f $(ALIB3)/MAC/Makefile

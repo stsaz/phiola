@@ -289,7 +289,7 @@ struct phi_track_conf {
 	struct {
 		double	gain_db; // Audio gain/attenuation
 		uint	peaks_info :1;
-		uint	peaks_crc :1;
+		uint	loudness_summary :1;
 		const char *danorm;
 	} afilter;
 
@@ -436,6 +436,7 @@ struct phi_queue_conf {
 	};
 	fftime last_mod_time;
 	uint conversion :1;
+	uint analyze :1;
 	uint random :1;
 	uint repeat_all :1;
 	uint modified :1;

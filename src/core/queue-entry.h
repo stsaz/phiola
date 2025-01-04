@@ -151,15 +151,17 @@ static int qe_play(struct q_entry *e)
 			goto err;
 		t->output.allow_async = 1;
 
-	} else if (c->info_only || c->afilter.peaks_info) {
+	} else if (e->q->conf.analyze) {
 		if (!track->filter(t, &phi_queue_guard, 0)
 			|| !track->filter(t, core->mod("core.auto-input"), 0)
 			|| !track->filter(t, core->mod("format.detect"), 0)
 			|| !track->filter(t, core->mod("afilter.until"), 0)
 			|| !track->filter(t, ui_if, 0)
-			|| !track->filter(t, core->mod("afilter.auto-conv"), 0)
+			|| !track->filter(t, core->mod("afilter.auto-conv-f"), 0)
 			|| (c->afilter.peaks_info
-				&& !track->filter(t, core->mod("afilter.peaks"), 0)))
+				&& !track->filter(t, core->mod("afilter.peaks"), 0))
+			|| (c->afilter.loudness_summary
+				&& !track->filter(t, core->mod("af-loudness.analyze"), 0)))
 			goto err;
 
 	} else {

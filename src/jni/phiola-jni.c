@@ -202,6 +202,7 @@ static char* mod_loading(ffstr name)
 		{ "ac-opus",	"libopus-phi" },
 		{ "ac-vorbis",	"libvorbis-phi" },
 		{ "af-danorm",	"libDynamicAudioNormalizer-phi" },
+		{ "af-loudness","libebur128-phi" },
 		{ "af-soxr",	"libsoxr-phi" },
 		{ "zstd",		"libzstd-ffpack" },
 		{}

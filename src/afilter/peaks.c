@@ -8,34 +8,27 @@ extern const phi_core *core;
 #define errlog(t, ...)  phi_errlog(core, NULL, t, __VA_ARGS__)
 #define userlog(t, ...)  phi_userlog(core, NULL, t, __VA_ARGS__)
 
-/** Fast CRC32 implementation using 8k table. */
-extern uint crc32(const void *buf, ffsize size, uint crc);
-
 struct peaks {
-	uint state;
-	uint nch;
+	uint channels;
 	uint64 total;
 
 	struct {
-		uint crc;
-		uint high;
-		uint64 sum;
+		double max;
 		uint64 clipped;
 	} ch[8];
-	uint do_crc :1;
 };
 
 static void* peaks_open(phi_track *t)
 {
-	struct peaks *p;
-	if (t->oaudio.format.channels > FF_COUNT(p->ch)) {
-		errlog(t, "invalid channels");
+	if (!(t->oaudio.format.interleaved
+		&& t->oaudio.format.format == PHI_PCM_FLOAT64
+		&& t->oaudio.format.channels <= 8)) {
+		errlog(t, "invalid input format");
 		return PHI_OPEN_ERR;
 	}
 
-	p = phi_track_allocT(t, struct peaks);
-	p->nch = t->oaudio.format.channels;
-	p->do_crc = t->conf.afilter.peaks_crc;
+	struct peaks *p = phi_track_allocT(t, struct peaks);
+	p->channels = t->oaudio.format.channels;
 	return p;
 }
 
@@ -46,47 +39,23 @@ static void peaks_close(struct peaks *p, phi_track *t)
 
 static int peaks_process(struct peaks *p, phi_track *t)
 {
-	ffsize i, ich, samples;
+	ffsize i, c, samples;
 
-	switch (p->state) {
-	case 0:
-		t->oaudio.conv_format.interleaved = 0;
-		t->oaudio.conv_format.format = PHI_PCM_16;
-		p->state = 1;
-		return PHI_MORE;
-
-	case 1:
-		if (t->oaudio.format.interleaved
-			|| t->oaudio.format.format != PHI_PCM_16) {
-			errlog(t, "input must be non-interleaved 16LE PCM");
-			return PHI_ERR;
-		}
-		p->state = 2;
-		break;
-	}
-
-	samples = t->data_in.len / (sizeof(short) * p->nch);
+	samples = t->data_in.len / 8 / p->channels;
 	p->total += samples;
 
-	void **datani = (void**)t->data_in.ptr;
-	for (ich = 0;  ich != p->nch;  ich++) {
+	const double *data = (void*)t->data_in.ptr;
+	for (c = 0;  c != p->channels;  c++) {
 		for (i = 0;  i != samples;  i++) {
-			int sh = ((short**)t->data_in.ptr)[ich][i];
+			double d = data[i * p->channels + c];
 
-			if (sh == 0x7fff || sh == -0x8000)
-				p->ch[ich].clipped++;
+			if (d >= 1 || d <= -1)
+				p->ch[c].clipped++;
 
-			if (sh < 0)
-				sh = -sh;
-
-			if (p->ch[ich].high < (uint)sh)
-				p->ch[ich].high = sh;
-
-			p->ch[ich].sum += sh;
+			d = fabs(d);
+			if (p->ch[c].max < d)
+				p->ch[c].max = d;
 		}
-
-		if (samples != 0 && p->do_crc)
-			p->ch[ich].crc = crc32(datani[ich], t->data_in.len / p->nch, p->ch[ich].crc);
 	}
 
 	t->data_out = t->data_in;
@@ -97,14 +66,11 @@ static int peaks_process(struct peaks *p, phi_track *t)
 			, p->total);
 
 		if (p->total != 0) {
-			for (ich = 0;  ich != p->nch;  ich++) {
+			for (c = 0;  c != p->channels;  c++) {
 
-				double hi = gain_db(pcm_16le_flt(p->ch[ich].high));
-				double avg = gain_db(pcm_16le_flt(p->ch[ich].sum / p->total));
-				ffvec_addfmt(&buf, "Channel #%L: highest peak:%.2FdB, avg peak:%.2FdB.  Clipped: %U (%.4F%%).  CRC:%08xu\n"
-					, ich + 1, hi, avg
-					, p->ch[ich].clipped, ((double)p->ch[ich].clipped * 100 / p->total)
-					, p->ch[ich].crc);
+				double hi = gain_db(p->ch[c].max);
+				ffvec_addfmt(&buf, "Channel #%L: max peak: %.2FdB  Clipped: %U\n"
+					, c + 1, hi, p->ch[c].clipped);
 			}
 		}
 

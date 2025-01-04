@@ -209,6 +209,7 @@ struct phi_track {
 		struct {
 			struct phi_af format;
 			struct phi_af conv_format;
+			double loudness, loudness_momentary;
 
 			// ui -> audio.play
 			void *adev_ctx;
