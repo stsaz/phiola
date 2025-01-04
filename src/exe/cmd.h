@@ -43,15 +43,28 @@ static int cmd_time_value(ffuint64 *msec, ffstr s)
 
 static int cmd_tracks(ffvec *tracks, ffstr s)
 {
+	ffstr it;
 	while (s.len) {
-		ffstr it;
-		ffstr_splitby(&s, ',', &it, &s);
-		uint n;
+		ssize_t r = ffstr_splitbyany(&s, ",-", &it, &s);
+		uint n, n2;
 		if (!ffstr_to_uint32(&it, &n))
-			return _ffargs_err(&x->cmd, 1, "incorrect track number '%S'", &it);
-		*ffvec_pushT(tracks, uint) = n;
+			goto err;
+		if (r > 0 && it.ptr[it.len] == '-') {
+			ffstr_splitby(&s, ',', &it, &s);
+			if (!ffstr_to_uint32(&it, &n2))
+				goto err;
+			ffvec_growT(tracks, n2 - n + 1, uint);
+			while (n <= n2) {
+				*(uint*)_ffvec_push(tracks, 4) = n++;
+			}
+		} else {
+			*ffvec_pushT(tracks, uint) = n;
+		}
 	}
 	return 0;
+
+err:
+	return _ffargs_err(&x->cmd, 1, "incorrect track number '%S'", &it);
 }
 
 static void cmd_meta_set(ffvec *dst, const ffvec *src)

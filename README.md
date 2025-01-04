@@ -204,7 +204,7 @@ phiola convert "My Recordings" -include "*.wav" -o @filepath/@filename.flac -pre
 phiola convert -copy -seek 1:0 -until 2:0 input.mp3 -o output.mp3
 
 # Extract (100% accurately) several tracks from a .cue file
-phiola convert input.cue -tracks 3,7,13 -o "@tracknumber. @artist - @title.flac"
+phiola convert input.cue -tracks 3,5-7,13 -o "@tracknumber. @artist - @title.flac"
 
 # Increase .wav file's volume by 6 dB
 phiola convert file.wav -gain 6 -o file-louder.wav

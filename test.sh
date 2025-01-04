@@ -544,6 +544,7 @@ EOF
 	fi
 	./phiola i cue.cue -tracks 2,3 | grep 'Artist - T2'
 	./phiola i cue.cue -tracks 2,3 | grep 'Artist - T3'
+	./phiola i cue.cue -tracks 1-3,4
 
 	cat <<EOF >cue.cue
 PERFORMER Artist
