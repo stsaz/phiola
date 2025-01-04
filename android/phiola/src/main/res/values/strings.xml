@@ -76,6 +76,7 @@
 	<string name="sett_trash_dir">Trash Directory (relative to storage mount-point):</string>
 	<string name="sett_quick_move_dir">Quick-Move Directory:</string>
 	<string name="sett_data_dir">App Data Directory:</string>
+	<string name="sett_deprecated_mods">Enable Deprecated Modules (ALAC)</string>
 
 	<string name="sett_recording">Recording</string>
 	<string name="sett_rec_longclick">Long-click for Start/Stop; Short-click for Pause/Resume</string>

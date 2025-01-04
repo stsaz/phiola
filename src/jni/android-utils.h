@@ -26,6 +26,7 @@ static const char setting_names[][20] = {
 	"list_rm_on_err",
 	"list_rm_on_next",
 	"op_data_dir",
+	"op_deprecated_mods",
 	"op_file_delete",
 	"op_plist_save_dir",
 	"op_quick_move_dir",

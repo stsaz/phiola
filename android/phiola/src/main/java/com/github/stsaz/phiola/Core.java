@@ -133,7 +133,7 @@ class Core extends Util {
 
 		setts.normalize();
 		qu.conf_normalize();
-		phiola.setCodepage(setts.codepage);
+		phiola.setConfig(setts.codepage, setts.deprecated_mods);
 	}
 
 	void clipboard_text_set(Context ctx, String s) {

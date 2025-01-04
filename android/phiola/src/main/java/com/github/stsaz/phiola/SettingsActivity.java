@@ -206,6 +206,7 @@ public class SettingsActivity extends AppCompatActivity {
 		b.eTrashDir.setText(core.setts.trash_dir);
 		b.swFileDel.setChecked(core.setts.file_del);
 		b.eQuickMoveDir.setText(core.setts.quick_move_dir);
+		b.swDeprecatedMods.setChecked(core.setts.deprecated_mods);
 
 		rec_load();
 	}
@@ -245,7 +246,6 @@ public class SettingsActivity extends AppCompatActivity {
 
 		// Playback
 		core.setts.set_codepage(b.eCodepage.getText().toString());
-		core.phiola.setCodepage(core.setts.codepage);
 		core.setts.auto_skip_head_set(b.eAutoSkip.getText().toString());
 		core.setts.auto_skip_tail_set(b.eAutoSkipTail.getText().toString());
 
@@ -259,10 +259,12 @@ public class SettingsActivity extends AppCompatActivity {
 		core.setts.trash_dir = b.eTrashDir.getText().toString();
 		core.setts.file_del = b.swFileDel.isChecked();
 		core.setts.quick_move_dir = b.eQuickMoveDir.getText().toString();
+		core.setts.deprecated_mods = b.swDeprecatedMods.isChecked();
 
 		rec_save();
 		core.queue().conf_normalize();
 		core.setts.normalize();
+		core.phiola.setConfig(core.setts.codepage, core.setts.deprecated_mods);
 	}
 
 	// 20%..1%; 0; 10sec..200sec by 10

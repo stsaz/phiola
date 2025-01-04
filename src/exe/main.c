@@ -217,6 +217,9 @@ static char* env_expand(const char *s)
 
 static char* mod_loading(ffstr name)
 {
+	if (ffstr_eqz(&name, "ac-alac"))
+		warnlog("ALAC module is deprecated.  Decoding the files from untrusted sources is NOT RECOMMENDED.");
+
 	return ffsz_allocfmt("%Smod%c%S.%s"
 		, &x->root_dir, FFPATH_SLASH, &name, FFDL_EXT);
 }

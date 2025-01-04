@@ -16,7 +16,7 @@ class Phiola {
 	}
 
 	native String version();
-	native void setCodepage(String codepage);
+	native void setConfig(String codepage, boolean deprecated_mods);
 	native void setDebug(boolean enable);
 
 	static class Meta {

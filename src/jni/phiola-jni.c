@@ -20,7 +20,8 @@ struct phiola_jni {
 	phi_meta_if metaif;
 
 	ffstr dir_libs;
-	ffbyte debug;
+	u_char debug;
+	u_char deprecated_mods;
 	ffvec storage_paths; // char*[]
 	AAssetManager *am;
 
@@ -192,8 +193,9 @@ static int conf()
 Some modules also have the dependencies - load them too. */
 static char* mod_loading(ffstr name)
 {
-	int e = -1;
+	int e = -1, r, attached = 0;
 	char* znames[3] = {};
+	JNIEnv *env;
 
 	static const struct map_sz_vptr mod_deps[] = {
 		{ "ac-aac",		"libfdk-aac-phi" },
@@ -211,13 +213,18 @@ static char* mod_loading(ffstr name)
 	const char *dep = map_sz_vptr_findstr(mod_deps, FF_COUNT(mod_deps), name);
 	znames[0] = ffsz_allocfmt("%S/lib%S.so", &x->dir_libs, &name);
 	if (dep) {
+
+		if (ffstr_eqz(&name, "ac-alac")
+			&& !x->deprecated_mods) {
+			errlog("Loading deprecated libraries is restricted: %S", &name);
+			goto end;
+		}
+
 		znames[1] = ffsz_allocfmt("%S/%s.so", &x->dir_libs, dep);
 		if (ffstr_eqz(&name, "vorbis"))
 			znames[2] = ffsz_allocfmt("%S/libvorbisenc-phi.so", &x->dir_libs);
 	}
 
-	JNIEnv *env;
-	int r, attached;
 	if ((r = jni_vm_attach_once(jvm, &env, &attached, JNI_VERSION_1_6))) {
 		errlog("jni_vm_attach: %d", r);
 		goto end;
@@ -354,7 +361,7 @@ Java_com_github_stsaz_phiola_Phiola_version(JNIEnv *env, jobject thiz)
 }
 
 JNIEXPORT void JNICALL
-Java_com_github_stsaz_phiola_Phiola_setCodepage(JNIEnv *env, jobject thiz, jstring jcodepage)
+Java_com_github_stsaz_phiola_Phiola_setConfig(JNIEnv *env, jobject thiz, jstring jcodepage, jboolean deprecated_mods)
 {
 	const char *sz = jni_sz_js(jcodepage);
 	if (ffsz_eq(sz, "cp1251"))
@@ -362,6 +369,8 @@ Java_com_github_stsaz_phiola_Phiola_setCodepage(JNIEnv *env, jobject thiz, jstri
 	else if (ffsz_eq(sz, "cp1252"))
 		x->core->conf.code_page = FFUNICODE_WIN1252;
 	jni_sz_free(sz, jcodepage);
+
+	x->deprecated_mods = deprecated_mods;
 }
 
 JNIEXPORT void JNICALL

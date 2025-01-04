@@ -64,6 +64,7 @@ static void exe_log(void *log_obj, uint flags, const char *module, phi_track *t,
 }
 
 #define errlog(...)  exe_log(&x->log, PHI_LOG_ERR, NULL, NULL, __VA_ARGS__)
+#define warnlog(...)  exe_log(&x->log, PHI_LOG_WARN, NULL, NULL, __VA_ARGS__)
 
 static int ffu_coding(ffstr s)
 {
@@ -151,6 +152,9 @@ static char* env_expand(const char *s)
 
 static char* mod_loading(ffstr name)
 {
+	if (ffstr_eqz(&name, "ac-alac"))
+		warnlog("ALAC module is deprecated.  Decoding the files from untrusted sources is NOT RECOMMENDED.");
+
 	return ffsz_allocfmt("%Smod%c%S.%s"
 		, &x->root_dir, FFPATH_SLASH, &name, FFDL_EXT);
 }

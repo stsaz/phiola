@@ -46,7 +46,7 @@ class CoreSettings {
 	boolean	debug_logs;
 	boolean	svc_notification_disable;
 	String	trash_dir;
-	boolean	file_del;
+	boolean	file_del, deprecated_mods;
 	String	codepage;
 	String	pub_data_dir;
 	String	plist_save_dir;
@@ -185,6 +185,8 @@ class CoreSettings {
 			+ "op_plist_save_dir %s\n"
 			+ "op_quick_move_dir %s\n"
 			+ "op_trash_dir_rel %s\n"
+			+ "op_deprecated_mods %d\n"
+
 			+ "play_auto_skip %s\n"
 			+ "play_auto_skip_tail %s\n"
 			+ "rec_path %s\n"
@@ -216,6 +218,8 @@ class CoreSettings {
 			, plist_save_dir
 			, quick_move_dir
 			, trash_dir
+			, core.bool_to_int(deprecated_mods)
+
 			, auto_skip_head.str()
 			, auto_skip_tail.str()
 			, rec_path
@@ -317,6 +321,7 @@ class CoreSettings {
 		plist_save_dir = kv[Conf.OP_PLIST_SAVE_DIR].value;
 		quick_move_dir = kv[Conf.OP_QUICK_MOVE_DIR].value;
 		trash_dir = kv[Conf.OP_TRASH_DIR_REL].value;
+		deprecated_mods = kv[Conf.OP_DEPRECATED_MODS].enabled;
 		set_codepage(kv[Conf.CODEPAGE].value);
 
 		auto_skip_head_set(kv[Conf.PLAY_AUTO_SKIP].value);
