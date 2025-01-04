@@ -25,7 +25,11 @@ $(DIR): $(PKG)
 
 # config
 _:=
-ifeq "$(CPU)" "arm64"
+ifeq "$(CPU)" "amd64"
+	ifeq "$(SYS)" "android"
+		CONFIGURE_FLAGS := --host=x86_64
+	endif
+else ifeq "$(CPU)" "arm64"
 	ifeq "$(SYS)" "android"
 		CONFIGURE_FLAGS := --host=aarch64
 	else

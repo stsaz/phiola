@@ -49,13 +49,14 @@ static inline int ffopus_addtag(ffopus_enc *o, const char *name, const char *val
 int ffopus_create(ffopus_enc *o, const struct phi_af *fmt, int bitrate)
 {
 	int r;
-	opus_encode_conf conf = {0};
-	conf.channels = fmt->channels;
-	conf.sample_rate = fmt->rate;
-	conf.bitrate = bitrate;
-	conf.complexity = o->complexity;
-	conf.bandwidth = o->bandwidth;
-	conf.application = o->mode;
+	opus_encode_conf conf = {
+		.channels = fmt->channels,
+		.sample_rate = fmt->rate,
+		.bitrate = bitrate,
+		.complexity = o->complexity,
+		.bandwidth = o->bandwidth,
+		.application = o->mode,
+	};
 	if (0 != (r = opus_encode_create(&o->enc, &conf)))
 		return ERR(o, r);
 	o->preskip = conf.preskip;

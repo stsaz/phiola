@@ -80,6 +80,9 @@ int opus_encode_create(opus_ctx **pc, opus_encode_conf *conf)
 		&& OPUS_OK != (e = opus_encoder_ctl(c, OPUS_SET_BITRATE(conf->bitrate))))
 		goto fail;
 
+	if ((e = opus_encoder_ctl(c, OPUS_SET_VBR_CONSTRAINT(conf->vbr_mode == OPUS_VBR_CONSTRAINED))))
+		goto fail;
+
 	if (conf->complexity != 0
 		&& OPUS_OK != (e = opus_encoder_ctl(c, OPUS_SET_COMPLEXITY(conf->complexity - 1))))
 		goto fail;

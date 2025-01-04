@@ -16,9 +16,7 @@ typedef struct opus_conf {
 	unsigned int channels;
 } opus_conf;
 
-enum {
-	OPUS_MAX_PKT = 4000,
-};
+#define OPUS_MAX_PKT  (6*1275+12)
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,6 +53,11 @@ enum OPUS_APP {
 	OPUS_VOIP,
 };
 
+enum OPUS_VBR {
+	OPUS_VBR_UNCONSTRAINED,
+	OPUS_VBR_CONSTRAINED,
+};
+
 typedef struct opus_encode_conf {
 	unsigned int channels;
 	unsigned int sample_rate;
@@ -62,6 +65,7 @@ typedef struct opus_encode_conf {
 	unsigned int complexity; //1..11
 	unsigned int application; //enum OPUS_APP
 	unsigned int bandwidth; //either 4, 6, 8, 12, 20kHz
+	unsigned int vbr_mode; // enum OPUS_VBR
 	unsigned int preskip; //encoder delay samples
 } opus_encode_conf;
 

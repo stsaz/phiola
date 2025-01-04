@@ -72,7 +72,7 @@ static int opus_enc_encode(void *ctx, phi_track *t)
 
 		o->opus.bandwidth = t->conf.opus.bandwidth;
 		o->opus.mode = t->conf.opus.mode;
-		o->opus.complexity = 0;
+		o->opus.complexity = 10 + 1;
 		o->opus.packet_dur = 40;
 		uint br = (t->conf.opus.bitrate) ? t->conf.opus.bitrate : 192;
 		if (0 != (r = ffopus_create(&o->opus, &o->fmt, br * 1000))) {
