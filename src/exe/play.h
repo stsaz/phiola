@@ -36,13 +36,10 @@ Options:\n\
                           [[HH:]MM:]SS[.MSC]\n\
   `-until` TIME           Stop at time\n\
 \n\
-  `-danorm` \"OPTIONS\"     Apply Dynamic Audio Normalizer filter. Options:\n\
-                          `frame`       Integer\n\
-                          `size`        Integer\n\
-                          `peak`        Float\n\
-                          `max-amp`     Float\n\
-                          `target-rms`  Float\n\
-                          `compress`    Float\n\
+  `-norm` \"OPTIONS\"       Auto loudness normalizer. Options:\n\
+                          `target`     Integer\n\
+                          `attenuate`  Integer\n\
+                          `gain`       Integer\n\
 \n\
   `-audio` STRING         Audio library name (e.g. alsa)\n\
   `-device` NUMBER        Playback device number\n\
@@ -63,7 +60,7 @@ Options:\n\
 
 struct cmd_play {
 	char*	audio_module;
-	const char*	danorm;
+	const char*	auto_norm;
 	const char*	dup;
 	const char*	tee;
 	ffstr	audio;
@@ -131,7 +128,7 @@ static void play_qu_add(struct cmd_play *p, ffstr *fn)
 		.seek_msec = p->seek,
 		.until_msec = p->until,
 		.afilter = {
-			.danorm = p->danorm,
+			.auto_normalizer = p->auto_norm,
 		},
 		.oaudio = {
 			.device_index = p->device,
@@ -209,7 +206,6 @@ static const struct ffarg cmd_play[] = {
 	{ "-audio",		'S',	O(audio) },
 	{ "-buffer",	'u',	O(buffer) },
 	{ "-connect_timeout",	'u',	O(connect_timeout) },
-	{ "-danorm",	's',	O(danorm) },
 	{ "-device",	'u',	O(device) },
 	{ "-dup",		's',	O(dup) },
 	{ "-exclude",	'S',	play_exclude },
@@ -217,6 +213,7 @@ static const struct ffarg cmd_play[] = {
 	{ "-help",		0,		play_help },
 	{ "-include",	'S',	play_include },
 	{ "-no_meta",	'1',	O(no_meta) },
+	{ "-norm",		's',	O(auto_norm) },
 	{ "-perf",		'1',	O(perf) },
 	{ "-random",	'1',	O(random) },
 	{ "-rbuffer",	'u',	O(rbuffer_kb) },

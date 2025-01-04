@@ -32,6 +32,7 @@ static void gui_finish();
 #define O(m)  (void*)FF_OFF(struct gui_data, m)
 const struct ffarg guimod_args[] = {
 	{ "list.auto_sel",	'u',	O(auto_select) },
+	{ "play.auto_norm",	'u',	O(conf.auto_norm) },
 	{ "play.auto_skip",	'd',	O(conf.auto_skip_sec_percent) },
 	{ "play.cursor",	'u',	O(cursor) },
 	{ "play.dev",		'u',	O(conf.odev) },
@@ -48,6 +49,7 @@ const struct ffarg guimod_args[] = {
 void mod_userconf_write(ffconfw *cw)
 {
 	ffconfw_add2u(cw, "list.auto_sel", gd->auto_select);
+	ffconfw_add2u(cw, "play.auto_norm", gd->conf.auto_norm);
 	ffconfw_add2u(cw, "play.auto_skip", (ffint64)gd->conf.auto_skip_sec_percent);
 	ffconfw_add2u(cw, "play.cursor", gd->cursor);
 	ffconfw_add2u(cw, "play.dev", gd->conf.odev);
@@ -295,6 +297,7 @@ void ctl_play(uint i)
 		struct phi_queue_conf *qc = gd->queue->conf(NULL);
 		qc->repeat_all = gd->conf.repeat;
 		qc->random = gd->conf.random;
+		qc->tconf.afilter.auto_normalizer = (gd->conf.auto_norm) ? "" : NULL;
 		qc->tconf.oaudio.device_index = gd->conf.odev;
 	}
 	phi_queue_id q = (gd->q_filtered) ? gd->q_filtered : NULL;
@@ -874,6 +877,7 @@ static void gui_start(void *param)
 	qc->name = ffsz_dup("Playlist 1");
 	qc->repeat_all = gd->conf.repeat;
 	qc->random = gd->conf.random;
+	qc->tconf.afilter.auto_normalizer = (gd->conf.auto_norm) ? "" : NULL;
 	qc->tconf.oaudio.device_index = gd->conf.odev;
 
 	struct list_info *li = ffvec_zpushT(&gd->lists, struct list_info);

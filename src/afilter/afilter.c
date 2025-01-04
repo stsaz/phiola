@@ -20,6 +20,7 @@ const phi_core *core;
 
 extern const phi_filter
 	phi_aconv,
+	phi_auto_norm,
 	phi_gain,
 	phi_peaks,
 	phi_rtpeak;
@@ -28,6 +29,7 @@ static const void* af_iface(const char *name)
 	static const struct map_sz_vptr mods[] = {
 		{ "auto-conv",	&phi_autoconv },
 		{ "auto-conv-f",&phi_autoconv_f },
+		{ "auto-norm",	&phi_auto_norm },
 		{ "conv",		&phi_aconv },
 		{ "gain",		&phi_gain },
 		{ "peaks",		&phi_peaks },

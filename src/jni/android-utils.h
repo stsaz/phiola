@@ -30,6 +30,7 @@ static const char setting_names[][20] = {
 	"op_plist_save_dir",
 	"op_quick_move_dir",
 	"op_trash_dir_rel",
+	"play_auto_norm",
 	"play_auto_skip",
 	"play_auto_skip_tail",
 	"play_auto_stop",

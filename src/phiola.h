@@ -290,6 +290,7 @@ struct phi_track_conf {
 		double	gain_db; // Audio gain/attenuation
 		uint	peaks_info :1;
 		uint	loudness_summary :1;
+		const char *auto_normalizer;
 		const char *danorm;
 	} afilter;
 

@@ -27,6 +27,7 @@ afilter.$(SO): afilter.o \
 		peaks.o \
 		gain.o \
 		rtpeak.o \
+		auto-norm.o \
 		conv.o \
 		\
 		str-format.o

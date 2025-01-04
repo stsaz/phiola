@@ -69,6 +69,7 @@
 	<string name="sett_codepage">Codepage for Non-Unicode Tags</string>
 	<string name="sett_auto_skip">Auto-Skip the Beginning of Each Track (% or sec):</string>
 	<string name="sett_auto_skip_tail">Auto-Skip the Ending of Each Track (% or sec):</string>
+	<string name="sett_auto_norm">Auto Loudness Normalizer</string>
 
 	<string name="sett_operation">Operation</string>
 	<string name="sett_file_del">Don\'t Move Files to Trash</string>

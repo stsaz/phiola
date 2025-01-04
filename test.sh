@@ -410,6 +410,13 @@ test_danorm() {
 	./phiola rec -danorm "" -f -o dan_rec96k.flac -u 10 -af int24 -rate 96000 ; ./phiola i dan_rec96k.flac | grep 'int24 96000Hz' ; ./phiola dan_rec96k.flac
 }
 
+test_norm() {
+	if ! test -f pl.wav ; then
+		./phiola rec -rate 48000 -o pl.wav -f -u 2
+	fi
+	./phiola pl pl.wav -norm ""
+}
+
 test_dir_read() {
 	./phiola i -inc '*.wav' .
 	./phiola i -inc '*.wav' -exc 'co*.wav' .
@@ -702,6 +709,7 @@ TESTS=(
 	copy
 	meta
 	danorm
+	norm
 	dir_read
 	list
 	list_heal

@@ -186,6 +186,13 @@
 			android:inputType="text"
 			android:textSize="@dimen/text_editbox" />
 
+		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/sw_auto_norm"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="@dimen/sett_margin"
+			android:text="@string/sett_auto_norm" />
+
 		<TextView
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"

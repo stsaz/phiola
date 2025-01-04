@@ -253,6 +253,7 @@ enum {
 	QUCOM_REMOVE_ON_ERROR = 12,
 	QUCOM_CONV_CANCEL = 13,
 	QUCOM_CONV_UPDATE = 14,
+	QUCOM_AUTO_NORM = 15,
 };
 
 static void qu_cmd(struct core_data *d)
@@ -276,6 +277,7 @@ static void qu_cmd(struct core_data *d)
 		struct phi_queue_conf *qc = x->queue.conf(NULL);
 		qc->repeat_all = x->play.repeat_all;
 		qc->random = x->play.random;
+		qc->tconf.afilter.auto_normalizer = (x->play.auto_normalizer) ? "" : NULL;
 		x->queue.play(NULL, x->queue.at(q, d->param_int));
 		break;
 	}
@@ -315,10 +317,22 @@ Java_com_github_stsaz_phiola_Phiola_quCmd(JNIEnv *env, jobject thiz, jlong jq, j
 		x->play.remove_on_error = !!i;  break;
 
 	case QUCOM_REPEAT:
-		x->play.repeat_all = !!i;  break;
+		x->play.repeat_all = !!i;  goto qc_apply;
 
 	case QUCOM_RANDOM:
-		x->play.random = !!i;  break;
+		x->play.random = !!i;  goto qc_apply;
+
+	case QUCOM_AUTO_NORM:
+		x->play.auto_normalizer = !!i;
+
+	qc_apply: {
+		// Apply settings for the active playlist
+		struct phi_queue_conf *qc = x->queue.conf(NULL);
+		qc->repeat_all = x->play.repeat_all;
+		qc->random = x->play.random;
+		qc->tconf.afilter.auto_normalizer = (x->play.auto_normalizer) ? "" : NULL;
+	}
+		break;
 
 	case QUCOM_CONV_CANCEL:
 		FFINT_WRITEONCE(x->convert.interrupt, 1);  break;

@@ -130,7 +130,8 @@ class Queue {
 		F_RANDOM = 2,
 		F_MOVE_ON_NEXT = 4,
 		F_RM_ON_NEXT = 8,
-		F_RM_ON_ERR = 0x10;
+		F_RM_ON_ERR = 0x10,
+		F_AUTO_NORM = 0x20;
 	private int flags;
 	void flags_set1(int mask, boolean val) {
 		int i = 0;
@@ -144,6 +145,9 @@ class Queue {
 
 		if ((mask & F_RANDOM) != 0 && (val & F_RANDOM) != (this.flags & F_RANDOM))
 			phi.quCmd(-1, Phiola.QUCOM_RANDOM, val & F_RANDOM);
+
+		if ((mask & F_AUTO_NORM) != 0 && (val & F_AUTO_NORM) != (this.flags & F_AUTO_NORM))
+			phi.quCmd(-1, Phiola.QUCOM_AUTO_NORM, val & F_AUTO_NORM);
 
 		if ((mask & F_RM_ON_ERR) != 0 && (val & F_RM_ON_ERR) != (this.flags & F_RM_ON_ERR))
 			phi.quCmd(-1, Phiola.QUCOM_REMOVE_ON_ERROR, val & F_RM_ON_ERR);
@@ -309,6 +313,8 @@ class Queue {
 			phi.quCmd(-1, Phiola.QUCOM_RANDOM, 1);
 		if (flags_test(F_RM_ON_ERR))
 			phi.quCmd(-1, Phiola.QUCOM_REMOVE_ON_ERROR, 1);
+		if (flags_test(F_AUTO_NORM))
+			phi.quCmd(-1, Phiola.QUCOM_AUTO_NORM, 1);
 
 		core.phiola.quSetCallback(this::on_change);
 	}
@@ -556,6 +562,7 @@ class Queue {
 			+ "list_add_rm_on_next %d\n"
 			+ "list_rm_on_next %d\n"
 			+ "list_rm_on_err %d\n"
+			+ "play_auto_norm %d\n"
 			+ "play_auto_stop %d\n"
 			, curpos
 			, i_active
@@ -564,6 +571,7 @@ class Queue {
 			, core.bool_to_int(flags_test(F_MOVE_ON_NEXT))
 			, core.bool_to_int(flags_test(F_RM_ON_NEXT))
 			, core.bool_to_int(flags_test(F_RM_ON_ERR))
+			, core.bool_to_int(flags_test(F_AUTO_NORM))
 			, auto_stop_value_min
 			);
 	}
@@ -579,6 +587,7 @@ class Queue {
 		if (kv[Conf.LIST_ADD_RM_ON_NEXT].enabled) f |= F_MOVE_ON_NEXT;
 		if (kv[Conf.LIST_RM_ON_NEXT].enabled) f |= F_RM_ON_NEXT;
 		if (kv[Conf.LIST_RM_ON_ERR].enabled) f |= F_RM_ON_ERR;
+		if (kv[Conf.PLAY_AUTO_NORM].enabled) f |= F_AUTO_NORM;
 		this.flags = f;
 
 		auto_stop_value_min = kv[Conf.PLAY_AUTO_STOP].number;

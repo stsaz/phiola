@@ -158,7 +158,9 @@ class Phiola {
 
 		/** Update current status of all entries.
 		Return 0 when conversion is complete. */
-		QUCOM_CONV_UPDATE = 14;
+		QUCOM_CONV_UPDATE = 14,
+
+		QUCOM_AUTO_NORM = 15;
 	native int quCmd(long q, int cmd, int i);
 
 	native Meta quMeta(long q, int i);
