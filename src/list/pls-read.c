@@ -46,22 +46,16 @@ static int pls_add(struct pls_r *p, phi_track *t)
 		return 1;
 
 	struct phi_queue_entry qe = {
+		.url = url.ptr,
 		.length_msec = (p->pls_ent.duration != -1) ? p->pls_ent.duration * 1000 : 0,
 	};
-	phi_track_conf_assign(&qe.conf, &t->conf);
-	qe.conf.ifile.name = url.ptr;
-	ffstr_null(&url);
-	if (t->conf.ofile.name)
-		qe.conf.ofile.name = ffsz_dup(t->conf.ofile.name);
-	metaif->copy(&qe.conf.meta, &t->conf.meta);
-	ffslice_null(&qe.conf.tracks);
 
-	if (!qe.conf.meta.len && p->pls_ent.title.len) {
-		metaif->set(&qe.conf.meta, FFSTR_Z("title"), *(ffstr*)&p->pls_ent.title, 0);
-		qe.conf.meta_transient = 1;
+	if (p->pls_ent.title.len) {
+		metaif->set(&qe.meta, FFSTR_Z("title"), *(ffstr*)&p->pls_ent.title, 0);
 	}
 
 	p->qu_cur = queue->insert(p->qu_cur, &qe);
+	ffstr_free(&url);
 
 	if (!p->removed) {
 		p->removed = 1;

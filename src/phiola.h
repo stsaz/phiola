@@ -29,6 +29,7 @@ struct _phi_fftask { size_t a[4]; };
 typedef struct _phi_fftask phi_task;
 struct _phi_fftimerqueue_node { size_t a[8]; };
 typedef struct _phi_fftimerqueue_node phi_timer;
+typedef struct { uint len, cap; void *ptr; } phi_meta;
 
 enum PHI_LOG {
 	PHI_LOG_ERR,
@@ -267,12 +268,10 @@ struct phi_track_conf {
 	ffslice tracks; // uint[]
 
 	uint	split_msec;
-	uint64	seek_msec;
-	uint64	until_msec;
-	uint64	seek_cdframes;
-	uint64	until_cdframes;
+	uint64	seek_msec, until_msec;
+	uint	seek_cdframes, until_cdframes;
 
-	ffvec	meta; // char*[]
+	phi_meta	meta;
 
 	const char*	tee;
 	const char*	tee_output;
@@ -334,7 +333,6 @@ struct phi_track_conf {
 	uint	info_only :1;
 	uint	print_tags :1;
 	uint	stream_copy :1;
-	uint	meta_transient :1;
 	uint	cross_worker_assign :1;
 };
 
@@ -386,23 +384,27 @@ struct phi_meta_if {
 
 	/** Set meta data.
 	flags: enum PHI_META_SET */
-	void (*set)(ffvec *meta, ffstr name, ffstr val, uint flags);
+	void (*set)(phi_meta *meta, ffstr name, ffstr val, uint flags);
 
-	void (*copy)(ffvec *dst, const ffvec *src);
+	void (*copy)(phi_meta *dst, const phi_meta *src, uint flags);
 
 	/**
 	Return 0 on success */
-	int (*find)(const ffvec *meta, ffstr name, ffstr *val, uint flags);
+	int (*find)(const phi_meta *meta, ffstr name, ffstr *val, uint flags);
 
 	/**
 	idx: must be initialized to 0
 	flags: enum PHI_META_LIST
 	Return 0 on complete */
-	int (*list)(const ffvec *meta, uint *idx, ffstr *name, ffstr *val, uint flags);
+	int (*list)(const phi_meta *meta, uint *idx, ffstr *name, ffstr *val, uint flags);
 
-	void (*destroy)(ffvec *meta);
+	void (*destroy)(phi_meta *meta);
 };
 
+static inline void phi_meta_null(phi_meta *m) {
+	m->ptr = NULL;
+	m->len = m->cap = 0;
+}
 
 enum PHI_ADEV_F {
 	PHI_ADEV_PLAYBACK,
@@ -435,6 +437,7 @@ struct phi_queue_conf {
 		const char *ui_module;
 		const phi_filter *ui_module_if;
 	};
+	struct phi_track_conf tconf;
 	fftime last_mod_time;
 	uint conversion :1;
 	uint analyze :1;
@@ -445,9 +448,12 @@ struct phi_queue_conf {
 };
 
 struct phi_queue_entry {
-	struct phi_track_conf conf;
-	uint length_msec;
-	uint lock; // For synchronizing access to `conf.meta`
+	char*	url;
+	phi_meta meta;
+	uint	length_msec;
+	uint	seek_cdframes, until_cdframes;
+	uint	lock; // For synchronizing access to `meta`
+	uint	meta_priority :1; // Supplied `meta` has higher priority than meta from input file (e.g. for .cue track)
 };
 
 enum PHI_Q_SORT {
@@ -459,6 +465,11 @@ enum PHI_Q_SORT {
 
 enum PHI_Q_REMOVE {
 	PHI_Q_RM_NONEXIST = 1,
+};
+
+enum PHI_QUEUE_FILTER {
+	PHI_QF_FILENAME = 1,
+	PHI_QF_META = 2,
 };
 
 typedef struct phi_queue* phi_queue_id;
@@ -488,7 +499,8 @@ struct phi_queue_if {
 	int (*add)(phi_queue_id q, struct phi_queue_entry *qe);
 	int (*count)(phi_queue_id q);
 
-	/** Create a new virtual queue with the items matching a filter */
+	/** Create a new virtual queue with the items matching a filter
+	flags: enum PHI_QUEUE_FILTER */
 	phi_queue_id (*filter)(phi_queue_id q, ffstr filter, uint flags);
 
 	int (*play)(phi_queue_id q, void *e);
@@ -555,7 +567,7 @@ struct phi_remote_cl_if {
 
 struct phi_tag_conf {
 	const char *filename;
-	ffvec meta; // ffstr[]
+	ffslice meta; // ffstr[]
 	uint clear :1;
 	uint preserve_date :1;
 	uint no_expand :1;

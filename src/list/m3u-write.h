@@ -40,11 +40,11 @@ static int m3uw_process(void *ctx, phi_track *t)
 	while (NULL != (qe = queue->at(m->q, m->pos++))) {
 
 		m3uwrite_entry m3e = {
-			.url = FFSTR_Z(qe->conf.ifile.name),
+			.url = FFSTR_Z(qe->url),
 			.duration_sec = (qe->length_msec) ? (int)qe->length_msec / 1000 : -1,
 		};
-		metaif->find(&qe->conf.meta, FFSTR_Z("artist"), &m3e.artist, 0);
-		metaif->find(&qe->conf.meta, FFSTR_Z("title"), &m3e.title, 0);
+		metaif->find(&qe->meta, FFSTR_Z("artist"), &m3e.artist, 0);
+		metaif->find(&qe->meta, FFSTR_Z("title"), &m3e.title, 0);
 		m3uwrite_process(&m->m3, &m3e);
 	}
 

@@ -78,7 +78,7 @@ static void meta_fill(JNIEnv *env, jobject jmeta, const phi_track *t)
 	jni_obj_sz_set(env, jmeta, jni_field_str(x->Phiola_Meta, "url"), t->conf.ifile.name);
 
 	struct phi_queue_entry *qe = (struct phi_queue_entry*)t->qent;
-	const ffvec *meta = &qe->conf.meta;
+	const phi_meta *meta = &qe->meta;
 
 	uint i = 0;
 	ffstr k, v;
@@ -174,13 +174,8 @@ static int play_ui_process(void *f, phi_track *t)
 		x->metaif.set(&t->meta, FFSTR_Z("_phi_info"), FFSTR_Z(buf), 0);
 
 		// We need to display the currently active track's meta data before `queue` does this on track close
-		fflock_lock((fflock*)&qe->lock); // UI thread may read or write `conf.meta` at this moment
-		ffvec meta_old = qe->conf.meta;
-		qe->conf.meta = t->meta;
-		fflock_unlock((fflock*)&qe->lock);
-
-		x->metaif.destroy(&meta_old);
-		ffvec_null(&t->meta);
+		if (!qe->meta_priority)
+			qe_meta_update(qe, &t->meta, &x->metaif);
 
 		JNIEnv *env;
 		int r = jni_vm_attach(jvm, &env);

@@ -149,7 +149,7 @@ static void split_next(struct split *c, phi_track *t)
 	};
 	c->out_trk = track->create(&conf);
 	phi_track *ot = c->out_trk;
-	meta_if->copy(&ot->meta, &t->meta);
+	meta_if->copy(&ot->meta, &t->meta, 0);
 
 	ot->data_type = "pcm";
 	ot->audio.format = t->audio.format;

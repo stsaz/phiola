@@ -156,7 +156,7 @@ struct phi_track {
 		fftime mtime; // Modification date/time
 	} input;
 
-	ffvec meta;
+	phi_meta meta;
 	void *qent;
 	void *udata;
 	uint icy_meta_interval; // Upon receiving HTTP response, 'http' filter sets ICY meta interval for 'icy' filter
@@ -279,13 +279,4 @@ static inline void phi_track_free(phi_track *t, void *ptr)
 		return;
 	}
 	ffmem_free(ptr);
-}
-
-static inline void phi_track_conf_assign(struct phi_track_conf *dst, const struct phi_track_conf *src)
-{
-	*dst = *src;
-	dst->ifile.name = NULL;
-	dst->ofile.name = NULL;
-	ffvec_null(&dst->meta);
-	ffslice_null(&dst->tracks);
 }

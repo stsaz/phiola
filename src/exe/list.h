@@ -52,17 +52,18 @@ static void lc_done(void *lc, phi_track *t)
 
 static int lc_action(struct list_create *lc)
 {
-	struct phi_queue_conf qc = {};
+	struct phi_queue_conf qc = {
+		.tconf = {
+			.ifile.include = *(ffslice*)&lc->include,
+			.ifile.exclude = *(ffslice*)&lc->exclude,
+		},
+	};
 	phi_queue_id q = x->queue->create(&qc);
 
 	char **it;
 	FFSLICE_WALK(&lc->input, it) {
 		struct phi_queue_entry qe = {
-			.conf.ifile = {
-				.name = ffsz_dup(*it),
-				.include = *(ffslice*)&lc->include,
-				.exclude = *(ffslice*)&lc->exclude,
-			},
+			.url = *it,
 		};
 		x->queue->add(q, &qe);
 	}

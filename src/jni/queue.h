@@ -111,9 +111,10 @@ Java_com_github_stsaz_phiola_Phiola_quDestroy(JNIEnv *env, jobject thiz, jlong q
 static void qu_cmd_add(struct core_data *d)
 {
 	struct phi_queue_entry qe = {
-		.conf.ifile.name = d->param_str,
+		.url = d->param_str,
 	};
 	x->queue.add(d->q, &qe);
+	ffmem_free(d->param_str);
 	ffmem_free(d);
 }
 
@@ -125,9 +126,7 @@ static void qu_cmd_dup(struct core_data *d)
 	uint i = (pos >= 0) ? pos : 0;
 	for (;  (iqe = x->queue.at(iq, i));  i++) {
 		struct phi_queue_entry qe = {};
-		phi_track_conf_assign(&qe.conf, &iqe->conf);
-		qe.conf.ifile.name = ffsz_dup(iqe->conf.ifile.name);
-		x->metaif.copy(&qe.conf.meta, &iqe->conf.meta);
+		qe_copy(&qe, iqe, &x->metaif);
 		x->queue.add(d->q, &qe);
 		if (pos >= 0)
 			break;
@@ -190,7 +189,7 @@ JNIEXPORT jstring JNICALL
 Java_com_github_stsaz_phiola_Phiola_quEntry(JNIEnv *env, jobject thiz, jlong q, jint i)
 {
 	struct phi_queue_entry *qe = x->queue.ref((phi_queue_id)q, i);
-	const char *url = qe->conf.ifile.name;
+	const char *url = qe->url;
 	jstring s = jni_js_sz(url);
 	x->queue.unref(qe);
 	return s;
@@ -208,7 +207,7 @@ Java_com_github_stsaz_phiola_Phiola_quMoveAll(JNIEnv *env, jobject thiz, jlong q
 		struct phi_queue_entry *qe = x->queue.ref((phi_queue_id)q, i);
 		if (!qe)
 			break;
-		const char *url = qe->conf.ifile.name;
+		const char *url = qe->url;
 
 		ffstr name;
 		ffpath_splitpath_str(FFSTR_Z(url), NULL, &name);
@@ -356,13 +355,13 @@ Java_com_github_stsaz_phiola_Phiola_quCmd(JNIEnv *env, jobject thiz, jlong jq, j
 
 static ffvec info_prepare(const struct phi_queue_entry *qe)
 {
-	const ffvec *meta = &qe->conf.meta;
+	const phi_meta *meta = &qe->meta;
 	ffvec info = {};
 	ffvec_allocT(&info, 5*2 + meta->len, char*);
 	char **p = info.ptr;
 
 	*p++ = ffsz_dup("url");
-	*p++ = ffsz_dup(qe->conf.ifile.name);
+	*p++ = ffsz_dup(qe->url);
 
 	*p++ = ffsz_dup("size");
 	*p++ = NULL;
@@ -444,14 +443,14 @@ Java_com_github_stsaz_phiola_Phiola_quMeta(JNIEnv *env, jobject thiz, jlong jq, 
 static void display_name_prepare(ffstr *val, ffsize cap, struct phi_queue_entry *qe, uint index, uint flags)
 {
 	ffstr artist = {}, title = {}, name;
-	x->metaif.find(&qe->conf.meta, FFSTR_Z("title"), &title, 0);
+	x->metaif.find(&qe->meta, FFSTR_Z("title"), &title, 0);
 	if (title.len) {
-		x->metaif.find(&qe->conf.meta, FFSTR_Z("artist"), &artist, 0);
+		x->metaif.find(&qe->meta, FFSTR_Z("artist"), &artist, 0);
 		ffstr_addfmt(val, cap, "%u. %S - %S"
 			, index + 1, &artist, &title);
 	} else {
-		ffstr_setz(&name, qe->conf.ifile.name);
-		if (!url_checkz(qe->conf.ifile.name))
+		ffstr_setz(&name, qe->url);
+		if (!url_checkz(qe->url))
 			ffpath_splitpath_str(name, NULL, &name);
 		ffstr_addfmt(val, cap, "%u. %S"
 			, index + 1, &name);
@@ -476,11 +475,11 @@ Java_com_github_stsaz_phiola_Phiola_quDisplayLine(JNIEnv *env, jobject thiz, jlo
 	ffstr val = {};
 	struct phi_queue_entry *qe = x->queue.ref(q, i);
 	fflock_lock((fflock*)&qe->lock); // core thread may read or write `conf.meta` at this moment
-	if (x->metaif.find(&qe->conf.meta, FFSTR_Z("_phi_display"), &val, PHI_META_PRIVATE)) {
+	if (x->metaif.find(&qe->meta, FFSTR_Z("_phi_display"), &val, PHI_META_PRIVATE)) {
 		val.ptr = buf;
 		uint flags = x->queue.conf(q)->conversion;
 		display_name_prepare(&val, sizeof(buf) - 1, qe, i, flags);
-		x->metaif.set(&qe->conf.meta, FFSTR_Z("_phi_display"), val, 0);
+		x->metaif.set(&qe->meta, FFSTR_Z("_phi_display"), val, 0);
 		val.ptr[val.len] = '\0';
 	}
 	jstring js = jni_js_sz(val.ptr);
@@ -529,9 +528,13 @@ Java_com_github_stsaz_phiola_Phiola_quConvertBegin(JNIEnv *env, jobject thiz, jl
 		.stream_copy = !!(flags & F_COPY),
 		.oaudio.format.format = jni_obj_int(jconf, jni_field_int(jc_conf, "sample_format")),
 		.oaudio.format.rate = jni_obj_int(jconf, jni_field_int(jc_conf, "sample_rate")),
+
 		.aac.quality = jni_obj_int(jconf, jni_field_int(jc_conf, "aac_quality")),
 		.vorbis.quality = jni_obj_int(jconf, jni_field_int(jc_conf, "vorbis_quality")),
 		.opus.bitrate = jni_obj_int(jconf, jni_field_int(jc_conf, "opus_quality")),
+
+		.ofile.name = ffsz_dup(ofn),
+		.ofile.name_tmp = 1,
 		.ofile.overwrite = !!(flags & F_OVERWRITE),
 	};
 
@@ -559,42 +562,26 @@ Java_com_github_stsaz_phiola_Phiola_quConvertBegin(JNIEnv *env, jobject thiz, jl
 	x->convert.q_pos = jni_obj_int(jconf, jni_field_int(jc_conf, "q_pos"));
 
 	phi_queue_id q = (phi_queue_id)jq;
-	uint i;
 	struct phi_queue_entry *qe;
-	for (i = 0;  !!(qe = x->queue.at(q, i));  i++) {
-		struct phi_track_conf *c = &qe->conf;
-
-		c->ifile.preserve_date = conf.ifile.preserve_date;
-		c->seek_msec = conf.seek_msec;
-		c->until_msec = conf.until_msec;
-		c->stream_copy = conf.stream_copy;
-
-		c->oaudio.format.format = conf.oaudio.format.format;
-		c->oaudio.format.rate = conf.oaudio.format.rate;
-
-		c->aac.quality = conf.aac.quality;
-		c->vorbis.quality = conf.vorbis.quality;
-		c->opus.bitrate = conf.opus.bitrate;
-
-		c->ofile.name = ffsz_dup(ofn);
-		c->ofile.name_tmp = 1;
-		c->ofile.overwrite = conf.ofile.overwrite;
-
-		if (conf.meta.len) {
-			qe->conf.meta_transient = 0;
-			x->metaif.destroy(&c->meta);
-			x->metaif.copy(&c->meta, &conf.meta);
-		}
+	if ((qe = x->queue.at(q, 0))) {
+		struct phi_queue_conf *qc = x->queue.conf(q);
+		ffmem_free(qc->tconf.ofile.name);
+		x->metaif.destroy(&qc->tconf.meta);
+		qc->tconf = conf;
+		qc->tconf.meta = conf.meta;
+		phi_meta_null(&conf.meta);
+		conf.ofile.name = NULL;
 	}
 
 	ffvec_free_align(&x->convert.tracks);
-	ffvec_alloc_alignT(&x->convert.tracks, i, 64, struct conv_track_info);
-	ffmem_zero(x->convert.tracks.ptr, i * sizeof(struct conv_track_info));
+	uint n = x->queue.count(q);
+	ffvec_alloc_alignT(&x->convert.tracks, n, 64, struct conv_track_info);
+	ffmem_zero(x->convert.tracks.ptr, n * sizeof(struct conv_track_info));
 
 	x->convert.q = q;
 	x->convert.interrupt = 0;
 	x->convert.n_tracks_updated = ~0U;
-	if (i)
+	if (qe)
 		x->queue.play(NULL, x->queue.at(q, 0));
 
 end:
@@ -652,7 +639,7 @@ static void qu_conv_update(phi_queue_id q)
 		}
 
 		fflock_lock((fflock*)&qe->lock); // UI thread may read or write `conf.meta` at this moment
-		x->metaif.set(&qe->conf.meta, FFSTR_Z("_phi_display"), val, PHI_META_REPLACE);
+		x->metaif.set(&qe->meta, FFSTR_Z("_phi_display"), val, PHI_META_REPLACE);
 		fflock_unlock((fflock*)&qe->lock);
 	}
 	FFINT_WRITEONCE(x->convert.n_tracks_updated, n);

@@ -73,11 +73,12 @@ static int info_input(struct cmd_info *p, ffstr s)
 	return cmd_input(&p->input, s);
 }
 
-static void info_qu_add(struct cmd_info *p, ffstr *fn)
+static int info_action(struct cmd_info *p)
 {
+	x->queue->on_change(q_on_change);
+
 	struct phi_track_conf c = {
 		.ifile = {
-			.name = ffsz_dupstr(fn),
 			.include = *(ffslice*)&p->include,
 			.exclude = *(ffslice*)&p->exclude,
 		},
@@ -93,24 +94,19 @@ static void info_qu_add(struct cmd_info *p, ffstr *fn)
 		.print_time = p->perf,
 	};
 
-	struct phi_queue_entry qe = {
-		.conf = c,
-	};
-	x->queue->add(NULL, &qe);
-}
-
-static int info_action(struct cmd_info *p)
-{
-	x->queue->on_change(q_on_change);
 	struct phi_queue_conf qc = {
 		.first_filter = &phi_guard,
 		.ui_module = "tui.play",
+		.tconf = c,
 		.analyze = 1,
 	};
 	x->queue->create(&qc);
 	ffstr *it;
 	FFSLICE_WALK(&p->input, it) {
-		info_qu_add(p, it);
+		struct phi_queue_entry qe = {
+			.url = it->ptr,
+		};
+		x->queue->add(NULL, &qe);
 	}
 	ffvec_free(&p->input);
 

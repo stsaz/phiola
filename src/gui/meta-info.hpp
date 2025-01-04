@@ -62,10 +62,10 @@ static void winfo_display(struct phi_queue_entry *qe)
 	w->keys.reset();
 	w->changed = 0;
 
-	winfo_addpair("File path", qe->conf.ifile.name);
+	winfo_addpair("File path", qe->url);
 
 	fffileinfo fi = {};
-	ffbool have_fi = (0 == fffile_info_path(qe->conf.ifile.name, &fi));
+	ffbool have_fi = (0 == fffile_info_path(qe->url, &fi));
 
 	data.len = 0;
 	if (have_fi)
@@ -83,7 +83,7 @@ static void winfo_display(struct phi_queue_entry *qe)
 	winfo_addpair("File date", data);
 
 	fflock_lock((fflock*)&qe->lock); // core thread may read or write `conf.meta` at this moment
-	const ffvec *meta = &qe->conf.meta;
+	const phi_meta *meta = &qe->meta;
 
 	gd->metaif->find(meta, FFSTR_Z("_phi_info"), &val, PHI_META_PRIVATE);
 	winfo_addpair("Info", val);
@@ -120,7 +120,7 @@ void winfo_show(uint show, uint idx)
 		ffmem_free(w->wnd_pos);
 	}
 
-	w->wnd.title(qe->conf.ifile.name);
+	w->wnd.title(qe->url);
 	winfo_display(qe);
 	w->qe = qe;
 	// keep the entry locked
@@ -136,7 +136,7 @@ static void winfo_edit(uint idx, const char *new_text)
 	if ((int)ki < 0)
 		return;
 	ffstr name = *w->keys.at<ffstr>(ki);
-	gd->metaif->set(&w->qe->conf.meta, name, val, PHI_META_REPLACE);
+	gd->metaif->set(&w->qe->meta, name, val, PHI_META_REPLACE);
 	if (ki >= 32)
 		warnlog("can write only up to 32 tags");
 	ffbit_set32(&w->changed, ki);
@@ -150,12 +150,12 @@ static void winfo_tag_add(ffstr name)
 	if (!w->qe) return;
 
 	ffstr val;
-	if (!gd->metaif->find(&w->qe->conf.meta, name, &val, 0)) {
+	if (!gd->metaif->find(&w->qe->meta, name, &val, 0)) {
 		warnlog("tag already exists: %S", &name);
 		return;
 	}
 	val = FFSTR_Z("");
-	gd->metaif->set(&w->qe->conf.meta, name, val, 0);
+	gd->metaif->set(&w->qe->meta, name, val, 0);
 	winfo_addpair(name, val);
 	ffstr_dupstr(w->keys.push_z<ffstr>(), &name);
 	ffbit_set32(&w->changed, w->keys.len - 1);
@@ -176,7 +176,7 @@ static void winfo_write()
 		i = ffbit_rfind32(bits) - 1;
 		ffbit_reset32(&bits, i);
 		k = *w->keys.at<ffstr>(i);
-		if (!gd->metaif->find(&w->qe->conf.meta, k, &v, 0)) {
+		if (!gd->metaif->find(&w->qe->meta, k, &v, 0)) {
 			ffvec s = {};
 			ffvec_addfmt(&s, "%S=%S", &k, &v);
 			*m.push<ffstr>() = *(ffstr*)&s;
@@ -187,10 +187,10 @@ static void winfo_write()
 		return;
 
 	struct phi_tag_conf conf = {};
-	conf.filename = w->qe->conf.ifile.name;
+	conf.filename = w->qe->url;
 	conf.meta = m.slice();
 	if (!tag->edit(&conf)) {
-		gd->metaif->destroy(&w->qe->conf.meta);
+		gd->metaif->destroy(&w->qe->meta);
 		w->keys.reset();
 		w->changed = 0;
 		w->vinfo.clear();

@@ -92,15 +92,12 @@ static int qu_add_dir_r(const char *fn, phi_track *t)
 			continue;
 		}
 
-		struct phi_queue_entry qe = {};
-		phi_track_conf_assign(&qe.conf, &t->conf);
-		qe.conf.ifile.name = fpath;
-		fpath = NULL;
-		if (t->conf.ofile.name)
-			qe.conf.ofile.name = ffsz_dup(t->conf.ofile.name);
-		phi_metaif->copy(&qe.conf.meta, &t->conf.meta);
-
+		struct phi_queue_entry qe = {
+			.url = fpath,
+		};
 		qcur = phi_queueif.insert(qcur, &qe);
+		ffmem_free(fpath);
+		fpath = NULL;
 
 		if (!dir_removed) {
 			dir_removed = 1;

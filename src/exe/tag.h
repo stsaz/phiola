@@ -51,8 +51,8 @@ static int tag_action(struct cmd_tag *t)
 	ffstr *fn;
 	FFSLICE_WALK(&t->input, fn) {
 		struct phi_tag_conf conf = {
-			.filename = ffsz_dupstr(fn),
-			.meta = t->meta,
+			.filename = fn->ptr,
+			.meta = *(ffslice*)&t->meta,
 			.clear = t->clear,
 			.preserve_date = t->preserve_date,
 			.no_expand = t->fast,

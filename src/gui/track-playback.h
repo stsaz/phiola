@@ -167,18 +167,13 @@ static int gtrk_process(void *ctx, phi_track *t)
 		gd->metaif->find(&t->meta, FFSTR_Z("artist"), &artist, 0);
 		gd->metaif->find(&t->meta, FFSTR_Z("title"), &title, 0);
 		if (!title.len)
-			ffpath_split3_str(FFSTR_Z(qe->conf.ifile.name), NULL, &title, NULL); // use filename as a title
+			ffpath_split3_str(FFSTR_Z(t->conf.ifile.name), NULL, &title, NULL); // use filename as a title
 		ffsz_format(ti->buf, sizeof(ti->buf), "%S - %S - phiola"
 			, &artist, &title);
 
 		// We need to display the currently active track's meta data before `queue` does this on track close
-		fflock_lock((fflock*)&qe->lock); // UI thread may read or write `conf.meta` at this moment
-		ffvec meta_old = qe->conf.meta;
-		qe->conf.meta = t->meta;
-		fflock_unlock((fflock*)&qe->lock);
-
-		gd->metaif->destroy(&meta_old);
-		ffvec_null(&t->meta);
+		if (!qe->meta_priority)
+			qe_meta_update(qe, &t->meta, gd->metaif);
 
 		gui_task_ptr(wmain_track_new, ti);
 

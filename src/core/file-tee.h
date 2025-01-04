@@ -163,7 +163,7 @@ static int tee_process(void *f, phi_track *t)
 			.ofile.name = ffsz_dup(tee_name),
 		};
 		c->out_trk = core->track->create(&conf);
-		meta_if->copy(&c->out_trk->meta, &t->meta);
+		meta_if->copy(&c->out_trk->meta, &t->meta, 0);
 
 		if (t->conf.tee_output) {
 			c->out_trk->data_type = "pcm";

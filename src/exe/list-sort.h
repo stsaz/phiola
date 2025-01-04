@@ -56,7 +56,7 @@ static int ls_action(struct list_sort *ls)
 		phi_queue_id q = x->queue->create(&qc);
 
 		struct phi_queue_entry qe = {
-			.conf.ifile.name = ffsz_dup(*it),
+			.url = *it,
 		};
 		x->queue->add(q, &qe);
 

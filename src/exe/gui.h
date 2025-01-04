@@ -19,8 +19,7 @@ struct cmd_gui {
 
 static int gui_input(struct cmd_gui *g, ffstr s)
 {
-	*ffvec_pushT(&g->input, ffstr) = s;
-	return 0;
+	return cmd_input(&g->input, s);
 }
 
 static void gui_log_ctl(uint flags)
@@ -42,7 +41,7 @@ static int gui_action(struct cmd_gui *g)
 	ffstr *it;
 	FFSLICE_WALK(&g->input, it) {
 		struct phi_queue_entry qe = {
-			.conf.ifile.name = ffsz_dupstr(it),
+			.url = it->ptr,
 		};
 		x->queue->add(NULL, &qe);
 	}

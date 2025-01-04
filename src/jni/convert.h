@@ -74,7 +74,7 @@ static void conv_grd_close(void *ctx, phi_track *t)
 
 			if (x->convert.q_add_remove) {
 				struct phi_queue_entry qe = {
-					.conf.ifile.name = ffsz_dup(oname),
+					.url = (char*)oname,
 				};
 				x->queue.add(x->convert.q_add_remove, &qe);
 			}
@@ -86,7 +86,7 @@ static void conv_grd_close(void *ctx, phi_track *t)
 						&& x->convert.q_pos >= 0) {
 						struct phi_queue_entry *qe = x->queue.ref(x->convert.q_add_remove, x->convert.q_pos);
 						if (qe) {
-							if (ffsz_eq(qe->conf.ifile.name, t->conf.ifile.name))
+							if (ffsz_eq(qe->url, t->conf.ifile.name))
 								x->queue.remove(qe);
 							x->queue.unref(qe);
 						}

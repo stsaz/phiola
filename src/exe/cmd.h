@@ -67,7 +67,7 @@ err:
 	return _ffargs_err(&x->cmd, 1, "incorrect track number '%S'", &it);
 }
 
-static void cmd_meta_set(ffvec *dst, const ffvec *src)
+static void cmd_meta_set(phi_meta *dst, const ffvec *src)
 {
 	if (!x->metaif)
 		x->metaif = x->core->mod("format.meta");
@@ -87,7 +87,7 @@ static int cmd_input_names(ffvec *input, fffd f)
 	ffvec buf = {};
 	for (;;) {
 		ffvec_grow(&buf, 8*1024, 1);
-		ssize_t r = ffstdin_read(ffslice_end(&buf, 1), ffvec_unused(&buf));
+		ssize_t r = ffstdin_read(ffslice_end(&buf, 1), ffvec_unused(&buf) - 1);
 		if (r == 0) {
 			break;
 		} else if (r < 0) {
@@ -102,8 +102,10 @@ static int cmd_input_names(ffvec *input, fffd f)
 	while (view.len) {
 		ffstr_splitby(&view, '\n', &ln, &view);
 		ffstr_trimwhite(&ln);
-		if (ln.len)
+		if (ln.len) {
+			ln.ptr[ln.len] = '\0';
 			*ffvec_pushT(input, ffstr) = ln;
+		}
 	}
 
 	rc = 0;
@@ -138,7 +140,8 @@ static int wildcard_expand(ffvec *input, ffstr s)
 		dbglog("wildcard expand: %s", fn);
 		ffstr *p = ffvec_zpushT(input, ffstr);
 		ffsize cap = 0;
-		ffstr_growfmt(p, &cap, "%S\\%s", &dir, fn);
+		ffstr_growfmt(p, &cap, "%S\\%s%Z", &dir, fn);
+		p->len--;
 	}
 
 	rc = 0;
@@ -157,6 +160,7 @@ static int cmd_input(ffvec *input, ffstr s)
 		return cmd_input_names(input, ffstdin);
 
 #ifdef FF_WIN
+	s.ptr[s.len] = '\0';
 	if (!(ffstr_matchz(&s, "http://")
 			|| ffstr_matchz(&s, "https://")
 			|| ffstr_matchz(&s, "\\\\?\\"))

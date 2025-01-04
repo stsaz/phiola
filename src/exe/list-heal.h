@@ -217,6 +217,7 @@ static void lh_free_table(struct list_heal *lh)
 			continue;
 		struct lh_map_ent *me = it->val;
 		ffmem_free(me->path.ptr);
+		ffmem_free(me);
 	}
 	ffmap_free(&lh->map);
 }
@@ -330,14 +331,14 @@ static void lh_ready(void *param)
 	struct phi_queue_entry *qe;
 	for (uint i = 0;  (qe = x->queue->at(q, i));  i++) {
 		char *new_name;
-		if ((new_name = lh_heal(lh, qe->conf.ifile.name))) {
-			ffmem_free(qe->conf.ifile.name);
-			qe->conf.ifile.name = new_name;
+		if ((new_name = lh_heal(lh, qe->url))) {
+			qe->url = new_name;
 			nfixed++;
 		}
 		ntotal++;
 	}
 
+	ffvec_free(&lh->tasks);
 	ffvec_free(&lh->buf);
 	ffvec_free(&lh->pl_dir);
 	ffvec_free(&lh->ds_path);
@@ -362,7 +363,7 @@ static int lh_action(struct list_heal *lh)
 		phi_queue_id q = x->queue->create(&qc);
 
 		struct phi_queue_entry qe = {
-			.conf.ifile.name = ffsz_dup(*it),
+			.url = *it,
 		};
 		x->queue->add(q, &qe);
 

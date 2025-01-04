@@ -255,7 +255,7 @@ static int action()
 	char **it;
 	FFSLICE_WALK(&x->input, it) {
 		struct phi_queue_entry qe = {
-			.conf.ifile.name = ffsz_dup(*it),
+			.url = *it,
 		};
 		if (0 == x->queue->add(NULL, &qe))
 			x->queue->play(NULL, x->queue->at(NULL, 0));

@@ -218,7 +218,7 @@ static void conv_track_update(phi_track *t, const char *progress)
 {
 	gui_wmain *m = gg->wmain;
 	struct phi_queue_entry *qe = (struct phi_queue_entry*)t->qent;
-	gd->metaif->set(&qe->conf.meta, FFSTR_Z("_phi_dur"), FFSTR_Z(progress), PHI_META_REPLACE);
+	gd->metaif->set(&qe->meta, FFSTR_Z("_phi_dur"), FFSTR_Z(progress), PHI_META_REPLACE);
 	if (gd->tab_conversion) {
 		int idx = gd->queue->index(t->qent);
 		m->vlist.update(idx, 0);
@@ -260,7 +260,7 @@ static void list_display(ffui_view_disp *disp)
 		return;
 
 	fflock_lock((fflock*)&qe->lock); // core thread may read or write `conf.meta` at this moment
-	ffvec *meta = &qe->conf.meta;
+	phi_meta *meta = &qe->meta;
 
 	switch (sub) {
 	case H_INDEX:
@@ -269,7 +269,7 @@ static void list_display(ffui_view_disp *disp)
 		break;
 
 	case H_FN:
-		s = FFSTR_Z(qe->conf.ifile.name);
+		s = FFSTR_Z(qe->url);
 		val = &s;
 		break;
 
@@ -281,10 +281,10 @@ static void list_display(ffui_view_disp *disp)
 	switch (sub) {
 	case H_TITLE:
 		if (!val || !val->len) {
-			if (url_checkz(qe->conf.ifile.name))
-				ffstr_setz(&s, qe->conf.ifile.name); // use URL as a title
+			if (url_checkz(qe->url))
+				ffstr_setz(&s, qe->url); // use URL as a title
 			else
-				ffpath_split3_str(FFSTR_Z(qe->conf.ifile.name), NULL, &s, NULL); // use filename as a title
+				ffpath_split3_str(FFSTR_Z(qe->url), NULL, &s, NULL); // use filename as a title
 			val = &s;
 		}
 		break;

@@ -198,6 +198,30 @@ static inline void phi_af_update(struct phi_af *dst, const struct phi_af *src)
 }
 
 
+#include <ffbase/lock.h>
+
+static inline void qe_meta_update(struct phi_queue_entry *qe, phi_meta *src, const phi_meta_if *metaif)
+{
+	fflock_lock((fflock*)&qe->lock); // UI thread may read or write `conf.meta` at this moment
+	phi_meta meta_old = qe->meta;
+	qe->meta = *src;
+	fflock_unlock((fflock*)&qe->lock);
+
+	metaif->destroy(&meta_old);
+	phi_meta_null(src);
+}
+
+static inline void qe_copy(struct phi_queue_entry *dst, const struct phi_queue_entry *src, const phi_meta_if *metaif)
+{
+	dst->url = src->url;
+	dst->length_msec = src->length_msec;
+	dst->seek_cdframes = src->seek_cdframes;
+	dst->until_cdframes = src->until_cdframes;
+	dst->meta_priority = src->meta_priority;
+	metaif->copy(&dst->meta, &src->meta, 0);
+}
+
+
 #include <ffsys/file.h>
 
 static inline int file_copydata(fffd src, ffuint64 offsrc, fffd dst, ffuint64 offdst, ffuint64 size)

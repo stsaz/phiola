@@ -26,9 +26,10 @@ static struct remote_ctl *g;
 static int cmd_start(void *o, ffstr s)
 {
 	struct phi_queue_entry qe = {
-		.conf.ifile.name = ffsz_dupstr(&s),
+		.url = ffsz_dupstr(&s),
 	};
 	int i = g->queue->add(NULL, &qe);
+	ffmem_free(qe.url);
 	g->queue->play(NULL, g->queue->at(NULL, i));
 	return 0;
 }

@@ -152,6 +152,10 @@ static void q_free(struct phi_queue *q)
 		return;
 	}
 
+	ffmem_free(q->conf.tconf.ofile.name);
+	ffslice_free(&q->conf.tconf.tracks);
+	meta_destroy(&q->conf.tconf.meta);
+
 	ffmem_free(q->conf.name);
 	ffmem_free(q);
 }
@@ -197,7 +201,7 @@ static void* q_insert(struct phi_queue *q, uint pos, struct phi_queue_entry *qe)
 	else
 		*ffslice_moveT((ffslice*)&q->index, pos, pos + 1, q->index.len - 1 - pos, void*) = e;
 	fflock_unlock(&q->lock);
-	dbglog("added '%s' [%u/%L]", qe->conf.ifile.name, pos, q->index.len);
+	dbglog("added '%s' [%u/%L]", qe->url, pos, q->index.len);
 	q_modified(q);
 	qm->on_change(q, 'a', pos);
 	return e;
@@ -526,7 +530,7 @@ static int q_remove_at(struct phi_queue *q, uint pos, uint n)
 	if (!e)
 		return -1;
 	e->index = ~0;
-	dbglog("removed '%s' @%u", e->pub.conf.ifile.name, pos);
+	dbglog("removed '%s' @%u", e->pub.url, pos);
 	fflock_lock(&q->lock); // after q_ref() has read the item @pos, but before 'used++', the item must not be destroyed
 
 	if (q->cursor_index > 0
@@ -601,7 +605,7 @@ static int q_sort_cmp(const void *_a, const void *_b, void *udata)
 			return 1;
 	}
 
-	return ffsz_icmp(a->pub.conf.ifile.name, b->pub.conf.ifile.name);
+	return ffsz_icmp(a->pub.url, b->pub.url);
 }
 
 static void q_sort(phi_queue_id q, uint flags)
@@ -623,7 +627,7 @@ static void q_sort(phi_queue_id q, uint flags)
 			FFSLICE_WALK(&q->index, it) {
 				fffileinfo fi;
 				uint64 fs = 0;
-				if (!fffile_info_path((*it)->pub.conf.ifile.name, &fi)) {
+				if (!fffile_info_path((*it)->pub.url, &fi)) {
 					fs = fffileinfo_size(&fi);
 					if (flags == PHI_Q_SORT_FILEDATE)
 						fs = fffileinfo_mtime(&fi).sec;
@@ -654,7 +658,7 @@ static void q_remove_multi(phi_queue_id q, uint flags)
 	FFSLICE_WALK(&q->index, it) {
 		struct q_entry *qe = *it;
 		if (flags & PHI_Q_RM_NONEXIST) {
-			const char *fn = qe->pub.conf.ifile.name;
+			const char *fn = qe->pub.url;
 			if (fffile_exists(fn)) {
 				*ffvec_pushT(&new_index, void*) = qe;
 				continue;

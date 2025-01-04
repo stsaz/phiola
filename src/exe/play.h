@@ -110,11 +110,21 @@ static int play_input(struct cmd_play *p, ffstr s)
 	return cmd_input(&p->input, s);
 }
 
-static void play_qu_add(struct cmd_play *p, ffstr *fn)
+static int play_action(struct cmd_play *p)
 {
+	if (p->volume != ~0U) {
+		struct phi_ui_conf uc = {
+			.volume_percent = p->volume,
+		};
+		const phi_ui_if *uif = x->core->mod("tui.if");
+		uif->conf(&uc);
+	}
+
+	if (p->audio.len)
+		p->audio_module = ffsz_allocfmt("%S.play", &p->audio);
+
 	struct phi_track_conf c = {
 		.ifile = {
-			.name = ffsz_dupstr(fn),
 			.buf_size = p->rbuffer_kb * 1024,
 			.include = *(ffslice*)&p->include,
 			.exclude = *(ffslice*)&p->exclude,
@@ -138,37 +148,22 @@ static void play_qu_add(struct cmd_play *p, ffstr *fn)
 		.print_time = p->perf,
 	};
 
-	struct phi_queue_entry qe = {
-		.conf = c,
-	};
-	x->queue->add(NULL, &qe);
-}
-
-static int play_action(struct cmd_play *p)
-{
-	if (p->volume != ~0U) {
-		struct phi_ui_conf uc = {
-			.volume_percent = p->volume,
-		};
-		const phi_ui_if *uif = x->core->mod("tui.if");
-		uif->conf(&uc);
-	}
-
-	if (p->audio.len)
-		p->audio_module = ffsz_allocfmt("%S.play", &p->audio);
-
 	x->queue->on_change(q_on_change);
 	struct phi_queue_conf qc = {
 		.first_filter = &phi_guard,
 		.audio_module = p->audio_module,
 		.ui_module = "tui.play",
+		.tconf = c,
 		.random = p->random,
 		.repeat_all = p->repeat_all,
 	};
 	x->queue->create(&qc);
 	ffstr *it;
 	FFSLICE_WALK(&p->input, it) {
-		play_qu_add(p, it);
+		struct phi_queue_entry qe = {
+			.url = it->ptr,
+		};
+		x->queue->add(NULL, &qe);
 	}
 	ffvec_free(&p->input);
 

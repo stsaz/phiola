@@ -274,16 +274,12 @@ static void add_track(struct cue *c, struct ffcuetrk *ctrk, phi_track *t)
 {
 	dbglog(t, "add '%S' %d..%d", &c->url, ctrk->from, ctrk->to);
 	struct phi_queue_entry qe = {
+		.url = c->url.ptr,
+		.seek_cdframes = ctrk->from,
+		.until_cdframes = ctrk->to,
 		.length_msec = (ctrk->to) ? (ctrk->to - ctrk->from) * 1000 / 75 : 0,
+		.meta_priority = 1,
 	};
-	phi_track_conf_assign(&qe.conf, &t->conf);
-	qe.conf.ifile.name = ffsz_dupstr(&c->url);
-	if (t->conf.ofile.name)
-		qe.conf.ofile.name = ffsz_dup(t->conf.ofile.name);
-	metaif->copy(&qe.conf.meta, &t->conf.meta);
-	ffslice_null(&qe.conf.tracks);
-	qe.conf.seek_cdframes = ctrk->from;
-	qe.conf.until_cdframes = ctrk->to;
 
 	// add global meta that isn't set in TRACK context
 	ffvec *m = (void*)c->gmetas.ptr;
@@ -292,13 +288,13 @@ static void add_track(struct cue *c, struct ffcuetrk *ctrk, phi_track *t)
 		if (cue_meta_find(&c->metas, c->nmeta, &m[i]) >= 0)
 			continue;
 
-		metaif->set(&qe.conf.meta, *(ffstr*)&m[i], *(ffstr*)&m[i + 1], 0);
+		metaif->set(&qe.meta, *(ffstr*)&m[i], *(ffstr*)&m[i + 1], 0);
 	}
 
 	// add TRACK meta
 	m = (void*)c->metas.ptr;
 	for (uint i = 0;  i != c->nmeta;  i += 2) {
-		metaif->set(&qe.conf.meta, *(ffstr*)&m[i], *(ffstr*)&m[i + 1], 0);
+		metaif->set(&qe.meta, *(ffstr*)&m[i], *(ffstr*)&m[i + 1], 0);
 	}
 
 	c->qu_cur = queue->insert(c->qu_cur, &qe);

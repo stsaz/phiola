@@ -91,7 +91,7 @@ void file_del(ffslice indices)
 
 	FFSLICE_WALK(&indices, it) {
 		qe = gd->queue->at(gd->q_selected, *it);
-		*ffvec_pushT(&names, char*) = qe->conf.ifile.name;
+		*ffvec_pushT(&names, char*) = qe->url;
 	}
 
 #ifdef FF_WIN
@@ -138,12 +138,12 @@ void file_dir_show(ffslice indices)
 		const struct phi_queue_entry *qe = gd->queue->at(list_id_visible(), *it);
 
 #ifdef FF_WIN
-		const char *const names[] = { qe->conf.ifile.name };
+		const char *const names[] = { qe->url };
 		ffui_openfolder(names, 1);
 
 #else
 		ffstr dir;
-		ffpath_splitpath_str(FFSTR_Z(qe->conf.ifile.name), &dir, NULL);
+		ffpath_splitpath_str(FFSTR_Z(qe->url), &dir, NULL);
 		char *dirz = ffsz_dupstr(&dir);
 		dir_show(dirz);
 		ffmem_free(dirz);
@@ -528,7 +528,7 @@ void lists_load()
 		}
 
 		struct phi_queue_entry qe = {
-			.conf.ifile.name = fn,
+			.url = fn,
 		};
 		fn = NULL;
 		gd->queue->add(q, &qe);
@@ -541,22 +541,25 @@ void list_add(ffstr fn)
 {
 	if (gd->q_filtered) return;
 
-	struct phi_queue_entry qe = {};
-	qe.conf.ifile.name = ffsz_dupstr(&fn);
+	struct phi_queue_entry qe = {
+		.url = ffsz_dupstr(&fn),
+	};
 	gd->queue->add(gd->q_selected, &qe);
+	ffmem_free(qe.url);
 }
 
 void list_add_sz(void *sz)
 {
-	if (gd->q_filtered) {
-		ffmem_free(sz);
-		return;
-	}
+	if (gd->q_filtered)
+		goto end;
 
 	struct phi_queue_entry qe = {
-		.conf.ifile.name = sz,
+		.url = sz,
 	};
 	gd->queue->add(gd->q_selected, &qe);
+
+end:
+	ffmem_free(sz);
 }
 
 void list_add_multi(ffslice names)
@@ -605,7 +608,7 @@ void list_add_to_next(ffslice indices)
 	uint *it;
 	FFSLICE_WALK(&indices, it) {
 		struct phi_queue_entry *qe = gd->queue->at(q_src, *it), nqe = {};
-		nqe.conf.ifile.name = ffsz_dup(qe->conf.ifile.name);
+		qe_copy(&nqe, qe, gd->metaif);
 		gd->queue->add(q_target, &nqe);
 	}
 
@@ -709,9 +712,7 @@ void convert_add(ffslice indices)
 		const struct phi_queue_entry *iqe = gd->queue->at(q, *it);
 
 		struct phi_queue_entry qe = {};
-		phi_track_conf_assign(&qe.conf, &iqe->conf);
-		qe.conf.ifile.name = ffsz_dup(iqe->conf.ifile.name);
-		gd->metaif->copy(&qe.conf.meta, &iqe->conf.meta);
+		qe_copy(&qe, iqe, gd->metaif);
 		gd->queue->add(gd->q_convert, &qe);
 	}
 
@@ -722,34 +723,26 @@ void convert_add(ffslice indices)
 void convert_begin(void *param)
 {
 	struct phi_track_conf *c = param;
-	uint i = 0;
+	struct phi_queue_entry *qe = NULL;
 	if (!gd->q_convert)
 		goto end;
 
-	struct phi_queue_entry *qe;
-	for (i = 0;  !!(qe = gd->queue->at(gd->q_convert, i));  i++) {
-		qe->conf.ofile.name = ffsz_dup(c->ofile.name);
-		qe->conf.ifile.preserve_date = c->ifile.preserve_date;
-		qe->conf.seek_msec = c->seek_msec;
-		qe->conf.until_msec = c->until_msec;
-		qe->conf.aac.quality = c->aac.quality;
-		qe->conf.vorbis.quality = c->vorbis.quality;
-		qe->conf.opus.bitrate = c->opus.bitrate;
-		qe->conf.stream_copy = c->stream_copy;
-
-		if (c->meta.len) {
-			qe->conf.meta_transient = 0;
-			gd->metaif->destroy(&qe->conf.meta);
-			gd->metaif->copy(&qe->conf.meta, &c->meta);
-		}
-	}
-	if (i)
+	if ((qe = gd->queue->at(gd->q_convert, 0))) {
+		struct phi_queue_conf *qc = gd->queue->conf(gd->q_convert);
+		gd->metaif->destroy(&qc->tconf.meta);
+		ffmem_free(qc->tconf.ofile.name);
+		qc->tconf = *c;
+		phi_meta_null(&c->meta);
+		c->ofile.name = NULL;
 		gd->queue->play(NULL, gd->queue->at(gd->q_convert, 0));
+	}
 
 end:
-	if (!i)
+	if (!qe) {
 		wconvert_done();
-	ffmem_free(c->ofile.name);
+		ffmem_free(c->ofile.name);
+		gd->metaif->destroy(&c->meta);
+	}
 	ffmem_free(c);
 }
 

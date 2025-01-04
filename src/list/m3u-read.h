@@ -53,26 +53,18 @@ static int m3u_add(struct m3u *m, phi_track *t)
 		dur = m->pls_ent.duration * 1000;
 
 	struct phi_queue_entry qe = {
+		.url = url.ptr,
 		.length_msec = dur,
 	};
-	phi_track_conf_assign(&qe.conf, &t->conf);
-	qe.conf.ifile.name = url.ptr;
-	ffstr_null(&url);
-	if (t->conf.ofile.name)
-		qe.conf.ofile.name = ffsz_dup(t->conf.ofile.name);
-	metaif->copy(&qe.conf.meta, &t->conf.meta);
-	ffslice_null(&qe.conf.tracks);
 
-	if (!qe.conf.meta.len) { // must not mix user-meta with transient-meta
-		if (m->pls_ent.artist.len)
-			metaif->set(&qe.conf.meta, FFSTR_Z("artist"), *(ffstr*)&m->pls_ent.artist, 0);
+	if (m->pls_ent.artist.len)
+		metaif->set(&qe.meta, FFSTR_Z("artist"), *(ffstr*)&m->pls_ent.artist, 0);
 
-		if (m->pls_ent.title.len)
-			metaif->set(&qe.conf.meta, FFSTR_Z("title"), *(ffstr*)&m->pls_ent.title, 0);
-		qe.conf.meta_transient = 1;
-	}
+	if (m->pls_ent.title.len)
+		metaif->set(&qe.meta, FFSTR_Z("title"), *(ffstr*)&m->pls_ent.title, 0);
 
 	m->qu_cur = queue->insert(m->qu_cur, &qe);
+	ffstr_free(&url);
 
 	if (!m->m3u_removed) {
 		m->m3u_removed = 1;

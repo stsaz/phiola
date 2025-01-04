@@ -202,11 +202,12 @@ static int conv_cpu_affinity(struct cmd_conv *v, ffstr s)
 	return 0;
 }
 
-static void conv_qu_add(struct cmd_conv *v, ffstr *fn)
+static int conv_action(struct cmd_conv *v)
 {
+	x->queue->on_change(q_on_change);
+
 	struct phi_track_conf c = {
 		.ifile = {
-			.name = ffsz_dupstr(fn),
 			.include = *(ffslice*)&v->include,
 			.exclude = *(ffslice*)&v->exclude,
 			.preserve_date = v->preserve_date,
@@ -243,28 +244,22 @@ static void conv_qu_add(struct cmd_conv *v, ffstr *fn)
 		.stream_copy = v->copy,
 		.print_time = v->perf,
 	};
-
 	cmd_meta_set(&c.meta, &v->meta);
 	ffvec_free(&v->meta);
 
-	struct phi_queue_entry qe = {
-		.conf = c,
-	};
-	x->queue->add(NULL, &qe);
-}
-
-static int conv_action(struct cmd_conv *v)
-{
-	x->queue->on_change(q_on_change);
 	struct phi_queue_conf qc = {
 		.first_filter = &phi_guard,
 		.ui_module = "tui.play",
+		.tconf = c,
 		.conversion = 1,
 	};
 	x->queue->create(&qc);
 	ffstr *it;
 	FFSLICE_WALK(&v->input, it) {
-		conv_qu_add(v, it);
+		struct phi_queue_entry qe = {
+			.url = it->ptr,
+		};
+		x->queue->add(NULL, &qe);
 	}
 	ffvec_free(&v->input);
 
