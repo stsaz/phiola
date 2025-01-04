@@ -2,11 +2,11 @@
 
 include ../config.mk
 
-VER := 0.1.3
-URL := https://github.com/stsaz/phiola/raw/alib3/alib3/soxr/soxr-0.1.3-Source.tar.xz
-MD5SUM := 3f16f4dcb35b471682d4321eda6f6c08
-PKG := $(ALIB3)/soxr/$(notdir $(URL))
-DIR := soxr-$(VER)-Source
+VER := edbdb4081db14eb21729b57c4f2c813514ad0259
+URL := https://github.com/dofuuz/soxr/archive/soxr-$(VER).zip
+MD5SUM := e5294f21a1d98860f4d94fe40ebe7f7c
+PKG := $(ALIB3)/soxr/soxr-$(VER).zip
+DIR := soxr-$(VER)
 LIB := libsoxr-phi.$(SO)
 
 default: $(DIR)/soxr-config.h
@@ -19,11 +19,11 @@ $(PKG):
 # unpack
 $(DIR): $(PKG)
 	echo "$(MD5SUM) *$(PKG)" | md5sum -c -
-	$(UNTAR_XZ) $(PKG)
+	$(UNZIP) $(PKG)
 
 $(DIR)/soxr-config.h: | $(DIR)
 	cd $(DIR) && cmake -Wno-dev -DCMAKE_BUILD_TYPE="Release" $(CMAKE_FLAGS) .
-	cat $(ALIB3)/soxr/*.patch | patch -d $(DIR) -p1
+	# cat $(ALIB3)/soxr/*.patch | patch -d $(DIR) -p1
 	# cd $(DIR) && make VERBOSE=1
 	$(SED) 's/AVUTIL_FOUND 1/AVUTIL_FOUND 0/' $(DIR)/soxr-config.h
 ifeq "$(CPU)" "amd64"
@@ -42,7 +42,7 @@ ifeq "$(CPU)" "arm"
 	# w/a for `cannot locate symbol "fetestexcept"`
 	CFLAGS += -DSOXR_NO_FETESTEXCEPT
 endif
-ifeq ($(OS),windows)
+ifeq "$(OS)" "windows"
 	CFLAGS += -DSOXR_DLL -Dsoxr_EXPORTS -D_USE_MATH_DEFINES
 else
 	CFLAGS += -DSOXR_VISIBILITY
@@ -65,28 +65,25 @@ SRC_SIMD32 := \
 	$(DIR)/src/pffft32s.c \
 	$(DIR)/src/util32s.c
 
+SRC_AVX := \
+	$(DIR)/src/cr64s.c \
+	$(DIR)/src/pffft64s.c \
+	$(DIR)/src/util64s.c
+
 SRC += $(SRC_SIMD32)
 
 ifeq "$(CPU)" "amd64"
-	SRC += \
-		$(DIR)/src/cr64s.c \
-		$(DIR)/src/pffft64s.c \
-		$(DIR)/src/util64s.c
+	SRC += $(SRC_AVX)
+$(SRC_AVX:.c=.o): CFLAGS += -mavx
 endif
 
-OBJ := $(SRC:.c=.o)
+OBJ := soxr-phi.o $(SRC:.c=.o)
+
+%.o: $(ALIB3)/soxr/%.c $(wildcard $(DIR)/src/*.h)
+	$(C) $(CFLAGS) $< -o $@
 
 %.o: %.c $(wildcard $(DIR)/src/*.h)
 	$(C) $(CFLAGS) $< -o $@
-
-$(DIR)/src/cr64s.o: $(DIR)/src/cr64s.c $(wildcard $(DIR)/src/*.h)
-	$(C) $(CFLAGS) -mavx $< -o $@
-
-$(DIR)/src/pffft64s.o: $(DIR)/src/pffft64s.c $(wildcard $(DIR)/src/*.h)
-	$(C) $(CFLAGS) -mavx $< -o $@
-
-$(DIR)/src/util64s.o: $(DIR)/src/util64s.c $(wildcard $(DIR)/src/*.h)
-	$(C) $(CFLAGS) -mavx $< -o $@
 
 $(LIB): $(OBJ)
 	$(LINK) -shared $+ $(LINKFLAGS) -o $@

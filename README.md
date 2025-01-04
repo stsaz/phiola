@@ -343,7 +343,7 @@ libmpc,
 [libopus](https://github.com/xiph/opus),
 [libvorbis](https://github.com/xiph/vorbis),
 libwavpack,
-libsoxr,
+[libsoxr](https://github.com/dofuuz/soxr),
 [libzstd](https://github.com/facebook/zstd),
 [libDynamicAudioNormalizer](https://github.com/lordmulder/DynamicAudioNormalizer).
 And these unmodified libraries:

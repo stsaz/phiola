@@ -35,9 +35,9 @@ afilter.$(SO): afilter.o \
 
 MODS += $(AFPFX)soxr.$(SO)
 LIBS3 += $(ALIB3_BIN)/libsoxr-phi.$(SO)
-soxr.o: $(PHIOLA)/src/afilter/soxr.c
+soxr-conv.o: $(PHIOLA)/src/afilter/soxr-conv.c
 	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
-$(AFPFX)soxr.$(SO): soxr.o
+$(AFPFX)soxr.$(SO): soxr-conv.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lsoxr-phi -o $@
 
 MODS += $(AFPFX)danorm.$(SO)
