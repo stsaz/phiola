@@ -202,10 +202,10 @@ static int tag_prepare(struct cmd_tag *t)
 #define O(m)  (void*)FF_OFF(struct cmd_tag, m)
 static const struct ffarg cmd_tag_args[] = {
 	{ "-clear",			'1',	O(clear) },
-	{ "-exclude",		'S',	tag_exclude },
+	{ "-exclude",		'+S',	tag_exclude },
 	{ "-fast",			'1',	O(fast) },
 	{ "-help",			0,		tag_help },
-	{ "-include",		'S',	tag_include },
+	{ "-include",		'+S',	tag_include },
 	{ "-meta",			'+S',	tag_meta },
 	{ "-preserve_date",	'1',	O(preserve_date) },
 	{ "-rg",			's',	tag_replay_gain },

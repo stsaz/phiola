@@ -82,9 +82,9 @@ static int lc_fin(struct list_create *lc)
 
 #define O(m)  (void*)FF_OFF(struct list_create, m)
 static const struct ffarg list_create_args[] = {
-	{ "-exclude",	'S',	lc_exclude },
+	{ "-exclude",	'+S',	lc_exclude },
 	{ "-help",		'1',	lc_help },
-	{ "-include",	'S',	lc_include },
+	{ "-include",	'+S',	lc_include },
 	{ "-out",		's',	O(output) },
 	{ "\0\1",		's',	lc_input },
 	{ "",			'1',	lc_fin }

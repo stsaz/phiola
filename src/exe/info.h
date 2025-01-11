@@ -125,9 +125,9 @@ static int info_check(struct cmd_info *p)
 #define O(m)  (void*)FF_OFF(struct cmd_info, m)
 static const struct ffarg cmd_info[] = {
 	{ "-duration",	'1',	O(duration) },
-	{ "-exclude",	'S',	info_exclude },
+	{ "-exclude",	'+S',	info_exclude },
 	{ "-help",		0,		info_help },
-	{ "-include",	'S',	info_include },
+	{ "-include",	'+S',	info_include },
 	{ "-loudness",	'1',	O(loudness) },
 	{ "-peaks",		'1',	O(pcm_peaks) },
 	{ "-perf",		'1',	O(perf) },
