@@ -12,6 +12,7 @@
 #include <avpack/vorbistag.h>
 #include <avpack/opus-fmt.h>
 #include <avpack/vorbis-fmt.h>
+#include <avpack/flac-read.h>
 #include <ffsys/file.h>
 #include <ffsys/path.h>
 
@@ -663,6 +664,185 @@ end:
 	return rc;
 }
 
+static int tag_flac_process(struct tag_edit *t, vorbistagwrite *vtw, ffstr vtags)
+{
+	ffstr *kv, k, v, k2, v2;
+	vorbistagread vtr = {};
+	u_char tags_added[_MMTAG_N] = {};
+
+	// Copy "Vendor" field
+	int tag = vorbistagread_process(&vtr, &vtags, &k, &v);
+	if (tag != MMTAG_VENDOR) {
+		errlog("parsing Vorbis tag");
+		return -1;
+	}
+	if (!vorbistagwrite_add(vtw, MMTAG_VENDOR, v))
+		dbglog("vorbistag: written vendor = %S", &v);
+	tags_added[MMTAG_VENDOR] = 1;
+
+	if (!t->conf.clear) {
+		// Replace tags, copy existing tags preserving the original order
+		for (;;) {
+			tag = vorbistagread_process(&vtr, &vtags, &k, &v);
+			if (tag == VORBISTAGREAD_DONE) {
+				break;
+			} else if (tag == VORBISTAGREAD_ERROR) {
+				errlog("parsing Vorbis tags");
+				return -1;
+			}
+
+			if (user_meta_find(&t->conf.meta, tag, &k2, &v2)) {
+				// Write user tag
+				if (!vorbistagwrite_add(vtw, tag, v2))
+					dbglog("vorbistag: written %S = %S", &k2, &v2);
+
+			} else {
+				// Copy existing tag
+				if (tag != 0) {
+					vorbistagwrite_add(vtw, tag, v);
+				} else {
+					// Unknown tag
+					vorbistagwrite_add_name(vtw, k, v);
+				}
+			}
+
+			tags_added[tag] = 1;
+		}
+	}
+
+	// Add new tags
+	FFSLICE_WALK(&t->conf.meta, kv) {
+		if (!kv->len)
+			continue;
+		tag = user_meta_split(*kv, &k, &v);
+		if (tag < 0)
+			return -1;
+		if (!tag)
+			continue;
+		if (tags_added[tag])
+			continue;
+
+		if (!vorbistagwrite_add(vtw, tag, v))
+			dbglog("vorbistag: written %S = %S", &k, &v);
+	}
+
+	return 0;
+}
+
+static int tag_flac(struct tag_edit *t)
+{
+	int rc = 'e', r;
+	ffstr input = {}, output;
+	uint64 tags_hdr_off = 0, padding_hdr_off = 0;
+	uint vtags_len = 0, padding_len, padding_last;
+	vorbistagwrite vtw = {
+		.left_zone = sizeof(struct flac_hdr),
+	};
+	vorbistagwrite_create(&vtw);
+	flacread fr = {};
+	flacread_open(&fr, 0);
+
+	ffvec_realloc(&t->buf, 64*1024, 1);
+	input = *(ffstr*)&t->buf;
+
+	for (;;) {
+		r = flacread_process(&fr, &input, &output);
+		switch (r) {
+		case FLACREAD_MORE:
+			if (0 >= (r = fffile_read(t->fd, t->buf.ptr, t->buf.cap))) {
+				if (r == 0)
+					errlog("bad FLAC file");
+				else
+					syserrlog("file read");
+				goto end;
+			}
+			t->buf.len = r;
+			input = *(ffstr*)&t->buf;
+			break;
+
+		case FLACREAD_HEADER:
+			break;
+
+		case FLACREAD_META_BLOCK:
+			dbglog("meta block %u", flacread_meta_type(&fr));
+			switch (flacread_meta_type(&fr)) {
+			case FLAC_TTAGS:
+				vtags_len = output.len;
+				tags_hdr_off = flacread_meta_offset(&fr);
+				if (tag_flac_process(t, &vtw, output))
+					goto end;
+				break;
+
+			case FLAC_TPADDING:
+				padding_last = fr.last_hdr_block;
+				padding_len = output.len;
+				padding_hdr_off = flacread_meta_offset(&fr);
+				goto fin;
+			}
+			break;
+
+		case FLACREAD_HEADER_FIN:
+			goto fin;
+
+		default:
+			errlog("flacread_process(): %u", r);
+			goto end;
+		}
+	}
+
+fin:
+	dbglog("tags @%U  padding @%U", tags_hdr_off, padding_hdr_off);
+	if (!tags_hdr_off || !padding_hdr_off) {
+		errlog("Tags and padding regions must already exist");
+		goto end;
+	}
+	if (tags_hdr_off + sizeof(struct flac_hdr) + vtags_len != padding_hdr_off) {
+		errlog("Tags region must preceed padding region");
+		goto end;
+	}
+
+	uint new_tags_len = vorbistagwrite_fin(&vtw).len;
+	dbglog("old tags size:%u  new size:%u", vtags_len, new_tags_len);
+
+	int padding = vtags_len + padding_len - new_tags_len;
+	if (padding < 0)
+		padding = 0;
+	ffvec_grow(&vtw.out, sizeof(struct flac_hdr) + padding, 1);
+	ffstr vt = *(ffstr*)&vtw.out;
+
+	flac_hdr_write(vt.ptr, FLAC_TTAGS, 0, new_tags_len);
+
+	vt.len += flac_hdr_write(vt.ptr + vt.len, FLAC_TPADDING, padding_last, padding);
+	ffmem_zero(vt.ptr + vt.len, padding);
+	vt.len += padding;
+
+	if (vt.len == sizeof(struct flac_hdr) * 2 + vtags_len + padding_len) {
+		// Rewrite tags and padding regions in-place
+		if (0 > (r = fffile_writeat(t->fdw, vt.ptr, vt.len, tags_hdr_off))) {
+			syserrlog("file write");
+			goto end;
+		}
+		t->written += r;
+		dbglog("written %L bytes @%U", vt.len, tags_hdr_off);
+
+	} else {
+		if (t->conf.no_expand) {
+			errlog("File rewrite is disabled");
+			goto end;
+		}
+
+		errlog("Expanding FLAC files is not implemented");
+		goto end;
+	}
+
+	rc = 0;
+
+end:
+	vorbistagwrite_destroy(&vtw);
+	flacread_close(&fr);
+	return rc;
+}
+
 static int tag_edit_process(struct tag_edit *t)
 {
 	int r;
@@ -701,6 +881,9 @@ static int tag_edit_process(struct tag_edit *t)
 
 	} else if (ffsz_eq(ext, "ogg")) {
 		r = tag_ogg(t);
+
+	} else if (ffsz_eq(ext, "flac")) {
+		r = tag_flac(t);
 
 	} else {
 		errlog("unsupported format");

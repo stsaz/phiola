@@ -667,25 +667,29 @@ test_tag() {
 		ffmpeg -i tag.wav -y -c:a libmp3lame tag.mp3 2>/dev/null
 		./phiola co tag.wav -o .ogg
 		./phiola co tag.wav -o .opus
+		./phiola co tag.wav -o .flac
 	fi
 
 	# add new tags
-	./phiola tag -m 'artist=Great Artist' -m 'title=Cool Song' tag.mp3 tag.ogg tag.opus
+	./phiola tag -m 'artist=Great Artist' -m 'title=Cool Song' tag.mp3 tag.ogg tag.opus tag.flac
 	./phiola i tag.mp3 | grep "Great Artist - Cool Song"
 	./phiola i tag.ogg | grep "Great Artist - Cool Song"
 	./phiola i tag.opus | grep "Great Artist - Cool Song"
+	./phiola i tag.flac | grep "Great Artist - Cool Song"
 
 	# replace tag
-	./phiola tag -m 'title=Very Cool Song' tag.mp3 tag.ogg tag.opus
+	./phiola tag -m 'title=Very Cool Song' tag.mp3 tag.ogg tag.opus tag.flac
 	./phiola i tag.mp3 | grep "Great Artist - Very Cool Song"
 	./phiola i tag.ogg | grep "Great Artist - Very Cool Song"
 	./phiola i tag.opus | grep "Great Artist - Very Cool Song"
+	./phiola i tag.flac | grep "Great Artist - Very Cool Song"
 
 	# set tag
-	./phiola tag -clear -m 'title=Cool Song' tag.mp3 tag.ogg tag.opus
+	./phiola tag -clear -m 'title=Cool Song' tag.mp3 tag.ogg tag.opus tag.flac
 	./phiola i tag.mp3 | grep " - Cool Song"
 	./phiola i tag.ogg | grep " - Cool Song"
 	./phiola i tag.opus | grep " - Cool Song"
+	./phiola i tag.flac | grep " - Cool Song"
 }
 
 test_clean() {
