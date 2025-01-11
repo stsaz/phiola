@@ -32,9 +32,9 @@ Contents:
 * Play audio: `.mp3`, `.ogg`(Vorbis/Opus), `.mp4`/`.mov`(AAC/ALAC/MP3), `.mkv`/`.webm`(AAC/ALAC/MP3/Vorbis/Opus/PCM), `.caf`(AAC/ALAC/PCM), `.avi`(AAC/MP3/PCM), `.ts`(AAC/MP3), `.aac`, `.mpc`; `.flac`, `.ape`, `.wv`, `.wav`.
 * Record audio: `.m4a`(AAC), `.ogg`, `.opus`; `.flac`, `.wav`
 * Convert audio
-* List/search file meta tags; edit file tags, write ReplayGain tags (.mp3, .ogg, .opus)
+* List/search file meta tags; edit file tags, write ReplayGain tags (.mp3, .ogg, .opus, .flac)
 * List available audio devices
-* Input: file, directory, HTTP/HTTPS URL, console (stdin), playlists: `.m3u`, `.pls`, `.cue`
+* Input: file, directory, ICY/HLS/HTTP/HTTPS URL, console (stdin), playlists: `.m3u`, `.pls`, `.cue`
 * Command Line Interface for Desktop OS
 * Terminal/Console UI for interaction at runtime
 * GUI for Windows, Linux, Android

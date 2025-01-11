@@ -103,7 +103,7 @@ static int meta_find(const phi_meta *meta, ffstr name, ffstr *val, uint flags)
 	uint i = 0;
 	ffstr n, v;
 	while (meta_list(meta, &i, &n, &v, flags)) {
-		if (ffstr_eq2(&n, &name)) {
+		if (ffstr_ieq2(&n, &name)) {
 			phi_dbglog(core, NULL, NULL, "meta requested: %S = %S", &n, &v);
 			*val = v;
 			return 0;

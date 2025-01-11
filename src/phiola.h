@@ -377,7 +377,8 @@ enum PHI_META_LIST {
 };
 
 enum PHI_META_SET {
-	PHI_META_REPLACE = 1, // replace existing key-value pair
+	// PHI_META_UNIQUE
+	PHI_META_REPLACE = 4, // replace existing key-value pair
 };
 
 typedef struct phi_meta_if phi_meta_if;
@@ -387,6 +388,8 @@ struct phi_meta_if {
 	flags: enum PHI_META_SET */
 	void (*set)(phi_meta *meta, ffstr name, ffstr val, uint flags);
 
+	/**
+	flags: enum PHI_META_SET */
 	void (*copy)(phi_meta *dst, const phi_meta *src, uint flags);
 
 	/**

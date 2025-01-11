@@ -283,6 +283,29 @@ static int _pcm_chan_mix(uint ochan, void *odata, const struct phi_af *inpcm, co
 		}
 		break;
 
+	case PHI_PCM_FLOAT64:
+		for (oc = 0;  oc != 8;  oc++) {
+
+			if (!ffbit_test32(&omask, oc))
+				continue;
+
+			for (i = 0;  i != samples;  i++) {
+				double sum = 0;
+				uint icstm = 0;
+				for (ic = 0;  ic != 8;  ic++) {
+					if (!ffbit_test32(&imask, ic))
+						continue;
+					sum += in.pd[icstm][i * istep] * level[oc][ic];
+					icstm++;
+				}
+				out.d[ocstm + i * ostep] = pcm_limf(sum);
+			}
+
+			if (++ocstm == ochan)
+				break;
+		}
+		break;
+
 	default:
 		return -1;
 	}

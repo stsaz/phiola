@@ -309,7 +309,7 @@ static int q_play(struct phi_queue *q, void *_e)
 		q = e->q;
 	}
 
-	if (q->conf.conversion) {
+	if (q->conf.tconf.cross_worker_assign) {
 		for (;;) {
 			q->cursor = e;
 			q->cursor_index = qe_index(e);

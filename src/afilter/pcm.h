@@ -9,6 +9,7 @@ union pcmdata {
 	short *sh;
 	int *in;
 	float *f;
+	double *d;
 
 	u_char **pub;
 	char **pb;

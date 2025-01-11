@@ -152,6 +152,7 @@ static int tag_action(struct cmd_tag *t)
 				.exclude = *(ffslice*)&t->exclude,
 			},
 			.afilter.loudness_summary = 1,
+			.cross_worker_assign = 1,
 		};
 
 		struct phi_queue_conf qc = {

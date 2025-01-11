@@ -552,6 +552,8 @@ Java_com_github_stsaz_phiola_Phiola_quConvertBegin(JNIEnv *env, jobject thiz, jl
 		.ofile.name = ffsz_dup(ofn),
 		.ofile.name_tmp = 1,
 		.ofile.overwrite = !!(flags & F_OVERWRITE),
+
+		.cross_worker_assign = 1,
 	};
 
 	if (msec_apos(from, (int64*)&conf.seek_msec)) {

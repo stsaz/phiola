@@ -101,6 +101,7 @@ static int info_action(struct cmd_info *p)
 		.analyze = 1,
 	};
 	x->queue->create(&qc);
+
 	ffstr *it;
 	FFSLICE_WALK(&p->input, it) {
 		struct phi_queue_entry qe = {

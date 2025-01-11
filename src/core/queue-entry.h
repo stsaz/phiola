@@ -127,7 +127,6 @@ static int qe_play(struct q_entry *e)
 	c.ifile.name = e->pub.url;
 	c.seek_cdframes = e->pub.seek_cdframes;
 	c.until_cdframes = e->pub.until_cdframes;
-	c.cross_worker_assign = e->q->conf.conversion;
 	const phi_filter *ui_if = (e->q->conf.ui_module_if_set) ? e->q->conf.ui_module_if : core->mod(e->q->conf.ui_module);
 
 	const phi_track_if *track = core->track;

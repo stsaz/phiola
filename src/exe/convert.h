@@ -243,6 +243,7 @@ static int conv_action(struct cmd_conv *v)
 		},
 		.stream_copy = v->copy,
 		.print_time = v->perf,
+		.cross_worker_assign = 1,
 	};
 	cmd_meta_set(&c.meta, &v->meta);
 	ffvec_free(&v->meta);

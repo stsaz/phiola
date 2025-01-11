@@ -206,6 +206,8 @@ static struct phi_track_conf* conv_conf_create()
 	tc->ifile.preserve_date = c->cbkeepdate.checked();
 	tc->ofile.overwrite = c->cboverwrite.checked();
 	tc->ofile.name = ffsz_allocfmt("%S/%S.%S", &c->conf_dir, &c->conf_name, &c->conf_ext);
+
+	tc->cross_worker_assign = 1;
 	return tc;
 }
 
