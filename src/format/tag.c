@@ -135,85 +135,110 @@ static int tag_file_write(struct tag_edit *t, ffstr head, ffstr tags, uint64 tai
 	return 0;
 }
 
-static int tag_mp3_id3v2(struct tag_edit *t)
+/**
+Return whole ID3v2 region size */
+static int tag_mp3_id3v2_read(struct tag_edit *t, ffstr hdr)
 {
-	int rc = 'e', r;
-	uint id3v2_size = 0;
-	struct id3v2write w = {};
-	id3v2write_create(&w);
-	w.as_is = 1;
+	int rc = -1, r;
+	uint n = 0;
+	ffstr k, v;
 	struct id3v2read id3v2 = {};
 	id3v2read_open(&id3v2);
 	id3v2.as_is = 1;
-
-	if (0 > (r = fffile_readat(t->fd, t->buf.ptr, t->buf.cap, 0))) {
-		syserrlog("file read: %s", t->conf.filename);
-		goto end;
-	}
-	t->buf.len = r;
-
-	ffstr *kv, in, k, v, ik, iv;
-
-	ffstr_setstr(&in, &t->buf);
-	int tag = id3v2read_process(&id3v2, &in, &ik, &iv);
-	if (tag != ID3V2READ_NO) {
-		id3v2_size = id3v2read_size(&id3v2);
-		if (id3v2_size > t->buf.cap) {
+	r = id3v2read_process(&id3v2, &hdr, &k, &v);
+	if (r != ID3V2READ_NO) {
+		n = id3v2read_size(&id3v2);
+		if (n > t->buf.cap) {
 			// we need full tag contents in memory
-			if (id3v2_size > 100*1024*1024) {
-				errlog("id3v2: %s: huge tag size %u", t->conf.filename, id3v2_size);
+			if (n > 100*1024*1024) {
+				errlog("id3v2: %s: huge tag size %u", t->conf.filename, n);
 				goto end;
 			}
-			ffvec_realloc(&t->buf, id3v2_size, 1);
+			ffvec_realloc(&t->buf, n, 1);
 			if (0 > (r = fffile_readat(t->fd, t->buf.ptr, t->buf.cap, 0))) {
 				syserrlog("file read: %s", t->conf.filename);
 				goto end;
 			}
 			t->buf.len = r;
-
-			id3v2read_close(&id3v2);
-			ffmem_zero_obj(&id3v2);
-			id3v2read_open(&id3v2);
-			id3v2.as_is = 1;
-			ffstr_setstr(&in, &t->buf);
-			tag = id3v2read_process(&id3v2, &in, &ik, &iv);
 		}
 	}
 
+	rc = n;
+
+end:
+	id3v2read_close(&id3v2);
+	return rc;
+}
+
+static int tag_mp3_id3v2_process(struct tag_edit *t, struct id3v2write *w, ffstr in)
+{
+	int rc = -1, tag;
+	ffstr *kv, k, v, ik, iv;
+	struct id3v2read id3v2 = {
+		.as_is = 1,
+	};
+	id3v2read_open(&id3v2);
 	u_char tags_added[_MMTAG_N] = {};
 
 	if (!t->conf.clear) {
 		// replace tags, copy existing tags preserving the original order
-		while (tag <= 0) {
+		for (;;) {
+			tag = id3v2read_process(&id3v2, &in, &ik, &iv);
+			dbglog("id3v2: %d", tag);
+			switch (tag) {
+			case ID3V2READ_NO:
+			case ID3V2READ_DONE:
+				goto add;
+
+			case ID3V2READ_WARN:
+				warnlog("%s", id3v2read_error(&id3v2));
+				continue;
+
+			case ID3V2READ_ERROR:
+				errlog("%s", id3v2read_error(&id3v2));
+				goto end;
+
+			default:
+				if (tag > 0)
+					goto end;
+			}
+
 			tag = -tag;
 			if (user_meta_find(&t->conf.meta, tag, &k, &v)) {
 				// write user tag
 				dbglog("id3v2: writing %S = %S", &k, &v);
-				id3v2write_add(&w, tag, v);
+				if (id3v2write_add(w, tag, v)) {
+					errlog("id3v2write_add()");
+					goto end;
+				}
 
 			} else {
 				// copy existing tag
-				dbglog("id3v2: writing %S = %S %d", &ik, &iv, tag);
-				if (tag != 0) {
-					id3v2write_add(&w, tag, iv);
+				dbglog("id3v2: writing (%d) %S = %S ", tag, &ik, &iv);
+				if (id3v2read_version(&id3v2) == 2) {
+					if (tag == 0) {
+						errlog("Can't copy ID3v2.2 tag %S", &ik);
+						goto end;
+					}
+					if (id3v2write_add(w, tag, iv)) {
+						errlog("id3v2write_add()");
+						goto end;
+					}
+
 				} else {
-					// unknown tag
-					char key[4] = {};
-					ffmem_copy(key, ik.ptr, ffmax(ik.len, 4));
-					_id3v2write_addframe(&w, key, FFSTR_Z(""), iv, 1);
+					// Copy v3/v4 tag data as-is
+					if (_id3v2write_addframe(w, ik.ptr, FFSTR_Z(""), iv, -1)) {
+						errlog("_id3v2write_addframe()");
+						goto end;
+					}
 				}
 			}
-			tags_added[tag] = 1;
 
-			tag = id3v2read_process(&id3v2, &in, &ik, &iv);
-			dbglog("id3v2: %d", tag);
-			switch (tag) {
-			case ID3V2READ_WARN:
-			case ID3V2READ_ERROR:
-				warnlog("%s", id3v2read_error(&id3v2));
-			}
+			tags_added[tag] = 1;
 		}
 	}
+
+add:
 
 	// add new tags
 	FFSLICE_WALK(&t->conf.meta, kv) {
@@ -228,9 +253,40 @@ static int tag_mp3_id3v2(struct tag_edit *t)
 		}
 		if (tags_added[tag])
 			continue; // already added
+
 		dbglog("id3v2: writing %S = %S", &k, &v);
-		id3v2write_add(&w, tag, v);
+		id3v2write_add(w, tag, v);
 	}
+
+	rc = 0;
+
+end:
+	id3v2read_close(&id3v2);
+	return rc;
+}
+
+static int tag_mp3_id3v2(struct tag_edit *t)
+{
+	int rc = 'e', r;
+	ffstr in;
+	uint id3v2_size;
+	struct id3v2write w = {};
+	id3v2write_create(&w);
+	w.as_is = 1;
+
+	if (0 > (r = fffile_readat(t->fd, t->buf.ptr, t->buf.cap, 0))) {
+		syserrlog("file read: %s", t->conf.filename);
+		goto end;
+	}
+	t->buf.len = r;
+	in = *(ffstr*)&t->buf;
+
+	if ((int)(id3v2_size = tag_mp3_id3v2_read(t, in)) < 0)
+		goto end;
+	in = *(ffstr*)&t->buf;
+
+	if (tag_mp3_id3v2_process(t, &w, in))
+		goto end;
 
 	int padding = id3v2_size - w.buf.len;
 	if (padding < 0)
@@ -268,7 +324,6 @@ static int tag_mp3_id3v2(struct tag_edit *t)
 	rc = 0;
 
 end:
-	id3v2read_close(&id3v2);
 	id3v2write_close(&w);
 	return rc;
 }
@@ -440,39 +495,19 @@ static int tag_opus_r128_track_gain(vorbistagwrite *vtw, ffstr v)
 	return 0;
 }
 
-static int tag_vorbis(struct tag_edit *t)
+static int tag_ogg_process(struct tag_edit *t, vorbistagwrite *vtw, ffstr vtag, uint format)
 {
-	int r, rc = 'e', format;
-	uint tags_page_off, tags_page_num, vtags_len;
-	ffstr vtag = {}, vorbis_codebook = {}, page, *kv, k, v, k2, v2;
-	oggwrite ogw = {};
-	oggread ogg = {};
-	vorbistagwrite vtw = {
-		.left_zone = 8,
-	};
+	ffstr *kv, k, v, k2, v2;
 	vorbistagread vtr = {};
 	u_char tags_added[_MMTAG_N] = {};
-
-	ffvec_realloc(&t->buf, 64*1024, 1);
-	if (0 > (r = fffile_readat(t->fd, t->buf.ptr, t->buf.cap, 0))) {
-		syserrlog("file read");
-		return 'e';
-	}
-	t->buf.len = r;
-
-	oggread_open(&ogg, -1);
-	if (!(format = tag_ogg_vtag_read(&ogg, *(ffstr*)&t->buf, &page, &tags_page_off, &tags_page_num, &vtag, &vorbis_codebook)))
-		goto end;
-	vtags_len = vtag.len - ((format == 'v') ? 1 : 0);
 
 	// Copy "Vendor" field
 	int tag = vorbistagread_process(&vtr, &vtag, &k, &v);
 	if (tag != MMTAG_VENDOR) {
 		errlog("parsing Vorbis tag");
-		goto end;
+		return -1;
 	}
-	vorbistagwrite_create(&vtw);
-	if (!vorbistagwrite_add(&vtw, MMTAG_VENDOR, v))
+	if (!vorbistagwrite_add(vtw, MMTAG_VENDOR, v))
 		dbglog("vorbistag: written vendor = %S", &v);
 	tags_added[MMTAG_VENDOR] = 1;
 
@@ -484,7 +519,7 @@ static int tag_vorbis(struct tag_edit *t)
 				break;
 			} else if (tag == VORBISTAGREAD_ERROR) {
 				errlog("parsing Vorbis tags");
-				goto end;
+				return -1;
 			}
 
 			if (user_meta_find(&t->conf.meta, tag, &k2, &v2)) {
@@ -492,16 +527,16 @@ static int tag_vorbis(struct tag_edit *t)
 					continue; // Skip existing REPLAYGAIN_TRACK_GAIN tag
 
 				// Write user tag
-				if (!vorbistagwrite_add(&vtw, tag, v2))
+				if (!vorbistagwrite_add(vtw, tag, v2))
 					dbglog("vorbistag: written %S = %S", &k2, &v2);
 
 			} else {
 				// Copy existing tag
 				if (tag != 0) {
-					vorbistagwrite_add(&vtw, tag, v);
+					vorbistagwrite_add(vtw, tag, v);
 				} else {
 					// Unknown tag
-					vorbistagwrite_add_name(&vtw, k, v);
+					vorbistagwrite_add_name(vtw, k, v);
 				}
 			}
 
@@ -515,7 +550,7 @@ static int tag_vorbis(struct tag_edit *t)
 			continue;
 		tag = user_meta_split(*kv, &k, &v);
 		if (tag < 0)
-			goto end;
+			return -1;
 		if (!tag)
 			continue;
 		if (tags_added[tag])
@@ -523,13 +558,43 @@ static int tag_vorbis(struct tag_edit *t)
 
 		if (tag == MMTAG_REPLAYGAIN_TRACK_GAIN && format == 'o') {
 			// Write R128_TRACK_GAIN tag instead of REPLAYGAIN_TRACK_GAIN
-			tag_opus_r128_track_gain(&vtw, v);
+			tag_opus_r128_track_gain(vtw, v);
 			continue;
 		}
 
-		if (!vorbistagwrite_add(&vtw, tag, v))
+		if (!vorbistagwrite_add(vtw, tag, v))
 			dbglog("vorbistag: written %S = %S", &k, &v);
 	}
+
+	return 0;
+}
+
+static int tag_ogg(struct tag_edit *t)
+{
+	int r, rc = 'e', format;
+	uint tags_page_off, tags_page_num, vtags_len;
+	ffstr vtag = {}, vorbis_codebook = {}, page;
+	oggwrite ogw = {};
+	oggread ogg = {};
+	vorbistagwrite vtw = {
+		.left_zone = 8,
+	};
+	vorbistagwrite_create(&vtw);
+
+	ffvec_realloc(&t->buf, 64*1024, 1);
+	if (0 > (r = fffile_readat(t->fd, t->buf.ptr, t->buf.cap, 0))) {
+		syserrlog("file read");
+		return 'e';
+	}
+	t->buf.len = r;
+
+	oggread_open(&ogg, -1);
+	if (!(format = tag_ogg_vtag_read(&ogg, *(ffstr*)&t->buf, &page, &tags_page_off, &tags_page_num, &vtag, &vorbis_codebook)))
+		goto end;
+	vtags_len = vtag.len - ((format == 'v') ? 1 : 0);
+
+	if (tag_ogg_process(t, &vtw, vtag, format))
+		goto end;
 
 	// Prepare OGG packet with Opus/Vorbis header, tags data and padding
 	uint tags_len = vorbistagwrite_fin(&vtw).len;
@@ -629,12 +694,13 @@ static int tag_edit_process(struct tag_edit *t)
 	}
 
 	const char *ext = file_ext_str(fmt);
+	dbglog("%s: %s", t->conf.filename, ext);
 	if (ffsz_eq(ext, "mp3")) {
 		if (0 == (r = tag_mp3_id3v2(t)))
 			r = tag_mp3_id3v1(t);
 
 	} else if (ffsz_eq(ext, "ogg")) {
-		r = tag_vorbis(t);
+		r = tag_ogg(t);
 
 	} else {
 		errlog("unsupported format");

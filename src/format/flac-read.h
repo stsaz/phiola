@@ -2,6 +2,7 @@
 2021, Simon Zolin */
 
 #include <avpack/flac-read.h>
+#include <avpack/vorbistag.h>
 
 struct flac_r {
 	flacread fl;
@@ -36,16 +37,25 @@ static void flac_in_free(void *ctx, phi_track *t)
 }
 
 extern const phi_meta_if phi_metaif;
-static void flac_meta(struct flac_r *f, phi_track *t)
+static void flac_tags(struct flac_r *f, phi_track *t, ffstr vtag)
 {
-	ffstr name, val;
-	int tag = flacread_tag(&f->fl, &name, &val);
-	dbglog(t, "%S: %S", &name, &val);
-	if (tag == MMTAG_PICTURE)
-		return;
-	if (tag > 0)
-		ffstr_setz(&name, ffmmtag_str[tag]);
-	phi_metaif.set(&t->meta, name, val, 0);
+	vorbistagread vtr = {};
+	for (;;) {
+		ffstr name, val;
+		int tag = vorbistagread_process(&vtr, &vtag, &name, &val);
+		switch (tag) {
+		case VORBISTAGREAD_DONE:
+			return;
+		case VORBISTAGREAD_ERROR:
+			errlog(t, "bad Vorbis tags");
+			return;
+		}
+
+		dbglog(t, "tags: %S: %S", &name, &val);
+		if (tag > 0)
+			ffstr_setz(&name, ffmmtag_str[tag]);
+		phi_metaif.set(&t->meta, name, val, 0);
+	}
 }
 
 static void flac_info(struct flac_r *f, phi_track *t, const struct flac_info *i, int done)
@@ -113,8 +123,9 @@ static int flac_in_read(void *ctx, phi_track *t)
 			f->sample_rate = t->audio.format.rate;
 			break;
 
-		case FLACREAD_TAG:
-			flac_meta(f, t);
+		case FLACREAD_META_BLOCK:
+			if (flacread_meta_type(&f->fl) == FLAC_TTAGS)
+				flac_tags(f, t, out);
 			break;
 
 		case FLACREAD_HEADER_FIN:
@@ -135,7 +146,6 @@ static int flac_in_read(void *ctx, phi_track *t)
 			return PHI_MORE;
 
 		case FLACREAD_DONE:
-
 			return PHI_DONE;
 
 		case FLACREAD_ERROR:
