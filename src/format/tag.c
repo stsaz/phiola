@@ -3,6 +3,7 @@
 
 #include <phiola.h>
 #include <util/util.h>
+#include <afilter/pcm.h>
 #include <format/mmtag.h>
 #include <avpack/id3v1.h>
 #include <avpack/id3v2.h>
@@ -420,6 +421,25 @@ err:
 	return 0;
 }
 
+static int tag_opus_r128_track_gain(vorbistagwrite *vtw, ffstr v)
+{
+	int r;
+	double d;
+	if (!ffstr_to_float(&v, &d)
+		|| Q78_from_float(&r, RG_R128(d))) {
+		warnlog("incorrect value: %S", &v);
+		return -1;
+	}
+
+	char val[8];
+	v.ptr = val;
+	v.len = ffs_fromint(r, val, sizeof(val), FFS_INTSIGN);
+	ffstr k = FFSTR_Z("R128_TRACK_GAIN");
+	if (!vorbistagwrite_add_name(vtw, k, v))
+		dbglog("vorbistag: written %S = %S", &k, &v);
+	return 0;
+}
+
 static int tag_vorbis(struct tag_edit *t)
 {
 	int r, rc = 'e', format;
@@ -468,6 +488,9 @@ static int tag_vorbis(struct tag_edit *t)
 			}
 
 			if (user_meta_find(&t->conf.meta, tag, &k2, &v2)) {
+				if (tag == MMTAG_REPLAYGAIN_TRACK_GAIN && format == 'o')
+					continue; // Skip existing REPLAYGAIN_TRACK_GAIN tag
+
 				// Write user tag
 				if (!vorbistagwrite_add(&vtw, tag, v2))
 					dbglog("vorbistag: written %S = %S", &k2, &v2);
@@ -497,6 +520,13 @@ static int tag_vorbis(struct tag_edit *t)
 			continue;
 		if (tags_added[tag])
 			continue;
+
+		if (tag == MMTAG_REPLAYGAIN_TRACK_GAIN && format == 'o') {
+			// Write R128_TRACK_GAIN tag instead of REPLAYGAIN_TRACK_GAIN
+			tag_opus_r128_track_gain(&vtw, v);
+			continue;
+		}
+
 		if (!vorbistagwrite_add(&vtw, tag, v))
 			dbglog("vorbistag: written %S = %S", &k, &v);
 	}

@@ -32,7 +32,7 @@ Contents:
 * Play audio: `.mp3`, `.ogg`(Vorbis/Opus), `.mp4`/`.mov`(AAC/ALAC/MP3), `.mkv`/`.webm`(AAC/ALAC/MP3/Vorbis/Opus/PCM), `.caf`(AAC/ALAC/PCM), `.avi`(AAC/MP3/PCM), `.ts`(AAC/MP3), `.aac`, `.mpc`; `.flac`, `.ape`, `.wv`, `.wav`.
 * Record audio: `.m4a`(AAC), `.ogg`, `.opus`; `.flac`, `.wav`
 * Convert audio
-* List/search file meta tags; edit file tags (.mp3, .ogg, .opus)
+* List/search file meta tags; edit file tags, write ReplayGain tags (.mp3, .ogg, .opus)
 * List available audio devices
 * Input: file, directory, HTTP/HTTPS URL, console (stdin), playlists: `.m3u`, `.pls`, `.cue`
 * Command Line Interface for Desktop OS
@@ -240,6 +240,9 @@ phiola tag -m "artist=Great Artist" -m "title=Cool Song" file.mp3
 
 # Remove all existing tags; add new tags
 phiola tag -clear -m "artist=Great Artist" -m "title=Cool Song" file.mp3
+
+# Write ReplayGain tag for all .mp3 & .flac files in the directory
+phiola tag -rg track_gain "My Music" -include "*.mp3" -include "*.flac"
 ```
 
 Create/edit playlist files:

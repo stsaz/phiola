@@ -45,4 +45,4 @@ format.$(SO): mod-fmt.o \
 		\
 		sort.o \
 		str-format.o
-	$(LINK) -shared $+ $(LINKFLAGS) -o $@
+	$(LINK) -shared $+ $(LINKFLAGS) -lm -o $@
