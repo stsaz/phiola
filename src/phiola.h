@@ -287,6 +287,7 @@ struct phi_track_conf {
 
 	struct {
 		double	gain_db; // Audio gain/attenuation
+		uint	rg_normalizer :1;
 		uint	peaks_info :1;
 		uint	loudness_summary :1;
 		const char *auto_normalizer;

@@ -247,13 +247,17 @@ enum {
 	QUCOM_PLAY = 7,
 	QUCOM_PLAY_NEXT = 8,
 	QUCOM_PLAY_PREV = 9,
-	QUCOM_REPEAT = 10,
-	QUCOM_RANDOM = 11,
-	QUCOM_REMOVE_ON_ERROR = 12,
 	QUCOM_CONV_CANCEL = 13,
 	QUCOM_CONV_UPDATE = 14,
-	QUCOM_AUTO_NORM = 15,
 };
+
+static void qc_apply(struct phi_queue_conf *qc)
+{
+	qc->repeat_all = x->play.repeat_all;
+	qc->random = x->play.random;
+	qc->tconf.afilter.rg_normalizer = (x->play.rg_normalizer && !x->play.auto_normalizer);
+	qc->tconf.afilter.auto_normalizer = (x->play.auto_normalizer) ? "" : NULL;
+}
 
 static void qu_cmd(struct core_data *d)
 {
@@ -273,10 +277,7 @@ static void qu_cmd(struct core_data *d)
 
 	case QUCOM_PLAY: {
 		x->queue.qselect(q);
-		struct phi_queue_conf *qc = x->queue.conf(NULL);
-		qc->repeat_all = x->play.repeat_all;
-		qc->random = x->play.random;
-		qc->tconf.afilter.auto_normalizer = (x->play.auto_normalizer) ? "" : NULL;
+		qc_apply(x->queue.conf(NULL));
 		x->queue.play(NULL, x->queue.at(q, d->param_int));
 		break;
 	}
@@ -312,27 +313,6 @@ Java_com_github_stsaz_phiola_Phiola_quCmd(JNIEnv *env, jobject thiz, jlong jq, j
 		break;
 	}
 
-	case QUCOM_REMOVE_ON_ERROR:
-		x->play.remove_on_error = !!i;  break;
-
-	case QUCOM_REPEAT:
-		x->play.repeat_all = !!i;  goto qc_apply;
-
-	case QUCOM_RANDOM:
-		x->play.random = !!i;  goto qc_apply;
-
-	case QUCOM_AUTO_NORM:
-		x->play.auto_normalizer = !!i;
-
-	qc_apply: {
-		// Apply settings for the active playlist
-		struct phi_queue_conf *qc = x->queue.conf(NULL);
-		qc->repeat_all = x->play.repeat_all;
-		qc->random = x->play.random;
-		qc->tconf.afilter.auto_normalizer = (x->play.auto_normalizer) ? "" : NULL;
-	}
-		break;
-
 	case QUCOM_CONV_CANCEL:
 		FFINT_WRITEONCE(x->convert.interrupt, 1);  break;
 
@@ -351,6 +331,42 @@ Java_com_github_stsaz_phiola_Phiola_quCmd(JNIEnv *env, jobject thiz, jlong jq, j
 
 	dbglog("%s: exit", __func__);
 	return rc;
+}
+
+enum {
+	QC_REPEAT = 1,
+	QC_RANDOM = 2,
+	QC_REMOVE_ON_ERROR = 4,
+	QC_AUTO_NORM = 0x10,
+	QC_RG_NORM = 0x20,
+};
+
+JNIEXPORT void JNICALL
+Java_com_github_stsaz_phiola_Phiola_quConf(JNIEnv *env, jobject thiz, jint mask, jint val)
+{
+	dbglog("%s: enter  mask:%u  val:%u", __func__, mask, val);
+
+	if (mask & QC_REMOVE_ON_ERROR)
+		x->play.remove_on_error = !!(val & QC_REMOVE_ON_ERROR);
+
+	if (mask & QC_REPEAT)
+		x->play.repeat_all = !!(val & QC_REPEAT);
+
+	if (mask & QC_RANDOM)
+		x->play.random = !!(val & QC_RANDOM);
+
+	if (mask & QC_RG_NORM)
+		x->play.rg_normalizer = !!(val & QC_RG_NORM);
+
+	if (mask & QC_AUTO_NORM)
+		x->play.auto_normalizer = !!(val & QC_AUTO_NORM);
+
+	if (mask & (QC_REPEAT | QC_RANDOM | QC_RG_NORM | QC_AUTO_NORM)) {
+		// Apply settings for the active playlist
+		qc_apply(x->queue.conf(NULL));
+	}
+
+	dbglog("%s: exit", __func__);
 }
 
 static ffvec info_prepare(const struct phi_queue_entry *qe)

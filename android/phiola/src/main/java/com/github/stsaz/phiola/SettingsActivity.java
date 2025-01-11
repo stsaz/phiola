@@ -73,6 +73,15 @@ public class SettingsActivity extends AppCompatActivity {
 					}
 				}
 			});
+
+		b.swRgNorm.setOnCheckedChangeListener((v, checked) -> {
+				if (checked)
+					b.swAutoNorm.setChecked(false);
+			});
+		b.swAutoNorm.setOnCheckedChangeListener((v, checked) -> {
+				if (checked)
+					b.swRgNorm.setChecked(false);
+			});
 	}
 
 	private void rec_init() {
@@ -190,6 +199,7 @@ public class SettingsActivity extends AppCompatActivity {
 		b.swListAddRmOnNext.setChecked(queue.flags_test(Queue.F_MOVE_ON_NEXT));
 		b.swListRmOnNext.setChecked(queue.flags_test(Queue.F_RM_ON_NEXT));
 		b.swListRmOnErr.setChecked(queue.flags_test(Queue.F_RM_ON_ERR));
+		b.swRgNorm.setChecked(queue.flags_test(Queue.F_RG_NORM));
 		b.swAutoNorm.setChecked(queue.flags_test(Queue.F_AUTO_NORM));
 		b.sbPlayAutoStop.setProgress(auto_stop_progress(queue.auto_stop_value_min));
 		b.eAutoStop.setText(core.int_to_str(queue.auto_stop_value_min));
@@ -238,8 +248,9 @@ public class SettingsActivity extends AppCompatActivity {
 		f |= flag(Queue.F_MOVE_ON_NEXT, b.swListAddRmOnNext.isChecked());
 		f |= flag(Queue.F_RM_ON_NEXT, b.swListRmOnNext.isChecked());
 		f |= flag(Queue.F_RM_ON_ERR, b.swListRmOnErr.isChecked());
+		f |= flag(Queue.F_RG_NORM, b.swRgNorm.isChecked());
 		f |= flag(Queue.F_AUTO_NORM, b.swAutoNorm.isChecked());
-		int mask = Queue.F_RANDOM | Queue.F_REPEAT | Queue.F_MOVE_ON_NEXT | Queue.F_RM_ON_NEXT | Queue.F_RM_ON_ERR | Queue.F_AUTO_NORM;
+		int mask = Queue.F_RANDOM | Queue.F_REPEAT | Queue.F_MOVE_ON_NEXT | Queue.F_RM_ON_NEXT | Queue.F_RM_ON_ERR | Queue.F_RG_NORM | Queue.F_AUTO_NORM;
 		queue.flags_set(mask, f);
 
 		queue.auto_stop_value_min = core.str_to_uint(b.eAutoStop.getText().toString(), 0);

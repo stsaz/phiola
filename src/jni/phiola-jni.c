@@ -42,6 +42,7 @@ struct phiola_jni {
 		uint auto_stop_timer_expired :1;
 		uint repeat_all :1;
 		uint random :1;
+		uint rg_normalizer :1;
 		uint auto_normalizer :1;
 	} play;
 

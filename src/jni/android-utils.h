@@ -35,6 +35,7 @@ static const char setting_names[][20] = {
 	"play_auto_skip",
 	"play_auto_skip_tail",
 	"play_auto_stop",
+	"play_rg_norm",
 	"rec_bitrate",
 	"rec_buf_len",
 	"rec_channels",

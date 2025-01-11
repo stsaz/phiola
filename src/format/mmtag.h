@@ -13,6 +13,7 @@ static const char *const ffmmtag_str[] = {
 	"lyrics", // MMTAG_LYRICS
 	"picture", // MMTAG_PICTURE
 	"publisher", // MMTAG_PUBLISHER
+	"replaygain_track_gain", // MMTAG_REPLAYGAIN_TRACK_GAIN
 	"title", // MMTAG_TITLE
 	"tracknumber", // MMTAG_TRACKNO
 	"tracktotal", // MMTAG_TRACKTOTAL

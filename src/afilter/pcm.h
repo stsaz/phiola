@@ -183,3 +183,22 @@ static inline char** pcm_setni(void **ni, void *b, uint fmt, uint nch)
 	}
 	return (char**)ni;
 }
+
+/** Q7.8 number <-> float (max. value = 127.99999999 ~= 128) */
+static inline int Q78_float(int n, double *dst) {
+	if (n < -0x8000 || n > 0x8000)
+		return -1;
+	*dst = (double)n / 256; // 256 = 2^8
+	return 0;
+}
+static inline int Q78_from_float(int *dst, double d) {
+	*dst = round(d * 256);
+	return (*dst < -0x8000 || *dst > 0x8000);
+}
+
+// -18: RG target
+// -23: R128 target
+// -18 -> -23 = -5
+// -23 -> -18 = +5
+#define RG_R128(rg2)  ((rg2) - 5)
+#define RG_from_R128(r128)  ((r128) + 5)

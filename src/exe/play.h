@@ -36,6 +36,7 @@ Options:\n\
                           [[HH:]MM:]SS[.MSC]\n\
   `-until` TIME           Stop at time\n\
 \n\
+  `-rgnorm`               ReplayGain normalizer\n\
   `-norm` \"OPTIONS\"       Auto loudness normalizer. Options:\n\
                           `target`     Integer\n\
                           `attenuate`  Integer\n\
@@ -73,6 +74,7 @@ struct cmd_play {
 	u_char	random;
 	u_char	remote;
 	u_char	repeat_all;
+	u_char	rg_norm;
 	uint	buffer;
 	uint	connect_timeout;
 	uint	device;
@@ -138,6 +140,7 @@ static int play_action(struct cmd_play *p)
 		.seek_msec = p->seek,
 		.until_msec = p->until,
 		.afilter = {
+			.rg_normalizer = (p->rg_norm && !p->auto_norm),
 			.auto_normalizer = p->auto_norm,
 		},
 		.oaudio = {
@@ -215,6 +218,7 @@ static const struct ffarg cmd_play[] = {
 	{ "-recv_timeout",	'u',	O(recv_timeout) },
 	{ "-remote",	'1',	O(remote) },
 	{ "-repeat_all",'1',	O(repeat_all) },
+	{ "-rgnorm",	'1',	O(rg_norm) },
 	{ "-seek",		'S',	play_seek },
 	{ "-tee",		's',	O(tee) },
 	{ "-tracks",	'S',	play_tracks },

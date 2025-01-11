@@ -6,6 +6,7 @@
 #include <ffsys/globals.h>
 
 const phi_core *core;
+const phi_meta_if *meta_if;
 #define syserrlog(t, ...)  phi_syserrlog(core, NULL, t, __VA_ARGS__)
 #define errlog(t, ...)  phi_errlog(core, NULL, t, __VA_ARGS__)
 #define warnlog(t, ...)  phi_warnlog(core, NULL, t, __VA_ARGS__)
@@ -17,9 +18,11 @@ const phi_core *core;
 #include <afilter/skip.h>
 #include <afilter/until.h>
 #include <afilter/split.h>
+#include <afilter/rgnorm.h>
 
 extern const phi_filter
 	phi_aconv,
+	phi_rg_norm,
 	phi_auto_norm,
 	phi_gain,
 	phi_peaks,
@@ -33,6 +36,7 @@ static const void* af_iface(const char *name)
 		{ "conv",		&phi_aconv },
 		{ "gain",		&phi_gain },
 		{ "peaks",		&phi_peaks },
+		{ "rg-norm",	&phi_rg_norm },
 		{ "rtpeak",		&phi_rtpeak },
 		{ "silence-gen",&phi_sil_gen },
 		{ "skip",		&phi_pcm_skip },

@@ -151,17 +151,20 @@ class Phiola {
 		QUCOM_PLAY = 7,
 		QUCOM_PLAY_NEXT = 8,
 		QUCOM_PLAY_PREV = 9,
-		QUCOM_REPEAT = 10,
-		QUCOM_RANDOM = 11,
-		QUCOM_REMOVE_ON_ERROR = 12,
 		QUCOM_CONV_CANCEL = 13,
 
 		/** Update current status of all entries.
 		Return 0 when conversion is complete. */
-		QUCOM_CONV_UPDATE = 14,
-
-		QUCOM_AUTO_NORM = 15;
+		QUCOM_CONV_UPDATE = 14;
 	native int quCmd(long q, int cmd, int i);
+
+	static final int
+		QC_REPEAT = 1,
+		QC_RANDOM = 2,
+		QC_REMOVE_ON_ERROR = 4,
+		QC_AUTO_NORM = 0x10,
+		QC_RG_NORM = 0x20;
+	native void quConf(int mask, int val);
 
 	native Meta quMeta(long q, int i);
 

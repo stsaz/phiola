@@ -38,6 +38,7 @@ const struct ffarg guimod_args[] = {
 	{ "play.dev",		'u',	O(conf.odev) },
 	{ "play.random",	'u',	O(conf.random) },
 	{ "play.repeat",	'u',	O(conf.repeat) },
+	{ "play.rg_norm",	'u',	O(conf.rg_norm) },
 	{ "play.seek_leap",	'u',	O(conf.seek_leap_delta) },
 	{ "play.seek_step",	'u',	O(conf.seek_step_delta) },
 	{ "play.volume",	'u',	O(volume) },
@@ -55,6 +56,7 @@ void mod_userconf_write(ffconfw *cw)
 	ffconfw_add2u(cw, "play.dev", gd->conf.odev);
 	ffconfw_add2u(cw, "play.random", gd->conf.random);
 	ffconfw_add2u(cw, "play.repeat", gd->conf.repeat);
+	ffconfw_add2u(cw, "play.rg_norm", gd->conf.rg_norm);
 	ffconfw_add2u(cw, "play.seek_leap", gd->conf.seek_leap_delta);
 	ffconfw_add2u(cw, "play.seek_step", gd->conf.seek_step_delta);
 	ffconfw_add2u(cw, "play.volume", gd->volume);
@@ -289,16 +291,21 @@ end:
 	ffstr_free(&filter);
 }
 
+static void qc_apply(struct phi_queue_conf *qc)
+{
+	qc->repeat_all = gd->conf.repeat;
+	qc->random = gd->conf.random;
+	qc->tconf.afilter.rg_normalizer = gd->conf.rg_norm;
+	qc->tconf.afilter.auto_normalizer = (gd->conf.auto_norm) ? "" : NULL;
+	qc->tconf.oaudio.device_index = gd->conf.odev;
+}
+
 void ctl_play(uint i)
 {
 	if (!gd->q_filtered && !gd->tab_conversion) {
 		gd->queue->qselect(gd->q_selected); // set the visible list as default
 		// Apply settings for the list that we're activating
-		struct phi_queue_conf *qc = gd->queue->conf(NULL);
-		qc->repeat_all = gd->conf.repeat;
-		qc->random = gd->conf.random;
-		qc->tconf.afilter.auto_normalizer = (gd->conf.auto_norm) ? "" : NULL;
-		qc->tconf.oaudio.device_index = gd->conf.odev;
+		qc_apply(gd->queue->conf(NULL));
 	}
 	phi_queue_id q = (gd->q_filtered) ? gd->q_filtered : NULL;
 	gd->queue->play(NULL, gd->queue->at(q, i));
@@ -868,10 +875,7 @@ static void gui_start(void *param)
 	struct phi_queue_conf *qc = gd->queue->conf(q);
 	gd->playback_first_filter = qc->first_filter;
 	qc->name = ffsz_dup("Playlist 1");
-	qc->repeat_all = gd->conf.repeat;
-	qc->random = gd->conf.random;
-	qc->tconf.afilter.auto_normalizer = (gd->conf.auto_norm) ? "" : NULL;
-	qc->tconf.oaudio.device_index = gd->conf.odev;
+	qc_apply(qc);
 
 	struct list_info *li = ffvec_zpushT(&gd->lists, struct list_info);
 	li->q = q;

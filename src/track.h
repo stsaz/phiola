@@ -209,6 +209,7 @@ struct phi_track {
 			struct phi_af format;
 			struct phi_af conv_format;
 			double gain_db;
+			double replay_gain_db;
 			double loudness, loudness_momentary;
 
 			// ui -> audio.play

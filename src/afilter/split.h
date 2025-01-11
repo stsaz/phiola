@@ -11,8 +11,6 @@ iaudio -> split (#1)
 #include <track.h>
 #include <afilter/pcm.h>
 
-static const phi_meta_if *meta_if;
-
 struct split_brg {
 	uint	users;
 	uint	state;

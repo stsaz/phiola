@@ -32,7 +32,7 @@ static void gain_close(void *ctx, phi_track *t)
 static int gain_process(void *ctx, phi_track *t)
 {
 	struct gain *c = ctx;
-	double db = t->oaudio.gain_db;
+	double db = t->oaudio.replay_gain_db + t->oaudio.gain_db;
 	if (db != 0) {
 		if (db != c->db) {
 			c->db = db;

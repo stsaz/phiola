@@ -175,6 +175,8 @@ static int qe_play(struct q_entry *e)
 			|| !track->filter(t, core->mod("format.detect"), 0)
 			|| !track->filter(t, core->mod("afilter.until"), 0)
 			|| !track->filter(t, ui_if, 0)
+			|| (c.afilter.rg_normalizer
+				&& !track->filter(t, core->mod("afilter.rg-norm"), 0))
 			|| (c.afilter.auto_normalizer
 				&& (!track->filter(t, core->mod("afilter.auto-conv-f"), 0)
 				|| !track->filter(t, core->mod("af-loudness.analyze"), 0)

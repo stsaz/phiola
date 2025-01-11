@@ -149,7 +149,7 @@ struct gui_data {
 		uint	odev;
 		uint	repeat;
 		uint	random;
-		uint	auto_norm;
+		uint	rg_norm, auto_norm;
 		uint	seek_step_delta;
 		uint	seek_leap_delta;
 		int		auto_skip_sec_percent;

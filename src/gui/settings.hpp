@@ -5,7 +5,7 @@ struct gui_wsettings {
 	ffui_windowxx	wnd;
 	ffui_label		ldev, lseek_by, lleap_by, lauto_skip;
 	ffui_editxx		eseek_by, eleap_by, eauto_skip;
-	ffui_checkboxxx	cbdarktheme, cbauto_norm;
+	ffui_checkboxxx	cbdarktheme, cbrg_norm, cbauto_norm;
 	ffui_comboboxxx	cbdev;
 
 	char*	wnd_pos;
@@ -21,6 +21,7 @@ FF_EXTERN const ffui_ldr_ctl wsettings_ctls[] = {
 	_(lseek_by),	_(eseek_by),
 	_(lleap_by),	_(eleap_by),
 	_(lauto_skip),	_(eauto_skip),
+	_(cbrg_norm),
 	_(cbauto_norm),
 	FFUI_LDR_CTL_END
 };
@@ -64,6 +65,10 @@ static void wsettings_ui_to_conf()
 		gd->conf.auto_norm = r;
 		mod = 1;
 	}
+	if (gd->conf.rg_norm != (r = w->cbrg_norm.checked())) {
+		gd->conf.rg_norm = (r && !gd->conf.auto_norm);
+		mod = 1;
+	}
 
 	if (gd->conf.odev != (r = w->cbdev.get())) {
 		gd->conf.odev = r;
@@ -73,6 +78,7 @@ static void wsettings_ui_to_conf()
 	if (mod) {
 		// Apply settings for the active playlist
 		struct phi_queue_conf *qc = gd->queue->conf(NULL);
+		qc->tconf.afilter.rg_normalizer = gd->conf.rg_norm;
 		qc->tconf.afilter.auto_normalizer = (gd->conf.auto_norm) ? "" : NULL;
 		qc->tconf.oaudio.device_index = gd->conf.odev;
 	}
@@ -89,6 +95,7 @@ static void wsettings_ui_from_conf()
 	if (w->cbdarktheme.h)
 		w->cbdarktheme.check(!!gd->conf.theme);
 
+	w->cbrg_norm.check(!!gd->conf.rg_norm);
 	w->cbauto_norm.check(!!gd->conf.auto_norm);
 
 	uint odev = adevices_fill(PHI_ADEV_PLAYBACK, w->cbdev, gd->conf.odev);
