@@ -8,7 +8,7 @@ struct gui_wconvert {
 	ffui_labelxx		ldir, lname, lext, lfrom, luntil, ltags, laacq, lvorbisq, lopusq;
 	ffui_editxx			edir, ename, efrom, euntil, etags, eaacq, evorbisq, eopusq;
 	ffui_comboboxxx		cbext;
-	ffui_checkboxxx		cbcopy, cbkeepdate;
+	ffui_checkboxxx		cbcopy, cbkeepdate, cboverwrite;
 	ffui_buttonxx		bbrowse, bstart;
 
 	xxstr conf_dir, conf_name, conf_ext;
@@ -32,7 +32,7 @@ FF_EXTERN const ffui_ldr_ctl wconvert_ctls[] = {
 	_(laacq),	_(eaacq),
 	_(lvorbisq),_(evorbisq),
 	_(lopusq),	_(eopusq),
-	_(cbkeepdate),
+	_(cbkeepdate), _(cboverwrite),
 	_(bstart),
 	FFUI_LDR_CTL_END
 };
@@ -204,6 +204,7 @@ static struct phi_track_conf* conv_conf_create()
 	tc->opus.bitrate = c->conf_opusq;
 
 	tc->ifile.preserve_date = c->cbkeepdate.checked();
+	tc->ofile.overwrite = c->cboverwrite.checked();
 	tc->ofile.name = ffsz_allocfmt("%S/%S.%S", &c->conf_dir, &c->conf_name, &c->conf_ext);
 	return tc;
 }
