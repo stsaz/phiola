@@ -64,9 +64,7 @@ Options:\n\
                           0..10\n\
 \n\
   `-meta` NAME=VALUE      Meta data\n\
-                          .mp3 supports: album, albumartist, artist, comment, date, genre, picture, publisher, title, tracknumber, tracktotal.\n\
                           .mp4 supports: album, albumartist, artist, comment, composer, copyright, date, discnumber, genre, lyrics, title, tracknumber.\n\
-                          .flac, .ogg support tags of any name, but the use of MP3/MP4-compatible names is recommended.\n\
 \n\
   `-out` FILE             Output file name.\n\
                           `@stdout`    Write to standard output\n\

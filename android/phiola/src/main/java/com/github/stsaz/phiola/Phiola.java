@@ -65,9 +65,10 @@ class Phiola {
 		int format;
 
 		static final int
-			F_DATE_PRESERVE = 1,
-			F_OVERWRITE = 2,
-			F_COPY = 4;
+			COF_DATE_PRESERVE = 1,
+			COF_OVERWRITE = 2,
+			COF_COPY = 4,
+			COF_ADD = 8; // add item to playlist `q_add_remove`
 		int flags;
 
 		String out_name;

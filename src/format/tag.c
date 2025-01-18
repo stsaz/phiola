@@ -460,7 +460,7 @@ static int tag_ogg_vtag_read(oggread *ogg, ffstr in, ffstr *page, uint *page_off
 			if (!oggread_pkt_last(ogg))
 				goto err;
 			*page = ogg->chunk;
-			*page_off = ogg->off - _avp_stream_used(&ogg->stream);
+			*page_off = oggread_page_offset(ogg);
 			*page_num = oggread_page_num(ogg);
 			return (state == I_OPUS_TAGS) ? 'o' : 'v';
 

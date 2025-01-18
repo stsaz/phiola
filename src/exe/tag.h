@@ -13,7 +13,6 @@ Options:\n\
 \n\
   `-clear`                Remove all existing tags.  By default all original tags are preserved.\n\
   `-meta` NAME=VALUE      Meta data\n\
-                          .mp3 supports: album, albumartist, artist, comment, date, genre, picture, publisher, title, tracknumber, tracktotal.\n\
   `-rg` \"OPTIONS\"         Write ReplayGain tags. Options:\n\
                           `track_gain` (default)\n\
   `-preserve_date`        Preserve file modification date\n\
@@ -99,20 +98,23 @@ static void tag_grd_close(void *f, phi_track *t)
 	if (t->error)
 		goto end;
 
-	ffvec_add2T(&tags, &t->meta, ffstr);
-	ffstr_dupz(&s, "replaygain_track_gain=-xx.xx");
-	*ffvec_pushT(&tags, ffstr) = s;
-
 	// -18: ReplayGain target
 	// -1: EBU R 128: "The Maximum True-Peak Level in production shall not exceed −1 dBTP"
 	// e.g. -10 loudness -> -19 target = -9 gain
 	double rg = -18-1 - t->oaudio.loudness;
 
-	uint n = ffs_fromfloat(rg, s.ptr + 22, 6, FFS_FLTKEEPSIGN | FFS_FLTWIDTH(3) | FFS_FLTZERO | 2);
-	if (n != 6) {
+	char val[8]; // "-xx.xx"
+	uint n = ffs_fromfloat(rg, val, sizeof(val) - 1, FFS_FLTKEEPSIGN | FFS_FLTWIDTH(3) | FFS_FLTZERO | 2);
+	if (!n) {
 		phi_errlog(x->core, NULL, t, "ffs_fromfloat");
 		goto end;
 	}
+	val[n] = '\0';
+
+	ffvec_add2T(&tags, &t->meta, ffstr);
+	size_t cap = 0;
+	ffstr_growfmt(&s, &cap, "replaygain_track_gain=%s", val);
+	*ffvec_pushT(&tags, ffstr) = s;
 
 	struct phi_tag_conf conf = {
 		.filename = t->conf.ifile.name,

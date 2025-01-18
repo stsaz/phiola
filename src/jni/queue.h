@@ -540,8 +540,8 @@ Java_com_github_stsaz_phiola_Phiola_quConvertBegin(JNIEnv *env, jobject thiz, jl
 		, *trash_dir_rel = jni_sz_js(jtrash_dir_rel);
 
 	struct phi_track_conf conf = {
-		.ifile.preserve_date = !!(flags & F_DATE_PRESERVE),
-		.stream_copy = !!(flags & F_COPY),
+		.ifile.preserve_date = !!(flags & COF_DATE_PRESERVE),
+		.stream_copy = !!(flags & COF_COPY),
 		.oaudio.format.format = jni_obj_int(jconf, jni_field_int(jc_conf, "sample_format")),
 		.oaudio.format.rate = jni_obj_int(jconf, jni_field_int(jc_conf, "sample_rate")),
 
@@ -551,7 +551,7 @@ Java_com_github_stsaz_phiola_Phiola_quConvertBegin(JNIEnv *env, jobject thiz, jl
 
 		.ofile.name = ffsz_dup(ofn),
 		.ofile.name_tmp = 1,
-		.ofile.overwrite = !!(flags & F_OVERWRITE),
+		.ofile.overwrite = !!(flags & COF_OVERWRITE),
 
 		.cross_worker_assign = 1,
 	};
@@ -577,6 +577,7 @@ Java_com_github_stsaz_phiola_Phiola_quConvertBegin(JNIEnv *env, jobject thiz, jl
 	x->convert.trash_dir_rel = (trash_dir_rel[0]) ? ffsz_dup(trash_dir_rel) : NULL;
 
 	x->convert.q_add_remove = (phi_queue_id)jni_obj_long(jconf, jni_field_long(jc_conf, "q_add_remove"));
+	x->convert.q_add = !!(flags & COF_ADD);
 	x->convert.q_pos = jni_obj_int(jconf, jni_field_int(jc_conf, "q_pos"));
 
 	phi_queue_id q = (phi_queue_id)jq;

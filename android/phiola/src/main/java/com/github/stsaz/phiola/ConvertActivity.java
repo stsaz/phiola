@@ -191,7 +191,7 @@ public class ConvertActivity extends AppCompatActivity {
 		b.sbAacQ.setProgress(aac_q_progress(core.setts.conv_aac_quality));
 		b.eAacQ.setText(core.int_to_str(core.setts.conv_aac_quality));
 
-		b.sbOpusQ.setProgress((core.setts.conv_opus_quality - 8) / 8);
+		b.sbOpusQ.setProgress(opus_q_progress(core.setts.conv_opus_quality));
 		b.eOpusQ.setText(core.int_to_str(core.setts.conv_opus_quality));
 
 		b.sbVorbisQ.setProgress(vorbis_q_progress(core.setts.conv_vorbis_quality));
@@ -278,14 +278,16 @@ public class ConvertActivity extends AppCompatActivity {
 		p.format = CoreSettings.conv_encoders[iformat];
 
 		if (core.setts.conv_copy)
-			p.flags |= Phiola.ConvertParams.F_COPY;
+			p.flags |= Phiola.ConvertParams.COF_COPY;
 		if (core.setts.conv_file_date_preserve)
-			p.flags |= Phiola.ConvertParams.F_DATE_PRESERVE;
+			p.flags |= Phiola.ConvertParams.COF_DATE_PRESERVE;
 		if (b.swOutOverwrite.isChecked() && b.swOutOverwriteConfirm.isChecked())
-			p.flags |= Phiola.ConvertParams.F_OVERWRITE;
+			p.flags |= Phiola.ConvertParams.COF_OVERWRITE;
 
-		if (core.setts.conv_new_add_list)
+		if (core.setts.conv_new_add_list) {
 			p.q_add_remove = getIntent().getLongExtra("current_list_id", 0);
+			p.flags |= Phiola.ConvertParams.COF_ADD;
+		}
 
 		if (b.swTrashOrig.isChecked()) {
 			p.trash_dir_rel = core.setts.trash_dir;

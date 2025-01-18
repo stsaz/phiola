@@ -33,6 +33,9 @@ static void* mp3_open(phi_track *t)
 
 static void mp3_close(struct mp3_r *m, phi_track *t)
 {
+#ifdef FF_DEBUG
+	dbglog(t, "data copied: %u", m->mpg.rd.stream.copied);
+#endif
 	mp3read_close(&m->mpg);
 	phi_track_free(t, m);
 }

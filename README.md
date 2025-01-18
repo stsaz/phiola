@@ -30,9 +30,9 @@ Contents:
 ## Features
 
 * Play audio: `.mp3`, `.ogg`(Vorbis/Opus), `.mp4`/`.mov`(AAC/ALAC/MP3), `.mkv`/`.webm`(AAC/ALAC/MP3/Vorbis/Opus/PCM), `.caf`(AAC/ALAC/PCM), `.avi`(AAC/MP3/PCM), `.ts`(AAC/MP3), `.aac`, `.mpc`; `.flac`, `.ape`, `.wv`, `.wav`.
-* Record audio: `.m4a`(AAC), `.ogg`, `.opus`; `.flac`, `.wav`
+* Record audio: `.m4a`(AAC), `.ogg`(Vorbis), `.opus`; `.flac`, `.wav`
 * Convert audio
-* List/search file meta tags; edit file tags, write ReplayGain tags (.mp3, .ogg, .opus, .flac)
+* List/search file meta tags; edit file tags, write ReplayGain tags (`.mp3`, `.ogg/.opus`, `.flac`)
 * List available audio devices
 * Input: file, directory, ICY/HLS/HTTP/HTTPS URL, console (stdin), playlists: `.m3u`, `.pls`, `.cue`
 * Command Line Interface for Desktop OS
@@ -47,17 +47,17 @@ Features and notes by platform:
 
 | Feature              | Linux | Windows | Android |
 | --- | --- | --- | --- |
-| GUI                  | ✅ | ✅ | ✅ |
 | Dark themed GUI      | ✅ (GTK default) | incomplete | ✅ |
-| Powerful CLI         | ✅ | ✅ | ❌ |
-| Simple TUI           | ✅ | ✅ | ❌ |
 | File formats         | ✅ all supported | ✅ all supported | all supported except `.mpc`, `.ape`, `.wv` |
 | Record from Internet | ✅ | ✅ | ❌ |
 | Record what you hear | ✅ (PulseAudio) | ✅ | ❌ |
+| Edit file tags       | `.mp3/.ogg/.flac` | `.mp3/.ogg/.flac` | ❌ |
 | Requirements         | glibc-2.36 | Windows 7 | Android 8 (ARM64), Android 6 (ARM) |
 | HW Requirements      | AMD64, ARM64 | AMD64 | ARM64, ARM(incomplete) |
 
 > Although not officially supported, phiola should build fine for **macOS**, **FreeBSD** and **Windows XP** after tweaking the build script.
+
+> Important: ALAC decoder is disabled by default in phiola/Android because of potential security issues (see https://github.com/macosforge/alac).
 
 See also: [phiola Architecture](doc/arch/arch.md).
 

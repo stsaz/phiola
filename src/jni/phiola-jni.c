@@ -53,6 +53,7 @@ struct phiola_jni {
 		int q_pos;
 		uint interrupt;
 		uint n_tracks_updated;
+		uint q_add :1;
 	} convert;
 
 	phi_timer tmr_q_draw;

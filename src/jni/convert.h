@@ -72,7 +72,7 @@ static void conv_grd_close(void *ctx, phi_track *t)
 		} else {
 			const char *oname = (t->output.name) ? t->output.name : t->conf.ofile.name;
 
-			if (x->convert.q_add_remove) {
+			if (x->convert.q_add_remove && x->convert.q_add) {
 				struct phi_queue_entry qe = {
 					.url = (char*)oname,
 				};
@@ -168,7 +168,8 @@ static const phi_filter phi_convert_ui = {
 };
 
 enum {
-	F_DATE_PRESERVE = 1,
-	F_OVERWRITE = 2,
-	F_COPY = 4,
+	COF_DATE_PRESERVE = 1,
+	COF_OVERWRITE = 2,
+	COF_COPY = 4,
+	COF_ADD = 8,
 };

@@ -32,6 +32,9 @@ static void* flac_in_create(phi_track *t)
 static void flac_in_free(void *ctx, phi_track *t)
 {
 	struct flac_r *f = ctx;
+#ifdef FF_DEBUG
+	dbglog(t, "data copied: %u", f->fl.stream.copied);
+#endif
 	flacread_close(&f->fl);
 	phi_track_free(t, f);
 }
