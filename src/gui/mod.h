@@ -31,6 +31,8 @@ static inline void gui_task(void (*func)()) {
 }
 
 FF_EXTERN void file_dir_show(ffslice indices);
+FF_EXTERN void file_rename(void *name);
+FF_EXTERN void file_del(ffslice indices);
 
 FF_EXTERN void list_created(phi_queue_id q);
 FF_EXTERN void list_add(ffstr fn);
@@ -121,6 +123,8 @@ struct gui_data {
 
 	uint volume;
 	double gain_db;
+
+	struct phi_queue_entry *qe_rename;
 
 	phi_task task;
 	ffthread th;

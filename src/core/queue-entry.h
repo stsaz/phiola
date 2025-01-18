@@ -308,3 +308,33 @@ static phi_queue_id qe_queue(struct q_entry *e)
 {
 	return e->q;
 }
+
+int qe_rename(struct q_entry *e, const char *new, uint flags)
+{
+	int rc = -1;
+	if (fffile_exists(new)) {
+		errlog("file already exists: \"%s\"", new);
+		goto end;
+	}
+	if (fffile_rename(e->pub.url, new)) {
+		syserrlog("fffile_rename: \"%s\"", new);
+		goto end;
+	}
+	infolog("file renamed: \"%s\" -> \"%s\"", e->pub.url, new);
+
+	if (e->pub.url == e->name
+		&& ffsz_len(new) <= ffsz_len(e->name)) {
+		ffsz_copyz(e->name, -1, new);
+	} else {
+		if (e->pub.url != e->name)
+			ffmem_free(e->pub.url);
+		e->pub.url = (char*)new,  new = NULL;
+	}
+
+	rc = 0;
+
+end:
+	if (flags & PHI_QRN_ACQUIRE)
+		ffmem_free((char*)new);
+	return rc;
+}

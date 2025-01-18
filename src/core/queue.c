@@ -10,7 +10,9 @@ extern const phi_core *core;
 extern const phi_track_if phi_track_iface;
 extern const phi_meta_if *phi_metaif;
 #define dbglog(...)  phi_dbglog(core, "queue", NULL, __VA_ARGS__)
+#define infolog(...)  phi_infolog(core, "queue", NULL, __VA_ARGS__)
 #define errlog(...)  phi_errlog(core, "queue", NULL, __VA_ARGS__)
+#define syserrlog(...)  phi_syserrlog(core, "queue", NULL, __VA_ARGS__)
 #define ERR_MAX  20
 
 typedef void (*on_change_t)(phi_queue_id, uint, uint);
@@ -718,4 +720,5 @@ const phi_queue_if phi_queueif = {
 	(void*)qe_insert,
 	(void*)qe_index,
 	(void*)qe_remove,
+	(void*)qe_rename,
 };

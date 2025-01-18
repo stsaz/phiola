@@ -64,6 +64,13 @@ void mod_userconf_write(ffconfw *cw)
 		ffconfw_add2z(cw, "theme", gd->conf.theme);
 }
 
+void file_rename(void *name)
+{
+	gd->queue->rename(gd->qe_rename, name, PHI_QRN_ACQUIRE);
+	gd->queue->unref(gd->qe_rename),  gd->qe_rename = NULL;
+	// ffmem_free(name);
+}
+
 #ifdef FF_LINUX
 static int file_del_trash(const char **names, ffsize n)
 {

@@ -157,6 +157,7 @@ static void gui_userconf_save()
 extern const ffui_ldr_ctl
 	wmain_ctls[],
 	winfo_ctls[],
+	wrename_ctls[],
 	wsettings_ctls[],
 	wgoto_ctls[],
 	wlistadd_ctls[],
@@ -182,6 +183,7 @@ static void* gui_getctl(void *udata, const ffstr *name)
 		_(mminfo_addtag),
 		_w(wmain, wmain_ctls),
 		_w(winfo, winfo_ctls),
+		_w(wrename, wrename_ctls),
 		_w(wsettings, wsettings_ctls),
 		_w(wgoto, wgoto_ctls),
 		_w(wlistfilter, wlistfilter_ctls),
@@ -291,6 +293,7 @@ void gui_init()
 	gg = ffmem_new(struct gui);
 	wmain_init();
 	winfo_init();
+	wrename_init();
 	wsettings_init();
 	wgoto_init();
 	wlistadd_init();
@@ -329,6 +332,7 @@ void gui_quit()
 {
 	gui_userconf_save();
 	winfo_fin();
+	wrename_fin();
 	wmain_fin();
 	ffui_post_quitloop();
 }

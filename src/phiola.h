@@ -476,6 +476,10 @@ enum PHI_QUEUE_FILTER {
 	PHI_QF_META = 2,
 };
 
+enum PHI_Q_RENAME {
+	PHI_QRN_ACQUIRE = 1,
+};
+
 typedef struct phi_queue* phi_queue_id;
 typedef struct phi_queue_if phi_queue_if;
 struct phi_queue_if {
@@ -551,6 +555,10 @@ struct phi_queue_if {
 	/** Remove item.
 	Generates on_change('r') event. */
 	int (*remove)(void *e);
+
+	/**
+	flags: enum PHI_Q_RENAME */
+	int (*rename)(struct phi_queue_entry *qe, char *new_url, uint flags);
 };
 
 

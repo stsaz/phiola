@@ -3,6 +3,7 @@
 
 #include <ffbase/string.h>
 #include <ffbase/vector.h>
+#include <ffsys/path.h>
 #include <new>
 
 struct xxstr : ffstr {
@@ -140,5 +141,21 @@ struct xxvec : ffvec {
 		if (len && ((char*)ptr)[len-1] != '\0')
 			ffvec_addchar(this, '\0');
 		return (char*)ptr;
+	}
+};
+
+struct xxpath {
+	xxstr data;
+	xxpath(const char *sz) : data(sz) {}
+	xxpath(ffstr s) : data(s) {}
+	ffstr	path() const {
+		ffstr path;
+		ffpath_splitpath(data.ptr, data.len, &path, NULL);
+		return path;
+	}
+	ffstr	name() const {
+		ffstr name;
+		ffpath_splitpath(data.ptr, data.len, NULL, &name);
+		return name;
 	}
 };

@@ -28,6 +28,11 @@ FF_EXTERN void winfo_show(uint show, uint idx);
 FF_EXTERN void winfo_userconf_write(ffconfw *cw);
 FF_EXTERN const struct ffarg winfo_args[];
 
+struct gui_wrename;
+FF_EXTERN void wrename_init();
+FF_EXTERN void wrename_show(uint show, uint idx);
+FF_EXTERN void wrename_fin();
+
 struct gui_wsettings;
 FF_EXTERN void wsettings_init();
 FF_EXTERN void wsettings_show(uint show);
@@ -84,6 +89,7 @@ struct gui {
 	ffui_dialog dlg;
 	struct gui_wmain*		wmain;
 	struct gui_winfo*		winfo;
+	struct gui_wrename*		wrename;
 	struct gui_wsettings*	wsettings;
 	struct gui_wgoto*		wgoto;
 	struct gui_wlistadd*	wlistadd;
@@ -104,5 +110,4 @@ static inline void conf_wnd_pos_write(ffconfw *cw, const char *name, ffui_window
 }
 FF_EXTERN void theme_switch(uint i);
 FF_EXTERN void gui_dragdrop(ffstr data);
-FF_EXTERN void file_del(ffslice indices);
 FF_EXTERN void gui_quit();
