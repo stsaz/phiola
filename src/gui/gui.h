@@ -84,6 +84,7 @@ struct gui {
 		, mrecord
 		, mconvert
 		, mhelp
+		, mminfo_file
 		, mminfo_addtag;
 	ffui_menu mpopup;
 	ffui_dialog dlg;

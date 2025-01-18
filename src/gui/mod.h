@@ -157,6 +157,7 @@ struct gui_data {
 		uint	seek_step_delta;
 		uint	seek_leap_delta;
 		int		auto_skip_sec_percent;
+		uint	tags_keep_date;
 	} conf;
 };
 FF_EXTERN struct gui_data *gd;

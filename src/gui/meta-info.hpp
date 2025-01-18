@@ -118,6 +118,9 @@ void winfo_show(uint show, uint idx)
 		if (w->wnd_pos)
 			conf_wnd_pos_read(&w->wnd, FFSTR_Z(w->wnd_pos));
 		ffmem_free(w->wnd_pos);
+
+		if (gd->conf.tags_keep_date)
+			gg->mminfo_file.check(A_INFO_KEEPDATE, 1);
 	}
 
 	w->wnd.title(qe->url);
@@ -188,6 +191,7 @@ static void winfo_write()
 
 	struct phi_tag_conf conf = {};
 	conf.filename = w->qe->url;
+	conf.preserve_date = gd->conf.tags_keep_date;
 	conf.meta = m.slice();
 	if (!tag->edit(&conf)) {
 		gd->metaif->destroy(&w->qe->meta);
@@ -237,6 +241,9 @@ static void winfo_action(ffui_window *wnd, int id)
 	tag_add:
 		winfo_tag_add(name);
 		break;
+
+	case A_INFO_KEEPDATE:
+		gg->mminfo_file.check(A_INFO_KEEPDATE, !!(gd->conf.tags_keep_date = !gd->conf.tags_keep_date));  break;
 
 	case A_INFO_WRITE:
 		gui_core_task(winfo_write);  break;

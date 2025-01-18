@@ -180,7 +180,7 @@ static void* gui_getctl(void *udata, const ffstr *name)
 		_(mhelp),
 		_(mpopup),
 		_(dlg),
-		_(mminfo_addtag),
+		_(mminfo_file), _(mminfo_addtag),
 		_w(wmain, wmain_ctls),
 		_w(winfo, winfo_ctls),
 		_w(wrename, wrename_ctls),

@@ -42,6 +42,7 @@ const struct ffarg guimod_args[] = {
 	{ "play.seek_leap",	'u',	O(conf.seek_leap_delta) },
 	{ "play.seek_step",	'u',	O(conf.seek_step_delta) },
 	{ "play.volume",	'u',	O(volume) },
+	{ "tags.keep_date",	'u',	O(conf.tags_keep_date) },
 	{ "theme",			'=s',	O(conf.theme) },
 	{}
 };
@@ -60,6 +61,7 @@ void mod_userconf_write(ffconfw *cw)
 	ffconfw_add2u(cw, "play.seek_leap", gd->conf.seek_leap_delta);
 	ffconfw_add2u(cw, "play.seek_step", gd->conf.seek_step_delta);
 	ffconfw_add2u(cw, "play.volume", gd->volume);
+	ffconfw_add2u(cw, "tags.keep_date", gd->conf.tags_keep_date);
 	if (gd->conf.theme)
 		ffconfw_add2z(cw, "theme", gd->conf.theme);
 }
