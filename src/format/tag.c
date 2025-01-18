@@ -80,20 +80,17 @@ static int user_meta_split(ffstr kv, ffstr *k, ffstr *v)
 	return tag;
 }
 
-static int user_meta_find(const ffslice *m, uint tag, ffstr *k, ffstr *v)
+static int user_meta_find(const ffslice *m, ffstr find, ffstr *val)
 {
-	if (tag == MMTAG_UNKNOWN)
-		return 0;
-
-	ffstr *kv;
+	ffstr *kv, k, v;
 	FFSLICE_WALK(m, kv) {
-		if (kv->len) {
-			int r = user_meta_split(*kv, k, v);
-			if (r == (int)tag)
-				return 1;
+		if (ffstr_splitby(kv, '=', &k, &v) >= 0
+			&& ffstr_ieq2(&find, &k)) {
+			*val = v;
+			return kv - (ffstr*)m->ptr;
 		}
 	}
-	return 0;
+	return -1;
 }
 
 static int tag_file_write(struct tag_edit *t, ffstr head, ffstr tags, uint64 tail_off_src)
@@ -142,12 +139,9 @@ static int tag_mp3_id3v2_read(struct tag_edit *t, ffstr hdr)
 {
 	int rc = -1, r;
 	uint n = 0;
-	ffstr k, v;
 	struct id3v2read id3v2 = {};
-	id3v2read_open(&id3v2);
-	id3v2.as_is = 1;
-	r = id3v2read_process(&id3v2, &hdr, &k, &v);
-	if (r != ID3V2READ_NO) {
+	r = _id3v2r_hdr_read(&id3v2, hdr, &n);
+	if (r == 0 || r == ID3V2READ_MORE) {
 		n = id3v2read_size(&id3v2);
 		if (n > t->buf.cap) {
 			// we need full tag contents in memory
@@ -167,24 +161,29 @@ static int tag_mp3_id3v2_read(struct tag_edit *t, ffstr hdr)
 	rc = n;
 
 end:
-	id3v2read_close(&id3v2);
 	return rc;
 }
 
 static int tag_mp3_id3v2_process(struct tag_edit *t, struct id3v2write *w, ffstr in)
 {
-	int rc = -1, tag;
-	ffstr *kv, k, v, ik, iv;
+	int rc = -1, tag, r, i;
+	uint tags_added = 0;
+	ffstr *kv, k, v, kmm;
 	struct id3v2read id3v2 = {
 		.as_is = 1,
 	};
 	id3v2read_open(&id3v2);
-	u_char tags_added[_MMTAG_N] = {};
 
 	if (!t->conf.clear) {
 		// replace tags, copy existing tags preserving the original order
+
+		if (t->conf.meta.len > 32) {
+			errlog("Writing more than 32 tags is not supported");
+			goto end;
+		}
+
 		for (;;) {
-			tag = id3v2read_process(&id3v2, &in, &ik, &iv);
+			tag = id3v2read_process(&id3v2, &in, &k, &v);
 			dbglog("id3v2: %d", tag);
 			switch (tag) {
 			case ID3V2READ_NO:
@@ -205,58 +204,64 @@ static int tag_mp3_id3v2_process(struct tag_edit *t, struct id3v2write *w, ffstr
 			}
 
 			tag = -tag;
-			if (user_meta_find(&t->conf.meta, tag, &k, &v)) {
+			kmm = (tag) ? FFSTR_Z(ffmmtag_str[tag]) : FFSTR_Z("");
+			if ((i = user_meta_find(&t->conf.meta, kmm, &v)) >= 0) {
 				// write user tag
-				dbglog("id3v2: writing %S = %S", &k, &v);
-				if (id3v2write_add(w, tag, v)) {
-					errlog("id3v2write_add()");
-					goto end;
-				}
+				if (tag != 0)
+					r = id3v2write_add(w, tag, v, 0);
+				else
+					r = id3v2write_add_txxx(w, kmm, v);
+
+				ffbit_set32(&tags_added, i);
 
 			} else {
-				// copy existing tag
-				dbglog("id3v2: writing (%d) %S = %S ", tag, &ik, &iv);
 				if (id3v2read_version(&id3v2) == 2) {
 					if (tag == 0) {
-						errlog("Can't copy ID3v2.2 tag %S", &ik);
+						errlog("Can't copy ID3v2.2 tag %S", &k);
 						goto end;
 					}
-					if (id3v2write_add(w, tag, iv)) {
-						errlog("id3v2write_add()");
-						goto end;
-					}
+					ffstr_shift(&v, sizeof(struct id3v22_framehdr));
+					r = id3v2write_add(w, tag, v, 1);
 
 				} else {
-					// Copy v3/v4 tag data as-is
-					if (_id3v2write_addframe(w, ik.ptr, FFSTR_Z(""), iv, -1)) {
-						errlog("_id3v2write_addframe()");
-						goto end;
-					}
+					// Copy v3/v4 tag data preserving the original text encoding
+					uint n = sizeof(struct id3v2_framehdr);
+					if (id3v2.frame_flags & ID3V2_FRAME_DATALEN)
+						n += 4;
+					ffstr_shift(&v, n);
+					r = _id3v2write_addframe(w, k.ptr, FFSTR_Z(""), v, -1);
 				}
 			}
 
-			tags_added[tag] = 1;
+			if (r) {
+				errlog("id3v2write_add()");
+				goto end;
+			}
+			dbglog("id3v2: written (%d) %S = %S ", tag, &k, &v);
 		}
 	}
 
 add:
 
 	// add new tags
+	i = 0;
 	FFSLICE_WALK(&t->conf.meta, kv) {
-		if (!kv->len)
-			continue;
+		i++;
 		tag = user_meta_split(*kv, &k, &v);
 		if (tag < 0)
 			goto end;
-		if (tag == 0) {
-			warnlog("skipping unknown tag: %S", &k);
-			continue;
-		}
-		if (tags_added[tag])
-			continue; // already added
+		if (i - 1 < 32 && ffbit_test32(&tags_added, i - 1))
+			continue; // Tag is already added
 
-		dbglog("id3v2: writing %S = %S", &k, &v);
-		id3v2write_add(w, tag, v);
+		if (tag != 0)
+			r = id3v2write_add(w, tag, v, 0);
+		else
+			r = id3v2write_add_txxx(w, k, v);
+		if (r) {
+			errlog("id3v2write_add()");
+			goto end;
+		}
+		dbglog("id3v2: written (%d) %S = %S ", tag, &k, &v);
 	}
 
 	rc = 0;
@@ -273,7 +278,6 @@ static int tag_mp3_id3v2(struct tag_edit *t)
 	uint id3v2_size;
 	struct id3v2write w = {};
 	id3v2write_create(&w);
-	w.as_is = 1;
 
 	if (0 > (r = fffile_readat(t->fd, t->buf.ptr, t->buf.cap, 0))) {
 		syserrlog("file read: %s", t->conf.filename);
@@ -357,8 +361,6 @@ static int tag_mp3_id3v1(struct tag_edit *t)
 
 	// add user tags
 	FFSLICE_WALK(&t->conf.meta, kv) {
-		if (!kv->len)
-			continue;
 		int tag = user_meta_split(*kv, &k, &v);
 		if (tag < 0)
 			return 'e';
@@ -373,7 +375,7 @@ static int tag_mp3_id3v1(struct tag_edit *t)
 		// copy existing tags
 		while (tag < 0) {
 			tag = -tag;
-			if (!user_meta_find(&t->conf.meta, tag, &k, &v)) {
+			if (user_meta_find(&t->conf.meta, FFSTR_Z(ffmmtag_str[tag]), &v) < 0) {
 				int r2 = id3v1write_set(&w, tag, iv);
 				if (r2 != 0)
 					dbglog("id3v1: written %s = %S", ffmmtag_str[tag], &iv);
@@ -498,64 +500,61 @@ static int tag_opus_r128_track_gain(vorbistagwrite *vtw, ffstr v)
 
 static int tag_ogg_process(struct tag_edit *t, vorbistagwrite *vtw, ffstr vtag, uint format)
 {
-	ffstr *kv, k, v, k2, v2;
+	int rc = -1, r;
+	uint i;
+	ffstr *kv, k, v;
 	vorbistagread vtr = {};
-	u_char tags_added[_MMTAG_N] = {};
+	uint tags_added = 0;
 
 	// Copy "Vendor" field
 	int tag = vorbistagread_process(&vtr, &vtag, &k, &v);
 	if (tag != MMTAG_VENDOR) {
 		errlog("parsing Vorbis tag");
-		return -1;
+		goto end;
 	}
-	if (!vorbistagwrite_add(vtw, MMTAG_VENDOR, v))
-		dbglog("vorbistag: written vendor = %S", &v);
-	tags_added[MMTAG_VENDOR] = 1;
+	if (vorbistagwrite_add(vtw, MMTAG_VENDOR, v))
+		goto end;
+	dbglog("vorbistag: written vendor = %S", &v);
 
 	if (!t->conf.clear) {
 		// Replace tags, copy existing tags preserving the original order
+
+		if (t->conf.meta.len > 32) {
+			errlog("Writing more than 32 tags is not supported");
+			goto end;
+		}
+
 		for (;;) {
 			tag = vorbistagread_process(&vtr, &vtag, &k, &v);
 			if (tag == VORBISTAGREAD_DONE) {
 				break;
 			} else if (tag == VORBISTAGREAD_ERROR) {
 				errlog("parsing Vorbis tags");
-				return -1;
+				goto end;
 			}
 
-			if (user_meta_find(&t->conf.meta, tag, &k2, &v2)) {
+			if ((r = user_meta_find(&t->conf.meta, k, &v)) >= 0) {
+				// Write user tag
 				if (tag == MMTAG_REPLAYGAIN_TRACK_GAIN && format == 'o')
 					continue; // Skip existing REPLAYGAIN_TRACK_GAIN tag
-
-				// Write user tag
-				if (!vorbistagwrite_add(vtw, tag, v2))
-					dbglog("vorbistag: written %S = %S", &k2, &v2);
-
-			} else {
-				// Copy existing tag
-				if (tag != 0) {
-					vorbistagwrite_add(vtw, tag, v);
-				} else {
-					// Unknown tag
-					vorbistagwrite_add_name(vtw, k, v);
-				}
+				ffbit_set32(&tags_added, r);
 			}
 
-			tags_added[tag] = 1;
+			if (vorbistagwrite_add_name(vtw, k, v))
+				goto end;
+			dbglog("vorbistag: written %S = %S", &k, &v);
 		}
 	}
 
 	// Add new tags
+	i = 0;
 	FFSLICE_WALK(&t->conf.meta, kv) {
-		if (!kv->len)
-			continue;
+		i++;
 		tag = user_meta_split(*kv, &k, &v);
 		if (tag < 0)
-			return -1;
-		if (!tag)
-			continue;
-		if (tags_added[tag])
-			continue;
+			goto end;
+		if (i - 1 < 32 && ffbit_test32(&tags_added, i - 1))
+			continue; // Tag is already added
 
 		if (tag == MMTAG_REPLAYGAIN_TRACK_GAIN && format == 'o') {
 			// Write R128_TRACK_GAIN tag instead of REPLAYGAIN_TRACK_GAIN
@@ -563,11 +562,15 @@ static int tag_ogg_process(struct tag_edit *t, vorbistagwrite *vtw, ffstr vtag, 
 			continue;
 		}
 
-		if (!vorbistagwrite_add(vtw, tag, v))
-			dbglog("vorbistag: written %S = %S", &k, &v);
+		if (vorbistagwrite_add_name(vtw, k, v))
+			goto end;
+		dbglog("vorbistag: written %S = %S", &k, &v);
 	}
 
-	return 0;
+	rc = 0;
+
+end:
+	return rc;
 }
 
 static int tag_ogg(struct tag_edit *t)
@@ -666,67 +669,69 @@ end:
 
 static int tag_flac_process(struct tag_edit *t, vorbistagwrite *vtw, ffstr vtags)
 {
-	ffstr *kv, k, v, k2, v2;
+	int rc = -1, r;
+	uint i;
+	ffstr *kv, k, v;
 	vorbistagread vtr = {};
-	u_char tags_added[_MMTAG_N] = {};
+	uint tags_added = 0;
 
 	// Copy "Vendor" field
 	int tag = vorbistagread_process(&vtr, &vtags, &k, &v);
 	if (tag != MMTAG_VENDOR) {
 		errlog("parsing Vorbis tag");
-		return -1;
+		goto end;
 	}
-	if (!vorbistagwrite_add(vtw, MMTAG_VENDOR, v))
-		dbglog("vorbistag: written vendor = %S", &v);
-	tags_added[MMTAG_VENDOR] = 1;
+	if (vorbistagwrite_add(vtw, MMTAG_VENDOR, v))
+		goto end;
+	dbglog("vorbistag: written vendor = %S", &v);
 
 	if (!t->conf.clear) {
 		// Replace tags, copy existing tags preserving the original order
+
+		if (t->conf.meta.len > 32) {
+			errlog("Writing more than 32 tags is not supported");
+			goto end;
+		}
+
 		for (;;) {
 			tag = vorbistagread_process(&vtr, &vtags, &k, &v);
 			if (tag == VORBISTAGREAD_DONE) {
 				break;
 			} else if (tag == VORBISTAGREAD_ERROR) {
 				errlog("parsing Vorbis tags");
-				return -1;
+				goto end;
 			}
 
-			if (user_meta_find(&t->conf.meta, tag, &k2, &v2)) {
+			if ((r = user_meta_find(&t->conf.meta, k, &v)) >= 0) {
 				// Write user tag
-				if (!vorbistagwrite_add(vtw, tag, v2))
-					dbglog("vorbistag: written %S = %S", &k2, &v2);
-
-			} else {
-				// Copy existing tag
-				if (tag != 0) {
-					vorbistagwrite_add(vtw, tag, v);
-				} else {
-					// Unknown tag
-					vorbistagwrite_add_name(vtw, k, v);
-				}
+				ffbit_set32(&tags_added, r);
 			}
 
-			tags_added[tag] = 1;
+			if (vorbistagwrite_add_name(vtw, k, v))
+				goto end;
+			dbglog("vorbistag: written %S = %S", &k, &v);
 		}
 	}
 
 	// Add new tags
+	i = 0;
 	FFSLICE_WALK(&t->conf.meta, kv) {
-		if (!kv->len)
-			continue;
+		i++;
 		tag = user_meta_split(*kv, &k, &v);
 		if (tag < 0)
-			return -1;
-		if (!tag)
-			continue;
-		if (tags_added[tag])
-			continue;
+			goto end;
+		if (i - 1 < 32 && ffbit_test32(&tags_added, i - 1))
+			continue; // Tag is already added
 
-		if (!vorbistagwrite_add(vtw, tag, v))
-			dbglog("vorbistag: written %S = %S", &k, &v);
+		if (vorbistagwrite_add_name(vtw, k, v))
+			goto end;
+		dbglog("vorbistag: written %S = %S", &k, &v);
 	}
 
-	return 0;
+	rc = 0;
+
+end:
+	return rc;
 }
 
 static int tag_flac(struct tag_edit *t)

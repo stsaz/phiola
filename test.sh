@@ -671,11 +671,15 @@ test_tag() {
 	fi
 
 	# add new tags
-	./phiola tag -m 'artist=Great Artist' -m 'title=Cool Song' tag.mp3 tag.ogg tag.opus tag.flac
+	./phiola tag -m 'artist=Great Artist' -m 'title=Cool Song' -m 'usertag=User Data' tag.mp3 tag.ogg tag.opus tag.flac
 	./phiola i tag.mp3 | grep "Great Artist - Cool Song"
 	./phiola i tag.ogg | grep "Great Artist - Cool Song"
 	./phiola i tag.opus | grep "Great Artist - Cool Song"
 	./phiola i tag.flac | grep "Great Artist - Cool Song"
+	./phiola i -tag tag.mp3 | grep -iE "usertag.*User Data"
+	./phiola i -tag tag.ogg | grep -iE "usertag.*User Data"
+	./phiola i -tag tag.opus | grep -iE "usertag.*User Data"
+	./phiola i -tag tag.flac | grep -iE "usertag.*User Data"
 
 	# replace tag
 	./phiola tag -m 'title=Very Cool Song' tag.mp3 tag.ogg tag.opus tag.flac
@@ -683,6 +687,10 @@ test_tag() {
 	./phiola i tag.ogg | grep "Great Artist - Very Cool Song"
 	./phiola i tag.opus | grep "Great Artist - Very Cool Song"
 	./phiola i tag.flac | grep "Great Artist - Very Cool Song"
+	./phiola i -tag tag.mp3 | grep -iE "usertag.*User Data"
+	./phiola i -tag tag.ogg | grep -iE "usertag.*User Data"
+	./phiola i -tag tag.opus | grep -iE "usertag.*User Data"
+	./phiola i -tag tag.flac | grep -iE "usertag.*User Data"
 
 	# set tag
 	./phiola tag -clear -m 'title=Cool Song' tag.mp3 tag.ogg tag.opus tag.flac
