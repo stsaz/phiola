@@ -62,7 +62,7 @@ static void split_brg_close(void *f, phi_track *t)
 	struct split_brg *g = f;
 	g->state = S_NONE;
 	split_brg_unref(g);
-	meta_if->destroy(&t->meta);
+	core->metaif->destroy(&t->meta);
 	ffmem_free(t->conf.ofile.name);  t->conf.ofile.name = NULL;
 }
 
@@ -108,8 +108,6 @@ static void* split_open(phi_track *t)
 	c->split_by = msec_to_samples(t->conf.split_msec, t->audio.format.rate);
 	c->sample_size = pcm_size(t->audio.format.format, t->audio.format.channels);
 	c->split_next = 1;
-	if (!meta_if)
-		meta_if = core->mod("format.meta");
 	return c;
 }
 
@@ -137,9 +135,7 @@ static void split_next(struct split *c, phi_track *t)
 	}
 
 	struct phi_track_conf conf = {
-		.aac = t->conf.aac,
-		.vorbis = t->conf.vorbis,
-		.opus = t->conf.opus,
+		.encoder = t->conf.encoder,
 		.ofile = {
 			.name = ffsz_dup(t->conf.ofile.name),
 			.overwrite = t->conf.ofile.overwrite,
@@ -148,7 +144,7 @@ static void split_next(struct split *c, phi_track *t)
 	};
 	c->out_trk = track->create(&conf);
 	phi_track *ot = c->out_trk;
-	meta_if->copy(&ot->meta, &t->meta, 0);
+	core->metaif->copy(&ot->meta, &t->meta, 0);
 
 	ot->data_type = "pcm";
 	ot->audio.format = t->audio.format;

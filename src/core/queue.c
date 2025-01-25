@@ -8,12 +8,12 @@
 
 extern const phi_core *core;
 extern const phi_track_if phi_track_iface;
-extern const phi_meta_if *phi_metaif;
 #define dbglog(...)  phi_dbglog(core, "queue", NULL, __VA_ARGS__)
 #define infolog(...)  phi_infolog(core, "queue", NULL, __VA_ARGS__)
 #define errlog(...)  phi_errlog(core, "queue", NULL, __VA_ARGS__)
 #define syserrlog(...)  phi_syserrlog(core, "queue", NULL, __VA_ARGS__)
 #define ERR_MAX  20
+#include <core/meta.h>
 
 typedef void (*on_change_t)(phi_queue_id, uint, uint);
 struct queue_mgr {
@@ -37,6 +37,7 @@ struct phi_queue {
 	uint track_closed_flags;
 	uint closing :1;
 	uint random_split :1;
+	uint random_init :1;
 };
 
 enum {
@@ -79,9 +80,6 @@ void qm_init()
 
 static void qm_add(struct phi_queue *q)
 {
-	if (!phi_metaif)
-		phi_metaif = core->mod("format.meta");
-
 	*ffvec_pushT(&qm->lists, struct phi_queue*) = q;
 	dbglog("added list [%L]", qm->lists.len);
 }
@@ -265,6 +263,12 @@ static uint q_random(struct phi_queue *q)
 		return 0;
 	qm_rand_init();
 	ffsize i = ffrand_get();
+
+	if (!q->random_init) {
+		q->random_init = 1;
+		q->random_split = i & 1;
+	}
+
 	if (!q->random_split)
 		i %= n / 2;
 	else

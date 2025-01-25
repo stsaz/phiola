@@ -9,7 +9,6 @@ extern const phi_core *core;
 
 struct icy {
 	icyread icy;
-	const phi_meta_if *metaif;
 	ffstr data;
 	ffvec meta;
 };
@@ -17,7 +16,6 @@ struct icy {
 static void* icy_open(phi_track *t)
 {
 	struct icy *c = phi_track_allocT(t, struct icy);
-	c->metaif = core->mod("format.meta");
 	icyread_open(&c->icy, t->icy_meta_interval);
 	return c;
 }
@@ -61,13 +59,13 @@ static int icy_meta(struct icy *c, ffstr data, phi_track *t)
 	}
 
 	ffstr martist = {}, mtitle = {};
-	c->metaif->find(&t->meta, FFSTR_Z("title"), &mtitle, 0);
-	c->metaif->find(&t->meta, FFSTR_Z("artist"), &martist, 0);
+	core->metaif->find(&t->meta, FFSTR_Z("title"), &mtitle, 0);
+	core->metaif->find(&t->meta, FFSTR_Z("artist"), &martist, 0);
 	if (!ffstr_ieq2(&title, &mtitle)
 		|| !ffstr_ieq2(&artist, &martist)) {
-		c->metaif->destroy(&t->meta);
-		c->metaif->set(&t->meta, FFSTR_Z("artist"), artist, 0);
-		c->metaif->set(&t->meta, FFSTR_Z("title"), title, 0);
+		core->metaif->destroy(&t->meta);
+		core->metaif->set(&t->meta, FFSTR_Z("artist"), artist, 0);
+		core->metaif->set(&t->meta, FFSTR_Z("title"), title, 0);
 		t->meta_changed = 1;
 	}
 

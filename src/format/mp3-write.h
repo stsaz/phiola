@@ -34,7 +34,7 @@ int mpeg_out_addmeta(mp3_w *m, phi_track *t)
 {
 	uint i = 0;
 	ffstr name, val;
-	while (phi_metaif.list(&t->meta, &i, &name, &val, PHI_META_UNIQUE)) {
+	while (core->metaif->list(&t->meta, &i, &name, &val, PHI_META_UNIQUE)) {
 		if (ffstr_eqcz(&name, "vendor"))
 			continue;
 		int tag;

@@ -10,7 +10,6 @@ const struct phi_core *core;
 
 static const void* fmt_mod_iface_input(const char *name);
 
-#include <format/meta.h>
 #include <format/detector.h>
 
 extern const phi_filter
@@ -123,7 +122,6 @@ static const void* fmt_mod_iface(const char *name)
 		{ "flacogg",	&phi_flacogg_read },
 		{ "m3u",		&phi_m3u_read },
 		{ "m3u-write",	&phi_m3u_write },
-		{ "meta",		&phi_metaif },
 		{ "mkv",		&phi_mkv_read },
 		{ "mp3",		&phi_mp3_read },
 		{ "mp4",		&phi_mp4_read },

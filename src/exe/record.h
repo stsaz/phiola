@@ -95,6 +95,8 @@ struct cmd_rec {
 	uint	split;
 	uint	vorbis_q;
 	uint64	until;
+
+	u_char	aenc;
 };
 
 #ifdef FF_WIN
@@ -130,6 +132,20 @@ static void rec_silence_track(struct cmd_rec *r)
 static void rec_silence_track(struct cmd_rec *r) {}
 #endif
 
+static void rec_grd_close(void *f, phi_track *t)
+{
+	phi_grd_close(f, t);
+
+	ffmem_free(t->conf.ofile.name);  t->conf.ofile.name = NULL;
+	x->core->metaif->destroy(&t->meta);
+	x->core->sig(PHI_CORE_STOP);
+}
+
+static const phi_filter rec_guard = {
+	NULL, rec_grd_close, phi_grd_process,
+	"rec-guard"
+};
+
 static int rec_action(struct cmd_rec *r)
 {
 	struct phi_track_conf c = {
@@ -157,20 +173,27 @@ static int rec_action(struct cmd_rec *r)
 				.channels = r->channels,
 			},
 		},
-		.aac = {
-			.profile = r->aac_profile[0],
-			.quality = r->aac_q,
-		},
-		.vorbis.quality = (r->vorbis_q) ? (r->vorbis_q + 1) * 10 : 0,
-		.opus = {
-			.bitrate = r->opus_q,
-			.mode = r->opus_mode_n,
-		},
 		.ofile = {
 			.name = ffsz_dup(r->output),
 			.overwrite = r->force,
 		},
 	};
+
+	switch (r->aenc) {
+	case PHI_AC_AAC:
+		c.aac.profile = r->aac_profile[0];
+		c.aac.quality = r->aac_q;
+		break;
+
+	case PHI_AC_OPUS:
+		c.opus.bitrate = r->opus_q;
+		c.opus.mode = r->opus_mode_n;
+		break;
+
+	case PHI_AC_VORBIS:
+		c.vorbis.quality = (r->vorbis_q) ? (r->vorbis_q + 1) * 10 : 0;  break;
+	}
+
 	const phi_track_if *track = x->core->track;
 	phi_track *t = track->create(&c);
 
@@ -182,7 +205,7 @@ static int rec_action(struct cmd_rec *r)
 
 	const char *output = (x->stdout_busy) ? "core.stdout" : "core.file-write";
 
-	if (!track->filter(t, &phi_guard, 0)
+	if (!track->filter(t, &rec_guard, 0)
 		|| !track->filter(t, x->core->mod(input), 0)
 		|| !track->filter(t, x->core->mod("afilter.until"), 0)
 		|| !track->filter(t, x->core->mod("afilter.rtpeak"), 0)
@@ -204,7 +227,6 @@ static int rec_action(struct cmd_rec *r)
 	cmd_meta_set(&t->meta, &r->meta);
 	ffvec_free(&r->meta);
 
-	x->mode_record = 1;
 	t->output.allow_async = 1;
 	track->start(t);
 
@@ -231,9 +253,13 @@ static int rec_check(struct cmd_rec *r)
 	if ((int)(r->opus_mode_n = cmd_opus_mode(r->opus_mode)) < 0)
 		return _ffargs_err(&x->cmd, 1, "-opus_mode: incorrect value");
 
-	ffstr name;
-	ffpath_splitname_str(FFSTR_Z(r->output), &name, NULL);
+	ffstr name, ext;
+	ffpath_splitname_str(FFSTR_Z(r->output), &name, &ext);
 	x->stdout_busy = ffstr_eqz(&name, "@stdout");
+	if (!ext.len)
+		return _ffargs_err(&x->cmd, 1, "Please specify output file extension: \"%s\"", r->output);
+	if (!(r->aenc = cmd_oext_aenc(ext, 0)))
+		return _ffargs_err(&x->cmd, 1, "Specified output file format is not supported: \"%S\"", &ext);
 
 	if (r->buffer)
 		x->timer_int_msec = ffmin(r->buffer / 2, x->timer_int_msec);

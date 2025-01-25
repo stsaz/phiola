@@ -14,8 +14,6 @@ struct opus_enc {
 static void* opus_enc_create(phi_track *t)
 {
 	struct opus_enc *o = phi_track_allocT(t, struct opus_enc);
-	if (!phi_metaif)
-		phi_metaif = core->mod("format.meta");
 	return o;
 }
 
@@ -30,7 +28,7 @@ static int opus_enc_addmeta(struct opus_enc *o, phi_track *t)
 {
 	uint i = 0;
 	ffstr name, val;
-	while (phi_metaif->list(&t->meta, &i, &name, &val, PHI_META_UNIQUE)) {
+	while (core->metaif->list(&t->meta, &i, &name, &val, PHI_META_UNIQUE)) {
 		if (ffstr_eqz(&name, "vendor"))
 			continue;
 		if (0 != ffopus_addtag(&o->opus, name.ptr, val.ptr, val.len))

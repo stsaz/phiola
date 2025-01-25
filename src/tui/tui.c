@@ -53,7 +53,6 @@ struct tui_mod {
 
 	struct tui_track *curtrk; // currently playing track
 	struct tui_rec *curtrk_rec; // currently recording track
-	const phi_meta_if *phi_metaif;
 	phi_task task_init;
 
 	uint vol;
@@ -450,7 +449,6 @@ static void tui_create()
 {
 	mod->vol = 100;
 	mod->queue = core->mod("core.queue");
-	mod->phi_metaif = core->mod("format.meta");
 	mod->use_stderr = core->conf.stdout_busy;
 	color_init(mod);
 

@@ -9,7 +9,6 @@
 #define errlog(t, ...)  phi_errlog(core, NULL, t, __VA_ARGS__)
 #define dbglog(t, ...)  phi_dbglog(core, NULL, t, __VA_ARGS__)
 extern const phi_core *core;
-extern const phi_meta_if phi_metaif;
 
 struct flacogg_r {
 	flacoggread fo;
@@ -39,7 +38,7 @@ static void flacogg_meta(struct flacogg_r *f, phi_track *t)
 	if (tag != 0)
 		ffstr_setz(&name, ffmmtag_str[tag]);
 	dbglog(t, "%S: %S", &name, &val);
-	phi_metaif.set(&t->meta, name, val, 0);
+	core->metaif->set(&t->meta, name, val, 0);
 }
 
 static int flacogg_info(struct flacogg_r *f, phi_track *t, const struct flac_info *info, int done)

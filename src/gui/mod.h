@@ -106,7 +106,6 @@ struct gui_track_info {
 
 struct gui_data {
 	const phi_queue_if *queue;
-	const phi_meta_if *metaif;
 	char *user_conf_dir;
 	char *user_conf_name;
 	const phi_filter *playback_first_filter;

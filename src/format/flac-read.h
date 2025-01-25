@@ -39,7 +39,6 @@ static void flac_in_free(void *ctx, phi_track *t)
 	phi_track_free(t, f);
 }
 
-extern const phi_meta_if phi_metaif;
 static void flac_tags(struct flac_r *f, phi_track *t, ffstr vtag)
 {
 	vorbistagread vtr = {};
@@ -57,7 +56,7 @@ static void flac_tags(struct flac_r *f, phi_track *t, ffstr vtag)
 		dbglog(t, "tags: %S: %S", &name, &val);
 		if (tag > 0)
 			ffstr_setz(&name, ffmmtag_str[tag]);
-		phi_metaif.set(&t->meta, name, val, 0);
+		core->metaif->set(&t->meta, name, val, 0);
 	}
 }
 

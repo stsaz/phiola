@@ -7,7 +7,6 @@
 #include <ffsys/globals.h>
 
 static const phi_core *core;
-static const phi_meta_if *phi_metaif;
 #define errlog(t, ...)  phi_errlog(core, NULL, t, __VA_ARGS__)
 #define warnlog(t, ...)  phi_warnlog(core, NULL, t, __VA_ARGS__)
 #define dbglog(t, ...)  phi_dbglog(core, NULL, t, __VA_ARGS__)

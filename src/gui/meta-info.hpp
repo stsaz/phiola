@@ -85,11 +85,11 @@ static void winfo_display(struct phi_queue_entry *qe)
 	fflock_lock((fflock*)&qe->lock); // core thread may read or write `conf.meta` at this moment
 	const phi_meta *meta = &qe->meta;
 
-	gd->metaif->find(meta, FFSTR_Z("_phi_info"), &val, PHI_META_PRIVATE);
+	core->metaif->find(meta, FFSTR_Z("_phi_info"), &val, PHI_META_PRIVATE);
 	winfo_addpair("Info", val);
 
 	uint i = 0;
-	while (gd->metaif->list(meta, &i, &name, &val, 0)) {
+	while (core->metaif->list(meta, &i, &name, &val, 0)) {
 		winfo_addpair(name, val);
 		ffstr_dupstr(w->keys.push_z<ffstr>(), &name);
 	}
@@ -139,7 +139,7 @@ static void winfo_edit(uint idx, const char *new_text)
 	if ((int)ki < 0)
 		return;
 	ffstr name = *w->keys.at<ffstr>(ki);
-	gd->metaif->set(&w->qe->meta, name, val, PHI_META_REPLACE);
+	core->metaif->set(&w->qe->meta, name, val, PHI_META_REPLACE);
 	if (ki >= 32)
 		warnlog("can write only up to 32 tags");
 	ffbit_set32(&w->changed, ki);
@@ -153,12 +153,12 @@ static void winfo_tag_add(ffstr name)
 	if (!w->qe) return;
 
 	ffstr val;
-	if (!gd->metaif->find(&w->qe->meta, name, &val, 0)) {
+	if (!core->metaif->find(&w->qe->meta, name, &val, 0)) {
 		warnlog("tag already exists: %S", &name);
 		return;
 	}
 	val = FFSTR_Z("");
-	gd->metaif->set(&w->qe->meta, name, val, 0);
+	core->metaif->set(&w->qe->meta, name, val, 0);
 	winfo_addpair(name, val);
 	ffstr_dupstr(w->keys.push_z<ffstr>(), &name);
 	ffbit_set32(&w->changed, w->keys.len - 1);
@@ -179,7 +179,7 @@ static void winfo_write()
 		i = ffbit_rfind32(bits) - 1;
 		ffbit_reset32(&bits, i);
 		k = *w->keys.at<ffstr>(i);
-		if (!gd->metaif->find(&w->qe->meta, k, &v, 0)) {
+		if (!core->metaif->find(&w->qe->meta, k, &v, 0)) {
 			ffvec s = {};
 			ffvec_addfmt(&s, "%S=%S", &k, &v);
 			*m.push<ffstr>() = *(ffstr*)&s;
@@ -194,7 +194,7 @@ static void winfo_write()
 	conf.preserve_date = gd->conf.tags_keep_date;
 	conf.meta = m.slice();
 	if (!tag->edit(&conf)) {
-		gd->metaif->destroy(&w->qe->meta);
+		core->metaif->destroy(&w->qe->meta);
 		w->keys.reset();
 		w->changed = 0;
 		w->vinfo.clear();

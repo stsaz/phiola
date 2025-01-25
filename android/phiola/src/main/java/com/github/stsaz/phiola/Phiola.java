@@ -50,7 +50,8 @@ class Phiola {
 		AF_AAC_HE2 = 2,
 		AF_FLAC = 3,
 		AF_OPUS = 4,
-		AF_OPUS_VOICE = 5;
+		AF_OPUS_VOICE = 5,
+		AF_VORBIS = 6;
 
 	static class ConvertParams {
 		ConvertParams() {
@@ -62,7 +63,7 @@ class Phiola {
 			q_pos = -1;
 		}
 
-		int format;
+		int format; // AF_*
 
 		static final int
 			COF_DATE_PRESERVE = 1,
@@ -85,7 +86,7 @@ class Phiola {
 	}
 
 	static class RecordParams {
-		int format;
+		int format; // AF_*
 
 		int channels;
 		int sample_rate;

@@ -138,9 +138,9 @@ static int gtrk_process(void *ctx, phi_track *t)
 			, t->audio.format.rate
 			, phi_af_name(t->audio.format.format)
 			, pcm_channelstr(t->audio.format.channels));
-		gd->metaif->set(&t->meta, FFSTR_Z("_phi_info"), FFSTR_Z(buf), 0);
+		core->metaif->set(&t->meta, FFSTR_Z("_phi_info"), FFSTR_Z(buf), 0);
 
-		qe->length_msec = gt->duration_sec * 1000;
+		qe->length_sec = gt->duration_sec;
 
 		void *qe_prev_active = gd->qe_active;
 		gd->qe_active = qe;
@@ -164,8 +164,8 @@ static int gtrk_process(void *ctx, phi_track *t)
 		}
 
 		ffstr artist = {}, title = {};
-		gd->metaif->find(&t->meta, FFSTR_Z("artist"), &artist, 0);
-		gd->metaif->find(&t->meta, FFSTR_Z("title"), &title, 0);
+		core->metaif->find(&t->meta, FFSTR_Z("artist"), &artist, 0);
+		core->metaif->find(&t->meta, FFSTR_Z("title"), &title, 0);
 		if (!title.len)
 			ffpath_split3_str(FFSTR_Z(t->conf.ifile.name), NULL, &title, NULL); // use filename as a title
 		ffsz_format(ti->buf, sizeof(ti->buf), "%S - %S - phiola"
@@ -173,7 +173,7 @@ static int gtrk_process(void *ctx, phi_track *t)
 
 		// We need to display the currently active track's meta data before `queue` does this on track close
 		if (!qe->meta_priority)
-			qe_meta_update(qe, &t->meta, gd->metaif);
+			qe_meta_update(qe, &t->meta, core->metaif);
 
 		gui_task_ptr(wmain_track_new, ti);
 

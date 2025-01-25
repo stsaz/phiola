@@ -14,7 +14,6 @@
 
 static phi_core _core;
 phi_core *core;
-const phi_meta_if *phi_metaif;
 
 #define syserrlog(...) \
 	core->conf.log(core->conf.log_obj, PHI_LOG_ERR | PHI_LOG_SYS, "core", NULL, __VA_ARGS__)
@@ -529,10 +528,12 @@ FF_EXPORT void phi_core_run()
 	wrkx_run(&cc->wx);
 }
 
-extern phi_track_if phi_track_iface;
+extern const phi_track_if phi_track_iface;
+extern const phi_meta_if phi_metaif;
 static phi_core _core = {
 	.version_str = PHI_VERSION_STR,
 	.track = &phi_track_iface,
+	.metaif = &phi_metaif,
 	.time = core_time,
 	.sig = core_sig,
 	.mod = core_mod,

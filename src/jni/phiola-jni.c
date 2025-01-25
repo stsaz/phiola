@@ -175,6 +175,7 @@ enum {
 	AF_FLAC = 3,
 	AF_OPUS = 4,
 	AF_OPUS_VOICE = 5,
+	AF_VORBIS = 6,
 };
 
 #include <jni/android-utils.h>
@@ -296,7 +297,7 @@ static int core()
 	if (NULL == (x->core = phi_core_create(&conf)))
 		return -1;
 	x->queue = *(phi_queue_if*)x->core->mod("core.queue");
-	x->metaif = *(phi_meta_if*)x->core->mod("format.meta");
+	x->metaif = *(phi_meta_if*)x->core->metaif;
 	return 0;
 }
 

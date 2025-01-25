@@ -111,7 +111,7 @@ static void tag_grd_close(void *f, phi_track *t)
 	}
 	val[n] = '\0';
 
-	ffvec_add2T(&tags, &t->meta, ffstr);
+	ffvec_add2T(&tags, &tt->meta, ffstr);
 	size_t cap = 0;
 	ffstr_growfmt(&s, &cap, "replaygain_track_gain=%s", val);
 	*ffvec_pushT(&tags, ffstr) = s;

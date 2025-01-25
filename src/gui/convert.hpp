@@ -108,6 +108,14 @@ static const char out_file_ext[][5] = {
 	"wav",
 	"mp3",
 };
+static const char out_file_aenc[] = {
+	PHI_AC_AAC,
+	PHI_AC_VORBIS,
+	PHI_AC_OPUS,
+	0,
+	0,
+	0,
+};
 
 /** Get file extension index by value */
 static int out_file_ext_index(xxstr val)
@@ -196,12 +204,18 @@ static struct phi_track_conf* conv_conf_create()
 		s.split_by(';', &name, &s);
 		name.split_by('=', &name, &val);
 		if (name.len)
-			gd->metaif->set(&tc->meta, name, val, 0);
+			core->metaif->set(&tc->meta, name, val, 0);
 	}
 
-	tc->aac.quality = c->conf_aacq;
-	tc->vorbis.quality = c->conf_vorbisq;
-	tc->opus.bitrate = c->conf_opusq;
+	int i = out_file_ext_index(c->conf_ext);
+	switch (out_file_aenc[i]) {
+	case PHI_AC_AAC:
+		tc->aac.quality = c->conf_aacq;  break;
+	case PHI_AC_OPUS:
+		tc->opus.bitrate = c->conf_opusq;  break;
+	case PHI_AC_VORBIS:
+		tc->vorbis.quality = c->conf_vorbisq;  break;
+	}
 
 	tc->ifile.preserve_date = c->cbkeepdate.checked();
 	tc->ofile.overwrite = c->cboverwrite.checked();

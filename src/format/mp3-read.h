@@ -40,7 +40,6 @@ static void mp3_close(struct mp3_r *m, phi_track *t)
 	phi_track_free(t, m);
 }
 
-extern const phi_meta_if phi_metaif;
 static void mp3_meta(struct mp3_r *m, phi_track *t, uint type)
 {
 	if (type == MP3READ_ID32) {
@@ -57,7 +56,7 @@ static void mp3_meta(struct mp3_r *m, phi_track *t, uint type)
 		ffstr_setz(&name, ffmmtag_str[tag]);
 
 	dbglog(t, "tag: %S: %S", &name, &val);
-	phi_metaif.set(&t->meta, name, val, 0);
+	core->metaif->set(&t->meta, name, val, 0);
 }
 
 static void mp3_info(struct mp3_r *m, phi_track *t, const struct mpeg1read_info *info)

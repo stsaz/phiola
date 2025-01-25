@@ -5,7 +5,6 @@
 #include <avpack/vorbistag.h>
 #include <avpack/opus-fmt.h>
 
-extern const phi_meta_if phi_metaif;
 extern int vorbistag_read(phi_track *t, ffstr vc);
 
 struct opusmeta {
@@ -87,7 +86,7 @@ static int opusmeta_read(void *ctx, phi_track *t)
 
 		case 3:
 			if (t->audio.ogg_reset) {
-				phi_metaif.destroy(&t->meta);
+				core->metaif->destroy(&t->meta);
 				o->reset = 1;
 				o->state = 0;
 				continue;

@@ -29,7 +29,8 @@ struct _phi_fftask { size_t a[4]; };
 typedef struct _phi_fftask phi_task;
 struct _phi_fftimerqueue_node { size_t a[8]; };
 typedef struct _phi_fftimerqueue_node phi_timer;
-typedef struct { uint len, cap; void *ptr; } phi_meta;
+struct phi_meta_if;
+typedef struct _phi_meta* phi_meta;
 
 enum PHI_LOG {
 	PHI_LOG_ERR,
@@ -123,6 +124,7 @@ struct phi_core {
 	const char *version_str;
 	struct phi_core_conf conf;
 	const struct phi_track_if* track; // track manager interface
+	const struct phi_meta_if* metaif;
 
 	/**
 	flags: enum PHI_CORE_TIME */
@@ -234,6 +236,15 @@ struct phi_af {
 	uint rate;
 };
 
+enum PHI_AC {
+	PHI_AC_AAC = 1,
+	PHI_AC_FLAC,
+	PHI_AC_MP3,
+	PHI_AC_OPUS,
+	PHI_AC_VORBIS,
+	PHI_AC_WAV,
+};
+
 enum PHI_CUE_GAP {
 	/** Add gap to the end of the previous track:
 	track01.index01 .. track02.index01 */
@@ -273,8 +284,7 @@ struct phi_track_conf {
 
 	phi_meta	meta;
 
-	const char*	tee;
-	const char*	tee_output;
+	const char*	tee; // Name of the file where input data will be copied
 
 	struct {
 		struct phi_af format;
@@ -294,21 +304,28 @@ struct phi_track_conf {
 		const char *danorm;
 	} afilter;
 
-	struct {
-		char	profile; // LC:'l' | HE:'h' | HEv2:'H'
-		ushort	quality; // VBR:1..5 | CBR:8..800
-		ushort	bandwidth;
-	} aac;
+	// Audio encoder selected by `ofile.name`
+	union {
+		struct {
+			char data[6];
+		} encoder;
 
-	struct {
-		u_char	quality; // (q+1.0)*10
-	} vorbis;
+		struct {
+			char	profile; // LC:'l' | HE:'h' | HEv2:'H'
+			ushort	quality; // VBR:1..5 | CBR:8..800
+			ushort	bandwidth;
+		} aac;
 
-	struct {
-		ushort	bitrate;
-		u_char	mode; // 0:audio; 1:voip
-		u_char	bandwidth; // either 4, 6, 8, 12, 20kHz
-	} opus;
+		struct {
+			u_char	quality; // (q+1.0)*10
+		} vorbis;
+
+		struct {
+			ushort	bitrate;
+			u_char	mode; // 0:audio; 1:voip
+			u_char	bandwidth; // either 4, 6, 8, 12, 20kHz
+		} opus;
+	};
 
 	struct {
 		u_char	max_page_length_msec;
@@ -335,6 +352,7 @@ struct phi_track_conf {
 	uint	print_tags :1;
 	uint	stream_copy :1;
 	uint	cross_worker_assign :1;
+	uint	tee_output :1; // `tee` is the file name for *output* data, not *input* data
 };
 
 enum PHI_TF {
@@ -405,11 +423,6 @@ struct phi_meta_if {
 	void (*destroy)(phi_meta *meta);
 };
 
-static inline void phi_meta_null(phi_meta *m) {
-	m->ptr = NULL;
-	m->len = m->cap = 0;
-}
-
 enum PHI_ADEV_F {
 	PHI_ADEV_PLAYBACK,
 	PHI_ADEV_CAPTURE,
@@ -454,10 +467,10 @@ struct phi_queue_conf {
 struct phi_queue_entry {
 	char*	url;
 	phi_meta meta;
-	uint	length_msec;
-	uint	seek_cdframes, until_cdframes;
-	uint	lock; // For synchronizing access to `meta`
+	uint	length_sec :24;
 	uint	meta_priority :1; // Supplied `meta` has higher priority than meta from input file (e.g. for .cue track)
+	uint	lock; // For synchronizing access to `meta`
+	uint	seek_cdframes, until_cdframes;
 };
 
 enum PHI_Q_SORT {

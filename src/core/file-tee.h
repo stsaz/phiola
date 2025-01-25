@@ -3,8 +3,6 @@
 
 #include <ffbase/ring.h>
 
-static const phi_meta_if *meta_if;
-
 struct tee_brg {
 	uint		users;
 	ffring*		ring;
@@ -39,7 +37,7 @@ static void tee_brg_close(void *f, phi_track *t)
 	struct tee_brg *tb = f;
 	tee_brg_unref(tb);
 	t->udata = NULL;
-	meta_if->destroy(&t->meta);
+	core->metaif->destroy(&t->meta);
 	ffmem_free(t->conf.ofile.name);  t->conf.ofile.name = NULL;
 }
 
@@ -84,9 +82,8 @@ struct tee {
 
 static void* tee_open(phi_track *t)
 {
-	const char *tee_name = (t->conf.tee) ? t->conf.tee : t->conf.tee_output;
 	ffstr fn, ext;
-	ffpath_splitname_str(FFSTR_Z(tee_name), &fn, &ext);
+	ffpath_splitname_str(FFSTR_Z(t->conf.tee), &fn, &ext);
 	uint o_stdout = ffstr_eqz(&fn, "@stdout");
 
 	if (t->conf.tee_output
@@ -111,8 +108,6 @@ static void* tee_open(phi_track *t)
 
 	struct tee *c = phi_track_allocT(t, struct tee);
 	c->o_stdout = o_stdout;
-	if (!meta_if)
-		meta_if = core->mod("format.meta");
 	return c;
 }
 
@@ -158,12 +153,11 @@ static int tee_process(void *f, phi_track *t)
 		           -> tee-brg -> file.write
 		*/
 
-		const char *tee_name = (t->conf.tee) ? t->conf.tee : t->conf.tee_output;
 		struct phi_track_conf conf = {
-			.ofile.name = ffsz_dup(tee_name),
+			.ofile.name = ffsz_dup(t->conf.tee),
 		};
 		c->out_trk = core->track->create(&conf);
-		meta_if->copy(&c->out_trk->meta, &t->meta, 0);
+		core->metaif->copy(&c->out_trk->meta, &t->meta, 0);
 
 		if (t->conf.tee_output) {
 			c->out_trk->data_type = "pcm";

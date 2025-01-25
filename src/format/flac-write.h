@@ -71,7 +71,6 @@ static void pic_meta(struct flac_picinfo *info, const ffstr *data, void *trk)
 	warnlog(trk, "picture write: can't detect MIME; writing without MIME and image dimensions");
 }
 
-extern const phi_meta_if phi_metaif;
 static int flac_out_addmeta(flac_w *f, phi_track *t)
 {
 	ffstr vendor = {};
@@ -84,7 +83,7 @@ static int flac_out_addmeta(flac_w *f, phi_track *t)
 
 	uint i = 0;
 	ffstr name, val;
-	while (phi_metaif.list(&t->meta, &i, &name, &val, PHI_META_UNIQUE)) {
+	while (core->metaif->list(&t->meta, &i, &name, &val, PHI_META_UNIQUE)) {
 
 		if (ffstr_eqcz(&name, "vendor"))
 			continue;

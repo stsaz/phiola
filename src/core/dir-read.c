@@ -7,7 +7,6 @@
 
 extern const phi_core *core;
 extern const phi_queue_if phi_queueif;
-extern const phi_meta_if *phi_metaif;
 #define syswarnlog(t, ...)  phi_syswarnlog(core, NULL, t, __VA_ARGS__)
 
 /**
@@ -121,9 +120,6 @@ end:
 
 static void* dir_open(phi_track *t)
 {
-	if (!phi_metaif)
-		phi_metaif = core->mod("format.meta");
-
 	if (!!qu_add_dir_r(t->conf.ifile.name, t))
 		return PHI_OPEN_ERR;
 	return (void*)1;

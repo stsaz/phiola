@@ -24,7 +24,6 @@ struct exe_subcmd {
 struct exe {
 	const phi_core*		core;
 	const phi_queue_if*	queue;
-	const phi_meta_if*	metaif;
 	const phi_ui_if*	uif;
 
 	struct zzlog		log;
@@ -47,7 +46,6 @@ struct exe {
 	uint cpu_affinity;
 	uint timer_int_msec;
 	uint codepage_id;
-	uint mode_record :1;
 	uint stdin_busy :1;
 	uint stdout_busy :1;
 	uint log_file :1;
@@ -117,13 +115,6 @@ static void phi_grd_close(void *f, phi_track *t)
 
 	if (x->exit_code == ~0U || t->error)
 		x->exit_code = t->error & 0xff;
-
-	if (x->mode_record) {
-		ffmem_free(t->conf.ofile.name);  t->conf.ofile.name = NULL;
-		x->metaif->destroy(&t->meta);
-		x->core->sig(PHI_CORE_STOP);
-		return;
-	}
 
 	x->dont_exit = !!(t->chain_flags & PHI_FSTOP); // don't exit app if the last track is stopped by user command
 }

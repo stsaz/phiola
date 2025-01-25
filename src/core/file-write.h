@@ -132,12 +132,8 @@ static void fw_name_var(ffvec *buf, ffstr var, phi_track *t)
 	ffdatetime dt = {};
 
 	if (0 > (r = ffcharr_findsorted(vars, FF_COUNT(vars), sizeof(*vars), var.ptr+1, var.len-1))) {
-
-		if (!phi_metaif)
-			phi_metaif = core->mod("format.meta");
-
 		ffstr var_name = FFSTR_INITN(var.ptr+1, var.len-1);
-		if (!!phi_metaif->find(&t->meta, var_name, &val, 0))
+		if (core->metaif->find(&t->meta, var_name, &val, 0))
 			val = var;
 		goto data;
 	}

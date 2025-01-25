@@ -4,7 +4,6 @@
 
 extern const phi_core *core;
 static const phi_queue_if *queue;
-static const phi_meta_if *metaif;
 #define errlog(t, ...)  phi_errlog(core, NULL, t, __VA_ARGS__)
 #define warnlog(t, ...)  phi_warnlog(core, NULL, t, __VA_ARGS__)
 

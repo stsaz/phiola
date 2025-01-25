@@ -14,17 +14,6 @@ struct q_entry {
 	char name[0];
 };
 
-static void meta_destroy(phi_meta *meta)
-{
-	char **it;
-	FFSLICE_FOR(meta, it) {
-		ffmem_free(*it);
-		it += 2;
-	}
-	ffmem_free(meta->ptr);
-	phi_meta_null(meta);
-}
-
 static void qe_free(struct q_entry *e)
 {
 	if (e->q && e == e->q->cursor)
@@ -32,7 +21,7 @@ static void qe_free(struct q_entry *e)
 	if (e == qm->cursor)
 		qm->cursor = NULL;
 
-	meta_destroy(&e->pub.meta);
+	core->metaif->destroy(&e->pub.meta);
 	if (e->pub.url != e->name)
 		ffmem_free(e->pub.url);
 	ffmem_free(e);
@@ -75,15 +64,15 @@ static void qe_close(void *f, phi_track *t)
 		e->trk = NULL;
 
 		if (e->q && !e->q->conf.conversion && !e->pub.meta_priority) {
-			int mod = (e->pub.meta.len || t->meta.len); // empty meta == not modified
-			if (t->meta.len) {
+			int mod = (e->pub.meta || t->meta); // empty meta == not modified
+			if (t->meta) {
 				fflock_lock((fflock*)&e->pub.lock); // UI thread may read or write `conf.meta` at this moment
 				phi_meta meta_old = e->pub.meta;
 				e->pub.meta = t->meta; // Remember the tags we read from file in this track
 				fflock_unlock((fflock*)&e->pub.lock);
 
-				meta_destroy(&meta_old);
-				phi_meta_null(&t->meta);
+				core->metaif->destroy(&meta_old);
+				t->meta = NULL;
 			}
 			if (mod)
 				q_modified(e->q);
@@ -93,7 +82,7 @@ static void qe_close(void *f, phi_track *t)
 			core->track->stop(t);
 	}
 
-	meta_destroy(&t->meta);
+	core->metaif->destroy(&t->meta);
 	if (e->q) {
 		uint flags = (t->error) ? Q_TKCL_ERR : 0;
 		if ((t->chain_flags & (PHI_FSTOP | PHI_FSTOP_AFTER)) // track stopped by user
@@ -169,7 +158,7 @@ static int qe_play(struct q_entry *e)
 	} else {
 		if (!track->filter(t, &phi_queue_guard, 0)
 			|| !track->filter(t, core->mod("core.auto-input"), 0)
-			|| (c.tee
+			|| (c.tee && !c.tee_output
 				&& !track->filter(t, core->mod("core.tee"), 0))
 			|| !track->filter(t, core->mod("format.detect"), 0)
 			|| !track->filter(t, core->mod("afilter.until"), 0)
@@ -188,10 +177,10 @@ static int qe_play(struct q_entry *e)
 			goto err;
 	}
 
-	if (e->q->conf.tconf.meta.len)
-		phi_metaif->copy(&t->meta, &e->q->conf.tconf.meta, 0); // from user
-	if (e->pub.meta.len && e->pub.meta_priority)
-		phi_metaif->copy(&t->meta, &e->pub.meta, (e->q->conf.tconf.meta.len) ? PHI_META_UNIQUE : 0); // from .cue
+	if (e->q->conf.tconf.meta)
+		core->metaif->copy(&t->meta, &e->q->conf.tconf.meta, 0); // from user
+	if (e->pub.meta && e->pub.meta_priority)
+		core->metaif->copy(&t->meta, &e->pub.meta, (e->q->conf.tconf.meta) ? PHI_META_UNIQUE : 0); // from .cue
 
 	e->trk = t;
 	e->used++;
@@ -295,7 +284,7 @@ int qe_filter(struct q_entry *e, ffstr filter, uint flags)
 
 	if (flags & PHI_QF_META) {
 		uint i = 0;
-		while (phi_metaif->list(&e->pub.meta, &i, &name, &val, 0)) {
+		while (core->metaif->list(&e->pub.meta, &i, &name, &val, 0)) {
 			if (ffstr_ifindstr(&val, &filter) >= 0)
 				return 1;
 		}

@@ -16,8 +16,6 @@ static void* m3uw_open(phi_track *t)
 
 	if (!queue)
 		queue = core->mod("core.queue");
-	if (!metaif)
-		metaif = core->mod("format.meta");
 
 	struct m3uw *m = phi_track_allocT(t, struct m3uw);
 	m->q = t->udata;
@@ -41,10 +39,10 @@ static int m3uw_process(void *ctx, phi_track *t)
 
 		m3uwrite_entry m3e = {
 			.url = FFSTR_Z(qe->url),
-			.duration_sec = (qe->length_msec) ? (int)qe->length_msec / 1000 : -1,
+			.duration_sec = (qe->length_sec) ? (int)qe->length_sec : -1,
 		};
-		metaif->find(&qe->meta, FFSTR_Z("artist"), &m3e.artist, 0);
-		metaif->find(&qe->meta, FFSTR_Z("title"), &m3e.title, 0);
+		core->metaif->find(&qe->meta, FFSTR_Z("artist"), &m3e.artist, 0);
+		core->metaif->find(&qe->meta, FFSTR_Z("title"), &m3e.title, 0);
 		m3uwrite_process(&m->m3, &m3e);
 	}
 

@@ -2,6 +2,7 @@
 2023, Simon Zolin */
 
 #include <util/aformat.h>
+#include <util/util.h>
 #include <ffsys/std.h>
 #include <ffsys/path.h>
 #include <ffsys/dirscan.h>
@@ -69,14 +70,11 @@ err:
 
 static void cmd_meta_set(phi_meta *dst, const ffvec *src)
 {
-	if (!x->metaif)
-		x->metaif = x->core->mod("format.meta");
-
 	ffstr *it;
 	FFSLICE_WALK(src, it) {
 		ffstr name, val;
 		ffstr_splitby(it, '=', &name, &val);
-		x->metaif->set(dst, name, val, 0);
+		x->core->metaif->set(dst, name, val, 0);
 	}
 }
 
@@ -173,6 +171,52 @@ static int cmd_input(ffvec *input, ffstr s)
 		*ffvec_pushT(input, ffstr) = s;
 	}
 	return 0;
+}
+
+static int cmd_oext_aenc(ffstr ext, uint stream_copy)
+{
+	if (ext.len > 4)
+		return 0;
+	char s[4] = {};
+	ffs_lower(s, sizeof(s), ext.ptr, ext.len);
+	static const char exts[][4] = {
+		"aac",
+		"flac",
+		"m4a",
+		"mp3",
+		"mp4",
+		"ogg",
+		"opus",
+		"wav",
+	};
+	static const char ac[2][8] = {
+		// encode
+		{
+			0, // aac
+			PHI_AC_FLAC, // flac
+			PHI_AC_AAC, // m4a
+			0, // mp3
+			PHI_AC_AAC, // mp4
+			PHI_AC_VORBIS, // ogg
+			PHI_AC_OPUS, // opus
+			PHI_AC_WAV, // wav
+		},
+		// copy
+		{
+			PHI_AC_AAC, // aac
+			0, // flac
+			PHI_AC_AAC, // m4a
+			PHI_AC_MP3, // mp3
+			PHI_AC_AAC, // mp4
+			PHI_AC_VORBIS, // ogg
+			PHI_AC_OPUS, // opus
+			0, // wav
+		},
+	};
+	int r = ffcharr_findsorted(exts, FF_COUNT(exts), sizeof(*exts), s, 4);
+	if (r < 0)
+		return 0;
+	return ac[stream_copy][r];
 }
 
 static const char* cmd_aac_profile(const char *s)

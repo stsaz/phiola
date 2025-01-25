@@ -8,7 +8,6 @@
 
 extern const phi_core *core;
 static const phi_queue_if *queue;
-static const phi_meta_if *metaif;
 #define dbglog(t, ...)  phi_dbglog(core, NULL, t, __VA_ARGS__)
 #define warnlog(t, ...)  phi_warnlog(core, NULL, t, __VA_ARGS__)
 
@@ -61,8 +60,6 @@ static void* cue_open(phi_track *t)
 {
 	if (!queue)
 		queue = core->mod("core.queue");
-	if (!metaif)
-		metaif = core->mod("format.meta");
 
 	struct cue *c = phi_track_allocT(t, struct cue);
 	ffarrint32_sort((uint*)t->conf.tracks.ptr, t->conf.tracks.len);
@@ -277,7 +274,7 @@ static void add_track(struct cue *c, struct ffcuetrk *ctrk, phi_track *t)
 		.url = c->url.ptr,
 		.seek_cdframes = ctrk->from,
 		.until_cdframes = ctrk->to,
-		.length_msec = (ctrk->to) ? (ctrk->to - ctrk->from) * 1000 / 75 : 0,
+		.length_sec = (ctrk->to) ? (ctrk->to - ctrk->from) / 75 : 0,
 		.meta_priority = 1,
 	};
 
@@ -288,13 +285,13 @@ static void add_track(struct cue *c, struct ffcuetrk *ctrk, phi_track *t)
 		if (cue_meta_find(&c->metas, c->nmeta, &m[i]) >= 0)
 			continue;
 
-		metaif->set(&qe.meta, *(ffstr*)&m[i], *(ffstr*)&m[i + 1], 0);
+		core->metaif->set(&qe.meta, *(ffstr*)&m[i], *(ffstr*)&m[i + 1], 0);
 	}
 
 	// add TRACK meta
 	m = (void*)c->metas.ptr;
 	for (uint i = 0;  i != c->nmeta;  i += 2) {
-		metaif->set(&qe.meta, *(ffstr*)&m[i], *(ffstr*)&m[i + 1], 0);
+		core->metaif->set(&qe.meta, *(ffstr*)&m[i], *(ffstr*)&m[i + 1], 0);
 	}
 
 	c->qu_cur = queue->insert(c->qu_cur, &qe);

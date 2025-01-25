@@ -5,8 +5,6 @@
 #include <avpack/vorbistag.h>
 #include <avpack/vorbis-fmt.h>
 
-extern const phi_meta_if phi_metaif;
-
 struct vorbismeta {
 	uint state;
 	ffvec hdr;
@@ -43,7 +41,7 @@ int vorbistag_read(phi_track *t, ffstr vc)
 		dbglog(t, "%S: %S", &name, &val);
 		if (tag != 0)
 			ffstr_setz(&name, ffmmtag_str[tag]);
-		phi_metaif.set(&t->meta, name, val, 0);
+		core->metaif->set(&t->meta, name, val, 0);
 	}
 }
 

@@ -3,8 +3,6 @@
 
 #include <avpack/mp4-write.h>
 
-extern const phi_meta_if phi_metaif;
-
 struct mp4_w {
 	uint state;
 	mp4write mp;
@@ -28,7 +26,7 @@ static int mp4w_addmeta(struct mp4_w *m, phi_track *t)
 {
 	uint i = 0;
 	ffstr name, val;
-	while (phi_metaif.list(&t->meta, &i, &name, &val, PHI_META_UNIQUE)) {
+	while (core->metaif->list(&t->meta, &i, &name, &val, PHI_META_UNIQUE)) {
 		if (ffstr_eqcz(&name, "vendor"))
 			continue;
 

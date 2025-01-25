@@ -218,7 +218,7 @@ static void conv_track_update(phi_track *t, const char *progress)
 {
 	gui_wmain *m = gg->wmain;
 	struct phi_queue_entry *qe = (struct phi_queue_entry*)t->qent;
-	gd->metaif->set(&qe->meta, FFSTR_Z("_phi_dur"), FFSTR_Z(progress), PHI_META_REPLACE);
+	core->metaif->set(&qe->meta, FFSTR_Z("_phi_dur"), FFSTR_Z(progress), PHI_META_REPLACE);
 	if (gd->tab_conversion) {
 		int idx = gd->queue->index(t->qent);
 		m->vlist.update(idx, 0);
@@ -274,7 +274,7 @@ static void list_display(ffui_view_disp *disp)
 		break;
 
 	default:
-		if (!gd->metaif->find(meta, FFSTR_Z(list_colname[sub]), &s, PHI_META_PRIVATE))
+		if (!core->metaif->find(meta, FFSTR_Z(list_colname[sub]), &s, PHI_META_PRIVATE))
 			val = &s;
 	}
 
@@ -290,10 +290,9 @@ static void list_display(ffui_view_disp *disp)
 		break;
 
 	case H_DUR:
-		if (!val && qe->length_msec != 0) {
-			uint sec = qe->length_msec / 1000;
-			buf.zfmt("%u:%02u", sec / 60, sec % 60);
-			gd->metaif->set(meta, FFSTR_Z("_phi_dur"), buf, 0);
+		if (!val && qe->length_sec) {
+			buf.zfmt("%u:%02u", qe->length_sec / 60, qe->length_sec % 60);
+			core->metaif->set(meta, FFSTR_Z("_phi_dur"), buf, 0);
 			val = &buf;
 		}
 		break;

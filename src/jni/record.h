@@ -100,20 +100,27 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 			.gain_db = (double)gain_db100 / 100,
 			.danorm = (flags & RECF_DANORM) ? "" : NULL,
 		},
-		.aac = {
-			.profile = (fmt == AF_AAC_HE) ? 'h'
-				: (fmt == AF_AAC_HE2) ? 'H'
-				: 0,
-			.quality = (uint)q,
-		},
-		.opus = {
-			.bitrate = q,
-			.mode = (fmt == AF_OPUS_VOICE) ? 1 : 0,
-		},
 		.ofile = {
 			.name = ffsz_dup(oname),
 		},
 	};
+
+	switch (fmt) {
+	case AF_AAC_LC:
+	case AF_AAC_HE:
+	case AF_AAC_HE2:
+		c.aac.profile = (fmt == AF_AAC_HE) ? 'h'
+			: (fmt == AF_AAC_HE2) ? 'H'
+			: 0;
+		c.aac.quality = (uint)q;
+		break;
+
+	case AF_OPUS:
+	case AF_OPUS_VOICE:
+		c.opus.bitrate = q;
+		c.opus.mode = !!(fmt == AF_OPUS_VOICE);
+		break;
+	}
 
 	const phi_track_if *track = x->core->track;
 	phi_track *t = track->create(&c);

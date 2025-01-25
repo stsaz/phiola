@@ -513,7 +513,7 @@ static ffssize track_cmd(phi_track *t, uint cmd, ...)
 	return 0;
 }
 
-phi_track_if phi_track_iface = {
+const phi_track_if phi_track_iface = {
 	track_conf,
 	track_create,
 	track_close,

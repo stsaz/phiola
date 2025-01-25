@@ -16,8 +16,6 @@ static void* m3u_open(phi_track *t)
 {
 	if (!queue)
 		queue = core->mod("core.queue");
-	if (!metaif)
-		metaif = core->mod("format.meta");
 
 	struct m3u *m = phi_track_allocT(t, struct m3u);
 	m3uread_open(&m->m3u);
@@ -48,20 +46,16 @@ static int m3u_add(struct m3u *m, phi_track *t)
 	if (0 != plist_fullname(t, *(ffstr*)&m->pls_ent.url, &url))
 		return 1;
 
-	uint dur = 0;
-	if (m->pls_ent.duration != -1)
-		dur = m->pls_ent.duration * 1000;
-
 	struct phi_queue_entry qe = {
 		.url = url.ptr,
-		.length_msec = dur,
+		.length_sec = (m->pls_ent.duration != -1) ? m->pls_ent.duration : 0,
 	};
 
 	if (m->pls_ent.artist.len)
-		metaif->set(&qe.meta, FFSTR_Z("artist"), *(ffstr*)&m->pls_ent.artist, 0);
+		core->metaif->set(&qe.meta, FFSTR_Z("artist"), *(ffstr*)&m->pls_ent.artist, 0);
 
 	if (m->pls_ent.title.len)
-		metaif->set(&qe.meta, FFSTR_Z("title"), *(ffstr*)&m->pls_ent.title, 0);
+		core->metaif->set(&qe.meta, FFSTR_Z("title"), *(ffstr*)&m->pls_ent.title, 0);
 
 	m->qu_cur = queue->insert(m->qu_cur, &qe);
 	ffstr_free(&url);

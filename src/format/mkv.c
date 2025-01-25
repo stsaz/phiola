@@ -47,12 +47,11 @@ static void mkv_close(void *ctx, phi_track *t)
 	phi_track_free(t, m);
 }
 
-extern const phi_meta_if phi_metaif;
 static void mkv_meta(struct mkv_r *m, phi_track *t)
 {
 	ffstr name, val;
 	name = mkvread_tag(&m->mkv, &val);
-	phi_metaif.set(&t->meta, name, val, 0);
+	core->metaif->set(&t->meta, name, val, 0);
 }
 
 static const ushort mkv_codecs[] = {

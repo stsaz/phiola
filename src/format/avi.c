@@ -40,7 +40,6 @@ static void avi_close(void *ctx, phi_track *t)
 	phi_track_free(t, a);
 }
 
-extern const phi_meta_if phi_metaif;
 static void avi_meta(struct avi_r *a, phi_track *t)
 {
 	ffstr name, val;
@@ -48,7 +47,7 @@ static void avi_meta(struct avi_r *a, phi_track *t)
 	if (tag == -1)
 		return;
 	ffstr_setz(&name, ffmmtag_str[tag]);
-	phi_metaif.set(&t->meta, name, val, 0);
+	core->metaif->set(&t->meta, name, val, 0);
 }
 
 static const ushort avi_codecs[] = {

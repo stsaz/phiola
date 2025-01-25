@@ -121,6 +121,8 @@ struct cmd_conv {
 	uint	vorbis_q;
 	uint64	seek;
 	uint64	until;
+
+	u_char	aenc;
 };
 
 static int conv_include(struct cmd_conv *v, ffstr s)
@@ -225,16 +227,6 @@ static int conv_action(struct cmd_conv *v)
 				.channels = v->channels,
 			},
 		},
-		.aac = {
-			.profile = v->aac_profile[0],
-			.quality = v->aac_q,
-			.bandwidth = (ushort)v->aac_bandwidth,
-		},
-		.vorbis.quality = (v->vorbis_q) ? (v->vorbis_q + 1) * 10 : 0,
-		.opus = {
-			.bitrate = v->opus_q,
-			.mode = v->opus_mode_n,
-		},
 		.ofile = {
 			.name = ffsz_dup(v->output),
 			.overwrite = v->force,
@@ -243,6 +235,23 @@ static int conv_action(struct cmd_conv *v)
 		.print_time = v->perf,
 		.cross_worker_assign = 1,
 	};
+
+	switch (v->aenc) {
+	case PHI_AC_AAC:
+		c.aac.profile = v->aac_profile[0];
+		c.aac.quality = v->aac_q;
+		c.aac.bandwidth = (ushort)v->aac_bandwidth;
+		break;
+
+	case PHI_AC_OPUS:
+		c.opus.bitrate = v->opus_q;
+		c.opus.mode = v->opus_mode_n;
+		break;
+
+	case PHI_AC_VORBIS:
+		c.vorbis.quality = (v->vorbis_q) ? (v->vorbis_q + 1) * 10 : 0;  break;
+	}
+
 	cmd_meta_set(&c.meta, &v->meta);
 	ffvec_free(&v->meta);
 
@@ -280,9 +289,13 @@ static int conv_prepare(struct cmd_conv *v)
 	if ((int)(v->opus_mode_n = cmd_opus_mode(v->opus_mode)) < 0)
 		return _ffargs_err(&x->cmd, 1, "-opus_mode: incorrect value");
 
-	ffstr name;
-	ffpath_splitname_str(FFSTR_Z(v->output), &name, NULL);
-	x->stdout_busy = ffstr_eqz(&name, "@stdout");
+	ffstr dir, name, ext;
+	ffpath_split3_output(FFSTR_Z(v->output), &dir, &name, &ext);
+	x->stdout_busy = (!dir.len && ffstr_eqz(&name, "@stdout"));
+	if (!ext.len)
+		return _ffargs_err(&x->cmd, 1, "Please specify output file extension: \"%s\"", v->output);
+	if (!(v->aenc = cmd_oext_aenc(ext, v->copy)))
+		return _ffargs_err(&x->cmd, 1, "Specified output file format is not supported: \"%S\"", &ext);
 	return 0;
 }
 

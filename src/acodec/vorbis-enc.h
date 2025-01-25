@@ -15,8 +15,6 @@ struct vorbis_enc {
 static void* vorbis_out_create(phi_track *t)
 {
 	struct vorbis_enc *v = phi_track_allocT(t, struct vorbis_enc);
-	if (!phi_metaif)
-		phi_metaif = core->mod("format.meta");
 	return v;
 }
 
@@ -31,7 +29,7 @@ static int vorbis_out_addmeta(struct vorbis_enc *v, phi_track *t)
 {
 	uint i = 0;
 	ffstr name, val;
-	while (phi_metaif->list(&t->meta, &i, &name, &val, PHI_META_UNIQUE)) {
+	while (core->metaif->list(&t->meta, &i, &name, &val, PHI_META_UNIQUE)) {
 		if (ffstr_eqz(&name, "vendor")
 			|| ffstr_eqz(&name, "picture"))
 			continue;

@@ -7,7 +7,6 @@
 
 extern const phi_core *core;
 static const phi_queue_if *queue;
-static const phi_meta_if *metaif;
 #define warnlog(t, ...)  phi_warnlog(core, NULL, t, __VA_ARGS__)
 
 struct pls_r {
@@ -21,8 +20,6 @@ static void* pls_open(phi_track *t)
 {
 	if (!queue)
 		queue = core->mod("core.queue");
-	if (!metaif)
-		metaif = core->mod("format.meta");
 
 	struct pls_r *p = phi_track_allocT(t, struct pls_r);
 	plsread_open(&p->pls);
@@ -47,11 +44,11 @@ static int pls_add(struct pls_r *p, phi_track *t)
 
 	struct phi_queue_entry qe = {
 		.url = url.ptr,
-		.length_msec = (p->pls_ent.duration != -1) ? p->pls_ent.duration * 1000 : 0,
+		.length_sec = (p->pls_ent.duration != -1) ? p->pls_ent.duration : 0,
 	};
 
 	if (p->pls_ent.title.len) {
-		metaif->set(&qe.meta, FFSTR_Z("title"), *(ffstr*)&p->pls_ent.title, 0);
+		core->metaif->set(&qe.meta, FFSTR_Z("title"), *(ffstr*)&p->pls_ent.title, 0);
 	}
 
 	p->qu_cur = queue->insert(p->qu_cur, &qe);

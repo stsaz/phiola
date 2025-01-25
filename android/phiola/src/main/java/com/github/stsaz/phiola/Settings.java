@@ -117,9 +117,9 @@ class CoreSettings {
 	static final int conv_encoders[] = {
 		Phiola.AF_AAC_LC,
 		Phiola.AF_AAC_HE,
-		0,
-		0,
-		0,
+		Phiola.AF_OPUS,
+		Phiola.AF_VORBIS,
+		Phiola.AF_FLAC,
 		0,
 		0,
 	};

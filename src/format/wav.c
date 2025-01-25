@@ -45,7 +45,6 @@ static void wav_close(void *ctx, phi_track *t)
 	phi_track_free(t, w);
 }
 
-extern const phi_meta_if phi_metaif;
 static void wav_meta(struct wav_r *w, phi_track *t)
 {
 	ffstr name, val;
@@ -53,7 +52,7 @@ static void wav_meta(struct wav_r *w, phi_track *t)
 	if (tag == 0)
 		return;
 	ffstr_setz(&name, ffmmtag_str[tag]);
-	phi_metaif.set(&t->meta, name, val, 0);
+	core->metaif->set(&t->meta, name, val, 0);
 }
 
 static uint af_wav_phi(uint wf)

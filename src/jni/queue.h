@@ -373,7 +373,7 @@ static ffvec info_prepare(const struct phi_queue_entry *qe)
 {
 	const phi_meta *meta = &qe->meta;
 	ffvec info = {};
-	ffvec_allocT(&info, 5*2 + meta->len, char*);
+	ffvec_allocT(&info, 5*2, char*);
 	char **p = info.ptr;
 
 	*p++ = ffsz_dup("url");
@@ -386,8 +386,7 @@ static ffvec info_prepare(const struct phi_queue_entry *qe)
 	*p++ = NULL;
 
 	*p++ = ffsz_dup("length");
-	uint sec = qe->length_msec / 1000,  msec = qe->length_msec % 1000;
-	*p++ = ffsz_allocfmt("%u:%02u.%03u", sec/60, sec%60, msec);
+	*p++ = ffsz_allocfmt("%u:%02u", qe->length_sec / 60, qe->length_sec % 60);
 
 	*p++ = ffsz_dup("format");
 	ffstr val;
@@ -396,18 +395,22 @@ static ffvec info_prepare(const struct phi_queue_entry *qe)
 	else
 		*p++ = ffsz_dup("");
 
+	info.len = p - (char**)info.ptr;
+
 	uint i = 0;
 	ffstr k, v;
 	while (x->metaif.list(meta, &i, &k, &v, 0)) {
+		ffvec_growT(&info, 2, char*);
+		p = (char**)info.ptr + info.len;
+		info.len += 2;
 		*p++ = ffsz_dupstr(&k);
 		if (ffstr_eqz(&k, "picture")) {
-			*p++ = ffsz_dup("");
+			*p = ffsz_dup("");
 			continue;
 		}
-		*p++ = ffsz_dupstr(&v);
+		*p = ffsz_dupstr(&v);
 	}
 
-	info.len = p - (char**)info.ptr;
 	return info;
 }
 
@@ -473,8 +476,8 @@ static void display_name_prepare(ffstr *val, ffsize cap, struct phi_queue_entry 
 	}
 
 	if (!(flags & 1) // not a conversion track
-		&& qe->length_msec) {
-		uint sec = qe->length_msec / 1000;
+		&& qe->length_sec) {
+		uint sec = qe->length_sec;
 		uint min = sec / 60;
 		sec -= min * 60;
 		ffstr_addfmt(val, cap, " [%u:%02u]"
@@ -545,16 +548,24 @@ Java_com_github_stsaz_phiola_Phiola_quConvertBegin(JNIEnv *env, jobject thiz, jl
 		.oaudio.format.format = jni_obj_int(jconf, jni_field_int(jc_conf, "sample_format")),
 		.oaudio.format.rate = jni_obj_int(jconf, jni_field_int(jc_conf, "sample_rate")),
 
-		.aac.quality = jni_obj_int(jconf, jni_field_int(jc_conf, "aac_quality")),
-		.vorbis.quality = jni_obj_int(jconf, jni_field_int(jc_conf, "vorbis_quality")),
-		.opus.bitrate = jni_obj_int(jconf, jni_field_int(jc_conf, "opus_quality")),
-
 		.ofile.name = ffsz_dup(ofn),
 		.ofile.name_tmp = 1,
 		.ofile.overwrite = !!(flags & COF_OVERWRITE),
 
 		.cross_worker_assign = 1,
 	};
+
+	int fmt = jni_obj_int(jconf, jni_field_int(jc_conf, "format"));
+	switch (fmt) {
+	case AF_AAC_LC:
+		conf.aac.quality = jni_obj_int(jconf, jni_field_int(jc_conf, "aac_quality"));  break;
+
+	case AF_OPUS:
+		conf.opus.bitrate = jni_obj_int(jconf, jni_field_int(jc_conf, "opus_quality"));  break;
+
+	case AF_VORBIS:
+		conf.vorbis.quality = jni_obj_int(jconf, jni_field_int(jc_conf, "vorbis_quality"));  break;
+	}
 
 	if (msec_apos(from, (int64*)&conf.seek_msec)) {
 		error = "Incorrect 'from' value";
@@ -588,7 +599,7 @@ Java_com_github_stsaz_phiola_Phiola_quConvertBegin(JNIEnv *env, jobject thiz, jl
 		x->metaif.destroy(&qc->tconf.meta);
 		qc->tconf = conf;
 		qc->tconf.meta = conf.meta;
-		phi_meta_null(&conf.meta);
+		conf.meta = NULL;
 		conf.ofile.name = NULL;
 	}
 

@@ -5,7 +5,6 @@
 #include <avpack/caf-read.h>
 
 extern const phi_core *core;
-extern const phi_meta_if phi_metaif;
 #define dbglog(t, ...)  phi_dbglog(core, NULL, t, __VA_ARGS__)
 #define errlog(t, ...)  phi_errlog(core, NULL, t, __VA_ARGS__)
 
@@ -139,7 +138,7 @@ static int caf_process(void *ctx, phi_track *t)
 		case CAFREAD_TAG: {
 			ffstr name, val;
 			name = cafread_tag(&c->caf, &val);
-			phi_metaif.set(&t->meta, name, val, 0);
+			core->metaif->set(&t->meta, name, val, 0);
 			break;
 		}
 

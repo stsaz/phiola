@@ -6,19 +6,16 @@
 
 static void* rgnorm_open(phi_track *t)
 {
-	if (!meta_if)
-		meta_if = core->mod("format.meta");
-
 	double db;
 	ffstr val;
-	if (!meta_if->find(&t->meta, FFSTR_Z("r128_track_gain"), &val, 0)) {
+	if (!core->metaif->find(&t->meta, FFSTR_Z("r128_track_gain"), &val, 0)) {
 		int n;
 		if (!ffstr_to_int32(&val, &n)
 			|| Q78_float(n, &db))
 			goto end;
 		db = RG_from_R128(db);
 
-	} else if (!meta_if->find(&t->meta, FFSTR_Z("replaygain_track_gain"), &val, 0)) {
+	} else if (!core->metaif->find(&t->meta, FFSTR_Z("replaygain_track_gain"), &val, 0)) {
 		ffstr_trimwhite(&val);
 		ffstr_splitby(&val, ' ', &val, NULL);
 		if (!ffstr_to_float(&val, &db))

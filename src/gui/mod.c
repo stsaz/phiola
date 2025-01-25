@@ -624,7 +624,7 @@ void list_add_to_next(ffslice indices)
 	uint *it;
 	FFSLICE_WALK(&indices, it) {
 		struct phi_queue_entry *qe = gd->queue->at(q_src, *it), nqe = {};
-		qe_copy(&nqe, qe, gd->metaif);
+		qe_copy(&nqe, qe, core->metaif);
 		gd->queue->add(q_target, &nqe);
 	}
 
@@ -728,7 +728,7 @@ void convert_add(ffslice indices)
 		const struct phi_queue_entry *iqe = gd->queue->at(q, *it);
 
 		struct phi_queue_entry qe = {};
-		qe_copy(&qe, iqe, gd->metaif);
+		qe_copy(&qe, iqe, core->metaif);
 		gd->queue->add(gd->q_convert, &qe);
 	}
 
@@ -745,10 +745,10 @@ void convert_begin(void *param)
 
 	if ((qe = gd->queue->at(gd->q_convert, 0))) {
 		struct phi_queue_conf *qc = gd->queue->conf(gd->q_convert);
-		gd->metaif->destroy(&qc->tconf.meta);
+		core->metaif->destroy(&qc->tconf.meta);
 		ffmem_free(qc->tconf.ofile.name);
 		qc->tconf = *c;
-		phi_meta_null(&c->meta);
+		c->meta = NULL;
 		c->ofile.name = NULL;
 		gd->queue->play(NULL, gd->queue->at(gd->q_convert, 0));
 	}
@@ -757,7 +757,7 @@ end:
 	if (!qe) {
 		wconvert_done();
 		ffmem_free(c->ofile.name);
-		gd->metaif->destroy(&c->meta);
+		core->metaif->destroy(&c->meta);
 	}
 	ffmem_free(c);
 }
@@ -861,7 +861,6 @@ static void gui_start(void *param)
 	gd->marker_sec = ~0;
 	gd->volume = 100;
 	gd->queue = core->mod("core.queue");
-	gd->metaif = core->mod("format.meta");
 
 	char *user_conf_fn = ffsz_allocfmt("%Smod/gui/%s", &core->conf.root, USER_CONF_NAME_ALT);
 	if (fffile_exists(user_conf_fn)) {
