@@ -246,6 +246,15 @@ static const phi_filter phi_guard_gui = {
 
 static int action()
 {
+	const phi_remote_cl_if *rcl = x->core->mod("remote.client");
+	if (!rcl->play("gui", *(ffslice*)&x->input, PHI_RCLF_NOLOG)) {
+		x->core->sig(PHI_CORE_STOP);
+		return 0;
+	}
+
+	const phi_remote_sv_if *rsv = x->core->mod("remote.server");
+	rsv->start("gui");
+
 	struct phi_queue_conf qc = {
 		.first_filter = &phi_guard_gui,
 		.ui_module = "gui.track",

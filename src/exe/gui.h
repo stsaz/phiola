@@ -32,13 +32,26 @@ static void gui_log_ctl(uint flags)
 
 static int gui_action(struct cmd_gui *g)
 {
+	const phi_remote_cl_if *rcl = x->core->mod("remote.client");
+	ffvec inz = {};
+	ffstr *it;
+	FFSLICE_WALK(&g->input, it) {
+		*ffvec_pushT(&inz, char*) = it->ptr;
+	}
+	if (!rcl->play("gui", *(ffslice*)&inz, PHI_RCLF_NOLOG)) {
+		x->core->sig(PHI_CORE_STOP);
+		goto end;
+	}
+
+	const phi_remote_sv_if *rsv = x->core->mod("remote.server");
+	rsv->start("gui");
+
 	struct phi_queue_conf qc = {
 		.first_filter = &phi_guard_gui,
 		.ui_module = "gui.track",
 	};
 	x->queue->create(&qc);
 
-	ffstr *it;
 	FFSLICE_WALK(&g->input, it) {
 		struct phi_queue_entry qe = {
 			.url = it->ptr,
@@ -59,6 +72,8 @@ static int gui_action(struct cmd_gui *g)
 		x->uif->conf(&uc);
 	}
 
+end:
+	ffvec_free(&inz);
 	x->exit_code = 0;
 	return 0;
 }

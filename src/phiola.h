@@ -569,9 +569,18 @@ struct phi_remote_sv_if {
 	int (*start)(const char *name);
 };
 
+enum PHI_RCLF {
+	PHI_RCLF_NOLOG = 1,
+};
+
 typedef struct phi_remote_cl_if phi_remote_cl_if;
 struct phi_remote_cl_if {
 	int (*cmd)(const char *name, ffstr cmd);
+
+	/**
+	names: char*[]
+	flags: enum PHI_RCLF */
+	int (*play)(const char *name, ffslice names, uint flags);
 };
 
 

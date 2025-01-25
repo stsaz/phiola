@@ -180,19 +180,20 @@ static int rctl_listen()
 
 static void rctl_prepare(const char *name)
 {
-	const char *pipename = "phiola";
+	if (!name)
+		name = "";
 	g->pipe_name.len = 0;
 #ifdef FF_UNIX
 	uint uid = getuid();
-	ffvec_addfmt(&g->pipe_name, "/tmp/.%s-%u.sock%Z", pipename, uid);
+	ffvec_addfmt(&g->pipe_name, "/tmp/phiola%s-%u.sock%Z", name, uid);
 #else
-	ffvec_addfmt(&g->pipe_name, "\\\\.\\pipe\\%s%Z", pipename);
+	ffvec_addfmt(&g->pipe_name, "\\\\.\\pipe\\phiola%s%Z", name);
 #endif
 }
 
 static int rctl_start(const char *name)
 {
-	if (g->pipe_name.len) return -1; // only 1 server instance is supported
+	if (g->server_pipe != FFPIPE_NULL) return -1; // only 1 server instance is supported
 
 	rctl_prepare(name);
 	if (rctl_listen())
@@ -207,28 +208,65 @@ static const struct phi_remote_sv_if phi_rctl_sv = {
 };
 
 
-static int rctl_cmd(const char *name, ffstr cmd)
+static int rctl_connect(uint flags)
 {
-	rctl_prepare(name);
-
 	if (FFPIPE_NULL == (g->client_pipe = ffpipe_connect(g->pipe_name.ptr))) {
-		syserrlog(g, "pipe connect: %s", g->pipe_name.ptr);
+		if (!(flags & PHI_RCLF_NOLOG))
+			syserrlog(g, "pipe connect: %s", g->pipe_name.ptr);
 		return -1;
 	}
 	dbglog(g, "connected");
-
-	if (cmd.len != (ffsize)ffpipe_write(g->client_pipe, cmd.ptr, cmd.len)) {
-		syserrlog(g, "pipe write");
-		return -1;
-	}
-	dbglog(g, "written %L bytes", cmd.len);
-
-	ffpipe_close(g->client_pipe);  g->client_pipe = FFPIPE_NULL;
 	return 0;
 }
 
+static int rctl_cmd(const char *name, ffstr cmd)
+{
+	int rc = -1;
+	rctl_prepare(name);
+	if (rctl_connect(0))
+		return -1;
+
+	if (cmd.len != (ffsize)ffpipe_write(g->client_pipe, cmd.ptr, cmd.len)) {
+		syserrlog(g, "pipe write");
+		goto end;
+	}
+	dbglog(g, "written %L bytes", cmd.len);
+	rc = 0;
+
+end:
+	ffpipe_close(g->client_pipe);  g->client_pipe = FFPIPE_NULL;
+	return rc;
+}
+
+static int rctl_play(const char *name, ffslice names, uint flags)
+{
+	int rc = -1;
+	rctl_prepare(name);
+	if (rctl_connect(flags))
+		return -1;
+
+	ffvec cmd = {};
+	ffvec_addsz(&cmd, "start ");
+	const char **it;
+	FFSLICE_WALK(&names, it) {
+		ffvec_addfmt(&cmd, "\"%s\" ", *it);
+	}
+
+	if (cmd.len != (ffsize)ffpipe_write(g->client_pipe, cmd.ptr, cmd.len)) {
+		syserrlog(g, "pipe write");
+		goto end;
+	}
+	dbglog(g, "written %L bytes", cmd.len);
+	rc = 0;
+
+end:
+	ffvec_free(&cmd);
+	ffpipe_close(g->client_pipe);  g->client_pipe = FFPIPE_NULL;
+	return rc;
+}
+
 static const struct phi_remote_cl_if phi_rctl_cl = {
-	rctl_cmd
+	rctl_cmd, rctl_play,
 };
 
 
