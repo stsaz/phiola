@@ -96,7 +96,7 @@ static void qe_close(void *f, phi_track *t)
 	meta_destroy(&t->meta);
 	if (e->q) {
 		uint flags = (t->error) ? Q_TKCL_ERR : 0;
-		if ((t->chain_flags & PHI_FSTOP) // track stopped by user
+		if ((t->chain_flags & (PHI_FSTOP | PHI_FSTOP_AFTER)) // track stopped by user
 			|| (e->expand && !e->play_next_on_close))
 			flags |= Q_TKCL_STOP;
 		q_ent_closed(e->q, flags);

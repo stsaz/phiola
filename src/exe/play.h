@@ -30,6 +30,7 @@ Options:\n\
 \n\
   `-repeat_all`           Repeat all tracks\n\
   `-random`               Choose the next track randomly\n\
+  `-number` NUMBER        Exit after N tracks played\n\
   `-tracks` NUMBER[,...]  Select only specific tracks in a .cue list\n\
 \n\
   `-seek` TIME            Seek to time:\n\
@@ -78,6 +79,7 @@ struct cmd_play {
 	uint	buffer;
 	uint	connect_timeout;
 	uint	device;
+	uint	number;
 	uint	rbuffer_kb;
 	uint	recv_timeout;
 	uint	volume;
@@ -111,6 +113,21 @@ static int play_input(struct cmd_play *p, ffstr s)
 	x->stdin_busy = ffstr_eqz(&s, "@stdin");
 	return cmd_input(&p->input, s);
 }
+
+static int play_grd_process(void *f, phi_track *t)
+{
+	struct cmd_play *p = x->subcmd.obj;
+	if (p->number) {
+		if (0 == --p->number)
+			t->chain_flags |= PHI_FSTOP_AFTER;
+	}
+	return phi_grd_process(f, t);
+}
+
+static const phi_filter play_guard = {
+	NULL, phi_grd_close, play_grd_process,
+	"play-guard"
+};
 
 static int play_action(struct cmd_play *p)
 {
@@ -153,7 +170,7 @@ static int play_action(struct cmd_play *p)
 
 	x->queue->on_change(q_on_change);
 	struct phi_queue_conf qc = {
-		.first_filter = &phi_guard,
+		.first_filter = &play_guard,
 		.audio_module = p->audio_module,
 		.ui_module = "tui.play",
 		.tconf = c,
@@ -212,6 +229,7 @@ static const struct ffarg cmd_play[] = {
 	{ "-include",	'+S',	play_include },
 	{ "-no_meta",	'1',	O(no_meta) },
 	{ "-norm",		's',	O(auto_norm) },
+	{ "-number",	'u',	O(number) },
 	{ "-perf",		'1',	O(perf) },
 	{ "-random",	'1',	O(random) },
 	{ "-rbuffer",	'u',	O(rbuffer_kb) },

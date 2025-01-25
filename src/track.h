@@ -119,6 +119,7 @@ enum PHI_F {
 	PHI_FSTOP = 2, // track is being stopped
 	PHI_FFWD = 4, // going forward through the chain
 	PHI_FFINISHED = 8, // the chain is finished either by PHI_DONE/PHI_FIN or PHI_ERR
+	PHI_FSTOP_AFTER = 0x20, // don't start next track in queue
 };
 
 enum PHI_E {
