@@ -6,13 +6,13 @@
 #include <ffbase/string.h>
 #include <ffbase/time.h>
 
-#define PHI_VERSION  20306
+#define PHI_VERSION  20307
 
 /** Inter-module compatibility version.
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20306
+#define PHI_VERSION_CORE  20307
 
 typedef long long int64;
 typedef unsigned long long uint64;
