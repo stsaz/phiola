@@ -61,16 +61,8 @@ int mpeg_out_process(void *ctx, phi_track *t)
 		m->state = 2;
 		if (ffsz_eq(t->data_type, "mpeg"))
 			break;
-		else if (!ffsz_eq(t->data_type, "pcm")) {
-			errlog(t, "unsupported input data format: %s", t->data_type);
-			return PHI_ERR;
-		}
-
-		if (!core->track->filter(t, core->mod("ac-mpeg.encode"), PHI_TF_PREV)) {
-			t->error = PHI_E_OUT_FMT;
-			return PHI_ERR;
-		}
-		return PHI_MORE;
+		t->error = PHI_E_OUT_FMT;
+		return PHI_ERR;
 
 	case 2:
 		break;

@@ -29,7 +29,6 @@ $(DIR)/soxr-config.h: | $(DIR)
 ifeq "$(CPU)" "amd64"
 else ifeq "$(CPU)" "x86"
 else
-	$(SED) 's/WITH_CR64 1/WITH_CR64 0/' $(DIR)/soxr-config.h
 	$(SED) 's/WITH_CR64S 1/WITH_CR64S 0/' $(DIR)/soxr-config.h
 endif
 	cat $(DIR)/soxr-config.h
