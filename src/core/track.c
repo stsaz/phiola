@@ -428,13 +428,15 @@ err:
 
 fin:
 	dbglog(t, "finished: %u", t->error);
-	if (t->state == ST_RUNNING) {
-		t->chain_flags |= PHI_FFINISHED;
-		conveyor_close(&t->conveyor, t);
-		return; // waiting for stop()
-	}
-	if (*(size_t*)&t->task_stop == (size_t)-1)
+
+	if (*(size_t*)&t->task_stop == (size_t)-1) {
 		track_close(t);
+		return;
+	}
+
+	t->chain_flags |= PHI_FFINISHED;
+	conveyor_close(&t->conveyor, t);
+	// waiting for stop()
 }
 
 static void track_start(phi_track *t)
