@@ -137,31 +137,27 @@ static int tag_file_write(struct tag_edit *t, ffstr head, ffstr tags, uint64 tai
 Return whole ID3v2 region size */
 static int tag_mp3_id3v2_read(struct tag_edit *t, ffstr hdr)
 {
-	int rc = -1, r;
-	uint n = 0;
-	struct id3v2read id3v2 = {};
-	r = _id3v2r_hdr_read(&id3v2, hdr, &n);
-	if (r == 0 || r == ID3V2READ_MORE) {
-		n = id3v2read_size(&id3v2);
-		if (n > t->buf.cap) {
-			// we need full tag contents in memory
-			if (n > 100*1024*1024) {
-				errlog("id3v2: %s: huge tag size %u", t->conf.filename, n);
-				goto end;
-			}
-			ffvec_realloc(&t->buf, n, 1);
-			if (0 > (r = fffile_readat(t->fd, t->buf.ptr, t->buf.cap, 0))) {
-				syserrlog("file read: %s", t->conf.filename);
-				goto end;
-			}
-			t->buf.len = r;
+	int r;
+	struct id3v2_hdr id3v2 = {};
+	if (id3v2_hdr_read(&id3v2, hdr) < 0)
+		return 0;
+
+	uint n = id3v2.size;
+	if (n > t->buf.cap) {
+		// we need full tag contents in memory
+		if (n > 100*1024*1024) {
+			errlog("id3v2: %s: huge tag size %u", t->conf.filename, n);
+			return -1;
 		}
+		ffvec_realloc(&t->buf, n, 1);
+		if (0 > (r = fffile_readat(t->fd, t->buf.ptr, t->buf.cap, 0))) {
+			syserrlog("file read: %s", t->conf.filename);
+			return -1;
+		}
+		t->buf.len = r;
 	}
 
-	rc = n;
-
-end:
-	return rc;
+	return id3v2.size;
 }
 
 static int tag_mp3_id3v2_process(struct tag_edit *t, struct id3v2write *w, ffstr in)
@@ -226,7 +222,7 @@ static int tag_mp3_id3v2_process(struct tag_edit *t, struct id3v2write *w, ffstr
 				} else {
 					// Copy v3/v4 tag data preserving the original text encoding
 					uint n = sizeof(struct id3v2_framehdr);
-					if (id3v2.frame_flags & ID3V2_FRAME_DATALEN)
+					if (id3v2.frame.flags & ID3V2_FRAME_DATALEN)
 						n += 4;
 					ffstr_shift(&v, n);
 					r = _id3v2write_addframe(w, k.ptr, FFSTR_Z(""), v, -1);
