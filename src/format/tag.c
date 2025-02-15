@@ -529,11 +529,18 @@ static int tag_ogg_process(struct tag_edit *t, vorbistagwrite *vtw, ffstr vtag, 
 				goto end;
 			}
 
+			if (format == 'o' && ffstr_ieqz(&k, "R128_TRACK_GAIN"))
+				ffstr_setz(&k, "REPLAYGAIN_TRACK_GAIN");
+
 			if ((r = user_meta_find(&t->conf.meta, k, &v)) >= 0) {
 				// Write user tag
-				if (tag == MMTAG_REPLAYGAIN_TRACK_GAIN && format == 'o')
-					continue; // Skip existing REPLAYGAIN_TRACK_GAIN tag
 				ffbit_set32(&tags_added, r);
+
+				if (tag == MMTAG_REPLAYGAIN_TRACK_GAIN && format == 'o') {
+					// Write R128_TRACK_GAIN tag instead of REPLAYGAIN_TRACK_GAIN
+					tag_opus_r128_track_gain(vtw, v);
+					continue;
+				}
 			}
 
 			if (vorbistagwrite_add_name(vtw, k, v))
