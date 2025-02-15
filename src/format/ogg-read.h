@@ -10,7 +10,7 @@ struct ogg_r {
 	uint page_serial;
 	uint sample_rate;
 	uint state;
-	uint stmcopy :1;
+	uint copy :1;
 };
 
 static void ogg_log(void *udata, const char *fmt, va_list va)
@@ -31,7 +31,7 @@ static void* ogg_open(phi_track *t)
 
 	if (t->conf.stream_copy) {
 		t->data_type = "OGG";
-		o->stmcopy = 1;
+		o->copy = 1;
 	}
 	return o;
 }
@@ -177,19 +177,7 @@ data:
 		, t->data_out.len
 		, t->audio.pos);
 
-	if (o->stmcopy) {
-		int64 set_gpos = -1;
-		const struct ogg_hdr *h = (struct ogg_hdr*)o->og.chunk.ptr;
-		int page_is_last_pkt = (o->og.seg_off == h->nsegments);
-		if (page_is_last_pkt) {
-			t->oaudio.ogg_flush = 1;
-			set_gpos = o->og.page_endpos;
-			t->oaudio.ogg_granule_pos = set_gpos;
-			if (o->sample_rate != 0)
-				set_gpos = pcm_time(set_gpos, o->sample_rate);
-		}
-	}
-
+	t->oaudio.ogg_granule_pos = o->og.page_endpos;
 	return PHI_DATA;
 }
 

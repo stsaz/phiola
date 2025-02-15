@@ -146,7 +146,7 @@ int ffvorbis_encode(ffvorbis_enc *v)
 		break;
 	}
 
-	v->granulepos = pkt.granulepos;
+	v->granulepos = (pkt.granulepos) ? pkt.granulepos : 1;
 	ffstr_set(&v->data, pkt.packet, pkt.bytes);
 	return (pkt.e_o_s) ? FFVORBIS_RDONE : FFVORBIS_RDATA;
 }

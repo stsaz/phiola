@@ -9,9 +9,11 @@ struct ogg_w {
 	ffvec pktbuf;
 	ffstr pkt, in;
 	uint state;
-	uint pos_start_set;
 	uint64 pos_start; // starting position of the first data page
+	uint64 last_pos;
 	uint64 total;
+	uint pos_start_set :1;
+	uint copy :1;
 };
 
 static void* ogg_w_open(phi_track *t)
@@ -80,7 +82,7 @@ static int pkt_write(struct ogg_w *o, phi_track *t, ffstr *in, ffstr *out, uint6
 /*
 Per-packet writing ("end-pos" value is optional):
 . while "start-pos" == 0: write packet and flush
-. if add_opus_tags==1: write packet #2 with Opus tags
+. Optionally, write packet #2 with empty Opus tags
 . write the cached packet with "end-pos" = "current start-pos"
 . store the input packet in temp. buffer
 . ask for more data; if no more data:
@@ -90,10 +92,9 @@ OGG->OGG copying doesn't require temp. buffer.
 */
 static int ogg_w_encode(void *ctx, phi_track *t)
 {
-	enum { I_CONF, I_PKT, I_OPUS_TAGS, I_PAGE_EXACT };
+	enum { I_ENC, I_CONF, I_PKT, I_OPUS_TAGS, I_PAGE_EXACT };
 	struct ogg_w *o = ctx;
 	int r;
-	ffstr in;
 	uint flags = 0;
 	uint64 endpos;
 
@@ -104,40 +105,37 @@ static int ogg_w_encode(void *ctx, phi_track *t)
 	for (;;) {
 		switch (o->state) {
 
-		case I_CONF: {
-			o->state = I_PKT;
-
-			uint max_page_samples = (t->oaudio.format.rate) ? t->oaudio.format.rate : 44100;
-			if (t->conf.ogg.max_page_length_msec)
-				max_page_samples = max_page_samples * t->conf.ogg.max_page_length_msec / 1000;
-
-			if (ffsz_eq(t->data_type, "OGG")) {
-				max_page_samples = 0; // ogg->ogg copy must replicate the pages exactly
-				o->state = I_PAGE_EXACT;
-			}
-
-			if (0 != oggwrite_create(&o->og, ffrand_get(), max_page_samples)) {
-				errlog(t, "oggwrite_create() failed");
-				return PHI_ERR;
-			}
-
+		case I_ENC:
 			if (ffsz_eq(t->data_type, "pcm")) {
 				const char *enc = ogg_enc_mod(t->conf.ofile.name);
 				if (!core->track->filter(t, core->mod(enc), PHI_TF_PREV))
 					return PHI_ERR;
-			}
-
-			if (o->state == I_PKT && !(t->chain_flags & PHI_FFIRST)) {
-				ffvec_add2(&o->pktbuf, &o->in, 1); // store the first packet
-				ffstr_set2(&o->pkt, &o->pktbuf);
+				o->state = I_CONF;
 				return PHI_MORE;
 			}
+			o->copy = 1;
+			// fallthrough
 
+		case I_CONF: {
+			uint max_page_samples = (t->oaudio.format.rate) ? t->oaudio.format.rate : 48000;
+			if (t->conf.ogg.max_page_length_msec)
+				max_page_samples = max_page_samples * t->conf.ogg.max_page_length_msec / 1000;
+
+			o->state = I_PKT;
+			if (ffsz_eq(t->data_type, "OGG")) {
+				max_page_samples = 0; // ogg->ogg copy must replicate the pages exactly
+				o->state = I_PAGE_EXACT;
+			} else {
+				o->pkt = o->in;
+				o->in.len = 0;
+			}
+
+			oggwrite_create(&o->og, ffrand_get(), max_page_samples);
 			continue;
 		}
 
 		case I_PKT:
-			if (!o->pos_start_set && t->audio.pos) {
+			if (o->copy && !o->pos_start_set && t->audio.pos) {
 				o->pos_start_set = 1;
 				o->pos_start = t->audio.pos;
 			}
@@ -171,25 +169,32 @@ static int ogg_w_encode(void *ctx, phi_track *t)
 		case I_OPUS_TAGS: {
 			o->state = I_PKT;
 			static const char opus_tags[] = "OpusTags\x08\x00\x00\x00" "datacopy\x00\x00\x00\x00";
+			ffstr in;
 			ffstr_set(&in, opus_tags, sizeof(opus_tags)-1);
 			return pkt_write(o, t, &in, &t->data_out, 0, OGGWRITE_FFLUSH);
 		}
 
 		case I_PAGE_EXACT:
-			if (t->oaudio.ogg_flush) {
-				t->oaudio.ogg_flush = 0;
-				flags = OGGWRITE_FFLUSH;
-
-				if (!o->pos_start_set && t->oaudio.ogg_granule_pos) {
-					o->pos_start_set = 1;
-					o->pos_start = t->audio.pos;
-				}
+			if (t->oaudio.ogg_granule_pos != o->last_pos && o->og.page.nsegments != 0) {
+				// This packet begins a new page -> flush the current page
+				ffstr empty = {};
+				return pkt_write(o, t, &empty, &t->data_out, 0, OGGWRITE_FFLUSH);
 			}
 
-			if (t->chain_flags & PHI_FFIRST)
-				flags = OGGWRITE_FLAST;
+			if (!o->pos_start_set && t->oaudio.ogg_granule_pos) {
+				o->pos_start_set = 1;
+				o->pos_start = t->audio.pos;
+			}
 
 			endpos = t->oaudio.ogg_granule_pos - o->pos_start;
+			if (t->oaudio.ogg_granule_pos == 0)
+				flags = OGGWRITE_FFLUSH;
+			if (t->chain_flags & PHI_FFIRST) {
+				flags = OGGWRITE_FLAST;
+				endpos = o->last_pos - o->pos_start + 1; // we don't know the packet's audio length -> can't set the real end-pos value
+			}
+			o->last_pos = t->oaudio.ogg_granule_pos;
+
 			r = pkt_write(o, t, &o->in, &t->data_out, endpos, flags);
 			return r;
 		}
