@@ -29,6 +29,8 @@ static int phi_output_open(nml_http_client *c)
 
 		if (ffstr_ieqz(&name, "icy-metaint")) {
 			(void)ffstr_to_uint32(&val, &d.icy_meta_interval);
+		} else if (ffstr_ieqz(&name, "icy-br")) {
+			(void)ffstr_to_uint32(&val, &d.icy_br);
 		}
 	}
 

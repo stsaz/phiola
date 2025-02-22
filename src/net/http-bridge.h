@@ -7,6 +7,7 @@ struct phi_http_data {
 	ffstr status;
 	ffstr ct;
 	uint icy_meta_interval;
+	uint icy_br;
 };
 
 extern int phi_hc_resp(void *ctx, struct phi_http_data *d);
