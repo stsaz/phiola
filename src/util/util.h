@@ -174,6 +174,10 @@ static inline ffsize ffpath_makefn(char *dst, ffsize dstcap, ffstr src, char rep
 }
 
 
+/** Return bits/sec. */
+#define bitrate_compute(bytes, samples, rate) \
+	FFINT_DIVSAFE((uint64)(bytes) * 8 * (rate), samples)
+
 #define samples_to_msec(samples, rate)   ((uint64)(samples) * 1000 / (rate))
 #define msec_to_samples(time_ms, rate)   ((uint64)(time_ms) * (rate) / 1000)
 

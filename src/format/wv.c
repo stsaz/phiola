@@ -15,7 +15,6 @@ typedef struct wvpk_r {
 	wvread wv;
 	phi_track *trk;
 	ffstr in;
-	uint state;
 	uint sample_rate;
 	uint hdr_done;
 } wvpk_r;
@@ -57,7 +56,6 @@ static void wv_in_meta(wvpk_r *w, phi_track *t)
 
 static int wv_in_process(void *ctx, phi_track *t)
 {
-	enum { I_HDR, I_HDR_PARSED, I_DATA };
 	wvpk_r *w = ctx;
 	int r;
 
@@ -71,22 +69,11 @@ static int wv_in_process(void *ctx, phi_track *t)
 		t->data_in.len = 0;
 	}
 
-	switch (w->state) {
-	case I_HDR:
-		break;
-
-	case I_HDR_PARSED:
-		w->sample_rate = t->audio.format.rate;
-		w->state = I_DATA;
-		// fallthrough
-
-	case I_DATA:
-		if (t->audio.seek_req && t->audio.seek != -1) {
-			t->audio.seek_req = 0;
-			wvread_seek(&w->wv, msec_to_samples(t->audio.seek, w->sample_rate));
-			dbglog(t, "seek: %Ums", t->audio.seek);
-		}
-		break;
+again:
+	if (w->hdr_done && t->audio.seek_req && t->audio.seek != -1) {
+		t->audio.seek_req = 0;
+		wvread_seek(&w->wv, msec_to_samples(t->audio.seek, w->sample_rate));
+		dbglog(t, "seek: %Ums", t->audio.seek);
 	}
 
 	for (;;) {
@@ -102,9 +89,27 @@ static int wv_in_process(void *ctx, phi_track *t)
 				w->hdr_done = 1;
 				const struct wvread_info *info = wvread_info(&w->wv);
 				t->audio.total = info->total_samples;
+
+				struct phi_af f = {
+					.format = info->bits,
+					.channels = info->channels,
+					.rate = info->sample_rate,
+				};
+				if (info->flt) {
+					if (info->bits != 32) {
+						errlog(t, "audio format is not supported");
+						return PHI_ERR;
+					}
+					f.format = PHI_PCM_FLOAT32;
+				}
+				t->audio.format = f;
+
+				t->audio.bitrate = bitrate_compute(t->input.size, info->total_samples, info->sample_rate);
 				if (!core->track->filter(t, core->mod("ac-wavpack.decode"), 0))
 					return PHI_ERR;
-				w->state = I_HDR_PARSED;
+				w->sample_rate = info->sample_rate;
+				if (t->audio.seek_req && t->audio.seek != -1)
+					goto again;
 			}
 			goto data;
 
