@@ -354,8 +354,8 @@ struct cuehook {
 	uint64 abs_seek_ms;
 };
 
-#define cdframes_to_samples(val, rate)  ((val) * (rate) / 75)
-#define cdframes_to_msec(val)  ((val) / 75 * 1000)
+#define cdframes_to_samples(val, rate)  ((uint64)(val) * (rate) / 75)
+#define cdframes_to_msec(val)  ((uint64)(val) * 1000 / 75)
 
 static void* cuehook_open(phi_track *t)
 {
