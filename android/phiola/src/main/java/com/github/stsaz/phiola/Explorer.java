@@ -57,7 +57,7 @@ class Explorer {
 
 		if (up_dir) {
 			if (pos == 0) {
-				if (ev == PlaylistAdapter.EV_LONGCLICK)
+				if (ev == 1)
 					return; // long click on "<UP>"
 
 				if (parent == null)
@@ -70,7 +70,7 @@ class Explorer {
 			pos--;
 		}
 
-		if (ev == PlaylistAdapter.EV_LONGCLICK) {
+		if (ev == 1) {
 			main.explorer_event(file_names[pos], Queue.ADD_RECURSE);
 			return;
 		}

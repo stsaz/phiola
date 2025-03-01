@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto">
+
+	<item android:id="@+id/action_list_remove"
+		android:title="@string/mitem_list_remove" />
+
+	<item android:id="@+id/action_file_explore"
+		android:title="@string/mitem_file_show" />
+
+	<item android:id="@+id/action_file_delete"
+		android:title="@string/mitem_file_delete" />
+
+</menu>

@@ -43,7 +43,8 @@ public class MainActivity extends AppCompatActivity {
 	private boolean view_explorer;
 	private Explorer explorer;
 	private PlaylistAdapter pl_adapter;
-	private PopupMenu mfile, mlist;
+	private PopupMenu mfile, mlist, mitem;
+	private int item_menu_qi;
 
 	private MainBinding b;
 
@@ -252,6 +253,38 @@ public class MainActivity extends AppCompatActivity {
 		m.show();
 	}
 
+	private boolean item_menu_click(MenuItem item) {
+		switch (item.getItemId()) {
+
+		case R.id.action_list_remove:
+			queue.current_remove(item_menu_qi);  break;
+
+		case R.id.action_file_explore:
+			explorer_file_show(queue.visible_url(item_menu_qi));  break;
+
+		case R.id.action_file_delete: {
+			String fn = queue.visible_url(item_menu_qi);
+			if (!fn.isEmpty())
+				file_delete_ask(item_menu_qi, fn);
+			break;
+		}
+
+		default:
+			return false;
+		}
+		return true;
+	}
+
+	private void item_menu_show(int i) {
+		item_menu_qi = i;
+		if (mitem == null) {
+			mitem = new PopupMenu(this, b.lname);
+			mitem.getMenuInflater().inflate(R.menu.item, mitem.getMenu());
+			mitem.setOnMenuItemClickListener(this::item_menu_click);
+		}
+		mitem.show();
+	}
+
 	private static final int
 		REQUEST_PERM_READ_STORAGE = 1,
 		REQUEST_PERM_RECORD = 2;
@@ -405,7 +438,25 @@ public class MainActivity extends AppCompatActivity {
 		});
 
 		b.list.setLayoutManager(new LinearLayoutManager(this));
-		pl_adapter = new PlaylistAdapter(this, explorer);
+		pl_adapter = new PlaylistAdapter(this, explorer, new PlaylistViewHolder.Parent() {
+				public void on_click(int i) {
+					if (view_explorer) {
+						explorer.event(0, i);
+						return;
+					}
+
+					queue.visible_play(i);
+				}
+
+				public void on_longclick(int i) {
+					if (view_explorer) {
+						explorer.event(1, i);
+						return;
+					}
+
+					item_menu_show(i);
+				}
+			});
 
 		gui.cur_activity = this;
 	}
@@ -560,13 +611,14 @@ public class MainActivity extends AppCompatActivity {
 		queue.active_remove(pos);
 	}
 
-	/** Ask confirmation before deleting the currently playing file from storage */
 	private void file_del_cur() {
 		int pos = queue.active_pos();
 		String fn = queue.active_track_url();
-		if (fn == null)
-			return;
+		if (fn != null)
+			file_delete_ask(pos, fn);
+	}
 
+	private void file_delete_ask(int pos, String fn) {
 		AlertDialog.Builder b = new AlertDialog.Builder(this);
 		b.setIcon(android.R.drawable.ic_dialog_alert);
 		b.setTitle("File Delete");
@@ -626,8 +678,11 @@ public class MainActivity extends AppCompatActivity {
 
 	private void explorer_file_current_show() {
 		String fn = track.cur_url();
-		if (fn.isEmpty())
-			return;
+		if (!fn.isEmpty())
+			explorer_file_show(fn);
+	}
+
+	private void explorer_file_show(String fn) {
 		gui.cur_path = new File(fn).getParent();
 		if (!view_explorer) {
 			explorer_click();

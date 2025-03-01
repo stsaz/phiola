@@ -506,6 +506,10 @@ class Queue {
 		return phi.quEntry(queues.get(i_selected).q, trk_idx);
 	}
 
+	String visible_url(int i) {
+		return phi.quEntry(q_visible().q, i);
+	}
+
 	String display_line(int i) {
 		return phi.quDisplayLine(q_visible().q, i);
 	}
@@ -526,6 +530,12 @@ class Queue {
 		queues.get(i_selected).clear();
 		curpos = -1;
 		trk_idx = -1;
+	}
+
+	void current_remove(int pos) {
+		if (q_filtered != null)
+			return;
+		queues.get(i_selected).remove(pos);
 	}
 
 	void current_remove_non_existing() {

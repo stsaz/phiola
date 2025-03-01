@@ -15,12 +15,17 @@ import androidx.recyclerview.widget.RecyclerView;
 class PlaylistViewHolder extends RecyclerView.ViewHolder
 		implements View.OnClickListener, View.OnLongClickListener {
 
-	private final PlaylistAdapter adapter;
 	final TextView text;
 
-	PlaylistViewHolder(PlaylistAdapter adapter, View itemView) {
+	interface Parent {
+		void on_click(int i);
+		void on_longclick(int i);
+	}
+	private final Parent parent;
+
+	PlaylistViewHolder(Parent parent, View itemView) {
 		super(itemView);
-		this.adapter = adapter;
+		this.parent = parent;
 		text = itemView.findViewById(R.id.list2_text);
 		itemView.setClickable(true);
 		itemView.setOnClickListener(this);
@@ -28,11 +33,11 @@ class PlaylistViewHolder extends RecyclerView.ViewHolder
 	}
 
 	public void onClick(View v) {
-		adapter.on_event(0, getAdapterPosition());
+		parent.on_click(getAdapterPosition());
 	}
 
 	public boolean onLongClick(View v) {
-		adapter.on_event(PlaylistAdapter.EV_LONGCLICK, getAdapterPosition());
+		parent.on_longclick(getAdapterPosition());
 		return true;
 	}
 }
@@ -45,17 +50,19 @@ class PlaylistAdapter extends RecyclerView.Adapter<PlaylistViewHolder> {
 	private final LayoutInflater inflater;
 	boolean view_explorer;
 	private final Explorer explorer;
+	private final PlaylistViewHolder.Parent parent;
 
-	PlaylistAdapter(Context ctx, Explorer explorer) {
+	PlaylistAdapter(Context ctx, Explorer explorer, PlaylistViewHolder.Parent parent) {
 		core = Core.getInstance();
 		queue = core.queue();
 		this.explorer = explorer;
 		inflater = LayoutInflater.from(ctx);
+		this.parent = parent;
 	}
 
 	public PlaylistViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
 		View v = inflater.inflate(R.layout.list_row2, parent, false);
-		return new PlaylistViewHolder(this, v);
+		return new PlaylistViewHolder(this.parent, v);
 	}
 
 	public void onBindViewHolder(@NonNull PlaylistViewHolder holder, int position) {
@@ -73,20 +80,6 @@ class PlaylistAdapter extends RecyclerView.Adapter<PlaylistViewHolder> {
 			return explorer.count();
 
 		return queue.visible_items();
-	}
-
-	static final int EV_LONGCLICK = 1;
-
-	void on_event(int ev, int i) {
-		if (view_explorer) {
-			explorer.event(ev, i);
-			return;
-		}
-
-		if (ev == EV_LONGCLICK)
-			return;
-
-		queue.visible_play(i);
 	}
 
 	void on_change(int how, int pos) {

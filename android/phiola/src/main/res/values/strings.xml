@@ -49,6 +49,10 @@
 
 	<string name="menu_about">About</string>
 
+	<string name="mitem_list_remove">Remove from List</string>
+	<string name="mitem_file_show">Show in Explorer</string>
+	<string name="mitem_file_delete">Delete File from Storage</string>
+
 	<string name="sett_interface">Interface</string>
 	<string name="sett_dark">Dark Theme</string>
 	<string name="sett_ui_state_hide">Hide Status Flags in Title (i.e. "[Playing]")</string>
