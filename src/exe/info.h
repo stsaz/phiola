@@ -28,6 +28,9 @@ Options:\n\
   `-peaks`                Analyze audio and print some details\n\
 \n\
   `-perf`                 Print performance counters\n\
+  `-connect_timeout` NUMBER\n\
+                          Connection timeout (in seconds): 1..255\n\
+  `-recv_timeout` NUMBER  Receive timeout (in seconds): 1..255\n\
 ");
 	x->exit_code = 0;
 	return 1;
@@ -39,6 +42,8 @@ struct cmd_info {
 	u_char	pcm_peaks;
 	u_char	perf;
 	u_char	tags;
+	uint	connect_timeout;
+	uint	recv_timeout;
 	ffvec	include, exclude; // ffstr[]
 	ffvec	input; // ffstr[]
 	ffvec	tracks; // uint[]
@@ -81,6 +86,8 @@ static int info_action(struct cmd_info *p)
 		.ifile = {
 			.include = *(ffslice*)&p->include,
 			.exclude = *(ffslice*)&p->exclude,
+			.connect_timeout_sec = ffmin(p->connect_timeout, 0xff),
+			.recv_timeout_sec = ffmin(p->recv_timeout, 0xff),
 		},
 		.tracks = *(ffslice*)&p->tracks,
 		.seek_msec = p->seek,
@@ -125,6 +132,7 @@ static int info_check(struct cmd_info *p)
 
 #define O(m)  (void*)FF_OFF(struct cmd_info, m)
 static const struct ffarg cmd_info[] = {
+	{ "-connect_timeout",'u',	O(connect_timeout) },
 	{ "-duration",	'1',	O(duration) },
 	{ "-exclude",	'+S',	info_exclude },
 	{ "-help",		0,		info_help },
@@ -132,6 +140,7 @@ static const struct ffarg cmd_info[] = {
 	{ "-loudness",	'1',	O(loudness) },
 	{ "-peaks",		'1',	O(pcm_peaks) },
 	{ "-perf",		'1',	O(perf) },
+	{ "-recv_timeout",	'u',	O(recv_timeout) },
 	{ "-seek",		'S',	info_seek },
 	{ "-tags",		'1',	O(tags) },
 	{ "-tracks",	'S',	info_tracks },
