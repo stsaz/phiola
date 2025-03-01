@@ -66,6 +66,7 @@ Options:\n\
   `-force`                Overwrite output file\n\
 \n\
   `-remote`               Listen for incoming remote commands\n\
+  `-remote_id` STRING     phiola instance ID\n\
 ");
 	x->exit_code = 0;
 	return 1;
@@ -78,6 +79,7 @@ struct cmd_rec {
 	const char*	danorm;
 	const char*	opus_mode;
 	const char*	output;
+	const char*	remote_id;
 	ffvec	meta;
 	int		gain;
 	u_char	exclusive;
@@ -230,9 +232,9 @@ static int rec_action(struct cmd_rec *r)
 	t->output.allow_async = 1;
 	track->start(t);
 
-	if (r->remote) {
+	if (r->remote || r->remote_id) {
 		const phi_remote_sv_if *rsv = x->core->mod("remote.server");
-		if (rsv->start(NULL))
+		if (rsv->start(r->remote_id))
 			return -1;
 	}
 
@@ -315,6 +317,7 @@ static const struct ffarg cmd_rec[] = {
 	{ "-out",			's',	O(output) },
 	{ "-rate",			'u',	O(rate) },
 	{ "-remote",		'1',	O(remote) },
+	{ "-remote_id",		's',	O(remote_id) },
 	{ "-split",			'S',	rec_split },
 	{ "-until",			'S',	rec_until },
 	{ "-vorbis_quality",'u',	O(vorbis_q) },

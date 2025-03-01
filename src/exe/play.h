@@ -50,6 +50,7 @@ Options:\n\
 \n\
   `-perf`                 Print performance counters\n\
   `-remote`               Listen for incoming remote commands\n\
+  `-remote_id` STRING     phiola instance ID\n\
   `-volume` NUMBER        Set initial volume level: 0..100\n\
   `-connect_timeout` NUMBER\n\
                           Connection timeout (in seconds): 1..255\n\
@@ -65,6 +66,7 @@ struct cmd_play {
 	const char*	auto_norm;
 	const char*	dup;
 	const char*	tee;
+	const char*	remote_id;
 	ffstr	audio;
 	ffvec	include, exclude; // ffstr[]
 	ffvec	input; // ffstr[]
@@ -189,9 +191,9 @@ static int play_action(struct cmd_play *p)
 
 	x->queue->play(NULL, NULL);
 
-	if (p->remote) {
+	if (p->remote || p->remote_id) {
 		const phi_remote_sv_if *rsv = x->core->mod("remote.server");
-		if (rsv->start(NULL))
+		if (rsv->start(p->remote_id))
 			return -1;
 	}
 	return 0;
@@ -218,32 +220,33 @@ static int play_check(struct cmd_play *p)
 
 #define O(m)  (void*)FF_OFF(struct cmd_play, m)
 static const struct ffarg cmd_play[] = {
-	{ "-audio",		'S',	O(audio) },
-	{ "-buffer",	'u',	O(buffer) },
-	{ "-connect_timeout",	'u',	O(connect_timeout) },
-	{ "-device",	'u',	O(device) },
-	{ "-dup",		's',	O(dup) },
-	{ "-exclude",	'+S',	play_exclude },
-	{ "-exclusive",	'1',	O(exclusive) },
-	{ "-help",		0,		play_help },
-	{ "-include",	'+S',	play_include },
-	{ "-no_meta",	'1',	O(no_meta) },
-	{ "-norm",		's',	O(auto_norm) },
-	{ "-number",	'u',	O(number) },
-	{ "-perf",		'1',	O(perf) },
-	{ "-random",	'1',	O(random) },
-	{ "-rbuffer",	'u',	O(rbuffer_kb) },
+	{ "-audio",			'S',	O(audio) },
+	{ "-buffer",		'u',	O(buffer) },
+	{ "-connect_timeout",'u',	O(connect_timeout) },
+	{ "-device",		'u',	O(device) },
+	{ "-dup",			's',	O(dup) },
+	{ "-exclude",		'+S',	play_exclude },
+	{ "-exclusive",		'1',	O(exclusive) },
+	{ "-help",			0,		play_help },
+	{ "-include",		'+S',	play_include },
+	{ "-no_meta",		'1',	O(no_meta) },
+	{ "-norm",			's',	O(auto_norm) },
+	{ "-number",		'u',	O(number) },
+	{ "-perf",			'1',	O(perf) },
+	{ "-random",		'1',	O(random) },
+	{ "-rbuffer",		'u',	O(rbuffer_kb) },
 	{ "-recv_timeout",	'u',	O(recv_timeout) },
-	{ "-remote",	'1',	O(remote) },
-	{ "-repeat_all",'1',	O(repeat_all) },
-	{ "-rgnorm",	'1',	O(rg_norm) },
-	{ "-seek",		'S',	play_seek },
-	{ "-tee",		's',	O(tee) },
-	{ "-tracks",	'S',	play_tracks },
-	{ "-until",		'S',	play_until },
-	{ "-volume",	'u',	O(volume) },
-	{ "\0\1",		'S',	play_input },
-	{ "",			0,		play_check },
+	{ "-remote",		'1',	O(remote) },
+	{ "-remote_id",		's',	O(remote_id) },
+	{ "-repeat_all",	'1',	O(repeat_all) },
+	{ "-rgnorm",		'1',	O(rg_norm) },
+	{ "-seek",			'S',	play_seek },
+	{ "-tee",			's',	O(tee) },
+	{ "-tracks",		'S',	play_tracks },
+	{ "-until",			'S',	play_until },
+	{ "-volume",		'u',	O(volume) },
+	{ "\0\1",			'S',	play_input },
+	{ "",				0,		play_check },
 };
 #undef O
 

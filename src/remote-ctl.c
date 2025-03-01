@@ -159,13 +159,13 @@ static void rctl_accept(void *param)
 	}
 }
 
-static int rctl_listen()
+static int rctl_listen(const char *pipe_name)
 {
-	if (FFPIPE_NULL == (g->server_pipe = ffpipe_create_named(g->pipe_name.ptr, FFPIPE_ASYNC))) {
-		syserrlog(g, "pipe create: %s", g->pipe_name.ptr);
+	if (FFPIPE_NULL == (g->server_pipe = ffpipe_create_named(pipe_name, FFPIPE_ASYNC))) {
+		syserrlog(g, "pipe create: %s", pipe_name);
 		return -1;
 	}
-	dbglog(g, "created pipe: %s", g->pipe_name.ptr);
+	dbglog(g, "created pipe: %s", pipe_name);
 
 	g->server_kev.rhandler = rctl_accept;
 	g->server_kev.obj = g;
@@ -178,7 +178,7 @@ static int rctl_listen()
 	return 0;
 }
 
-static void rctl_prepare(const char *name)
+static const char* rctl_prepare(const char *name)
 {
 	if (!name)
 		name = "";
@@ -189,14 +189,14 @@ static void rctl_prepare(const char *name)
 #else
 	ffvec_addfmt(&g->pipe_name, "\\\\.\\pipe\\phiola%s%Z", name);
 #endif
+	return g->pipe_name.ptr;
 }
 
 static int rctl_start(const char *name)
 {
 	if (g->server_pipe != FFPIPE_NULL) return -1; // only 1 server instance is supported
 
-	rctl_prepare(name);
-	if (rctl_listen())
+	if (rctl_listen(rctl_prepare(name)))
 		return -1;
 	g->queue = g->core->mod("core.queue");
 	rctl_accept(NULL);
@@ -208,11 +208,11 @@ static const struct phi_remote_sv_if phi_rctl_sv = {
 };
 
 
-static int rctl_connect(uint flags)
+static int rctl_connect(const char *pipe_name, uint flags)
 {
-	if (FFPIPE_NULL == (g->client_pipe = ffpipe_connect(g->pipe_name.ptr))) {
+	if (FFPIPE_NULL == (g->client_pipe = ffpipe_connect(pipe_name))) {
 		if (!(flags & PHI_RCLF_NOLOG))
-			syserrlog(g, "pipe connect: %s", g->pipe_name.ptr);
+			syserrlog(g, "pipe connect: %s", pipe_name);
 		return -1;
 	}
 	dbglog(g, "connected");
@@ -222,8 +222,7 @@ static int rctl_connect(uint flags)
 static int rctl_cmd(const char *name, ffstr cmd)
 {
 	int rc = -1;
-	rctl_prepare(name);
-	if (rctl_connect(0))
+	if (rctl_connect(rctl_prepare(name), 0))
 		return -1;
 
 	if (cmd.len != (ffsize)ffpipe_write(g->client_pipe, cmd.ptr, cmd.len)) {
@@ -241,8 +240,7 @@ end:
 static int rctl_play(const char *name, ffslice names, uint flags)
 {
 	int rc = -1;
-	rctl_prepare(name);
-	if (rctl_connect(flags))
+	if (rctl_connect(rctl_prepare(name), flags))
 		return -1;
 
 	ffvec cmd = {};

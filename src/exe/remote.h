@@ -5,7 +5,7 @@ static int remote_help()
 {
 	help_info_write("\
 Send remote command:\n\
-    `phiola remote` CMD...\n\
+    `phiola remote` [OPTIONS] CMD...\n\
 \n\
 Commands:\n\
   `start` INPUT       Add track and play\n\
@@ -19,6 +19,9 @@ Commands:\n\
                         `back`\n\
   `volume` NUMBER     Set playback volume level: 0..100\n\
   `quit`              Exit\n\
+\n\
+Options:\n\
+  `-id` STRING        phiola instance ID\n\
 ");
 	x->exit_code = 0;
 	return 1;
@@ -26,6 +29,7 @@ Commands:\n\
 
 struct cmd_remote {
 	ffvec cmd;
+	const char* id;
 };
 
 static int remote_cmd(struct cmd_remote *r, ffstr s)
@@ -45,7 +49,7 @@ static int remote_cmd(struct cmd_remote *r, ffstr s)
 static int remote_action(struct cmd_remote *r)
 {
 	const phi_remote_cl_if *rcl = x->core->mod("remote.client");
-	if (rcl->cmd(NULL, *(ffstr*)&r->cmd))
+	if (rcl->cmd(r->id, *(ffstr*)&r->cmd))
 		return 1;
 
 	x->core->sig(PHI_CORE_STOP);
@@ -61,6 +65,7 @@ static int remote_fin(struct cmd_remote *r)
 #define O(m)  (void*)FF_OFF(struct cmd_remote, m)
 static const struct ffarg cmd_remote[] = {
 	{ "-help",		0,		remote_help },
+	{ "-id",		's',	O(id) },
 	{ "\0\1",		'S',	remote_cmd },
 	{ "",			0,		remote_fin },
 };
