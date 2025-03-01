@@ -24,6 +24,7 @@ static void* tuiplay_open(phi_track *t)
 			tui_setvol(u, vol);
 	}
 
+	tui_prepare(1);
 	u->show_info = 1;
 	return u;
 }

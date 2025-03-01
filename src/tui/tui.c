@@ -72,6 +72,8 @@ struct tui_mod {
 	uint mute :1;
 	uint conversion :1;
 	uint conversion_valid :1;
+	uint term_size_change_subscribed :1;
+	uint term_size_changed :1;
 };
 
 static struct tui_mod *mod;
@@ -121,6 +123,7 @@ typedef void (*cmdfunc3)(tui_track *u, uint cmd, void *udata);
 typedef void (*cmdfunc1)(uint cmd);
 
 
+static void tui_prepare(uint f);
 static void tui_cmd_read(void *param);
 static void tui_help(uint cmd);
 static void tui_op(uint cmd);
@@ -431,6 +434,8 @@ static void tui_cmd_read(void *param)
 
 static void color_init(struct tui_mod *c)
 {
+	if (c->color.progress) return;
+
 	c->color.progress = "";
 	c->color.filename = "";
 	c->color.index = "";
@@ -445,16 +450,62 @@ static void color_init(struct tui_mod *c)
 	}
 }
 
+#ifdef FF_WIN
+
+static uint term_size()
+{
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	if (!GetConsoleScreenBufferInfo(ffstdout, &csbi))
+		return 80;
+    return csbi.dwSize.X;
+}
+
+#else
+
+static uint term_size()
+{
+	struct winsize w;
+	if (ioctl(ffstdout, TIOCGWINSZ, &w))
+		return 80;
+	return w.ws_col;
+}
+
+static void term_size_changed(int sig)
+{
+	mod->term_size_changed = 1;
+}
+
+#endif
+
+static void tui_prepare(uint f)
+{
+	if (f == 0) return;
+
+	if (mod->term_size_changed) {
+		mod->term_size_changed = 0;
+
+#ifndef FF_WIN
+		if (!mod->term_size_change_subscribed) {
+			mod->term_size_change_subscribed = 1;
+			signal(SIGWINCH, term_size_changed);
+		}
+#endif
+
+		int n = term_size();
+		dbglog(NULL, "terminal width:%u", n);
+		n -= FFS_LEN("[] 000:00 / 000:00");
+		mod->progress_dots = ffmax(n, 0);
+	}
+
+	color_init(mod);
+}
+
 static void tui_create()
 {
 	mod->vol = 100;
 	mod->queue = core->mod("core.queue");
 	mod->use_stderr = core->conf.stdout_busy;
-	color_init(mod);
-
-	uint term_wnd_size = 80;
-	mod->progress_dots = term_wnd_size - FFS_LEN("[] 00:00 / 00:00");
-
+	mod->term_size_changed = 1;
 	core->task(0, &mod->task_init, tui_stdin_prepare, NULL);
 }
 
