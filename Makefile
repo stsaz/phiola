@@ -106,6 +106,7 @@ app:
 	chmod 644 $(APP_DIR)/libphiola.$(SO)
 	$(CP) $(PHIOLA)/LICENSE \
 		$(PHIOLA)/README.md \
+		$(PHIOLA)/phiola-example.conf \
 		$(APP_DIR)/
 
 	$(CP) $(MODS) $(APP_DIR)/mod/

@@ -3,13 +3,14 @@
 
 #include <phiola.h>
 #include <track.h>
+#include <exe/conf.h>
 #include <util/log.h>
 #include <util/crash.h>
+#include <util/conf-args.h>
 #include <ffsys/std.h>
 #include <ffsys/dylib.h>
 #include <ffsys/environ.h>
 #include <ffsys/globals.h>
-#include <ffbase/args.h>
 
 #ifndef FF_DEBUG
 #define PHI_CRASH_HANDLER
@@ -34,6 +35,7 @@ struct exe {
 	char*	cmd_line;
 	ffstr	root_dir;
 	char*	in_fnames;
+	struct conf conf;
 
 	uint		exit_code;
 	uint		ctrl_c;
@@ -45,7 +47,6 @@ struct exe {
 	uint workers;
 	uint cpu_affinity;
 	uint timer_int_msec;
-	uint codepage_id;
 	uint stdin_busy :1;
 	uint stdout_busy :1;
 	uint log_file :1;
@@ -129,11 +130,14 @@ static int phi_grd_process(void *f, phi_track *t)
 	if (x->ctrl_c)
 		return PHI_ERR; // cancel the tracks that weren't stopped by PHI_TRACK_STOP_ALL handler
 
+	if (!x->conf.allow_hibernate) {
 #ifdef FF_LINUX
-	x->core->track->filter(t, x->core->mod("dbus.sleep"), 0);
+		x->core->track->filter(t, x->core->mod("dbus.sleep"), 0);
 #elif defined FF_WIN
-	x->core->track->filter(t, x->core->mod("core.win-sleep"), 0);
+		x->core->track->filter(t, x->core->mod("core.win-sleep"), 0);
 #endif
+	}
+
 	return PHI_DONE;
 }
 
@@ -148,27 +152,6 @@ static const phi_filter phi_guard_gui = {
 
 
 #include <exe/cmd.h>
-
-static const struct ffarg conf_args[] = {
-	{ "Codepage",	'S',		cmd_codepage },
-	{}
-};
-
-static int conf_read(struct exe *x, ffstr d)
-{
-	ffstr line;
-	while (d.len) {
-		ffstr_splitby(&d, '\n', &line, &d);
-		ffstr_trimwhite(&line);
-		line.ptr[line.len] = '\0';
-
-		ffmem_zero_obj(&x->cmd);
-		int r = ffargs_process_line(&x->cmd, conf_args, x, 0, line.ptr);
-		if (r)
-			return -1;
-	}
-	return 0;
-}
 
 static int conf(struct exe *x, const char *argv_0)
 {
@@ -191,9 +174,11 @@ static int conf(struct exe *x, const char *argv_0)
 
 	char *conf_fn = ffsz_allocfmt("%Sphiola.conf", &x->root_dir);
 	ffvec buf = {};
-	if (!fffile_readwhole(conf_fn, &buf, 10*1024*1024)
-		&& conf_read(x, *(ffstr*)&buf)) {
-		errlog("reading '%s': %s", conf_fn, x->cmd.error);
+	if (!fffile_readwhole(conf_fn, &buf, 10*1024*1024)) {
+		struct ffargs conf = {};
+		int r = ffargs_process_conf(&conf, conf_args, &x->conf, 0, *(ffstr*)&buf);
+		if (r)
+			warnlog("'%s': %s", conf_fn, conf.error);
 	}
 
 	ffvec_free(&buf);
@@ -242,7 +227,7 @@ static int core()
 		.io_workers = ~0U,
 		.timer_interval_msec = x->timer_int_msec,
 
-		.code_page = x->codepage_id,
+		.code_page = x->conf.codepage_id,
 		.root = x->root_dir,
 		.stdin_busy = x->stdin_busy,
 		.stdout_busy = x->stdout_busy,

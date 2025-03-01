@@ -21,6 +21,7 @@ Contents:
 * [How to Use GUI](#how-to-use-gui)
 * [How to Use on Android](#how-to-use-on-android)
 * [How to Use SDK](#how-to-use-sdk)
+* [Configuration](#configuration)
 * [External Libraries](#external-libraries)
 * [Build](#build)
 * [Bug report](#bug-report)
@@ -341,6 +342,12 @@ A short description of how phiola works:
 * A *Module* is a file (`.so/.dll`), it may contain one or several Filters, and it provides direct access for them to Executor, Core or other Modules.  All necessary Modules are loaded on-demand while the Tracks are running.
 * Before being started, each Track is assigned to a Worker.  A *Worker* is a system thread (a logical CPU core) that actually executes the Filters code.
 * When a Track is being started, stopped or updated, Executor's own Filters get called, so it can report the current status back to the user.
+
+
+## Configuration
+
+Global settings can be specified in `phiola-2/phiola.conf` file.
+See the contents of `phiola-2/phiola-example.conf` for more info.
 
 
 ## External Libraries

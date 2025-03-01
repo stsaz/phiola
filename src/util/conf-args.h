@@ -1,7 +1,7 @@
 /** phiola: ffconf-ffargs bridge
 2023, Simon Zolin */
 
-#include <ffgui/conf-obj.h>
+#include <util/conf-obj.h>
 #include <ffbase/args.h>
 
 /** Process conf data.

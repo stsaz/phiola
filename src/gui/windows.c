@@ -3,7 +3,9 @@
 
 #include <phiola.h>
 #include <track.h>
+#include <exe/conf.h>
 #include <util/log.h>
+#include <util/conf-args.h>
 #include <ffsys/process.h>
 #include <ffsys/path.h>
 #include <ffsys/environ.h>
@@ -25,7 +27,7 @@ struct ctx {
 	ffstr	root_dir;
 
 	struct ffargs cmd;
-	uint codepage_id;
+	struct conf conf;
 	ffvec input; // char*[]
 };
 static struct ctx *x;
@@ -66,54 +68,6 @@ static void exe_log(void *log_obj, uint flags, const char *module, phi_track *t,
 #define errlog(...)  exe_log(&x->log, PHI_LOG_ERR, NULL, NULL, __VA_ARGS__)
 #define warnlog(...)  exe_log(&x->log, PHI_LOG_WARN, NULL, NULL, __VA_ARGS__)
 
-static int ffu_coding(ffstr s)
-{
-	static const u_char codepage_val[] = {
-		FFUNICODE_WIN1251,
-		FFUNICODE_WIN1252,
-		FFUNICODE_WIN866,
-	};
-	static const char codepage_str[][8] = {
-		"win1251",
-		"win1252",
-		"win866",
-	};
-	int r = ffcharr_findsorted(codepage_str, FF_COUNT(codepage_str), sizeof(codepage_str[0]), s.ptr, s.len);
-	if (r < 0)
-		return -1;
-	return codepage_val[r];
-}
-
-static int cmd_codepage(void *obj, ffstr s)
-{
-	int r = ffu_coding(s);
-	if (r < 0)
-		return _ffargs_err(&x->cmd, 1, "unknown codepage: '%S'", &s);
-	x->codepage_id = r;
-	return 0;
-}
-
-static const struct ffarg conf_args[] = {
-	{ "Codepage",	'S',		cmd_codepage },
-	{}
-};
-
-static int conf_read(struct ctx *x, ffstr d)
-{
-	ffstr line;
-	while (d.len) {
-		ffstr_splitby(&d, '\n', &line, &d);
-		ffstr_trimwhite(&line);
-		line.ptr[line.len] = '\0';
-
-		ffmem_zero_obj(&x->cmd);
-		int r = ffargs_process_line(&x->cmd, conf_args, x, 0, line.ptr);
-		if (r)
-			return -1;
-	}
-	return 0;
-}
-
 static int conf(struct ctx *x)
 {
 	x->fn = ffmem_alloc(4*1024);
@@ -135,9 +89,11 @@ static int conf(struct ctx *x)
 
 	char *conf_fn = ffsz_allocfmt("%Sphiola.conf", &x->root_dir);
 	ffvec buf = {};
-	if (!fffile_readwhole(conf_fn, &buf, 10*1024*1024)
-		&& conf_read(x, *(ffstr*)&buf)) {
-		errlog("reading '%s': %s", conf_fn, x->cmd.error);
+	if (!fffile_readwhole(conf_fn, &buf, 10*1024*1024)) {
+		struct ffargs conf = {};
+		int r = ffargs_process_conf(&conf, conf_args, &x->conf, 0, *(ffstr*)&buf);
+		if (r)
+			warnlog("'%s': %s", conf_fn, conf.error);
 	}
 
 	ffvec_free(&buf);
@@ -185,7 +141,7 @@ static int core()
 		.io_workers = ~0U,
 		.timer_interval_msec = 100,
 
-		.code_page = x->codepage_id,
+		.code_page = x->conf.codepage_id,
 		.root = x->root_dir,
 	};
 	ffenv_locale(conf.language, sizeof(conf.language), FFENV_LANGUAGE);
@@ -235,7 +191,8 @@ static void phi_guigrd_close(void *f, phi_track *t)
 
 static int phi_grd_process(void *f, phi_track *t)
 {
-	x->core->track->filter(t, x->core->mod("core.win-sleep"), 0);
+	if (!x->conf.allow_hibernate)
+		x->core->track->filter(t, x->core->mod("core.win-sleep"), 0);
 	return PHI_DONE;
 }
 

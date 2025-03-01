@@ -298,30 +298,12 @@ Run `phiola -help` for complete help info.\n\
 	return 1;
 }
 
-static int ffu_coding(ffstr s)
-{
-	static const u_char codepage_val[] = {
-		FFUNICODE_WIN1251,
-		FFUNICODE_WIN1252,
-		FFUNICODE_WIN866,
-	};
-	static const char codepage_str[][8] = {
-		"win1251",
-		"win1252",
-		"win866",
-	};
-	int r = ffcharr_findsorted(codepage_str, FF_COUNT(codepage_str), sizeof(codepage_str[0]), s.ptr, s.len);
-	if (r < 0)
-		return -1;
-	return codepage_val[r];
-}
-
 static int cmd_codepage(void *obj, ffstr s)
 {
 	int r = ffu_coding(s);
 	if (r < 0)
 		return _ffargs_err(&x->cmd, 1, "unknown codepage: '%S'", &s);
-	x->codepage_id = r;
+	x->conf.codepage_id = r;
 	return 0;
 }
 
