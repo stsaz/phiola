@@ -23,10 +23,6 @@ static void ape_dec_free(void *ctx, phi_track *t)
 	phi_track_free(t, a);
 }
 
-/** Return bits/sec. */
-#define pcm_brate(bytes, samples, rate) \
-	FFINT_DIVSAFE((uint64)(bytes) * 8 * (rate), samples)
-
 static void ape_info(struct ape_dec *a, phi_track *t, const ffape_info *info)
 {
 	t->audio.decoder = "APE";
@@ -38,7 +34,7 @@ static void ape_info(struct ape_dec *a, phi_track *t, const ffape_info *info)
 	};
 	t->audio.format = f;
 	t->data_type = "pcm";
-	t->audio.bitrate = pcm_brate(t->input.size, t->audio.total, info->fmt.rate);
+	t->audio.bitrate = bitrate_compute(t->input.size, t->audio.total, info->fmt.rate);
 	t->audio.total = info->total_samples;
 }
 

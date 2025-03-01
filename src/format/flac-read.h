@@ -91,7 +91,6 @@ static int flac_in_read(void *ctx, phi_track *t)
 	ffstr out = {};
 
 	if (t->chain_flags & PHI_FSTOP) {
-
 		return PHI_LASTOUT;
 	}
 
@@ -115,7 +114,6 @@ static int flac_in_read(void *ctx, phi_track *t)
 		case FLACREAD_MORE:
 			if (t->chain_flags & PHI_FFIRST) {
 				warnlog(t, "file is incomplete");
-
 				return PHI_DONE;
 			}
 			return PHI_MORE;

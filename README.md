@@ -60,8 +60,6 @@ Features and notes by platform:
 
 > Important: ALAC decoder is disabled by default in phiola/Android because of potential security issues (see https://github.com/macosforge/alac).
 
-See also: [phiola Architecture](doc/arch/arch.md).
-
 
 ## Install
 

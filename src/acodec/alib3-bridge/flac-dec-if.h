@@ -2,7 +2,7 @@
 2015, Simon Zolin */
 
 #pragma once
-#include <avpack/flac-fmt.h>
+#include <avpack/base/flac.h>
 #include <FLAC/FLAC-phi.h>
 
 typedef struct ffflac_dec {

@@ -77,17 +77,13 @@ static int add_decoder(struct ogg_r *o, phi_track *t, ffstr data)
 	return 0;
 }
 
-/** Return bits/sec. */
-#define pcm_brate(bytes, samples, rate) \
-	FFINT_DIVSAFE((uint64)(bytes) * 8 * (rate), samples)
-
 #define pcm_time(samples, rate)   ((uint64)(samples) * 1000 / (rate))
 
 static uint file_bitrate(phi_track *t, oggread *og, uint sample_rate)
 {
 	if (t->audio.total == 0 || og->total_size == 0)
 		return 0;
-	return pcm_brate(og->total_size, t->audio.total, sample_rate);
+	return bitrate_compute(og->total_size, t->audio.total, sample_rate);
 }
 
 /*

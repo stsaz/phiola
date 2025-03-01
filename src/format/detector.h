@@ -2,7 +2,7 @@
 2020, Simon Zolin */
 
 #include <track.h>
-#include <avpack/mpeg1-fmt.h>
+#include <avpack/base/mpeg1.h>
 #include <avpack/aac-read.h>
 
 enum FILE_FORMAT {
@@ -118,8 +118,8 @@ int file_format_detect(const void *data, ffsize len)
 	}
 
 	if (len >= 7) {
-		struct aacadts_hdr h;
-		if (!aacadts_parse(&h, d))
+		struct adts_hdr h;
+		if (adts_hdr_read(&h, d, len) > 0)
 			return FILE_AAC;
 	}
 

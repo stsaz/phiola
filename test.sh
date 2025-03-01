@@ -279,16 +279,16 @@ test_convert_encode() {
 	./phiola pl co_wav_he2.m4a | grep 'HE-AACv2'
 
 	convert__from_to wav ogg
-	./phiola i co_wav.ogg              | grep -E '95,... samples'
+	./phiola i co_wav.ogg              | grep -E '96,000 samples'
 	./phiola i co_wav.ogg -peaks       | grep '96,000 total'
 	./phiola i -u 1 co_wav.ogg -peaks  | grep -E '48,... total'
-	./phiola i -s 1 co_wav.ogg -peaks  | grep -E '4[78],... total'
+	./phiola i -s 1 co_wav.ogg -peaks  | grep -E '4[678],... total'
 
 	convert__from_to wav opus
-	./phiola i co_wav.opus             | grep -E '94,... samples'
+	./phiola i co_wav.opus             | grep -E '96,... samples'
 	./phiola i co_wav.opus -peaks      | grep '96,000 total'
 	./phiola i -u 1 co_wav.opus -peaks | grep '48,000 total'
-	./phiola i -s 1 co_wav.opus -peaks | grep -E '46,... total'
+	./phiola i -s 1 co_wav.opus -peaks | grep -E '48,000 total'
 }
 
 test_convert_parallel() {
@@ -351,6 +351,74 @@ test_copy_seek() {
 	./phiola i -peaks $2 | grep -E "$3"
 }
 
+test_copy_ogg_ogg() {
+	if ! test -f co_vorbis.ogg ; then
+		./phiola co co.wav -o co_vorbis.ogg -f
+		./phiola co co.wav -o co_opus.opus -f
+	fi
+
+	# Copy ogg -> ogg (Opus)
+		I=co_opus.opus
+		O=copy_u_opus.ogg
+		./phiola -D co -copy -f -u 1 $I -o $O | grep -E 'page |page:'
+		./phiola i -peaks $O | grep 'samples'
+		# Note: due to Opus preskip value, decoder may cut/skip samples from the last packet, thus making the file length less than was requested
+
+		O=copy_s_opus.ogg
+		./phiola -D co -copy -f -s 1 $I -o $O | grep -E 'page |page:'
+		./phiola i -peaks $O | grep 'samples'
+
+		O=copy_su_opus.ogg
+		./phiola -D co -copy -f -s 1 -u 2 $I -o $O | grep -E 'page |page:'
+		./phiola i -peaks $O | grep 'samples'
+
+	# Copy ogg -> ogg (Vorbis)
+		I=co_vorbis.ogg
+		O=copy_u_vorbis.ogg
+		# Note: copy less than 1 second or else the 2nd page will be also copied because 48000 is not divisible by Vorbis packet length
+		./phiola -D co -copy -f -u 0.950 $I -o $O | grep -E 'page |page:'
+		./phiola i -peaks $O | grep 'samples'
+
+		O=copy_s_vorbis.ogg
+		./phiola -D co -copy -f -s 1 $I -o $O | grep -E 'page |page:'
+		./phiola i -peaks $O | grep 'samples'
+		# Note: the output file length is less than requested when seeking is performed, because the first packet is skipped/delayed by decoder
+
+		O=copy_su_vorbis.ogg
+		./phiola -D co -copy -f -s 1 -u 2 $I -o $O | grep -E 'page |page:'
+		./phiola i -peaks $O | grep 'samples'
+}
+
+test_copy_mkv_ogg() {
+	# Copy mkv -> ogg (Opus)
+		I=fm_opus.mkv
+		O=copy_u_opus_mkv.ogg
+		./phiola -D co -copy -f -u 1 $I -o $O | grep -a 'page:'
+		./phiola i -peaks $O | grep 'samples'
+
+		O=copy_s_opus_mkv.ogg
+		./phiola -D co -copy -f -s 1 $I -o $O | grep -a 'page:'
+		./phiola i -peaks $O | grep 'samples'
+
+		O=copy_su_opus_mkv.ogg
+		./phiola -D co -copy -f -s 1 -u 2 $I -o $O | grep -a 'page:'
+		./phiola i -peaks $O | grep 'samples'
+
+	# Copy mkv -> ogg (Vorbis)
+		I=fm_vorbis.mkv
+		O=copy_u_vorbis_mkv.ogg
+		./phiola -D co -copy -f -u 0.950 $I -o $O | grep -a 'page:'
+		./phiola i -peaks $O | grep 'samples'
+
+		O=copy_s_vorbis_mkv.ogg
+		./phiola -D co -copy -f -s 1 $I -o $O | grep -a 'page:'
+		./phiola i -peaks $O | grep 'samples'
+
+		O=copy_su_vorbis_mkv.ogg
+		./phiola -D co -copy -f -s 1 -u 2 $I -o $O | grep -a 'page:'
+		./phiola i -peaks $O | grep 'samples'
+}
+
 test_copy() {
 	if ! test -f co.wav ; then
 		./phiola rec -rate 48000 -o co.wav -f -u 2
@@ -360,6 +428,9 @@ test_copy() {
 		ffmpeg_encode co.wav
 	fi
 
+	test_copy_ogg_ogg
+	test_copy_mkv_ogg
+
 	## Until
 	test_copy_until fm_aac.aac     copy_u_aac.m4a        '4[89],...'
 	test_copy_until fm_aac.mkv     copy_u_mkv.m4a        '48,...'
@@ -367,10 +438,6 @@ test_copy() {
 	test_copy_until fm_mp3.mkv     copy_u_mp3_mkv.mp3    '4[89],...'
 	test_copy_until fm_mp3.mp3     copy_u_mp3.mp3        '4[89],...'
 	test_copy_until fm_mp3_320.mp3 copy_u_mp3_320.mp3    '4[89],...'
-	test_copy_until fm_opus.mkv    copy_u_opus_mkv.ogg   '4[6789],...'
-	test_copy_until fm_opus.ogg    copy_u_opus.ogg       '4[78],...'
-	test_copy_until fm_vorbis.mkv  copy_u_vorbis_mkv.ogg '4[78],...'
-	test_copy_until fm_vorbis.ogg  copy_u_vorbis.ogg     '..,...'
 
 	## Seek
 	## mkv seeking implementation is not precise
@@ -381,11 +448,6 @@ test_copy() {
 	test_copy_seek fm_mp3.mkv     copy_s_mp3_mkv.mp3    '4[789],...'
 	test_copy_seek fm_mp3.mp3     copy_s_mp3.mp3        '5[01],...'
 	test_copy_seek fm_mp3_320.mp3 copy_s_mp3_320.mp3    '5[01],...'
-	test_copy_seek fm_opus.mkv    copy_s_opus_mkv.ogg   '4[789],...'
-	test_copy_seek fm_opus.ogg    copy_s_opus.ogg       '48,...'
-	test_copy_seek fm_vorbis.mkv  copy_s_vorbis_mkv.ogg '4[6789],...'
-	./phiola co co.wav -o co_vorbis.ogg -f
-	test_copy_seek co_vorbis.ogg  copy_s_vorbis.ogg     '4[78],...'
 
 	## Seek + Until
 	O=copy_aac.m4a        ; ./phiola co -copy -f -s 1 -u 2 fm_aac.aac    -o $O ; ./phiola pl $O
@@ -393,10 +455,6 @@ test_copy() {
 	O=copy_mp4.m4a        ; ./phiola co -copy -f -s 1 -u 2 fm_aac.mp4    -o $O ; ./phiola pl $O
 	O=copy_mp3.mp3        ; ./phiola co -copy -f -s 1 -u 2 fm_mp3.mp3    -o $O ; ./phiola pl $O
 	O=copy_mp3_mkv.mp3    ; ./phiola co -copy -f -s 1 -u 2 fm_mp3.mkv    -o $O ; ./phiola pl $O
-	O=copy_opus_mkv.ogg   ; ./phiola co -copy -f -s 1 -u 2 fm_opus.mkv   -o $O ; ./phiola pl $O
-	O=copy_opus.ogg       ; ./phiola co -copy -f -s 1 -u 2 fm_opus.ogg   -o $O ; ./phiola pl $O
-	O=copy_vorbis_mkv.ogg ; ./phiola co -copy -f -s 1 -u 2 fm_vorbis.mkv -o $O ; ./phiola pl $O
-	O=copy_vorbis.ogg     ; ./phiola co -copy -f -s 1 -u 2 fm_vorbis.ogg -o $O ; ./phiola pl $O
 }
 
 test_danorm() {

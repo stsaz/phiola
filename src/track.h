@@ -230,7 +230,6 @@ struct phi_track {
 
 			// (ogg|mkv).read -> ogg.write
 			uint64 ogg_granule_pos; // stream_copy=1: granule-position value from source
-			uint ogg_flush :1;
 			uint ogg_gen_opus_tag :1; // ogg.write must generate Opus-tag packet
 
 			/** Order AO filter to pause playing, then just wait until the track is woken up.

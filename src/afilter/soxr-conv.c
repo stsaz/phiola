@@ -59,6 +59,11 @@ static void* soxr_open(phi_track *t)
 		.o_interleaved = oaf.interleaved,
 		.channels = t->aconv.in.channels,
 	};
+	if (!conf.i_format || !conf.o_format) {
+		errlog(t, "sample rate conversion with %s sample format is not supported"
+			, (!conf.i_format) ? phi_af_name(t->aconv.in.format) : phi_af_name(oaf.format));
+		goto end;
+	}
 	if ((r = phi_soxr_create(&c->soxr, &conf))
 		|| (core->conf.log_level >= PHI_LOG_DEBUG)) {
 		log_pcmconv(r, &t->aconv.in, &t->aconv.out, t);

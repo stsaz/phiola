@@ -3,7 +3,7 @@
 
 #pragma once
 #include <ffbase/vector.h>
-#include <avpack/flac-fmt.h>
+#include <avpack/base/flac.h>
 #include <FLAC/FLAC-phi.h>
 
 enum {

@@ -3,7 +3,7 @@
 
 #include <track.h>
 #include <avpack/vorbistag.h>
-#include <avpack/vorbis-fmt.h>
+#include <avpack/base/vorbis.h>
 
 struct vorbismeta {
 	uint state;

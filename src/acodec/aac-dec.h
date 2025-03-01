@@ -84,8 +84,10 @@ static int aac_decode(void *ctx, phi_track *t)
 			a->state = R_CACHE_DATA;
 
 		} else {
-			dbglog(t, "decoded %u samples @%U"
-				, out.len / phi_af_size(&a->aac.fmt), apos);
+			const fdkaac_info *inf = &a->aac.info;
+			dbglog(t, "decoded %u samples @%U  aot:%u rate:%u chan:%u br:%u"
+				, out.len / phi_af_size(&a->aac.fmt), apos
+				, inf->aot, inf->rate, inf->channels, inf->bitrate);
 		}
 
 		switch (a->state) {

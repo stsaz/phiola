@@ -120,9 +120,11 @@ data:
 	}
 
 	t->audio.pos = apos;
-	dbglog(t, "passing frame #%u  samples:%u @%U  size:%u"
+	const struct aacread_info *i = &a->adts.info;
+	dbglog(t, "passing frame #%u  samples:%u @%U  size:%u  aot:%u rate:%u chan:%u"
 		, a->frno, aacread_frame_samples(&a->adts), t->audio.pos
-		, out.len);
+		, out.len
+		, i->codec, i->sample_rate, i->channels);
 	a->frno++;
 	t->data_out = out;
 	return PHI_DATA;

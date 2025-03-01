@@ -10,9 +10,9 @@
 #include <avpack/ogg-read.h>
 #include <avpack/ogg-write.h>
 #include <avpack/vorbistag.h>
-#include <avpack/opus-fmt.h>
-#include <avpack/vorbis-fmt.h>
 #include <avpack/flac-read.h>
+#include <avpack/base/opus.h>
+#include <avpack/base/vorbis.h>
 #include <ffsys/file.h>
 #include <ffsys/path.h>
 

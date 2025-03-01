@@ -7,7 +7,6 @@ struct opus_enc {
 	uint state;
 	struct phi_af fmt;
 	ffopus_enc opus;
-	uint64 npkt;
 	uint64 endpos;
 };
 
@@ -42,6 +41,7 @@ static int opus_enc_encode(void *ctx, phi_track *t)
 {
 	struct opus_enc *o = ctx;
 	int r;
+	uint in_len;
 	enum { W_CONV, W_CREATE, W_DATA };
 
 	switch (o->state) {
@@ -91,6 +91,7 @@ static int opus_enc_encode(void *ctx, phi_track *t)
 	if (t->chain_flags & PHI_FFWD)
 		o->opus.pcm = (void*)t->data_in.ptr,  o->opus.pcmlen = t->data_in.len;
 
+	in_len = o->opus.pcmlen;
 	r = ffopus_encode(&o->opus);
 
 	switch (r) {
@@ -98,7 +99,6 @@ static int opus_enc_encode(void *ctx, phi_track *t)
 		return PHI_MORE;
 
 	case FFOPUS_RDONE:
-
 		t->audio.pos = ffopus_enc_pos(&o->opus);
 		return PHI_DONE;
 
@@ -112,9 +112,8 @@ static int opus_enc_encode(void *ctx, phi_track *t)
 
 	t->audio.pos = o->endpos;
 	o->endpos = ffopus_enc_pos(&o->opus);
-	o->npkt++;
 	dbglog(t, "encoded %L samples into %L bytes @%U [%U]"
-		, (t->data_in.len - o->opus.pcmlen) / phi_af_size(&o->fmt), o->opus.data.len
+		, (in_len - o->opus.pcmlen) / phi_af_size(&o->fmt), o->opus.data.len
 		, t->audio.pos, o->endpos);
 	ffstr_set(&t->data_out, o->opus.data.ptr, o->opus.data.len);
 	return PHI_DATA;

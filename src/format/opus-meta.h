@@ -3,7 +3,7 @@
 
 #include <track.h>
 #include <avpack/vorbistag.h>
-#include <avpack/opus-fmt.h>
+#include <avpack/base/opus.h>
 
 extern int vorbistag_read(phi_track *t, ffstr vc);
 
