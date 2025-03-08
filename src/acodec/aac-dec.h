@@ -12,7 +12,7 @@ struct aac_in {
 	uint br;
 };
 
-enum { DETECT_FRAMES = 32, }; //# of frames to detect real audio format
+enum { DETECT_FRAMES = 8, }; //# of frames to detect real audio format
 
 static void* aac_open(phi_track *t)
 {

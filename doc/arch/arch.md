@@ -184,6 +184,44 @@ Case 2.  Input is OGG with only end-position value of each page.
 ```
 
 
+## .ogg(Opus) Notes
+
+Example of a 2-second .ogg(Opus) file map:
+
+	page #0  end-pos:0      packets:1   flags:2  size:47
+	page #1  end-pos:0      packets:1   flags:0  size:1039
+	page #2  end-pos:48000  packets:25  flags:0  size:22399
+	page #3  end-pos:96000  packets:25  flags:0  size:22180
+	page #4  end-pos:96312  packets:1   flags:4  size:990
+
+`312` is an Opus preskip samples (the N of samples decoder must skip from the first frame):
+
+	ogg-read: page #2  end-pos:48000  packets:25
+	opus-decode: decoded 1920 samples @0
+	tui: samples: @0(0ms) +1608 [1608]
+	opus-decode: decoded 1920 samples @1920
+	tui: samples: @1608(33ms) +1920 [3528]
+
+When copying, the last OGG page is written with granule-pos value `+1`.
+Example of the output file's map after `phiola co -copy -u 1`:
+
+	page #0  end-pos:0      packets:1   flags:2  size:47
+	page #1  end-pos:0      packets:1   flags:0  size:1039
+	page #2  end-pos:48000  packets:25  flags:0  size:22399
+	page #3  end-pos:48001  packets:1   flags:4  size:911
+
+
+## .aac Notes
+
+For HE and HEv2 profiles phiola can obtain sample rate & channels number only after the decoder reports these values (libFDKAAC parses SBR/PS info block that is 'buried' deep within AAC frame).
+Example:
+
+	aac-adts-read: passing frame #0  samples:1024 @0  size:19  aot:2 rate:22050 chan:1
+	aac-decode:    decoded 2048 samples @0  aot:5 rate:44100 chan:2 br:3273
+	aac-adts-read: passing frame #1  samples:1024 @1024  size:22  aot:2 rate:22050 chan:1
+	aac-decode:    decoded 2048 samples @2048  aot:29 rate:44100 chan:2 br:3789
+
+
 ## Build
 
 Global call+include+targets map:
