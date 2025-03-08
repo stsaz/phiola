@@ -15,7 +15,7 @@ Codecs:
 
 * alac-rev2
 * fdk-aac-0.1.6
-* flac-1.4.3
+* flac-1.5.0
 * MAC-433
 * mpg123-1.32.10
 * musepack-r475

@@ -13,7 +13,7 @@
 typedef struct flac_decoder flac_decoder;
 typedef struct flac_encoder flac_encoder;
 
-#ifndef FLAC_EXP
+#ifndef FLAC__MAX_CHANNELS
 #define FLAC__MAX_CHANNELS 8
 #endif
 

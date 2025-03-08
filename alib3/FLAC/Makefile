@@ -2,15 +2,15 @@
 
 include ../config.mk
 
-VER := 1.4.3
+VER := 1.5.0
 URL := https://github.com/xiph/flac/archive/refs/tags/$(VER).zip
-MD5SUM := 21451360ee87ba8c9fdb891e09ac9dd7
+MD5SUM := 49560e2be82d559c6ac0751fe51e43bf
 PKG := $(ALIB3)/FLAC/$(notdir $(URL))
 DIR := flac-$(VER)
 LIB := libFLAC-phi.$(SO)
 
 default: $(DIR)/config.h
-	cd $(DIR) && sed -n '/libFLAC_sources = /,/libFLAC_la_SOURCES = /p' src/libFLAC/Makefile.in >phi.mk
+	#cd $(DIR) && sed -n '/libFLAC_sources = /,/libFLAC_la_SOURCES = /p' src/libFLAC/Makefile.in >phi.mk
 	#cd $(DIR) && make -j8 V=1 >LOG
 	$(SUBMAKE) $(LIB)
 
@@ -42,7 +42,8 @@ ifeq "$(SYS)" "android"
 endif
 $(DIR)/config.h: | $(DIR)
 	cd $(DIR) && bash autogen.sh
-	cd $(DIR) && $(CONFIGURE_ENV) ./configure --disable-ogg $(CONFIGURE_FLAGS)
+	cd $(DIR) && $(CONFIGURE_ENV) ./configure --disable-ogg --disable-multithreading $(CONFIGURE_FLAGS)
+	# cd $(DIR) && git init && git add include src/libFLAC && git commit -m init && git am $(ALIB3)/FLAC/*.patch
 	cat $(ALIB3)/FLAC/*.patch | patch -d $(DIR) -p1
 	cat $@
 	touch $@
@@ -61,9 +62,34 @@ ifeq "$(OS)" "windows"
 	LINKFLAGS += -Wl,-static -lssp
 endif
 
--include $(DIR)/phi.mk
-
-SRC := $(libFLAC_sources)
+SRC := \
+	bitmath.c \
+	bitreader.c \
+	bitwriter.c \
+	cpu.c \
+	crc.c \
+	fixed.c \
+	fixed_intrin_sse2.c \
+	fixed_intrin_ssse3.c \
+	fixed_intrin_sse42.c \
+	fixed_intrin_avx2.c \
+	float.c \
+	format.c \
+	lpc.c \
+	lpc_intrin_sse2.c \
+	lpc_intrin_sse41.c \
+	lpc_intrin_avx2.c \
+	lpc_intrin_fma.c \
+	lpc_intrin_neon.c \
+	md5.c \
+	memory.c \
+	stream_decoder.c \
+	stream_encoder.c \
+	stream_encoder_intrin_sse2.c \
+	stream_encoder_intrin_ssse3.c \
+	stream_encoder_intrin_avx2.c \
+	stream_encoder_framing.c \
+	window.c
 OBJ := FLAC-phi.o $(addprefix $(DIR)/src/libFLAC/,$(SRC:.c=.o))
 
 %.o: $(ALIB3)/FLAC/%.c
