@@ -242,3 +242,42 @@ Global call+include+targets map:
 				apk
 					gradle
 ```
+
+
+## Benchmarks
+
+### FDK-AAC
+
+Test file: 44.1KHz/stereo/06:16
+
+	phiola co i.flac -aac_q 5 -o q5.m4a -perf
+	phiola co i.flac -aac_q 192 -o q192.m4a -perf
+	phiola co q5.m4a -perf -o @stdout.wav >/dev/null
+	phiola co q192.m4a -perf -o @stdout.wav >/dev/null
+
+amd64
+
+| Ver | Enc(q192) | Enc(q5)  | Dec(q5)  | Dec(q5) NL | Dec(q192) NL |
+| --- | --- | --- | --- | --- | --- |
+| 203 | 3.055     | 3.251    | 1.006    | 0.942      | 0.865        |
+| 201 | 3.045     | 3.475    |          | 0.952      | 0.878        |
+| 200 |           |          |          | 0.943      | 0.875        |
+| 016 | 4.087     | 4.772    | 0.848(!) | 0.739      |              |
+| 015 | 4.177     | 4.858    | 0.853    |            |              |
+| 014 | 4.062     | 4.707    | 0.846    | 0.712(!)   |              |
+| 013 | 4.049     | 4.713    |          | 0.718      |              |
+| ffmpeg* | 5.726 |          |          | 0.461      | 0.447        |
+
+* Encoder settings: `AACENC_AFTERBURNER=1`, `AACENC_SIGNALING_MODE=1`, `AACENC_TRANSMUX=TT_MP4_RAW`
+* NL means "no limiter", i.e. `AAC_PCM_LIMITER_ENABLE=0`
+* !!! **v203 decoder is `18%` slower than v016**
+* v203 decoder is `27%` slower than v016 with "limiter" disabled and `200%` slower than ffmpeg
+* v014 introduced "limiter" feature that slows down decoder by `18%`
+* The ffmpeg results are for reference
+
+arm64
+
+| Ver | Enc(q192) | Enc(q5)  | Dec(q192) | Dec(q5)  |
+| --- | --- | --- | --- | --- |
+| 203 | 5.503     | 5.863    | 1.779     | 1.823    |
+| 016 | 7.434     | 8.647    | 1.935     | 2.066    |

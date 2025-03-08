@@ -14,7 +14,7 @@ In order to be used by phiola all these libraries must be built in a specific wa
 Codecs:
 
 * alac-rev2
-* fdk-aac-0.1.6
+* fdk-aac-2.0.3
 * flac-1.5.0
 * MAC-433
 * mpg123-1.32.10
