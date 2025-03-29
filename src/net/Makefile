@@ -28,6 +28,11 @@ HTTP_OBJ := http.o \
 	netmill-http-client.o \
 	netmill-http-filters.o
 
+HTTP_OBJ += server.o \
+	netmill-tcp-listener.o \
+	netmill-http-server.o \
+	netmill-http-server-conn.o
+
 CFLAGS_NETMILL := $(CFLAGS_BASE) -I$(NETMILL)/src
 ifeq "$(DEBUG)" "1"
 	CFLAGS_NETMILL += -DNML_ENABLE_LOG_EXTRA
@@ -63,14 +68,31 @@ http.$(SO): $(HTTP_OBJ)
 
 icy.o: $(PHIOLA)/src/net/icy.c
 	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
+
 %.o: $(PHIOLA)/src/net/%.c
 	$(C) $(CFLAGS) -I$(NETMILL)/src -DNML_STATIC_LINKING $< -o $@
 
+ifeq "$(DEBUG)" "1"
+server.o: CFLAGS += -DNML_ENABLE_LOG_EXTRA
+endif
+
 netmill-http-filters.o: $(PHIOLA)/src/net/http-filters.c
 	$(C) $(CFLAGS_NETMILL) -I$(PHIOLA)/src -I$(FFSYS) $< -o $@
+
 netmill-http-client.o: $(NETMILL)/src/http-client/client.c
 	$(C) $(CFLAGS_NETMILL) -I$(FFSYS) $< -o $@
+
+netmill-http-server.o: $(NETMILL)/src/http-server/server.c
+	$(C) $(CFLAGS_NETMILL) -I$(FFSYS) $< -o $@
+
+netmill-http-server-conn.o: $(NETMILL)/src/http-server/conn.c
+	$(C) $(CFLAGS_NETMILL) -I$(FFSYS) $< -o $@
+
+netmill-tcp-listener.o: $(NETMILL)/src/core/tcp-listener.c
+	$(C) $(CFLAGS_NETMILL) -I$(FFSYS) $< -o $@
+
 netmill-core-cache.o: $(NETMILL)/src/core/cache.c
 	$(C) $(CFLAGS_NETMILL) -I$(FFSYS) $< -o $@
+
 ffssl.o: $(NETMILL)/src/util/ffssl.c
 	$(C) $(CFLAGS_NETMILL) -I$(FFSYS) $< -o $@

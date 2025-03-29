@@ -2,7 +2,7 @@
 
 ![](res/phiola.svg)
 
-phiola - fast audio player, recorder, converter for Windows, Linux & Android.
+phiola - fast audio player, recorder, converter and streaming server for Windows, Linux & Android.
 It can play audio files from your device or remote server, record audio from your microphone or Internet radio stream, process and convert audio into another format, and more.
 Its low CPU consumption conserves the notebook/phone battery.
 You can issue commands to phiola via its CLI, TUI, GUI, system pipe and SDK interfaces.
@@ -33,6 +33,7 @@ Contents:
 * Play audio: `.mp3`, `.ogg`(Vorbis/Opus), `.mp4`/`.mov`(AAC/ALAC/MP3), `.mkv`/`.webm`(AAC/ALAC/MP3/Vorbis/Opus/PCM), `.caf`(AAC/ALAC/PCM), `.avi`(AAC/MP3/PCM), `.ts`(AAC/MP3), `.aac`, `.mpc`; `.flac`, `.ape`, `.wv`, `.wav`.
 * Record audio: `.m4a`(AAC), `.ogg`(Vorbis), `.opus`; `.flac`, `.wav`
 * Convert audio
+* Broadcast audio over HTTP
 * List/search file meta tags; edit file tags, write ReplayGain tags (`.mp3`, `.ogg/.opus`, `.flac`)
 * List available audio devices
 * Input: file, directory, ICY/HLS/HTTP/HTTPS URL, console (stdin), playlists: `.m3u`, `.pls`, `.cue`
@@ -52,7 +53,7 @@ Features and notes by platform:
 | File formats         | ✅ all supported | ✅ all supported | all supported except `.mpc`, `.ape`, `.wv` |
 | Record from Internet | ✅ | ✅ | ❌ |
 | Record what you hear | ✅ (PulseAudio) | ✅ | ❌ |
-| Edit file tags       | `.mp3/.ogg/.flac` | `.mp3/.ogg/.flac` | ❌ |
+| Audio Streaming Server | ✅ (Opus) | ✅ (Opus) | ❌ |
 | Requirements         | glibc-2.36 | Windows 7 | Android 8 (ARM64), Android 6 (ARM) |
 | HW Requirements      | AMD64, ARM64 | AMD64 | ARM64, ARM(incomplete) |
 
@@ -262,6 +263,9 @@ Other use-cases:
 ```sh
 # List all available audio playback and recording devices
 phiola device list
+
+# Start HTTP audio streaming server (Opus, 128kbps)
+phiola server "My Music" -inc "*.flac" -opus_q 128
 ```
 
 Currently supported commands:
@@ -276,6 +280,7 @@ Currently supported commands:
 | [play](src/exe/play.h)       | Play audio |
 | [record](src/exe/record.h)   | Record audio |
 | [remote](src/exe/remote.h)   | Send remote command |
+| [server](src/exe/server.h)   | Start audio streaming server |
 | [tag](src/exe/tag.h)         | Edit file tags |
 
 > For the details on each command you can click on the links above or execute `phiola COMMAND -h` on your PC.

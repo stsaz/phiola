@@ -484,10 +484,12 @@ const phi_filter phi_http = {
 	"http-client"
 };
 
+extern const phi_filter phi_audiosv;
 
 static const void* net_iface(const char *name)
 {
 	if (ffsz_eq(name, "client")) return &phi_http;
+	if (ffsz_eq(name, "server")) return &phi_audiosv;
 	return NULL;
 }
 

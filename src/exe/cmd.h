@@ -256,6 +256,7 @@ static int cmd_opus_mode(const char *s)
 #include <exe/play.h>
 #include <exe/record.h>
 #include <exe/remote.h>
+#include <exe/server.h>
 #include <exe/tag.h>
 
 static int root_help()
@@ -280,7 +281,8 @@ Commands:\n\
   `play`      Play audio [Default command]\n\
   `record`    Record audio\n\
   `remote`    Send remote command\n\
-  `tag`       Edit .mp3 file tags\n\
+  `server`    Start audio streaming server\n\
+  `tag`       Edit file tags\n\
 \n\
 'phiola COMMAND -help' will print information on a particular command.\n\
 ");
@@ -468,6 +470,7 @@ static const struct ffarg cmd_root[] = {
 	{ "play",		'{',		cmd_play_init },
 	{ "record",		'{',		cmd_rec_init },
 	{ "remote",		'{',		cmd_remote_init },
+	{ "server",		'{',		cmd_server_init },
 	{ "tag",		'{',		cmd_tag_init },
 	{ "\0\1",		'{',		cmd_play_init },
 	{ "",			0,			usage },
