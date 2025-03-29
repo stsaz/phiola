@@ -85,6 +85,8 @@ err:
 
 void flac_decode_free(flac_decoder *f)
 {
+	if (!f) return;
+
 	FLAC__stream_decoder_delete(f->decoder);
 	free(f);
 }
@@ -142,6 +144,8 @@ err:
 
 void flac_encode_free(flac_encoder *f)
 {
+	if (!f) return;
+
 	FLAC__stream_encoder_delete(f->encoder);
 	free(f);
 }

@@ -1,18 +1,24 @@
 /** phiola: FLAC decode
 2018, Simon Zolin */
 
-#include <acodec/alib3-bridge/flac-dec-if.h>
+#include <avpack/base/flac.h>
+#include <FLAC/FLAC-phi.h>
 
 struct flac_dec {
-	ffflac_dec fl;
 	uint sample_size;
-	uint64 last_page_pos;
+	uint64 last_page_pos, pos;
+	flac_decoder *dec;
+	flac_conf info;
+	ffstr in;
+	size_t pcmlen;
+	void *out[FLAC__MAX_CHANNELS];
 };
 
 static void flac_dec_free(void *ctx, phi_track *t)
 {
 	struct flac_dec *f = ctx;
-	ffflac_dec_close(&f->fl);
+	if (f->dec)
+		flac_decode_free(f->dec);
 	phi_track_free(t, f);
 }
 
@@ -32,20 +38,71 @@ static void* flac_dec_create(phi_track *t)
 		.min_blocksize = t->audio.flac_minblock,
 		.max_blocksize = t->audio.flac_maxblock,
 	};
-	if (0 != (r = ffflac_dec_open(&f->fl, &info))) {
-		errlog(t, "ffflac_dec_open(): %s", ffflac_dec_errstr(&f->fl));
+	if ((r = flac_decode_init(&f->dec, &info))) {
+		errlog(t, "flac_decode_init(): %s", flac_errstr(r));
 		flac_dec_free(f, t);
 		return PHI_OPEN_ERR;
 	}
 
+	f->info = info;
+	f->pos = ~0ULL;
 	f->sample_size = phi_af_size(&t->audio.format);
 	t->data_type = "pcm";
 	return f;
 }
 
+static inline void int_le_cpu24(void *p, uint n)
+{
+	u_char *o = (u_char*)p;
+	o[0] = (u_char)n;
+	o[1] = (u_char)(n >> 8);
+	o[2] = (u_char)(n >> 16);
+}
+
+/** Convert data between 32bit integer and any other integer PCM format.
+e.g. 16bit: "11 22 00 00" <-> "11 22" */
+static int pcm_from32(const int **src, void **dst, uint dstbits, uint channels, uint samples)
+{
+	uint ic, i;
+	union {
+	char **pb;
+	short **psh;
+	} to;
+	to.psh = (void*)dst;
+
+	switch (dstbits) {
+	case 8:
+		for (ic = 0;  ic < channels;  ic++) {
+			for (i = 0;  i < samples;  i++) {
+				to.pb[ic][i] = (char)src[ic][i];
+			}
+		}
+		break;
+
+	case 16:
+		for (ic = 0;  ic < channels;  ic++) {
+			for (i = 0;  i < samples;  i++) {
+				to.psh[ic][i] = (short)src[ic][i];
+			}
+		}
+		break;
+
+	case 24:
+		for (ic = 0;  ic < channels;  ic++) {
+			for (i = 0;  i < samples;  i++) {
+				int_le_cpu24(&to.pb[ic][i * 3], src[ic][i]);
+			}
+		}
+		break;
+
+	default:
+		return -1;
+	}
+	return 0;
+}
+
 static int flac_dec_decode(void *ctx, phi_track *t)
 {
-	enum { I_HDR, I_DATA };
 	struct flac_dec *f = ctx;
 	int r;
 
@@ -54,22 +111,30 @@ static int flac_dec_decode(void *ctx, phi_track *t)
 	}
 
 	if (t->chain_flags & PHI_FFWD) {
-		if (f->fl.frsample == ~0ULL || f->last_page_pos != t->audio.pos) {
+		if (f->pos == ~0ULL || f->last_page_pos != t->audio.pos) {
 			f->last_page_pos = t->audio.pos;
-			f->fl.frsample = t->audio.pos;
+			f->pos = t->audio.pos;
 		}
 
-		ffflac_dec_input(&f->fl, t->data_in, t->audio.flac_samples);
-		t->data_in.len = 0;
+		f->in = t->data_in;
+		f->pcmlen = t->audio.flac_samples;
 	}
 
-	r = ffflac_decode(&f->fl, &t->data_out, &t->audio.pos);
-	if (r < 0) {
-		warnlog(t, "ffflac_decode(): %s"
-			, ffflac_dec_errstr(&f->fl));
+	const int **out;
+	if ((r = flac_decode(f->dec, f->in.ptr, f->in.len, &out))) {
+		warnlog(t, "flac_decode(): %s", flac_errstr(r));
 		return PHI_MORE;
 	}
 
+	for (uint i = 0;  i < f->info.channels;  i++) {
+		f->out[i] = (void*)out[i];
+	}
+
+	pcm_from32(out, f->out, f->info.bps, f->info.channels, f->pcmlen); // in-place conversion
+	t->audio.pos = f->pos;
+	f->pos += f->pcmlen;
+
+	ffstr_set(&t->data_out, f->out, f->pcmlen * f->info.bps/8 * f->info.channels);
 	dbglog(t, "decoded %L samples @%U"
 		, t->data_out.len / f->sample_size, t->audio.pos);
 	return PHI_OK;

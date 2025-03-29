@@ -1,10 +1,16 @@
 /** phiola: ALAC input
 2016, Simon Zolin */
 
-#include <acodec/alib3-bridge/alac.h>
+#include <ffbase/vector.h>
+#include <avpack/base/alac.h>
+#include <ALAC/ALAC-phi.h>
 
 typedef struct alac_in {
-	ffalac alac;
+	struct alac_ctx *al;
+	struct phi_af fmt;
+	uint bitrate; // 0 if unknown
+	ffstr in;
+	ffvec buf;
 } alac_in;
 
 static void* alac_open(phi_track *t)
@@ -14,17 +20,26 @@ static void* alac_open(phi_track *t)
 
 	alac_in *a = phi_track_allocT(t, alac_in);
 
-	if (0 != ffalac_open(&a->alac, t->data_in.ptr, t->data_in.len)) {
-		errlog(t, "ffalac_open(): %s", ffalac_errstr(&a->alac));
+	if (!(a->al = alac_init(t->data_in.ptr, t->data_in.len))) {
+		errlog(t, "alac_init(): bad 'magic cookie'");
 		phi_track_free(t, a);
 		return PHI_OPEN_ERR;
 	}
-	t->audio.end_padding = (t->audio.total != ~0ULL);
 	t->data_in.len = 0;
 
-	if (a->alac.bitrate != 0)
-		t->audio.bitrate = a->alac.bitrate;
-	t->audio.format = a->alac.fmt;
+	const struct alac_conf *conf = (void*)t->data_in.ptr;
+	a->fmt.format = conf->bit_depth;
+	a->fmt.channels = conf->channels;
+	a->fmt.rate = ffint_be_cpu32_ptr(conf->sample_rate);
+	a->bitrate = ffint_be_cpu32_ptr(conf->avg_bitrate);
+
+	uint n = ffint_be_cpu32_ptr(conf->frame_length) * phi_af_size(&a->fmt);
+	ffvec_alloc(&a->buf, n, 1);
+
+	t->audio.end_padding = (t->audio.total != ~0ULL);
+	if (a->bitrate != 0)
+		t->audio.bitrate = a->bitrate;
+	t->audio.format = a->fmt;
 	t->audio.format.interleaved = 1;
 	t->audio.decoder = "ALAC";
 	t->data_type = "pcm";
@@ -34,7 +49,8 @@ static void* alac_open(phi_track *t)
 static void alac_close(void *ctx, phi_track *t)
 {
 	alac_in *a = ctx;
-	ffalac_close(&a->alac);
+	alac_free(a->al);
+	ffvec_free(&a->buf);
 	phi_track_free(t, a);
 }
 
@@ -42,25 +58,20 @@ static int alac_in_decode(void *ctx, phi_track *t)
 {
 	alac_in *a = ctx;
 
-	if (t->chain_flags & PHI_FFWD) {
-		a->alac.data = t->data_in.ptr,  a->alac.datalen = t->data_in.len;
-		t->data_in.len = 0;
+	if (t->chain_flags & PHI_FFWD)
+		a->in = t->data_in;
+
+	int r = alac_decode(a->al, a->in.ptr, a->in.len, a->buf.ptr);
+	if (r <= 0) {
+		if (r < 0)
+			warnlog(t, "alac_decode(): %d", r);
+		return (t->chain_flags & PHI_FFIRST) ? PHI_DONE : PHI_MORE;
 	}
 
-	int r = ffalac_decode(&a->alac, &t->data_out);
-	if (r == FFALAC_RERR) {
-		errlog(t, "ffalac_decode(): %s", ffalac_errstr(&a->alac));
-		return PHI_ERR;
-
-	} else if (r == FFALAC_RMORE) {
-		if (t->chain_flags & PHI_FFIRST) {
-			return PHI_DONE;
-		}
-		return PHI_MORE;
-	}
-
+	a->in.len = 0;
+	ffstr_set(&t->data_out, a->buf.ptr, r * phi_af_size(&a->fmt));
 	dbglog(t, "decoded %u samples @%U"
-		, t->data_out.len / phi_af_size(&a->alac.fmt), t->audio.pos);
+		, t->data_out.len / phi_af_size(&a->fmt), t->audio.pos);
 	return PHI_DATA;
 }
 

@@ -33,26 +33,19 @@ endif
 
 %.o: $(PHIOLA)/src/adev/%.c
 	$(C) $(CFLAGS) -I$(FFAUDIO) $< -o $@
+
 ffaudio-%.o: $(FFAUDIO)/ffaudio/%.c
 	$(C) -I$(FFAUDIO) $(CFLAGS_BASE) $< -o $@
 
-wasapi.$(SO): wasapi.o ffaudio-wasapi.o
-	$(LINK) -shared $+ $(LINKFLAGS) -lole32 -o $@
-
-alsa.$(SO): alsa.o ffaudio-alsa.o
-	$(LINK) -shared $+ $(LINKFLAGS) -lasound -o $@
-
-pulse.$(SO): pulse.o ffaudio-pulse.o
-	$(LINK) -shared $+ $(LINKFLAGS) -lpulse -o $@
-
-jack.$(SO): jack.o ffaudio-jack.o
-	$(LINK) -shared $+ $(LINKFLAGS) -L/usr/lib64/pipewire-0.3/jack -ljack -o $@
-
-aaudio.$(SO): aaudio.o ffaudio-aaudio.o
-	$(LINK) -shared $+ $(LINKFLAGS) -laaudio -o $@
-
-coreaudio.$(SO): coreaudio.o ffaudio-coreaudio.o
+%.$(SO): %.o ffaudio-%.o
 	$(LINK) -shared $+ $(LINKFLAGS) -o $@
 
-oss.$(SO): oss.o ffaudio-oss.o
-	$(LINK) -shared $+ $(LINKFLAGS) -o $@
+wasapi.$(SO): LINKFLAGS += -lole32
+
+alsa.$(SO): LINKFLAGS += -lasound
+
+pulse.$(SO): LINKFLAGS += -lpulse
+
+jack.$(SO): LINKFLAGS += -L/usr/lib64/pipewire-0.3/jack -ljack
+
+aaudio.$(SO): LINKFLAGS += -laaudio

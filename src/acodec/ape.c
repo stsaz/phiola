@@ -3,8 +3,6 @@
 
 #include <track.h>
 #include <util/util.h>
-#include <acodec/alib3-bridge/ape.h>
-#include <format/mmtag.h>
 #include <ffsys/globals.h>
 
 static const phi_core *core;

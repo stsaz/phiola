@@ -70,6 +70,8 @@ err:
 
 void vorbis_decode_free(vorbis_ctx *v)
 {
+	if (!v) return;
+
 	vorbis_block_clear(&v->blk);
 	vorbis_dsp_clear(&v->ds);
 	vorbis_info_clear(&v->info);

@@ -1,12 +1,18 @@
 /** phiola: Vorbis input
 2016, Simon Zolin */
 
-#include <acodec/alib3-bridge/vorbis-dec-if.h>
+#include <avpack/vorbistag.h>
+#include <avpack/base/vorbis.h>
+#include <vorbis/vorbis-phi.h>
 
 struct vorbis_dec {
 	uint state;
-	ffvorbis vorbis;
 	uint64 prev_page_pos;
+	vorbis_ctx *vctx;
+	uint channels;
+	uint pktno;
+	uint64 cursample;
+	const float **pcm; //non-interleaved
 };
 
 static void* vorbis_open(phi_track *t)
@@ -15,42 +21,69 @@ static void* vorbis_open(phi_track *t)
 		return PHI_OPEN_ERR;
 
 	struct vorbis_dec *v = phi_track_allocT(t, struct vorbis_dec);
-
-	if (0 != ffvorbis_open(&v->vorbis)) {
-		errlog(t, "ffvorbis_open(): %s", ffvorbis_errstr(&v->vorbis));
-		phi_track_free(t, v);
-		return PHI_OPEN_ERR;
-	}
-
+	v->cursample = ~0ULL;
 	t->audio.end_padding = (t->audio.total != ~0ULL);
+	t->data_type = "pcm";
 	return v;
 }
 
 static void vorbis_close(void *ctx, phi_track *t)
 {
 	struct vorbis_dec *v = ctx;
-	ffvorbis_close(&v->vorbis);
+	if (v->vctx)
+		vorbis_decode_free(v->vctx);
 	phi_track_free(t, v);
 }
 
-/*
-Stream copy:
-Pass the first 2 packets with meta_block flag, then close the filter.
-*/
 static int vorbis_in_decode(void *ctx, phi_track *t)
 {
-	enum { R_HDR, R_TAGS, R_BOOK, R_DATA1, R_DATA };
 	struct vorbis_dec *v = ctx;
+	enum { R_HDR, R_TAGS, R_BOOK, R_DATA1, R_DATA };
+	int r;
+	ffstr in = {};
+	if (t->chain_flags & PHI_FFWD)
+		in = t->data_in;
+
+	if (in.len == 0)
+		goto more;
+
+	ogg_packet opkt = {
+		.packet = (void*)in.ptr,
+		.bytes = in.len,
+		.packetno = v->pktno++,
+		.granulepos = ~0ULL,
+		.e_o_s = !!(t->chain_flags & PHI_FFIRST),
+	};
 
 	switch (v->state) {
-	case R_HDR:
-	case R_TAGS:
-	case R_BOOK:
-		if (!(t->chain_flags & PHI_FFWD))
-			return PHI_MORE;
+	case R_HDR: {
+		uint rate, br_nominal;
+		if (!vorbis_info_read(in.ptr, in.len, &v->channels, &rate, &br_nominal)) {
+			errlog(t, "bad Vorbis header");
+			return PHI_ERR;
+		}
 
-		v->state++;
-		break;
+		if ((r = vorbis_decode_init(&v->vctx, &opkt))) {
+			errlog(t, "vorbis_decode_init(): %s", vorbis_errstr(r));
+			return PHI_ERR;
+		}
+		v->state = R_TAGS;
+		return PHI_MORE;
+	}
+
+	case R_TAGS:
+		if (!vorbis_tags_read(in.ptr, in.len))
+			warnlog(t, "bad Vorbis tags");
+		v->state = R_BOOK;
+		return PHI_MORE;
+
+	case R_BOOK:
+		if ((r = vorbis_decode_init(&v->vctx, &opkt))) {
+			errlog(t, "vorbis_decode_init(): %s", vorbis_errstr(r));
+			return PHI_ERR;
+		}
+		v->state = R_DATA1;
+		goto more;
 
 	case R_DATA1:
 		if (t->conf.info_only)
@@ -61,59 +94,31 @@ static int vorbis_in_decode(void *ctx, phi_track *t)
 
 	case R_DATA:
 		if (t->chain_flags & PHI_FFWD) {
-			if (v->vorbis.cursample == ~0ULL || v->prev_page_pos != t->audio.pos) {
+			if (v->cursample == ~0ULL || v->prev_page_pos != t->audio.pos) {
 				v->prev_page_pos = t->audio.pos;
-				v->vorbis.cursample = t->audio.pos;
+				v->cursample = t->audio.pos;
 			}
 		}
 		break;
 	}
 
-	int r;
-	ffstr in = {};
-	if (t->chain_flags & PHI_FFWD) {
-		in = t->data_in;
-		t->data_in.len = 0;
-		v->vorbis.fin = !!(t->chain_flags & PHI_FFIRST);
+	r = vorbis_decode(v->vctx, &opkt, &v->pcm);
+	if (r <= 0) {
+		if (r < 0)
+			warnlog(t, "vorbis_decode(): %s", vorbis_errstr(r));
+		goto more;
 	}
 
-	for (;;) {
+	ffstr_set(&t->data_out, (void*)v->pcm, r * sizeof(float) * v->channels);
+	t->audio.pos = v->cursample;
+	v->cursample += r;
 
-		r = ffvorbis_decode(&v->vorbis, in, &t->data_out, &t->audio.pos);
-
-		switch (r) {
-
-		case FFVORBIS_RHDR:
-			t->audio.format.interleaved = 0;
-			t->data_type = "pcm";
-			return PHI_MORE;
-
-		case FFVORBIS_RHDRFIN:
-			return PHI_MORE;
-
-		case FFVORBIS_RDATA:
-			goto data;
-
-		case FFVORBIS_RERR:
-			errlog(t, "ffvorbis_decode(): %s", ffvorbis_errstr(&v->vorbis));
-			return PHI_ERR;
-
-		case FFVORBIS_RWARN:
-			warnlog(t, "ffvorbis_decode(): %s", ffvorbis_errstr(&v->vorbis));
-			// fallthrough
-
-		case FFVORBIS_RMORE:
-			if (t->chain_flags & PHI_FFIRST) {
-				return PHI_DONE;
-			}
-			return PHI_MORE;
-		}
-	}
-
-data:
 	dbglog(t, "decoded %L samples @%U"
-		, t->data_out.len / pcm_size(PHI_PCM_FLOAT32, ffvorbis_channels(&v->vorbis)), t->audio.pos);
+		, t->data_out.len / pcm_size(PHI_PCM_FLOAT32, v->channels), t->audio.pos);
 	return PHI_DATA;
+
+more:
+	return (t->chain_flags & PHI_FFIRST) ? PHI_DONE : PHI_MORE;
 }
 
 static const phi_filter phi_vorbis_dec = {

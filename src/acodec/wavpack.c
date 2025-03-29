@@ -3,12 +3,11 @@
 
 #include <track.h>
 #include <util/util.h>
-#include <acodec/alib3-bridge/wavpack.h>
-#include <format/mmtag.h>
 #include <ffsys/globals.h>
 
 static const phi_core *core;
 #define errlog(t, ...)  phi_errlog(core, NULL, t, __VA_ARGS__)
+#define warnlog(t, ...)  phi_warnlog(core, NULL, t, __VA_ARGS__)
 #define dbglog(t, ...)  phi_dbglog(core, NULL, t, __VA_ARGS__)
 
 #include <acodec/wavpack-dec.h>

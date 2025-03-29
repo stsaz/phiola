@@ -1,14 +1,18 @@
 /** phiola: Opus input
 2016, Simon Zolin */
 
-#include <acodec/alib3-bridge/opus-dec-if.h>
+#include <avpack/base/opus.h>
+#include <opus/opus-phi.h>
 
 struct opus_dec {
 	uint state;
-	ffopus opus;
 	uint sample_size;
-	uint64 prev_page_pos;
+	uint64 prev_page_pos, pos;
+	uint channels;
+	uint preskip;
 	uint reset_decoder;
+	opus_ctx *dec;
+	ffvec obuf;
 };
 
 static void* opus_open(phi_track *t)
@@ -17,14 +21,42 @@ static void* opus_open(phi_track *t)
 		return PHI_OPEN_ERR;
 
 	struct opus_dec *o = phi_track_allocT(t, struct opus_dec);
+	o->prev_page_pos = o->pos = ~0ULL;
 	return o;
 }
 
 static void opus_close(void *ctx, phi_track *t)
 {
 	struct opus_dec *o = ctx;
-	ffopus_close(&o->opus);
+	ffvec_free(&o->obuf);
+	opus_decode_free(o->dec);
 	phi_track_free(t, o);
+}
+
+static int opus_dec_init(struct opus_dec *o, phi_track *t, ffstr in)
+{
+	if (!opus_hdr_read(in.ptr, in.len, &o->channels, &o->preskip)) {
+		errlog(t, "bad Opus header");
+		return PHI_ERR;
+	}
+
+	opus_conf conf = {
+		.channels = o->channels,
+	};
+	int r;
+	if ((r = opus_decode_init(&o->dec, &conf))) {
+		errlog(t, "opus_decode_init(): %s", opus_errstr(r));
+		return PHI_ERR;
+	}
+
+	t->audio.format.format = PHI_PCM_FLOAT32;
+	t->audio.format.interleaved = 1;
+	t->audio.start_delay = ffmin(o->preskip, 4800);
+
+	o->sample_size = phi_af_size(&t->audio.format);
+	t->data_type = "pcm";
+	ffvec_alloc(&o->obuf, OPUS_BUFLEN(48000) * o->channels * sizeof(float), 1);
+	return 0;
 }
 
 static const char* opus_pkt_mode(const char *d)
@@ -38,43 +70,40 @@ static const char* opus_pkt_mode(const char *d)
 
 static int opus_in_decode(void *ctx, phi_track *t)
 {
-	enum { R_INIT, R_HDR, R_TAGS, R_DATA1, R_DATA };
+	enum { R_INIT, R_TAGS, R_DATA1, R_DATA };
 	struct opus_dec *o = ctx;
 	int r;
 	const char *opus_mode = NULL;
-
 	ffstr in = {};
+
 	if (t->chain_flags & PHI_FFWD) {
 		in = t->data_in;
-		t->data_in.len = 0;
 
 		if (core->conf.log_level >= PHI_LOG_DEBUG && in.len)
 			opus_mode = opus_pkt_mode(in.ptr);
 	}
 
-	ffstr out;
 	for (;;) {
 		switch (o->state) {
 		case R_INIT:
-			if (ffopus_open(&o->opus)) {
-				errlog(t, "ffopus_open(): %s", ffopus_errstr(&o->opus));
-				return PHI_ERR;
-			}
-			o->prev_page_pos = ~0ULL;
-			o->state = R_HDR;
-			// fallthrough
-
-		case R_HDR:
-		case R_TAGS:
-			if (!(t->chain_flags & PHI_FFWD))
+			if (in.len == 0)
 				return PHI_MORE;
+			if (opus_dec_init(o, t, in))
+				return PHI_ERR;
+			o->state = R_TAGS;
+			return PHI_MORE;
 
-			o->state++;
-			break;
+		case R_TAGS:
+			if (in.len == 0)
+				return PHI_MORE;
+			o->state = R_DATA1;
+			if (opus_tags_read(in.ptr, in.len))
+				return PHI_MORE;
+			// fallthrough
 
 		case R_DATA1:
 			if (t->audio.total != ~0ULL) {
-				t->audio.total -= o->opus.info.preskip;
+				t->audio.total -= o->preskip;
 				t->audio.end_padding = 1;
 			}
 
@@ -82,81 +111,56 @@ static int opus_in_decode(void *ctx, phi_track *t)
 				return PHI_LASTOUT;
 
 			o->state = R_DATA;
-			// fallthrough
-
-		case R_DATA:
-			if (t->audio.ogg_reset) {
-				ffopus_close(&o->opus);
-				ffmem_zero_obj(o);
-				continue;
-			}
-
-			if (t->audio.seek_req) {
-				// a new seek request is received, pass control to UI module
-				o->reset_decoder = 1;
-				t->data_in.len = 0;
-				return (t->chain_flags & PHI_FFIRST) ? PHI_DONE : PHI_OK;
-			}
-
-			if (t->chain_flags & PHI_FFWD) {
-				if (o->reset_decoder) {
-					o->reset_decoder = 0;
-					opus_decode_reset(o->opus.dec);
-				}
-
-				if (o->opus.pos == ~0ULL || o->prev_page_pos != t->audio.pos) {
-					o->prev_page_pos = t->audio.pos;
-					ffopus_setpos(&o->opus, t->audio.pos);
-				}
-			}
 			break;
 		}
 
-		for (;;) {
-			r = ffopus_decode(&o->opus, &in, &out, &t->audio.pos);
-
-			switch (r) {
-			case FFOPUS_RHDR:
-				t->audio.format.format = PHI_PCM_FLOAT32;
-				t->audio.format.interleaved = 1;
-				o->sample_size = phi_af_size(&t->audio.format);
-				t->audio.start_delay = ffmin(o->opus.info.preskip, 4800);
-				t->data_type = "pcm";
-				break;
-
-			case FFOPUS_RHDRFIN:
-				goto again; // this packet isn't a Tags packet but audio data
-			case FFOPUS_RHDRFIN_TAGS:
-				break;
-
-			case FFOPUS_RDATA:
-				goto data;
-
-			case FFOPUS_RERR:
-				errlog(t, "ffopus_decode(): %s", ffopus_errstr(&o->opus));
-				return PHI_ERR;
-
-			case FFOPUS_RWARN:
-				warnlog(t, "ffopus_decode(): %s", ffopus_errstr(&o->opus));
-				// fallthrough
-
-			case FFOPUS_RMORE:
-				if (t->chain_flags & PHI_FFIRST) {
-					return PHI_DONE;
-				}
-				return PHI_MORE;
-			}
+		if (t->audio.ogg_reset) {
+			ffvec_free(&o->obuf);
+			if (o->dec)
+				opus_decode_free(o->dec);
+			ffmem_zero_obj(o);
+			continue;
 		}
 
-again:
-		;
+		break;
 	}
 
-data:
+	if (t->audio.seek_req) {
+		// A new seek request is received.  Pass control to UI module.
+		o->reset_decoder = 1;
+		return (t->chain_flags & PHI_FFIRST) ? PHI_DONE : PHI_OK;
+	}
+
+	if (in.len == 0)
+		goto more;
+
+	if (t->chain_flags & PHI_FFWD) {
+		if (o->reset_decoder) {
+			o->reset_decoder = 0;
+			opus_decode_reset(o->dec);
+		}
+
+		if (o->pos == ~0ULL || o->prev_page_pos != t->audio.pos) {
+			o->prev_page_pos = t->audio.pos;
+			o->pos = t->audio.pos;
+		}
+	}
+
+	r = opus_decode_f(o->dec, in.ptr, in.len, (float*)o->obuf.ptr);
+	if (r < 0) {
+		warnlog(t, "opus_decode_f(): %s", opus_errstr(r));
+		goto more;
+	}
+
+	ffstr_set(&t->data_out, o->obuf.ptr, r * o->channels * sizeof(float));
+	t->audio.pos = o->pos;
+	o->pos += r;
 	dbglog(t, "decoded %L samples @%U  mode:%s"
-		, out.len / o->sample_size, t->audio.pos, opus_mode);
-	t->data_out = out;
+		, t->data_out.len / o->sample_size, t->audio.pos, opus_mode);
 	return PHI_DATA;
+
+more:
+	return !(t->chain_flags & PHI_FFIRST) ? PHI_MORE : PHI_DONE;
 }
 
 static const phi_filter phi_opus_dec = {

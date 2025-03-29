@@ -53,6 +53,8 @@ int phi_mpg123_open(phi_mpg123 **pm, unsigned int flags)
 
 void phi_mpg123_free(phi_mpg123 *m)
 {
+	if (!m) return;
+
 	mpg123_delete(m->h);
 	mpg123_exit();
 	free(m);

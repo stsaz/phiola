@@ -11,7 +11,7 @@
 
 typedef struct ape_decoder ape_decoder;
 
-struct ape_info {
+struct ape_conf {
 	int version;
 	int compressionlevel;
 	int bitspersample;
@@ -34,7 +34,7 @@ _EXPORT const char* ape_errstr(int e);
 
 /**
 Return 0 on success. */
-_EXPORT int ape_decode_init(ape_decoder **a, const struct ape_info *info);
+_EXPORT int ape_decode_init(ape_decoder **a, const struct ape_conf *info);
 
 _EXPORT void ape_decode_free(ape_decoder *a);
 

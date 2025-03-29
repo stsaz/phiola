@@ -69,6 +69,8 @@ int mpc_decode_open(mpc_ctx **pc, const void *sh_block, size_t len)
 
 void mpc_decode_free(mpc_ctx *c)
 {
+	if (!c) return;
+
 	mpc_decoder_exit(c->d);
 	free(c);
 }

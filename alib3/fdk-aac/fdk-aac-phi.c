@@ -266,6 +266,8 @@ end:
 
 void fdkaac_encode_free(fdkaac_encoder *a)
 {
+	if (!a) return;
+
 	aacEncClose(&a->enc);
 	free(a);
 }

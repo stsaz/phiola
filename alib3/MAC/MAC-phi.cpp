@@ -38,7 +38,7 @@ static void _FillWaveFormatEx(APE::WAVEFORMATEX * pWaveFormatEx, int nSampleRate
 	pWaveFormatEx->nAvgBytesPerSec = pWaveFormatEx->nBlockAlign * pWaveFormatEx->nSamplesPerSec;
 }
 
-int ape_decode_init(ape_decoder **pa, const struct ape_info *info)
+int ape_decode_init(ape_decoder **pa, const struct ape_conf *info)
 {
 	int r = 0;
 	ape_decoder *a = new ape_decoder();
@@ -72,6 +72,8 @@ int ape_decode_init(ape_decoder **pa, const struct ape_info *info)
 
 void ape_decode_free(ape_decoder *a)
 {
+	if (!a) return;
+
 	delete a->dec;
 	delete a;
 }

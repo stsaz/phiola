@@ -1,15 +1,23 @@
 /** phiola: AAC decode
 2016, Simon Zolin */
 
-#include <acodec/alib3-bridge/aac-dec-if.h>
+#include <afilter/pcm.h>
+#include <fdk-aac/fdk-aac-phi.h>
 
 struct aac_in {
-	ffaac aac;
 	uint state;
 	ffvec cache;
 	uint sample_rate;
-	uint frnum;
-	uint br;
+	uint frame;
+	uint avg_bitrate;
+	fdkaac_decoder *dec;
+	ffstr in;
+	fdkaac_info info;
+	struct phi_af fmt;
+	void *pcmbuf;
+	uint64 cursample;
+	uint contr_sample_rate;
+	uint rate_mul;
 };
 
 enum { DETECT_FRAMES = 8, }; //# of frames to detect real audio format
@@ -20,14 +28,21 @@ static void* aac_open(phi_track *t)
 		return PHI_OPEN_ERR;
 
 	struct aac_in *a = phi_track_allocT(t, struct aac_in);
-	a->aac.contr_samprate = t->audio.format.rate;
-	if (0 != ffaac_open(&a->aac, t->audio.format.channels, t->data_in.ptr, t->data_in.len)) {
-		errlog(t, "ffaac_open(): %s", ffaac_errstr(&a->aac));
+	a->contr_sample_rate = t->audio.format.rate;
+	int r;
+	if ((r = fdkaac_decode_open(&a->dec, t->data_in.ptr, t->data_in.len))) {
+		errlog(t, "ffaac_open(): %s", fdkaac_decode_errstr(r));
 		phi_track_free(t, a);
 		return PHI_OPEN_ERR;
 	}
+
+	a->fmt.format = PHI_PCM_16;
+	a->fmt.rate = a->contr_sample_rate;
+	a->fmt.channels = t->audio.format.channels;
+	a->pcmbuf = ffmem_alloc(AAC_MAXFRAMESAMPLES * pcm_size(PHI_PCM_16, AAC_MAXCHANNELS));
+	a->rate_mul = 1;
 	t->data_in.len = 0;
-	t->audio.format.format = a->aac.fmt.format;
+	t->audio.format.format = a->fmt.format;
 	t->audio.format.interleaved = 1;
 	a->sample_rate = t->audio.format.rate;
 	t->data_type = "pcm";
@@ -37,7 +52,9 @@ static void* aac_open(phi_track *t)
 
 static void aac_close(struct aac_in *a, phi_track *t)
 {
-	ffaac_close(&a->aac);
+	if (a->dec)
+		fdkaac_decode_free(a->dec);
+	ffmem_free(a->pcmbuf);
 	ffvec_free(&a->cache);
 	phi_track_free(t, a);
 }
@@ -59,64 +76,78 @@ static int aac_decode(void *ctx, phi_track *t)
 {
 	struct aac_in *a = ctx;
 	int r;
+	uint new_format;
 	uint64 apos = 0;
 	ffstr out;
 	enum { R_CACHE, R_CACHE_DATA, R_CACHE_DONE, R_PASS };
 
 	if (t->chain_flags & PHI_FFWD) {
-		ffaac_input(&a->aac, t->data_in.ptr, t->data_in.len, t->audio.pos);
-		t->data_in.len = 0;
+		a->in = t->data_in;
+		a->cursample = t->audio.pos * a->rate_mul;
 	}
 
 	for (;;) {
 
-		r = ffaac_decode(&a->aac, &out, &apos);
-		if (r == FFAAC_RERR) {
-			warnlog(t, "ffaac_decode(): (%xu) %s", a->aac.err, ffaac_errstr(&a->aac));
-			return PHI_MORE;
-
-		} else if (r == FFAAC_RMORE) {
+		r = fdkaac_decode(a->dec, a->in.ptr, a->in.len, a->pcmbuf);
+		if (r == 0) {
 			if (!(t->chain_flags & PHI_FFIRST))
 				return PHI_MORE;
-			else if (a->cache.len == 0) {
+			else if (a->cache.len == 0)
 				return PHI_DONE;
-			}
 			a->state = R_CACHE_DATA;
 
+		} else if (r < 0) {
+			warnlog(t, "fdkaac_decode(): (%xu) %s", r, fdkaac_decode_errstr(r));
+			return PHI_MORE;
+
 		} else {
-			const fdkaac_info *inf = &a->aac.info;
-			dbglog(t, "decoded %u samples @%U  aot:%u rate:%u chan:%u br:%u"
-				, out.len / phi_af_size(&a->aac.fmt), apos
+			a->in.len = 0;
+			new_format = 0;
+			fdkaac_frameinfo(a->dec, &a->info);
+			if (a->fmt.rate != a->info.rate
+				|| a->fmt.channels != a->info.channels) {
+				new_format = 1;
+				a->fmt.channels = a->info.channels;
+				a->fmt.rate = a->info.rate;
+				if (a->contr_sample_rate != 0)
+					a->rate_mul = a->info.rate / a->contr_sample_rate;
+			}
+
+			ffstr_set(&out, a->pcmbuf, r * pcm_size(a->fmt.format, a->info.channels));
+			apos = a->cursample;
+			const fdkaac_info *inf = &a->info;
+			dbglog(t, "decoded %u samples @%U  aot:%u rate:%u chan:%u bitrate:%u"
+				, out.len / phi_af_size(&a->fmt), apos
 				, inf->aot, inf->rate, inf->channels, inf->bitrate);
 		}
 
 		switch (a->state) {
 		case R_CACHE:
-			if (r == FFAAC_RDATA_NEWFMT) {
+			if (new_format) {
 				struct phi_af *fmt = &t->audio.format;
-				fdkaac_info *inf = &a->aac.info;
+				const fdkaac_info *inf = &a->info;
 				dbglog(t, "overriding audio configuration: %u/%u -> %u/%u"
 					, fmt->rate, fmt->channels
 					, inf->rate, inf->channels);
 				if (fmt->rate != inf->rate) {
 					if (t->audio.total != 0) {
-						t->audio.total *= a->aac.rate_mul;
+						t->audio.total *= a->rate_mul;
 					}
 				}
 				a->sample_rate = fmt->rate = inf->rate;
 				fmt->channels = inf->channels;
 				a->cache.len = 0;
 			}
-			a->br = ffint_mean_dyn(a->br, a->frnum, a->aac.info.bitrate);
+			a->avg_bitrate = ffint_mean_dyn(a->avg_bitrate, a->frame, a->info.bitrate);
 			ffvec_addstr(&a->cache, &out);
-			if (++a->frnum != DETECT_FRAMES)
+			if (++a->frame != DETECT_FRAMES)
 				continue;
-			//fall through
+			// fallthrough
 
 		case R_CACHE_DATA:
 			if (t->audio.total == 0 && t->input.size)
-				t->audio.total = t->input.size * 8 * a->sample_rate / a->br;
-			switch (a->aac.info.aot) {
+				t->audio.total = t->input.size * 8 * a->sample_rate / a->avg_bitrate;
+			switch (a->info.aot) {
 			case AAC_LC:
 				t->audio.decoder = "AAC-LC"; break;
 			case AAC_HE:
@@ -125,7 +156,7 @@ static int aac_decode(void *ctx, phi_track *t)
 				t->audio.decoder = "HE-AACv2"; break;
 			}
 
-			t->audio.pos = apos + out.len / phi_af_size(&a->aac.fmt) - a->cache.len / phi_af_size(&a->aac.fmt);
+			t->audio.pos = apos + out.len / phi_af_size(&a->fmt) - a->cache.len / phi_af_size(&a->fmt);
 			t->audio.pos = ffmax((ffint64)t->audio.pos, 0);
 			t->data_out = *(ffstr*)&a->cache;
 			a->cache.len = 0;
@@ -138,8 +169,7 @@ static int aac_decode(void *ctx, phi_track *t)
 			break;
 		}
 
-		if (a->state == R_PASS)
-			break;
+		break;
 	}
 
 	t->data_out = out;
