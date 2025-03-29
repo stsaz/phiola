@@ -146,4 +146,24 @@ class Core extends Util {
 		if (BuildConfig.DEBUG)
 			Log.d(mod, String.format("%s: %s", mod, String.format(fmt, args)));
 	}
+
+	// enum PHI_E
+	private static final String[] errors = {
+		"", // PHI_E_OK
+		"Input file doesn't exist", // PHI_E_NOSRC
+		"Output file already exists", // PHI_E_DSTEXIST
+		"Unknown input file format", // PHI_E_UNKIFMT
+		"Input audio device problem", // PHI_E_AUDIO_INPUT
+		"Cancelled", // PHI_E_CANCELLED
+		"Sample conversion", // PHI_E_ACONV
+		"Output format is not supported", // PHI_E_OUT_FMT
+	};
+
+	String errstr(int r) {
+		if (r < errors.length)
+			return errors[r];
+		if ((r & 0x80000000) != 0) // PHI_E_SYS
+			return "System";
+		return "Other";
+	}
 }

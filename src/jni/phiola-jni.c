@@ -56,6 +56,8 @@ struct phiola_jni {
 		uint q_add :1;
 	} convert;
 
+	const phi_tag_if *tag_if;
+
 	phi_timer tmr_q_draw;
 	phi_queue_id q_adding;
 
@@ -381,6 +383,52 @@ Java_com_github_stsaz_phiola_Phiola_setDebug(JNIEnv *env, jobject thiz, jboolean
 {
 	x->debug = !!enable;
 	x->core->conf.log_level = (x->debug) ? PHI_LOG_EXTRA : PHI_LOG_VERBOSE;
+}
+
+enum {
+	TE_CLEAR = 1,
+	TE_PRESERVE_DATE = 2,
+};
+
+JNIEXPORT jint JNICALL
+Java_com_github_stsaz_phiola_Phiola_tagsEdit(JNIEnv *env, jobject thiz, jstring jfilename, jobjectArray jtags, jint flags)
+{
+	dbglog("%s: enter", __func__);
+	int rc = 1;
+	ffvec tags = {};
+
+	uint n = jni_arr_len(jtags);
+	ffvec_allocT(&tags, n / 2, ffstr);
+	for (uint i = 0;  i + 1 < n;  i += 2) {
+		jstring jk = jni_joa_i(jtags, i),  jval = jni_joa_i(jtags, i + 1);
+		const char *k = jni_sz_js(jk),  *val = jni_sz_js(jval);
+
+		ffstr *it = _ffvec_push(&tags, sizeof(ffstr));
+		ffmem_zero_obj(it);
+		size_t cap = 0;
+		ffstr_growfmt(it, &cap, "%s=%s", k, val);
+
+		jni_sz_free(k, jk);
+		jni_local_unref(jk);
+		jni_sz_free(val, jval);
+		jni_local_unref(jval);
+	}
+
+	struct phi_tag_conf conf = {
+		.filename = jni_sz_js(jfilename),
+		.meta = *(ffslice*)&tags,
+		.clear = !!(flags & TE_CLEAR),
+		.preserve_date = !!(flags & TE_PRESERVE_DATE),
+	};
+
+	if (!x->tag_if)
+		x->tag_if = x->core->mod("format.tag");
+	rc = x->tag_if->edit(&conf);
+
+	jni_sz_free(conf.filename, jfilename);
+	jni_stra_free(&tags);
+	dbglog("%s: exit", __func__);
+	return rc;
 }
 
 JNIEXPORT jint JNI_OnLoad(JavaVM *_jvm, void *reserved)

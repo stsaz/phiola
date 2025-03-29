@@ -133,6 +133,10 @@
 
 	<string name="conv_go">Begin Conversion</string>
 
+	<string name="menu_tags_write">Write Tags to File!</string>
+	<string name="menu_tags_clear">Remove All Tags</string>
+	<string name="menu_tag_add">Add Tag</string>
+
 	<string name="about_enable_debug_log">Enable debug logging</string>
 	<string name="about_save_logs">Save system logs to file</string>
 	<string name="about_log_saved">Saved logs to %s</string>

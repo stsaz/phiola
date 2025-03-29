@@ -24,6 +24,7 @@ class Phiola {
 		long length_msec;
 		String url, artist, title, album, date, info;
 		String[] meta;
+		static final int N_RESERVED = 5; // URL, SIZE, MTIME, LENGTH, FORMAT
 	}
 	static final int
 		PCS_STOP = 1,
@@ -85,6 +86,8 @@ class Phiola {
 		String trash_dir_rel;
 	}
 
+	// RECORD
+
 	static class RecordParams {
 		int format; // AF_*
 
@@ -111,6 +114,13 @@ class Phiola {
 		RECL_PAUSE = 2,
 		RECL_RESUME = 3;
 	native String recCtrl(long trk, int cmd);
+
+	// TAGS EDIT
+
+	static final int
+		TE_CLEAR = 1,
+		TE_PRESERVE_DATE = 2;
+	native int tagsEdit(String filename, String[] tags, int flags);
 
 	// track queue
 

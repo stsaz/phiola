@@ -2,6 +2,7 @@
 2022, Simon Zolin */
 
 #include <phiola.h>
+#include <track.h>
 #include <util/util.h>
 #include <afilter/pcm.h>
 #include <format/mmtag.h>
@@ -269,7 +270,7 @@ end:
 
 static int tag_mp3_id3v2(struct tag_edit *t)
 {
-	int rc = 'e', r;
+	int rc = PHI_E_OTHER, r;
 	ffstr in;
 	uint id3v2_size;
 	struct id3v2write w = {};
@@ -338,7 +339,7 @@ static int tag_mp3_id3v1(struct tag_edit *t)
 	if (id3v1_off > 0) {
 		if (0 > (r = fffile_readat(t->fd, t->buf.ptr, sizeof(struct id3v1), id3v1_off))) {
 			syserrlog("file read");
-			return 'e';
+			return PHI_E_SYS;
 		}
 		t->buf.len = r;
 	}
@@ -359,7 +360,7 @@ static int tag_mp3_id3v1(struct tag_edit *t)
 	FFSLICE_WALK(&t->conf.meta, kv) {
 		int tag = user_meta_split(*kv, &k, &v);
 		if (tag < 0)
-			return 'e';
+			return PHI_E_OTHER;
 		if (!tag)
 			continue; // tag isn't supported in ID3v1
 		r = id3v1write_set(&w, tag, v);
@@ -386,7 +387,7 @@ static int tag_mp3_id3v1(struct tag_edit *t)
 		id3v1_off -= sizeof(struct id3v1);
 	if (0 > (r = fffile_writeat(t->fdw, &w, sizeof(struct id3v1), id3v1_off))) {
 		syserrlog("file write");
-		return 'e';
+		return PHI_E_SYS;
 	}
 	t->written += r;
 	return 0;
@@ -578,7 +579,7 @@ end:
 
 static int tag_ogg(struct tag_edit *t)
 {
-	int r, rc = 'e', format;
+	int r, rc = PHI_E_OTHER, format;
 	uint tags_page_off, tags_page_num, vtags_len;
 	ffstr vtag = {}, vorbis_codebook = {}, page;
 	oggwrite ogw = {};
@@ -591,7 +592,7 @@ static int tag_ogg(struct tag_edit *t)
 	ffvec_realloc(&t->buf, 64*1024, 1);
 	if (0 > (r = fffile_readat(t->fd, t->buf.ptr, t->buf.cap, 0))) {
 		syserrlog("file read");
-		return 'e';
+		return PHI_E_SYS;
 	}
 	t->buf.len = r;
 
@@ -739,7 +740,7 @@ end:
 
 static int tag_flac(struct tag_edit *t)
 {
-	int rc = 'e', r;
+	int rc = PHI_E_OTHER, r;
 	ffstr input = {}, output;
 	uint64 tags_hdr_off = 0, padding_hdr_off = 0;
 	uint vtags_len = 0, padding_len, padding_last;
@@ -857,28 +858,28 @@ static int tag_edit_process(struct tag_edit *t)
 
 	if (FFFILE_NULL == (t->fd = fffile_open(t->conf.filename, FFFILE_READWRITE))) {
 		syserrlog("file open: %s", t->conf.filename);
-		return 'e';
+		return PHI_E_NOSRC;
 	}
 	t->fdw = t->fd;
 
 	fffileinfo fi = {};
 	if (0 != fffile_info(t->fd, &fi)){
 		syserrlog("file info: %s", t->conf.filename);
-		return 'e';
+		return PHI_E_SYS;
 	}
 	t->mtime = fffileinfo_mtime(&fi);
 
 	ffvec_alloc(&t->buf, 1024, 1);
 	if (0 > (r = fffile_read(t->fd, t->buf.ptr, t->buf.cap))) {
 		syserrlog("file read");
-		return 'e';
+		return PHI_E_SYS;
 	}
 	t->buf.len = r;
 
 	uint fmt = file_format_detect(t->buf.ptr, t->buf.len);
 	if (fmt == 0) {
 		errlog("can't detect file format");
-		return 'e';
+		return PHI_E_UNKIFMT;
 	}
 
 	const char *ext = file_ext_str(fmt);
@@ -895,7 +896,7 @@ static int tag_edit_process(struct tag_edit *t)
 
 	} else {
 		errlog("unsupported format");
-		r = -1;
+		r = PHI_E_UNKIFMT;
 	}
 	t->done = (r == 0);
 	return r;
