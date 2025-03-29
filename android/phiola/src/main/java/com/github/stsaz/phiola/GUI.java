@@ -10,10 +10,11 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 class GUI {
 	private static final String TAG = "phiola.GUI";
-	private Core core;
+	private final Core core;
 	Context cur_activity;
 	boolean state_hide;
 	boolean filter_hide;
@@ -21,6 +22,7 @@ class GUI {
 	boolean ainfo_in_title;
 	String cur_path = ""; // current explorer path
 	private ArrayList<Integer> list_pos; // list scroll position
+	private ArrayList<String> list_names;
 
 	static final int
 		THM_DEF = 0,
@@ -41,14 +43,10 @@ class GUI {
 	GUI(Core core) {
 		this.core = core;
 		list_pos = new ArrayList<>();
+		list_names = new ArrayList<>();
 	}
 
 	String conf_write() {
-		String list_pos_str = "";
-		for (Integer it : list_pos) {
-			list_pos_str += String.format("%d ", it);
-		}
-
 		return String.format(
 			"ui_curpath %s\n"
 			+ "ui_state_hide %d\n"
@@ -56,13 +54,15 @@ class GUI {
 			+ "ui_record_hide %d\n"
 			+ "ui_info_in_title %d\n"
 			+ "ui_list_scroll_pos %s\n"
+			+ "ui_list_names %s\n"
 			+ "ui_theme %d\n"
 			, cur_path
 			, core.bool_to_int(state_hide)
 			, core.bool_to_int(filter_hide)
 			, core.bool_to_int(record_hide)
 			, core.bool_to_int(ainfo_in_title)
-			, list_pos_str
+			, list_scroll_pos_string()
+			, list_names_string()
 			, theme
 			);
 	}
@@ -73,14 +73,9 @@ class GUI {
 		filter_hide = kv[Conf.UI_FILTER_HIDE].enabled;
 		record_hide = kv[Conf.UI_RECORD_HIDE].enabled;
 		ainfo_in_title = kv[Conf.UI_INFO_IN_TITLE].enabled;
-		String list_pos_str = kv[Conf.UI_LIST_SCROLL_POS].value;
+		list_scroll_pos_parse(kv[Conf.UI_LIST_SCROLL_POS].value);
+		list_names_parse(kv[Conf.UI_LIST_NAMES].value);
 		theme = kv[Conf.UI_THEME].number;
-
-		String[] v = list_pos_str.split(" ");
-		for (String s : v) {
-			if (!s.isEmpty())
-				list_pos.add(Util.str_to_uint(s, 0));
-		}
 	}
 
 	boolean state_test(int mask) { return (state & mask) != 0; }
@@ -94,24 +89,71 @@ class GUI {
 		return old;
 	}
 
-	int list_scroll_pos(int i) {
-		if (i >= list_pos.size())
-			return 0;
-		return list_pos.get(i);
-	}
+	int list_scroll_pos(int i) { return list_pos.get(i); }
+	void list_scroll_pos_set(int i, int n) { list_pos.set(i, n); }
 
-	void list_scroll_pos_set(int i, int n) {
-		for (int j = list_pos.size();  j <= i;  j++) {
-			list_pos.add(0);
+	private String list_scroll_pos_string() {
+		StringBuilder sb = new StringBuilder();
+		for (Integer it : list_pos) {
+			sb.append(String.format("%d ", it));
 		}
-		list_pos.set(i, n);
+		return sb.toString();
 	}
 
-	void list_scroll_pos_swap(int a, int b) {
-		int aa = list_scroll_pos(a);
-		int bb = list_scroll_pos(b);
-		list_scroll_pos_set(a, bb);
-		list_scroll_pos_set(b, aa);
+	private void list_scroll_pos_parse(String ss) {
+		String[] v = ss.split(" ");
+		for (String s : v) {
+			if (!s.isEmpty())
+				list_pos.add(Util.str_to_uint(s, 0));
+		}
+	}
+
+	String list_name(int i) { return list_names.get(i); }
+	void list_name_set(int i, String name) { list_names.set(i, name); }
+
+	private String list_names_string() {
+		StringBuilder sb = new StringBuilder();
+		for (String s : list_names) {
+			sb.append(String.format("\"%s\" ", s));
+		}
+		return sb.toString();
+	}
+
+	private void list_names_parse(String s) {
+		String[] v = s.split("\"");
+		for (int i = 1;  i < v.length - 1;  i++) {
+			if (v[i].startsWith(" "))
+				continue;
+			list_names.add(v[i]);
+		}
+	}
+
+	void list_swap(int a, int b) {
+		Collections.swap(list_pos, a, b);
+		Collections.swap(list_names, a, b);
+	}
+
+	void list_closed(int i) {
+		list_pos.remove(i);
+		list_names.remove(i);
+	}
+
+	void lists_number(int n) {
+		if (n < list_pos.size()) {
+			list_pos.subList(n, list_pos.size()).clear();
+		} else {
+			for (int i = list_pos.size();  i < n;  i++) {
+				list_pos.add(0);
+			}
+		}
+
+		if (n < list_names.size()) {
+			list_names.subList(n, list_names.size()).clear();
+		} else {
+			for (int i = list_names.size();  i < n;  i++) {
+				list_names.add("");
+			}
+		}
 	}
 
 	void on_error(String fmt, Object... args) {

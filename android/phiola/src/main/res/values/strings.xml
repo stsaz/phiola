@@ -30,6 +30,7 @@
 	<string name="mlist_close">List: Close</string>
 	<string name="mlist_closed">Closed playlist</string>
 	<string name="mlist_save">List: Save...</string>
+	<string name="mlist_rename">List: Rename...</string>
 	<string name="mlist_add">List: Add...</string>
 	<string name="mlist_remove">List: Remove Current Track</string>
 	<string name="mlist_remove_non_existing">List: Remove Non-Existing Files</string>

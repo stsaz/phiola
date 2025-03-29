@@ -204,6 +204,9 @@ public class MainActivity extends AppCompatActivity {
 		case R.id.action_list_save:
 			list_save();  break;
 
+		case R.id.action_list_rename:
+			list_rename();  break;
+
 		case R.id.action_list_showcur: {
 			if (view_explorer)
 				plist_click();
@@ -222,7 +225,7 @@ public class MainActivity extends AppCompatActivity {
 		case R.id.action_move_left: {
 			int i = queue.current_move_left();
 			if (i >= 0) {
-				gui.list_scroll_pos_swap(i, i + 1);
+				gui.list_swap(i, i + 1);
 				bplaylist_text(i);
 			}
 			break;
@@ -578,6 +581,13 @@ public class MainActivity extends AppCompatActivity {
 		plist_show();
 	}
 
+	private String list_name(int i) {
+		String s = gui.list_name(i);
+		if (s.isEmpty())
+			s = String.format(getString(R.string.main_playlist_n), i + 1);
+		return s;
+	}
+
 	private void playlist_menu_show() {
 		PopupMenu m = new PopupMenu(this, b.bplaylist);
 		m.setOnMenuItemClickListener((item) -> {
@@ -586,8 +596,7 @@ public class MainActivity extends AppCompatActivity {
 			});
 		int n = queue.number();
 		for (int i = 0;  i < n;  i++) {
-			String s = String.format(getString(R.string.main_playlist_n), i + 1);
-			m.getMenu().add(0, i, 0, s);
+			m.getMenu().add(0, i, 0, list_name(i));
 		}
 		m.show();
 	}
@@ -734,7 +743,7 @@ public class MainActivity extends AppCompatActivity {
 		if (queue.conversion_list(qi))
 			s = "Conversion";
 		else
-			s = String.format(getString(R.string.main_playlist_n), qi + 1);
+			s = list_name(qi);
 		b.bplaylist.setText(s);
 		b.bplaylist.setTextOn(s);
 		b.bplaylist.setTextOff(s);
@@ -758,6 +767,7 @@ public class MainActivity extends AppCompatActivity {
 		int qi = queue.new_list();
 		if (qi < 0)
 			return;
+		gui.lists_number(qi + 1);
 
 		gui.msg_show(this, String.format(getString(R.string.mlist_created), qi+1));
 		queue.switch_list(qi);
@@ -784,11 +794,13 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void list_close_confirmed() {
+		int qi = queue.current_index();
 		if (queue.current_close() != 0) {
 			core.errlog(TAG, "Please wait until the conversion is complete");
 			return;
 		}
 
+		gui.list_closed(qi);
 		gui.msg_show(this, getString(R.string.mlist_closed));
 		list_update();
 		bplaylist_text(queue.current_index());
@@ -818,6 +830,14 @@ public class MainActivity extends AppCompatActivity {
 	/** Show dialog for saving playlist file */
 	private void list_save() {
 		startActivity(new Intent(this, ListSaveActivity.class));
+	}
+
+	private void list_rename() {
+		int pos = queue.current_index();
+		gui.dlg_edit(this, "Rename List", "Specify the name for this list:", list_name(pos), "Rename", "Cancel", (s) -> {
+				gui.list_name_set(pos, s);
+				bplaylist_text(pos);
+			});
 	}
 
 	private void list_switched(int i) {
@@ -893,6 +913,8 @@ public class MainActivity extends AppCompatActivity {
 			return;
 		}
 
+		gui.lists_number(qi + 1);
+
 		if (view_explorer)
 			plist_click();
 		else
@@ -922,6 +944,8 @@ public class MainActivity extends AppCompatActivity {
 			core.errlog(TAG, e);
 			return;
 		}
+
+		gui.lists_number(qi + 1);
 
 		if (view_explorer)
 			plist_click();

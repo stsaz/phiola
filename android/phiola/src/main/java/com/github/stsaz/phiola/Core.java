@@ -77,6 +77,7 @@ class Core extends Util {
 
 		loadconf();
 		qu.load();
+		gui.lists_number(qu.number());
 		return 0;
 	}
 
