@@ -601,7 +601,7 @@ struct phi_remote_cl_if {
 
 struct phi_tag_conf {
 	const char *filename;
-	ffslice meta; // ffstr[]
+	ffslice meta; // ffstr[]{name=value}
 	uint clear :1;
 	uint preserve_date :1;
 	uint no_expand :1;

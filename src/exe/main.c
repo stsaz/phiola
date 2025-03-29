@@ -43,7 +43,6 @@ struct exe {
 
 	u_char	background, background_child;
 	u_char	debug;
-	u_char	verbose;
 	uint workers;
 	uint cpu_affinity;
 	uint timer_int_msec;
@@ -213,7 +212,7 @@ static ffstr resource_load(const char *name)
 static int core()
 {
 	struct phi_core_conf conf = {
-		.log_level = (x->debug) ? PHI_LOG_EXTRA : ((x->verbose) ? PHI_LOG_VERBOSE : PHI_LOG_INFO),
+		.log_level = (x->debug) ? PHI_LOG_EXTRA : ((1) ? PHI_LOG_VERBOSE : PHI_LOG_INFO),
 		.log = exe_log,
 		.logv = exe_logv,
 		.log_obj = &x->log,

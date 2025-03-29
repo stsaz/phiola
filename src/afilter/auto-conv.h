@@ -33,6 +33,8 @@ static int autoconv_process(struct autoconv *c, phi_track *t)
 
 	if (c->state == 0) {
 		phi_af_update(oaf, &t->conf.oaudio.format); // apply settings from user
+		if (t->conf.oaudio.format.interleaved)
+			oaf->interleaved = 1;
 		t->oaudio.conv_format.interleaved = oaf->interleaved;
 		char buf[100];
 		dbglog(t, "request audio format: %s", phi_af_print(oaf, buf, 100));

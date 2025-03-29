@@ -71,9 +71,9 @@ Download the latest package for your OS and CPU from [phiola Releases](https://g
 For example, here's how you can install the latest release for AMD64 into `~/bin` directory:
 
 ```sh
-wget https://github.com/stsaz/phiola/releases/download/v2.2.5/phiola-2.2.5-linux-amd64.tar.zst
+wget https://github.com/stsaz/phiola/releases/download/v2.3.12/phiola-2.3.12-linux-amd64.tar.zst
 mkdir -p ~/bin
-tar xf phiola-2.2.5-linux-amd64.tar.zst -C ~/bin
+tar xf phiola-2.3.12-linux-amd64.tar.zst -C ~/bin
 ln -s ~/bin/phiola-2/phiola ~/bin/phiola
 cp ~/bin/phiola-2/mod/gui/phiola.desktop ~/.local/share/applications
 ```

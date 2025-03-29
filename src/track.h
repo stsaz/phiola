@@ -89,6 +89,7 @@ struct phi_filter {
 	Return filter instance for this track or PHI_OPEN_... */
 	void* (*open)(phi_track *t);
 
+	/** Optional */
 	void (*close)(void *f, phi_track *t);
 
 	/** Return enum PHI_R */

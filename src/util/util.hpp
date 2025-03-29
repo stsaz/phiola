@@ -12,13 +12,13 @@ struct xxstr : ffstr {
 	xxstr(const char *sz) { ptr = (char*)sz;  len = ffsz_len(sz); }
 	xxstr(const char *s, size_t n) { ptr = (char*)s;  len = n; }
 	void	set(const char *s, size_t n) { ptr = (char*)s;  len = n; }
-	void	operator=(const char *sz) { ptr = (char*)sz, len = ffsz_len(sz); }
-	bool	equals(xxstr s) const { return ffstr_eq2(this, &s); }
-	bool	equals_i(const char *sz) const { return ffstr_ieqz(this, sz); }
-	char	at(size_t i) const { FF_ASSERT(i < len); return ptr[i]; }
 	void	reset() { ptr = NULL;  len = 0; }
-	void	free() { ffmem_free(ptr);  ptr = NULL;  len = 0; }
 	xxstr&	shift(ffsize n) { ffstr_shift(this, n); return *this; }
+	void	free() { ffmem_free(ptr);  ptr = NULL;  len = 0; }
+
+	bool	equals(xxstr s) const { return ffstr_eq2(this, &s); }
+	bool	equals_i(xxstr s) const { return ffstr_ieq(this, s.ptr, s.len); }
+	char	at(size_t i) const { FF_ASSERT(i < len); return ptr[i]; }
 	ffssize	split_by(char by, xxstr *left, xxstr *right) const { return ffstr_splitby(this, by, left, right); }
 	ffssize	split_at(ffssize index, xxstr *left, xxstr *right) const { return ffstr_split(this, index, left, right); }
 	ffssize	find_char(char c) const { return ffstr_findchar(this, c); }

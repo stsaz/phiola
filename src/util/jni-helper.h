@@ -19,6 +19,7 @@ Arrays:
 	jni_joa_i jni_joa_i_set
 	jni_jsa_sza
 	jni_str_jba
+	jni_stra_jsa jni_stra_free
 Object:
 	jni_obj_new
 	jni_obj_jo jni_obj_jo_set
@@ -174,6 +175,35 @@ static inline jobjectArray jni_jsa_sza(JNIEnv *env, char **asz, ffsize n)
 		jni_local_unref(js);
 	}
 	return jas;
+}
+
+/** ffstr[] = String[]
+Free with jni_stra_free(). */
+static inline ffvec jni_stra_jsa(JNIEnv *env, jobjectArray jsa)
+{
+	ffvec v = {};
+	uint n = jni_arr_len(jsa);
+	ffvec_allocT(&v, n, ffstr);
+	for (uint i = 0;  i < n;  i++) {
+		jstring js = jni_joa_i(jsa, i);
+		const char *sz = jni_sz_js(js);
+
+		ffstr *it = ffvec_pushT(&v, ffstr);
+		ffstr_dupz(it, sz);
+
+		jni_sz_free(sz, js);
+		jni_local_unref(js);
+	}
+	return v;
+}
+
+static inline void jni_stra_free(ffvec *v)
+{
+	ffstr *it;
+	FFSLICE_WALK(v, it) {
+		ffstr_free(it);
+	}
+	ffvec_free(v);
 }
 
 

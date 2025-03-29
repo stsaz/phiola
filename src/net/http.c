@@ -366,6 +366,8 @@ static int conf_prepare(struct httpcl *h, struct nml_http_client_conf *c, phi_tr
 	ffvec_alloc(&h->path, p.path.len * 3, 1);
 	h->path.len = httpurl_escape(h->path.ptr, h->path.cap, p.path);
 	c->path = *(ffstr*)&h->path;
+	if (!c->path.len)
+		c->path = FFSTR_Z("/");
 
 	c->chain = hc_chain;
 
