@@ -177,8 +177,8 @@ static void hls_f_request(struct httpcl *h, ffstr name)
 			l->m3u_file = 0;
 			l->data_file = 0;
 			// set the m3u sublist as main URL
-			ffmem_free(h->trk->conf.ifile.name);
-			h->trk->conf.ifile.name = ffsz_dupstr(&url);
+			ffmem_free(h->redirect_location);
+			h->trk->conf.ifile.name = h->redirect_location = ffsz_dupstr(&url);
 		}
 	}
 

@@ -26,6 +26,7 @@ struct httpcl {
 	phi_track *trk;
 	ffvec path;
 	nml_cache_ctx *conn_cache;
+	char *redirect_location;
 
 	ffring *buf;
 	ffring_head rhead;
@@ -254,8 +255,8 @@ static int http_redirect(struct httpcl *h, const char *location)
 		return -1;
 	}
 
-	ffmem_free(h->trk->conf.ifile.name);
-	h->trk->conf.ifile.name = ffsz_dup(location);
+	ffmem_free(h->redirect_location);
+	h->trk->conf.ifile.name = h->redirect_location = ffsz_dup(location);
 
 	http_request(h, FFSTR_Z(h->trk->conf.ifile.name));
 	return 0;
