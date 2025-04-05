@@ -12,6 +12,10 @@
 #include <ffsys/environ.h>
 #include <ffsys/globals.h>
 
+#ifdef FF_UNIX
+#include <sys/resource.h>
+#endif
+
 #ifndef FF_DEBUG
 #define PHI_CRASH_HANDLER
 #endif
@@ -46,6 +50,7 @@ struct exe {
 	uint workers;
 	uint cpu_affinity;
 	uint timer_int_msec;
+	uint max_tasks;
 	uint stdin_busy :1;
 	uint stdout_busy :1;
 	uint log_file :1;
@@ -225,6 +230,7 @@ static int core()
 		.cpu_affinity = x->cpu_affinity,
 		.io_workers = ~0U,
 		.timer_interval_msec = x->timer_int_msec,
+		.max_tasks = ffmax(x->max_tasks, 100),
 
 		.code_page = x->conf.codepage_id,
 		.root = x->root_dir,
@@ -235,6 +241,16 @@ static int core()
 	if (NULL == (x->core = phi_core_create(&conf)))
 		return -1;
 	x->queue = x->core->mod("core.queue");
+
+#ifdef FF_UNIX
+	if (x->max_tasks > 1000) {
+		struct rlimit rl;
+		rl.rlim_cur = x->max_tasks;
+		rl.rlim_max = x->max_tasks;
+		setrlimit(RLIMIT_NOFILE, &rl);
+	}
+#endif
+
 	return 0;
 }
 

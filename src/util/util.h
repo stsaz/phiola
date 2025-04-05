@@ -180,6 +180,9 @@ static inline ffsize ffpath_makefn(char *dst, ffsize dstcap, ffstr src, char rep
 
 #define samples_to_msec(samples, rate)   ((uint64)(samples) * 1000 / (rate))
 #define msec_to_samples(time_ms, rate)   ((uint64)(time_ms) * (rate) / 1000)
+#define bytes_to_msec_af(n, af)   ((uint64)(n) / (((af)->format & 0xff) / 8) / (af)->channels * 1000 / (af)->rate)
+#define msec_to_bytes_af(msec, af)   ((uint64)(msec) * (af)->rate * (((af)->format & 0xff) / 8) * (af)->channels / 1000)
+#define msec_to_bytes_kbps(msec, kbps)   ((uint64)(msec) * (kbps) / 8 * 1024 / 1000)
 
 /** bits per sample */
 #define pcm_bits(format)  ((format) & 0xff)

@@ -652,6 +652,21 @@ test_meta() {
 	./phiola co -copy -m artist='AA' meta.mp3 -f -o meta2.mp3 && ./phiola i meta2.mp3 | grep 'AA - Cool Song' || false
 }
 
+test_server() {
+	if ! test -f sv.flac ; then
+		./phiola rec -u 2 -m "title=mytrack" -o sv.flac
+	fi
+
+	./phiola server sv.flac -shuffle -opus_q 64 -max_cl 10000 &
+	sleep 3
+	kill -9 $!
+	sleep .1
+
+	./phiola server sv.flac -aac_q 64 &
+	sleep 3
+	kill -9 $!
+}
+
 test_http() {
 	if ! test -f http.ogg ; then
 		./phiola rec -u 2 -m "title=mytrack" -o http.ogg
@@ -791,6 +806,7 @@ TESTS=(
 	ofile_vars
 	remote
 	tag
+	server
 	# http
 	clean
 	# rec_play_alsa

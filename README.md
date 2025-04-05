@@ -53,7 +53,7 @@ Features and notes by platform:
 | File formats         | ✅ all supported | ✅ all supported | all supported except `.mpc`, `.ape`, `.wv` |
 | Record from Internet | ✅ | ✅ | ❌ |
 | Record what you hear | ✅ (PulseAudio) | ✅ | ❌ |
-| Audio Streaming Server | ✅ (Opus) | ✅ (Opus) | ❌ |
+| Audio Streaming Server | ✅ (AAC,Opus) | ✅ (AAC,Opus) | ❌ |
 | Requirements         | glibc-2.36 | Windows 7 | Android 8 (ARM64), Android 6 (ARM) |
 | HW Requirements      | AMD64, ARM64 | AMD64 | ARM64, ARM(incomplete) |
 
@@ -265,7 +265,7 @@ Other use-cases:
 phiola device list
 
 # Start HTTP audio streaming server (Opus, 128kbps)
-phiola server "My Music" -inc "*.flac" -opus_q 128
+phiola server "My Music" -inc "*.flac" -shuffle -opus_q 128
 ```
 
 Currently supported commands:

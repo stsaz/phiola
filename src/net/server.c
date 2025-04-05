@@ -9,6 +9,7 @@ file.read -> format.read -> ac.dec -> af.conv -> provider ->                    
 */
 
 #include <track.h>
+#include <util/util.h>
 #include <http-server/conn.h>
 #include <ffbase/ring.h>
 
@@ -21,8 +22,6 @@ extern const phi_core *core;
 extern const struct nml_http_server_if nml_http_server_interface;
 extern const struct nml_tcp_listener_if nml_tcp_listener_interface;
 
-#define AUSV_PORT  21014
-#define AUSV_BUF_LEN_SEC  1
 #define AUSV_CLIENT_BUF_SIZE_KB  16
 
 struct ausv {
@@ -37,10 +36,15 @@ struct ausv {
 	ffring_head rh;
 	ffvec meta;
 	ffstr input;
+	uint64 total_msec;
+	uint64 next_pos_samples;
+	size_t buf_half_samples;
+	size_t half_pos;
 	uint worker;
 	uint clients;
 	uint qi;
 	uint pkt;
+	uint ogg_opus :1;
 	uint consumer_paused :1;
 	uint provider_paused :1;
 	uint output_full :1;
@@ -253,31 +257,38 @@ static void phi_sv_close(nml_http_sv_conn *c)
 	ffmem_free(sc);
 }
 
+static inline int ring_peek_at(ffring *r, size_t off, size_t n, ffstr *d1, ffstr *d2)
+{
+	n = ffmin(n, r->wtail - off);
+	size_t i = off & r->mask;
+	ffstr_set(d1, r->data + i, n);
+	ffstr_set(d2, r->data, 0);
+	if (i + n > r->cap) {
+		d1->len = r->cap - i;
+		d2->len = i + n - r->cap;
+	}
+	return n;
+}
+
 static int phi_sv_process(nml_http_sv_conn *c)
 {
 	struct ausv_cl *sc = c->proxy;
 	struct ausv *s = c->conf->opaque;
+	ffvec *buf = &c->file.buf;
 
-	size_t n = ffmin(ffvec_unused(&c->file.buf), s->oring->wtail - sc->rpos);
 	ffstr d1, d2;
-	size_t i = sc->rpos & s->oring->mask;
-	ffstr_set(&d1, s->oring->data + i, n);
-	ffstr_set(&d2, s->oring->data, 0);
-	if (i + n > s->oring->cap) {
-		d1.len = s->oring->cap - i;
-		d2.len = i + n - s->oring->cap;
-	}
-	if (!d1.len) {
+	size_t n = ring_peek_at(s->oring, sc->rpos, ffvec_unused(buf), &d1, &d2);
+	if (!n) {
 		ausv_client_paused(s, c);
 		return NMLR_ASYNC;
 	}
-	ffmem_copy(c->file.buf.ptr + c->file.buf.len, d1.ptr, d1.len);
-	ffmem_copy(c->file.buf.ptr + c->file.buf.len + d1.len, d2.ptr, d2.len);
-	c->file.buf.len += d1.len + d2.len;
-	sc->rpos += d1.len + d2.len;
+	ffmem_copy(buf->ptr + buf->len, d1.ptr, d1.len);
+	ffmem_copy(buf->ptr + buf->len + d1.len, d2.ptr, d2.len);
+	buf->len += n;
+	sc->rpos += n;
 
-	ffstr_set(&c->output, c->file.buf.ptr, c->file.buf.len);
-	c->file.buf.len = 0;
+	c->output = *(ffstr*)buf;
+	buf->len = 0;
 	return NMLR_FWD;
 }
 
@@ -326,7 +337,7 @@ static int ausv_grd_process(void *f, phi_track *t)
 }
 
 /** Receives notification when an input track is finished */
-static const phi_filter phi_ausv_guard = {
+static const phi_filter ausv_guard = {
 	ausv_grd_open, ausv_grd_close, ausv_grd_process,
 	"ausv-guard"
 };
@@ -334,11 +345,16 @@ static const phi_filter phi_ausv_guard = {
 
 static void* ausv_provider_open(phi_track *t)
 {
+	struct ausv *s = t->udata;
+	userlog(s->trk, "New track: %s", t->conf.ifile.name);
 	return t->udata;
 }
 
 static int ausv_provider_process(struct ausv *s, phi_track *t)
 {
+	if (t->chain_flags & PHI_FSTOP)
+		return PHI_FIN;
+
 	if (!s->input.len && (t->chain_flags & PHI_FFWD)) {
 		s->input = t->data_in;
 		t->data_in.len = 0;
@@ -351,12 +367,12 @@ static int ausv_provider_process(struct ausv *s, phi_track *t)
 		return PHI_ASYNC;
 	}
 	ffstr_shift(&s->input, n);
-	dbglog(s->trk, "ibuffer: %L", s->iring->wtail - s->iring->rtail);
+	dbglog(s->trk, "ibuffer: %L%%", (s->iring->wtail - s->iring->rtail) * 100 / s->iring->cap);
 	return !(t->chain_flags & PHI_FFIRST) ? PHI_MORE : PHI_DONE;
 }
 
 /** Sends data from input track to the main track */
-static const phi_filter phi_ausv_provider = {
+static const phi_filter ausv_provider = {
 	ausv_provider_open, NULL, (void*)ausv_provider_process,
 	"ausv-provider"
 };
@@ -383,12 +399,13 @@ static int ausv_consumer_process(struct ausv *s, phi_track *t)
 		return PHI_ASYNC;
 	}
 
+	s->total_msec += bytes_to_msec_af(d.len, &t->oaudio.format);
 	t->data_out = d;
 	return PHI_DATA;
 }
 
 /** Receives data from input track */
-const struct phi_filter phi_ausv_consumer = {
+const struct phi_filter ausv_consumer = {
 	ausv_consumer_open, NULL, (void*)ausv_consumer_process,
 	"ausv-consumer",
 };
@@ -425,21 +442,16 @@ static phi_track* ausv_track_start(struct ausv *s)
 	const struct phi_queue_entry *qe = s->qif->at(NULL, i);
 	struct phi_track_conf tc = {
 		.ifile.name = qe->url,
-		.oaudio.format = {
-			.format = PHI_PCM_FLOAT32,
-			.rate = 48000,
-			.channels = 2,
-			.interleaved = 1,
-		},
+		.oaudio.format = s->trk->conf.oaudio.format,
 	};
 
 	const phi_track_if *track = core->track;
 	phi_track *t = track->create(&tc);
-	if (!track->filter(t, &phi_ausv_guard, 0)
+	if (!track->filter(t, &ausv_guard, 0)
 		|| !track->filter(t, core->mod("core.auto-input"), 0)
 		|| !track->filter(t, core->mod("format.detect"), 0)
 		|| !track->filter(t, core->mod("afilter.auto-conv"), 0)
-		|| !track->filter(t, &phi_ausv_provider, 0)) {
+		|| !track->filter(t, &ausv_provider, 0)) {
 		track->close(t);
 		return NULL;
 	}
@@ -461,48 +473,67 @@ static void ausv_track_closed(struct ausv *s, uint stop)
 static void ausv_timer(void *param)
 {
 	struct ausv *s = param;
-	ffring_read_discard(s->iring);
-	ffring_read_discard(s->oring);
+
+	ffstr d1, d2;
+	ffring_head rh = ffring_read_all_begin(s->oring, s->half_pos - s->oring->rtail, &d1, &d2, NULL);
+	ffring_read_finish(s->oring, rh);
+
+	s->next_pos_samples += s->buf_half_samples;
+
 	if (s->output_full) {
 		s->output_full = 0;
 		core->track->wake(s->trk);
 	}
-	dbglog(s->trk, "buffer: 0");
+
+	userlog(s->trk, "[%U:%02U:%02U.%03U]  Listeners:%u"
+		, s->total_msec / (60*60*1000)
+		, (s->total_msec / 60000) % 60
+		, (s->total_msec / 1000) % 60
+		, s->total_msec % 1000
+		, s->clients);
 }
 
 static void* ausv_open(phi_track *t)
 {
-	core->track->filter(t, &phi_ausv_consumer, PHI_TF_PREV);
+	const struct phi_asv_conf *ac = *(struct phi_asv_conf**)&t->conf.ofile.mtime;
+
+	core->track->filter(t, &ausv_consumer, PHI_TF_PREV);
 	core->track->filter(t, core->mod("format.auto-write"), PHI_TF_PREV);
 
-	struct phi_af f = {
-		.format = PHI_PCM_FLOAT32,
-		.rate = 48000,
-		.channels = 2,
-		.interleaved = 1,
-	};
-	t->oaudio.format = f;
+	t->oaudio.format = t->conf.oaudio.format;
 	t->data_type = "pcm";
 
 	struct ausv *s = phi_track_allocT(t, struct ausv);
 	gs = s;
 	s->qif = core->mod("core.queue");
 	t->udata = s;
-	s->iring = ffring_alloc(AUSV_BUF_LEN_SEC * t->oaudio.format.rate * sizeof(float) * t->oaudio.format.channels, FFRING_1_READER | FFRING_1_WRITER);
-	s->oring = ffring_alloc(AUSV_BUF_LEN_SEC * t->conf.opus.bitrate/8 * 1024, FFRING_1_READER | FFRING_1_WRITER);
+	s->ogg_opus = ffsz_eq(t->conf.ofile.name, "stream.opus");
 	s->trk = t;
 	s->worker = t->worker;
 
-	s->subtrack = ausv_track_start(s);
+	uint n = msec_to_bytes_af(t->conf.oaudio.buf_time, &t->oaudio.format);
+	s->iring = ffring_alloc(n, FFRING_1_READER | FFRING_1_WRITER);
+	uint kbps = (s->ogg_opus) ? t->conf.opus.bitrate : t->conf.aac.quality;
+	n = msec_to_bytes_kbps(t->conf.oaudio.buf_time, kbps);
+	s->oring = ffring_alloc(n, FFRING_1_READER | FFRING_1_WRITER);
 
-	core->timer(s->worker, &s->tmr, AUSV_BUF_LEN_SEC * 1000, ausv_timer, s);
+	s->next_pos_samples = s->buf_half_samples = msec_to_samples(t->conf.oaudio.buf_time / 2, t->oaudio.format.rate);
+	core->timer(s->worker, &s->tmr, t->conf.oaudio.buf_time / 2, ausv_timer, s);
 
 	s->sv = nml_http_server_interface.create();
 	struct nml_http_server_conf sc;
 	nml_http_server_interface.conf(NULL, &sc);
 	sc.response.server_name = FFSTR_Z("phiola/2");
-
 	sc.opaque = s;
+	sc.boss = s;
+	sc.server.wif = &nmlwrk_if;
+	sc.server.lsif = &nml_tcp_listener_interface;
+	s->addr.port = ac->port;
+	sc.server.listen_addresses = &s->addr;
+	if (ac->max_clients)
+		sc.server.max_connections = ac->max_clients;
+	sc.chain = sv_chain;
+
 	sc.log_level = NML_LOG_VERBOSE;
 	if (core->conf.log_level >= PHI_LOG_EXTRA)
 		sc.log_level = NML_LOG_EXTRA;
@@ -511,21 +542,13 @@ static void* ausv_open(phi_track *t)
 	sc.log = nml_log;
 	sc.log_obj = s;
 
-	sc.boss = s;
-
-	sc.server.wif = &nmlwrk_if;
-	sc.server.lsif = &nml_tcp_listener_interface;
-
-	s->addr.port = AUSV_PORT;
-	sc.server.listen_addresses = &s->addr;
-
-	sc.chain = sv_chain;
 	if (nml_http_server_interface.conf(s->sv, &sc)) {
 		ausv_close(s, t);
 		return PHI_OPEN_ERR;
 	}
 
-	userlog(t, "Started ICY/HTTP server (TCP port %u)", AUSV_PORT);
+	userlog(t, "Started ICY/HTTP server (TCP port %u)", s->addr.port);
+	s->subtrack = ausv_track_start(s);
 	nml_http_server_interface.run(s->sv);
 	return s;
 }
@@ -535,7 +558,7 @@ static int ausv_process(struct ausv *s, phi_track *t)
 	if (t->chain_flags & PHI_FSTOP)
 		return PHI_FIN;
 
-	if (s->pkt <= 1) {
+	if (s->ogg_opus && s->pkt <= 1) {
 		if (!t->data_in.len)
 			return PHI_MORE;
 		s->pkt++;
@@ -543,12 +566,23 @@ static int ausv_process(struct ausv *s, phi_track *t)
 		return PHI_MORE;
 	}
 
+	if (!t->data_in.len)
+		return PHI_MORE;
+
+	// Determine how many bytes to discard from the ring buffer on next timer signal
+	if (t->audio.pos < s->next_pos_samples) {
+		s->half_pos = s->oring->wtail;
+		dbglog(s->trk, "apos:%U  next:%U  half:%L"
+			, t->audio.pos, s->next_pos_samples, s->half_pos);
+	}
+
 	size_t n = ffring_write_all(s->oring, t->data_in.ptr, t->data_in.len);
 	if (n == 0) {
+		// There is no free space for this compressed audio frame -> suspend processing until the timer signals
 		s->output_full = 1;
 		return PHI_ASYNC;
 	}
-	dbglog(s->trk, "obuffer: %L", s->oring->wtail - s->oring->rtail);
+	dbglog(s->trk, "obuffer: %L%%", (s->oring->wtail - s->oring->rtail) * 100 / s->oring->cap);
 	ausv_client_unpause(s);
 	return PHI_MORE;
 }

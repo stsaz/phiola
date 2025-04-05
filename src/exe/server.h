@@ -5,7 +5,7 @@ static int server_help()
 {
 	help_info_write("\
 Start audio streaming server:\n\
-	`phiola server` INPUT... [OPTIONS]\n\
+    `phiola server` INPUT... [OPTIONS]\n\
 \n\
 INPUT                   File name or a directory\n\
                           `@names`  Read file names from standard input\n\
@@ -13,9 +13,16 @@ INPUT                   File name or a directory\n\
 Options:\n\
   `-include` WILDCARD     Only include files matching a wildcard (case-insensitive)\n\
   `-exclude` WILDCARD     Exclude files & directories matching a wildcard (case-insensitive)\n\
+  `-shuffle`              Randomize input queue\n\
 \n\
-  `-opus_quality` NUMBER  Opus encoding bitrate:\n\
-                          6..510 (VBR)\n\
+  `-aac_quality` NUMBER   AAC encoding bitrate:\n\
+                          8..800 (CBR, kbit/s)\n\
+  `-opus_quality` NUMBER  Opus encoding bitrate (VBR):\n\
+                          6..510 (default: 128)\n\
+  `-channels` NUMBER      Channels number (default: 2)\n\
+\n\
+  `-port` NUMBER          TCP port (default: 21014)\n\
+  `-max_clients` NUMBER   Max. number of clients\n\
 ");
 	x->exit_code = 0;
 	return 1;
@@ -24,9 +31,17 @@ Options:\n\
 struct cmd_srv {
 	ffvec	include, exclude; // ffstr[]
 	ffvec	input; // ffstr[]
-	const char*	aac_profile;
+	uint	aac_q;
+	uint	channels;
 	uint	opus_q;
+	uint	port;
+	u_char	shuffle;
+
+	struct phi_asv_conf ac;
+	phi_task task;
 };
+
+static void srv_action2(struct cmd_srv *s);
 
 static int srv_include(struct cmd_srv *s, ffstr ss)
 {
@@ -52,7 +67,9 @@ static int srv_prepare(struct cmd_srv *s)
 {
 	if (!s->input.len)
 		return _ffargs_err(&x->cmd, 1, "please specify input file");
-   return 0;
+
+	x->max_tasks = s->ac.max_clients;
+	return 0;
 }
 
 static void playlist_prepare(struct cmd_srv *s)
@@ -65,13 +82,13 @@ static void playlist_prepare(struct cmd_srv *s)
 			},
 		},
 	};
-	x->queue->create(&qc);
+	phi_queue_id q = x->queue->create(&qc);
 	ffstr *it;
 	FFSLICE_WALK(&s->input, it) {
 		struct phi_queue_entry qe = {
 			.url = it->ptr,
 		};
-		x->queue->add(NULL, &qe);
+		x->queue->add(q, &qe);
 	}
 	ffvec_free(&s->input);
 }
@@ -79,25 +96,64 @@ static void playlist_prepare(struct cmd_srv *s)
 static int srv_action(struct cmd_srv *s)
 {
 	playlist_prepare(s);
+	x->core->task(0, &s->task, (void*)srv_action2, s);
+	return 0;
+}
+
+static void srv_action2(struct cmd_srv *s)
+{
+	if (s->shuffle)
+		x->queue->sort(NULL, PHI_Q_SORT_RANDOM);
+
+	s->ac.port = (s->port > 0 && s->port < 0xffff) ? s->port : 21014;
 
 	struct phi_track_conf c = {
-		.ofile.name = ffsz_dup("stream.opus"),
+		.oaudio = {
+			.buf_time = 1000,
+		},
 	};
-	c.opus.bitrate = s->opus_q;
+	*(struct phi_asv_conf**)&c.ofile.mtime = &s->ac;
+
+	if (s->aac_q) {
+		struct phi_af f = {
+			.format = PHI_PCM_16,
+			.rate = 48000,
+			.channels = (s->channels) ? s->channels : 2,
+			.interleaved = 1,
+		};
+		c.oaudio.format = f;
+		c.aac.quality = (s->aac_q >= 8) ? s->aac_q : 128;
+		c.ofile.name = ffsz_dup("stream.aac");
+
+	} else {
+		struct phi_af f = {
+			.format = PHI_PCM_FLOAT32,
+			.rate = 48000,
+			.channels = (s->channels) ? s->channels : 2,
+			.interleaved = 1,
+		};
+		c.oaudio.format = f;
+		c.opus.bitrate = (s->opus_q >= 6) ? s->opus_q : 128;
+		c.ofile.name = ffsz_dup("stream.opus");
+	}
 
 	const phi_track_if *track = x->core->track;
 	phi_track *t = track->create(&c);
 	track->filter(t, x->core->mod("http.server"), 0);
 	track->start(t);
-	return 0;
 }
 
 #define O(m)  (void*)FF_OFF(struct cmd_srv, m)
 static const struct ffarg cmd_srv[] = {
+	{ "-aac_quality",	'u',	O(aac_q) },
+	{ "-channels",		'u',	O(channels) },
 	{ "-exclude",		'+S',	srv_exclude },
 	{ "-help",			0,		server_help },
 	{ "-include",		'+S',	srv_include },
+	{ "-max_clients",	'u',	O(ac.max_clients) },
 	{ "-opus_quality",	'u',	O(opus_q) },
+	{ "-port",			'u',	O(port) },
+	{ "-shuffle",		'1',	O(shuffle) },
 	{ "\0\1",			'S',	srv_input },
 	{ "",				0,		srv_prepare },
 };

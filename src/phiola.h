@@ -635,3 +635,11 @@ struct phi_ui_if {
 	flags: enum PHI_UI_SEEK */
 	void (*seek)(uint val, uint flags);
 };
+
+
+/** Audio Streaming Server */
+
+struct phi_asv_conf {
+	uint max_clients;
+	ushort port;
+};
