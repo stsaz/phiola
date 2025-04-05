@@ -10,6 +10,7 @@ struct aac_enc {
 	ffstr in;
 	fdkaac_encoder *enc;
 	fdkaac_conf info;
+	uint64 total;
 	void *buf;
 	const short *pcm;
 	uint pcmlen; // PCM data length in bytes
@@ -128,9 +129,12 @@ static int aacw_encode(struct aac_enc *a, phi_track *t)
 		break;
 	}
 
+	t->audio.pos = a->total;
+	a->total += (a->in.len - a->pcmlen) / phi_af_size(&a->fmt);
+
 	ffstr_set(&t->data_out, a->buf, r);
-	dbglog(t, "encoded %L samples into %L bytes"
-		, (a->in.len - a->pcmlen) / phi_af_size(&a->fmt), t->data_out.len);
+	dbglog(t, "encoded %L samples [%U] into %L bytes"
+		, (a->in.len - a->pcmlen) / phi_af_size(&a->fmt), t->audio.pos, t->data_out.len);
 	ffstr_set(&a->in, (void*)a->pcm, a->pcmlen);
 	a->total_out += t->data_out.len;
 	return PHI_DATA;

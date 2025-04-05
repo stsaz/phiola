@@ -192,7 +192,7 @@ static int cmd_oext_aenc(ffstr ext, uint stream_copy)
 	static const char ac[2][8] = {
 		// encode
 		{
-			0, // aac
+			PHI_AC_AAC, // aac
 			PHI_AC_FLAC, // flac
 			PHI_AC_AAC, // m4a
 			0, // mp3

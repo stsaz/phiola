@@ -31,7 +31,7 @@ Contents:
 ## Features
 
 * Play audio: `.mp3`, `.ogg`(Vorbis/Opus), `.mp4`/`.mov`(AAC/ALAC/MP3), `.mkv`/`.webm`(AAC/ALAC/MP3/Vorbis/Opus/PCM), `.caf`(AAC/ALAC/PCM), `.avi`(AAC/MP3/PCM), `.ts`(AAC/MP3), `.aac`, `.mpc`; `.flac`, `.ape`, `.wv`, `.wav`.
-* Record audio: `.m4a`(AAC), `.ogg`(Vorbis), `.opus`; `.flac`, `.wav`
+* Record audio: `.m4a`(AAC), `.aac`(AAC-LC), `.ogg`(Vorbis), `.opus`; `.flac`, `.wav`
 * Convert audio
 * Broadcast audio over HTTP
 * List/search file meta tags; edit file tags, write ReplayGain tags (`.mp3`, `.ogg/.opus`, `.flac`)

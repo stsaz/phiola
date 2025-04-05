@@ -278,6 +278,9 @@ test_convert_encode() {
 	./phiola co co.wav -aac_profile HE2 -f -o co_wav_he2.m4a
 	./phiola pl co_wav_he2.m4a | grep 'HE-AACv2'
 
+	./phiola co co.wav -f -o co_wav.aac
+	./phiola pl co_wav.aac
+
 	convert__from_to wav ogg
 	./phiola i co_wav.ogg              | grep -E '96,000 samples'
 	./phiola i co_wav.ogg -peaks       | grep '96,000 total'
