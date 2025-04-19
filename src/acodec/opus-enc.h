@@ -103,7 +103,7 @@ static int opus_enc_encode(void *ctx, phi_track *t)
 	struct opus_enc *o = ctx;
 	int r;
 	uint in_len;
-	ffstr d;
+	ffstr d = {};
 	enum { W_CONV, W_CREATE, W_TAGS, W_DATA, W_DONE };
 
 	if (t->chain_flags & PHI_FFWD)
