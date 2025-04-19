@@ -72,6 +72,7 @@ icy.o: $(PHIOLA)/src/net/icy.c
 %.o: $(PHIOLA)/src/net/%.c
 	$(C) $(CFLAGS) -I$(NETMILL)/src -DNML_STATIC_LINKING $< -o $@
 
+server.o: CFLAGS += -I$(AVPACK)
 ifeq "$(DEBUG)" "1"
 server.o: CFLAGS += -DNML_ENABLE_LOG_EXTRA
 endif

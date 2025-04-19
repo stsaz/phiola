@@ -11,6 +11,7 @@ file.read -> format.read -> ac.dec -> af.conv -> provider ->                    
 #include <track.h>
 #include <util/util.h>
 #include <http-server/conn.h>
+#include <avpack/icy.h>
 #include <ffbase/ring.h>
 
 extern const phi_core *core;
@@ -35,6 +36,7 @@ struct ausv {
 	ffring *iring, *oring;
 	ffring_head rh;
 	ffvec meta;
+	ffstr resp_headers;
 	ffstr input;
 	uint64 total_msec;
 	uint64 next_pos_samples;
@@ -44,6 +46,7 @@ struct ausv {
 	uint clients;
 	uint qi;
 	uint pkt;
+	u_char meta_uid;
 	uint ogg_opus :1;
 	uint consumer_paused :1;
 	uint provider_paused :1;
@@ -219,12 +222,37 @@ static const nml_worker_if nmlwrk_if = {
 
 struct ausv_cl {
 	size_t rpos;
+	uint icy_meta_off;
+	u_char last_meta_uid;
 };
+
+/** Process HTTP request headers */
+static void phi_sv_req_headers(nml_http_sv_conn *c)
+{
+	const struct ausv *s = c->conf->opaque;
+	struct ausv_cl *sc = c->proxy;
+
+	ffstr h = HS_REQUEST_DATA(c, c->req.headers), name = {}, val = {};
+	for (;;) {
+		int r = http_hdr_parse(h, &name, &val);
+		if (r <= 2)
+			break;
+		ffstr_shift(&h, r);
+
+		if (ffstr_ieqz(&name, "Icy-MetaData")
+			&& ffstr_eqz(&val, "1")) {
+			c->resp.headers = s->resp_headers;
+			sc->icy_meta_off = AUSV_CLIENT_BUF_SIZE_KB * 1024;
+		}
+	}
+}
 
 static int phi_sv_open(nml_http_sv_conn *c)
 {
 	struct ausv *s = c->conf->opaque;
 	struct ausv_cl *sc = ffmem_new(struct ausv_cl);
+	sc->icy_meta_off = ~0U;
+	sc->last_meta_uid = s->meta_uid - 1;
 	sc->rpos = s->oring->rtail;
 	c->proxy = sc;
 
@@ -243,8 +271,13 @@ static int phi_sv_open(nml_http_sv_conn *c)
 	ausv_client_connected(s, c);
 	hs_response(c, HTTP_200_OK);
 	c->req_no_chunked = 1;
+
+	if (!s->ogg_opus)
+		phi_sv_req_headers(c);
+
 	ffvec_alloc(&c->file.buf, AUSV_CLIENT_BUF_SIZE_KB * 1024, 1);
-	ffvec_addstr(&c->file.buf, &s->meta);
+	if (s->ogg_opus)
+		ffvec_addstr(&c->file.buf, &s->meta);
 	return NMLR_OPEN;
 }
 
@@ -255,6 +288,33 @@ static void phi_sv_close(nml_http_sv_conn *c)
 	ausv_client_closed(s, c);
 	ffvec_free(&c->file.buf);
 	ffmem_free(sc);
+}
+
+/**
+Return the max. size of the next audio data chunk */
+static size_t phi_sv_icy_meta(nml_http_sv_conn *c, size_t n)
+{
+	const struct ausv *s = c->conf->opaque;
+	struct ausv_cl *sc = c->proxy;
+	ffvec *buf = &c->file.buf;
+
+	if (sc->icy_meta_off == ~0U)
+		return n;
+
+	if (sc->icy_meta_off == 0) {
+		sc->icy_meta_off = AUSV_CLIENT_BUF_SIZE_KB * 1024;
+		if (sc->last_meta_uid != s->meta_uid) {
+			// Meta has been changed
+			sc->last_meta_uid = s->meta_uid;
+			ffmem_copy(buf->ptr, s->meta.ptr, s->meta.len);
+			buf->len = s->meta.len;
+		} else {
+			ffmem_copy(buf->ptr, "\0", 1);
+			buf->len = 1;
+		}
+	}
+
+	return ffmin(n, sc->icy_meta_off);
 }
 
 static inline int ring_peek_at(ffring *r, size_t off, size_t n, ffstr *d1, ffstr *d2)
@@ -276,8 +336,10 @@ static int phi_sv_process(nml_http_sv_conn *c)
 	struct ausv *s = c->conf->opaque;
 	ffvec *buf = &c->file.buf;
 
+	size_t n = phi_sv_icy_meta(c, ffvec_unused(buf));
+
 	ffstr d1, d2;
-	size_t n = ring_peek_at(s->oring, sc->rpos, ffvec_unused(buf), &d1, &d2);
+	n = ring_peek_at(s->oring, sc->rpos, n, &d1, &d2);
 	if (!n) {
 		ausv_client_paused(s, c);
 		return NMLR_ASYNC;
@@ -286,6 +348,8 @@ static int phi_sv_process(nml_http_sv_conn *c)
 	ffmem_copy(buf->ptr + buf->len + d1.len, d2.ptr, d2.len);
 	buf->len += n;
 	sc->rpos += n;
+	if (sc->icy_meta_off != ~0U)
+		sc->icy_meta_off -= n;
 
 	c->output = *(ffstr*)buf;
 	buf->len = 0;
@@ -342,11 +406,29 @@ static const phi_filter ausv_guard = {
 	"ausv-guard"
 };
 
+static void ausv_icy_meta(struct ausv *s, ffstr artist, ffstr title)
+{
+	char buf[250];
+	ffsz_format(buf, sizeof(buf), "%S - %S", &artist, &title);
+	s->meta.len = 0;
+	icymeta_add(&s->meta, FFSTR_Z("StreamTitle"), FFSTR_Z(buf));
+	icymeta_fin(&s->meta);
+	s->meta_uid++;
+}
 
 static void* ausv_provider_open(phi_track *t)
 {
 	struct ausv *s = t->udata;
-	userlog(s->trk, "New track: %s", t->conf.ifile.name);
+
+	ffstr artist = {}, title = {};
+	core->metaif->find(&t->meta, FFSTR_Z("artist"), &artist, 0);
+	core->metaif->find(&t->meta, FFSTR_Z("title"), &title, 0);
+
+	if (!s->ogg_opus)
+		ausv_icy_meta(s, artist, title);
+
+	userlog(s->trk, "New track: \"%S - %S\" \"%s\""
+		, &artist, &title, t->conf.ifile.name);
 	return t->udata;
 }
 
@@ -416,6 +498,7 @@ static void ausv_close_delayed(struct ausv *s)
 	FF_ASSERT(s->clients == 0);
 	FF_ASSERT(s->subtrack == NULL);
 	nml_http_server_interface.free(s->sv);
+	ffstr_free(&s->resp_headers);
 	ffring_free(s->iring);
 	ffring_free(s->oring);
 	ffvec_free(&s->meta);
@@ -516,6 +599,12 @@ static void* ausv_open(phi_track *t)
 	uint kbps = (s->ogg_opus) ? t->conf.opus.bitrate : t->conf.aac.quality;
 	n = msec_to_bytes_kbps(t->conf.oaudio.buf_time, kbps);
 	s->oring = ffring_alloc(n, FFRING_1_READER | FFRING_1_WRITER);
+
+	if (!s->ogg_opus) {
+		size_t cap = 0;
+		ffstr_growfmt(&s->resp_headers, &cap, "icy-br:%u\r\nicy-metaint:%u\r\n"
+			, kbps, AUSV_CLIENT_BUF_SIZE_KB * 1024);
+	}
 
 	s->next_pos_samples = s->buf_half_samples = msec_to_samples(t->conf.oaudio.buf_time / 2, t->oaudio.format.rate);
 	core->timer(s->worker, &s->tmr, t->conf.oaudio.buf_time / 2, ausv_timer, s);
