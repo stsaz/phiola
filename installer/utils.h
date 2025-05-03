@@ -6,7 +6,7 @@ zip_unpack
 env_path_add
 */
 
-#include <ffpack/zipread.h>
+#include <ffpack/zip-read.h>
 #include <ffsys/file.h>
 #include <ffsys/winreg.h>
 

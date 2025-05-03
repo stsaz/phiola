@@ -210,7 +210,7 @@ static int mp4r_decode(struct mp4_r *m, phi_track *t)
 			m->state = I_DATA1;
 
 			if (t->conf.info_only)
-				return PHI_DONE;
+				return PHI_LASTOUT;
 			continue;
 		}
 

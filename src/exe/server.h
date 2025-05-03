@@ -108,6 +108,9 @@ static void srv_action2(struct cmd_srv *s)
 	s->ac.port = (s->port > 0 && s->port < 0xffff) ? s->port : 21014;
 
 	struct phi_track_conf c = {
+		.afilter = {
+			.rg_normalizer = 1,
+		},
 		.oaudio = {
 			.buf_time = 1000,
 		},

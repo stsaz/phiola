@@ -24,6 +24,7 @@ extern const struct nml_http_server_if nml_http_server_interface;
 extern const struct nml_tcp_listener_if nml_tcp_listener_interface;
 
 #define AUSV_CLIENT_BUF_SIZE_KB  16
+#define ERRORS_MAX  20
 
 struct ausv {
 	nml_http_server *sv;
@@ -46,6 +47,7 @@ struct ausv {
 	uint clients;
 	uint qi;
 	uint pkt;
+	u_char consecutive_errors;
 	u_char meta_uid;
 	uint ogg_opus :1;
 	uint consumer_paused :1;
@@ -54,7 +56,7 @@ struct ausv {
 };
 static struct ausv *gs;
 
-static void ausv_track_closed(struct ausv *s, uint stop);
+static void ausv_track_closed(struct ausv *s, uint stop, uint error);
 
 static void ausv_provider_paused(struct ausv *s)
 {
@@ -392,7 +394,7 @@ static void ausv_grd_close(void *f, phi_track *t)
 {
 	core->track->stop(t);
 	struct ausv *s = t->udata;
-	ausv_track_closed(s, !!(t->chain_flags & PHI_FSTOP));
+	ausv_track_closed(s, !!(t->chain_flags & PHI_FSTOP), t->error);
 }
 
 static int ausv_grd_process(void *f, phi_track *t)
@@ -533,6 +535,9 @@ static phi_track* ausv_track_start(struct ausv *s)
 	if (!track->filter(t, &ausv_guard, 0)
 		|| !track->filter(t, core->mod("core.auto-input"), 0)
 		|| !track->filter(t, core->mod("format.detect"), 0)
+		|| (s->trk->conf.afilter.rg_normalizer
+			&& !track->filter(t, core->mod("afilter.rg-norm"), 0))
+		|| !track->filter(t, core->mod("afilter.gain"), 0)
 		|| !track->filter(t, core->mod("afilter.auto-conv"), 0)
 		|| !track->filter(t, &ausv_provider, 0)) {
 		track->close(t);
@@ -544,12 +549,22 @@ static phi_track* ausv_track_start(struct ausv *s)
 	return t;
 }
 
-static void ausv_track_closed(struct ausv *s, uint stop)
+static void ausv_track_closed(struct ausv *s, uint stop, uint error)
 {
 	if (stop) {
 		s->subtrack = NULL;
 		return;
 	}
+
+	if (error) {
+		if (++s->consecutive_errors >= ERRORS_MAX) {
+			errlog(s->trk, "Stopping after %u consecutive errors", ERRORS_MAX);
+			return;
+		}
+	} else {
+		s->consecutive_errors = 0;
+	}
+
 	s->subtrack = ausv_track_start(s);
 }
 
