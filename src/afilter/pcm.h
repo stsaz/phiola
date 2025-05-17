@@ -49,9 +49,11 @@ union pcmdata {
 #define vol2db_inc(pos, pos_max, db_max) \
 	(pow(10, (double)(pos) / (pos_max)) / 10 * (db_max))
 
+#ifndef db_gain
 /* gain = 10 ^ (db / 20) */
 #define db_gain(db)  pow(10, (double)(db) / 20)
 #define gain_db(gain)  (log10(gain) * 20)
+#endif
 
 static inline int int_ltoh24s(const void *p)
 {

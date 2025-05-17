@@ -2,8 +2,8 @@
 2024, Simon Zolin */
 
 #include <track.h>
-#include <afilter/pcm.h>
-#include <afilter/pcm_gain.h>
+#include <util/util.h>
+#include <ffaudio/pcm-gain.h>
 #include <ffbase/args.h>
 
 extern const phi_core *core;
@@ -26,7 +26,7 @@ static const struct ffarg autonorm_conf_args[] = {
 
 struct autonorm {
 	uint state;
-	struct phi_af af;
+	struct pcm_af af;
 	double gain_db, gain;
 	ffvec buf;
 	struct autonorm_conf conf;
@@ -35,7 +35,7 @@ struct autonorm {
 static void* anorm_open(phi_track *t)
 {
 	struct autonorm *c = phi_track_allocT(t, struct autonorm);
-	c->af = t->oaudio.format;
+	c->af = *(struct pcm_af*)&t->oaudio.format;
 	struct autonorm_conf conf = {
 		.target = -14,
 		.max_gain = 6,

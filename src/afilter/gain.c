@@ -2,13 +2,14 @@
 2022, Simon Zolin */
 
 #include <track.h>
-#include <afilter/pcm_gain.h>
+#include <util/util.h>
+#include <ffaudio/pcm-gain.h>
 
 extern const phi_core *core;
 #define dbglog(t, ...)  phi_dbglog(core, NULL, t, __VA_ARGS__)
 
 struct gain {
-	struct phi_af af;
+	struct pcm_af af;
 	uint sample_size;
 	double db, gain;
 };
@@ -16,8 +17,9 @@ struct gain {
 static void* gain_open(phi_track *t)
 {
 	struct gain *c = phi_track_allocT(t, struct gain);
-	c->af = (t->oaudio.format.format) ? t->oaudio.format : t->audio.format;
-	c->sample_size = pcm_size1(&c->af);
+	const struct phi_af *af = (t->oaudio.format.format) ? &t->oaudio.format : &t->audio.format;
+	c->sample_size = pcm_size1(af);
+	c->af = *(struct pcm_af*)af;
 	t->oaudio.gain_db = (t->oaudio.gain_db) ? t->oaudio.gain_db : t->conf.afilter.gain_db;
 	c->db = -t->oaudio.gain_db;
 	return c;

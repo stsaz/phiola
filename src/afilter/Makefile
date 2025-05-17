@@ -9,6 +9,7 @@
 # LINKFLAGS
 # OS
 # PHIOLA
+# ROOT_DIR
 # SO
 # SYS
 
@@ -16,6 +17,7 @@
 # LIBS3
 # MODS
 
+FFAUDIO := $(ROOT_DIR)/ffaudio
 ALIB3 := $(PHIOLA)/alib3
 ALIB3_BIN := $(ALIB3)/_$(SYS)-$(CPU)
 AFPFX := af-
@@ -23,6 +25,9 @@ AFPFX := af-
 MODS += afilter.$(SO)
 %.o: $(PHIOLA)/src/afilter/%.c
 	$(C) $(CFLAGS) -DFFBASE_OPT_SIZE $< -o $@
+conv.o: CFLAGS += -I$(FFAUDIO)
+gain.o: CFLAGS += -I$(FFAUDIO)
+auto-norm.o: CFLAGS += -I$(FFAUDIO)
 afilter.$(SO): afilter.o \
 		peaks.o \
 		gain.o \

@@ -4,7 +4,7 @@
 #include <track.h>
 #include <util/util.h>
 #include <util/aformat.h>
-#include <afilter/pcm_convert.h>
+#include <ffaudio/pcm-convert.h>
 
 #define errlog(trk, ...)  phi_errlog(core, NULL, trk, __VA_ARGS__)
 #define dbglog(trk, ...)  phi_dbglog(core, NULL, trk, __VA_ARGS__)
@@ -18,7 +18,7 @@ enum {
 struct aconv {
 	uint state;
 	uint out_samp_size;
-	struct phi_af fi, fo;
+	struct pcm_af fi, fo;
 	ffstr in;
 	ffvec buf;
 	uint off;
@@ -63,8 +63,8 @@ static inline void arrp_setbuf(void **ar, ffsize n, const void *buf, ffsize regi
 
 static int aconv_prepare(struct aconv *c, phi_track *t)
 {
-	c->fi = t->aconv.in;
-	c->fo = t->aconv.out;
+	c->fi = *(struct pcm_af*)&t->aconv.in;
+	c->fo = *(struct pcm_af*)&t->aconv.out;
 
 	if (c->fi.rate != c->fo.rate) {
 		if (!core->track->filter(t, core->mod("af-soxr.conv"), 0))
@@ -91,7 +91,7 @@ static int aconv_prepare(struct aconv *c, phi_track *t)
 	}
 
 	int r = pcm_convert(&c->fo, NULL, &c->fi, NULL, 0);
-	log_pcmconv(r, &c->fi, &c->fo, t);
+	log_pcmconv(r, (void*)&c->fi, (void*)&c->fo, t);
 	if (r != 0)
 		return PHI_ERR;
 
@@ -101,7 +101,7 @@ static int aconv_prepare(struct aconv *c, phi_track *t)
 		return PHI_ERR;
 	}
 
-	uint out_ch = c->fo.channels & PHI_PCM_CHMASK;
+	uint out_ch = c->fo.channels & PCM_CHAN_MASK;
 	c->out_samp_size = pcm_size(c->fo.format, out_ch);
 	size_t cap = msec_to_samples(CONV_OUTBUF_MSEC, c->fo.rate) * c->out_samp_size;
 	uint n = cap;

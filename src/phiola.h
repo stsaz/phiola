@@ -12,7 +12,7 @@
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20400
+#define PHI_VERSION_CORE  20500
 
 typedef long long int64;
 typedef unsigned long long uint64;
@@ -216,19 +216,21 @@ Usage:
   . User calls track->stop(), and the track object gets destroyed
 */
 
+/** Sample formats (must match enum FFAUDIO_F) */
 enum PHI_PCM {
 	PHI_PCM_8 = 8,
 	PHI_PCM_16 = 16,
 	PHI_PCM_24 = 24,
 	PHI_PCM_32 = 32,
-	PHI_PCM_24_4 = 0x0100 | 32,
+	PHI_PCM_24_4 = 32 | 0x0200,
 
-	PHI_PCM_U8 = 0x0400 | 8,
+	PHI_PCM_U8 = 8 | 0x0400,
 
-	PHI_PCM_FLOAT32 = 0x0200 | 32,
-	PHI_PCM_FLOAT64 = 0x0200 | 64,
+	PHI_PCM_FLOAT32 = 32 | 0x0100,
+	PHI_PCM_FLOAT64 = 64 | 0x0100,
 };
 
+/** Audio format (must match struct pcm_af) */
 struct phi_af {
 	ushort format; // enum PHI_PCM
 	u_char channels;
