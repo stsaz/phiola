@@ -97,7 +97,8 @@ class Phiola {
 		static final int
 			RECF_EXCLUSIVE = 1,
 			RECF_POWER_SAVE = 2,
-			RECF_DANORM = 4;
+			RECF_UNPROCESSED = 4,
+			RECF_DANORM = 8;
 		int flags;
 
 		int buf_len_msec;

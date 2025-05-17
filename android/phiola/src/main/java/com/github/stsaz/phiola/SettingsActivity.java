@@ -336,6 +336,7 @@ public class SettingsActivity extends AppCompatActivity {
 		b.eRecGain.setText(core.float_to_str((float)core.setts.rec_gain_db100 / 100));
 		b.sbRecGain.setProgress((int)core.setts.rec_gain_db100 / 100);
 		b.swRecExclusive.setChecked(core.setts.rec_exclusive);
+		b.swRecSrcUnprocessed.setChecked(core.setts.rec_src_unprocessed);
 		b.swRecListAdd.setChecked(core.setts.rec_list_add);
 	}
 
@@ -352,6 +353,7 @@ public class SettingsActivity extends AppCompatActivity {
 		core.setts.rec_danorm = b.swRecDanorm.isChecked();
 		core.setts.rec_gain_db100 = (int)(core.str_to_float(b.eRecGain.getText().toString(), 0) * 100);
 		core.setts.rec_exclusive = b.swRecExclusive.isChecked();
+		core.setts.rec_src_unprocessed = b.swRecSrcUnprocessed.isChecked();
 		core.setts.rec_list_add = b.swRecListAdd.isChecked();
 	}
 }

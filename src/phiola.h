@@ -295,6 +295,7 @@ struct phi_track_conf {
 		uint	exclusive :1;
 		uint	loopback :1;
 		uint	power_save :1;
+		uint	aa_unprocessed :1; // AAudio: use UNPROCESSED audio source
 	} iaudio;
 
 	struct {

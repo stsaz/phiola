@@ -66,7 +66,8 @@ static const phi_filter phi_android_rec_ctl = {
 
 #define RECF_EXCLUSIVE  1
 #define RECF_POWER_SAVE  2
-#define RECF_DANORM  4
+#define RECF_UNPROCESSED  4
+#define RECF_DANORM  8
 
 JNIEXPORT jlong JNICALL
 Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring joname, jobject jconf, jobject jcb)
@@ -94,6 +95,7 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 			.buf_time = buf_len_msec,
 			.exclusive = !!(flags & RECF_EXCLUSIVE),
 			.power_save = !!(flags & RECF_POWER_SAVE),
+			.aa_unprocessed = !!(flags & RECF_UNPROCESSED),
 		},
 		.until_msec = (uint)until_sec*1000,
 		.afilter = {

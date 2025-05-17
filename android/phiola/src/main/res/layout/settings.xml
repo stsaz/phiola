@@ -445,6 +445,13 @@
 			android:text="@string/sett_rec_exclusive" />
 
 		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/sw_rec_src_unprocessed"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="@dimen/sett_margin"
+			android:text="@string/sett_rec_src_unprocessed" />
+
+		<androidx.appcompat.widget.SwitchCompat
 			android:id="@+id/sw_rec_list_add"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"

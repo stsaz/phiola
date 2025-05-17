@@ -97,6 +97,7 @@
 	<string name="sett_rec_danorm">Dynamic Audio Normalizer</string>
 	<string name="sett_rec_gain">Gain/attenuate (dB):</string>
 	<string name="sett_rec_exclusive">Exclusive Mode</string>
+	<string name="sett_rec_src_unprocessed">Try using UNPROCESSED audio source preset</string>
 	<string name="sett_rec_list_add">Add Recorded File to Playlist</string>
 
 	<string name="lssv_ldir">Output directory:</string>

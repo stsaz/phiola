@@ -8,6 +8,7 @@ typedef struct audio_in {
 	const ffaudio_interface *audio;
 	uint dev_idx; // 0:default
 	phi_track *trk;
+	const char *dev_id;
 	ffuint buffer_length_msec; // output
 	uint loopback;
 	uint aflags;
@@ -41,6 +42,7 @@ static int audio_in_open(audio_in *a, phi_track *t)
 	if (!t->conf.iaudio.format.channels)
 		t->conf.iaudio.format.channels = 2;
 
+	conf.device_id = a->dev_id;
 	a->dev_idx = t->conf.iaudio.device_index;
 	if (a->dev_idx != 0) {
 		ffuint mode = (a->loopback) ? FFAUDIO_DEV_PLAYBACK : FFAUDIO_DEV_CAPTURE;

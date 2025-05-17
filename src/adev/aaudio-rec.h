@@ -18,6 +18,7 @@ static void* aai_open(phi_track *t)
 	audio_in *a = &c->in;
 	a->audio = &ffaaudio;
 	a->trk = t;
+	a->dev_id = (t->conf.iaudio.aa_unprocessed) ? "unprocessed" : NULL;
 	a->aflags |= FFAUDIO_O_UNSYNC_NOTIFY;
 	a->aflags |= (t->conf.iaudio.power_save) ? FFAUDIO_O_POWER_SAVE : 0;
 	a->aflags |= (t->conf.iaudio.exclusive) ? FFAUDIO_O_EXCLUSIVE : 0;

@@ -81,6 +81,7 @@ class CoreSettings {
 	int		rec_gain_db100;
 	boolean	rec_danorm;
 	boolean	rec_exclusive;
+	boolean	rec_src_unprocessed;
 	boolean	rec_longclick;
 	boolean	rec_list_add;
 	static final String[] rec_formats = {
@@ -200,6 +201,7 @@ class CoreSettings {
 			+ "rec_danorm %d\n"
 			+ "rec_gain %d\n"
 			+ "rec_exclusive %d\n"
+			+ "rec_src_unproc %d\n"
 			+ "rec_list_add %d\n"
 			+ "rec_longclick %d\n"
 			+ "conv_out_dir %s\n"
@@ -233,6 +235,7 @@ class CoreSettings {
 			, core.bool_to_int(rec_danorm)
 			, rec_gain_db100
 			, core.bool_to_int(rec_exclusive)
+			, core.bool_to_int(rec_src_unprocessed)
 			, core.bool_to_int(rec_list_add)
 			, core.bool_to_int(rec_longclick)
 			, conv_out_dir
@@ -336,6 +339,7 @@ class CoreSettings {
 		rec_buf_len_ms = kv[Conf.REC_BUF_LEN].number;
 		rec_danorm = kv[Conf.REC_DANORM].enabled;
 		rec_exclusive = kv[Conf.REC_EXCLUSIVE].enabled;
+		rec_src_unprocessed = kv[Conf.REC_SRC_UNPROC].enabled;
 		rec_list_add = kv[Conf.REC_LIST_ADD].enabled;
 		rec_longclick = kv[Conf.REC_LONGCLICK].enabled;
 		rec_until_sec = core.str_to_uint(kv[Conf.REC_UNTIL].value, rec_until_sec);
