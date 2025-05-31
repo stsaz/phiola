@@ -274,6 +274,7 @@ struct phi_track_conf {
 		ffslice	include, exclude; // ffstr[]
 		u_char	connect_timeout_sec;
 		u_char	recv_timeout_sec;
+		u_char	format; // enum AVPK_FORMAT
 		uint	preserve_date :1;
 		uint	no_meta :1;
 	} ifile;

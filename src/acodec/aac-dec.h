@@ -15,7 +15,7 @@ struct aac_in {
 	fdkaac_info info;
 	struct phi_af fmt;
 	void *pcmbuf;
-	uint64 cursample;
+	uint64 pos;
 	uint contr_sample_rate;
 	uint rate_mul;
 };
@@ -77,13 +77,13 @@ static int aac_decode(void *ctx, phi_track *t)
 	struct aac_in *a = ctx;
 	int r;
 	uint new_format;
-	uint64 apos = 0;
 	ffstr out;
 	enum { R_CACHE, R_CACHE_DATA, R_CACHE_DONE, R_PASS };
 
 	if (t->chain_flags & PHI_FFWD) {
 		a->in = t->data_in;
-		a->cursample = t->audio.pos * a->rate_mul;
+		if (t->audio.pos != ~0ULL)
+			a->pos = t->audio.pos * a->rate_mul;
 	}
 
 	for (;;) {
@@ -114,11 +114,11 @@ static int aac_decode(void *ctx, phi_track *t)
 			}
 
 			ffstr_set(&out, a->pcmbuf, r * pcm_size(a->fmt.format, a->info.channels));
-			apos = a->cursample;
 			const fdkaac_info *inf = &a->info;
 			dbglog(t, "decoded %u samples @%U  aot:%u rate:%u chan:%u bitrate:%u"
-				, out.len / phi_af_size(&a->fmt), apos
+				, out.len / phi_af_size(&a->fmt), a->pos
 				, inf->aot, inf->rate, inf->channels, inf->bitrate);
+			a->pos += r;
 		}
 
 		switch (a->state) {
@@ -147,6 +147,10 @@ static int aac_decode(void *ctx, phi_track *t)
 		case R_CACHE_DATA:
 			if (t->audio.total == 0 && t->input.size)
 				t->audio.total = t->input.size * 8 * a->sample_rate / a->avg_bitrate;
+
+			if (!t->audio.bitrate)
+				t->audio.bitrate = a->avg_bitrate;
+
 			switch (a->info.aot) {
 			case AAC_LC:
 				t->audio.decoder = "AAC-LC"; break;
@@ -156,10 +160,9 @@ static int aac_decode(void *ctx, phi_track *t)
 				t->audio.decoder = "HE-AACv2"; break;
 			}
 
-			t->audio.pos = apos + out.len / phi_af_size(&a->fmt) - a->cache.len / phi_af_size(&a->fmt);
+			t->audio.pos = a->pos - a->cache.len / phi_af_size(&a->fmt);
 			t->audio.pos = ffmax((ffint64)t->audio.pos, 0);
 			t->data_out = *(ffstr*)&a->cache;
-			a->cache.len = 0;
 			a->state = R_CACHE_DONE;
 			return PHI_DATA;
 
@@ -173,7 +176,7 @@ static int aac_decode(void *ctx, phi_track *t)
 	}
 
 	t->data_out = out;
-	t->audio.pos = apos;
+	t->audio.pos = a->pos - out.len / phi_af_size(&a->fmt);
 	return PHI_DATA;
 }
 

@@ -7,7 +7,7 @@
 struct opus_dec {
 	uint state;
 	uint sample_size;
-	uint64 prev_page_pos, pos;
+	uint64 pos;
 	uint channels;
 	uint preskip;
 	uint reset_decoder;
@@ -21,7 +21,6 @@ static void* opus_open(phi_track *t)
 		return PHI_OPEN_ERR;
 
 	struct opus_dec *o = phi_track_allocT(t, struct opus_dec);
-	o->prev_page_pos = o->pos = ~0ULL;
 	return o;
 }
 
@@ -59,28 +58,15 @@ static int opus_dec_init(struct opus_dec *o, phi_track *t, ffstr in)
 	return 0;
 }
 
-static const char* opus_pkt_mode(const char *d)
-{
-	if (d[0] & 0x80)
-		return "celt";
-	else if ((d[0] & 0x60) == 0x60)
-		return "hybrid";
-	return "silk";
-}
-
 static int opus_in_decode(void *ctx, phi_track *t)
 {
 	enum { R_INIT, R_TAGS, R_DATA1, R_DATA };
 	struct opus_dec *o = ctx;
 	int r;
-	const char *opus_mode = NULL;
 	ffstr in = {};
 
 	if (t->chain_flags & PHI_FFWD) {
 		in = t->data_in;
-
-		if (core->conf.log_level >= PHI_LOG_DEBUG && in.len)
-			opus_mode = opus_pkt_mode(in.ptr);
 	}
 
 	for (;;) {
@@ -115,6 +101,7 @@ static int opus_in_decode(void *ctx, phi_track *t)
 		}
 
 		if (t->audio.ogg_reset) {
+			t->audio.ogg_reset = 0;
 			ffvec_free(&o->obuf);
 			if (o->dec)
 				opus_decode_free(o->dec);
@@ -140,10 +127,8 @@ static int opus_in_decode(void *ctx, phi_track *t)
 			opus_decode_reset(o->dec);
 		}
 
-		if (o->pos == ~0ULL || o->prev_page_pos != t->audio.pos) {
-			o->prev_page_pos = t->audio.pos;
+		if (t->audio.pos != ~0ULL)
 			o->pos = t->audio.pos;
-		}
 	}
 
 	r = opus_decode_f(o->dec, in.ptr, in.len, (float*)o->obuf.ptr);
@@ -155,8 +140,8 @@ static int opus_in_decode(void *ctx, phi_track *t)
 	ffstr_set(&t->data_out, o->obuf.ptr, r * o->channels * sizeof(float));
 	t->audio.pos = o->pos;
 	o->pos += r;
-	dbglog(t, "decoded %L samples @%U  mode:%s"
-		, t->data_out.len / o->sample_size, t->audio.pos, opus_mode);
+	dbglog(t, "decoded %L samples @%U"
+		, t->data_out.len / o->sample_size, t->audio.pos);
 	return PHI_DATA;
 
 more:

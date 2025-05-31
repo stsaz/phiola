@@ -1,6 +1,8 @@
 /** phiola: AAC ADTS (.aac) writer
 2019, Simon Zolin */
 
+#include <avpack/base/adts.h>
+
 struct aac_adts_w {
 	uint state;
 	struct adts_hdr hdr;

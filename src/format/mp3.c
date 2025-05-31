@@ -10,5 +10,4 @@ extern const phi_core *core;
 #define warnlog(t, ...)  phi_warnlog(core, NULL, t, __VA_ARGS__)
 #define dbglog(t, ...)  phi_dbglog(core, NULL, t, __VA_ARGS__)
 
-#include <format/mp3-read.h>
 #include <format/mp3-write.h>

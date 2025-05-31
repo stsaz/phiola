@@ -46,7 +46,8 @@ static int until_process(void *ctx, phi_track *t)
 	pos = t->audio.pos;
 	if (t->audio.pos == ~0ULL) {
 		pos = u->total;
-		u->total += t->data_in.len / u->sampsize;
+		if (u->sampsize)
+			u->total += t->data_in.len / u->sampsize;
 	}
 
 	if (t->conf.stream_copy) {

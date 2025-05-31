@@ -7,11 +7,10 @@
 
 struct vorbis_dec {
 	uint state;
-	uint64 prev_page_pos;
+	uint64 pos;
 	vorbis_ctx *vctx;
 	uint channels;
 	uint pktno;
-	uint64 cursample;
 	const float **pcm; //non-interleaved
 };
 
@@ -21,7 +20,7 @@ static void* vorbis_open(phi_track *t)
 		return PHI_OPEN_ERR;
 
 	struct vorbis_dec *v = phi_track_allocT(t, struct vorbis_dec);
-	v->cursample = ~0ULL;
+	t->audio.format.format = PHI_PCM_FLOAT32;
 	t->audio.end_padding = (t->audio.total != ~0ULL);
 	t->data_type = "pcm";
 	return v;
@@ -94,10 +93,8 @@ static int vorbis_in_decode(void *ctx, phi_track *t)
 
 	case R_DATA:
 		if (t->chain_flags & PHI_FFWD) {
-			if (v->cursample == ~0ULL || v->prev_page_pos != t->audio.pos) {
-				v->prev_page_pos = t->audio.pos;
-				v->cursample = t->audio.pos;
-			}
+			if (t->audio.pos != ~0ULL)
+				v->pos = t->audio.pos;
 		}
 		break;
 	}
@@ -110,8 +107,8 @@ static int vorbis_in_decode(void *ctx, phi_track *t)
 	}
 
 	ffstr_set(&t->data_out, (void*)v->pcm, r * sizeof(float) * v->channels);
-	t->audio.pos = v->cursample;
-	v->cursample += r;
+	t->audio.pos = v->pos;
+	v->pos += r;
 
 	dbglog(t, "decoded %L samples @%U"
 		, t->data_out.len / pcm_size(PHI_PCM_FLOAT32, v->channels), t->audio.pos);
