@@ -6,6 +6,10 @@ IMAGE_NAME=phiola-debianbw-builder
 CONTAINER_NAME=phiola_debianBW_build
 ARGS=${@@Q}
 
+if test "$JOBS" == "" ; then
+	JOBS=8
+fi
+
 set -xe
 
 if ! test -d "../phiola" ; then
@@ -68,25 +72,25 @@ cat >build_linux.sh <<EOF
 set -xe
 
 mkdir -p ../netmill/3pt/_linux-amd64
-make -j8 openssl \
+make -j$JOBS openssl \
  -C ../netmill/3pt/_linux-amd64 \
  -f ../Makefile \
  -I ..
 
 mkdir -p ../ffpack/_linux-amd64
-make -j8 zstd \
+make -j$JOBS zstd \
  -C ../ffpack/_linux-amd64 \
  -f ../Makefile \
  -I ..
 
 mkdir -p alib3/_linux-amd64
-make -j8 \
+make -j$JOBS \
  -C alib3/_linux-amd64 \
  -f ../Makefile \
  -I ..
 
 mkdir -p _linux-amd64
-make -j8 \
+make -j$JOBS \
  -C _linux-amd64 \
  -f ../Makefile \
  ROOT_DIR=../.. \

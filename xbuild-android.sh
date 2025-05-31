@@ -13,6 +13,10 @@ IMAGE_NAME=phiola-android-builder
 CONTAINER_NAME=phiola_android_build
 ARGS=${@@Q}
 
+if test "$JOBS" == "" ; then
+	JOBS=8
+fi
+
 set -xe
 
 if ! test -d "../phiola" ; then
@@ -117,7 +121,7 @@ export PATH=/Android/ndk/$ANDROID_NDK_VER/toolchains/llvm/prebuilt/linux-x86_64/
 
 export ANDROID_NDK_ROOT=/Android/ndk/$ANDROID_NDK_VER
 mkdir -p ../netmill/3pt/_android-$CPU
-make -j8 openssl \
+make -j$JOBS openssl \
  -C ../netmill/3pt/_android-$CPU \
  -f ../Makefile \
  -I .. \
@@ -127,7 +131,7 @@ make -j8 openssl \
  NDK_DIR=/Android/ndk/$ANDROID_NDK_VER
 
 mkdir -p ../ffpack/_android-$CPU
-make -j8 zstd \
+make -j$JOBS zstd \
  -C ../ffpack/_android-$CPU \
  -f ../Makefile \
  -I .. \
@@ -137,7 +141,7 @@ make -j8 zstd \
  NDK_DIR=/Android/ndk/$ANDROID_NDK_VER
 
 mkdir -p alib3/_android-$CPU
-make -j8 \
+make -j$JOBS \
  -C alib3/_android-$CPU \
  -f ../Makefile \
  -I .. \
@@ -148,7 +152,7 @@ make -j8 \
 
 export ANDROID_HOME=/Android
 mkdir -p _android-$CPU
-make -j8 \
+make -j$JOBS \
  -C _android-$CPU \
  -f ../android/Makefile \
  -I ../android \

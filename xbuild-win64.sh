@@ -6,6 +6,10 @@ IMAGE_NAME=phiola-win64-builder
 CONTAINER_NAME=phiola_win64_build
 ARGS=${@@Q}
 
+if test "$JOBS" == "" ; then
+	JOBS=8
+fi
+
 set -xe
 
 # Ensure we're inside phiola directory
@@ -50,7 +54,7 @@ fi
 cat >build_mingw64.sh <<EOF
 set -xe
 
-make -j8 openssl \
+make -j$JOBS openssl \
  -C ../netmill/3pt \
  -f ../Makefile \
  -I .. \
@@ -59,7 +63,7 @@ make -j8 openssl \
  CROSS_PREFIX=x86_64-w64-mingw32-
 
 mkdir -p ../ffpack/_windows-amd64
-make -j8 zstd zlib \
+make -j$JOBS zstd zlib \
  -C ../ffpack/_windows-amd64 \
  -f ../Makefile \
  -I .. \
@@ -68,7 +72,7 @@ make -j8 zstd zlib \
  CROSS_PREFIX=x86_64-w64-mingw32-
 
 mkdir -p alib3/_windows-amd64
-make -j8 \
+make -j$JOBS \
  -C alib3/_windows-amd64 \
  -f ../Makefile \
  -I .. \
@@ -77,7 +81,7 @@ make -j8 \
  CROSS_PREFIX=x86_64-w64-mingw32-
 
 mkdir -p _windows-amd64
-make -j8 \
+make -j$JOBS \
  -C _windows-amd64 \
  -f ../Makefile \
  ROOT_DIR=../.. \
