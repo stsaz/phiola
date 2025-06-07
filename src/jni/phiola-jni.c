@@ -84,7 +84,7 @@ static void exe_logv(void *log_obj, uint flags, const char *module, phi_track *t
 	ffuint level = flags & 0x0f;
 	char buffer[4*1024];
 	char *d = buffer;
-	ffsize r = 0, cap = sizeof(buffer) - 3;
+	ffsize r = 0, cap = sizeof(buffer) - (2+2+2);
 
 	if (ctx != NULL) {
 		r += _ffs_copyz(&d[r], cap - r, ctx);
@@ -108,9 +108,6 @@ static void exe_logv(void *log_obj, uint flags, const char *module, phi_track *t
 			, fferr_last(), fferr_strptr(fferr_last()));
 	}
 
-#ifdef FF_WIN
-	d[r++] = '\r';
-#endif
 	d[r++] = '\n';
 	d[r++] = '\0';
 

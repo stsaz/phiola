@@ -242,15 +242,14 @@ void wmain_conv_track_update(phi_track *t, uint time_cur, uint time_total)
 	conv_track_update(t, buf);
 }
 
-static void list_display(ffui_view_disp *disp)
+static void list_display(ffui_viewxx_disp *disp)
 {
 #ifdef FF_WIN
 	if (!(disp->mask & LVIF_TEXT))
 		return;
 #endif
 
-	uint i = ffui_view_dispinfo_index(disp);
-	uint sub = ffui_view_dispinfo_subindex(disp);
+	uint i = disp->index(), sub = disp->subindex();
 
 	// gui_wmain *m = gg->wmain;
 	xxstr_buf<1000> buf;
@@ -299,11 +298,7 @@ static void list_display(ffui_view_disp *disp)
 	}
 
 	if (val) {
-#ifdef FF_WIN
-		ffui_view_dispinfo_settext(disp, val->ptr, val->len);
-#else
-		disp->text.len = ffmem_ncopy(disp->text.ptr, disp->text.len, val->ptr, val->len);
-#endif
+		disp->text(*val);
 	}
 
 	fflock_unlock((fflock*)&qe->lock);
@@ -655,7 +650,7 @@ static void wmain_action(ffui_window *wnd, int id)
 		break;
 
 	case A_LIST_DISPLAY:
-		list_display(m->vlist.dispinfo_item);  break;
+		list_display((ffui_viewxx_disp*)m->vlist.dispinfo_item);  break;
 
 // Record:
 	case A_RECORD_SHOW:

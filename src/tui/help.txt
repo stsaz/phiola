@@ -2,27 +2,27 @@ Commands:
 
 Key     Command
 ===============
-Space   Play/Pause
-s       Stop
-n       Next track
-p       Previous track
-Home    First track
-End     Last track
+`Space`   Play/Pause
+`s`       Stop
+`n`       Next track
+`p`       Previous track
+`Home`    First track
+`End`     Last track
 [0-9]...  Play track at index
 
-Right   Seek forward
-          +Alt   medium step
-          +Ctrl  large step
-Left    Seek backward
+`Right`   Seek forward
+          +`Alt`   medium step
+          +`Ctrl`  large step
+`Left`    Seek backward
 
-Up      Volume up
-Down    Volume down
-m       Mute
+`Up`      Volume up
+`Down`    Volume down
+`m`       Mute
 
-i       Show tags
-d       Remove current track from playlist
-x       Remove current track from playlist and play next track
-r       "Choose random track" setting: on/off
-Shift+l Save playlist to disk
-h       Show help
-q       Quit
+`i`       Show tags
+`d`       Remove current track from playlist
+`x`       Remove current track from playlist and play next track
+`r`       "Choose random track" setting: on/off
+`Shift+l` Save playlist to disk
+`h`       Show help
+`q`       Quit

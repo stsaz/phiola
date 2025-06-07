@@ -125,7 +125,6 @@ typedef void (*cmdfunc1)(uint cmd);
 
 static void tui_prepare(uint f);
 static void tui_cmd_read(void *param);
-static void tui_help(uint cmd);
 static void tui_op(uint cmd);
 static void cmd_activate(uint cmd);
 
@@ -223,6 +222,34 @@ static void list_save()
 #endif
 }
 
+static void help_info_write(ffstr s)
+{
+	ffstr l, k;
+	ffvec v = {};
+
+	while (s.len) {
+		ffstr_splitby(&s, '`', &l, &s);
+		ffstr_splitby(&s, '`', &k, &s);
+		ffvec_addfmt(&v, "%S%s%S%s"
+			, &l, mod->color.index, &k, mod->color.reset);
+	}
+
+	tui_print(v.ptr, v.len);
+	ffvec_free(&v);
+}
+
+static void tui_help(uint cmd)
+{
+	ffvec buf = {};
+	char *fn = ffsz_allocfmt("%S/mod/tui-help.txt", &core->conf.root);
+	if (fffile_readwhole(fn, &buf, 64*1024))
+		goto end;
+	help_info_write(*(ffstr*)&buf);
+end:
+	ffvec_free(&buf);
+	ffmem_free(fn);
+}
+
 struct key {
 	uint key;
 	uint cmd;
@@ -273,18 +300,6 @@ struct corecmd {
 	const struct key *k;
 	void *udata;
 };
-
-static void tui_help(uint cmd)
-{
-	ffvec buf = {};
-	char *fn = ffsz_allocfmt("%S/mod/tui-help.txt", &core->conf.root);
-	if (fffile_readwhole(fn, &buf, 64*1024))
-		goto end;
-	userlog(NULL, "%S", &buf);
-end:
-	ffvec_free(&buf);
-	ffmem_free(fn);
-}
 
 static void tui_corecmd(void *param)
 {

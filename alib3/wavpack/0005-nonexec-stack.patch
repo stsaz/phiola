@@ -1,0 +1,12 @@
+diff --git a/src/unpack_x64.s b/src/unpack_x64.s
+index 543dfed..f821064 100644
+--- a/src/unpack_x64.s
++++ b/src/unpack_x64.s
+@@ -940,3 +940,7 @@ mono_done:
+         pop     rbx
+         pop     rbp
+         ret
++
++#if defined(__linux__)
++.section .note.GNU-stack,"",@progbits
++#endif

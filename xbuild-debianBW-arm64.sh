@@ -6,6 +6,10 @@ IMAGE_NAME=phiola-debianbw-arm64-builder
 CONTAINER_NAME=phiola_debianBW_arm64_build
 ARGS=${@@Q}
 
+if test "$JOBS" == "" ; then
+	JOBS=8
+fi
+
 set -xe
 
 if ! test -d "../phiola" ; then
@@ -57,7 +61,7 @@ cat >build_linux.sh <<EOF
 set -xe
 
 mkdir -p ../ffpack/_linux-arm64
-make -j8 zstd \
+make -j$JOBS zstd \
  -C ../ffpack/_linux-arm64 \
  -f ../Makefile \
  -I .. \
@@ -65,7 +69,7 @@ make -j8 zstd \
  CROSS_PREFIX=aarch64-linux-gnu-
 
 mkdir -p alib3/_linux-arm64
-make -j8 \
+make -j$JOBS \
  -C alib3/_linux-arm64 \
  -f ../Makefile \
  -I .. \
@@ -74,7 +78,7 @@ make -j8 \
 
 export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
 mkdir -p _linux-arm64
-make -j8 \
+make -j$JOBS \
  -C _linux-arm64 \
  -f ../Makefile \
  ROOT_DIR=../.. \
