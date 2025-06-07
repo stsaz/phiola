@@ -10,7 +10,9 @@ const struct phi_core *core;
 
 static const void* fmt_mod_iface_input(const char *name);
 
+#include <format/mmtag.h>
 #include <format/detector.h>
+#include <format/reader.h>
 
 extern const phi_filter
 	phi_aac_adts_write,
@@ -20,23 +22,7 @@ extern const phi_filter
 	phi_ogg_write,
 	phi_wav_write;
 extern const phi_filter
-	phi_aac_adts_read,
-	phi_ape_read,
-	phi_avi_read,
-	phi_caf_read,
-	phi_flac_read,
-	phi_flacogg_read,
-	phi_mkv_read,
-	phi_mp3_read,
-	phi_mp4_read,
-	phi_mpc_read,
-	phi_ogg_read,
-	phi_opusmeta_read,
 	phi_ts_read,
-	phi_vorbismeta_read,
-	phi_wav_read,
-	phi_wv_read;
-extern const phi_filter
 	phi_cue_read, phi_cue_hook,
 	phi_m3u_read, phi_m3u_write,
 	phi_pls_read;
@@ -83,26 +69,26 @@ static const struct phi_filter phi_auto_write = {
 static const void* fmt_mod_iface_input(const char *name)
 {
 	static const struct map_sz_vptr mods[] = {
-		{ "aac",	&phi_aac_adts_read },
-		{ "ape",	&phi_ape_read },
-		{ "avi",	&phi_avi_read },
-		{ "caf",	&phi_caf_read },
+		{ "aac",	&fmt_read },
+		{ "ape",	&fmt_read },
+		{ "avi",	&fmt_read },
+		{ "caf",	&fmt_read },
 		{ "cue",	&phi_cue_read },
-		{ "flac",	&phi_flac_read },
+		{ "flac",	&fmt_read },
 		{ "m3u",	&phi_m3u_read },
 		{ "m3u8",	&phi_m3u_read },
-		{ "m4a",	&phi_mp4_read },
-		{ "mka",	&phi_mkv_read },
-		{ "mkv",	&phi_mkv_read },
-		{ "mp3",	&phi_mp3_read },
-		{ "mp4",	&phi_mp4_read },
-		{ "mpc",	&phi_mpc_read },
-		{ "ogg",	&phi_ogg_read },
-		{ "opus",	&phi_ogg_read },
+		{ "m4a",	&fmt_read },
+		{ "mka",	&fmt_read },
+		{ "mkv",	&fmt_read },
+		{ "mp3",	&fmt_read },
+		{ "mp4",	&fmt_read },
+		{ "mpc",	&fmt_read },
+		{ "ogg",	&fmt_read },
+		{ "opus",	&fmt_read },
 		{ "pls",	&phi_pls_read },
 		{ "ts",		&phi_ts_read },
-		{ "wav",	&phi_wav_read },
-		{ "wv",		&phi_wv_read },
+		{ "wav",	&fmt_read },
+		{ "wv",		&fmt_read },
 	};
 	return map_sz_vptr_findz2(mods, FF_COUNT(mods), name);
 }
@@ -110,31 +96,29 @@ static const void* fmt_mod_iface_input(const char *name)
 static const void* fmt_mod_iface(const char *name)
 {
 	static const struct map_sz_vptr mods[] = {
-		{ "aac",		&phi_aac_adts_read },
-		{ "ape",		&phi_ape_read },
+		{ "aac",		&fmt_read },
+		{ "ape",		&fmt_read },
 		{ "auto-write",	&phi_auto_write },
-		{ "avi",		&phi_avi_read },
-		{ "caf",		&phi_caf_read },
+		{ "avi",		&fmt_read },
+		{ "caf",		&fmt_read },
 		{ "cue",		&phi_cue_read },
 		{ "cue-hook",	&phi_cue_hook },
 		{ "detect",		&phi_format_detector },
-		{ "flac",		&phi_flac_read },
-		{ "flacogg",	&phi_flacogg_read },
+		{ "flac",		&fmt_read },
+		{ "flacogg",	&fmt_read },
 		{ "m3u",		&phi_m3u_read },
 		{ "m3u-write",	&phi_m3u_write },
-		{ "mkv",		&phi_mkv_read },
-		{ "mp3",		&phi_mp3_read },
-		{ "mp4",		&phi_mp4_read },
-		{ "mpc",		&phi_mpc_read },
-		{ "ogg",		&phi_ogg_read },
-		{ "opusmeta",	&phi_opusmeta_read },
+		{ "mkv",		&fmt_read },
+		{ "mp3",		&fmt_read },
+		{ "mp4",		&fmt_read },
+		{ "mpc",		&fmt_read },
+		{ "ogg",		&fmt_read },
 		{ "pls",		&phi_pls_read },
 		{ "tag",		&phi_tag },
 		{ "ts",			&phi_ts_read },
-		{ "vorbismeta",	&phi_vorbismeta_read },
-		{ "wav",		&phi_wav_read },
+		{ "wav",		&fmt_read },
 		{ "wav-write",	&phi_wav_write },
-		{ "wv",			&phi_wv_read },
+		{ "wv",			&fmt_read },
 	};
 	return map_sz_vptr_findz2(mods, FF_COUNT(mods), name);
 }

@@ -36,7 +36,7 @@ libphiola.$(SO): $(CORE_O)
 
 CFLAGS_CORE := $(CFLAGS) -DFFBASE_OPT_SIZE
 ifdef PHI_VERSION_STR
-	CFLAGS_CORE += -DPHI_VERSION_STR=\"$(PHI_VERSION_STR)\"
+core.o: CFLAGS_CORE += -DPHI_VERSION_STR=\"$(PHI_VERSION_STR)\"
 endif
 %.o: $(PHIOLA)/src/core/%.c
 	$(C) $(CFLAGS_CORE) $< -o $@

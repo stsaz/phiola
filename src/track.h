@@ -169,7 +169,7 @@ struct phi_track {
 		uint64	pos, total; // samples; -1:unset/unknown
 		int64	seek; // >0:msec; -1:unset
 		uint	seek_req :1; // New seek request is received (UI -> fmt.read)
-		uint	ogg_reset :1; // ogg.read -> opus.meta
+		uint	ogg_reset :1; // ogg.read -> opus.dec
 		uint	bitrate;
 		double	maxpeak_db;
 		const char *decoder;
@@ -179,10 +179,7 @@ struct phi_track {
 
 		union {
 			// flac.read/ogg -> flac.dec
-			struct {
-				uint flac_samples;
-				uint flac_minblock, flac_maxblock;
-			};
+			uint flac_samples;
 
 			// ape.read -> ape.dec
 			struct {

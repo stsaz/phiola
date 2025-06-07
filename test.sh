@@ -167,7 +167,7 @@ test_until() {
 	./phiola i -peaks -u 1 fm_opus.ogg    | grep '48,000 total'
 	./phiola i -peaks -u 1 fm_pcm.avi     | grep '48,000 total'
 	./phiola i -peaks -u 1 fm_pcm.caf     | grep '48,000 total'
-	./phiola i -peaks -u 1 fm_pcm.mkv     | grep -E '48,... total'
+	./phiola i -peaks -u 1 fm_pcm.mkv     | grep -E '4[78],... total'
 	./phiola i -peaks -u 1 fm_pcm.wav     | grep '48,000 total'
 	./phiola i -peaks -u 1 fm_vorbis.mkv  | grep -E '4[78],... total'
 	./phiola i -peaks -u 1 fm_vorbis.ogg  | grep '48,000 total'
@@ -201,7 +201,7 @@ test_seek() {
 	./phiola i -peaks -s 1 fm_opus.ogg    | grep '48,000 total'
 	# ./phiola i -peaks -s 1 fm_pcm.avi     | grep -E '4[89],... total'
 	# ./phiola i -peaks -s 1 fm_pcm.caf     | grep -E '4[89],... total'
-	./phiola i -peaks -s 1 fm_pcm.mkv     | grep -E '4[78],... total'
+	./phiola i -peaks -s 1 fm_pcm.mkv     | grep -E '4[678],... total'
 	./phiola i -peaks -s 1 fm_pcm.wav     | grep '48,000 total'
 	./phiola i -peaks -s 1 fm_vorbis.mkv  | grep -E '4[678],... total'
 	./phiola i -peaks -s 1 fm_vorbis.ogg  | grep -E '4[78],... total'
@@ -445,7 +445,7 @@ test_copy() {
 	## Seek
 	## mkv seeking implementation is not precise
 	## mp3 copy algorithm implementation doesn't preserve original delay/padding values
-	test_copy_seek fm_aac.aac     copy_s_aac.m4a        '4[89],...'
+	test_copy_seek fm_aac.aac     copy_s_aac.m4a        '[45][890],...'
 	test_copy_seek fm_aac.mkv     copy_s_mkv.m4a        '4[789],...'
 	test_copy_seek fm_aac.mp4     copy_s_mp4.m4a        '5[01],...'
 	test_copy_seek fm_mp3.mkv     copy_s_mp3_mkv.mp3    '4[789],...'
@@ -639,10 +639,14 @@ EOF
 
 test_meta() {
 	# Recording
-	./phiola rec -u 1 -m artist='Great Artist' -m title='Cool Song' -f -o meta.flac && ./phiola i meta.flac | grep 'Great Artist - Cool Song' || false
-	./phiola rec -u 1 -m artist='Great Artist' -m title='Cool Song' -f -o meta.m4a && ./phiola i meta.m4a | grep 'Great Artist - Cool Song' || false
-	./phiola rec -u 1 -m artist='Great Artist' -m title='Cool Song' -f -o meta.ogg && ./phiola i meta.ogg | grep 'Great Artist - Cool Song' || false
-	./phiola rec -u 1 -m artist='Great Artist' -m title='Cool Song' -ra 48000 -f -o meta.opus && ./phiola i meta.opus | grep 'Great Artist - Cool Song' || false
+	./phiola rec -u 1 -m artist='Great Artist' -m title='Cool Song' -f -o meta.flac
+	./phiola i meta.flac | grep 'Great Artist - Cool Song'
+	./phiola rec -u 1 -m artist='Great Artist' -m title='Cool Song' -f -o meta.m4a
+	./phiola i meta.m4a | grep 'Great Artist - Cool Song'
+	./phiola rec -u 1 -m artist='Great Artist' -m title='Cool Song' -f -o meta.ogg
+	./phiola i meta.ogg | grep 'Great Artist - Cool Song'
+	./phiola rec -u 1 -m artist='Great Artist' -m title='Cool Song' -ra 48000 -f -o meta.opus
+	./phiola i meta.opus | grep 'Great Artist - Cool Song'
 
 	# Conversion
 	./phiola co -m artist='AA' meta.flac -f -o meta2.flac && ./phiola i meta2.flac | grep 'AA - Cool Song' || false

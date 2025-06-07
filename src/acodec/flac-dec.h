@@ -6,7 +6,7 @@
 
 struct flac_dec {
 	uint sample_size;
-	uint64 last_page_pos, pos;
+	uint64 pos;
 	flac_decoder *dec;
 	flac_conf info;
 	ffstr in;
@@ -26,17 +26,22 @@ static void* flac_dec_create(phi_track *t)
 {
 	if (!core->track->filter(t, core->mod("afilter.skip"), 0))
 		return PHI_OPEN_ERR;
+	if (t->data_in.len != sizeof(struct flac_streaminfo))
+		return PHI_OPEN_ERR;
 
 	int r;
 	struct flac_dec *f = phi_track_allocT(t, struct flac_dec);
+
+	const struct flac_streaminfo *si = (void*)t->data_in.ptr;
+	t->data_in.len = 0;
 
 	flac_conf info = {
 		.bps = phi_af_bits(&t->audio.format),
 		.channels = t->audio.format.channels,
 		.rate = t->audio.format.rate,
 
-		.min_blocksize = t->audio.flac_minblock,
-		.max_blocksize = t->audio.flac_maxblock,
+		.min_blocksize = ffint_be_cpu16_ptr(si->minblock),
+		.max_blocksize = ffint_be_cpu16_ptr(si->maxblock),
 	};
 	if ((r = flac_decode_init(&f->dec, &info))) {
 		errlog(t, "flac_decode_init(): %s", flac_errstr(r));
@@ -45,7 +50,6 @@ static void* flac_dec_create(phi_track *t)
 	}
 
 	f->info = info;
-	f->pos = ~0ULL;
 	f->sample_size = phi_af_size(&t->audio.format);
 	t->data_type = "pcm";
 	return f;
@@ -111,13 +115,15 @@ static int flac_dec_decode(void *ctx, phi_track *t)
 	}
 
 	if (t->chain_flags & PHI_FFWD) {
-		if (f->pos == ~0ULL || f->last_page_pos != t->audio.pos) {
-			f->last_page_pos = t->audio.pos;
+		if (!t->data_in.len)
+			return PHI_MORE; // after we've read the stream info in flac_dec_create()
+		if (t->audio.pos != ~0ULL)
 			f->pos = t->audio.pos;
-		}
 
 		f->in = t->data_in;
 		f->pcmlen = t->audio.flac_samples;
+		if (!f->pcmlen)
+			f->pcmlen = f->info.min_blocksize; // OGG reader doesn't provide per-packet duration
 	}
 
 	const int **out;

@@ -9,5 +9,4 @@
 
 extern const phi_core *core;
 
-#include <format/aac-read.h>
 #include <format/aac-write.h>

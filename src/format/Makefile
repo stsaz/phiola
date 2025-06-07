@@ -24,18 +24,12 @@ CFLAGS_FORMAT := $(CFLAGS) -DFFBASE_OPT_SIZE -I$(AVPACK)
 
 format.$(SO): mod-fmt.o \
 		aac-adts.o \
-		ape-read.o \
-		avi.o \
-		caf.o \
-		flac-fmt.o flac-ogg.o \
-		mkv.o \
+		flac-fmt.o \
 		mp3.o \
 		mp4.o \
-		mpc-read.o \
 		ogg.o \
 		ts-read.o \
 		wav.o \
-		wv.o \
 		\
 		tag.o \
 		\

@@ -46,19 +46,20 @@ static void ts_close(void *ctx, phi_track *t)
 	phi_track_free(t, c);
 }
 
+extern const phi_filter fmt_read;
+
 static int ts_info(struct ts_r *c, phi_track *t, const struct _tsr_pm *info)
 {
-	const char *mod;
 	switch (info->stream_type) {
 	case TS_STREAM_AUDIO_MP3:
-		mod = "format.mp3";  break;
+		t->conf.ifile.format = AVPKF_MP3;  break;
 	case TS_STREAM_AUDIO_AAC:
-		mod = "format.aac";  break;
+		t->conf.ifile.format = AVPKF_AAC;  break;
 	default:
 		errlog(t, "codec not supported: %u", info->stream_type);
 		return 1;
 	}
-	if (!core->track->filter(t, core->mod(mod), 0))
+	if (!core->track->filter(t, &fmt_read, 0))
 		return -1;
 
 	c->track_id = info->pid;
