@@ -6,6 +6,7 @@
 const struct phi_core *core;
 #define errlog(t, ...)  phi_errlog(core, NULL, t, __VA_ARGS__)
 #define warnlog(t, ...)  phi_warnlog(core, NULL, t, __VA_ARGS__)
+#define verblog(t, ...)  phi_verblog(core, NULL, t, __VA_ARGS__)
 #define dbglog(t, ...)  phi_dbglog(core, NULL, t, __VA_ARGS__)
 
 static const void* fmt_mod_iface_input(const char *name);
@@ -13,14 +14,12 @@ static const void* fmt_mod_iface_input(const char *name);
 #include <format/mmtag.h>
 #include <format/detector.h>
 #include <format/reader.h>
+#include <format/writer.h>
 
 extern const phi_filter
 	phi_aac_adts_write,
 	phi_flac_write,
-	phi_mp3_write,
-	phi_mp4_write,
-	phi_ogg_write,
-	phi_wav_write;
+	phi_ogg_write;
 extern const phi_filter
 	phi_ts_read,
 	phi_cue_read, phi_cue_hook,
@@ -42,12 +41,12 @@ static int phi_autow_process(void *obj, phi_track *t)
 	static const struct map_sz_vptr mods[] = {
 		{ "aac",	&phi_aac_adts_write },
 		{ "flac",	&phi_flac_write },
-		{ "m4a",	&phi_mp4_write },
-		{ "mp3",	&phi_mp3_write },
-		{ "mp4",	&phi_mp4_write },
+		{ "m4a",	&fmt_write },
+		{ "mp3",	&fmt_write },
+		{ "mp4",	&fmt_write },
 		{ "ogg",	&phi_ogg_write },
 		{ "opus",	&phi_ogg_write },
-		{ "wav",	&phi_wav_write },
+		{ "wav",	&fmt_write },
 	};
 	const void *f;
 	if (NULL == (f = map_sz_vptr_findstr(mods, FF_COUNT(mods), ext))) {
@@ -117,7 +116,7 @@ static const void* fmt_mod_iface(const char *name)
 		{ "tag",		&phi_tag },
 		{ "ts",			&phi_ts_read },
 		{ "wav",		&fmt_read },
-		{ "wav-write",	&phi_wav_write },
+		{ "wav-write",	&fmt_write },
 		{ "wv",			&fmt_read },
 	};
 	return map_sz_vptr_findz2(mods, FF_COUNT(mods), name);
