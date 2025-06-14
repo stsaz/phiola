@@ -24,6 +24,10 @@ if ! test -d "../phiola" ; then
 fi
 PHI_DIR=$(pwd)
 
+path_basename() {
+	echo "${1##*/}"
+}
+
 if test -z "$ANDROID_HOME" ; then
 	exit 1
 elif ! test -d "$ANDROID_HOME/cmdline-tools" ; then
@@ -38,7 +42,7 @@ elif ! test -d "$ANDROID_HOME/cmdline-tools" ; then
 	cd $ANDROID_HOME
 	mkdir cmdline-tools
 	cd cmdline-tools
-	fcom unpack /tmp/android-dl/commandlinetools*
+	unzip /tmp/android-dl/$(path_basename "$ANDROID_CLT_URL")
 	mv cmdline-tools latest
 	cd $PHI_DIR
 fi
@@ -114,44 +118,42 @@ EOF
 fi
 
 # Prepare build script
+
+ARGS_OS="COMPILER=clang \
+SYS=android \
+CPU=$CPU \
+NDK_DIR=/Android/ndk/$ANDROID_NDK_VER"
+ODIR=_android-$CPU
+
 cat >build_android.sh <<EOF
 set -xe
 
 export PATH=/Android/ndk/$ANDROID_NDK_VER/toolchains/llvm/prebuilt/linux-x86_64/bin:\$PATH
 
 export ANDROID_NDK_ROOT=/Android/ndk/$ANDROID_NDK_VER
-mkdir -p ../netmill/3pt/_android-$CPU
+mkdir -p ../netmill/3pt/$ODIR
 make -j$JOBS openssl \
- -C ../netmill/3pt/_android-$CPU \
+ -C ../netmill/3pt/$ODIR \
  -f ../Makefile \
  -I .. \
- COMPILER=clang \
- SYS=android \
- CPU=$CPU \
- NDK_DIR=/Android/ndk/$ANDROID_NDK_VER
+ $ARGS_OS
 
-mkdir -p ../ffpack/_android-$CPU
+mkdir -p ../ffpack/$ODIR
 make -j$JOBS zstd \
- -C ../ffpack/_android-$CPU \
+ -C ../ffpack/$ODIR \
  -f ../Makefile \
  -I .. \
- COMPILER=clang \
- SYS=android \
- CPU=$CPU \
- NDK_DIR=/Android/ndk/$ANDROID_NDK_VER
+ $ARGS_OS
 
-mkdir -p alib3/_android-$CPU
+mkdir -p alib3/$ODIR
 make -j$JOBS \
- -C alib3/_android-$CPU \
+ -C alib3/$ODIR \
  -f ../Makefile \
  -I .. \
- COMPILER=clang \
- SYS=android \
- CPU=$CPU \
- NDK_DIR=/Android/ndk/$ANDROID_NDK_VER
+ $ARGS_OS
 
 export ANDROID_HOME=/Android
-mkdir -p _android-$CPU
+mkdir -p $ODIR
 make -j$JOBS \
  -C _android-$CPU \
  -f ../android/Makefile \

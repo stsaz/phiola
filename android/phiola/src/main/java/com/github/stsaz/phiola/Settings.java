@@ -251,11 +251,11 @@ class CoreSettings {
 	}
 
 	void set_codepage(String val) {
-		if (val.equals("cp1251")
-				|| val.equals("cp1252"))
+		if (val.equals("win1251")
+				|| val.equals("win1252"))
 			codepage = val;
 		else
-			codepage = "cp1252";
+			codepage = "win1252";
 	}
 
 	void normalize_convert() {

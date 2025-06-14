@@ -366,9 +366,9 @@ JNIEXPORT void JNICALL
 Java_com_github_stsaz_phiola_Phiola_setConfig(JNIEnv *env, jobject thiz, jstring jcodepage, jboolean deprecated_mods)
 {
 	const char *sz = jni_sz_js(jcodepage);
-	if (ffsz_eq(sz, "cp1251"))
+	if (ffsz_eq(sz, "win1251"))
 		x->core->conf.code_page = FFUNICODE_WIN1251;
-	else if (ffsz_eq(sz, "cp1252"))
+	else if (ffsz_eq(sz, "win1252"))
 		x->core->conf.code_page = FFUNICODE_WIN1252;
 	jni_sz_free(sz, jcodepage);
 

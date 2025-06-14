@@ -43,19 +43,21 @@ cd phiola
 * Cross-Build on Linux:
 
 	```sh
-	bash xbuild-debianbullseye.sh
+	bash xbuild.sh
 	```
 
 * Cross-Build on Linux for ARM64:
 
 	```sh
-	bash xbuild-debianbookworm-arm64.sh
+	CPU=arm64 \
+		bash xbuild.sh
 	```
 
 * Cross-Build on Linux for Windows/AMD64:
 
 	```sh
-	bash xbuild-win64.sh
+	OS=windows \
+		bash xbuild.sh
 	```
 
 * Cross-Build on Linux for Android/ARM64:

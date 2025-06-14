@@ -130,9 +130,6 @@ ifeq "$(DEBUG)" "1"
 else
 	CFLAGS += -O3 -fno-strict-aliasing -fvisibility=hidden
 endif
-ifdef PHI_VERSION_STR
-	CFLAGS += -DPHI_VERSION_STR=\"$(PHI_VERSION_STR)\"
-endif
 CFLAGS += $(CFLAGS_USER)
 CFLAGS_BASE := $(CFLAGS)
 CFLAGS += -I$(PHIOLA)/src -I$(FFSYS)
