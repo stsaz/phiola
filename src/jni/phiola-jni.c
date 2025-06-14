@@ -174,7 +174,6 @@ enum {
 	AF_FLAC = 3,
 	AF_OPUS = 4,
 	AF_OPUS_VOICE = 5,
-	AF_VORBIS = 6,
 };
 
 #include <jni/android-utils.h>
@@ -196,35 +195,36 @@ Some modules also have the dependencies - load them too. */
 static char* mod_loading(ffstr name)
 {
 	int e = -1, r, attached = 0;
-	char* znames[3] = {};
+	char* znames[2] = {};
 	JNIEnv *env;
 
-	static const struct map_sz_vptr mod_deps[] = {
-		{ "ac-aac",		"libfdk-aac-phi" },
-		{ "ac-alac",	"libALAC-phi" },
-		{ "ac-flac",	"libFLAC-phi" },
-		{ "ac-mpeg",	"libmpg123-phi" },
-		{ "ac-opus",	"libopus-phi" },
-		{ "ac-vorbis",	"libvorbis-phi" },
-		{ "af-danorm",	"libDynamicAudioNormalizer-phi" },
-		{ "af-loudness","libebur128-phi" },
-		{ "af-soxr",	"libsoxr-phi" },
-		{ "zstd",		"libzstd-ffpack" },
-		{}
+	static const struct {
+		char module[16];
+		char dependency[31];
+		u_char deprecated;
+	} mods[] = {
+		{ "ac-aac",		"libfdk-aac-phi", 0 },
+		{ "ac-alac",	"libALAC-phi", 1 },
+		{ "ac-flac",	"libFLAC-phi", 0 },
+		{ "ac-mpeg",	"libmpg123-phi", 0 },
+		{ "ac-opus",	"libopus-phi", 0 },
+		{ "ac-vorbis",	"libvorbis-phi", 0 },
+		{ "af-danorm",	"libDynamicAudioNormalizer-phi", 0 },
+		{ "af-loudness","libebur128-phi", 0 },
+		{ "af-soxr",	"libsoxr-phi", 0 },
+		{ "zstd",		"libzstd-ffpack", 0 },
 	};
-	const char *dep = map_sz_vptr_findstr(mod_deps, FF_COUNT(mod_deps), name);
+	int i = ffcharr_findsorted_padding(mods, FF_COUNT(mods), sizeof(mods[0].module), sizeof(mods[0]) - sizeof(mods[0].module), name.ptr, name.len);
 	znames[0] = ffsz_allocfmt("%S/lib%S.so", &x->dir_libs, &name);
-	if (dep) {
+	if (i >= 0) {
 
-		if (ffstr_eqz(&name, "ac-alac")
+		if (mods[i].deprecated
 			&& !x->deprecated_mods) {
 			errlog("Loading deprecated libraries is restricted: %S", &name);
 			goto end;
 		}
 
-		znames[1] = ffsz_allocfmt("%S/%s.so", &x->dir_libs, dep);
-		if (ffstr_eqz(&name, "vorbis"))
-			znames[2] = ffsz_allocfmt("%S/libvorbisenc-phi.so", &x->dir_libs);
+		znames[1] = ffsz_allocfmt("%S/%s.so", &x->dir_libs, mods[i].dependency);
 	}
 
 	if ((r = jni_vm_attach_once(jvm, &env, &attached, JNI_VERSION_1_6))) {
@@ -248,7 +248,6 @@ end:
 		jni_vm_detach(jvm);
 
 	ffmem_free(znames[1]);
-	ffmem_free(znames[2]);
 	if (e) {
 		ffmem_free(znames[0]);
 		return NULL;

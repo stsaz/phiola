@@ -39,8 +39,13 @@ LIBS3 += $(ALIB3_BIN)/libmpg123-phi.$(SO)
 $(ACPFX)mpeg.$(SO): LINKFLAGS += $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lmpg123-phi
 
 MODS += $(ACPFX)vorbis.$(SO)
-LIBS3 += $(ALIB3_BIN)/libvorbis-phi.$(SO) $(ALIB3_BIN)/libvorbisenc-phi.$(SO)
-$(ACPFX)vorbis.$(SO): LINKFLAGS += $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lvorbis-phi -lvorbisenc-phi
+LIBS3 += $(ALIB3_BIN)/libvorbis-phi.$(SO)
+VORBIS_ENC_LIB :=
+ifneq "$(SYS)" "android"
+	LIBS3 += $(ALIB3_BIN)/libvorbisenc-phi.$(SO)
+	VORBIS_ENC_LIB := -lvorbisenc-phi
+endif
+$(ACPFX)vorbis.$(SO): LINKFLAGS += $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lvorbis-phi $(VORBIS_ENC_LIB)
 
 MODS += $(ACPFX)opus.$(SO)
 LIBS3 += $(ALIB3_BIN)/libopus-phi.$(SO)

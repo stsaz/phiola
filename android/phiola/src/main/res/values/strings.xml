@@ -123,7 +123,6 @@
 	<string name="conv_encoding">Encoding</string>
 	<string name="conv_aac_q">[.m4a] AAC Quality: 1..5 (VBR) or 8..800 (CBR, kbit/s):</string>
 	<string name="conv_opus_q">[.opus] Opus Quality (VBR, kbit/s):</string>
-	<string name="conv_vorbis_q">[.ogg] Vorbis Quality:</string>
 	<string name="conv_copy">[.mp3/.m4a/.ogg] Stream Copy</string>
 
 	<string name="conv_behaviour">Behavior</string>

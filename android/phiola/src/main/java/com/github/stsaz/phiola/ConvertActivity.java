@@ -84,15 +84,6 @@ public class ConvertActivity extends AppCompatActivity {
 				}
 			});
 
-		b.sbVorbisQ.setMax(vorbis_q_progress(10));
-		b.sbVorbisQ.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
-				@Override
-				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser)
-						b.eVorbisQ.setText(core.int_to_str(vorbis_q_value(progress)));
-				}
-			});
-
 		b.swCopy.setOnCheckedChangeListener((v, checked) -> {
 				b.spSampleFormat.setEnabled(!checked);
 				b.eSampleRate.setEnabled(!checked);
@@ -102,9 +93,6 @@ public class ConvertActivity extends AppCompatActivity {
 
 				b.sbOpusQ.setEnabled(!checked);
 				b.eOpusQ.setEnabled(!checked);
-
-				b.sbVorbisQ.setEnabled(!checked);
-				b.eVorbisQ.setEnabled(!checked);
 			});
 
 		b.bStart.setOnClickListener((v) -> convert());
@@ -179,10 +167,6 @@ public class ConvertActivity extends AppCompatActivity {
 	private static int opus_q_value(int progress) { return 16 + progress * 16; }
 	private static int opus_q_progress(int q) { return (q - 16) / 16; }
 
-	// 1..10
-	private static int vorbis_q_value(int progress) { return 1 + progress; }
-	private static int vorbis_q_progress(int q) { return q - 1; }
-
 	private void load() {
 		b.eOutDir.setText(core.setts.conv_out_dir);
 		b.eOutName.setText(core.setts.conv_out_name);
@@ -193,9 +177,6 @@ public class ConvertActivity extends AppCompatActivity {
 
 		b.sbOpusQ.setProgress(opus_q_progress(core.setts.conv_opus_quality));
 		b.eOpusQ.setText(core.int_to_str(core.setts.conv_opus_quality));
-
-		b.sbVorbisQ.setProgress(vorbis_q_progress(core.setts.conv_vorbis_quality));
-		b.eVorbisQ.setText(core.int_to_str(core.setts.conv_vorbis_quality));
 
 		b.swCopy.setChecked(core.setts.conv_copy);
 
@@ -228,10 +209,6 @@ public class ConvertActivity extends AppCompatActivity {
 		v = core.str_to_uint(b.eOpusQ.getText().toString(), 0);
 		if (v != 0)
 			core.setts.conv_opus_quality = v;
-
-		v = core.str_to_uint(b.eVorbisQ.getText().toString(), 0);
-		if (v != 0)
-			core.setts.conv_vorbis_quality = v;
 
 		core.setts.conv_file_date_preserve = b.swPreserveDate.isChecked();
 		core.setts.conv_new_add_list = b.swPlAdd.isChecked();
@@ -272,7 +249,6 @@ public class ConvertActivity extends AppCompatActivity {
 		p.sample_rate = core.str_to_uint(b.eSampleRate.getText().toString(), 0);
 		p.aac_quality = core.setts.conv_aac_quality;
 		p.opus_quality = core.setts.conv_opus_quality;
-		p.vorbis_quality = (core.setts.conv_vorbis_quality + 1) * 10;
 
 		int iformat = b.spOutExt.getSelectedItemPosition();
 		p.format = CoreSettings.conv_encoders[iformat];

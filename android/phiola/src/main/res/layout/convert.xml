@@ -216,24 +216,6 @@
 		<TextView
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="@dimen/sett_margin"
-			android:text="@string/conv_vorbis_q"
-			android:textColor="@color/text" />
-		<SeekBar
-			android:id="@+id/sb_vorbis_q"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content" />
-		<EditText
-			android:id="@+id/e_vorbis_q"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="@dimen/sett_margin"
-			android:inputType="number"
-			android:textSize="@dimen/text_editbox" />
-
-		<TextView
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
 			android:text="@string/conv_behaviour"
 			android:textColor="@color/sett_group" />
 

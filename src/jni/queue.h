@@ -565,9 +565,6 @@ Java_com_github_stsaz_phiola_Phiola_quConvertBegin(JNIEnv *env, jobject thiz, jl
 
 	case AF_OPUS:
 		conf.opus.bitrate = jni_obj_int(jconf, jni_field_int(jc_conf, "opus_quality"));  break;
-
-	case AF_VORBIS:
-		conf.vorbis.quality = jni_obj_int(jconf, jni_field_int(jc_conf, "vorbis_quality"));  break;
 	}
 
 	if (msec_apos(from, (int64*)&conf.seek_msec)) {

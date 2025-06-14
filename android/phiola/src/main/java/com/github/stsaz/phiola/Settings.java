@@ -97,7 +97,6 @@ class CoreSettings {
 	String	conv_format;
 	int		conv_aac_quality;
 	int		conv_opus_quality;
-	int		conv_vorbis_quality;
 	boolean	conv_copy;
 	boolean	conv_file_date_preserve;
 	boolean	conv_new_add_list;
@@ -119,7 +118,6 @@ class CoreSettings {
 		Phiola.AF_AAC_LC,
 		Phiola.AF_AAC_HE,
 		Phiola.AF_OPUS,
-		Phiola.AF_VORBIS,
 		Phiola.AF_FLAC,
 		0,
 		0,
@@ -128,7 +126,6 @@ class CoreSettings {
 		"m4a",
 		"m4a/aac-he",
 		"opus",
-		"ogg",
 		"flac",
 		"wav",
 		"mp3",
@@ -137,7 +134,6 @@ class CoreSettings {
 		"m4a",
 		"m4a",
 		"opus",
-		"ogg",
 		"flac",
 		"wav",
 		"mp3",
@@ -146,7 +142,6 @@ class CoreSettings {
 		".m4a (AAC-LC)",
 		".m4a (AAC-HE)",
 		".opus (Opus)",
-		".ogg (Vorbis)",
 		".flac (FLAC)",
 		".wav (PCM)",
 		".mp3 (Copy)",
@@ -209,7 +204,6 @@ class CoreSettings {
 			+ "conv_format %s\n"
 			+ "conv_aac_q %d\n"
 			+ "conv_opus_q %d\n"
-			+ "conv_vorbis_q %d\n"
 			+ "conv_copy %d\n"
 			+ "conv_file_date_pres %d\n"
 			+ "conv_new_add_list %d\n"
@@ -243,7 +237,6 @@ class CoreSettings {
 			, conv_format
 			, conv_aac_quality
 			, conv_opus_quality
-			, conv_vorbis_quality
 			, core.bool_to_int(conv_copy)
 			, core.bool_to_int(conv_file_date_preserve)
 			, core.bool_to_int(conv_new_add_list)
@@ -269,8 +262,6 @@ class CoreSettings {
 			conv_aac_quality = 5;
 		if (conv_opus_quality <= 0)
 			conv_opus_quality = 192;
-		if (conv_vorbis_quality <= 0)
-			conv_vorbis_quality = 7;
 	}
 
 	void normalize_rec() {
@@ -350,7 +341,6 @@ class CoreSettings {
 		conv_format = kv[Conf.CONV_FORMAT].value;
 		conv_aac_quality = kv[Conf.CONV_AAC_Q].number;
 		conv_opus_quality = kv[Conf.CONV_OPUS_Q].number;
-		conv_vorbis_quality = kv[Conf.CONV_VORBIS_Q].number;
 		conv_copy = kv[Conf.CONV_COPY].enabled;
 		conv_file_date_preserve = kv[Conf.CONV_FILE_DATE_PRES].enabled;
 		conv_new_add_list = kv[Conf.CONV_NEW_ADD_LIST].enabled;

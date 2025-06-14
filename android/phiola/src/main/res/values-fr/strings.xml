@@ -20,7 +20,6 @@
     <string name="conv_preserve_date">Préserver la date du fichier</string>
     <string name="conv_sample_rate">Taux d\'échatillonage (Hz):</string>
     <string name="conv_trash_orig">Déplacer le fichier d\'entrée dans la poubelle</string>
-    <string name="conv_vorbis_q">[.ogg] Qualité Vorbis:</string>
     <string name="lssv_bsave">Sauvegarder</string>
     <string name="lssv_ldir">Dossier de sortie:</string>
     <string name="lssv_lname">Nom de la liste de lecture:</string>
