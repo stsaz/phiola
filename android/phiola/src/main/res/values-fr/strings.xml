@@ -62,7 +62,7 @@
     <string name="sett_rec_enc">Encodeur</string>
     <string name="sett_rec_exclusive">Mode exclusif</string>
     <string name="sett_rec_gain">Gain/Attenuation (dB):</string>
-    <string name="sett_rec_until">Arrêt automatique après (secondes):</string>
+    <string name="sett_rec_until">Arrêt automatique après:</string>
     <string name="sett_recording">Enregistrement</string>
     <string name="sett_repeat_all">Tout répéter</string>
     <string name="sett_show_filter">Cacher la zone de recherche-édition</string>
@@ -70,5 +70,4 @@
     <string name="sett_svc_notif_disable">Désactiver les notifications système (recquiert un redémarrage)</string>
     <string name="sett_trash_dir">Dossier poubelle (relatif au point de montage):</string>
     <string name="sett_ui_info_in_title">Montrer les infos audio dans le titre</string>
-    <string name="sett_ui_state_hide">Ne pas afficher le statut dans le titre (ex: [Lecture])</string>
 </resources>

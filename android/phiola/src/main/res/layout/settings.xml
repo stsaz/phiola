@@ -22,13 +22,6 @@
 			android:text="@string/sett_dark" />
 
 		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/sw_state_hide"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:layout_margin="@dimen/sett_margin"
-			android:text="@string/sett_ui_state_hide" />
-
-		<androidx.appcompat.widget.SwitchCompat
 			android:id="@+id/sw_showfilter"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
@@ -133,16 +126,12 @@
 			android:layout_marginTop="@dimen/sett_margin"
 			android:text="@string/sett_codepage"
 			android:textColor="@color/text" />
-
-		<EditText
-			android:id="@+id/e_codepage"
+		<Spinner
+			android:id="@+id/sp_codepage"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
-			android:autofillHints=""
-			android:hint=""
-			android:inputType="text"
-			android:textSize="@dimen/text_editbox" />
+			android:spinnerMode="dropdown" />
 
 		<TextView
 			android:layout_width="match_parent"

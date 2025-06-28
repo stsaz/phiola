@@ -44,6 +44,7 @@ VORBIS_ENC_LIB :=
 ifneq "$(SYS)" "android"
 	LIBS3 += $(ALIB3_BIN)/libvorbisenc-phi.$(SO)
 	VORBIS_ENC_LIB := -lvorbisenc-phi
+vorbis.o: CFLAGS += -DPHI_VORBIS_ENC=1
 endif
 $(ACPFX)vorbis.$(SO): LINKFLAGS += $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lvorbis-phi $(VORBIS_ENC_LIB)
 

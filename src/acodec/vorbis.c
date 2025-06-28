@@ -12,12 +12,16 @@ static const phi_core *core;
 #define dbglog(t, ...)  phi_dbglog(core, NULL, t, __VA_ARGS__)
 
 #include <acodec/vorbis-dec.h>
+#if PHI_VORBIS_ENC == 1
 #include <acodec/vorbis-enc.h>
+#endif
 
 static const void* vorbis_iface(const char *name)
 {
 	if (ffsz_eq(name, "decode")) return &phi_vorbis_dec;
+#if PHI_VORBIS_ENC == 1
 	else if (ffsz_eq(name, "encode")) return &phi_vorbis_enc;
+#endif
 	return NULL;
 }
 

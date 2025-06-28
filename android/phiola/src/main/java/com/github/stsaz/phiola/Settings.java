@@ -48,6 +48,7 @@ class CoreSettings {
 	String	trash_dir;
 	boolean	file_del, deprecated_mods;
 	String	codepage;
+	int		codepage_index;
 	String	pub_data_dir;
 	String	plist_save_dir;
 	String	quick_move_dir;
@@ -147,6 +148,11 @@ class CoreSettings {
 		".mp3 (Copy)",
 	};
 
+	static final String[] code_pages = {
+		"win1251",
+		"win1252",
+	};
+
 	CoreSettings(Core core) {
 		this.core = core;
 
@@ -199,6 +205,7 @@ class CoreSettings {
 			+ "rec_src_unproc %d\n"
 			+ "rec_list_add %d\n"
 			+ "rec_longclick %d\n"
+
 			+ "conv_out_dir %s\n"
 			+ "conv_out_name %s\n"
 			+ "conv_format %s\n"
@@ -232,6 +239,7 @@ class CoreSettings {
 			, core.bool_to_int(rec_src_unprocessed)
 			, core.bool_to_int(rec_list_add)
 			, core.bool_to_int(rec_longclick)
+
 			, conv_out_dir
 			, conv_out_name
 			, conv_format
@@ -243,12 +251,16 @@ class CoreSettings {
 			);
 	}
 
-	void set_codepage(String val) {
-		if (val.equals("win1251")
-				|| val.equals("win1252"))
-			codepage = val;
-		else
-			codepage = "win1252";
+	void set_codepage_str(String val) {
+		int i = Util.array_ifind(code_pages, val);
+		if (i < 0)
+			return;
+		codepage = val;
+		codepage_index = i;
+	}
+	void set_codepage(int i) {
+		codepage_index = i;
+		codepage = code_pages[i];
 	}
 
 	void normalize_convert() {
@@ -294,7 +306,7 @@ class CoreSettings {
 			plist_save_dir = pub_data_dir;
 
 		if (codepage.isEmpty())
-			codepage = "cp1252";
+			set_codepage_str("win1252");
 
 		if (trash_dir.isEmpty())
 			trash_dir = "Trash";
@@ -316,7 +328,7 @@ class CoreSettings {
 		quick_move_dir = kv[Conf.OP_QUICK_MOVE_DIR].value;
 		trash_dir = kv[Conf.OP_TRASH_DIR_REL].value;
 		deprecated_mods = kv[Conf.OP_DEPRECATED_MODS].enabled;
-		set_codepage(kv[Conf.CODEPAGE].value);
+		set_codepage_str(kv[Conf.CODEPAGE].value);
 
 		auto_skip_head_set(kv[Conf.PLAY_AUTO_SKIP].value);
 		auto_skip_tail_set(kv[Conf.PLAY_AUTO_SKIP_TAIL].value);

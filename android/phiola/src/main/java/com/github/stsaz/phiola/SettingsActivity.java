@@ -118,12 +118,12 @@ public class SettingsActivity extends AppCompatActivity {
 				}
 			});
 
-		b.sbRecUntil.setMax(rec_until_progress(3600));
+		b.sbRecUntil.setMax(rec_until_progress(12*3600));
 		b.sbRecUntil.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
 				@Override
 				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 					if (fromUser)
-						b.eRecUntil.setText(String.format("%d", rec_until_value(progress)));
+						b.eRecUntil.setText(time_str(rec_until_value(progress)));
 				}
 			});
 
@@ -186,7 +186,6 @@ public class SettingsActivity extends AppCompatActivity {
 	private void load() {
 		// Interface
 		b.swDark.setChecked(core.gui().theme == GUI.THM_DARK);
-		b.swStateHide.setChecked(core.gui().state_hide);
 		b.swShowfilter.setChecked(core.gui().filter_hide);
 		b.swShowrec.setChecked(core.gui().record_hide);
 		b.swSvcNotifDisable.setChecked(core.setts.svc_notification_disable);
@@ -205,7 +204,11 @@ public class SettingsActivity extends AppCompatActivity {
 		b.eAutoStop.setText(core.int_to_str(queue.auto_stop_value_min));
 
 		// Playback
-		b.eCodepage.setText(core.setts.codepage);
+		ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, core.setts.code_pages);
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		b.spCodepage.setAdapter(adapter);
+		b.spCodepage.setSelection(core.setts.codepage_index);
+
 		b.sbPlayAutoSkip.setProgress(auto_skip_progress(core.setts.auto_skip_head.val));
 		b.eAutoSkip.setText(core.setts.auto_skip_head.str());
 		b.sbPlayAutoSkipTail.setProgress(auto_skip_progress(core.setts.auto_skip_tail.val));
@@ -234,7 +237,6 @@ public class SettingsActivity extends AppCompatActivity {
 			i = GUI.THM_DARK;
 		core.gui().theme = i;
 
-		core.gui().state_hide = b.swStateHide.isChecked();
 		core.gui().filter_hide = b.swShowfilter.isChecked();
 		core.gui().record_hide = b.swShowrec.isChecked();
 		core.gui().ainfo_in_title = b.swUiInfoInTitle.isChecked();
@@ -256,7 +258,7 @@ public class SettingsActivity extends AppCompatActivity {
 		queue.auto_stop_value_min = core.str_to_uint(b.eAutoStop.getText().toString(), 0);
 
 		// Playback
-		core.setts.set_codepage(b.eCodepage.getText().toString());
+		core.setts.set_codepage(b.spCodepage.getSelectedItemPosition());
 		core.setts.auto_skip_head_set(b.eAutoSkip.getText().toString());
 		core.setts.auto_skip_tail_set(b.eAutoSkipTail.getText().toString());
 
@@ -313,9 +315,30 @@ public class SettingsActivity extends AppCompatActivity {
 	private static int rec_bitrate_value(int progress) { return 8 + (progress) * 8; }
 	private static int rec_bitrate_progress(int value) { return (value - 8) / 8; }
 
-	// 60..3600 by 60
-	private static int rec_until_value(int progress) { return 60 + (progress) * 60; }
-	private static int rec_until_progress(int value) { return (value - 60) / 60; }
+	// 10m..12h by 10m
+	private static int rec_until_value(int progress) { return 10*60 + (progress) * 10*60; }
+	private static int rec_until_progress(int value) { return (value - 10*60) / (10*60); }
+
+	private String time_str(int sec) { return String.format("%02d:%02d:%02d", sec / 3600, (sec / 60) % 60, sec % 60); }
+
+	/** Convert string like '[[HH:]MM:]SS' to seconds */
+	private int time_sec(String s) {
+		int sec = -1, min = 0, hr = 0;
+
+		String[] v = s.split(":");
+		if (v.length >= 1)
+			sec = core.str_to_uint(v[v.length - 1], -1);
+		if (v.length >= 2)
+			min = core.str_to_uint(v[v.length - 2], -1);
+		if (v.length >= 3)
+			hr = core.str_to_uint(v[v.length - 3], -1);
+		if (v.length >= 4)
+			return -1;
+
+		if (sec < 0 || min < 0 || hr < 0)
+			return -1;
+		return hr*3600 + min*60 + sec;
+	}
 
 	private void rec_load() {
 		b.swRecLongclick.setChecked(core.setts.rec_longclick);
@@ -331,7 +354,7 @@ public class SettingsActivity extends AppCompatActivity {
 		b.eRecBitrate.setText(Integer.toString(core.setts.rec_bitrate));
 		b.eRecBufLen.setText(core.int_to_str(core.setts.rec_buf_len_ms));
 		b.sbRecUntil.setProgress(rec_until_progress(core.setts.rec_until_sec));
-		b.eRecUntil.setText(core.int_to_str(core.setts.rec_until_sec));
+		b.eRecUntil.setText(time_str(core.setts.rec_until_sec));
 		b.swRecDanorm.setChecked(core.setts.rec_danorm);
 		b.eRecGain.setText(core.float_to_str((float)core.setts.rec_gain_db100 / 100));
 		b.sbRecGain.setProgress((int)core.setts.rec_gain_db100 / 100);
@@ -349,7 +372,7 @@ public class SettingsActivity extends AppCompatActivity {
 		core.setts.rec_rate = core.str_to_uint(b.eRecRate.getText().toString(), 0);
 		core.setts.rec_enc = CoreSettings.rec_formats[b.spRecEnc.getSelectedItemPosition()];
 		core.setts.rec_buf_len_ms = core.str_to_uint(b.eRecBufLen.getText().toString(), -1);
-		core.setts.rec_until_sec = core.str_to_uint(b.eRecUntil.getText().toString(), -1);
+		core.setts.rec_until_sec = time_sec(b.eRecUntil.getText().toString());
 		core.setts.rec_danorm = b.swRecDanorm.isChecked();
 		core.setts.rec_gain_db100 = (int)(core.str_to_float(b.eRecGain.getText().toString(), 0) * 100);
 		core.setts.rec_exclusive = b.swRecExclusive.isChecked();
