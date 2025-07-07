@@ -1024,8 +1024,6 @@ public class MainActivity extends AppCompatActivity {
 	// [Playing]
 	// [PLA,STP,REC|RPA,CON]
 	private String state_flags(int st) {
-		if (gui.state_hide) return "";
-
 		if ((st & (GUI.STATE_PLAYING | GUI.STATE_RECORDING | GUI.STATE_CONVERTING)) == 0)
 			return "";
 

@@ -55,37 +55,37 @@ static const char setting_names[][20] = {
 	"ui_list_names",
 	"ui_list_scroll_pos",
 	"ui_record_hide",
-	"ui_state_hide",
 	"ui_svc_notfn_disable",
 	"ui_theme",
 };
 
-JNIEXPORT jobjectArray JNICALL
-Java_com_github_stsaz_phiola_Conf_confRead(JNIEnv *env, jobject thiz, jstring jfilepath)
-{
-	dbglog("%s: enter", __func__);
-	const char *fn = jni_sz_js(jfilepath);
-	ffvec d = {};
-	jobjectArray joa = NULL;
-	if (0 != fffile_readwhole(fn, &d, 1*1024*1024))
-		goto end;
+/** Read config data into Java array.
 
-	jclass jc = jni_class(PJC_CONF_ENTRY);
+(KEY VALUE LF)...
+
+->
+
+class C {
+	String value;
+	int number;
+	boolean enabled;
+}
+*/
+static jobjectArray conf_read(JNIEnv *env, jclass jc, ffstr data, const char settings[][20], uint n_settings, int int_default)
+{
+	jobjectArray joa = jni_joa(n_settings+1, jc);
+
 	jmethodID jinit = jni_func(jc, "<init>", "()V");
 	jfieldID jf_value = jni_field(jc, "value", JNI_TSTR);
 	jfieldID jf_number = jni_field(jc, "number", JNI_TINT);
 	jfieldID jf_enabled = jni_field(jc, "enabled", JNI_TBOOL);
 
-	ffstr s = FFSTR_INITSTR(&d);
-	joa = jni_joa(FF_COUNT(setting_names)+1, jc);
-
-	ffstr_setstr(&s, &d);
-	while (s.len) {
+	while (data.len) {
 		ffstr ln, k, v;
-		ffstr_splitby(&s, '\n', &ln, &s);
+		ffstr_splitby(&data, '\n', &ln, &data);
 		ffstr_splitby(&ln, ' ', &k, &v);
 
-		int r = ffcharr_findsorted(setting_names, FF_COUNT(setting_names), sizeof(setting_names[0]), k.ptr, k.len);
+		int r = ffcharr_findsorted(settings, n_settings, sizeof(settings[0]), k.ptr, k.len);
 		if (r < 0)
 			continue;
 
@@ -98,26 +98,43 @@ Java_com_github_stsaz_phiola_Conf_confRead(JNIEnv *env, jobject thiz, jstring jf
 		if (ffstr_to_int32(&v, &n)) {
 			jni_obj_int_set(jo, jf_number, n);
 			jni_obj_bool_set(jo, jf_enabled, (n == 1));
+		} else if (int_default) {
+			jni_obj_int_set(jo, jf_number, int_default);
 		}
 
 		jni_joa_i_set(joa, r + 1, jo);
 		jni_local_unref(jo);
 	}
 
-	for (uint i = 1;  i <= FF_COUNT(setting_names);  i++) {
+	for (uint i = 1;  i <= n_settings;  i++) {
 		jobject jo = jni_joa_i(joa, i);
 		if (!jo) {
 			jo = jni_obj_new(jc, jinit);
 			jni_obj_sz_set(env, jo, jf_value, "");
+			jni_obj_int_set(jo, jf_number, int_default);
 			jni_joa_i_set(joa, i, jo);
 		}
 		jni_local_unref(jo);
 	}
 
+	return joa;
+}
+
+JNIEXPORT jobjectArray JNICALL
+Java_com_github_stsaz_phiola_Conf_confRead(JNIEnv *env, jobject thiz, jstring jfilepath)
+{
+	dbglog("%s: enter", __func__);
+	const char *fn = jni_sz_js(jfilepath);
+	ffvec d = {};
+	jobjectArray joa = NULL;
+	if (0 != fffile_readwhole(fn, &d, 1*1024*1024))
+		goto end;
+	joa = conf_read(env, jni_class(PJC_CONF_ENTRY), *(ffstr*)&d, setting_names, FF_COUNT(setting_names), 0);
+	dbglog("%s: exit", __func__);
+
 end:
 	jni_sz_free(fn, jfilepath);
 	ffvec_free(&d);
-	dbglog("%s: exit", __func__);
 	return joa;
 }
 

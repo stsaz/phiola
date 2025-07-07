@@ -16,7 +16,6 @@ class GUI {
 	private static final String TAG = "phiola.GUI";
 	private final Core core;
 	Context cur_activity;
-	boolean state_hide;
 	boolean filter_hide;
 	boolean record_hide;
 	boolean ainfo_in_title;
@@ -49,7 +48,6 @@ class GUI {
 	String conf_write() {
 		return String.format(
 			"ui_curpath %s\n"
-			+ "ui_state_hide %d\n"
 			+ "ui_filter_hide %d\n"
 			+ "ui_record_hide %d\n"
 			+ "ui_info_in_title %d\n"
@@ -57,7 +55,6 @@ class GUI {
 			+ "ui_list_names %s\n"
 			+ "ui_theme %d\n"
 			, cur_path
-			, core.bool_to_int(state_hide)
 			, core.bool_to_int(filter_hide)
 			, core.bool_to_int(record_hide)
 			, core.bool_to_int(ainfo_in_title)
@@ -69,7 +66,6 @@ class GUI {
 
 	void conf_load(Conf.Entry[] kv) {
 		cur_path = kv[Conf.UI_CURPATH].value;
-		state_hide = kv[Conf.UI_STATE_HIDE].enabled;
 		filter_hide = kv[Conf.UI_FILTER_HIDE].enabled;
 		record_hide = kv[Conf.UI_RECORD_HIDE].enabled;
 		ainfo_in_title = kv[Conf.UI_INFO_IN_TITLE].enabled;

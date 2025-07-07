@@ -93,7 +93,7 @@ static const char* fmtr_hdr(struct fmt_rd *f, phi_track *t, struct avpk_info *hd
 	t->audio.format.rate = hdr->sample_rate;
 	t->audio.format.channels = hdr->channels;
 	t->audio.total = hdr->duration;
-	t->audio.bitrate = hdr->real_bitrate;
+	t->audio.bitrate = (hdr->audio_bitrate) ? hdr->audio_bitrate : hdr->real_bitrate;
 	t->audio.start_delay = hdr->delay;
 	t->audio.end_padding = hdr->padding;
 
