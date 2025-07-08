@@ -36,6 +36,16 @@ const char* file_ext_str(uint i)
 	return "";
 }
 
+/** Return enum AVPK_FORMAT */
+static uint file_ext_format(const char *ext)
+{
+	for (uint i = 0;  i < FF_COUNT(file_ext);  i++) {
+		if (ffsz_eq(ext, file_ext[i]))
+			return i + 1;
+	}
+	return 0;
+}
+
 int file_format_detect(const void *data, ffsize len)
 {
 	return avpk_format_detect(data, len);
@@ -49,19 +59,30 @@ static void* fdetcr_open(phi_track *t)
 	if (t->data_type)
 		ffstr_setz(&ext, t->data_type);
 
+	char ext_s[8] = {};
+	if (ext.len < 8) {
+		ffs_lower(ext_s, sizeof(ext_s), ext.ptr, ext.len);
+		ext.ptr = ext_s;
+	}
+
 	int r = file_format_detect(t->data_in.ptr, t->data_in.len);
 	switch (r) {
 	case 0:
 		dbglog(t, "%s: unrecognized file header", fn);
+		t->conf.ifile.format = file_ext_format(ext.ptr);
 		break;
 
 	case AVPKF_ID3:
-		r = (ffstr_ieqz(&ext, "flac")) ? AVPKF_FLAC : AVPKF_MP3;
+		r = (ffstr_eqz(&ext, "flac")) ? AVPKF_FLAC : AVPKF_MP3;
 		// fallthrough
 	default:
-		ffstr_setz(&ext, file_ext_str(r));
 		t->conf.ifile.format = r;
-		dbglog(t, "detected format: %S", &ext);
+	}
+
+	if (t->conf.ifile.format) {
+		ffstr_setz(&ext, file_ext_str(t->conf.ifile.format)); // normalize extension (e.g. "m4a" -> "mp4")
+		if (r)
+			dbglog(t, "detected format: %S", &ext);
 	}
 
 	const void *f = NULL;

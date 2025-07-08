@@ -46,13 +46,12 @@ static void* fmtr_open(phi_track *t)
 {
 	ffstr ext = {};
 	if (t->conf.ifile.format) {
-		uint i = t->conf.ifile.format - 1;
-		if (i >= (uint)FF_COUNT(file_ext))
-			return PHI_OPEN_ERR;
-		ffstr_setz(&ext, file_ext[i]);
+		ffstr_setz(&ext, file_ext_str(t->conf.ifile.format));
 	} else {
 		ffpath_split3_str(FFSTR_Z(t->conf.ifile.name), NULL, NULL, &ext);
 	}
+	if (!ext.len)
+		return PHI_OPEN_ERR;
 
 	struct fmt_rd *f = phi_track_allocT(t, struct fmt_rd);
 	f->trk = t;
