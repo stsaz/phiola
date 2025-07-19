@@ -22,11 +22,18 @@ class GUI {
 	String cur_path = ""; // current explorer path
 	private ArrayList<Integer> list_pos; // list scroll position
 	private ArrayList<String> list_names;
+	int mlib_scroll_pos;
 
 	static final int
 		THM_DEF = 0,
 		THM_DARK = 1;
 	int theme;
+
+	static final int
+		V_PLAYLIST = 0,
+		V_EXPLORER = 1,
+		V_LIBRARY = 2;
+	int view;
 
 	static final int
 		STATE_DEF = 1,
@@ -51,16 +58,20 @@ class GUI {
 			+ "ui_filter_hide %d\n"
 			+ "ui_record_hide %d\n"
 			+ "ui_info_in_title %d\n"
-			+ "ui_list_scroll_pos %s\n"
 			+ "ui_list_names %s\n"
+			+ "ui_list_scroll_pos %s\n"
+			+ "ui_mlib_scroll_pos %d\n"
 			+ "ui_theme %d\n"
+			+ "ui_view %d\n"
 			, cur_path
 			, core.bool_to_int(filter_hide)
 			, core.bool_to_int(record_hide)
 			, core.bool_to_int(ainfo_in_title)
-			, list_scroll_pos_string()
 			, list_names_string()
+			, list_scroll_pos_string()
+			, mlib_scroll_pos
 			, theme
+			, view
 			);
 	}
 
@@ -71,7 +82,9 @@ class GUI {
 		ainfo_in_title = kv[Conf.UI_INFO_IN_TITLE].enabled;
 		list_scroll_pos_parse(kv[Conf.UI_LIST_SCROLL_POS].value);
 		list_names_parse(kv[Conf.UI_LIST_NAMES].value);
+		mlib_scroll_pos = kv[Conf.UI_MLIB_SCROLL_POS].number;
 		theme = kv[Conf.UI_THEME].number;
+		view = kv[Conf.UI_VIEW].number;
 	}
 
 	boolean state_test(int mask) { return (state & mask) != 0; }
@@ -161,11 +174,11 @@ class GUI {
 	/**
 	 * Show status message to the user.
 	 */
-	void msg_show(Context ctx, String fmt, Object... args) {
+	static void msg_show(Context ctx, String fmt, Object... args) {
 		Toast.makeText(ctx, String.format(fmt, args), Toast.LENGTH_SHORT).show();
 	}
 
-	void dlg_question(Context ctx, String title, String msg, String btn_yes, String btn_no, DialogInterface.OnClickListener on_click) {
+	static void dlg_question(Context ctx, String title, String msg, String btn_yes, String btn_no, DialogInterface.OnClickListener on_click) {
 		new AlertDialog.Builder(ctx)
 			.setTitle(title)
 			.setMessage(msg)
@@ -180,7 +193,7 @@ class GUI {
 	}
 
 	/** Show the dialog with edit text control and yes/no buttons */
-	void dlg_edit(Context ctx, String title, String msg, String text, String btn_yes, String btn_no, DlgEditOnClick on_click) {
+	static void dlg_edit(Context ctx, String title, String msg, String text, String btn_yes, String btn_no, DlgEditOnClick on_click) {
 		EditText edit_ctl = new EditText(ctx);
 		edit_ctl.setText(text);
 		new AlertDialog.Builder(ctx)

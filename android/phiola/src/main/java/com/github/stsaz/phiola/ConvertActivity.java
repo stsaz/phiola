@@ -28,7 +28,7 @@ public class ConvertActivity extends AppCompatActivity {
 
 		varmenu = new VarMenu(this);
 		explorer = new ExplorerMenu(this);
-		b.eOutDir.setOnClickListener(v -> explorer.show(b.eOutDir));
+		b.eOutDir.setOnClickListener(v -> explorer.show(b.eOutDir, 0));
 		b.eOutName.setOnClickListener(v -> varmenu.show(b.eOutName, new String[]{
 				"@filename", "@album", "@artist", "@title", "@tracknumber",
 			}));

@@ -27,7 +27,7 @@
     <string name="menu_settings">Paramètres…</string>
     <string name="mfile_convert">Fichier: Convertir…</string>
     <string name="mfile_del">Fichier: Supprimer du stockage</string>
-    <string name="mfile_move">Fichier: Déplacement rapide!</string>
+    <string name="mfile_move">Fichier: Déplacement rapide</string>
     <string name="mfile_show">Fichier: Montrer la piste actuelle</string>
     <string name="mfile_tags_show">Fichier: Montrer les tags</string>
     <string name="mlist_add">Liste: Ajouter…</string>

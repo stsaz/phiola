@@ -27,6 +27,7 @@ static const char setting_names[][20] = {
 	"op_data_dir",
 	"op_deprecated_mods",
 	"op_file_delete",
+	"op_mlib_dir",
 	"op_plist_save_dir",
 	"op_trash_dir_rel",
 	"play_auto_norm",
@@ -53,9 +54,11 @@ static const char setting_names[][20] = {
 	"ui_info_in_title",
 	"ui_list_names",
 	"ui_list_scroll_pos",
+	"ui_mlib_scroll_pos",
 	"ui_record_hide",
 	"ui_svc_notfn_disable",
 	"ui_theme",
+	"ui_view",
 };
 
 /** Read config data into Java array.
@@ -294,7 +297,13 @@ Java_com_github_stsaz_phiola_UtilNative_dirList(JNIEnv *env, jobject thiz, jstri
 	size_t i = 0, n = 0, ndirs = 0;
 	ffdirscanx dx = {};
 
-	if (!ffdirscanx_open(&dx, path, FFDIRSCANX_SORT_DIRS))
+	uint dsof = FFDIRSCANX_SORT_DIRS;
+	if (flags & 1) {
+		dx.ds.wildcard = "*.m3u*";
+		dsof = FFDIRSCAN_USEWILDCARD;
+	}
+
+	if (!ffdirscanx_open(&dx, path, dsof))
 		n = ffdirscan_count(&dx.ds);
 
 	ffstr s_path = FFSTR_INITZ(path);
@@ -309,12 +318,23 @@ Java_com_github_stsaz_phiola_UtilNative_dirList(JNIEnv *env, jobject thiz, jstri
 
 	const char *fn;
 	while ((fn = ffdirscanx_next(&dx))) {
+		uint off = *(uint*)((char*)dx.ds.names + dx.ds.cur - sizeof(uint));
+
+		if (flags & 1) {
+			if (off & 0x80000000)
+				continue; // skip dirs
+			ffstr ext;
+			ffpath_split3_str(FFSTR_Z(fn), NULL, NULL, &ext);
+			if (!(ffstr_ieqz(&ext, "m3u")
+				|| ffstr_ieqz(&ext, "m3u8")))
+				continue;
+		}
+
 		ffsz_copyz(fullname_name, 255, fn);
 		jstring js = jni_js_sz(fullname);
 		jni_joa_i_set(jsa_names, i, js);
 		jni_local_unref(js);
 
-		uint off = *(uint*)((char*)dx.ds.names + dx.ds.cur - sizeof(uint));
 		if (off & 0x80000000) {
 			js = jni_js_szf(env, "<DIR> %s", fn);
 			ndirs++;

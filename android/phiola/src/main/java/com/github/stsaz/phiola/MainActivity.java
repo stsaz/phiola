@@ -39,8 +39,9 @@ public class MainActivity extends AppCompatActivity {
 	private PlaybackObserver trk_nfy;
 	private TrackCtl trackctl;
 	private long total_dur_msec;
+	private int view_prev = GUI.V_EXPLORER;
 
-	private boolean view_explorer;
+	private MLib library;
 	private Explorer explorer;
 	private PlaylistAdapter pl_adapter;
 	private PopupMenu mfile, mlist, mitem;
@@ -59,7 +60,6 @@ public class MainActivity extends AppCompatActivity {
 
 		b.list.setAdapter(pl_adapter);
 		b.list.setItemAnimator(null);
-		plist_show();
 
 		if (gui.cur_path.isEmpty())
 			gui.cur_path = core.storage_path;
@@ -98,8 +98,7 @@ public class MainActivity extends AppCompatActivity {
 		if (core != null) {
 			core.dbglog(TAG, "onStop()");
 			queue.saveconf();
-			if (!view_explorer)
-				list_leave();
+			list_leave();
 			core.saveconf();
 		}
 		super.onStop();
@@ -208,7 +207,7 @@ public class MainActivity extends AppCompatActivity {
 			list_rename();  break;
 
 		case R.id.action_list_showcur: {
-			if (view_explorer)
+			if (gui.view != GUI.V_PLAYLIST)
 				plist_click();
 			int pos = queue.active_pos();
 			if (pos >= 0)
@@ -375,6 +374,7 @@ public class MainActivity extends AppCompatActivity {
 		setSupportActionBar(b.toolbar);
 
 		explorer = new Explorer(core, this);
+		library = new MLib(core, this);
 
 		b.lname.setOnClickListener((v) -> file_tags_show());
 
@@ -444,23 +444,40 @@ public class MainActivity extends AppCompatActivity {
 		});
 
 		b.list.setLayoutManager(new LinearLayoutManager(this));
-		pl_adapter = new PlaylistAdapter(this, explorer, new PlaylistViewHolder.Parent() {
-				public void on_click(int i) {
-					if (view_explorer) {
-						explorer.event(0, i);
-						return;
-					}
+		pl_adapter = new PlaylistAdapter(this, new PlaylistViewHolder.Parent() {
 
-					queue.visible_play(i);
+				public int count() {
+					if (gui.view == GUI.V_EXPLORER)
+						return explorer.count();
+					else if (gui.view == GUI.V_LIBRARY)
+						return library.count();
+					return queue.visible_items();
+				}
+
+				public String display_line(int pos) {
+					if (gui.view == GUI.V_EXPLORER)
+						return explorer.display_line(pos);
+					else if (gui.view == GUI.V_LIBRARY)
+						return library.display_line(pos);
+					return queue.display_line(pos);
+				}
+
+				public void on_click(int i) {
+					if (gui.view == GUI.V_EXPLORER)
+						explorer.event(0, i);
+					else if (gui.view == GUI.V_LIBRARY)
+						library.on_click(i);
+					else
+						queue.visible_play(i);
 				}
 
 				public void on_longclick(int i) {
-					if (view_explorer) {
+					if (gui.view == GUI.V_EXPLORER)
 						explorer.event(1, i);
-						return;
-					}
-
-					item_menu_show(i);
+					else if (gui.view == GUI.V_LIBRARY)
+						library.on_longclick(i);
+					else
+						item_menu_show(i);
 				}
 			});
 
@@ -468,6 +485,16 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void show_ui() {
+		if (gui.view == GUI.V_PLAYLIST) {
+			plist_show();
+		} else {
+			if (gui.view == GUI.V_LIBRARY)
+				gui.view = GUI.V_EXPLORER;
+			else if (gui.view == GUI.V_EXPLORER)
+				gui.view = GUI.V_LIBRARY;
+			explorer_click();
+		}
+
 		int mode = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
 		if (gui.theme == GUI.THM_DARK)
 			mode = AppCompatDelegate.MODE_NIGHT_YES;
@@ -553,35 +580,63 @@ public class MainActivity extends AppCompatActivity {
 		}
 	}
 
-	void explorer_click() {
+	private void explorer_click() {
 		b.bexplorer.setChecked(true);
-		if (view_explorer) return;
-
-		list_leave();
-		view_explorer = true;
 		b.bplaylist.setChecked(false);
-		b.tfilter.setVisibility(View.INVISIBLE);
+		list_leave();
 
-		explorer.fill();
-		pl_adapter.view_explorer = true;
+		String name = null;
+		if (gui.view == GUI.V_PLAYLIST) {
+			gui.view = view_prev;
+		} else if (gui.view == GUI.V_LIBRARY) {
+			gui.view = GUI.V_EXPLORER;
+			name = getString(R.string.bexplorer);
+		} else {
+			gui.view = GUI.V_LIBRARY;
+			name = getString(R.string.blibrary);
+		}
+
+		if (name != null) {
+			b.bexplorer.setText(name);
+			b.bexplorer.setTextOn(name);
+			b.bexplorer.setTextOff(name);
+		}
+
+		if (gui.view == GUI.V_EXPLORER) {
+			explorer.fill();
+			if (!gui.filter_hide)
+				b.tfilter.setVisibility(View.INVISIBLE);
+		} else {
+			if (!gui.filter_hide) {
+				b.tfilter.setVisibility(View.VISIBLE);
+				b.tfilter.setQuery("", false);
+			}
+			library.fill();
+		}
+
 		list_update();
+		if (gui.view == GUI.V_LIBRARY)
+			list_scroll(gui.mlib_scroll_pos);
 	}
 
 	private void plist_click() {
 		b.bplaylist.setChecked(true);
-		if (!view_explorer) {
+		if (gui.view == GUI.V_PLAYLIST) {
 			list_switch();
 			return;
 		}
 
-		view_explorer = false;
+		list_leave();
 		b.bexplorer.setChecked(false);
+		view_prev = gui.view;
+		gui.view = GUI.V_PLAYLIST;
 		if (!gui.filter_hide) {
+			if (view_prev == GUI.V_LIBRARY)
+				b.tfilter.setQuery("", false);
 			b.tfilter.setVisibility(View.VISIBLE);
 			queue.current_filter(b.tfilter.getQuery().toString());
 		}
 
-		pl_adapter.view_explorer = false;
 		list_update();
 		plist_show();
 	}
@@ -693,11 +748,12 @@ public class MainActivity extends AppCompatActivity {
 
 	private void explorer_file_show(String fn) {
 		gui.cur_path = new File(fn).getParent();
-		if (!view_explorer) {
+		if (gui.view != GUI.V_EXPLORER) {
+			if (gui.view == GUI.V_PLAYLIST)
+				gui.view = GUI.V_LIBRARY;
 			explorer_click();
 		} else {
 			explorer.fill();
-			pl_adapter.view_explorer = true;
 			list_update();
 		}
 		int pos = explorer.file_idx(fn);
@@ -711,7 +767,7 @@ public class MainActivity extends AppCompatActivity {
 			return;
 		}
 
-		if (!view_explorer)
+		if (gui.view == GUI.V_PLAYLIST)
 			pl_adapter.on_change(how, pos);
 	}
 
@@ -720,21 +776,28 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void plist_show() {
-		int n = gui.list_scroll_pos(queue.current_index());
-		if (n != 0)
-			b.list.scrollToPosition(n);
+		list_scroll(gui.list_scroll_pos(queue.current_index()));
 	}
 
-	/** Called when we're leaving the playlist tab */
+	/** Called when we're leaving the current tab */
 	void list_leave() {
-		queue.current_filter("");
 		LinearLayoutManager llm = (LinearLayoutManager)b.list.getLayoutManager();
-		gui.list_scroll_pos_set(queue.current_index(), llm.findLastCompletelyVisibleItemPosition());
+		int pos = llm.findFirstVisibleItemPosition();
+
+		if (gui.view == GUI.V_PLAYLIST) {
+			queue.current_filter("");
+			gui.list_scroll_pos_set(queue.current_index(), pos);
+		} else if (gui.view == GUI.V_LIBRARY) {
+			gui.mlib_scroll_pos = pos;
+		}
 	}
 
 	private void plist_filter(String filter) {
 		core.dbglog(TAG, "list_filter: %s", filter);
-		queue.current_filter(filter);
+		if (gui.view == GUI.V_PLAYLIST)
+			queue.current_filter(filter);
+		else if (gui.view == GUI.V_LIBRARY)
+			library.filter(filter);
 		list_update();
 	}
 
@@ -771,7 +834,7 @@ public class MainActivity extends AppCompatActivity {
 
 		gui.msg_show(this, String.format(getString(R.string.mlist_created), qi+1));
 		queue.switch_list(qi);
-		if (view_explorer)
+		if (gui.view != GUI.V_PLAYLIST)
 			plist_click();
 		else
 			list_update();
@@ -779,7 +842,7 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void list_close() {
-		if (view_explorer) return;
+		if (gui.view != GUI.V_PLAYLIST) return;
 
 		if (0 == queue.current_items()) {
 			list_close_confirmed();
@@ -840,13 +903,17 @@ public class MainActivity extends AppCompatActivity {
 			});
 	}
 
+	private void list_scroll(int n) {
+		if (n != 0) {
+			LinearLayoutManager llm = (LinearLayoutManager)b.list.getLayoutManager();
+			llm.scrollToPositionWithOffset(n, 0);
+		}
+	}
+
 	private void list_switched(int i) {
 		list_update();
 		bplaylist_text(i);
-
-		int n = gui.list_scroll_pos(i);
-		if (n != 0)
-			b.list.scrollToPosition(n);
+		list_scroll(gui.list_scroll_pos(i));
 	}
 
 	private void list_switch() {
@@ -910,7 +977,7 @@ public class MainActivity extends AppCompatActivity {
 
 		gui.lists_number(qi + 1);
 
-		if (view_explorer)
+		if (gui.view != GUI.V_PLAYLIST)
 			plist_click();
 		else
 			list_update();
@@ -942,7 +1009,7 @@ public class MainActivity extends AppCompatActivity {
 
 		gui.lists_number(qi + 1);
 
-		if (view_explorer)
+		if (gui.view != GUI.V_PLAYLIST)
 			plist_click();
 		else
 			list_update();

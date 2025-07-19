@@ -1,6 +1,7 @@
 <resources>
 	<string name="app_name">phiola</string>
 	<string name="main_st_playing">Playing</string>
+	<string name="blibrary">Library</string>
 	<string name="bexplorer">Explorer</string>
 	<string name="main_playlist_n">Playlist %d</string>
 
@@ -20,7 +21,7 @@
 	<string name="mfile_convert">File: Convert...</string>
 	<string name="mfile_show">File: Show Current Track</string>
 	<string name="mfile_del">File: Delete from Storage</string>
-	<string name="mfile_move">File: Quick Move!</string>
+	<string name="mfile_move">File: Quick Move</string>
 
 	<string name="mplay_auto_stop">Auto-Stop Timer: Toggle</string>
 	<string name="mplay_auto_stop_msg">Will stop playing after %d min</string>
@@ -80,6 +81,7 @@
 	<string name="sett_operation">Operation</string>
 	<string name="sett_file_del">Don\'t Move Files to Trash</string>
 	<string name="sett_trash_dir">Trash Directory (relative to storage mount-point):</string>
+	<string name="sett_library_dir">Music Library Directories (separated by ";"):</string>
 	<string name="sett_data_dir">App Data Directory:</string>
 	<string name="sett_deprecated_mods">Enable Deprecated Modules (ALAC)</string>
 

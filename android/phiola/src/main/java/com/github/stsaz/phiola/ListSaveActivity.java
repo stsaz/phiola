@@ -25,7 +25,7 @@ public class ListSaveActivity extends AppCompatActivity {
 		explorer = new ExplorerMenu(this);
 
 		b.bSave.setOnClickListener((v) -> save());
-		b.eDir.setOnClickListener(v -> explorer.show(b.eDir));
+		b.eDir.setOnClickListener(v -> explorer.show(b.eDir, 0));
 
 		core = Core.getInstance();
 		load();
@@ -44,11 +44,19 @@ public class ListSaveActivity extends AppCompatActivity {
 	private void save() {
 		core.setts.plist_save_dir = b.eDir.getText().toString();
 		String fn = String.format("%s/%s.m3u8", core.setts.plist_save_dir, b.eName.getText().toString());
+
 		File f = new File(fn);
 		if (f.exists()) {
-			core.errlog(TAG, "File already exists.  Please specify a different name.");
+			GUI.dlg_question(this, "File exists"
+				, String.format("File '%s' already exists.  Overwrite?", fn)
+				, "Overwrite", "Do nothing"
+				, (dialog, which) -> { save2(fn); }
+				);
 			return;
 		}
+		save2(fn);
+	}
+	private void save2(String fn) {
 		if (!core.queue().current_save(fn)) {
 			core.errlog(TAG, "Error saving playlist file");
 			return;

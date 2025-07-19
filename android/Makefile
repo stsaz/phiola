@@ -180,7 +180,7 @@ endif
 
 PKG_DEBUG_NAME := phiola-$(APK_VER)-android-$(PKG_ARCH)-debug.$(PKG_EXT)
 $(PKG_DEBUG_NAME): $(wildcard $(PHIOLA)/android/phiola/libs/$(LIB_DIR_CPU)/*.debug)
-	cd $(PHIOLA) && $(PKG_PACKER) $@ android/phiola/libs/$(LIB_DIR_CPU)/*.debug
+	$(PKG_PACKER) $@ ../android/phiola/libs/$(LIB_DIR_CPU)/*.debug
 package-debug: $(PKG_DEBUG_NAME)
 
 release: default

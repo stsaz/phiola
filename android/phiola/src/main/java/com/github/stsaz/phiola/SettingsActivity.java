@@ -34,7 +34,8 @@ public class SettingsActivity extends AppCompatActivity {
 
 		play_init();
 
-		b.eDataDir.setOnClickListener(v -> explorer.show(b.eDataDir));
+		b.eDataDir.setOnClickListener(v -> explorer.show(b.eDataDir, 0));
+		b.eLibraryDir.setOnClickListener(v -> explorer.show(b.eLibraryDir, ExplorerMenu.F_MULTI));
 
 		rec_init();
 
@@ -84,7 +85,7 @@ public class SettingsActivity extends AppCompatActivity {
 	}
 
 	private void rec_init() {
-		b.eRecDir.setOnClickListener(v -> explorer.show(b.eRecDir));
+		b.eRecDir.setOnClickListener(v -> explorer.show(b.eRecDir, 0));
 
 		ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item
 			, new String[] {
@@ -217,6 +218,7 @@ public class SettingsActivity extends AppCompatActivity {
 		b.eDataDir.setText(core.setts.pub_data_dir);
 		b.eTrashDir.setText(core.setts.trash_dir);
 		b.swFileDel.setChecked(core.setts.file_del);
+		b.eLibraryDir.setText(core.setts.library_dir);
 		b.swDeprecatedMods.setChecked(core.setts.deprecated_mods);
 
 		rec_load();
@@ -269,6 +271,7 @@ public class SettingsActivity extends AppCompatActivity {
 		core.setts.svc_notification_disable = b.swSvcNotifDisable.isChecked();
 		core.setts.trash_dir = b.eTrashDir.getText().toString();
 		core.setts.file_del = b.swFileDel.isChecked();
+		core.setts.library_dir = b.eLibraryDir.getText().toString();
 		core.setts.deprecated_mods = b.swDeprecatedMods.isChecked();
 
 		rec_save();

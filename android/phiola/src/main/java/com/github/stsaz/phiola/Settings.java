@@ -51,6 +51,7 @@ class CoreSettings {
 	int		codepage_index;
 	String	pub_data_dir;
 	String	plist_save_dir;
+	String	library_dir;
 
 	AutoSkip auto_skip_head, auto_skip_tail;
 	void auto_skip_head_set(String s) {
@@ -159,6 +160,7 @@ class CoreSettings {
 		codepage = "";
 		pub_data_dir = "";
 		plist_save_dir = "";
+		library_dir = "";
 
 		auto_skip_head = new AutoSkip();
 		auto_skip_tail = new AutoSkip();
@@ -182,6 +184,7 @@ class CoreSettings {
 			+ "codepage %s\n"
 			+ "op_file_delete %d\n"
 			+ "op_data_dir %s\n"
+			+ "op_mlib_dir %s\n"
 			+ "op_plist_save_dir %s\n"
 			+ "op_trash_dir_rel %s\n"
 			+ "op_deprecated_mods %d\n"
@@ -215,6 +218,7 @@ class CoreSettings {
 			, codepage
 			, core.bool_to_int(file_del)
 			, pub_data_dir
+			, library_dir
 			, plist_save_dir
 			, trash_dir
 			, core.bool_to_int(deprecated_mods)
@@ -328,6 +332,7 @@ class CoreSettings {
 		svc_notification_disable = kv[Conf.UI_SVC_NOTFN_DISABLE].enabled;
 		file_del = kv[Conf.OP_FILE_DELETE].enabled;
 		pub_data_dir = kv[Conf.OP_DATA_DIR].value;
+		library_dir = kv[Conf.OP_MLIB_DIR].value;
 		plist_save_dir = kv[Conf.OP_PLIST_SAVE_DIR].value;
 		trash_dir = kv[Conf.OP_TRASH_DIR_REL].value;
 		deprecated_mods = kv[Conf.OP_DEPRECATED_MODS].enabled;

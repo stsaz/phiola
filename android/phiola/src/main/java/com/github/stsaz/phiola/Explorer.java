@@ -29,6 +29,8 @@ class Explorer {
 	}
 
 	int count() {
+		if (display_rows == null)
+			return 0;
 		int n = 1;
 		if (up_dir)
 			n++;

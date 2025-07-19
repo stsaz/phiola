@@ -18,10 +18,12 @@ class PlaylistViewHolder extends RecyclerView.ViewHolder
 	final TextView text;
 
 	interface Parent {
+		int count();
+		String display_line(int pos);
 		void on_click(int i);
 		void on_longclick(int i);
 	}
-	private final Parent parent;
+	final Parent parent;
 
 	PlaylistViewHolder(Parent parent, View itemView) {
 		super(itemView);
@@ -48,14 +50,11 @@ class PlaylistAdapter extends RecyclerView.Adapter<PlaylistViewHolder> {
 	private final Core core;
 	private final Queue queue;
 	private final LayoutInflater inflater;
-	boolean view_explorer;
-	private final Explorer explorer;
 	private final PlaylistViewHolder.Parent parent;
 
-	PlaylistAdapter(Context ctx, Explorer explorer, PlaylistViewHolder.Parent parent) {
+	PlaylistAdapter(Context ctx, PlaylistViewHolder.Parent parent) {
 		core = Core.getInstance();
 		queue = core.queue();
-		this.explorer = explorer;
 		inflater = LayoutInflater.from(ctx);
 		this.parent = parent;
 	}
@@ -67,21 +66,10 @@ class PlaylistAdapter extends RecyclerView.Adapter<PlaylistViewHolder> {
 	}
 
 	public void onBindViewHolder(@NonNull PlaylistViewHolder holder, int position) {
-		String s;
-		if (!view_explorer) {
-			s = queue.display_line(position);
-		} else {
-			s = explorer.display_line(position);
-		}
-		holder.text.setText(s);
+		holder.text.setText(parent.display_line(position));
 	}
 
-	public int getItemCount() {
-		if (view_explorer)
-			return explorer.count();
-
-		return queue.visible_items();
-	}
+	public int getItemCount() { return parent.count(); }
 
 	void on_change(int how, int pos) {
 		core.dbglog(TAG, "on_change: %d %d", how, pos);
