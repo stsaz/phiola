@@ -173,6 +173,14 @@ static inline ffsize ffpath_makefn(char *dst, ffsize dstcap, ffstr src, char rep
 	return len;
 }
 
+/** Return TRUE if 'parent' is a parent directory of 'file'.
+Both paths must be normalized. */
+static inline int path_isparent(ffstr parent, ffstr file)
+{
+	return (file.len > parent.len && ffpath_slash(file.ptr[parent.len])
+		&& ffstr_match2(&file, &parent));
+}
+
 
 /** Return bits/sec. */
 #define bitrate_compute(bytes, samples, rate) \

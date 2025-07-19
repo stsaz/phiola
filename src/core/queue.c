@@ -459,6 +459,9 @@ static int q_save(struct phi_queue *q, const char *filename, void (*on_complete)
 		},
 	};
 
+	int r = ffpath_normalize(c.ofile.name, -1, c.ofile.name, ffsz_len(c.ofile.name), 0);
+	c.ofile.name[r] = '\0';
+
 	int skip = 0;
 	fffileinfo fi;
 	if (!q->conf.modified && !fffile_info_path(filename, &fi)) {

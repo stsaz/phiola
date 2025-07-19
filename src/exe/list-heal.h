@@ -66,14 +66,6 @@ static char* lh_abs_norm(ffvec *buf, ffstr base, ffstr path)
 	return afn;
 }
 
-/** Return TRUE if 'parent' is a parent directory of 'file'.
-Both paths must be normalized. */
-static inline int path_isparent(ffstr parent, ffstr file)
-{
-	return (file.len > parent.len && ffpath_slash(file.ptr[parent.len])
-		&& ffstr_match2(&file, &parent));
-}
-
 /** Find an existing file with the same name but different extension.
 /path/dir/file.mp3 -> /path/dir/file.m4a */
 static int lh_fix_ext(struct list_heal *lh, ffstr fn, ffvec *output)
