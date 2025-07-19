@@ -60,6 +60,7 @@ class PlaylistAdapter extends RecyclerView.Adapter<PlaylistViewHolder> {
 		this.parent = parent;
 	}
 
+	@NonNull
 	public PlaylistViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
 		View v = inflater.inflate(R.layout.list_row2, parent, false);
 		return new PlaylistViewHolder(this.parent, v);

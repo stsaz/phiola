@@ -573,8 +573,10 @@ public class MainActivity extends AppCompatActivity {
 
 		view_explorer = false;
 		b.bexplorer.setChecked(false);
-		if (!gui.filter_hide)
+		if (!gui.filter_hide) {
 			b.tfilter.setVisibility(View.VISIBLE);
+			queue.current_filter(b.tfilter.getQuery().toString());
+		}
 
 		pl_adapter.view_explorer = false;
 		list_update();

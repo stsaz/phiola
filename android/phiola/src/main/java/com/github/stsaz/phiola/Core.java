@@ -161,10 +161,10 @@ class Core extends Util {
 	};
 
 	String errstr(int r) {
-		if (r < errors.length)
-			return errors[r];
 		if ((r & 0x80000000) != 0) // PHI_E_SYS
 			return "System";
+		if (r < errors.length)
+			return errors[r];
 		return "Other";
 	}
 }

@@ -160,10 +160,10 @@ static void cmd_activate(uint cmd)
 	uint i = 0;
 	switch (cmd) {
 	case CMD_NEXT:
-		mod->queue->play_next(NULL);  return;
+		mod->queue->play(NULL, PHI_Q_PLAY_NEXT);  return;
 
 	case CMD_PREV:
-		mod->queue->play_previous(NULL);  return;
+		mod->queue->play(NULL, PHI_Q_PLAY_PREVIOUS);  return;
 
 	case CMD_FIRST:
 		break;

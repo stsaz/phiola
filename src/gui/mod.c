@@ -422,10 +422,10 @@ list_sort:
 		break;
 
 	case A_NEXT:
-		gd->queue->play_next(NULL);  break;
+		gd->queue->play(NULL, PHI_Q_PLAY_NEXT);  break;
 
 	case A_PREV:
-		gd->queue->play_previous(NULL);  break;
+		gd->queue->play(NULL, PHI_Q_PLAY_PREVIOUS);  break;
 
 	case A_MARKER_SET:
 		if (gd->playing_track) {

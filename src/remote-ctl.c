@@ -45,12 +45,12 @@ static int cmd_play() {
 }
 
 static int cmd_next() {
-	g->queue->play_next(NULL);
+	g->queue->play(NULL, PHI_Q_PLAY_NEXT);
 	return 0;
 }
 
 static int cmd_previous() {
-	g->queue->play_previous(NULL);
+	g->queue->play(NULL, PHI_Q_PLAY_PREVIOUS);
 	return 0;
 }
 

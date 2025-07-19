@@ -97,7 +97,7 @@ class PhiolaQueue {
 }
 
 interface QueueNotify {
-	static final int
+	int
 		UPDATE = 0,
 		ADDED = 1,
 		REMOVED = 2,

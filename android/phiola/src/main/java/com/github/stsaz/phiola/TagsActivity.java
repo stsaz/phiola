@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 import com.github.stsaz.phiola.databinding.TagsBinding;
 
@@ -68,6 +69,8 @@ public class TagsActivity extends AppCompatActivity  {
 		if (meta == null)
 			meta = new String[0];
 		redraw();
+		if (meta.length == 0)
+			return;
 
 		String fn = meta[0+1];
 		supported = fn.endsWith(".mp3")
@@ -139,9 +142,7 @@ public class TagsActivity extends AppCompatActivity  {
 		}
 
 		ArrayList<String> m = new ArrayList<>();
-		for (String s : meta) {
-			m.add(s);
-		}
+		Collections.addAll(m, meta);
 		int pos = tag.indexOf('=');
 		m.add(tag.substring(0, pos));
 		m.add(tag.substring(pos + 1));

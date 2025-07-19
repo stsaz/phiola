@@ -103,7 +103,7 @@ public class SettingsActivity extends AppCompatActivity {
 					if (fromUser) {
 						String s = "Default";
 						if (progress != 0)
-							s = core.int_to_str(rec_rate_value(progress));
+							s = Util.int_to_str(rec_rate_value(progress));
 						b.eRecRate.setText(s);
 					}
 				}

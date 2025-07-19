@@ -286,10 +286,10 @@ static void qu_cmd(struct core_data *d)
 	}
 
 	case QUCOM_PLAY_NEXT:
-		x->queue.play_next(NULL);  break;
+		x->queue.play(NULL, PHI_Q_PLAY_NEXT);  break;
 
 	case QUCOM_PLAY_PREV:
-		x->queue.play_previous(NULL);  break;
+		x->queue.play(NULL, PHI_Q_PLAY_PREVIOUS);  break;
 
 	case QUCOM_CONV_UPDATE:
 		qu_conv_update(q);  break;

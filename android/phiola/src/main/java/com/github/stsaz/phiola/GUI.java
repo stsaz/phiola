@@ -175,8 +175,8 @@ class GUI {
 			.show();
 	}
 
-	static interface DlgEditOnClick {
-		public abstract void onClick(String new_text);
+	interface DlgEditOnClick {
+		void onClick(String new_text);
 	}
 
 	/** Show the dialog with edit text control and yes/no buttons */

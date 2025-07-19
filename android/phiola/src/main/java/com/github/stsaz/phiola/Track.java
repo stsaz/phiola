@@ -43,12 +43,8 @@ class Track {
 
 	static final int
 		STATE_NONE = 0,
-		STATE_PREPARING = 1, // -> STATE_OPENING
-		STATE_OPENING = 2, // -> STATE_PLAYING
-		STATE_SEEKING = 3, // -> STATE_PLAYING
-		STATE_PLAYING = 4,
-		STATE_PAUSED = 5, // -> STATE_UNPAUSE
-		STATE_UNPAUSE = 6; // -> STATE_PLAYING
+		STATE_PLAYING = 1,
+		STATE_PAUSED = 2;
 
 	Track(Core core) {
 		this.core = core;
@@ -86,10 +82,8 @@ class Track {
 	}
 
 	boolean supported_url(String name) {
-		if (name.startsWith("/")
-			|| name.startsWith("http://") || name.startsWith("https://"))
-			return true;
-		return false;
+		return name.startsWith("/")
+			|| name.startsWith("http://") || name.startsWith("https://");
 	}
 
 	void observer_add(PlaybackObserver f) {
@@ -122,16 +116,18 @@ class Track {
 	}
 
 	private int rec_fmt(String s) {
-		if (s.equals("AAC-HE"))
+		switch (s) {
+		case "AAC-HE":
 			return Phiola.AF_AAC_HE;
-		else if (s.equals("AAC-HEv2"))
+		case "AAC-HEv2":
 			return Phiola.AF_AAC_HE2;
-		else if (s.equals("FLAC"))
+		case "FLAC":
 			return Phiola.AF_FLAC;
-		else if (s.equals("Opus"))
+		case "Opus":
 			return Phiola.AF_OPUS;
-		else if (s.equals("Opus-VOIP"))
+		case "Opus-VOIP":
 			return Phiola.AF_OPUS_VOICE;
+		}
 		return Phiola.AF_AAC_LC;
 	}
 
@@ -211,11 +207,6 @@ class Track {
 	 */
 	void stop() {
 		core.dbglog(TAG, "stop");
-		trk_close();
-	}
-
-	void close(TrackHandle t) {
-		core.dbglog(TAG, "close");
 		trk_close();
 	}
 

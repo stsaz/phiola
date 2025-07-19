@@ -58,7 +58,6 @@ static void q_modified(struct phi_queue *q);
 
 #include <core/queue-entry.h>
 
-static int q_play_next(struct phi_queue *q);
 static void q_on_change(phi_queue_id q, uint flags, uint pos){}
 static void q_free(struct phi_queue *q);
 
@@ -306,9 +305,20 @@ static int q_play(struct phi_queue *q, void *_e)
 {
 	dbglog("%s", __func__);
 	struct q_entry *e = _e;
+	if (!q)
+		q = qm_default();
+
+	if (_e == PHI_Q_PLAY_NEXT
+		|| _e == PHI_Q_PLAY_PREVIOUS) {
+		if ((e = q->cursor)) {
+			int delta = (_e == PHI_Q_PLAY_NEXT) ? 1 : -1;
+			uint i = (e->index != ~0U) ? (uint)qe_index(e) + delta : q->cursor_index;
+			if (!(e = q_get(q, q_get_index(q, i))))
+				return -1;
+		}
+	}
+
 	if (!e) {
-		if (!q)
-			q = qm_default();
 		if (!(e = q_get(q, q_get_index(q, q->cursor_index))))
 			return -1;
 	} else {
@@ -361,7 +371,7 @@ static void q_trk_closed(void *param)
 	if (!(flags & Q_TKCL_STOP)) {
 		if (!(q->conf.conversion
 			&& core->conf.workers > 1 && !core->workers_available()))
-			q_play_next(q);
+			q_play(q, PHI_Q_PLAY_NEXT);
 	}
 
 	if (q->active_n == 0) {
@@ -406,33 +416,6 @@ static void q_ent_closed(struct phi_queue *q, uint flags)
 
 	if (signal) // guarantee that the queue isn't destroyed
 		core->task(0, &q->task, q_trk_closed, q);
-}
-
-static int q_play_next(struct phi_queue *q)
-{
-	dbglog("%s", __func__);
-	if (!q) q = qm_default();
-
-	struct q_entry *e = q->cursor;
-	if (!!e) {
-		uint i = (e->index != ~0U) ? (uint)qe_index(e) + 1 : q->cursor_index;
-		if (!(e = q_get(q, q_get_index(q, i))))
-			return -1;
-	}
-	return q_play(q, e);
-}
-
-static int q_play_prev(struct phi_queue *q)
-{
-	if (!q) q = qm_default();
-
-	struct q_entry *e = q->cursor;
-	if (!!e) {
-		uint i = (e->index != ~0U) ? e->index - 1 : q->cursor_index;
-		if (!(e = q_get(q, q_get_index(q, i))))
-			return -1;
-	}
-	return q_play(q, e);
 }
 
 static int q_status(struct phi_queue *q)
@@ -705,8 +688,6 @@ const phi_queue_if phi_queueif = {
 	q_filter,
 
 	q_play,
-	q_play_next,
-	q_play_prev,
 
 	q_save,
 	q_status,

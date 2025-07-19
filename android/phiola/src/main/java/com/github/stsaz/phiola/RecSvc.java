@@ -43,7 +43,7 @@ public class RecSvc extends Service {
 	@Override
 	public void onCreate() {
 		if (BuildConfig.DEBUG)
-			Log.d(TAG, String.format("onCreate"));
+			Log.d(TAG, "onCreate");
 
 		core = Core.getInstance();
 

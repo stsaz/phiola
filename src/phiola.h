@@ -477,6 +477,9 @@ struct phi_queue_entry {
 	uint	seek_cdframes, until_cdframes;
 };
 
+#define PHI_Q_PLAY_NEXT  ((void*)1)
+#define PHI_Q_PLAY_PREVIOUS  ((void*)-1)
+
 enum PHI_Q_SORT {
 	PHI_Q_SORT_FILENAME,
 	PHI_Q_SORT_FILESIZE,
@@ -528,9 +531,8 @@ struct phi_queue_if {
 	flags: enum PHI_QUEUE_FILTER */
 	phi_queue_id (*filter)(phi_queue_id q, ffstr filter, uint flags);
 
+	/** e: queue track pointer or PHI_Q_PLAY_* value */
 	int (*play)(phi_queue_id q, void *e);
-	int (*play_next)(phi_queue_id q);
-	int (*play_previous)(phi_queue_id q);
 
 	int (*save)(phi_queue_id q, const char *filename, void (*on_complete)(void*, phi_track*), void *param);
 	int (*status)(phi_queue_id q);

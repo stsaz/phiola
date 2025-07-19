@@ -115,7 +115,7 @@ class CoreSettings {
 		"int24",
 		"int32",
 	};
-	static final int conv_encoders[] = {
+	static final int[] conv_encoders = {
 		Phiola.AF_AAC_LC,
 		Phiola.AF_AAC_HE,
 		Phiola.AF_OPUS,
@@ -280,15 +280,23 @@ class CoreSettings {
 		if (rec_name_template.isEmpty())
 			rec_name_template = "rec-@year@month@day-@hour@minute@second";
 
-		if (rec_enc.equals("AAC-LC") || rec_enc.equals("AAC-HE") || rec_enc.equals("AAC-HEv2")) {
+		switch (rec_enc) {
+		case "AAC-LC":
+		case "AAC-HE":
+		case "AAC-HEv2":
 			rec_fmt = "m4a";
-		} else if (rec_enc.equals("FLAC")) {
+			break;
+		case "FLAC":
 			rec_fmt = "flac";
-		} else if (rec_enc.equals("Opus") || rec_enc.equals("Opus-VOIP")) {
+			break;
+		case "Opus":
+		case "Opus-VOIP":
 			rec_fmt = "opus";
-		} else {
+			break;
+		default:
 			rec_fmt = "m4a";
 			rec_enc = "AAC-LC";
+			break;
 		}
 
 		if (rec_bitrate <= 0)

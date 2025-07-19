@@ -116,7 +116,7 @@ class Explorer {
 		/* Prevent from going upper than sdcard because
 		 it may be impossible to come back (due to file permissions) */
 		parent = null;
-		if (core.array_ifind(core.storage_paths, path) < 0)
+		if (Util.array_ifind(core.storage_paths, path) < 0)
 			parent = Util.path_split2(path)[0];
 
 		up_dir = true;
