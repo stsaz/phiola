@@ -28,7 +28,6 @@ static const char setting_names[][20] = {
 	"op_deprecated_mods",
 	"op_file_delete",
 	"op_plist_save_dir",
-	"op_quick_move_dir",
 	"op_trash_dir_rel",
 	"play_auto_norm",
 	"play_auto_skip",

@@ -234,21 +234,6 @@
 			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/sett_file_del" />
 
-		<TextView
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="@dimen/sett_margin"
-			android:layout_marginTop="@dimen/sett_margin"
-			android:text="@string/sett_quick_move_dir"
-			android:textColor="@color/text" />
-		<EditText
-			android:id="@+id/e_quick_move_dir"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="@dimen/sett_margin"
-			android:inputType="text"
-			android:textSize="@dimen/text_editbox" />
-
 		<androidx.appcompat.widget.SwitchCompat
 			android:id="@+id/sw_deprecated_mods"
 			android:layout_width="match_parent"

@@ -53,7 +53,6 @@
     <string name="sett_list_rm_on_next">Après un clic sur \"Suivant\": retirer la piste de la liste de lecture</string>
     <string name="sett_operation">Opération</string>
     <string name="sett_playback">Lecture</string>
-    <string name="sett_quick_move_dir">Dossier de déplacement rapide:</string>
     <string name="sett_random">Aléatoire</string>
     <string name="sett_rec_bitrate">Bitrate de l\'encodeur (kbit/sec):</string>
     <string name="sett_rec_buf_len">Longueur du tampon (milisecondes):</string>

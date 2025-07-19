@@ -648,14 +648,9 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void file_move_cur() {
-		if (core.setts.quick_move_dir.isEmpty()) {
-			core.errlog(TAG, "Please set move-directory in Settings");
-			return;
-		}
-
 		gui.dlg_question(this, "Move file"
-			, String.format("Move the current file to %s ?", core.setts.quick_move_dir)
-			, "Move", "Do nothing"
+			, String.format("Move the current file to %s ?", gui.cur_path)
+			, "Move File", "Do nothing"
 			, (dialog, which) -> { file_move_cur_confirmed(); }
 			);
 	}
@@ -665,13 +660,13 @@ public class MainActivity extends AppCompatActivity {
 		if (fn == null)
 			return;
 
-		String e = core.util.fileMove(fn, core.setts.quick_move_dir);
+		String e = core.util.fileMove(fn, gui.cur_path);
 		if (!e.isEmpty()) {
 			core.errlog(TAG, "file move: %s", e);
 			return;
 		}
 
-		gui.msg_show(this, "Moved file to %s", core.setts.quick_move_dir);
+		gui.msg_show(this, "Moved file to %s", gui.cur_path);
 	}
 
 	void explorer_event(String fn, int flags) {
@@ -870,20 +865,15 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void list_files_move() {
-		if (core.setts.quick_move_dir.isEmpty()) {
-			core.errlog(TAG, "Please set move-directory in Settings");
-			return;
-		}
-
 		gui.dlg_question(this, "Move files"
-			, String.format("Move all files in the current list to %s ?", core.setts.quick_move_dir)
-			, "Move All", "Do nothing"
+			, String.format("Move all files in the current list to %s ?", gui.cur_path)
+			, "Move All Files", "Do nothing"
 			, (dialog, which) -> { list_files_move_confirmed(); }
 			);
 	}
 
 	private void list_files_move_confirmed() {
-		int n = queue.move_all(core.setts.quick_move_dir);
+		int n = queue.move_all(gui.cur_path);
 		String s = String.format("Moved %d files", n);
 		if (n < 0)
 			s = "Some files were NOT moved";

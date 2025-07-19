@@ -35,7 +35,6 @@ public class SettingsActivity extends AppCompatActivity {
 		play_init();
 
 		b.eDataDir.setOnClickListener(v -> explorer.show(b.eDataDir));
-		b.eQuickMoveDir.setOnClickListener(v -> explorer.show(b.eQuickMoveDir));
 
 		rec_init();
 
@@ -218,7 +217,6 @@ public class SettingsActivity extends AppCompatActivity {
 		b.eDataDir.setText(core.setts.pub_data_dir);
 		b.eTrashDir.setText(core.setts.trash_dir);
 		b.swFileDel.setChecked(core.setts.file_del);
-		b.eQuickMoveDir.setText(core.setts.quick_move_dir);
 		b.swDeprecatedMods.setChecked(core.setts.deprecated_mods);
 
 		rec_load();
@@ -271,7 +269,6 @@ public class SettingsActivity extends AppCompatActivity {
 		core.setts.svc_notification_disable = b.swSvcNotifDisable.isChecked();
 		core.setts.trash_dir = b.eTrashDir.getText().toString();
 		core.setts.file_del = b.swFileDel.isChecked();
-		core.setts.quick_move_dir = b.eQuickMoveDir.getText().toString();
 		core.setts.deprecated_mods = b.swDeprecatedMods.isChecked();
 
 		rec_save();
