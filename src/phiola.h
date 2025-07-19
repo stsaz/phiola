@@ -507,6 +507,7 @@ struct phi_queue_if {
 	cb.flags:
 		'a': item @pos added
 		'r': item @pos removed
+		'm': updated meta for the item @pos
 		'n': list created
 		'c': cleared
 		'd': deleted
@@ -541,6 +542,10 @@ struct phi_queue_if {
 	Generates on_change('u') event.
 	flags: enum PHI_Q_SORT */
 	void (*sort)(phi_queue_id q, uint flags);
+
+	/** Read meta data of all tracks.
+	Generates on_change('m') event. */
+	void (*read_meta)(phi_queue_id q);
 
 	/** Remove all items.
 	Generates on_change('c') event. */

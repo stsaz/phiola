@@ -162,6 +162,7 @@ class Phiola {
 		QUCOM_PLAY = 7,
 		QUCOM_PLAY_NEXT = 8,
 		QUCOM_PLAY_PREV = 9,
+		QUCOM_META_READ = 10,
 		QUCOM_CONV_CANCEL = 13,
 
 		/** Update current status of all entries.

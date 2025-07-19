@@ -47,6 +47,7 @@
 	<string name="mlist_move_left">List: Move Left</string>
 	<string name="mlist_convert">List: Convert All...</string>
 	<string name="mlist_files_move">List: Quick Move All Files</string>
+	<string name="mlist_read_meta">List: Read Tags</string>
 
 	<string name="menu_about">About</string>
 

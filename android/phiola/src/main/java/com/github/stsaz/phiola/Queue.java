@@ -62,6 +62,13 @@ class PhiolaQueue {
 		modified = true;
 	}
 
+	void read_meta() {
+		if (conversion) return;
+
+		phi.quCmd(q, Phiola.QUCOM_META_READ, 0);
+		modified = true;
+	}
+
 	void clear() {
 		if (conversion) return;
 
@@ -245,6 +252,9 @@ class Queue {
 
 				case 'r':
 					nfy_all(QueueNotify.REMOVED, pos);  break;
+
+				case 'm':
+					nfy_all(QueueNotify.UPDATE, pos);  break;
 				}
 			});
 	}
@@ -541,6 +551,8 @@ class Queue {
 	void current_remove_non_existing() {
 		queues.get(i_selected).remove_non_existing();
 	}
+
+	void current_read_meta() { queues.get(i_selected).read_meta(); }
 
 	int number() { return queues.size(); }
 

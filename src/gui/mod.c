@@ -645,6 +645,11 @@ end:
 	ffslice_free(&indices);
 }
 
+void list_meta_read()
+{
+	gd->queue->read_meta(gd->q_selected);
+}
+
 
 static void grd_rec_close(void *f, phi_track *t)
 {

@@ -163,6 +163,7 @@ struct phi_track {
 	void *udata;
 	uint icy_meta_interval; // Upon receiving HTTP response, 'http' filter sets ICY meta interval for 'icy' filter
 	uint meta_changed :1; // Set by 'icy' filter when meta is changed; reset by 'ui' filter
+	uint meta_reading :1;
 
 	struct {
 		struct phi_af format;

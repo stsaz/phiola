@@ -346,6 +346,10 @@ static void list_update(uint cmd, uint n, uint pos)
 			m->vlist.update(pos, 0);
 #endif
 		break;
+
+	case 'm':
+		m->vlist.update(pos, 0);
+		break;
 	}
 }
 
@@ -409,6 +413,7 @@ static void q_on_change(phi_queue_id q, uint flags, uint pos)
 		break;
 
 	case 'd':
+	case 'm':
 		break;
 
 	case '.':
@@ -634,6 +639,9 @@ static void wmain_action(ffui_window *wnd, int id)
 
 	case A_LIST_SAVE:
 		list_save_choose_filename();  break;
+
+	case A_LIST_META_READ:
+		gui_core_task(list_meta_read);  break;
 
 	case A_LIST_REMOVE:
 		gui_core_task_slice(list_remove, m->vlist.selected());  break;

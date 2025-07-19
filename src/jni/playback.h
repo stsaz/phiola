@@ -71,8 +71,6 @@ static void play_ui_close(void *f, phi_track *t)
 
 }
 
-#define pcm_samples_to_time_msec(samples, rate)   ((uint64)(samples) * 1000 / (rate))
-
 static void meta_fill(JNIEnv *env, jobject jmeta, const phi_track *t)
 {
 	jni_obj_sz_set(env, jmeta, jni_field_str(x->Phiola_Meta, "url"), t->conf.ifile.name);
@@ -100,7 +98,7 @@ static void meta_fill(JNIEnv *env, jobject jmeta, const phi_track *t)
 	}
 
 	if (t->audio.total != ~0ULL && t->audio.format.rate) {
-		uint64 duration_msec = pcm_samples_to_time_msec(t->audio.total, t->audio.format.rate);
+		uint64 duration_msec = samples_to_msec(t->audio.total, t->audio.format.rate);
 		jni_obj_long_set(jmeta, jni_field_long(x->Phiola_Meta, "length_msec"), duration_msec);
 		qe->length_sec = duration_msec / 1000;
 	}
@@ -134,7 +132,7 @@ static void auto_skip(phi_track *t)
 	if (!(as || au))
 		return;
 
-	uint64 dur_msec = pcm_samples_to_time_msec(t->audio.total, t->audio.format.rate);
+	uint64 dur_msec = samples_to_msec(t->audio.total, t->audio.format.rate);
 
 	if (as) {
 		x->play.seek_msec = (as > 0) ? (uint64)as * 1000
@@ -152,7 +150,7 @@ static int play_ui_process(void *f, phi_track *t)
 	uint pos_sec = 0;
 	if (t->audio.format.rate) {
 		if (t->audio.pos != ~0ULL) {
-			pos_msec = pcm_samples_to_time_msec(t->audio.pos, t->audio.format.rate);
+			pos_msec = samples_to_msec(t->audio.pos, t->audio.format.rate);
 			pos_sec = t->audio.pos / t->audio.format.rate;
 		}
 	}

@@ -237,6 +237,9 @@ public class MainActivity extends AppCompatActivity {
 		case R.id.action_list_fmove:
 			list_files_move();  break;
 
+		case R.id.action_list_read_meta:
+			queue.current_read_meta();  break;
+
 		default:
 			return false;
 		}

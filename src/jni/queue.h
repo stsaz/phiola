@@ -42,6 +42,7 @@ static void qu_on_change(phi_queue_id q, uint flags, uint pos)
 	case 'r':
 	case 'c':
 	case 'u':
+	case 'm':
 		break;
 
 	case '.':
@@ -250,6 +251,7 @@ enum {
 	QUCOM_PLAY = 7,
 	QUCOM_PLAY_NEXT = 8,
 	QUCOM_PLAY_PREV = 9,
+	QUCOM_META_READ = 10,
 	QUCOM_CONV_CANCEL = 13,
 	QUCOM_CONV_UPDATE = 14,
 };
@@ -290,6 +292,9 @@ static void qu_cmd(struct core_data *d)
 
 	case QUCOM_PLAY_PREV:
 		x->queue.play(NULL, PHI_Q_PLAY_PREVIOUS);  break;
+
+	case QUCOM_META_READ:
+		x->queue.read_meta(q);  break;
 
 	case QUCOM_CONV_UPDATE:
 		qu_conv_update(q);  break;

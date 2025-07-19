@@ -40,6 +40,7 @@ FF_EXTERN void list_add_sz(void *sz);
 FF_EXTERN void list_add_multi(ffslice names);
 FF_EXTERN void list_add_to_next(ffslice indices);
 FF_EXTERN void list_remove(ffslice indices);
+FF_EXTERN void list_meta_read();
 FF_EXTERN void list_save(void *sz);
 FF_EXTERN void lists_load();
 FF_EXTERN void list_deleted(phi_queue_id q);

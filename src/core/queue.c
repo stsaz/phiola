@@ -52,6 +52,7 @@ static int q_find(struct phi_queue *q, struct q_entry *e);
 enum Q_TKCL_F {
 	Q_TKCL_ERR = 1,
 	Q_TKCL_STOP = 2,
+	Q_TKCL_META_READ = 4,
 };
 static void q_ent_closed(struct phi_queue *q, uint flags);
 static void q_modified(struct phi_queue *q);
@@ -368,6 +369,19 @@ static void q_trk_closed(void *param)
 
 	q->active_n -= n;
 
+	if (flags & Q_TKCL_META_READ) {
+		struct q_entry *e = q->cursor;
+		if (!e)
+			return;
+		uint i = qe_index(e);
+		qm->on_change(q, 'm', i);
+		if (!(e = q_get(q, i + 1)))
+			return;
+		q->cursor = e;
+		qe_read_meta(e);
+		return;
+	}
+
 	if (!(flags & Q_TKCL_STOP)) {
 		if (!(q->conf.conversion
 			&& core->conf.workers > 1 && !core->workers_available()))
@@ -639,6 +653,17 @@ static void q_sort(phi_queue_id q, uint flags)
 	qm->on_change(q, 'u', 0);
 }
 
+static void q_read_meta(phi_queue_id q)
+{
+	if (!q) q = qm_default();
+
+	struct q_entry *e = q_get(q, 0);
+	if (!e) return;
+
+	q->cursor = e;
+	qe_read_meta(e);
+}
+
 static void q_remove_multi(phi_queue_id q, uint flags)
 {
 	if (!q) q = qm_default();
@@ -695,6 +720,7 @@ const phi_queue_if phi_queueif = {
 	q_save,
 	q_status,
 	q_sort,
+	q_read_meta,
 
 	q_clear,
 	q_remove_at,

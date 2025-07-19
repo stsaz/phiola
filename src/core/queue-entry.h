@@ -2,6 +2,9 @@
 2023, Simon Zolin */
 
 #include <ffsys/path.h>
+#include <ffsys/dirscan.h>
+
+static int qe_heal_ext(char *fn);
 
 struct q_entry {
 	struct phi_queue_entry pub;
@@ -74,11 +77,17 @@ static void qe_close(void *f, phi_track *t)
 				core->metaif->destroy(&meta_old);
 				t->meta = NULL;
 			}
+
+			if (t->audio.total != ~0ULL && t->audio.format.rate) {
+				uint64 duration_msec = samples_to_msec(t->audio.total, t->audio.format.rate);
+				e->pub.length_sec = duration_msec / 1000;
+			}
+
 			if (mod)
 				q_modified(e->q);
 		}
 
-		if (e->expand)
+		if (e->expand || t->meta_reading)
 			core->track->stop(t);
 	}
 
@@ -88,6 +97,7 @@ static void qe_close(void *f, phi_track *t)
 		if ((t->chain_flags & (PHI_FSTOP | PHI_FSTOP_AFTER)) // track stopped by user
 			|| (e->expand && !e->play_next_on_close))
 			flags |= Q_TKCL_STOP;
+		flags |= (t->meta_reading) ? Q_TKCL_META_READ : 0;
 		q_ent_closed(e->q, flags);
 	}
 	qe_unref(e);
@@ -95,6 +105,14 @@ static void qe_close(void *f, phi_track *t)
 
 static int qe_process(void *f, phi_track *t)
 {
+	struct q_entry *e = f;
+	if (t->meta_reading) {
+		if (!fffile_exists(e->pub.url)) {
+			if (qe_heal_ext(e->pub.url))
+				return PHI_FIN;
+		}
+	}
+
 	t->data_out = t->data_in;
 	return PHI_DONE;
 }
@@ -243,6 +261,68 @@ static int qe_expand(struct q_entry *e)
 err:
 	track->close(t);
 	return -1;
+}
+
+/** Find an existing file with the same name but different extension.
+/path/dir/file.mp3 -> /path/dir/file.m4a */
+static int qe_heal_ext(char *fn)
+{
+	int rc = 1;
+	ffdirscan ds = {};
+	ffstr ss, name, dir;
+	ffpath_splitpath_str(FFSTR_Z(fn), &dir, &name);
+	ffpath_splitname_str(name, &name, NULL);
+	char *dirz = ffsz_dupstr(&dir);
+	if (!dir.len || !name.len)
+		goto end;
+
+	char wc[4] = {
+		name.ptr[0],
+		'*',
+		'\0'
+	};
+	ds.wildcard = wc;
+	if (ffdirscan_open(&ds, dirz, FFDIRSCAN_NOSORT | FFDIRSCAN_USEWILDCARD))
+		goto end;
+
+	const char *s;
+	for (;;) {
+		if (!(s = ffdirscan_next(&ds)))
+			goto end;
+		ss = FFSTR_Z(s);
+		if (ffstr_match2(&ss, &name) && s[name.len] == '.')
+			break;
+	}
+
+	if (ss.len > ffsz_len(fn))
+		goto end; // not supported
+	ffmem_copy(name.ptr + name.len + 1, s + name.len + 1, ss.len - (name.len + 1) + 1); // replace extension (also write NUL)
+	rc = 0;
+
+end:
+	if (rc)
+		dbglog("%s: couldn't find similar file in '%S'", fn, dirz);
+	ffmem_free(dirz);
+	ffdirscan_close(&ds);
+	return rc;
+}
+
+static void qe_read_meta(struct q_entry *e)
+{
+	struct phi_track_conf c = e->q->conf.tconf;
+	c.ifile.name = e->pub.url;
+	c.info_only = 1;
+	phi_track *t = core->track->create(&c);
+	core->track->filter(t, &phi_queue_guard, 0);
+	core->track->filter(t, core->mod("core.auto-input"), 0);
+	core->track->filter(t, core->mod("format.detect"), 0);
+
+	e->trk = t;
+	e->used++;
+
+	t->meta_reading = 1;
+	t->qent = &e->pub;
+	core->track->start(t);
 }
 
 static void qe_stop(struct q_entry *e)
