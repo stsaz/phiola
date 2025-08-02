@@ -398,6 +398,14 @@ void ctl_action(uint cmd)
 		n = PHI_Q_SORT_FILEDATE;
 		goto list_sort;
 
+	case A_LIST_SORT_TAG_ARTIST:
+		n = PHI_Q_SORT_TAG_ARTIST;
+		goto list_sort;
+
+	case A_LIST_SORT_TAG_DATE:
+		n = PHI_Q_SORT_TAG_DATE;
+		goto list_sort;
+
 	case A_LIST_SHUFFLE:
 		n = PHI_Q_SORT_RANDOM;
 list_sort:

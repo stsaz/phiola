@@ -3,16 +3,25 @@
 
 package com.github.stsaz.phiola;
 
+import java.util.Arrays;
+
 class Conf {
 	Conf(Phiola phi) {}
 
-	static class Entry {
-		String value;
-		int number;
-		boolean enabled;
+	private int[] fields; // {off, len, number}...
+	private byte[] data;
+	String value(int i) {
+		return new String(Arrays.copyOfRange(data, fields[i*3], fields[i*3] + fields[i*3 + 1]));
 	}
+	int number(int i) { return fields[i*3 + 2]; }
+	boolean enabled(int i) { return fields[i*3 + 2] == 1; }
+	void reset() {
+		fields = null;
+		data = null;
+	}
+
 	static final int
-		CODEPAGE				= 1,
+		CODEPAGE				= 0,
 		CONV_AAC_Q				= CODEPAGE + 1,
 		CONV_COPY				= CONV_AAC_Q + 1,
 		CONV_FILE_DATE_PRES		= CONV_COPY + 1,
@@ -64,7 +73,7 @@ class Conf {
 		UI_THEME				= UI_SVC_NOTFN_DISABLE + 1,
 		UI_VIEW					= UI_THEME + 1
 		;
-	native Entry[] confRead(String filepath);
+	native boolean confRead(String filepath);
 	native boolean confWrite(String filepath, byte[] data);
 }
 

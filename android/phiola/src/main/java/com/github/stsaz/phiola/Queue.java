@@ -530,7 +530,6 @@ class Queue {
 
 	void active_remove(int pos) {
 		core.dbglog(TAG, "remove: %d:%d", i_active, pos);
-		filter_close();
 		queues.get(i_active).remove(pos);
 	}
 
@@ -624,22 +623,22 @@ class Queue {
 			);
 	}
 
-	void conf_load(Conf.Entry[] kv) {
-		curpos = kv[Conf.LIST_CURPOS].number;
-		i_active = kv[Conf.LIST_ACTIVE].number;
+	void conf_load(Conf c) {
+		curpos = c.number(Conf.LIST_CURPOS);
+		i_active = c.number(Conf.LIST_ACTIVE);
 		i_selected = i_active;
 
 		int f = 0;
-		if (kv[Conf.LIST_RANDOM].enabled) f |= F_RANDOM;
-		if (kv[Conf.LIST_REPEAT].enabled) f |= F_REPEAT;
-		if (kv[Conf.LIST_ADD_RM_ON_NEXT].enabled) f |= F_MOVE_ON_NEXT;
-		if (kv[Conf.LIST_RM_ON_NEXT].enabled) f |= F_RM_ON_NEXT;
-		if (kv[Conf.LIST_RM_ON_ERR].enabled) f |= F_RM_ON_ERR;
-		if (kv[Conf.PLAY_RG_NORM].enabled) f |= F_RG_NORM;
-		if (kv[Conf.PLAY_AUTO_NORM].enabled) f |= F_AUTO_NORM;
+		if (c.enabled(Conf.LIST_RANDOM)) f |= F_RANDOM;
+		if (c.enabled(Conf.LIST_REPEAT)) f |= F_REPEAT;
+		if (c.enabled(Conf.LIST_ADD_RM_ON_NEXT)) f |= F_MOVE_ON_NEXT;
+		if (c.enabled(Conf.LIST_RM_ON_NEXT)) f |= F_RM_ON_NEXT;
+		if (c.enabled(Conf.LIST_RM_ON_ERR)) f |= F_RM_ON_ERR;
+		if (c.enabled(Conf.PLAY_RG_NORM)) f |= F_RG_NORM;
+		if (c.enabled(Conf.PLAY_AUTO_NORM)) f |= F_AUTO_NORM;
 		this.flags = f;
 
-		auto_stop_value_min = kv[Conf.PLAY_AUTO_STOP].number;
+		auto_stop_value_min = c.number(Conf.PLAY_AUTO_STOP);
 	}
 
 	void conf_normalize() {

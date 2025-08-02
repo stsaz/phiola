@@ -20,6 +20,7 @@ class GUI {
 	boolean record_hide;
 	boolean ainfo_in_title;
 	String cur_path = ""; // current explorer path
+	String list_filter = "";
 	private ArrayList<Integer> list_pos; // list scroll position
 	private ArrayList<String> list_names;
 	int mlib_scroll_pos;
@@ -75,16 +76,16 @@ class GUI {
 			);
 	}
 
-	void conf_load(Conf.Entry[] kv) {
-		cur_path = kv[Conf.UI_CURPATH].value;
-		filter_hide = kv[Conf.UI_FILTER_HIDE].enabled;
-		record_hide = kv[Conf.UI_RECORD_HIDE].enabled;
-		ainfo_in_title = kv[Conf.UI_INFO_IN_TITLE].enabled;
-		list_scroll_pos_parse(kv[Conf.UI_LIST_SCROLL_POS].value);
-		list_names_parse(kv[Conf.UI_LIST_NAMES].value);
-		mlib_scroll_pos = kv[Conf.UI_MLIB_SCROLL_POS].number;
-		theme = kv[Conf.UI_THEME].number;
-		view = kv[Conf.UI_VIEW].number;
+	void conf_load(Conf c) {
+		cur_path = c.value(Conf.UI_CURPATH);
+		filter_hide = c.enabled(Conf.UI_FILTER_HIDE);
+		record_hide = c.enabled(Conf.UI_RECORD_HIDE);
+		ainfo_in_title = c.enabled(Conf.UI_INFO_IN_TITLE);
+		list_scroll_pos_parse(c.value(Conf.UI_LIST_SCROLL_POS));
+		list_names_parse(c.value(Conf.UI_LIST_NAMES));
+		mlib_scroll_pos = c.number(Conf.UI_MLIB_SCROLL_POS);
+		theme = c.number(Conf.UI_THEME);
+		view = c.number(Conf.UI_VIEW);
 	}
 
 	boolean state_test(int mask) { return (state & mask) != 0; }

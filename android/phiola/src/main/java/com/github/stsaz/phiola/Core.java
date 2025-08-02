@@ -104,26 +104,24 @@ class Core extends Util {
 		return gui;
 	}
 
+	private String conf_file_name() { return work_dir + "/" + CONF_FN; }
+
 	void saveconf() {
-		String fn = work_dir + "/" + CONF_FN;
 		StringBuilder sb = new StringBuilder();
 		sb.append(this.setts.conf_write());
 		sb.append(qu.conf_write());
 		sb.append(gui.conf_write());
 		dbglog(TAG, "%s", sb.toString());
-		if (!conf.confWrite(fn, sb.toString().getBytes()))
-			errlog(TAG, "saveconf: %s", fn);
-		else
-			dbglog(TAG, "saveconf ok: %s", fn);
+
+		conf.confWrite(conf_file_name(), sb.toString().getBytes());
 	}
 
 	private void loadconf() {
-		String fn = work_dir + "/" + CONF_FN;
-		Conf.Entry[] kv = conf.confRead(fn);
-		if (kv != null) {
-			setts.conf_load(kv);
-			qu.conf_load(kv);
-			gui.conf_load(kv);
+		if (conf.confRead(conf_file_name())) {
+			setts.conf_load(conf);
+			qu.conf_load(conf);
+			gui.conf_load(conf);
+			conf.reset();
 		}
 
 		setts.normalize();

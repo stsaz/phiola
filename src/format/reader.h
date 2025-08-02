@@ -57,6 +57,7 @@ static void* fmtr_open(phi_track *t)
 	f->trk = t;
 	struct avpk_reader_conf c = {
 		.total_size = (t->input.size != ~0ULL) ? t->input.size : 0,
+		.flags = (t->input.cant_seek) ? AVPKR_F_NO_SEEK : 0,
 		.code_page = core->conf.code_page,
 		.log = fmtr_log,
 		.opaque = f,
@@ -202,7 +203,12 @@ static int fmtr_process(struct fmt_rd *f, phi_track *t)
 			t->audio.seek_req = 0;
 			uint64 samples = msec_to_samples(t->audio.seek, f->sample_rate);
 			dbglog(t, "seek: %Ums", t->audio.seek);
-			avpk_seek(&f->rd, samples);
+			if (!(t->input.size == ~0ULL || t->input.cant_seek)) {
+				avpk_seek(&f->rd, samples);
+			} else {
+				t->audio.seek = -1;
+				warnlog(t, "can't seek");
+			}
 		}
 
 		ffmem_zero_obj(&res);

@@ -328,41 +328,41 @@ class CoreSettings {
 		normalize_convert();
 	}
 
-	void conf_load(Conf.Entry[] kv) {
-		svc_notification_disable = kv[Conf.UI_SVC_NOTFN_DISABLE].enabled;
-		file_del = kv[Conf.OP_FILE_DELETE].enabled;
-		pub_data_dir = kv[Conf.OP_DATA_DIR].value;
-		library_dir = kv[Conf.OP_MLIB_DIR].value;
-		plist_save_dir = kv[Conf.OP_PLIST_SAVE_DIR].value;
-		trash_dir = kv[Conf.OP_TRASH_DIR_REL].value;
-		deprecated_mods = kv[Conf.OP_DEPRECATED_MODS].enabled;
-		set_codepage_str(kv[Conf.CODEPAGE].value);
+	void conf_load(Conf c) {
+		svc_notification_disable = c.enabled(Conf.UI_SVC_NOTFN_DISABLE);
+		file_del = c.enabled(Conf.OP_FILE_DELETE);
+		pub_data_dir = c.value(Conf.OP_DATA_DIR);
+		library_dir = c.value(Conf.OP_MLIB_DIR);
+		plist_save_dir = c.value(Conf.OP_PLIST_SAVE_DIR);
+		trash_dir = c.value(Conf.OP_TRASH_DIR_REL);
+		deprecated_mods = c.enabled(Conf.OP_DEPRECATED_MODS);
+		set_codepage_str(c.value(Conf.CODEPAGE));
 
-		auto_skip_head_set(kv[Conf.PLAY_AUTO_SKIP].value);
-		auto_skip_tail_set(kv[Conf.PLAY_AUTO_SKIP_TAIL].value);
+		auto_skip_head_set(c.value(Conf.PLAY_AUTO_SKIP));
+		auto_skip_tail_set(c.value(Conf.PLAY_AUTO_SKIP_TAIL));
 
-		rec_path = kv[Conf.REC_PATH].value;
-		rec_name_template = kv[Conf.REC_NAME].value;
-		rec_enc = kv[Conf.REC_ENC].value;
-		rec_channels = kv[Conf.REC_CHANNELS].number;
-		rec_rate = kv[Conf.REC_RATE].number;
-		rec_bitrate = kv[Conf.REC_BITRATE].number;
-		rec_buf_len_ms = kv[Conf.REC_BUF_LEN].number;
-		rec_danorm = kv[Conf.REC_DANORM].enabled;
-		rec_exclusive = kv[Conf.REC_EXCLUSIVE].enabled;
-		rec_src_unprocessed = kv[Conf.REC_SRC_UNPROC].enabled;
-		rec_list_add = kv[Conf.REC_LIST_ADD].enabled;
-		rec_longclick = kv[Conf.REC_LONGCLICK].enabled;
-		rec_until_sec = core.str_to_uint(kv[Conf.REC_UNTIL].value, rec_until_sec);
-		rec_gain_db100 = kv[Conf.REC_GAIN].number;
+		rec_path = c.value(Conf.REC_PATH);
+		rec_name_template = c.value(Conf.REC_NAME);
+		rec_enc = c.value(Conf.REC_ENC);
+		rec_channels = c.number(Conf.REC_CHANNELS);
+		rec_rate = c.number(Conf.REC_RATE);
+		rec_bitrate = c.number(Conf.REC_BITRATE);
+		rec_buf_len_ms = c.number(Conf.REC_BUF_LEN);
+		rec_danorm = c.enabled(Conf.REC_DANORM);
+		rec_exclusive = c.enabled(Conf.REC_EXCLUSIVE);
+		rec_src_unprocessed = c.enabled(Conf.REC_SRC_UNPROC);
+		rec_list_add = c.enabled(Conf.REC_LIST_ADD);
+		rec_longclick = c.enabled(Conf.REC_LONGCLICK);
+		rec_until_sec = core.str_to_uint(c.value(Conf.REC_UNTIL), rec_until_sec);
+		rec_gain_db100 = c.number(Conf.REC_GAIN);
 
-		conv_out_dir = kv[Conf.CONV_OUT_DIR].value;
-		conv_out_name = kv[Conf.CONV_OUT_NAME].value;
-		conv_format = kv[Conf.CONV_FORMAT].value;
-		conv_aac_quality = kv[Conf.CONV_AAC_Q].number;
-		conv_opus_quality = kv[Conf.CONV_OPUS_Q].number;
-		conv_copy = kv[Conf.CONV_COPY].enabled;
-		conv_file_date_preserve = kv[Conf.CONV_FILE_DATE_PRES].enabled;
-		conv_new_add_list = kv[Conf.CONV_NEW_ADD_LIST].enabled;
+		conv_out_dir = c.value(Conf.CONV_OUT_DIR);
+		conv_out_name = c.value(Conf.CONV_OUT_NAME);
+		conv_format = c.value(Conf.CONV_FORMAT);
+		conv_aac_quality = c.number(Conf.CONV_AAC_Q);
+		conv_opus_quality = c.number(Conf.CONV_OPUS_Q);
+		conv_copy = c.enabled(Conf.CONV_COPY);
+		conv_file_date_preserve = c.enabled(Conf.CONV_FILE_DATE_PRES);
+		conv_new_add_list = c.enabled(Conf.CONV_NEW_ADD_LIST);
 	}
 }

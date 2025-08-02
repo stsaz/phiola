@@ -18,6 +18,7 @@ static int phi_output_open(nml_http_client *c)
 		.code = c->response.code,
 		.status = range16_tostr(&c->response.status, c->response.base),
 		.ct = range16_tostr(&c->response.content_type, c->response.base),
+		.content_length = c->response.content_length,
 	};
 
 	ffstr h = range16_tostr(&c->response.headers, c->response.base), name = {}, val = {};

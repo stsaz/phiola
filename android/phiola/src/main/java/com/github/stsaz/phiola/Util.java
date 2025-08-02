@@ -135,4 +135,28 @@ abstract class Util {
 		}
 		return parts;
 	}
+
+	/** Split full file path into directory, file name and extension */
+	static String[] path_split3(String s) {
+		String[] parts = new String[3];
+
+		int slash = s.lastIndexOf('/');
+		if (slash != -1) {
+			parts[0] = s.substring(0, slash);
+			s = s.substring(slash + 1);
+		} else {
+			parts[0] = "";
+		}
+
+		int dot = s.lastIndexOf('.');
+		if (dot > 0) {
+			parts[1] = s.substring(0, dot);
+			parts[2] = s.substring(dot + 1);
+		} else {
+			parts[1] = s;
+			parts[2] = "";
+		}
+
+		return parts;
+	}
 }

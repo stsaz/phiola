@@ -161,6 +161,8 @@ int phi_hc_resp(void *ctx, struct phi_http_data *d)
 		h->icy = !!d->icy_meta_interval;
 		h->trk->meta_changed = !d->icy_meta_interval;
 		h->trk->audio.bitrate = d->icy_br * 1000;
+		h->trk->input.size = d->content_length;
+		h->trk->input.cant_seek = 1;
 	}
 
 	return NMLR_OPEN;

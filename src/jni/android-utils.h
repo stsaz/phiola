@@ -5,8 +5,6 @@
 #include <ffsys/dir.h>
 #include <ffsys/dirscan.h>
 
-#define PJC_CONF_ENTRY  "com/github/stsaz/phiola/Conf$Entry"
-
 static const char setting_names[][20] = {
 	"codepage",
 	"conv_aac_q",
@@ -62,25 +60,15 @@ static const char setting_names[][20] = {
 };
 
 /** Read config data into Java array.
-
-(KEY VALUE LF)...
-
-->
-
-class C {
-	String value;
-	int number;
-	boolean enabled;
-}
+(KEY VALUE LF)... -> {value-offset value-length value-as-number}...
 */
-static jobjectArray conf_read(JNIEnv *env, jclass jc, ffstr data, const char settings[][20], uint n_settings, int int_default)
+static jintArray conf_read(JNIEnv *env, ffstr data, const char settings[][20], uint n_settings, int int_default)
 {
-	jobjectArray joa = jni_joa(n_settings+1, jc);
-
-	jmethodID jinit = jni_func(jc, "<init>", "()V");
-	jfieldID jf_value = jni_field(jc, "value", JNI_TSTR);
-	jfieldID jf_number = jni_field(jc, "number", JNI_TINT);
-	jfieldID jf_enabled = jni_field(jc, "enabled", JNI_TBOOL);
+	const char *data_start = data.ptr;
+	ffvec fields = {};
+	ffvec_zalloc(&fields, n_settings * 3, 4);
+	fields.len = n_settings * 3;
+	int *dst = fields.ptr;
 
 	while (data.len) {
 		ffstr ln, k, v;
@@ -91,53 +79,40 @@ static jobjectArray conf_read(JNIEnv *env, jclass jc, ffstr data, const char set
 		if (r < 0)
 			continue;
 
-		jobject jo = jni_obj_new(jc, jinit);
+		dst[r*3 + 0] = v.ptr - data_start;
+		dst[r*3 + 1] = v.len;
 
-		v.ptr[v.len] = '\0';
-		jni_obj_sz_set(env, jo, jf_value, v.ptr);
-
-		int n;
-		if (ffstr_to_int32(&v, &n)) {
-			jni_obj_int_set(jo, jf_number, n);
-			jni_obj_bool_set(jo, jf_enabled, (n == 1));
-		} else if (int_default) {
-			jni_obj_int_set(jo, jf_number, int_default);
-		}
-
-		jni_joa_i_set(joa, r + 1, jo);
-		jni_local_unref(jo);
+		int n = int_default;
+		ffstr_to_int32(&v, &n);
+		dst[r*3 + 2] = n;
 	}
 
-	for (uint i = 1;  i <= n_settings;  i++) {
-		jobject jo = jni_joa_i(joa, i);
-		if (!jo) {
-			jo = jni_obj_new(jc, jinit);
-			jni_obj_sz_set(env, jo, jf_value, "");
-			jni_obj_int_set(jo, jf_number, int_default);
-			jni_joa_i_set(joa, i, jo);
-		}
-		jni_local_unref(jo);
-	}
-
-	return joa;
+	jintArray jia = jni_jia_vec(env, *(ffslice*)&fields);
+	ffvec_free(&fields);
+	return jia;
 }
 
-JNIEXPORT jobjectArray JNICALL
+JNIEXPORT jboolean JNICALL
 Java_com_github_stsaz_phiola_Conf_confRead(JNIEnv *env, jobject thiz, jstring jfilepath)
 {
+	int rc = 0;
 	dbglog("%s: enter", __func__);
 	const char *fn = jni_sz_js(jfilepath);
 	ffvec d = {};
-	jobjectArray joa = NULL;
-	if (0 != fffile_readwhole(fn, &d, 1*1024*1024))
+	if (fffile_readwhole(fn, &d, 1*1024*1024))
 		goto end;
-	joa = conf_read(env, jni_class(PJC_CONF_ENTRY), *(ffstr*)&d, setting_names, FF_COUNT(setting_names), 0);
-	dbglog("%s: exit", __func__);
+	jintArray jia = conf_read(env, *(ffstr*)&d, setting_names, FF_COUNT(setting_names), 0);
+
+	jclass jc = jni_class_obj(thiz);
+	jni_obj_jba_set(env, thiz, jni_field_jba(jc, "data"), *(ffstr*)&d);
+	jni_obj_jo_set(thiz, jni_field(jc, "fields", JNI_TARR JNI_TINT), jia);
+	rc = 1;
 
 end:
 	jni_sz_free(fn, jfilepath);
 	ffvec_free(&d);
-	return joa;
+	dbglog("%s: exit", __func__);
+	return rc;
 }
 
 JNIEXPORT jboolean JNICALL

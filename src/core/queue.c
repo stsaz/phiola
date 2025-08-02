@@ -601,14 +601,36 @@ static int q_sort_cmp(const void *_a, const void *_b, void *udata)
 {
 	const struct q_entry *a = *(struct q_entry**)_a, *b = *(struct q_entry**)_b;
 	const struct q_sort_params *p = udata;
+	int r;
+	ffstr k;
 
-	if (p->flags == PHI_Q_SORT_FILESIZE
-		|| p->flags == PHI_Q_SORT_FILEDATE) {
+	switch (p->flags) {
+	case PHI_Q_SORT_FILESIZE:
+	case PHI_Q_SORT_FILEDATE: {
 		const uint64 *fs = p->file_sizes.ptr;
 		if (fs[a->index] > fs[b->index])
 			return -1;
 		else if (fs[a->index] < fs[b->index])
 			return 1;
+		break;
+	}
+
+	case PHI_Q_SORT_TAG_ARTIST:
+		k = FFSTR_Z("artist");
+		goto meta_cmp;
+
+	case PHI_Q_SORT_TAG_DATE:
+		k = FFSTR_Z("date");
+		goto meta_cmp;
+
+meta_cmp: {
+		ffstr ma = {}, mb = {};
+		core->metaif->find(&a->pub.meta, k, &ma, 0);
+		core->metaif->find(&b->pub.meta, k, &mb, 0);
+		if ((r = ffstr_icmp2(&ma, &mb)))
+			return r;
+		break;
+	}
 	}
 
 	return ffsz_icmp(a->pub.url, b->pub.url);

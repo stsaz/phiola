@@ -29,6 +29,11 @@ public class ListSaveActivity extends AppCompatActivity {
 
 		core = Core.getInstance();
 		load();
+
+		String name = getIntent().getStringExtra("name");
+		if (name == null || name.isEmpty())
+			name = "Playlist1";
+		b.eName.setText(name);
 	}
 
 	protected void onDestroy() {
@@ -38,7 +43,6 @@ public class ListSaveActivity extends AppCompatActivity {
 
 	private void load() {
 		b.eDir.setText(core.setts.plist_save_dir);
-		b.eName.setText("Playlist1");
 	}
 
 	private void save() {

@@ -48,6 +48,9 @@ enum {
 
 static void play_ui_close(void *f, phi_track *t)
 {
+	if (t != x->play.trk)
+		return; // new track has been started already
+
 	JNIEnv *env;
 	int r = jni_vm_attach(jvm, &env);
 	if (r != 0) {
@@ -81,20 +84,27 @@ static void meta_fill(JNIEnv *env, jobject jmeta, const phi_track *t)
 	uint i = 0;
 	ffstr k, v;
 	while (x->metaif.list(meta, &i, &k, &v, PHI_META_UNIQUE | PHI_META_PRIVATE)) {
-		if (ffstr_eqz(&k, "artist"))
-			jni_obj_sz_set(env, jmeta, jni_field_str(x->Phiola_Meta, "artist"), v.ptr);
+		const char *kz = NULL;
 
-		else if (ffstr_eqz(&k, "title"))
-			jni_obj_sz_set(env, jmeta, jni_field_str(x->Phiola_Meta, "title"), v.ptr);
+		switch (k.ptr[0]) {
+		case 'a':
+		case 't':
+		case 'd':
+			if (ffstr_eqz(&k, "artist")
+				|| ffstr_eqz(&k, "title")
+				|| ffstr_eqz(&k, "album")
+				|| ffstr_eqz(&k, "date"))
+				kz = k.ptr;
+			break;
 
-		else if (ffstr_eqz(&k, "album"))
-			jni_obj_sz_set(env, jmeta, jni_field_str(x->Phiola_Meta, "album"), v.ptr);
+		case '_':
+			if (ffstr_eqz(&k, "_phi_info"))
+				kz = "info";
+			break;
+		}
 
-		else if (ffstr_eqz(&k, "date"))
-			jni_obj_sz_set(env, jmeta, jni_field_str(x->Phiola_Meta, "date"), v.ptr);
-
-		else if (ffstr_eqz(&k, "_phi_info"))
-			jni_obj_sz_set(env, jmeta, jni_field_str(x->Phiola_Meta, "info"), v.ptr);
+		if (kz)
+			jni_obj_sz_set(env, jmeta, jni_field_str(x->Phiola_Meta, kz), v.ptr);
 	}
 
 	if (t->audio.total != ~0ULL && t->audio.format.rate) {

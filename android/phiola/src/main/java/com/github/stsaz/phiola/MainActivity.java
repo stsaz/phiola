@@ -255,6 +255,8 @@ public class MainActivity extends AppCompatActivity {
 		m.getMenu().add(0, Phiola.QU_SORT_FILESIZE, 0, getString(R.string.mlist_sort_filesize));
 		m.getMenu().add(0, Phiola.QU_SORT_FILEDATE, 0, getString(R.string.mlist_sort_filedate));
 		m.getMenu().add(0, Phiola.QU_SORT_RANDOM, 0, getString(R.string.mlist_shuffle));
+		m.getMenu().add(0, Phiola.QU_SORT_TAG_ARTIST, 0, getString(R.string.mlist_sort_tag_artist));
+		m.getMenu().add(0, Phiola.QU_SORT_TAG_DATE, 0, getString(R.string.mlist_sort_tag_date));
 		m.show();
 	}
 
@@ -631,10 +633,9 @@ public class MainActivity extends AppCompatActivity {
 		view_prev = gui.view;
 		gui.view = GUI.V_PLAYLIST;
 		if (!gui.filter_hide) {
-			if (view_prev == GUI.V_LIBRARY)
-				b.tfilter.setQuery("", false);
+			b.tfilter.setQuery(gui.list_filter, false);
 			b.tfilter.setVisibility(View.VISIBLE);
-			queue.current_filter(b.tfilter.getQuery().toString());
+			queue.current_filter(gui.list_filter);
 		}
 
 		list_update();
@@ -677,6 +678,8 @@ public class MainActivity extends AppCompatActivity {
 				return;
 			gui.msg_show(this, "Deleted file");
 		}
+
+		plist_filter_clear();
 		queue.active_remove(pos);
 	}
 
@@ -727,9 +730,39 @@ public class MainActivity extends AppCompatActivity {
 		gui.msg_show(this, "Moved file to %s", gui.cur_path);
 	}
 
+	private void plist_open_new(String fn) {
+		list_new();
+
+		int pos = queue.current_index();
+		gui.list_name_set(pos, Util.path_split3(fn)[1]);
+		bplaylist_text(pos);
+
+		queue.current_add(fn, Queue.ADD);
+		queue.current_play(0);
+	}
+
+	void library_event(String fn, int flags) {
+		if (flags == 0) {
+			plist_open_new(fn);
+			return;
+		}
+
+		explorer_event(fn, Queue.ADD_RECURSE);
+	}
+
+	private boolean is_playlist(String ext) {
+		return ext.equalsIgnoreCase("m3u")
+			|| ext.equalsIgnoreCase("m3u8");
+	}
+
 	void explorer_event(String fn, int flags) {
 		if (fn == null) {
 			b.list.setAdapter(pl_adapter);
+			return;
+		}
+
+		if (flags == Queue.ADD && is_playlist(Util.path_split3(fn)[2])) {
+			plist_open_new(fn);
 			return;
 		}
 
@@ -782,13 +815,21 @@ public class MainActivity extends AppCompatActivity {
 	/** Called when we're leaving the current tab */
 	void list_leave() {
 		LinearLayoutManager llm = (LinearLayoutManager)b.list.getLayoutManager();
-		int pos = llm.findFirstVisibleItemPosition();
+		int pos = llm.findFirstCompletelyVisibleItemPosition();
 
 		if (gui.view == GUI.V_PLAYLIST) {
 			queue.current_filter("");
+			gui.list_filter = b.tfilter.getQuery().toString();
 			gui.list_scroll_pos_set(queue.current_index(), pos);
 		} else if (gui.view == GUI.V_LIBRARY) {
 			gui.mlib_scroll_pos = pos;
+		}
+	}
+
+	private void plist_filter_clear() {
+		if (!b.tfilter.getQuery().toString().isEmpty()) {
+			b.tfilter.setQuery("", false);
+			plist_filter("");
 		}
 	}
 
@@ -886,13 +927,15 @@ public class MainActivity extends AppCompatActivity {
 		if (pos < 0)
 			return;
 
+		plist_filter_clear();
 		queue.active_remove(pos);
 		gui.msg_show(this, getString(R.string.mlist_trk_rm));
 	}
 
 	/** Show dialog for saving playlist file */
 	private void list_save() {
-		startActivity(new Intent(this, ListSaveActivity.class));
+		startActivity(new Intent(this, ListSaveActivity.class)
+			.putExtra("name", gui.list_name(queue.current_index())));
 	}
 
 	private void list_rename() {
@@ -911,6 +954,7 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void list_switched(int i) {
+		queue.current_filter(gui.list_filter);
 		list_update();
 		bplaylist_text(i);
 		list_scroll(gui.list_scroll_pos(i));

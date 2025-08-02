@@ -6,13 +6,13 @@
 #include <ffbase/string.h>
 #include <ffbase/time.h>
 
-#define PHI_VERSION  20504
+#define PHI_VERSION  20505
 
 /** Inter-module compatibility version.
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20503
+#define PHI_VERSION_CORE  20505
 
 typedef long long int64;
 typedef unsigned long long uint64;
@@ -485,6 +485,8 @@ enum PHI_Q_SORT {
 	PHI_Q_SORT_FILESIZE,
 	PHI_Q_SORT_FILEDATE,
 	PHI_Q_SORT_RANDOM,
+	PHI_Q_SORT_TAG_ARTIST,
+	PHI_Q_SORT_TAG_DATE,
 };
 
 enum PHI_Q_REMOVE {

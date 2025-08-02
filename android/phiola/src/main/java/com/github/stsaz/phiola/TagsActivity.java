@@ -96,12 +96,12 @@ public class TagsActivity extends AppCompatActivity  {
 	private void view_click(int pos) {
 		int i = pos * 2 + 1;
 		if (pos < Phiola.Meta.N_RESERVED || i >= meta.length) {
-			core.clipboard_text_set(this, meta[pos]);
+			core.clipboard_text_set(this, meta[i]);
 			return;
 		}
 
-		if (!supported) {
-			core.errlog(TAG, "Editing tags for this file format is not supported.");
+		if (!this.supported) {
+			core.errlog(TAG, getString(R.string.tag_edit_n_a));
 			return;
 		}
 
@@ -130,6 +130,11 @@ public class TagsActivity extends AppCompatActivity  {
 	}
 
 	private void tag_add() {
+		if (!this.supported) {
+			core.errlog(TAG, getString(R.string.tag_edit_n_a));
+			return;
+		}
+
 		core.gui().dlg_edit(this, "Add Tag", "Format: 'name=value'", "", "Add", "Cancel"
 			, (s) -> tag_add_done(s));
 	}
@@ -144,6 +149,8 @@ public class TagsActivity extends AppCompatActivity  {
 		ArrayList<String> m = new ArrayList<>();
 		Collections.addAll(m, meta);
 		int pos = tag.indexOf('=');
+		if (pos <= 0)
+			return;
 		m.add(tag.substring(0, pos));
 		m.add(tag.substring(pos + 1));
 		meta = m.toArray(new String[0]);

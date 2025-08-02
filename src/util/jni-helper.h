@@ -15,15 +15,17 @@ String:
 Arrays:
 	jni_arr_len
 	jni_bytes_jba jni_bytes_free
+	jni_jia_vec
 	jni_joa
 	jni_joa_i jni_joa_i_set
 	jni_jsa_sza
-	jni_str_jba
+	jni_str_jba jni_jba_str
 	jni_stra_jsa jni_stra_free
 Object:
 	jni_obj_new
 	jni_obj_jo jni_obj_jo_set
 	jni_obj_sz_set jni_obj_sz_setf
+	jni_obj_jba_set
 	jni_obj_long jni_obj_long_set
 	jni_obj_int jni_obj_int_set
 	jni_obj_bool jni_obj_bool_set
@@ -49,6 +51,7 @@ Notes:
 #define JNI_TINT "I"
 #define JNI_TLONG "J"
 #define JNI_TBOOL "Z"
+#define JNI_TBYTE "B"
 #define JNI_TARR "["
 #define JNI_TVOID "V"
 
@@ -105,6 +108,9 @@ T: JNI_T... */
 #define jni_field_bool(jclazz, name) \
 	(*env)->GetFieldID(env, jclazz, name, JNI_TBOOL)
 
+#define jni_field_jba(jclazz, name) \
+	(*env)->GetFieldID(env, jclazz, name, JNI_TARR JNI_TBYTE)
+
 
 
 /** jstring = char* */
@@ -142,6 +148,20 @@ do { \
 
 #define jni_bytes_free(ptr, jab) \
 	(*env)->ReleaseByteArrayElements(env, jab, (jbyte*)(ptr), 0)
+
+/** byte[] = ffstr */
+static inline jbyteArray jni_jba_str(JNIEnv *env, ffstr str) {
+	jbyteArray jba = (*env)->NewByteArray(env, str.len);
+	(*env)->SetByteArrayRegion(env, jba, 0, str.len, (jbyte*)str.ptr);
+	return jba;
+}
+
+/** int[] = ffslice */
+static inline jintArray jni_jia_vec(JNIEnv *env, ffslice v) {
+	jintArray jia = (*env)->NewIntArray(env, v.len);
+	(*env)->SetIntArrayRegion(env, jia, 0, v.len, (jint*)v.ptr);
+	return jia;
+}
 
 /** jobjectArray = new */
 #define jni_joa(cap, jclazz) \
@@ -235,6 +255,13 @@ static inline void jni_obj_sz_setf(JNIEnv *env, jobject jo, jfieldID jf, const c
 	va_end(va);
 	jni_obj_sz_set(env, jo, jf, sz);
 	ffmem_free(sz);
+}
+
+/** obj.byte[] = ffstr */
+static inline void jni_obj_jba_set(JNIEnv *env, jobject jo, jfieldID jf, ffstr data) {
+	jbyteArray jba = jni_jba_str(env, data);
+	jni_obj_jo_set(jo, jf, jba);
+	jni_local_unref(jba);
 }
 
 /** long = obj.long */

@@ -296,12 +296,13 @@ static int qe_heal_ext(char *fn)
 
 	if (ss.len > ffsz_len(fn))
 		goto end; // not supported
+	dbglog("list heal: '%s' -> %s", fn, ss.ptr);
 	ffmem_copy(name.ptr + name.len + 1, s + name.len + 1, ss.len - (name.len + 1) + 1); // replace extension (also write NUL)
 	rc = 0;
 
 end:
 	if (rc)
-		dbglog("%s: couldn't find similar file in '%S'", fn, dirz);
+		dbglog("list heal: %s: didn't find similar file in '%s'", fn, dirz);
 	ffmem_free(dirz);
 	ffdirscan_close(&ds);
 	return rc;
@@ -319,6 +320,7 @@ static void qe_read_meta(struct q_entry *e)
 
 	e->trk = t;
 	e->used++;
+	e->q->active_n++;
 
 	t->meta_reading = 1;
 	t->qent = &e->pub;
