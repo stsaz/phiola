@@ -82,7 +82,6 @@ class UtilNative {
 
 	native void storagePaths(String[] paths);
 	native String trash(String trash_dir, String filepath);
-	native String fileMove(String filepath, String target_dir);
 
 	static class Files {
 		String[] display_rows;

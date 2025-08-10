@@ -241,6 +241,33 @@ next:
 	return (!err) ? n : -1;
 }
 
+JNIEXPORT jint JNICALL
+Java_com_github_stsaz_phiola_Phiola_quRename(JNIEnv *env, jobject thiz, jlong q, jint pos, jstring jtarget, jint flags)
+{
+	int rc = 1;
+	dbglog("%s: enter", __func__);
+	const char *target = jni_sz_js(jtarget);
+
+	char *fn = NULL;
+	struct phi_queue_entry *qe;
+	if (!(qe = x->queue.ref((phi_queue_id)q, pos)))
+		goto end;
+
+	ffstr name;
+	ffpath_splitpath_str(FFSTR_Z(qe->url), NULL, &name);
+	fn = ffsz_allocfmt("%s/%S", target, &name);
+
+	rc = x->queue.rename(qe, fn, PHI_QRN_ACQUIRE);
+	fn = NULL;
+	x->queue.unref(qe);
+
+end:
+	ffmem_free(fn);
+	jni_sz_free(target, jtarget);
+	dbglog("%s: exit", __func__);
+	return rc;
+}
+
 enum {
 	QUCOM_CLEAR = 1,
 	QUCOM_REMOVE_I = 2,

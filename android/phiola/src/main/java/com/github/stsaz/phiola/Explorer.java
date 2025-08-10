@@ -11,6 +11,8 @@ import android.provider.Settings;
 
 import androidx.core.app.ActivityCompat;
 
+import java.util.ArrayList;
+
 class Explorer {
 	private static final String TAG = "phiola.Explorer";
 	private final Core core;
@@ -18,9 +20,9 @@ class Explorer {
 	private final MainActivity main;
 
 	private boolean up_dir; // Show "UP" directory link
-	private String parent, display_path;
-	private String[] display_rows, file_names;
-	private int n_dirs;
+	private String parent, display_path, cur_filter;
+	private String[] display_rows, file_names, display_rows_full, file_names_full;
+	private int n_dirs, n_dirs_full;
 
 	Explorer(Core core, MainActivity main) {
 		this.core = core;
@@ -87,6 +89,7 @@ class Explorer {
 	}
 
 	void fill() {
+		this.cur_filter = null;
 		if (gui.cur_path.isEmpty())
 			list_show_root();
 		else
@@ -107,32 +110,40 @@ class Explorer {
 		}
 
 		UtilNative.Files f = core.util.dirList(path, 0);
-		file_names = f.file_names;
-		display_rows = f.display_rows;
-		n_dirs = f.n_directories;
-		core.dbglog(TAG, "%d entries, %d directories", file_names.length, n_dirs);
+		this.file_names_full = f.file_names;
+		this.display_rows_full = f.display_rows;
+		this.n_dirs_full = f.n_directories;
 
-		display_path = String.format("[%s]", path);
+		this.display_path = String.format("[%s]", path);
 		gui.cur_path = path;
 
 		/* Prevent from going upper than sdcard because
 		 it may be impossible to come back (due to file permissions) */
-		parent = null;
+		this.parent = null;
 		if (Util.array_ifind(core.storage_paths, path) < 0)
-			parent = Util.path_split2(path)[0];
+			this.parent = Util.path_split2(path)[0];
 
-		up_dir = true;
+		this.up_dir = true;
+
+		filter(this.cur_filter);
+	}
+
+	private void full_view() {
+		this.file_names = this.file_names_full;
+		this.display_rows = this.display_rows_full;
+		this.n_dirs = this.n_dirs_full;
 	}
 
 	/** Show the list of all available storage directories. */
 	private void list_show_root() {
-		file_names = core.storage_paths;
-		n_dirs = core.storage_paths.length;
-		display_rows = core.storage_paths;
+		this.file_names_full = core.storage_paths;
+		this.display_rows_full = core.storage_paths;
+		this.n_dirs_full = core.storage_paths.length;
+		full_view();
 
-		display_path = main.getString(R.string.explorer_stg_dirs);
+		this.display_path = main.getString(R.string.explorer_stg_dirs);
 		gui.cur_path = "";
-		up_dir = false;
+		this.up_dir = false;
 	}
 
 	int file_idx(String fn) {
@@ -142,5 +153,35 @@ class Explorer {
 			}
 		}
 		return -1;
+	}
+
+	void filter(String filter) {
+		if (filter == null)
+			filter = "";
+		boolean advance = (this.cur_filter != null
+			&& filter.length() > this.cur_filter.length());
+		this.cur_filter = filter;
+		if (filter.isEmpty() || !advance) {
+			full_view();
+			if (filter.isEmpty())
+				return;
+		}
+
+		ArrayList<String> rows = new ArrayList<>(), fns = new ArrayList<>();
+		filter = filter.toLowerCase();
+		int i = 0, nd = 0;
+		for (String s : display_rows) {
+			if (s.toLowerCase().contains(filter)) {
+				rows.add(s);
+				fns.add(this.file_names[i]);
+			}
+			i++;
+			if (i == this.n_dirs)
+				nd = rows.size();
+		}
+
+		this.display_rows = rows.toArray(new String[0]);
+		this.file_names = fns.toArray(new String[0]);
+		this.n_dirs = nd;
 	}
 }

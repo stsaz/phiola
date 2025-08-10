@@ -66,6 +66,7 @@ class MLib {
 
 		this.display_rows = this.display_rows_full;
 		this.file_names = this.file_names_full;
+		this.cur_filter = null;
 	}
 
 	void filter(String filter) {

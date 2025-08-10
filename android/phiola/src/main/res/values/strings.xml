@@ -39,6 +39,7 @@
 	<string name="mlist_clear">List: Clear</string>
 	<string name="mlist_show_track">List: Show Current Track</string>
 	<string name="mlist_next_add">List: Add Current to Next</string>
+	<string name="mlist_next_add_sel">Add to Next List</string>
 	<string name="mlist_trk_added">Added track to Playlist %d</string>
 	<string name="mlist_sort">List: Sort...</string>
 	<string name="mlist_sort_filename">List: Sort by File Path</string>
@@ -57,6 +58,7 @@
 	<string name="mitem_list_remove">Remove from List</string>
 	<string name="mitem_file_show">Show in Explorer</string>
 	<string name="mitem_file_delete">Delete File from Storage</string>
+	<string name="mitem_file_move">Quick-Move File</string>
 
 	<string name="sett_interface">Interface</string>
 	<string name="sett_dark">Dark Theme</string>

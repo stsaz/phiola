@@ -237,32 +237,6 @@ Java_com_github_stsaz_phiola_UtilNative_trash(JNIEnv *env, jobject thiz, jstring
 	return js;
 }
 
-JNIEXPORT jstring JNICALL
-Java_com_github_stsaz_phiola_UtilNative_fileMove(JNIEnv *env, jobject thiz, jstring jfilepath, jstring jtarget_dir)
-{
-	dbglog("%s: enter", __func__);
-	const char *fn = jni_sz_js(jfilepath);
-	const char *tgt_dir = jni_sz_js(jtarget_dir);
-	const char *error = "";
-
-	ffstr fns = FFSTR_INITZ(fn);
-	ffstr name;
-	ffpath_splitpath_str(fns, NULL, &name);
-	char *newfn = ffsz_allocfmt("%s/%S", tgt_dir, &name);
-	if (fffile_exists(newfn))
-		error = "file already exists";
-	else if (0 != fffile_rename(fn, newfn))
-		error = fferr_strptr(fferr_last());
-
-	ffmem_free(newfn);
-	jni_sz_free(fn, jfilepath);
-	jni_sz_free(tgt_dir, jtarget_dir);
-
-	jstring js = jni_js_sz(error);
-	dbglog("%s: exit", __func__);
-	return js;
-}
-
 JNIEXPORT jobject JNICALL
 Java_com_github_stsaz_phiola_UtilNative_dirList(JNIEnv *env, jobject thiz, jstring jpath, jint flags)
 {

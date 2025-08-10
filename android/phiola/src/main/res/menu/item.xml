@@ -11,4 +11,10 @@
 	<item android:id="@+id/action_file_delete"
 		android:title="@string/mitem_file_delete" />
 
+	<item android:id="@+id/action_file_move"
+		android:title="@string/mitem_file_move" />
+
+	<item android:id="@+id/action_list_next_add_sel"
+		android:title="@string/mlist_next_add_sel" />
+
 </menu>

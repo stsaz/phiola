@@ -172,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
 			file_del_cur();  break;
 
 		case R.id.action_file_move:
-			file_move_cur();  break;
+			file_move(null, queue.active_pos());  break;
 
 		default:
 			return false;
@@ -261,6 +261,8 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private boolean item_menu_click(MenuItem item) {
+		String fn;
+
 		switch (item.getItemId()) {
 
 		case R.id.action_list_remove:
@@ -269,12 +271,23 @@ public class MainActivity extends AppCompatActivity {
 		case R.id.action_file_explore:
 			explorer_file_show(queue.visible_url(item_menu_qi));  break;
 
-		case R.id.action_file_delete: {
-			String fn = queue.visible_url(item_menu_qi);
+		case R.id.action_file_delete:
+			fn = queue.visible_url(item_menu_qi);
 			if (!fn.isEmpty())
 				file_delete_ask(item_menu_qi, fn);
 			break;
-		}
+
+		case R.id.action_file_move:
+			fn = queue.visible_url(item_menu_qi);
+			if (!fn.isEmpty())
+				file_move(fn, item_menu_qi);
+			break;
+
+		case R.id.action_list_next_add_sel:
+			fn = queue.visible_url(item_menu_qi);
+			if (!fn.isEmpty())
+				list_next_add(fn);
+			break;
 
 		default:
 			return false;
@@ -604,17 +617,13 @@ public class MainActivity extends AppCompatActivity {
 			b.bexplorer.setTextOff(name);
 		}
 
-		if (gui.view == GUI.V_EXPLORER) {
+		if (!gui.filter_hide)
+			b.tfilter.setQuery("", false);
+
+		if (gui.view == GUI.V_EXPLORER)
 			explorer.fill();
-			if (!gui.filter_hide)
-				b.tfilter.setVisibility(View.INVISIBLE);
-		} else {
-			if (!gui.filter_hide) {
-				b.tfilter.setVisibility(View.VISIBLE);
-				b.tfilter.setQuery("", false);
-			}
+		else
 			library.fill();
-		}
 
 		list_update();
 		if (gui.view == GUI.V_LIBRARY)
@@ -634,7 +643,6 @@ public class MainActivity extends AppCompatActivity {
 		gui.view = GUI.V_PLAYLIST;
 		if (!gui.filter_hide) {
 			b.tfilter.setQuery(gui.list_filter, false);
-			b.tfilter.setVisibility(View.VISIBLE);
 			queue.current_filter(gui.list_filter);
 		}
 
@@ -708,22 +716,22 @@ public class MainActivity extends AppCompatActivity {
 		b.show();
 	}
 
-	private void file_move_cur() {
+	private void file_move(String fn, int pos) {
 		gui.dlg_question(this, "Move file"
-			, String.format("Move the current file to %s ?", gui.cur_path)
+			, String.format("Move file to %s ?", gui.cur_path)
 			, "Move File", "Do nothing"
-			, (dialog, which) -> { file_move_cur_confirmed(); }
+			, (dialog, which) -> { file_move_confirmed(fn, pos); }
 			);
 	}
 
-	private void file_move_cur_confirmed() {
-		String fn = queue.active_track_url();
+	private void file_move_confirmed(String fn, int pos) {
+		boolean r;
 		if (fn == null)
-			return;
-
-		String e = core.util.fileMove(fn, gui.cur_path);
-		if (!e.isEmpty()) {
-			core.errlog(TAG, "file move: %s", e);
+			r = queue.active_track_move(pos, gui.cur_path);
+		else
+			r = queue.visible_track_move(pos, gui.cur_path);
+		if (!r) {
+			core.errlog(TAG, "file move: ERROR");
 			return;
 		}
 
@@ -839,6 +847,8 @@ public class MainActivity extends AppCompatActivity {
 			queue.current_filter(filter);
 		else if (gui.view == GUI.V_LIBRARY)
 			library.filter(filter);
+		else if (gui.view == GUI.V_EXPLORER)
+			explorer.filter(filter);
 		list_update();
 	}
 
@@ -972,10 +982,16 @@ public class MainActivity extends AppCompatActivity {
 		list_switched(i);
 	}
 
-	private void list_next_add_cur() {
-		int qi = queue.next_list_add_cur();
+	private void list_next_add(String url) {
+		int qi = queue.next_add(url);
 		if (qi >= 0)
 			gui.msg_show(this, String.format(getString(R.string.mlist_trk_added), qi+1));
+	}
+
+	private void list_next_add_cur() {
+		String url = core.track.cur_url();
+		if (!url.isEmpty())
+			list_next_add(url);
 	}
 
 	private void list_files_move() {
@@ -987,7 +1003,7 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void list_files_move_confirmed() {
-		int n = queue.move_all(gui.cur_path);
+		int n = queue.visible_move_all(gui.cur_path);
 		String s = String.format("Moved %d files", n);
 		if (n < 0)
 			s = "Some files were NOT moved";

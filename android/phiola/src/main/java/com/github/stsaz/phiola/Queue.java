@@ -113,6 +113,11 @@ interface QueueNotify {
 	void on_change(int how, int pos);
 }
 
+/**
+* "visible": Currently selected list (may be filtered)
+* "current": Currently selected list (not filtered)
+* "active": The list of the currently playing track
+*/
 class Queue {
 	private static final String TAG = "phiola.Queue";
 	private Core core;
@@ -398,17 +403,12 @@ class Queue {
 	int current_index() { return i_selected; }
 	long current_id() { return queues.get(i_selected).q; }
 
-	/** Add currently playing track to next list.
+	/** Add track to next list.
 	Return the modified list index. */
-	int next_list_add_cur() {
+	int next_add(String url) {
 		if (queues.size() == 1) return -1;
 
-		String url = core.track.cur_url();
-		if (url.isEmpty())
-			return -1;
-
 		int ni = index_next(i_active);
-		filter_close();
 		queues.get(ni).add(url, 0);
 		return ni;
 	}
@@ -524,13 +524,21 @@ class Queue {
 		return phi.quDisplayLine(q_visible().q, i);
 	}
 
-	int move_all(String dst_dir) {
+	int visible_move_all(String dst_dir) {
 		return phi.quMoveAll(q_visible().q, dst_dir);
 	}
 
 	void active_remove(int pos) {
 		core.dbglog(TAG, "remove: %d:%d", i_active, pos);
 		queues.get(i_active).remove(pos);
+	}
+
+	boolean active_track_move(int pos, String target_dir) {
+		return 0 == phi.quRename(queues.get(i_active).q, pos, target_dir, 0);
+	}
+
+	boolean visible_track_move(int pos, String target_dir) {
+		return 0 == phi.quRename(q_visible().q, pos, target_dir, 0);
 	}
 
 	void current_clear() {

@@ -102,6 +102,8 @@ static const char* fmtr_hdr(struct fmt_rd *f, phi_track *t, struct avpk_info *hd
 		t->audio.format.format |= 0x0100;
 	switch (t->audio.format.format) {
 	case 0:
+		t->audio.format.format = PHI_PCM_FLOAT32;  break;
+
 	case PHI_PCM_8:
 	case PHI_PCM_16:
 	case PHI_PCM_24:
