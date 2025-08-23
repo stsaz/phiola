@@ -52,8 +52,7 @@ public class MainActivity extends AppCompatActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		if (0 != init_mods())
-			return;
+		init_mods();
 		b = MainBinding.inflate(getLayoutInflater());
 		init_ui();
 		init_system();
@@ -123,37 +122,41 @@ public class MainActivity extends AppCompatActivity {
 
 	public boolean onOptionsItemSelected(@NonNull MenuItem item) {
 		switch (item.getItemId()) {
-			case R.id.action_settings:
-				startActivity(new Intent(this, SettingsActivity.class));
-				return true;
+		case R.id.action_settings:
+			startActivity(new Intent(this, SettingsActivity.class));
+			break;
 
-			case R.id.action_play_auto_stop:
-				play_auto_stop();
-				return true;
+		case R.id.action_play_auto_stop:
+			play_auto_stop();
+			break;
 
-			case R.id.action_file_menu_show:
-				if (mfile == null) {
-					mfile = new PopupMenu(this, findViewById(R.id.action_file_menu_show));
-					mfile.getMenuInflater().inflate(R.menu.file, mfile.getMenu());
-					mfile.setOnMenuItemClickListener(this::file_menu_click);
-				}
-				mfile.show();
-				return true;
+		case R.id.action_file_menu_show:
+			if (mfile == null) {
+				mfile = new PopupMenu(this, findViewById(R.id.action_file_menu_show));
+				mfile.getMenuInflater().inflate(R.menu.file, mfile.getMenu());
+				mfile.setOnMenuItemClickListener(this::file_menu_click);
+			}
+			mfile.show();
+			break;
 
-			case R.id.action_list_menu_show:
-				if (mlist == null) {
-					mlist = new PopupMenu(this, findViewById(R.id.action_list_menu_show));
-					mlist.getMenuInflater().inflate(R.menu.list, mlist.getMenu());
-					mlist.setOnMenuItemClickListener(this::list_menu_click);
-				}
-				mlist.show();
-				return true;
+		case R.id.action_list_menu_show:
+			if (mlist == null) {
+				mlist = new PopupMenu(this, findViewById(R.id.action_list_menu_show));
+				mlist.getMenuInflater().inflate(R.menu.list, mlist.getMenu());
+				mlist.setOnMenuItemClickListener(this::list_menu_click);
+			}
+			mlist.show();
+			break;
 
-			case R.id.action_about:
-				startActivity(new Intent(this, AboutActivity.class));
-				return true;
+		case R.id.action_about:
+			startActivity(new Intent(this, AboutActivity.class));
+			break;
+
+		default:
+			return super.onOptionsItemSelected(item);
 		}
-		return super.onOptionsItemSelected(item);
+
+		return true;
 	}
 
 	private boolean file_menu_click(MenuItem item) {
@@ -245,19 +248,27 @@ public class MainActivity extends AppCompatActivity {
 		return true;
 	}
 
+	private PopupMenu mlist_sort;
+	private static final int[] mlist_sort_data = {
+		Phiola.QU_SORT_FILENAME,	R.string.mlist_sort_filename,
+		Phiola.QU_SORT_FILESIZE,	R.string.mlist_sort_filesize,
+		Phiola.QU_SORT_FILEDATE,	R.string.mlist_sort_filedate,
+		Phiola.QU_SORT_RANDOM,		R.string.mlist_shuffle,
+		Phiola.QU_SORT_TAG_ARTIST,	R.string.mlist_sort_tag_artist,
+		Phiola.QU_SORT_TAG_DATE,	R.string.mlist_sort_tag_date,
+	};
 	private void list_sort_menu_show() {
-		PopupMenu m = new PopupMenu(this, b.list);
-		m.setOnMenuItemClickListener((item) -> {
-				queue.current_sort(item.getItemId());
-				return true;
-			});
-		m.getMenu().add(0, Phiola.QU_SORT_FILENAME, 0, getString(R.string.mlist_sort_filename));
-		m.getMenu().add(0, Phiola.QU_SORT_FILESIZE, 0, getString(R.string.mlist_sort_filesize));
-		m.getMenu().add(0, Phiola.QU_SORT_FILEDATE, 0, getString(R.string.mlist_sort_filedate));
-		m.getMenu().add(0, Phiola.QU_SORT_RANDOM, 0, getString(R.string.mlist_shuffle));
-		m.getMenu().add(0, Phiola.QU_SORT_TAG_ARTIST, 0, getString(R.string.mlist_sort_tag_artist));
-		m.getMenu().add(0, Phiola.QU_SORT_TAG_DATE, 0, getString(R.string.mlist_sort_tag_date));
-		m.show();
+		if (mlist_sort == null) {
+			mlist_sort = new PopupMenu(this, b.list);
+			mlist_sort.setOnMenuItemClickListener((item) -> {
+					queue.current_sort(item.getItemId());
+					return true;
+				});
+			for (int i = 0;  i < mlist_sort_data.length;  i += 2) {
+				mlist_sort.getMenu().add(0, mlist_sort_data[i], 0, getString(mlist_sort_data[i+1]));
+			}
+		}
+		mlist_sort.show();
 	}
 
 	private boolean item_menu_click(MenuItem item) {
@@ -274,7 +285,7 @@ public class MainActivity extends AppCompatActivity {
 		case R.id.action_file_delete:
 			fn = queue.visible_url(item_menu_qi);
 			if (!fn.isEmpty())
-				file_delete_ask(item_menu_qi, fn);
+				file_delete_ask(FD_VISIBLE, item_menu_qi, fn);
 			break;
 
 		case R.id.action_file_move:
@@ -282,6 +293,15 @@ public class MainActivity extends AppCompatActivity {
 			if (!fn.isEmpty())
 				file_move(fn, item_menu_qi);
 			break;
+
+		case R.id.action_file_rename:
+			fn = queue.visible_url(item_menu_qi);
+			if (!fn.isEmpty())
+				file_rename_ask(fn, item_menu_qi);
+			break;
+
+		case R.id.action_file_show_info:
+			file_tags_show_sel(item_menu_qi);  break;
 
 		case R.id.action_list_next_add_sel:
 			fn = queue.visible_url(item_menu_qi);
@@ -355,10 +375,8 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	/** Initialize core and modules */
-	private int init_mods() {
+	private void init_mods() {
 		core = Core.init_once(getApplicationContext());
-		if (core == null)
-			return -1;
 		core.dbglog(TAG, "init_mods()");
 
 		gui = core.gui();
@@ -379,7 +397,6 @@ public class MainActivity extends AppCompatActivity {
 		track.observer_add(trk_nfy);
 		trackctl = new TrackCtl(core, this);
 		trackctl.connect();
-		return 0;
 	}
 
 	/** Set UI objects and register event handlers */
@@ -671,9 +688,13 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void file_tags_show() { startActivity(new Intent(this, TagsActivity.class)); }
+	private void file_tags_show_sel(int pos) {
+		startActivity(new Intent(this, TagsActivity.class)
+			.putExtra("pos", pos));
+	}
 
 	/** Delete file and update view */
-	private void file_del(int pos, String fn) {
+	private void file_del(int how, int pos, String fn) {
 		if (!core.setts.file_del) {
 			String e = core.util.trash(core.setts.trash_dir, fn);
 			if (!e.isEmpty()) {
@@ -687,21 +708,24 @@ public class MainActivity extends AppCompatActivity {
 			gui.msg_show(this, "Deleted file");
 		}
 
-		plist_filter_clear();
-		queue.active_remove(pos);
+		if (how == FD_ACTIVE)
+			queue.active_remove(pos);
+		else
+			queue.current_remove(pos);
 	}
 
 	private void file_del_cur() {
 		int pos = queue.active_pos();
 		String fn = queue.active_track_url();
 		if (fn != null)
-			file_delete_ask(pos, fn);
+			file_delete_ask(FD_ACTIVE, pos, fn);
 	}
 
-	private void file_delete_ask(int pos, String fn) {
-		AlertDialog.Builder b = new AlertDialog.Builder(this);
-		b.setIcon(android.R.drawable.ic_dialog_alert);
-		b.setTitle("File Delete");
+	private static final int
+		FD_VISIBLE = 0,
+		FD_ACTIVE = 1;
+
+	private void file_delete_ask(int how, int pos, String fn) {
 		String msg, btn;
 		if (core.setts.file_del) {
 			msg = String.format("Delete file from storage: %s ?", fn);
@@ -710,10 +734,9 @@ public class MainActivity extends AppCompatActivity {
 			msg = String.format("Move file to Trash: %s ?", fn);
 			btn = "Trash";
 		}
-		b.setMessage(msg);
-		b.setPositiveButton(btn, (dialog, which) -> file_del(pos, fn));
-		b.setNegativeButton("Cancel", null);
-		b.show();
+		GUI.dlg_question(this, "File Delete", msg
+			, btn, "Cancel"
+			, (dialog, which) -> file_del(how, pos, fn));
 	}
 
 	private void file_move(String fn, int pos) {
@@ -736,6 +759,22 @@ public class MainActivity extends AppCompatActivity {
 		}
 
 		gui.msg_show(this, "Moved file to %s", gui.cur_path);
+	}
+
+	private void file_rename_ask(String fn, int pos) {
+		gui.dlg_edit(this, "Rename file"
+			, "Specify new name", Util.path_split3(fn)[1]
+			, "Rename", "Cancel"
+			, (new_text) -> { file_rename_confirmed(pos, new_text); }
+			);
+	}
+
+	private void file_rename_confirmed(int pos, String name) {
+		if (!queue.visible_track_rename(pos, name)) {
+			core.errlog(TAG, "file rename: ERROR");
+			return;
+		}
+		gui.msg_show(this, "Renamed file");
 	}
 
 	private void plist_open_new(String fn) {
@@ -828,7 +867,8 @@ public class MainActivity extends AppCompatActivity {
 		if (gui.view == GUI.V_PLAYLIST) {
 			queue.current_filter("");
 			gui.list_filter = b.tfilter.getQuery().toString();
-			gui.list_scroll_pos_set(queue.current_index(), pos);
+			if (gui.list_filter.isEmpty())
+				gui.list_scroll_pos_set(queue.current_index(), pos);
 		} else if (gui.view == GUI.V_LIBRARY) {
 			gui.mlib_scroll_pos = pos;
 		}

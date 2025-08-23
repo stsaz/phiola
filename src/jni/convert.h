@@ -28,7 +28,7 @@ static const char* trk_errstr(uint e)
 
 	e--;
 	// enum PHI_E
-	static const char errstr[][30] = {
+	static const char errstr[][32] = {
 		"Input file doesn't exist", // PHI_E_NOSRC
 		"Output file already exists", // PHI_E_DSTEXIST
 		"Unknown input file format", // PHI_E_UNKIFMT

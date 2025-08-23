@@ -24,6 +24,7 @@ public class TagsActivity extends AppCompatActivity  {
 	private boolean modified, clear, supported;
 	private TagsBinding b;
 	private int modified_bits;
+	private int list_pos;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +35,7 @@ public class TagsActivity extends AppCompatActivity  {
 		b.lvTags.setOnItemClickListener((parent, view, position, id) -> view_click(position));
 
 		core = Core.getInstance();
+		this.list_pos = getIntent().getIntExtra("pos", -1);
 		show();
 	}
 
@@ -47,15 +49,25 @@ public class TagsActivity extends AppCompatActivity  {
 		switch (item.getItemId()) {
 
 		case R.id.action_clear:
-			tags_clear();  return true;
+			tags_clear();  break;
+
+		case R.id.action_add_artist:
+			tag_add_common_ask("artist", 0);  break;
+
+		case R.id.action_add_title:
+			tag_add_common_ask("title", 1);  break;
 
 		case R.id.action_add:
-			tag_add();  return true;
+			tag_add_ask();  break;
 
 		case R.id.action_write:
-			tags_write();  return true;
+			tags_write();  break;
+
+		default:
+			return super.onOptionsItemSelected(item);
 		}
-		return super.onOptionsItemSelected(item);
+
+		return true;
 	}
 
 	@Override
@@ -65,19 +77,25 @@ public class TagsActivity extends AppCompatActivity  {
 	}
 
 	private void show() {
-		meta = core.queue().active_meta();
+		if (list_pos >= 0)
+			meta = core.queue().visible_meta(list_pos);
+		else
+			meta = core.queue().active_meta();
 		if (meta == null)
 			meta = new String[0];
+
 		redraw();
 		if (meta.length == 0)
 			return;
 
-		String fn = meta[0+1];
-		supported = fn.endsWith(".mp3")
-			|| fn.endsWith(".ogg")
-			|| fn.endsWith(".opus")
-			|| fn.endsWith(".flac");
+		String ext = Util.path_split3(meta[0+1])[2];
+		this.supported = ext.equalsIgnoreCase("mp3")
+			|| ext.equalsIgnoreCase("ogg")
+			|| ext.equalsIgnoreCase("opus")
+			|| ext.equalsIgnoreCase("flac");
 	}
+
+	private boolean tag_modified(int k) { return (k < 32 && (modified_bits & (1 << k)) != 0); }
 
 	private void redraw() {
 		ArrayList<String> tags = new ArrayList<>();
@@ -85,7 +103,7 @@ public class TagsActivity extends AppCompatActivity  {
 		for (int i = 0; i < meta.length; i+=2) {
 			int k = i / 2 - Phiola.Meta.N_RESERVED;
 			mod = "";
-			if (k < 32 && (modified_bits & (1 << k)) != 0)
+			if (tag_modified(k))
 				mod = "(*)";
 			tags.add(String.format("%s%s : %s", meta[i], mod, meta[i+1]));
 		}
@@ -100,10 +118,8 @@ public class TagsActivity extends AppCompatActivity  {
 			return;
 		}
 
-		if (!this.supported) {
-			core.errlog(TAG, getString(R.string.tag_edit_n_a));
+		if (!edit_supported())
 			return;
-		}
 
 		core.gui().dlg_edit(this, "Edit Tag", meta[pos * 2], meta[i], "Apply", "Cancel"
 			, (new_text) -> tag_edit_done(i, new_text));
@@ -129,30 +145,66 @@ public class TagsActivity extends AppCompatActivity  {
 		redraw();
 	}
 
-	private void tag_add() {
+	private boolean edit_supported() {
 		if (!this.supported) {
 			core.errlog(TAG, getString(R.string.tag_edit_n_a));
+			return false;
+		}
+		return true;
+	}
+
+	private void tag_add_ask() {
+		if (!edit_supported())
+			return;
+
+		core.gui().dlg_edit(this, "Add Tag", "Format: 'name=value'", "", "Add", "Cancel"
+			, (s) -> tag_add_split(s));
+	}
+
+	private void tag_add_common_ask(String name, int pos) {
+		if (!edit_supported())
+			return;
+
+		String value = "",  fn = Util.path_split3(meta[0+1])[1];
+		if (pos == 1)
+			value = fn;
+		int dash = fn.lastIndexOf(" - ");
+		if (dash > 0) {
+			if (pos == 0)
+				value = fn.substring(0, dash);
+			else
+				value = fn.substring(dash + 3);
+		}
+
+		core.gui().dlg_edit(this, "Add Tag", name, value, "Add", "Cancel"
+			, (s) -> tag_add(name, s));
+	}
+
+	private void tag_add_split(String tag) {
+		int pos = tag.indexOf('=');
+		if (pos <= 0)
+			return;
+		tag_add(tag.substring(0, pos), tag.substring(pos + 1));
+	}
+
+	private void tag_add(String name, String value) {
+		int k = meta.length / 2 - Phiola.Meta.N_RESERVED;
+		if (k >= 32) {
+			core.errlog(TAG, "ERROR: Too many tags");
 			return;
 		}
 
-		core.gui().dlg_edit(this, "Add Tag", "Format: 'name=value'", "", "Add", "Cancel"
-			, (s) -> tag_add_done(s));
-	}
-
-	private void tag_add_done(String tag) {
-		int k = meta.length / 2 - Phiola.Meta.N_RESERVED;
-		if (k >= 32) {
-			core.errlog(TAG, "Too many tags");
-			return;
+		for (int i = Phiola.Meta.N_RESERVED*2;  i + 1 < meta.length;  i += 2) {
+			if (name.equalsIgnoreCase(meta[i])) {
+				core.errlog(TAG, "ERROR: Tag already exists");
+				return;
+			}
 		}
 
 		ArrayList<String> m = new ArrayList<>();
 		Collections.addAll(m, meta);
-		int pos = tag.indexOf('=');
-		if (pos <= 0)
-			return;
-		m.add(tag.substring(0, pos));
-		m.add(tag.substring(pos + 1));
+		m.add(name);
+		m.add(value);
 		meta = m.toArray(new String[0]);
 
 		modified = true;
@@ -169,7 +221,7 @@ public class TagsActivity extends AppCompatActivity  {
 		ArrayList<String> tags = new ArrayList<>();
 		int k = 0;
 		for (int i = Phiola.Meta.N_RESERVED*2;  i + 1 < meta.length;  i += 2, k++) {
-			if (k < 32 && (modified_bits & (1 << k)) != 0) {
+			if (tag_modified(k)) {
 				tags.add(meta[i]);
 				tags.add(meta[i + 1]);
 			}

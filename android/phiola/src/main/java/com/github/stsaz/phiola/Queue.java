@@ -510,10 +510,9 @@ class Queue {
 	}
 
 	String active_track_url() {
-		if (i_selected != i_active
-			|| trk_idx < 0)
+		if (trk_idx < 0)
 			return null;
-		return phi.quEntry(queues.get(i_selected).q, trk_idx);
+		return phi.quEntry(queues.get(i_active).q, trk_idx);
 	}
 
 	String visible_url(int i) {
@@ -538,7 +537,11 @@ class Queue {
 	}
 
 	boolean visible_track_move(int pos, String target_dir) {
-		return 0 == phi.quRename(q_visible().q, pos, target_dir, 0);
+		return 0 == phi.quRename(q_visible().q, pos, target_dir, Phiola.QR_MOVE);
+	}
+
+	boolean visible_track_rename(int pos, String name) {
+		return 0 == phi.quRename(q_visible().q, pos, name, Phiola.QR_RENAME);
 	}
 
 	void current_clear() {
@@ -550,9 +553,12 @@ class Queue {
 	}
 
 	void current_remove(int pos) {
-		if (q_filtered != null)
-			return;
-		queues.get(i_selected).remove(pos);
+		int i = pos;
+		if (q_filtered != null) {
+			i = phi.quCmd(q_visible().q, Phiola.QUCOM_INDEX, pos);
+			q_filtered.remove(pos);
+		}
+		queues.get(i_selected).remove(i);
 	}
 
 	void current_remove_non_existing() {
@@ -663,6 +669,13 @@ class Queue {
 
 	String[] active_meta() {
 		Phiola.Meta m = phi.quMeta(queues.get(i_active).q, trk_idx);
+		if (m == null)
+			return null;
+		return m.meta;
+	}
+
+	String[] visible_meta(int pos) {
+		Phiola.Meta m = phi.quMeta(q_visible().q, pos);
 		if (m == null)
 			return null;
 		return m.meta;

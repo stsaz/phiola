@@ -241,6 +241,9 @@ next:
 	return (!err) ? n : -1;
 }
 
+#define QR_MOVE  0
+#define QR_RENAME  1
+
 JNIEXPORT jint JNICALL
 Java_com_github_stsaz_phiola_Phiola_quRename(JNIEnv *env, jobject thiz, jlong q, jint pos, jstring jtarget, jint flags)
 {
@@ -253,9 +256,17 @@ Java_com_github_stsaz_phiola_Phiola_quRename(JNIEnv *env, jobject thiz, jlong q,
 	if (!(qe = x->queue.ref((phi_queue_id)q, pos)))
 		goto end;
 
-	ffstr name;
-	ffpath_splitpath_str(FFSTR_Z(qe->url), NULL, &name);
-	fn = ffsz_allocfmt("%s/%S", target, &name);
+	ffstr dir, name, ext;
+	ffpath_splitpath_str(FFSTR_Z(qe->url), &dir, &name);
+
+	if (flags == QR_MOVE) {
+		fn = ffsz_allocfmt("%s/%S", target, &name);
+
+	} else {
+		if (ffpath_splitname_str(name, &name, &ext) > 0)
+			ext.ptr--,  ext.len++; // "ext" -> ".ext"
+		fn = ffsz_allocfmt("%S/%s%S", &dir, target, &ext);
+	}
 
 	rc = x->queue.rename(qe, fn, PHI_QRN_ACQUIRE);
 	fn = NULL;

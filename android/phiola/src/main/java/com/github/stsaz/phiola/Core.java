@@ -48,15 +48,14 @@ class Core extends Util {
 				PUB_DATA_DIR = "phiola-dbg";
 			Core c = new Core();
 			c.refcount = 1;
-			if (0 != c.init(ctx))
-				return null;
+			c.init(ctx);
 			instance = c;
 			return c;
 		}
 		return getInstance();
 	}
 
-	private int init(@NonNull Context ctx) {
+	private void init(@NonNull Context ctx) {
 		dbglog(TAG, "init");
 		context = ctx;
 		work_dir = ctx.getFilesDir().getPath();
@@ -78,7 +77,6 @@ class Core extends Util {
 		loadconf();
 		qu.load();
 		gui.lists_number(qu.number());
-		return 0;
 	}
 
 	void unref() {

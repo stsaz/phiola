@@ -188,7 +188,10 @@ class Phiola {
 		<0 if some files were not moved. */
 	native int quMoveAll(long q, String dst_dir);
 
-	/** Move file to the specified directory. */
+	static final int
+		QR_MOVE = 0, // move to the specified directory
+		QR_RENAME = 1; // rename file
+	/** Move file */
 	native int quRename(long q, int pos, String target, int flags);
 
 	static final int

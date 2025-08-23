@@ -14,6 +14,12 @@
 	<item android:id="@+id/action_file_move"
 		android:title="@string/mitem_file_move" />
 
+	<item android:id="@+id/action_file_rename"
+		android:title="@string/mitem_file_rename" />
+
+	<item android:id="@+id/action_file_show_info"
+		android:title="@string/mitem_file_show_info" />
+
 	<item android:id="@+id/action_list_next_add_sel"
 		android:title="@string/mlist_next_add_sel" />
 
