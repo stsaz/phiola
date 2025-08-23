@@ -157,9 +157,6 @@ static int conv_tracks(struct cmd_conv *v, ffstr s) { return cmd_tracks(&v->trac
 
 static int conv_input(struct cmd_conv *v, ffstr s)
 {
-	if (s.len && s.ptr[0] == '-')
-		return _ffargs_err(&x->cmd, 1, "unknown option '%S'. Use '-h' for usage info.", &s);
-
 	x->stdin_busy = ffstr_eqz(&s, "@stdin");
 	return cmd_input(&v->input, s);
 }

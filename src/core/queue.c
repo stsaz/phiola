@@ -32,6 +32,7 @@ struct phi_queue {
 	fflock lock;
 	phi_task task;
 	struct q_entry *cursor;
+	const char *rename_pattern;
 	uint cursor_index;
 	uint active_n, finished_n;
 	uint track_closed_flags;
@@ -56,6 +57,7 @@ enum Q_TKCL_F {
 };
 static void q_ent_closed(struct phi_queue *q, uint flags);
 static void q_modified(struct phi_queue *q);
+static void q_rename_next(struct phi_queue *q);
 
 #include <core/queue-entry.h>
 
@@ -686,6 +688,27 @@ static void q_read_meta(phi_queue_id q)
 	qe_read_meta(e);
 }
 
+static void q_rename_next(struct phi_queue *q)
+{
+	int i = (q->cursor) ? qe_index(q->cursor) + 1 : 0;
+	struct q_entry *e = q_get(q, i);
+	if (!e) {
+		qm->on_change(q, '.', 0);
+		return;
+	}
+	q->cursor = e;
+	qe_rename_start(e);
+}
+
+static int q_rename_all(phi_queue_id q, const char *pattern, uint flags)
+{
+	if (!q) q = qm_default();
+
+	q->rename_pattern = pattern;
+	q_rename_next(q);
+	return 0;
+}
+
 static void q_remove_multi(phi_queue_id q, uint flags)
 {
 	if (!q) q = qm_default();
@@ -743,6 +766,7 @@ const phi_queue_if phi_queueif = {
 	q_status,
 	q_sort,
 	q_read_meta,
+	q_rename_all,
 
 	q_clear,
 	q_remove_at,

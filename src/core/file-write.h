@@ -192,7 +192,7 @@ dt_add:
 
 data:
 	ffvec_grow(buf, val.len, 1);
-	buf->len += ffpath_makefn(ffslice_end(buf, 1), -1, val, '_', _ffpath_charmask_filename);
+	buf->len += ffpath_makename(ffslice_end(buf, 1), -1, val, '_', _ffpath_charmask_filename);
 }
 
 static const char* fw_name(ffstr *sbuf, const char *name, phi_track *t)

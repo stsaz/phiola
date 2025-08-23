@@ -36,9 +36,6 @@ struct cmd_tag {
 
 static int tag_input(struct cmd_tag *t, ffstr s)
 {
-	if (s.len && s.ptr[0] == '-')
-		return _ffargs_err(&x->cmd, 1, "unknown option '%S'. Use '-h' for usage info.", &s);
-
 	return cmd_input(&t->input, s);
 }
 

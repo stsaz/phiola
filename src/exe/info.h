@@ -71,9 +71,6 @@ static int info_tracks(struct cmd_info *p, ffstr s) { return cmd_tracks(&p->trac
 
 static int info_input(struct cmd_info *p, ffstr s)
 {
-	if (s.len && s.ptr[0] == '-')
-		return _ffargs_err(&x->cmd, 1, "unknown option '%S'. Use '-h' for usage info.", &s);
-
 	x->stdin_busy = ffstr_eqz(&s, "@stdin");
 	return cmd_input(&p->input, s);
 }

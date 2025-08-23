@@ -6,13 +6,13 @@
 #include <ffbase/string.h>
 #include <ffbase/time.h>
 
-#define PHI_VERSION  20506
+#define PHI_VERSION  20507
 
 /** Inter-module compatibility version.
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20505
+#define PHI_VERSION_CORE  20507
 
 typedef long long int64;
 typedef unsigned long long uint64;
@@ -549,6 +549,9 @@ struct phi_queue_if {
 	Generates on_change('m') event. */
 	void (*read_meta)(phi_queue_id q);
 
+	/** Rename all files. */
+	int (*rename_all)(phi_queue_id q, const char *pattern, uint flags);
+
 	/** Remove all items.
 	Generates on_change('c') event. */
 	int (*clear)(phi_queue_id q);
@@ -582,7 +585,7 @@ struct phi_queue_if {
 	Generates on_change('r') event. */
 	int (*remove)(void *e);
 
-	/**
+	/** Rename item's source file.
 	flags: enum PHI_Q_RENAME */
 	int (*rename)(struct phi_queue_entry *qe, char *new_url, uint flags);
 };

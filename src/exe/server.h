@@ -57,9 +57,6 @@ static int srv_exclude(struct cmd_srv *s, ffstr ss)
 
 static int srv_input(struct cmd_srv *s, ffstr fn)
 {
-	if (fn.len && fn.ptr[0] == '-')
-		return _ffargs_err(&x->cmd, 1, "unknown option '%S'. Use '-h' for usage info.", &fn);
-
 	return cmd_input(&s->input, fn);
 }
 

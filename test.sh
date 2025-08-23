@@ -780,6 +780,19 @@ test_tag() {
 	./phiola i tag.flac | grep " - Cool Song"
 }
 
+test_rename() {
+	if ! test -f rename2.opus ; then
+		./phiola rec -o rename.wav -f -u 2
+		./phiola co rename.wav -o rename1.opus -m "artist=A1" -m "title=T1"
+		./phiola co rename.wav -o rename2.opus -m "artist=A2" -m "title=T2"
+	fi
+
+	./phiola rename rename1.opus rename2.opus -o "renamed @artist - @title"
+	./phiola i \
+		"renamed A1 - T1.opus" \
+		"renamed A2 - T2.opus"
+}
+
 test_clean() {
 	rm -f *.wav *.flac *.m4a *.ogg *.opus *.mp3 fm_* ofv/*.ogg *.cue *.m3u copa/*
 	rmdir ofv copa
@@ -810,6 +823,7 @@ TESTS=(
 	ofile_vars
 	remote
 	tag
+	rename
 	server
 	# http
 	clean

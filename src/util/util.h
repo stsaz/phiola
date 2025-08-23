@@ -159,7 +159,7 @@ static inline void ffpath_split3_output(ffstr fullname, ffstr *path, ffstr *name
 
 /** Replace uncommon/invalid characters in file name component
 Return N bytes written */
-static inline ffsize ffpath_makefn(char *dst, ffsize dstcap, ffstr src, char replace_char, const uint *char_bitmask)
+static inline ffsize ffpath_makename(char *dst, ffsize dstcap, ffstr src, char replace_char, const uint *char_bitmask)
 {
 	ffstr_skipchar(&src, ' ');
 	ffstr_rskipchar(&src, ' ');

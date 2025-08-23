@@ -264,6 +264,9 @@ Other use-cases:
 # List all available audio playback and recording devices
 phiola device list
 
+# Auto-rename all .opus files according to a pattern
+phiola rename *.opus -o "@tracknumber. @artist - @title"
+
 # Start HTTP audio streaming server (Opus, 128kbps)
 phiola server "My Music" -inc "*.flac" -shuffle -opus_q 128
 ```
@@ -280,6 +283,7 @@ Currently supported commands:
 | [play](src/exe/play.h)       | Play audio |
 | [record](src/exe/record.h)   | Record audio |
 | [remote](src/exe/remote.h)   | Send remote command |
+| [rename](src/exe/rename.h)   | Auto-rename files |
 | [server](src/exe/server.h)   | Start audio streaming server |
 | [tag](src/exe/tag.h)         | Edit file tags |
 

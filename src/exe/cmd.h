@@ -154,6 +154,9 @@ err:
 
 static int cmd_input(ffvec *input, ffstr s)
 {
+	if (s.len && s.ptr[0] == '-')
+		return _ffargs_err(&x->cmd, 1, "unknown option '%S'. Use '-h' for usage info.", &s);
+
 	if (ffstr_eqz(&s, "@names"))
 		return cmd_input_names(input, ffstdin);
 
@@ -256,6 +259,7 @@ static int cmd_opus_mode(const char *s)
 #include <exe/play.h>
 #include <exe/record.h>
 #include <exe/remote.h>
+#include <exe/rename.h>
 #include <exe/server.h>
 #include <exe/tag.h>
 
@@ -281,6 +285,7 @@ Commands:\n\
   `play`      Play audio [Default command]\n\
   `record`    Record audio\n\
   `remote`    Send remote command\n\
+  `rename`    Auto-rename files\n\
   `server`    Start audio streaming server\n\
   `tag`       Edit file tags\n\
 \n\
@@ -470,6 +475,7 @@ static const struct ffarg cmd_root[] = {
 	{ "play",		'{',		cmd_play_init },
 	{ "record",		'{',		cmd_rec_init },
 	{ "remote",		'{',		cmd_remote_init },
+	{ "rename",		'{',		cmd_rename_init },
 	{ "server",		'{',		cmd_server_init },
 	{ "tag",		'{',		cmd_tag_init },
 	{ "\0\1",		'{',		cmd_play_init },

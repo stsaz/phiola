@@ -409,3 +409,80 @@ end:
 		ffmem_free((char*)new);
 	return rc;
 }
+
+/** All printable, plus SPACE, except: ", *, /, :, <, >, ?, \, | */
+static const uint _ffpath_charmask_filename[] = {
+	0,
+	            // ?>=< ;:98 7654 3210  /.-, +*)( '&%$ #"!
+	0x2bff7bfb, // 0010 1011 1111 1111  0111 1011 1111 1011
+	            // _^]\ [ZYX WVUT SRQP  ONML KJIH GFED CBA@
+	0xefffffff, // 1110 1111 1111 1111  1111 1111 1111 1111
+	            //  ~}| {zyx wvut srqp  onml kjih gfed cba`
+	0x6fffffff, // 0110 1111 1111 1111  1111 1111 1111 1111
+	0xffffffff,
+	0xffffffff,
+	0xffffffff,
+	0xffffffff
+};
+
+static void q_rename_first_close(void *f, phi_track *t)
+{
+	struct q_entry *e = t->qent;
+	ffstr s, val, dir, ext;
+	ffvec buf = {};
+
+	// Extract file meta components to prepare the target file name
+	ffstr out = FFSTR_INITZ(e->q->rename_pattern);
+	while (out.len) {
+		if ('v' == ffstr_var_next(&out, &s, '@')) {
+			ffstr_shift(&s, 1);
+			core->metaif->find(&t->meta, s, &val, 0);
+			ffvec_grow(&buf, val.len, 1);
+			buf.len += ffpath_makename(ffslice_end(&buf, 1), -1, val, '_', _ffpath_charmask_filename);
+
+		} else {
+			ffvec_addstr(&buf, &s);
+		}
+	}
+
+	ffpath_split3_str(FFSTR_Z(t->conf.ifile.name), &dir, NULL, &ext);
+	if (dir.len)
+		dir.len++; // "dir" -> "dir/"
+	if (ext.len)
+		ext.ptr--,  ext.len++; // "ext" -> ".ext"
+	char *fn = ffsz_allocfmt("%S%S%S", &dir, &buf, &ext);
+	qe_rename(t->qent, fn, PHI_QRN_ACQUIRE);
+
+	qe_unref(e);
+	core->metaif->destroy(&t->meta);
+	ffvec_free(&buf);
+	q_rename_next(e->q);
+}
+
+static int q_rename_first_process(void *f, phi_track *t)
+{
+	return PHI_DONE;
+}
+
+static const phi_filter q_rename_first = {
+	NULL, q_rename_first_close, q_rename_first_process,
+	"q-rename-first"
+};
+
+void qe_rename_start(struct q_entry *e)
+{
+	struct phi_track_conf c = {
+		.ifile.name = e->pub.url,
+		.info_only = 1,
+	};
+	phi_track *t = core->track->create(&c);
+
+	core->track->filter(t, e->q->conf.first_filter, 0);
+	core->track->filter(t, &q_rename_first, 0);
+	core->track->filter(t, core->mod("core.auto-input"), 0);
+	core->track->filter(t, core->mod("format.detect"), 0);
+
+	e->used++;
+	t->qent = &e->pub;
+	core->track->start(t);
+}
