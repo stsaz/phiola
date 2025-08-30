@@ -13,6 +13,7 @@ static void* phi_autorec_open(phi_track *t)
 	static const char rec_mods[][20] = {
 #if defined FF_WIN
 		"wasapi.rec",
+		"directsound.rec",
 
 #elif defined FF_BSD
 		"oss.rec",
@@ -55,6 +56,7 @@ static void* phi_autoplay_open(phi_track *t)
 	static const char play_mods[][20] = {
 #if defined FF_WIN
 		"wasapi.play",
+		"directsound.play",
 
 #elif defined FF_BSD
 		"oss.play",

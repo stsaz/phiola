@@ -783,6 +783,7 @@ const phi_adev_if* adev_find_mod()
 	static const char mods[][20] = {
 #if defined FF_WIN
 		"wasapi.dev",
+		"directsound.dev",
 #else
 		"pulse.dev",
 		"alsa.dev",
