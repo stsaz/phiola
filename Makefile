@@ -18,7 +18,7 @@ CFLAGS += -DFFBASE_MEM_ASSERT \
 	-fPIC -fvisibility=hidden \
 	-g
 ifeq "$(CPU)" "x86"
-	CFLAGS += -msse2
+	CFLAGS += -msse
 	LINKFLAGS += -static-libgcc
 endif
 ifeq "$(DEBUG)" "1"
