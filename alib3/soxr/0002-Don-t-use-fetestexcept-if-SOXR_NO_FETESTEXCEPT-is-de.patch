@@ -1,0 +1,60 @@
+From f81781b077725563df8307f307cf36e8ad094e2f Mon Sep 17 00:00:00 2001
+From: Simon Zolin <4729655+stsaz@users.noreply.github.com>
+Date: Sun, 19 Mar 2023 10:22:53 +0300
+Subject: [PATCH] Don't use fetestexcept() if SOXR_NO_FETESTEXCEPT is defined
+
+fetestexcept() isn't available on old Androids.
+---
+ src/rint-clip.h | 6 +++---
+ src/rint.h      | 2 ++
+ 2 files changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/src/rint-clip.h b/src/rint-clip.h
+index bfb6458..f82f3dd 100644
+--- a/src/rint-clip.h
++++ b/src/rint-clip.h
+@@ -32,7 +32,7 @@
+ 
+ 
+ 
+-#if defined FE_INVALID && defined FPU_RINT
++#if !defined SOXR_NO_FETESTEXCEPT && defined FE_INVALID && defined FPU_RINT
+ static void RINT_CLIP(RINT_T * const dest, FLOATX const * const src,
+     unsigned stride, size_t i, size_t const n, size_t * const clips SEED_ARG)
+ {
+@@ -59,7 +59,7 @@ static size_t LSX_RINT_CLIP(void * * const dest0, FLOATX const * const src,
+   size_t i, clips = 0;
+   RINT_T * dest = *dest0;
+   COPY_SEED
+-#if defined FE_INVALID && defined FPU_RINT
++#if !defined SOXR_NO_FETESTEXCEPT && defined FE_INVALID && defined FPU_RINT
+ #define _ RINT(dest[i], src[i] DITHERING); ++i
+   for (i = 0; i < (n & ~15u);) {
+     COPY_SEED1;
+@@ -100,7 +100,7 @@ static size_t LSX_RINT_CLIP_2(void * * dest0, FLOATX const * const * srcs,
+   size_t i, clips = 0;
+   RINT_T * dest = *dest0;
+   COPY_SEED
+-#if defined FE_INVALID && defined FPU_RINT
++#if !defined SOXR_NO_FETESTEXCEPT && defined FE_INVALID && defined FPU_RINT
+ #define _ RINT(dest[stride * i], src[i] DITHERING); ++i
+   for (j = 0; j < stride; ++j, ++dest) {
+     FLOATX const * const src = srcs[j];
+diff --git a/src/rint.h b/src/rint.h
+index 2f1dfbe..cdd9b2a 100644
+--- a/src/rint.h
++++ b/src/rint.h
+@@ -79,8 +79,10 @@
+   #define FPU_RINT32
+   #define rint32D(y,x) ((y)=lrint(x))
+   #define rint32F(y,x) ((y)=lrintf(x))
++  #if !defined SOXR_NO_FETESTEXCEPT
+   #define fe_test_invalid() fetestexcept(FE_INVALID)
+   #define fe_clear_invalid() feclearexcept(FE_INVALID)
++  #endif
+ #endif
+ 
+ #if !defined FPU_RINT32
+-- 
+2.38.1
+
