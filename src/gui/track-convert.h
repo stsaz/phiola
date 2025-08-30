@@ -30,6 +30,11 @@ static int conv_process(void *ctx, phi_track *t)
 {
 	struct conv *c = ctx;
 
+	if (t->audio.seek != -1 && !t->audio.seek_req) {
+		dbglog1(t, "seek: done");
+		t->audio.seek = ~0ULL; // prev. seek is complete
+	}
+
 	if (t->audio.pos == ~0ULL)
 		goto end;
 
