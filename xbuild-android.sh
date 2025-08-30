@@ -130,13 +130,15 @@ set -xe
 
 export PATH=/Android/ndk/$ANDROID_NDK_VER/toolchains/llvm/prebuilt/linux-x86_64/bin:\$PATH
 
-export ANDROID_NDK_ROOT=/Android/ndk/$ANDROID_NDK_VER
-mkdir -p ../netmill/3pt/$ODIR
-make -j$JOBS openssl \
- -C ../netmill/3pt/$ODIR \
- -f ../Makefile \
- -I .. \
- $ARGS_OS
+if test "$CPU" != "arm" ; then
+	export ANDROID_NDK_ROOT=/Android/ndk/$ANDROID_NDK_VER
+	mkdir -p ../netmill/3pt/$ODIR
+	make -j$JOBS openssl \
+	 -C ../netmill/3pt/$ODIR \
+	 -f ../Makefile \
+	 -I .. \
+	 $ARGS_OS
+fi
 
 mkdir -p ../ffpack/$ODIR
 make -j$JOBS zstd \
