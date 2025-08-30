@@ -17,6 +17,10 @@ CFLAGS += -DFFBASE_MEM_ASSERT \
 	-Wall -Wextra -Wno-unused-parameter -Wno-multichar \
 	-fPIC -fvisibility=hidden \
 	-g
+ifeq "$(CPU)" "x86"
+	CFLAGS += -msse2
+	LINKFLAGS += -static-libgcc
+endif
 ifeq "$(DEBUG)" "1"
 	CFLAGS += -DFF_DEBUG -O0 -Werror -Wno-deprecated-declarations
 else

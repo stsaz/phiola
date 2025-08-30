@@ -27,7 +27,6 @@ $(DIR)/soxr-config.h: | $(DIR)
 	# cd $(DIR) && make VERBOSE=1
 	$(SED) 's/AVUTIL_FOUND 1/AVUTIL_FOUND 0/' $(DIR)/soxr-config.h
 ifeq "$(CPU)" "amd64"
-else ifeq "$(CPU)" "x86"
 else
 	$(SED) 's/WITH_CR64S 1/WITH_CR64S 0/' $(DIR)/soxr-config.h
 endif
@@ -40,6 +39,8 @@ CFLAGS += \
 ifeq "$(CPU)" "arm"
 	# w/a for `cannot locate symbol "fetestexcept"`
 	CFLAGS += -DSOXR_NO_FETESTEXCEPT
+else ifeq "$(CPU)" "x86"
+	CFLAGS += -msse
 endif
 ifeq "$(OS)" "windows"
 	CFLAGS += -DSOXR_DLL -Dsoxr_EXPORTS -D_USE_MATH_DEFINES
