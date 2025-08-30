@@ -164,7 +164,7 @@ make -j$JOBS \
  ROOT_DIR=../.. \
  NDK_VER=$ANDROID_NDK_VER \
  CPU=$CPU \
- A_API=26 \
+ A_API=23 \
  $ARGS
 EOF
 
