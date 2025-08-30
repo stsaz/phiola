@@ -4,6 +4,10 @@
 #pragma once
 #include <math.h>
 
+#ifdef FF_X86
+	#undef FF_SSE2
+#endif
+
 union pcmdata {
 	char *b;
 	short *sh;

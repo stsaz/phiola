@@ -72,8 +72,13 @@ ifeq "$(CPUFAM)" "x86"
 	SILK_SOURCES += $(SILK_SOURCES_X86_RTCD) $(SILK_SOURCES_SSE4_1) $(SILK_SOURCES_AVX2) $(SILK_SOURCES_FLOAT_AVX2)
 
 ifeq "$(CPU)" "x86"
+	CFLAGS_SSE := -msse
+	SSE_OBJ := $(CELT_SOURCES_SSE:.c=.o)
+	SSE_OBJ := $(addprefix $(DIR)/,$(SSE_OBJ))
+$(SSE_OBJ): CFLAGS += $(CFLAGS_SSE)
+
 	CFLAGS_SSE2 := -msse2
-	SSE2_OBJ := $(CELT_SOURCES_SSE:.c=.o)  $(CELT_SOURCES_SSE2:.c=.o)
+	SSE2_OBJ := $(CELT_SOURCES_SSE2:.c=.o)
 	SSE2_OBJ := $(addprefix $(DIR)/,$(SSE2_OBJ))
 $(SSE2_OBJ): CFLAGS += $(CFLAGS_SSE2)
 endif

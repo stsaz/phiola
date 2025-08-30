@@ -1,6 +1,12 @@
 /** phiola: public interface */
 
 #pragma once
+
+#include <ffsys/base.h>
+#ifdef FF_X86
+	#undef FF_SSE2
+#endif
+
 #include <ffsys/error.h>
 #include <ffbase/vector.h>
 #include <ffbase/string.h>
