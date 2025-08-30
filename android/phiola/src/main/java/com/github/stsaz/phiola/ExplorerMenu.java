@@ -21,8 +21,8 @@ public class ExplorerMenu {
 
 	static final int F_MULTI = 1;
 
-	ExplorerMenu(Activity parent) {
-		core = Core.getInstance();
+	ExplorerMenu(Core core, Activity parent) {
+		this.core = core;
 		this.parent = parent;
 	}
 

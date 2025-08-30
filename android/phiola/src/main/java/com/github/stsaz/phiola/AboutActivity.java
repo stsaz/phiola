@@ -34,6 +34,7 @@ public class AboutActivity extends AppCompatActivity {
 
 	@Override
 	protected void onDestroy() {
+		core.unref();
 		super.onDestroy();
 	}
 

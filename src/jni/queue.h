@@ -71,6 +71,7 @@ JNIEXPORT void JNICALL
 Java_com_github_stsaz_phiola_Phiola_quSetCallback(JNIEnv *env, jobject thiz, jobject jcb)
 {
 	x->Phiola_QueueCallback_on_change = jni_func(jni_class_obj(jcb), "on_change", "(" JNI_TLONG JNI_TINT JNI_TINT ")" JNI_TVOID);
+	x->Phiola_QueueCallback_on_complete = jni_func(jni_class_obj(jcb), "on_complete", "(" JNI_TINT JNI_TINT ")" JNI_TVOID);
 	x->obj_QueueCallback = jni_global_ref(jcb);
 	x->queue.on_change(qu_on_change);
 }
@@ -99,11 +100,19 @@ Java_com_github_stsaz_phiola_Phiola_quNew(JNIEnv *env, jobject thiz, jint flags)
 	return (ffsize)q;
 }
 
+static void qu_cmd_destroy(struct core_data *d)
+{
+	x->queue.destroy(d->q);
+	ffmem_free(d);
+}
+
 JNIEXPORT void JNICALL
 Java_com_github_stsaz_phiola_Phiola_quDestroy(JNIEnv *env, jobject thiz, jlong q)
 {
 	dbglog("%s: enter", __func__);
-	x->queue.destroy((phi_queue_id)q);
+	struct core_data *d = ffmem_new(struct core_data);
+	d->q = (phi_queue_id)q;
+	core_task(d, qu_cmd_destroy);
 	dbglog("%s: exit", __func__);
 }
 
@@ -115,6 +124,28 @@ static void qu_cmd_add(struct core_data *d)
 		.url = d->param_str,
 	};
 	x->queue.add(d->q, &qe);
+	ffmem_free(d->param_str);
+	ffmem_free(d);
+}
+
+static void qu_save_complete(void *c, phi_track *t)
+{
+	JNIEnv *env;
+	int r = jni_vm_attach(jvm, &env);
+	if (r) {
+		errlog("jni_vm_attach: %d", r);
+		goto end;
+	}
+
+	jni_call_void(x->obj_QueueCallback, x->Phiola_QueueCallback_on_complete, 0, t->error);
+
+end:
+	jni_vm_detach(jvm);
+}
+
+static void qu_cmd_save(struct core_data *d)
+{
+	x->queue.save(d->q, d->param_str, qu_save_complete, NULL);
 	ffmem_free(d->param_str);
 	ffmem_free(d);
 }
@@ -734,13 +765,17 @@ Java_com_github_stsaz_phiola_Phiola_quLoad(JNIEnv *env, jobject thiz, jlong q, j
 	return 0;
 }
 
-JNIEXPORT jboolean JNICALL
+JNIEXPORT void JNICALL
 Java_com_github_stsaz_phiola_Phiola_quSave(JNIEnv *env, jobject thiz, jlong q, jstring jfilepath)
 {
 	dbglog("%s: enter", __func__);
 	const char *fn = jni_sz_js(jfilepath);
-	x->queue.save((phi_queue_id)q, fn, NULL, NULL);
+
+	struct core_data *d = ffmem_new(struct core_data);
+	d->q = (phi_queue_id)q;
+	d->param_str = ffsz_dup(fn);
+	core_task(d, qu_cmd_save);
+
 	jni_sz_free(fn, jfilepath);
 	dbglog("%s: exit", __func__);
-	return 1;
 }

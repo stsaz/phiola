@@ -26,8 +26,9 @@ public class ConvertActivity extends AppCompatActivity {
 		b = ConvertBinding.inflate(getLayoutInflater());
 		setContentView(b.getRoot());
 
+		core = Core.getInstance();
 		varmenu = new VarMenu(this);
-		explorer = new ExplorerMenu(this);
+		explorer = new ExplorerMenu(core, this);
 		b.eOutDir.setOnClickListener(v -> explorer.show(b.eOutDir, 0));
 		b.eOutName.setOnClickListener(v -> varmenu.show(b.eOutName, new String[]{
 				"@filename", "@album", "@artist", "@title", "@tracknumber",
@@ -97,7 +98,6 @@ public class ConvertActivity extends AppCompatActivity {
 
 		b.bStart.setOnClickListener((v) -> convert());
 
-		core = Core.getInstance();
 		load();
 
 		String iname = getIntent().getStringExtra("iname");

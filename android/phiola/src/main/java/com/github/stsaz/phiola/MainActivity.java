@@ -476,7 +476,7 @@ public class MainActivity extends AppCompatActivity {
 		});
 
 		b.list.setLayoutManager(new LinearLayoutManager(this));
-		pl_adapter = new PlaylistAdapter(this, new PlaylistViewHolder.Parent() {
+		pl_adapter = new PlaylistAdapter(core, this, new PlaylistViewHolder.Parent() {
 
 				public int count() {
 					if (gui.view == GUI.V_EXPLORER)
@@ -563,7 +563,6 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void rec_fin(int code, String filename) {
-		rec_state_set(false);
 		stopService(new Intent(this, RecSvc.class));
 		if (code == 0) {
 			if (core.setts.rec_list_add)
@@ -577,6 +576,7 @@ public class MainActivity extends AppCompatActivity {
 
 	private void rec_stop() {
 		state(GUI.STATE_RECORDING | GUI.STATE_REC_PAUSED, 0);
+		rec_state_set(false);
 		String e = track.record_stop();
 		if (e != null)
 			core.errlog(TAG, String.format("%s: %s", getString(R.string.main_rec_err), e));

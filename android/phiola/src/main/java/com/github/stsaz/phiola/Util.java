@@ -89,6 +89,19 @@ abstract class Util {
 		return null;
 	}
 
+	boolean file_rename(String old, String nu) {
+		try {
+			File of = new File(old),  nf = new File(nu);
+			if (!of.renameTo(nf)) {
+				nf.delete();
+				return of.renameTo(nf);
+			}
+			return true;
+		} catch (Exception e) {
+		}
+		return false;
+	}
+
 	boolean file_delete(String path) {
 		try {
 			File f = new File(path);

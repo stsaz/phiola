@@ -137,6 +137,8 @@ static void qm_move(uint from, uint to)
 	l[to] = FF_SWAP(&l[from], l[to]);
 	if (qm->selected == from)
 		qm->selected = to;
+	else if (qm->selected == to)
+		qm->selected = from;
 	dbglog("move: %u -> %u", from, to);
 }
 

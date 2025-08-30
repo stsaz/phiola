@@ -52,8 +52,8 @@ class PlaylistAdapter extends RecyclerView.Adapter<PlaylistViewHolder> {
 	private final LayoutInflater inflater;
 	private final PlaylistViewHolder.Parent parent;
 
-	PlaylistAdapter(Context ctx, PlaylistViewHolder.Parent parent) {
-		core = Core.getInstance();
+	PlaylistAdapter(Core core, Context ctx, PlaylistViewHolder.Parent parent) {
+		this.core = core;
 		queue = core.queue();
 		inflater = LayoutInflater.from(ctx);
 		this.parent = parent;

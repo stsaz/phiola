@@ -30,7 +30,8 @@ public class SettingsActivity extends AppCompatActivity {
 		if (actionBar != null)
 			actionBar.setDisplayHomeAsUpEnabled(true);
 
-		explorer = new ExplorerMenu(this);
+		core = Core.getInstance();
+		explorer = new ExplorerMenu(core, this);
 
 		play_init();
 
@@ -39,7 +40,6 @@ public class SettingsActivity extends AppCompatActivity {
 
 		rec_init();
 
-		core = Core.getInstance();
 		load();
 	}
 

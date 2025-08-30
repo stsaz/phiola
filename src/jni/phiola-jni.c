@@ -71,6 +71,7 @@ struct phiola_jni {
 	jmethodID UtilNative_Files_init;
 
 	jmethodID Phiola_QueueCallback_on_change;
+	jmethodID Phiola_QueueCallback_on_complete;
 	jobject obj_QueueCallback;
 };
 static struct phiola_jni *x;

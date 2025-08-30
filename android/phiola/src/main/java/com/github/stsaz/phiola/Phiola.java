@@ -125,6 +125,7 @@ class Phiola {
 
 	interface QueueCallback {
 		void on_change(long q, int flags, int pos);
+		void on_complete(int operation, int status);
 	}
 	native void quSetCallback(QueueCallback cb);
 
@@ -206,5 +207,5 @@ class Phiola {
 	/** Load playlist from a file on disk */
 	native int quLoad(long q, String filepath);
 
-	native boolean quSave(long q, String filepath);
+	native void quSave(long q, String filepath);
 }

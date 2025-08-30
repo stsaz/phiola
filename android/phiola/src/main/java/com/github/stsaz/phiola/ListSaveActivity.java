@@ -22,12 +22,12 @@ public class ListSaveActivity extends AppCompatActivity {
 		b = ListSaveBinding.inflate(getLayoutInflater());
 		setContentView(b.getRoot());
 
-		explorer = new ExplorerMenu(this);
+		core = Core.getInstance();
+		explorer = new ExplorerMenu(core, this);
 
 		b.bSave.setOnClickListener((v) -> save());
 		b.eDir.setOnClickListener(v -> explorer.show(b.eDir, 0));
 
-		core = Core.getInstance();
 		load();
 
 		String name = getIntent().getStringExtra("name");
@@ -60,8 +60,11 @@ public class ListSaveActivity extends AppCompatActivity {
 		}
 		save2(fn);
 	}
-	private void save2(String fn) {
-		if (!core.queue().current_save(fn)) {
+
+	private void save2(String fn) { core.queue().current_save(fn, this::save_complete); }
+
+	private void save_complete(int status) {
+		if (status != 0) {
 			core.errlog(TAG, "Error saving playlist file");
 			return;
 		}

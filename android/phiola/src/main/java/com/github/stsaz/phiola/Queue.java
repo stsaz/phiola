@@ -3,6 +3,8 @@
 
 package com.github.stsaz.phiola;
 
+import android.os.ConditionVariable;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -94,12 +96,10 @@ class PhiolaQueue {
 		phi.quLoad(q, file_name);
 		file_name = null;
 	}
+	boolean loaded() { return (file_name == null); }
 
-	boolean save(String filepath) {
-		boolean b = phi.quSave(q, filepath);
-		if (b)
-			modified = false;
-		return b;
+	void save(String filepath) {
+		phi.quSave(q, filepath);
 	}
 }
 
@@ -222,7 +222,7 @@ class Queue {
 		nfy = new ArrayList<>();
 	}
 
-	private void on_change(long q, int flags, int pos) {
+	private void q_on_change(long q, int flags, int pos) {
 		core.tq.post(() -> {
 				if (queues.size() == 0)
 					return;
@@ -261,6 +261,17 @@ class Queue {
 				case 'm':
 					nfy_all(QueueNotify.UPDATE, pos);  break;
 				}
+			});
+	}
+
+	private void q_on_complete(int operation, int status) {
+		core.dbglog(TAG, "q_on_complete: %d %d", operation, status);
+
+		if (save_on_close_event())
+			return;
+
+		core.tq.post(() -> {
+				save_complete(status);
 			});
 	}
 
@@ -355,29 +366,99 @@ class Queue {
 		if (v != 0)
 			phi.quConf(v, v);
 
-		core.phiola.quSetCallback(this::on_change);
+		core.phiola.quSetCallback(new Phiola.QueueCallback() {
+				public void on_change(long q, int flags, int pos) { q_on_change(q, flags, pos); }
+				public void on_complete(int operation, int status) { q_on_complete(operation, status); }
+			});
+	}
+
+	private ConditionVariable save_event;
+	private int save_pending;
+
+	private boolean save_on_close_event() {
+		if (save_event != null) {
+			if (--save_pending == 0)
+				save_event.open();
+			return true;
+		}
+		return false;
 	}
 
 	void saveconf() {
 		core.dir_make(core.setts.pub_data_dir);
+
+		save_pending = 0;
+		for (PhiolaQueue q : queues) {
+			if (q.conversion)
+				continue;
+
+			if (q.modified && q.loaded())
+				save_pending++;
+		}
+
+		if (save_pending != 0)
+			save_event = new ConditionVariable();
+
 		int i = 0;
 		for (PhiolaQueue q : queues) {
 			if (q.conversion)
 				continue;
-			if (q.modified)
-				q.save(list_file_name(i));
+
+			if (q.modified) {
+				if (q.loaded()) {
+					q.save(list_file_name(i));
+
+				} else {
+					// The playlist is already on disk: rename file so it won't conflict with the existing one
+					core.file_rename(q.file_name, list_file_name(i) + ".tmp");
+				}
+			}
+
 			i++;
 		}
 
 		core.file_delete(list_file_name(i));
+
+		// Finish file-rename procedure
+		i = 0;
+		for (PhiolaQueue q : queues) {
+			if (q.conversion)
+				continue;
+
+			if (q.modified && !q.loaded()) {
+				String s = list_file_name(i);
+				core.file_rename(s + ".tmp", s);
+			}
+
+			i++;
+		}
+
+		// Wait until the modified playlists are stored on disk
+		if (save_event != null) {
+			save_event.block();
+			save_event = null;
+		}
+
+		for (PhiolaQueue q : queues) {
+			q.modified = false;
+		}
+	}
+
+	interface QuSaveCallback {
+		void on_complete(int status);
+	}
+	private QuSaveCallback q_save_done;
+	private void save_complete(int status) {
+		if (q_save_done != null) {
+			q_save_done.on_complete(status);
+			q_save_done = null;
+		}
 	}
 
 	/** Save playlist to a file */
-	boolean current_save(String fn) {
-		if (!q_selected().save(fn))
-			return false;
-		core.dbglog(TAG, "saved %s", fn);
-		return true;
+	void current_save(String fn, QuSaveCallback on_complete) {
+		q_save_done = on_complete;
+		q_selected().save(fn);
 	}
 
 	/** Get next list index (round-robin) */
