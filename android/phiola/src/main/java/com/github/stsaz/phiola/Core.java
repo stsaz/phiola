@@ -31,6 +31,8 @@ class Core extends Util {
 
 	private GUI gui;
 	private Queue qu;
+	APlayer aplayer;
+	ARecorder arecorder;
 	Track track;
 	private SysJobs sysjobs;
 	Phiola phiola;
@@ -83,7 +85,11 @@ class Core extends Util {
 		rec = new RecSettings(this);
 		convert = new ConvertSettings(this);
 		gui = new GUI(this);
-		track = new Track(this);
+		if (Build.VERSION.SDK_INT < 26) {
+			aplayer = new APlayer(this);
+			arecorder = new ARecorder(this);
+		}
+		track = new Track(this, aplayer);
 		qu = new Queue(this);
 		sysjobs = new SysJobs();
 		sysjobs.init(this);
