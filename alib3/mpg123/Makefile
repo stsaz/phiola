@@ -28,6 +28,10 @@ ifeq "$(CPU)" "amd64"
 	else ifeq "$(OS)" "windows"
 		CONFIGURE_FLAGS := --host=x86_64-w64-mingw32
 	endif
+else ifeq "$(CPU)" "x86"
+	ifeq "$(OS)" "windows"
+		CONFIGURE_FLAGS := --host=i686-w64-mingw32
+	endif
 else ifeq "$(CPU)" "arm64"
 	ifeq "$(SYS)" "android"
 		CONFIGURE_FLAGS := --host=aarch64

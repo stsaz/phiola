@@ -26,6 +26,8 @@ $(DIR): $(PKG)
 CONFIGURE_FLAGS := --host=x86_64
 ifeq "$(CPU)" "arm64"
 	CONFIGURE_FLAGS := --host=aarch64-linux-gnu
+else ifeq "$(CPU)" "x86"
+	CONFIGURE_FLAGS := --host=i686
 else ifeq "$(CPU)" "arm64"
 endif
 ifeq "$(SYS)" "android"
@@ -62,6 +64,8 @@ SRC := \
 	$(DIR)/libmp3lame/version.c
 
 ifeq "$(CPU)" "amd64"
+	SRC += $(DIR)/libmp3lame/vector/xmm_quantize_sub.c
+else ifeq "$(CPU)" "x86"
 	SRC += $(DIR)/libmp3lame/vector/xmm_quantize_sub.c
 endif
 

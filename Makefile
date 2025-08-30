@@ -17,8 +17,12 @@ CFLAGS += -DFFBASE_MEM_ASSERT \
 	-Wall -Wextra -Wno-unused-parameter -Wno-multichar \
 	-fPIC -fvisibility=hidden \
 	-g
+ifeq "$(CPU)" "x86"
+	CFLAGS += -msse2
+	LINKFLAGS += -static-libgcc
+endif
 ifeq "$(DEBUG)" "1"
-	CFLAGS += -DFF_DEBUG -O0 -Werror -Wno-deprecated-declarations
+	CFLAGS += -DFF_DEBUG -O0 -Wno-deprecated-declarations
 else
 	CFLAGS += -O3 -fno-strict-aliasing
 endif
@@ -145,6 +149,6 @@ package-debug: $(PKG_DEBUG_NAME)
 release: default
 	$(SUBMAKE) package
 	$(SUBMAKE) package-debug
-ifeq "$(OS)" "windows"
-	$(MAKE) -f ../installer/Makefile
-endif
+# ifeq "$(OS)" "windows"
+# 	$(MAKE) -f ../installer/Makefile
+# endif

@@ -27,7 +27,7 @@ typedef struct phi_filter phi_filter;
 typedef struct phi_track phi_track;
 struct _phi_fftask { size_t a[4]; };
 typedef struct _phi_fftask phi_task;
-struct _phi_fftimerqueue_node { size_t a[8]; };
+struct _phi_fftimerqueue_node { size_t a[9]; };
 typedef struct _phi_fftimerqueue_node phi_timer;
 struct phi_meta_if;
 typedef struct { char data[56]; } phi_meta;
