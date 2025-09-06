@@ -144,6 +144,12 @@ class GUI {
 	}
 
 	void list_closed(int i) {
+		if (list_pos.size() == 1) {
+			list_pos.set(0, 0);
+			list_names.set(0, "");
+			return;
+		}
+
 		list_pos.remove(i);
 		list_names.remove(i);
 	}
