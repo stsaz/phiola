@@ -7,6 +7,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.PorterDuff;
 import android.os.Build;
 import android.os.Bundle;
@@ -538,6 +539,9 @@ public class MainActivity extends AppCompatActivity {
 		if (gui.filter_hide)
 			b.tfilter.setVisibility(View.INVISIBLE);
 
+		if (gui.main_color >= 0)
+			color_apply();
+
 		int mask = GUI.MASK_PLAYBACK;
 		int st = GUI.STATE_DEF;
 		if (queue.auto_stop_active) {
@@ -550,6 +554,24 @@ public class MainActivity extends AppCompatActivity {
 		state_f(mask, st, true);
 	}
 
+	private void color_apply() {
+		int argb = 0xff000000 | gui.main_color;
+
+		getSupportActionBar().setBackgroundDrawable(new ColorDrawable(argb));
+		getWindow().setStatusBarColor(argb);
+
+		b.lname.setTextColor(argb);
+
+		b.seekbar.getProgressDrawable().setColorFilter(argb, PorterDuff.Mode.SRC_IN);
+		b.seekbar.getThumb().setColorFilter(argb, PorterDuff.Mode.SRC_IN);
+
+		ColorStateList csl = ColorStateList.valueOf(argb);
+		b.brec.setImageTintList(csl);
+		b.bplay.setImageTintList(csl);
+		b.bnext.setImageTintList(csl);
+		b.bprev.setImageTintList(csl);
+	}
+
 	private void rec_state_set(boolean active) {
 		if (Build.VERSION.SDK_INT < 21)
 			return;
@@ -558,6 +580,8 @@ public class MainActivity extends AppCompatActivity {
 		if (active)
 			res = R.color.recording;
 		int color = getResources().getColor(res);
+		if (!active && gui.main_color >= 0)
+			color = 0xff000000 | gui.main_color;
 		b.brec.setImageTintMode(PorterDuff.Mode.SRC_IN);
 		b.brec.setImageTintList(ColorStateList.valueOf(color));
 	}

@@ -21,6 +21,20 @@
 			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/sett_dark" />
 
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:layout_marginTop="@dimen/sett_margin"
+			android:text="@string/sett_color"
+			android:textColor="@color/text" />
+		<EditText
+			android:id="@+id/e_color"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:textSize="@dimen/text_editbox" />
+
 		<androidx.appcompat.widget.SwitchCompat
 			android:id="@+id/sw_showfilter"
 			android:layout_width="match_parent"

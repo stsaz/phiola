@@ -186,6 +186,8 @@ public class SettingsActivity extends AppCompatActivity {
 	private void load() {
 		// Interface
 		b.swDark.setChecked(core.gui().theme == GUI.THM_DARK);
+		if (core.gui().main_color >= 0)
+			b.eColor.setText(String.format("#%06X", core.gui().main_color));
 		b.swShowfilter.setChecked(core.gui().filter_hide);
 		b.swShowrec.setChecked(core.gui().record_hide);
 		b.swSvcNotifDisable.setChecked(core.setts.svc_notification_disable);
@@ -237,6 +239,7 @@ public class SettingsActivity extends AppCompatActivity {
 			i = GUI.THM_DARK;
 		core.gui().theme = i;
 
+		core.gui().main_color = Util.color_from_str(b.eColor.getText().toString(), -1);
 		core.gui().filter_hide = b.swShowfilter.isChecked();
 		core.gui().record_hide = b.swShowrec.isChecked();
 		core.gui().ainfo_in_title = b.swUiInfoInTitle.isChecked();

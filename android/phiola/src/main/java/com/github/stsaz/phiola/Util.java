@@ -4,6 +4,7 @@
 package com.github.stsaz.phiola;
 
 import android.content.Context;
+import android.graphics.Color;
 
 import androidx.core.content.ContextCompat;
 
@@ -53,6 +54,14 @@ abstract class Util {
 		if (b)
 			return 1;
 		return 0;
+	}
+
+	static int color_from_str(String s, int def) {
+		try {
+			return Color.parseColor(s) & 0xffffff;
+		} catch (Exception e) {
+		}
+		return def;
 	}
 
 	/**

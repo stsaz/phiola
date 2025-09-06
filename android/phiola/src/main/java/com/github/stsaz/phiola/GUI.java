@@ -24,6 +24,7 @@ class GUI {
 	private ArrayList<Integer> list_pos; // list scroll position
 	private ArrayList<String> list_names;
 	int mlib_scroll_pos;
+	int main_color = -1;
 
 	static final int
 		THM_DEF = 0,
@@ -55,7 +56,8 @@ class GUI {
 
 	String conf_write() {
 		return String.format(
-			"ui_curpath %s\n"
+			"ui_color %d\n"
+			+ "ui_curpath %s\n"
 			+ "ui_filter_hide %d\n"
 			+ "ui_record_hide %d\n"
 			+ "ui_info_in_title %d\n"
@@ -64,6 +66,7 @@ class GUI {
 			+ "ui_mlib_scroll_pos %d\n"
 			+ "ui_theme %d\n"
 			+ "ui_view %d\n"
+			, main_color + 1
 			, cur_path
 			, core.bool_to_int(filter_hide)
 			, core.bool_to_int(record_hide)
@@ -77,6 +80,7 @@ class GUI {
 	}
 
 	void conf_load(Conf c) {
+		main_color = c.number(Conf.UI_COLOR) - 1;
 		cur_path = c.value(Conf.UI_CURPATH);
 		filter_hide = c.enabled(Conf.UI_FILTER_HIDE);
 		record_hide = c.enabled(Conf.UI_RECORD_HIDE);

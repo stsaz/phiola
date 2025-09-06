@@ -47,6 +47,7 @@ static const char setting_names[][20] = {
 	"rec_rate",
 	"rec_src_unproc",
 	"rec_until",
+	"ui_color",
 	"ui_curpath",
 	"ui_filter_hide",
 	"ui_info_in_title",
