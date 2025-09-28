@@ -72,6 +72,22 @@ static void danorm_f_close(void *ctx, phi_track *t)
 	phi_track_free(t, c);
 }
 
+static int request_input_conversion(phi_track *t)
+{
+	if (!core->track->filter(t, core->mod("afilter.conv"), PHI_TF_PREV))
+		return PHI_ERR;
+
+	t->aconv.in = t->audio.format;
+	t->aconv.out = t->audio.format;
+	t->aconv.out.format = PHI_PCM_FLOAT64;
+	t->aconv.out.interleaved = 0;
+	if (!t->conf.oaudio.format.format)
+		t->conf.oaudio.format.format = t->audio.format.format;
+	t->oaudio.format = t->aconv.out;
+	t->data_out = t->data_in;
+	return PHI_BACK;
+}
+
 /** Set array elements to point to consecutive regions of one buffer */
 static inline void arrp_setbuf(void **ar, ffsize n, const void *buf, ffsize region_len)
 {
@@ -92,19 +108,8 @@ static int danorm_f_process(void *ctx, phi_track *t)
 		if (!(t->audio.format.format == PHI_PCM_FLOAT64
 			&& !t->audio.format.interleaved)) {
 
-			if (!core->track->filter(t, core->mod("afilter.conv"), PHI_TF_PREV))
-				return PHI_ERR;
-
-			t->aconv.in = t->audio.format;
-			t->aconv.out = t->audio.format;
-			t->aconv.out.format = PHI_PCM_FLOAT64;
-			t->aconv.out.interleaved = 0;
-			if (!t->conf.oaudio.format.format)
-				t->conf.oaudio.format.format = t->audio.format.format;
-			t->oaudio.format = t->aconv.out;
-			t->data_out = t->data_in;
 			c->state = 1;
-			return PHI_BACK;
+			return request_input_conversion(t);
 		}
 		// fallthrough
 
