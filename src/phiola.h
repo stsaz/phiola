@@ -6,13 +6,13 @@
 #include <ffbase/string.h>
 #include <ffbase/time.h>
 
-#define PHI_VERSION  20509
+#define PHI_VERSION  20600
 
 /** Inter-module compatibility version.
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20507
+#define PHI_VERSION_CORE  20600
 
 typedef long long int64;
 typedef unsigned long long uint64;
@@ -306,6 +306,7 @@ struct phi_track_conf {
 		uint	loudness_summary :1;
 		const char *auto_normalizer;
 		const char *danorm;
+		const char *noise_gate;
 	} afilter;
 
 	// Audio encoder selected by `ofile.name`

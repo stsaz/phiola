@@ -24,6 +24,9 @@ Options:\n\
   `-until` TIME           Stop at time\n\
                           [[HH:]MM:]SS[.MSC]\n\
 \n\
+  `-noise_gate` \"OPTIONS\" Suppress noise. Options:\n\
+                          `threshold`   Integer (dB)\n\
+                          `release`     Integer (msec)\n\
   `-danorm` \"OPTIONS\"     Apply Dynamic Audio Normalizer filter. Options:\n\
                           `frame`       Integer\n\
                           `size`        Integer\n\
@@ -77,6 +80,7 @@ struct cmd_rec {
 	const char*	aac_profile;
 	const char*	audio;
 	const char*	danorm;
+	const char*	noise_gate;
 	const char*	opus_mode;
 	const char*	output;
 	const char*	remote_id;
@@ -167,6 +171,7 @@ static int rec_action(struct cmd_rec *r)
 		.afilter = {
 			.gain_db = r->gain,
 			.danorm = r->danorm,
+			.noise_gate = r->noise_gate,
 		},
 		.oaudio = {
 			.format = {
@@ -212,6 +217,8 @@ static int rec_action(struct cmd_rec *r)
 		|| !track->filter(t, x->core->mod("afilter.until"), 0)
 		|| !track->filter(t, x->core->mod("afilter.rtpeak"), 0)
 		|| !track->filter(t, x->core->mod("tui.rec"), 0)
+		|| (r->noise_gate
+			&& !track->filter(t, x->core->mod("afilter.noise-gate"), 0))
 		|| (r->danorm
 			&& !track->filter(t, x->core->mod("af-danorm.f"), 0))
 		|| !track->filter(t, x->core->mod("afilter.gain"), 0)
@@ -246,6 +253,9 @@ static int rec_action(struct cmd_rec *r)
 
 static int rec_check(struct cmd_rec *r)
 {
+	if (r->noise_gate && r->danorm)
+		return _ffargs_err(&x->cmd, 1, "`-noise_gate` and `-danorm` can't be used together");
+
 	if (!r->output)
 		return _ffargs_err(&x->cmd, 1, "please specify output file name with '-out FILE'");
 
@@ -311,6 +321,7 @@ static const struct ffarg cmd_rec[] = {
 	{ "-help",			0,		rec_help },
 	{ "-loopback",		'1',	O(loopback) },
 	{ "-meta",			'+S',	rec_meta },
+	{ "-noise_gate",	's',	O(noise_gate) },
 	{ "-o",				's',	O(output) },
 	{ "-opus_mode",		's',	O(opus_mode) },
 	{ "-opus_quality",	'u',	O(opus_q) },
