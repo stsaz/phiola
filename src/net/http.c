@@ -186,39 +186,42 @@ static inline ffsize _ffring_writestr(ffring *b, ffstr data, ffsize *free)
 }
 
 /** New data chunk is available for reading */
+static int hc_data_hls(struct httpcl *h, ffstr data, uint flags)
+{
+	switch (h->cl_state) {
+	case CLST_RECEIVING:
+		h->done = !!(flags & 1);
+		if (hls_data(h, data))
+			return (flags & 1) ? NMLR_FIN : NMLR_BACK;
+
+		h->data = data;
+		h->cl_state = CLST_PROCESSING;
+		// fallthrough
+
+	case CLST_PROCESSING: {
+		size_t nfree;
+		int r = _ffring_writestr(h->buf, h->data, &nfree);
+		dbglog(h->trk, "buffer:%L", h->buf->cap - nfree);
+		ffstr_shift(&h->data, r);
+		if (FF_SWAP(&h->state, ST_HLS_HAVE_DATA) == ST_WAIT)
+			core->track->wake(h->trk);
+
+		if (h->data.len)
+			return NMLR_ASYNC;
+		h->cl_state = CLST_RECEIVING;
+		return (flags & 1) ? NMLR_FIN : NMLR_BACK;
+	}
+	}
+
+	return NMLR_ERR;
+}
+
 int phi_hc_data(void *ctx, ffstr data, uint flags)
 {
 	struct httpcl *h = ctx;
-	int r;
 
-	if (h->hls) {
-		switch (h->cl_state) {
-		case CLST_RECEIVING:
-			h->done = !!(flags & 1);
-			if (hls_data(h, data))
-				return (flags & 1) ? NMLR_FIN : NMLR_BACK;
-
-			h->data = data;
-			h->cl_state = CLST_PROCESSING;
-			// fallthrough
-
-		case CLST_PROCESSING: {
-			size_t nfree;
-			r = _ffring_writestr(h->buf, h->data, &nfree);
-			dbglog(h->trk, "buffer:%L", h->buf->cap - nfree);
-			ffstr_shift(&h->data, r);
-			if (FF_SWAP(&h->state, ST_HLS_HAVE_DATA) == ST_WAIT)
-				core->track->wake(h->trk);
-
-			if (h->data.len)
-				return NMLR_ASYNC;
-			h->cl_state = CLST_RECEIVING;
-			return (flags & 1) ? NMLR_FIN : NMLR_BACK;
-		}
-		}
-
-		return NMLR_ERR;
-	}
+	if (h->hls)
+		return hc_data_hls(ctx, data, flags);
 
 	switch (h->cl_state) {
 	case CLST_RECEIVING:
