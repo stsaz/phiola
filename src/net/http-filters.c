@@ -17,7 +17,8 @@ static int phi_output_open(nml_http_client *c)
 	struct phi_http_data d = {
 		.code = c->response.code,
 		.status = range16_tostr(&c->response.status, c->response.base),
-		.ct = range16_tostr(&c->response.content_type, c->response.base),
+		.content_type = range16_tostr(&c->response.content_type, c->response.base),
+		.content_range = range16_tostr(&c->response.content_range, c->response.base),
 		.content_length = c->response.content_length,
 	};
 

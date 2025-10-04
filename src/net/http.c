@@ -37,6 +37,7 @@ struct httpcl {
 	uint done :1;
 	uint icy :1;
 	uint n_redirect;
+	uint64 range_first;
 
 	struct hlsread *hls;
 };
@@ -132,7 +133,8 @@ int phi_hc_resp(void *ctx, struct phi_http_data *d)
 {
 	struct httpcl *h = ctx;
 
-	if (d->code != 200) {
+	if (!(d->code == 200
+		|| (h->range_first && d->code == 206))) {
 		errlog(NULL, "resource unavailable: %S", &d->status);
 		return NMLR_ERR;
 	}
@@ -147,22 +149,31 @@ int phi_hc_resp(void *ctx, struct phi_http_data *d)
 		{ "audio/x-aac",	"aac" },
 		{ "video/MP2T",		"ts" },
 	};
-	h->trk->data_type = map_sz24_vptr_findstr(ct_ext, FF_COUNT(ct_ext), d->ct); // help format.detector in case it didn't detect format
+	h->trk->data_type = map_sz24_vptr_findstr(ct_ext, FF_COUNT(ct_ext), d->content_type); // help format.detector in case it didn't detect format
 	if (!h->trk->data_type
-		&& ffstr_eqz(&d->ct, "application/vnd.apple.mpegurl")
+		&& ffstr_eqz(&d->content_type, "application/vnd.apple.mpegurl")
 		&& !h->hls) {
 		h->hls = hls_new(h);
 		size_t cap = (h->trk->conf.ifile.buf_size) ? h->trk->conf.ifile.buf_size : 64*1024;
 		h->buf = ffring_alloc(cap, FFRING_1_READER | FFRING_1_WRITER);
 	}
 
-	if (!h->hls) {
+	if (h->range_first) {
+		int64 first, last, total;
+		if (d->code != 206
+			|| http_range_parse(d->content_range, &first, &last, &total)
+			|| (uint64)first != h->range_first) {
+			warnlog(NULL, "Server does not support audio seek requests");
+		}
+	}
+
+	if (d->code == 200 && !h->hls) {
 		h->trk->icy_meta_interval = d->icy_meta_interval;
 		h->icy = !!d->icy_meta_interval;
 		h->trk->meta_changed = !d->icy_meta_interval;
 		h->trk->audio.bitrate = d->icy_br * 1000;
 		h->trk->input.size = d->content_length;
-		h->trk->input.cant_seek = 1;
+		h->trk->input.no_auto_seek = 1;
 	}
 
 	return NMLR_OPEN;
@@ -250,7 +261,6 @@ static void http_request(struct httpcl *h, ffstr url)
 	h->cl = nml_http_client_create();
 	conf_prepare(h, &h->conf, h->trk, url);
 	nml_http_client_conf(h->cl, &h->conf);
-	nml_http_client_run(h->cl);
 }
 
 static int http_redirect(struct httpcl *h, const char *location)
@@ -264,6 +274,7 @@ static int http_redirect(struct httpcl *h, const char *location)
 	h->trk->conf.ifile.name = h->redirect_location = ffsz_dup(location);
 
 	http_request(h, FFSTR_Z(h->trk->conf.ifile.name));
+	nml_http_client_run(h->cl);
 	return 0;
 }
 
@@ -401,6 +412,9 @@ static int conf_prepare(struct httpcl *h, struct nml_http_client_conf *c, phi_tr
 	if (!t->conf.ifile.no_meta && !h->hls)
 		ffstr_growaddz(&c->headers, &headers_cap, "Icy-MetaData: 1\r\n");
 
+	if (h->range_first)
+		ffstr_growfmt(&c->headers, &headers_cap, "Range: bytes=%U-\r\n", h->range_first);
+
 	if (t->conf.ifile.connect_timeout_sec)
 		c->connect_timeout_msec = t->conf.ifile.connect_timeout_sec * 1000;
 	if (t->conf.ifile.recv_timeout_sec)
@@ -443,7 +457,14 @@ static void httpcl_close(struct httpcl *h, phi_track *t)
 static int httpcl_process(struct httpcl *h, phi_track *t)
 {
 	if (t->input.seek != ~0ULL) {
-		warnlog(t, "seeking isn't supported");
+		dbglog(t, "%s: seek @%U", t->conf.ifile.name, t->input.seek);
+		if (t->input.size != ~0ULL) {
+			h->range_first = t->input.seek;
+			http_request(h, FFSTR_Z(t->conf.ifile.name));
+			h->state = ST_PROCESSING;
+		} else {
+			warnlog(t, "seeking isn't supported");
+		}
 		t->input.seek = ~0ULL;
 	}
 

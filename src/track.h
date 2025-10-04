@@ -156,7 +156,7 @@ struct phi_track {
 		uint64 size; // Input file size. -1:unset
 		uint64 seek; // Seek to offset and reset. -1:unset
 		fftime mtime; // Modification date/time
-		uint cant_seek :1;
+		uint no_auto_seek :1;
 	} input;
 
 	phi_meta meta;

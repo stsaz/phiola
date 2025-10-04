@@ -5,7 +5,7 @@
 struct phi_http_data {
 	uint code;
 	ffstr status;
-	ffstr ct;
+	ffstr content_type, content_range;
 	uint icy_meta_interval;
 	uint icy_br;
 	uint64 content_length;
