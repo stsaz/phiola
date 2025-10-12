@@ -55,6 +55,9 @@
 
 	<string name="menu_about">About</string>
 
+	<string name="mexplorer_add_list_cur">Add To Current List</string>
+	<string name="mexplorer_add_list_new">Add To New List</string>
+
 	<string name="mitem_list_remove">Remove from List</string>
 	<string name="mitem_file_show">Show in Explorer</string>
 	<string name="mitem_file_delete">Delete File from Storage</string>

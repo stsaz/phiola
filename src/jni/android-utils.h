@@ -49,6 +49,7 @@ static const char setting_names[][20] = {
 	"rec_until",
 	"ui_color",
 	"ui_curpath",
+	"ui_explorer_scroll",
 	"ui_filter_hide",
 	"ui_info_in_title",
 	"ui_list_names",

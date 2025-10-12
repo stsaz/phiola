@@ -23,7 +23,7 @@ class GUI {
 	String list_filter = "";
 	private ArrayList<Integer> list_pos; // list scroll position
 	private ArrayList<String> list_names;
-	int mlib_scroll_pos;
+	int explorer_scroll_pos, mlib_scroll_pos;
 	int main_color = -1;
 
 	static final int
@@ -58,6 +58,7 @@ class GUI {
 		return String.format(
 			"ui_color %d\n"
 			+ "ui_curpath %s\n"
+			+ "ui_explorer_scroll %d\n"
 			+ "ui_filter_hide %d\n"
 			+ "ui_record_hide %d\n"
 			+ "ui_info_in_title %d\n"
@@ -68,6 +69,7 @@ class GUI {
 			+ "ui_view %d\n"
 			, main_color + 1
 			, cur_path
+			, explorer_scroll_pos
 			, core.bool_to_int(filter_hide)
 			, core.bool_to_int(record_hide)
 			, core.bool_to_int(ainfo_in_title)
@@ -82,6 +84,7 @@ class GUI {
 	void conf_load(Conf c) {
 		main_color = c.number(Conf.UI_COLOR) - 1;
 		cur_path = c.value(Conf.UI_CURPATH);
+		explorer_scroll_pos = c.number(Conf.UI_EXPLORER_SCROLL);
 		filter_hide = c.enabled(Conf.UI_FILTER_HIDE);
 		record_hide = c.enabled(Conf.UI_RECORD_HIDE);
 		ainfo_in_title = c.enabled(Conf.UI_INFO_IN_TITLE);

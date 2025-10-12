@@ -53,39 +53,43 @@ class Explorer {
 		return display_rows[pos];
 	}
 
-	void event(int ev, int pos) {
-		core.dbglog(TAG, "click on %d", pos);
-		if (pos == 0)
-			return; // click on the current directory path
+	static class EventResult {
+		String filename;
+		boolean noop;
+	}
+
+	EventResult event(boolean long_click, int pos) {
+		EventResult r = new EventResult();
+
+		if (pos == 0) {
+			r.noop = true;
+			return r; // click on the current directory path
+		}
 		pos--;
 
 		if (up_dir) {
 			if (pos == 0) {
-				if (ev == 1)
-					return; // long click on "<UP>"
+				if (long_click) {
+					r.noop = true;
+					return r; // long click on "<UP>"
+				}
 
 				if (parent == null)
 					list_show_root();
 				else
 					list_show(parent);
-				main.explorer_event(null, 0);
-				return;
+				return r; // click on "<UP>"
 			}
 			pos--;
 		}
 
-		if (ev == 1) {
-			main.explorer_event(file_names[pos], Queue.ADD_RECURSE);
-			return;
-		}
-
-		if (pos < n_dirs) {
+		if (!long_click && pos < n_dirs) {
 			list_show(file_names[pos]);
-			main.explorer_event(null, 0);
-			return;
+			return r; // click on a directory
 		}
 
-		main.explorer_event(file_names[pos], Queue.ADD);
+		r.filename = file_names[pos];
+		return r;
 	}
 
 	void fill() {

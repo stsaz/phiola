@@ -132,22 +132,10 @@ public class MainActivity extends AppCompatActivity {
 			break;
 
 		case R.id.action_file_menu_show:
-			if (mfile == null) {
-				mfile = new PopupMenu(this, findViewById(R.id.action_file_menu_show));
-				mfile.getMenuInflater().inflate(R.menu.file, mfile.getMenu());
-				mfile.setOnMenuItemClickListener(this::file_menu_click);
-			}
-			mfile.show();
-			break;
+			menu_file_show();  break;
 
 		case R.id.action_list_menu_show:
-			if (mlist == null) {
-				mlist = new PopupMenu(this, findViewById(R.id.action_list_menu_show));
-				mlist.getMenuInflater().inflate(R.menu.list, mlist.getMenu());
-				mlist.setOnMenuItemClickListener(this::list_menu_click);
-			}
-			mlist.show();
-			break;
+			menu_list_show();  break;
 
 		case R.id.action_about:
 			startActivity(new Intent(this, AboutActivity.class));
@@ -160,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
 		return true;
 	}
 
-	private boolean file_menu_click(MenuItem item) {
+	private boolean menu_file_click(MenuItem item) {
 		switch (item.getItemId()) {
 
 		case R.id.action_file_tags_show:
@@ -184,10 +172,19 @@ public class MainActivity extends AppCompatActivity {
 		return true;
 	}
 
-	private boolean list_menu_click(MenuItem item) {
+	private void menu_file_show() {
+		if (mfile == null) {
+			mfile = new PopupMenu(this, findViewById(R.id.action_file_menu_show));
+			mfile.getMenuInflater().inflate(R.menu.file, mfile.getMenu());
+			mfile.setOnMenuItemClickListener(this::menu_file_click);
+		}
+		mfile.show();
+	}
+
+	private boolean menu_list_click(MenuItem item) {
 		switch (item.getItemId()) {
 		case R.id.action_list_new:
-			list_new();  break;
+			list_new(null);  break;
 
 		case R.id.action_list_close:
 			list_close();  break;
@@ -249,6 +246,15 @@ public class MainActivity extends AppCompatActivity {
 		return true;
 	}
 
+	private void menu_list_show() {
+		if (mlist == null) {
+			mlist = new PopupMenu(this, findViewById(R.id.action_list_menu_show));
+			mlist.getMenuInflater().inflate(R.menu.list, mlist.getMenu());
+			mlist.setOnMenuItemClickListener(this::menu_list_click);
+		}
+		mlist.show();
+	}
+
 	private PopupMenu mlist_sort;
 	private static final int[] mlist_sort_data = {
 		Phiola.QU_SORT_FILENAME,	R.string.mlist_sort_filename,
@@ -272,7 +278,7 @@ public class MainActivity extends AppCompatActivity {
 		mlist_sort.show();
 	}
 
-	private boolean item_menu_click(MenuItem item) {
+	private boolean menu_item_click(MenuItem item) {
 		String fn;
 
 		switch (item.getItemId()) {
@@ -316,14 +322,45 @@ public class MainActivity extends AppCompatActivity {
 		return true;
 	}
 
-	private void item_menu_show(int i) {
+	private void menu_item_show(int i) {
 		item_menu_qi = i;
 		if (mitem == null) {
 			mitem = new PopupMenu(this, b.lname);
 			mitem.getMenuInflater().inflate(R.menu.item, mitem.getMenu());
-			mitem.setOnMenuItemClickListener(this::item_menu_click);
+			mitem.setOnMenuItemClickListener(this::menu_item_click);
 		}
 		mitem.show();
+	}
+
+	private int menu_explorer_index;
+	private PopupMenu menu_explorer;
+
+	private boolean menu_explorer_click(MenuItem item) {
+		int cmd;
+		switch (item.getItemId()) {
+
+		case R.id.action_explorer_add_cur:
+			cmd = EC_ADD_CUR;  break;
+
+		case R.id.action_explorer_add_new:
+			cmd = EC_ADD_NEW;  break;
+
+		default:
+			return false;
+		}
+
+		explorer_cmd(cmd, menu_explorer_index);
+		return true;
+	}
+
+	private void menu_explorer_show(int i) {
+		menu_explorer_index = i;
+		if (menu_explorer == null) {
+			menu_explorer = new PopupMenu(this, b.lname);
+			menu_explorer.getMenuInflater().inflate(R.menu.explorer, menu_explorer.getMenu());
+			menu_explorer.setOnMenuItemClickListener(this::menu_explorer_click);
+		}
+		menu_explorer.show();
 	}
 
 	private static final int
@@ -497,7 +534,7 @@ public class MainActivity extends AppCompatActivity {
 
 				public void on_click(int i) {
 					if (gui.view == GUI.V_EXPLORER)
-						explorer.event(0, i);
+						explorer_cmd(EC_ADD_PLAY, i);
 					else if (gui.view == GUI.V_LIBRARY)
 						library.on_click(i);
 					else
@@ -506,11 +543,11 @@ public class MainActivity extends AppCompatActivity {
 
 				public void on_longclick(int i) {
 					if (gui.view == GUI.V_EXPLORER)
-						explorer.event(1, i);
+						menu_explorer_show(i);
 					else if (gui.view == GUI.V_LIBRARY)
 						library.on_longclick(i);
 					else
-						item_menu_show(i);
+						menu_item_show(i);
 				}
 			});
 
@@ -669,6 +706,8 @@ public class MainActivity extends AppCompatActivity {
 		list_update();
 		if (gui.view == GUI.V_LIBRARY)
 			list_scroll(gui.mlib_scroll_pos);
+		else
+			list_scroll(gui.explorer_scroll_pos);
 	}
 
 	private void plist_click() {
@@ -802,12 +841,7 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void plist_open_new(String fn) {
-		list_new();
-
-		int pos = queue.current_index();
-		gui.list_name_set(pos, Util.path_split3(fn)[1]);
-		bplaylist_text(pos);
-
+		list_new(Util.path_split3(fn)[1]);
 		queue.current_add(fn, Queue.ADD);
 		queue.current_play(0);
 	}
@@ -821,17 +855,41 @@ public class MainActivity extends AppCompatActivity {
 		explorer_event(fn, Queue.ADD_RECURSE);
 	}
 
+	static final int EC_ADD_PLAY = 0,
+		EC_ADD_CUR = 1,
+		EC_ADD_NEW = 2;
+
+	private void explorer_cmd(int cmd, int i) {
+		core.dbglog(TAG, "explorer_cmd() %d %d", cmd, i);
+		Explorer.EventResult r = explorer.event((cmd != EC_ADD_PLAY), i);
+		if (r.noop)
+			return;
+
+		if (r.filename == null) {
+			b.list.setAdapter(pl_adapter);
+			return;
+		}
+
+		int flags = Queue.ADD;
+		switch (cmd) {
+		case EC_ADD_NEW:
+			flags = Queue.ADD_RECURSE;
+			list_new(Util.path_split3(r.filename)[1]);
+			break;
+
+		case EC_ADD_CUR:
+			flags = Queue.ADD_RECURSE;
+		}
+
+		explorer_event(r.filename, flags);
+	}
+
 	private boolean is_playlist(String ext) {
 		return ext.equalsIgnoreCase("m3u")
 			|| ext.equalsIgnoreCase("m3u8");
 	}
 
-	void explorer_event(String fn, int flags) {
-		if (fn == null) {
-			b.list.setAdapter(pl_adapter);
-			return;
-		}
-
+	private void explorer_event(String fn, int flags) {
 		if (flags == Queue.ADD && is_playlist(Util.path_split3(fn)[2])) {
 			plist_open_new(fn);
 			return;
@@ -895,6 +953,8 @@ public class MainActivity extends AppCompatActivity {
 				gui.list_scroll_pos_set(queue.current_index(), pos);
 		} else if (gui.view == GUI.V_LIBRARY) {
 			gui.mlib_scroll_pos = pos;
+		} else if (gui.view == GUI.V_EXPLORER) {
+			gui.explorer_scroll_pos = pos;
 		}
 	}
 
@@ -941,7 +1001,7 @@ public class MainActivity extends AppCompatActivity {
 		gui.msg_show(this, s);
 	}
 
-	private void list_new() {
+	private void list_new(String name) {
 		int qi = queue.new_list();
 		if (qi < 0)
 			return;
@@ -953,6 +1013,10 @@ public class MainActivity extends AppCompatActivity {
 			plist_click();
 		else
 			list_update();
+
+		if (name != null)
+			gui.list_name_set(qi, name);
+
 		bplaylist_text(qi);
 	}
 
@@ -1021,10 +1085,8 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void list_scroll(int n) {
-		if (n != 0) {
-			LinearLayoutManager llm = (LinearLayoutManager)b.list.getLayoutManager();
-			llm.scrollToPositionWithOffset(n, 0);
-		}
+		LinearLayoutManager llm = (LinearLayoutManager)b.list.getLayoutManager();
+		llm.scrollToPositionWithOffset(n, 0);
 	}
 
 	private void list_switched(int i) {
