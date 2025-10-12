@@ -130,7 +130,7 @@ static int aac_decode(void *ctx, phi_track *t)
 					, fmt->rate, fmt->channels
 					, inf->rate, inf->channels);
 				if (fmt->rate != inf->rate) {
-					if (t->audio.total != 0) {
+					if (t->audio.total != ~0ULL) {
 						t->audio.total *= a->rate_mul;
 					}
 				}
@@ -145,7 +145,7 @@ static int aac_decode(void *ctx, phi_track *t)
 			// fallthrough
 
 		case R_CACHE_DATA:
-			if (t->audio.total == 0 && t->input.size)
+			if (t->audio.total == ~0ULL && t->input.size != ~0ULL)
 				t->audio.total = t->input.size * 8 * a->sample_rate / a->avg_bitrate;
 
 			if (!t->audio.bitrate)

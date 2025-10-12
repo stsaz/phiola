@@ -36,6 +36,7 @@ struct httpcl {
 	uint cl_state;
 	uint done :1;
 	uint icy :1;
+	uint eof :1;
 	uint n_redirect;
 	uint64 range_first;
 
@@ -144,13 +145,16 @@ int phi_hc_resp(void *ctx, struct phi_http_data *d)
 		{ "application/x-mpegURL",	"m3u" },
 		{ "audio/aac",		"aac" },
 		{ "audio/aacp",		"aac" },
+		{ "audio/mp4",		"mp4" },
 		{ "audio/mpeg",		"mp3" },
 		{ "audio/ogg",		"ogg" },
 		{ "audio/x-aac",	"aac" },
 		{ "video/MP2T",		"ts" },
 	};
-	h->trk->data_type = map_sz24_vptr_findstr(ct_ext, FF_COUNT(ct_ext), d->content_type); // help format.detector in case it didn't detect format
-	if (!h->trk->data_type
+	const char *dt = map_sz24_vptr_findstr(ct_ext, FF_COUNT(ct_ext), d->content_type); // help format.detector in case it didn't detect format
+	if (!h->trk->data_type)
+		h->trk->data_type = dt;
+	if (!dt
 		&& ffstr_eqz(&d->content_type, "application/vnd.apple.mpegurl")
 		&& !h->hls) {
 		h->hls = hls_new(h);
@@ -256,6 +260,9 @@ static void http_request(struct httpcl *h, ffstr url)
 	nml_http_client_free(h->cl);
 	ffstr_free(&h->conf.headers);
 	ffmem_zero_obj(&h->conf);
+	h->cl_state = 0;
+	h->icy = 0;
+	h->done = 0;
 
 	dbglog(h->trk, "requesting %S", &url);
 	h->cl = nml_http_client_create();
@@ -460,6 +467,7 @@ static int httpcl_process(struct httpcl *h, phi_track *t)
 		dbglog(t, "%s: seek @%U", t->conf.ifile.name, t->input.seek);
 		if (t->input.size != ~0ULL) {
 			h->range_first = t->input.seek;
+			h->n_redirect = 0;
 			http_request(h, FFSTR_Z(t->conf.ifile.name));
 			h->state = ST_PROCESSING;
 		} else {
@@ -478,7 +486,13 @@ static int httpcl_process(struct httpcl *h, phi_track *t)
 
 		t->data_out = h->data;
 		h->state = ST_PROCESSING;
-		return (h->done) ? PHI_DONE : PHI_DATA;
+
+		// Don't return PHI_DONE immediately
+		if (h->eof && h->done)
+			return PHI_DONE;
+		h->eof = h->done;
+
+		return PHI_DATA;
 
 	case ST_PROCESSING:
 		h->state = ST_WAIT;
