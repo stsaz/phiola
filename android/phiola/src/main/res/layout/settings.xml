@@ -28,6 +28,18 @@
 			android:layout_marginTop="@dimen/sett_margin"
 			android:text="@string/sett_color"
 			android:textColor="@color/text" />
+		<SeekBar
+			android:id="@+id/sb_color_red"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content" />
+		<SeekBar
+			android:id="@+id/sb_color_green"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content" />
+		<SeekBar
+			android:id="@+id/sb_color_blue"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content" />
 		<EditText
 			android:id="@+id/e_color"
 			android:layout_width="match_parent"

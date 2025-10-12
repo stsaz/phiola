@@ -56,6 +56,10 @@ abstract class Util {
 		return 0;
 	}
 
+	static String color_str(int rgb) {
+		return String.format("#%06X", rgb);
+	}
+
 	static int color_from_str(String s, int def) {
 		try {
 			return Color.parseColor(s) & 0xffffff;

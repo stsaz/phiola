@@ -23,6 +23,7 @@ public class ListSaveActivity extends AppCompatActivity {
 		setContentView(b.getRoot());
 
 		core = Core.getInstance();
+		core.gui().on_activity_show(this);
 		explorer = new ExplorerMenu(core, this);
 
 		b.bSave.setOnClickListener((v) -> save());

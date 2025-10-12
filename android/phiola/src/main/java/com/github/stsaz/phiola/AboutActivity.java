@@ -21,6 +21,7 @@ public class AboutActivity extends AppCompatActivity {
 		setContentView(b.getRoot());
 
 		core = Core.getInstance();
+		core.gui().on_activity_show(this);
 
 		b.lAbout.setText(String.format("v%s\n\n%s",
 			core.phiola.version(),

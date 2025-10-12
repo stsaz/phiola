@@ -7,7 +7,6 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.PorterDuff;
 import android.os.Build;
 import android.os.Bundle;
@@ -82,6 +81,7 @@ public class MainActivity extends AppCompatActivity {
 		core.dbglog(TAG, "onStart()");
 
 		show_ui();
+		gui.on_activity_show(this);
 
 		// If already playing - get in sync
 		track.observer_notify(trk_nfy);
@@ -190,7 +190,7 @@ public class MainActivity extends AppCompatActivity {
 			list_close();  break;
 
 		case R.id.action_list_add:
-			startActivity(new Intent(this, AddURLActivity.class));  break;
+			list_add_show();  break;
 
 		case R.id.action_list_rm:
 			list_rm();  break;
@@ -576,8 +576,7 @@ public class MainActivity extends AppCompatActivity {
 		if (gui.filter_hide)
 			b.tfilter.setVisibility(View.INVISIBLE);
 
-		if (gui.main_color >= 0)
-			color_apply();
+		color_apply();
 
 		int mask = GUI.MASK_PLAYBACK;
 		int st = GUI.STATE_DEF;
@@ -592,10 +591,9 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void color_apply() {
-		int argb = 0xff000000 | gui.main_color;
+		if (gui.main_color < 0) return;
 
-		getSupportActionBar().setBackgroundDrawable(new ColorDrawable(argb));
-		getWindow().setStatusBarColor(argb);
+		int argb = 0xff000000 | gui.main_color;
 
 		b.lname.setTextColor(argb);
 
@@ -1081,6 +1079,16 @@ public class MainActivity extends AppCompatActivity {
 		gui.dlg_edit(this, "Rename List", "Specify the name for this list:", list_name(pos), "Rename", "Cancel", (s) -> {
 				gui.list_name_set(pos, s);
 				bplaylist_text(pos);
+			});
+	}
+
+	private void list_add_show() {
+		gui.dlg_edit(this, "Add To Playlist", "URL:", "", "Add", "Cancel", (s) -> {
+				if (!core.track.supported_url(s)) {
+					gui.msg_show(this, "Unsupported URL");
+					return;
+				}
+				queue.current_add(s, 0);
 			});
 	}
 

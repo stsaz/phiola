@@ -6,6 +6,7 @@ package com.github.stsaz.phiola;
 import android.os.Build;
 import android.os.Bundle;
 
+import android.graphics.PorterDuff;
 import android.widget.ArrayAdapter;
 import android.widget.SeekBar;
 
@@ -26,13 +27,11 @@ public class SettingsActivity extends AppCompatActivity {
 		b = SettingsBinding.inflate(getLayoutInflater());
 		setContentView(b.getRoot());
 
-		ActionBar actionBar = getSupportActionBar();
-		if (actionBar != null)
-			actionBar.setDisplayHomeAsUpEnabled(true);
-
 		core = Core.getInstance();
+		core.gui().on_activity_show(this);
 		explorer = new ExplorerMenu(core, this);
 
+		ui_init();
 		play_init();
 
 		b.eDataDir.setOnClickListener(v -> explorer.show(b.eDataDir, 0));
@@ -43,14 +42,50 @@ public class SettingsActivity extends AppCompatActivity {
 		load();
 	}
 
+	private static void seekbar_color(SeekBar sb, int color) {
+		sb.getProgressDrawable().setColorFilter(0xff000000 | color, PorterDuff.Mode.SRC_IN);
+		sb.getThumb().setColorFilter(0xff000000 | color, PorterDuff.Mode.SRC_IN);
+	}
+
+	private void ui_init() {
+		b.sbColorRed.setMax(color_progress(256));
+		b.sbColorRed.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
+				@Override
+				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+					if (fromUser)
+						color_modify(0x00ffff, (progress * 3) << 16);
+				}
+			});
+		seekbar_color(b.sbColorRed, 0xff4136);
+
+		b.sbColorGreen.setMax(color_progress(256));
+		b.sbColorGreen.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
+				@Override
+				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+					if (fromUser)
+						color_modify(0xff00ff, (progress * 3) << 8);
+				}
+			});
+		seekbar_color(b.sbColorGreen, 0x2ecc40);
+
+		b.sbColorBlue.setMax(color_progress(256));
+		b.sbColorBlue.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
+				@Override
+				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+					if (fromUser)
+						color_modify(0xffff00, progress * 3);
+				}
+			});
+		seekbar_color(b.sbColorBlue, 0x0074d9);
+	}
+
 	private void play_init() {
 		b.sbPlayAutoSkip.setMax(auto_skip_progress(200));
 		b.sbPlayAutoSkip.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
 				@Override
 				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser) {
+					if (fromUser)
 						b.eAutoSkip.setText(AutoSkip.user_str(auto_skip_value(progress)));
-					}
 				}
 			});
 
@@ -58,9 +93,8 @@ public class SettingsActivity extends AppCompatActivity {
 		b.sbPlayAutoSkipTail.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
 				@Override
 				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser) {
+					if (fromUser)
 						b.eAutoSkipTail.setText(AutoSkip.user_str(auto_skip_value(progress)));
-					}
 				}
 			});
 
@@ -68,9 +102,8 @@ public class SettingsActivity extends AppCompatActivity {
 		b.sbPlayAutoStop.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
 				@Override
 				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser) {
+					if (fromUser)
 						b.eAutoStop.setText(Util.int_to_str(auto_stop_value(progress)));
-					}
 				}
 			});
 
@@ -186,8 +219,13 @@ public class SettingsActivity extends AppCompatActivity {
 	private void load() {
 		// Interface
 		b.swDark.setChecked(core.gui().theme == GUI.THM_DARK);
-		if (core.gui().main_color >= 0)
-			b.eColor.setText(String.format("#%06X", core.gui().main_color));
+		int n = core.gui().main_color;
+		if (n >= 0) {
+			b.sbColorRed.setProgress(color_progress((n & 0xff0000) >> 16));
+			b.sbColorGreen.setProgress(color_progress((n & 0x00ff00) >> 8));
+			b.sbColorBlue.setProgress(color_progress(n & 0x0000ff));
+			b.eColor.setText(Util.color_str(n));
+		}
 		b.swShowfilter.setChecked(core.gui().filter_hide);
 		b.swShowrec.setChecked(core.gui().record_hide);
 		b.swSvcNotifDisable.setChecked(core.setts.svc_notification_disable);
@@ -283,14 +321,25 @@ public class SettingsActivity extends AppCompatActivity {
 		core.phiola.setConfig(core.setts.codepage, core.setts.deprecated_mods);
 	}
 
+	private static int color_progress(int value) { return value / 3; }
+	private void color_modify(int mask, int value) {
+		int n = core.gui().main_color;
+		if (n < 0)
+			n = 0; // default -> black
+		n = (n & mask) | value;
+		core.gui().main_color = n;
+		b.eColor.setText(Util.color_str(n));
+		b.eColor.setBackgroundColor(0xff000000 | n);
+	}
+
 	// 20%..1%; 0; 10sec..200sec by 10
-	private int auto_skip_value(int progress) {
+	private static int auto_skip_value(int progress) {
 		progress -= 20;
 		if (progress <= 0)
 			return progress;
 		return progress * 10;
 	}
-	private int auto_skip_progress(int n) {
+	private static int auto_skip_progress(int n) {
 		if (n < 0)
 			return 20 - -n;
 
@@ -299,10 +348,10 @@ public class SettingsActivity extends AppCompatActivity {
 		return 20;
 	}
 
-	private int auto_stop_value(int progress) { return progress * 6; }
-	private int auto_stop_progress(int min) { return min / 6; }
+	private static int auto_stop_value(int progress) { return progress * 6; }
+	private static int auto_stop_progress(int min) { return min / 6; }
 
-	private int rec_format_index(String s) {
+	private static int rec_format_index(String s) {
 		for (int i = 0; i < CoreSettings.rec_formats.length; i++) {
 			if (CoreSettings.rec_formats[i].equals(s))
 				return i;
@@ -322,19 +371,19 @@ public class SettingsActivity extends AppCompatActivity {
 	private static int rec_until_value(int progress) { return 10*60 + (progress) * 10*60; }
 	private static int rec_until_progress(int value) { return (value - 10*60) / (10*60); }
 
-	private String time_str(int sec) { return String.format("%02d:%02d:%02d", sec / 3600, (sec / 60) % 60, sec % 60); }
+	private static String time_str(int sec) { return String.format("%02d:%02d:%02d", sec / 3600, (sec / 60) % 60, sec % 60); }
 
 	/** Convert string like '[[HH:]MM:]SS' to seconds */
-	private int time_sec(String s) {
+	private static int time_sec(String s) {
 		int sec = -1, min = 0, hr = 0;
 
 		String[] v = s.split(":");
 		if (v.length >= 1)
-			sec = core.str_to_uint(v[v.length - 1], -1);
+			sec = Util.str_to_uint(v[v.length - 1], -1);
 		if (v.length >= 2)
-			min = core.str_to_uint(v[v.length - 2], -1);
+			min = Util.str_to_uint(v[v.length - 2], -1);
 		if (v.length >= 3)
-			hr = core.str_to_uint(v[v.length - 3], -1);
+			hr = Util.str_to_uint(v[v.length - 3], -1);
 		if (v.length >= 4)
 			return -1;
 

@@ -6,8 +6,11 @@ package com.github.stsaz.phiola;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.drawable.ColorDrawable;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -93,6 +96,14 @@ class GUI {
 		mlib_scroll_pos = c.number(Conf.UI_MLIB_SCROLL_POS);
 		theme = c.number(Conf.UI_THEME);
 		view = c.number(Conf.UI_VIEW);
+	}
+
+	void on_activity_show(AppCompatActivity aca) {
+		if (main_color >= 0) {
+			int argb = 0xff000000 | main_color;
+			aca.getSupportActionBar().setBackgroundDrawable(new ColorDrawable(argb));
+			aca.getWindow().setStatusBarColor(argb);
+		}
 	}
 
 	boolean state_test(int mask) { return (state & mask) != 0; }

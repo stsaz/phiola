@@ -27,6 +27,7 @@ public class ConvertActivity extends AppCompatActivity {
 		setContentView(b.getRoot());
 
 		core = Core.getInstance();
+		core.gui().on_activity_show(this);
 		varmenu = new VarMenu(this);
 		explorer = new ExplorerMenu(core, this);
 		b.eOutDir.setOnClickListener(v -> explorer.show(b.eOutDir, 0));

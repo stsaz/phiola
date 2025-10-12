@@ -35,6 +35,7 @@ public class TagsActivity extends AppCompatActivity  {
 		b.lvTags.setOnItemClickListener((parent, view, position, id) -> view_click(position));
 
 		core = Core.getInstance();
+		core.gui().on_activity_show(this);
 		this.list_pos = getIntent().getIntExtra("pos", -1);
 		show();
 	}
