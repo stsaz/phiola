@@ -67,7 +67,8 @@ public class MainActivity extends AppCompatActivity {
 			core.setts.rec_path = core.storage_path + "/Recordings";
 
 		// Add file to the playlist and start playback if executed from an external file manager app
-		if (getIntent().getAction().equals(Intent.ACTION_VIEW)) {
+		String ia = getIntent().getAction();
+		if (ia != null && ia.equals(Intent.ACTION_VIEW)) {
 			String fn = getIntent().getData().getPath();
 			core.dbglog(TAG, "Intent.ACTION_VIEW: %s", fn);
 			fn = Util.path_real(fn, core.storage_paths);
@@ -80,6 +81,9 @@ public class MainActivity extends AppCompatActivity {
 		super.onStart();
 		core.dbglog(TAG, "onStart()");
 
+		queue.nfy_add(quenfy);
+		track.observer_add(trk_nfy);
+
 		show_ui();
 		gui.on_activity_show(this);
 
@@ -87,31 +91,20 @@ public class MainActivity extends AppCompatActivity {
 		track.observer_notify(trk_nfy);
 	}
 
-	protected void onResume() {
-		super.onResume();
-		if (core != null) {
-			core.dbglog(TAG, "onResume()");
-		}
-	}
-
 	protected void onStop() {
-		if (core != null) {
-			core.dbglog(TAG, "onStop()");
-			queue.saveconf();
-			list_leave();
-			core.saveconf();
-		}
+		core.dbglog(TAG, "onStop()");
+		track.observer_rm(trk_nfy);
+		queue.nfy_rm(quenfy);
+		queue.saveconf();
+		list_leave();
+		core.saveconf();
 		super.onStop();
 	}
 
 	public void onDestroy() {
-		if (core != null) {
-			core.dbglog(TAG, "onDestroy()");
-			track.observer_rm(trk_nfy);
-			trackctl.close();
-			queue.nfy_rm(quenfy);
-			core.close();
-		}
+		core.dbglog(TAG, "onDestroy()");
+		trackctl.close();
+		core.close();
 		super.onDestroy();
 	}
 
@@ -424,7 +417,6 @@ public class MainActivity extends AppCompatActivity {
 				list_on_change(how, pos);
 			}
 		};
-		queue.nfy_add(quenfy);
 		track = core.track;
 		trk_nfy = new PlaybackObserver() {
 			public int open(TrackHandle t) { return track_opening(t); }
@@ -432,7 +424,6 @@ public class MainActivity extends AppCompatActivity {
 			public void closed(TrackHandle t) { track_closed(t); }
 			public int process(TrackHandle t) { return track_update(t); }
 		};
-		track.observer_add(trk_nfy);
 		trackctl = new TrackCtl(core, this);
 		trackctl.connect();
 	}
