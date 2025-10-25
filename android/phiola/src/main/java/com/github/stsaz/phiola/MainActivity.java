@@ -440,13 +440,17 @@ public class MainActivity extends AppCompatActivity {
 		b.lname.setOnClickListener((v) -> file_tags_show());
 
 		b.brec.setOnClickListener((v) -> {
-				if (core.setts.rec_longclick)
+				if (gui.playback_marker_show)
+					playback_marker_jump();
+				else if (core.setts.rec_longclick)
 					rec_pause_toggle();
 				else
 					rec_start_stop();
 			});
 		b.brec.setOnLongClickListener((v) -> {
-				if (core.setts.rec_longclick)
+				if (gui.playback_marker_show)
+					playback_marker_set();
+				else if (core.setts.rec_longclick)
 					rec_start_stop();
 				return true;
 			});
@@ -561,7 +565,9 @@ public class MainActivity extends AppCompatActivity {
 			mode = AppCompatDelegate.MODE_NIGHT_YES;
 		AppCompatDelegate.setDefaultNightMode(mode);
 
-		if (gui.record_hide)
+		if (gui.playback_marker_show)
+			b.brec.setImageResource(R.drawable.ic_replay);
+		else if (gui.record_hide)
 			b.brec.setVisibility(View.INVISIBLE);
 
 		if (gui.filter_hide)
@@ -1266,6 +1272,20 @@ public class MainActivity extends AppCompatActivity {
 		if (percent >= 100)
 			percent = 99;
 		seek(percent);
+	}
+
+	private void playback_marker_set() {
+		int sec = (int)(core.track.curpos_msec() / 1000);
+		gui.playback_marker_pos_sec = sec;
+		gui.msg_show(this, "Marker is set to %d:%02d", sec / 60, sec % 60);
+	}
+
+	private void playback_marker_jump() {
+		if (gui.playback_marker_pos_sec < 0) {
+			gui.msg_show(this, "Long-press the button to set marker");
+			return;
+		}
+		trackctl.seek((long)gui.playback_marker_pos_sec * 1000);
 	}
 
 	// [Playing]

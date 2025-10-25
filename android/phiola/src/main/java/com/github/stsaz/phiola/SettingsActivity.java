@@ -228,6 +228,7 @@ public class SettingsActivity extends AppCompatActivity {
 		}
 		b.swShowfilter.setChecked(core.gui().filter_hide);
 		b.swShowrec.setChecked(core.gui().record_hide);
+		b.swShowPlaybackMarker.setChecked(core.gui().playback_marker_show);
 		b.swSvcNotifDisable.setChecked(core.setts.svc_notification_disable);
 		b.swUiInfoInTitle.setChecked(core.gui().ainfo_in_title);
 
@@ -280,6 +281,7 @@ public class SettingsActivity extends AppCompatActivity {
 		core.gui().main_color = Util.color_from_str(b.eColor.getText().toString(), -1);
 		core.gui().filter_hide = b.swShowfilter.isChecked();
 		core.gui().record_hide = b.swShowrec.isChecked();
+		core.gui().playback_marker_show = b.swShowPlaybackMarker.isChecked();
 		core.gui().ainfo_in_title = b.swUiInfoInTitle.isChecked();
 
 		// Playlist

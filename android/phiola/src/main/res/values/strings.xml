@@ -68,8 +68,9 @@
 	<string name="sett_interface">Interface</string>
 	<string name="sett_dark">Dark Theme</string>
 	<string name="sett_color">Main Screen Color:</string>
-	<string name="sett_show_filter">Hide "Search" Edit Box</string>
-	<string name="sett_show_record">Hide "Record" Button</string>
+	<string name="sett_show_filter">Hide \'Search\' Edit Box</string>
+	<string name="sett_show_record">Hide \'Record\' Button</string>
+	<string name="sett_show_playback_marker">Show \'Playback Marker Set/Jump\' Button</string>
 	<string name="sett_ui_info_in_title">Show Audio Info in Title</string>
 	<string name="sett_svc_notif_disable">Disable System Notification (requires restart)</string>
 

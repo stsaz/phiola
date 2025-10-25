@@ -21,6 +21,8 @@ class GUI {
 	Context cur_activity;
 	boolean filter_hide;
 	boolean record_hide;
+	boolean playback_marker_show;
+	int playback_marker_pos_sec = -1;
 	boolean ainfo_in_title;
 	String cur_path = ""; // current explorer path
 	String list_filter = "";
@@ -63,6 +65,8 @@ class GUI {
 			+ "ui_curpath %s\n"
 			+ "ui_explorer_scroll %d\n"
 			+ "ui_filter_hide %d\n"
+			+ "ui_play_marker %d\n"
+			+ "ui_play_marker_pos %d\n"
 			+ "ui_record_hide %d\n"
 			+ "ui_info_in_title %d\n"
 			+ "ui_list_names %s\n"
@@ -74,6 +78,8 @@ class GUI {
 			, cur_path
 			, explorer_scroll_pos
 			, core.bool_to_int(filter_hide)
+			, core.bool_to_int(playback_marker_show)
+			, playback_marker_pos_sec + 1
 			, core.bool_to_int(record_hide)
 			, core.bool_to_int(ainfo_in_title)
 			, list_names_string()
@@ -89,6 +95,9 @@ class GUI {
 		cur_path = c.value(Conf.UI_CURPATH);
 		explorer_scroll_pos = c.number(Conf.UI_EXPLORER_SCROLL);
 		filter_hide = c.enabled(Conf.UI_FILTER_HIDE);
+		playback_marker_show = c.enabled(Conf.UI_PLAYBACK_MARKER);
+		if (playback_marker_show)
+			playback_marker_pos_sec = c.number(Conf.UI_PLAYBACK_MARKER_POS) - 1;
 		record_hide = c.enabled(Conf.UI_RECORD_HIDE);
 		ainfo_in_title = c.enabled(Conf.UI_INFO_IN_TITLE);
 		list_scroll_pos_parse(c.value(Conf.UI_LIST_SCROLL_POS));

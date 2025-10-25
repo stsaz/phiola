@@ -55,6 +55,8 @@ static const char setting_names[][20] = {
 	"ui_list_names",
 	"ui_list_scroll_pos",
 	"ui_mlib_scroll_pos",
+	"ui_play_marker",
+	"ui_play_marker_pos",
 	"ui_record_hide",
 	"ui_svc_notfn_disable",
 	"ui_theme",

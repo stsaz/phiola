@@ -62,6 +62,13 @@
 			android:text="@string/sett_show_record" />
 
 		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/sw_show_playback_marker"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="@dimen/sett_margin"
+			android:text="@string/sett_show_playback_marker" />
+
+		<androidx.appcompat.widget.SwitchCompat
 			android:id="@+id/sw_ui_info_in_title"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
