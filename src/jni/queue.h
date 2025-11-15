@@ -349,12 +349,11 @@ static void qu_cmd(struct core_data *d)
 	case QUCOM_SORT:
 		x->queue.sort(q, d->param_int);  break;
 
-	case QUCOM_PLAY: {
+	case QUCOM_PLAY:
 		x->queue.qselect(q);
 		qc_apply(x->queue.conf(NULL));
 		x->queue.play(NULL, x->queue.at(q, d->param_int));
 		break;
-	}
 
 	case QUCOM_PLAY_NEXT:
 		x->queue.play(NULL, PHI_Q_PLAY_NEXT);  break;

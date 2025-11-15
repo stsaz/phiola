@@ -39,6 +39,8 @@ const char* file_ext_str(uint i)
 /** Return enum AVPK_FORMAT */
 static uint file_ext_format(const char *ext)
 {
+	if (!ext[0])
+		return 0;
 	for (uint i = 0;  i < FF_COUNT(file_ext);  i++) {
 		if (ffsz_eq(ext, file_ext[i]))
 			return i + 1;

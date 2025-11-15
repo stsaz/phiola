@@ -719,7 +719,10 @@ class Queue {
 	}
 
 	void conf_load(Conf c) {
-		curpos = c.number(Conf.LIST_CURPOS);
+		// 'curpos' will be decreased in q_on_change('r') event handler
+		//  when the first item, that is the m3u file being loaded, is removed.
+		curpos = c.number(Conf.LIST_CURPOS) + 1;
+
 		i_active = c.number(Conf.LIST_ACTIVE);
 		i_selected = i_active;
 
