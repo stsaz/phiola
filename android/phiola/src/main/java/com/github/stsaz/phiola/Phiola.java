@@ -202,7 +202,7 @@ class Phiola {
 
 	native String quConvertBegin(long q, ConvertParams conf);
 
-	native String quDisplayLine(long q, int i);
+	native String[] quDisplayLine(long q, int i, int n);
 
 	/** Load playlist from a file on disk */
 	native int quLoad(long q, String filepath);

@@ -561,27 +561,39 @@ static void display_name_prepare(ffstr *val, ffsize cap, struct phi_queue_entry 
 	}
 }
 
-JNIEXPORT jstring JNICALL
-Java_com_github_stsaz_phiola_Phiola_quDisplayLine(JNIEnv *env, jobject thiz, jlong jq, jint i)
+JNIEXPORT jobjectArray JNICALL
+Java_com_github_stsaz_phiola_Phiola_quDisplayLine(JNIEnv *env, jobject thiz, jlong jq, jint i, jint n)
 {
-	dbglog("%s: enter %p %d", __func__, jq, i);
+	dbglog("%s: enter %p %d %d", __func__, jq, i, n);
 	phi_queue_id q = (phi_queue_id)jq;
 	char buf[256];
-	ffstr val = {};
-	struct phi_queue_entry *qe = x->queue.ref(q, i);
-	fflock_lock((fflock*)&qe->lock); // core thread may read or write `conf.meta` at this moment
-	if (x->metaif.find(&qe->meta, FFSTR_Z("_phi_display"), &val, PHI_META_PRIVATE)) {
-		val.ptr = buf;
-		uint flags = x->queue.conf(q)->conversion;
-		display_name_prepare(&val, sizeof(buf) - 1, qe, i, flags);
-		x->metaif.set(&qe->meta, FFSTR_Z("_phi_display"), val, 0);
-		val.ptr[val.len] = '\0';
+	jobjectArray jsa = jni_joa(n, jni_class(JNI_CSTR));
+	uint ijsa = 0;
+	jint end = i + n;
+	for (;  i < end;  i++) {
+		ffstr val = {};
+		struct phi_queue_entry *qe = x->queue.ref(q, i);
+		if (!qe)
+			break;
+		fflock_lock((fflock*)&qe->lock); // core thread may read or write `conf.meta` at this moment
+		if (x->metaif.find(&qe->meta, FFSTR_Z("_phi_display"), &val, PHI_META_PRIVATE)) {
+			val.ptr = buf;
+			uint flags = x->queue.conf(q)->conversion;
+			display_name_prepare(&val, sizeof(buf) - 1, qe, i, flags);
+			x->metaif.set(&qe->meta, FFSTR_Z("_phi_display"), val, 0);
+			val.ptr[val.len] = '\0';
+		}
+		jstring js = jni_js_sz(val.ptr);
+		fflock_unlock((fflock*)&qe->lock);
+		x->queue.unref(qe);
+
+		jni_joa_i_set(jsa, ijsa, js);
+		ijsa++;
+		jni_local_unref(js);
 	}
-	jstring js = jni_js_sz(val.ptr);
-	fflock_unlock((fflock*)&qe->lock);
-	x->queue.unref(qe);
+
 	dbglog("%s: exit", __func__);
-	return js;
+	return jsa;
 }
 
 enum {

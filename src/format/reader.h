@@ -272,13 +272,13 @@ static int fmtr_process(struct fmt_rd *f, phi_track *t)
 				}
 			}
 
-			if (!t->audio.format.format) {
-				errlog(t, "file is incomplete");
-				return PHI_ERR;
-			}
-
-			if (t->chain_flags & PHI_FFIRST)
+			if (t->chain_flags & PHI_FFIRST) {
+				if (!t->audio.format.format) {
+					errlog(t, "file is incomplete");
+					return PHI_ERR;
+				}
 				return PHI_LASTOUT;
+			}
 			return PHI_MORE;
 
 		case AVPK_FIN:

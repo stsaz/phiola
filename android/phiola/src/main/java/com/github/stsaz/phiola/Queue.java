@@ -101,6 +101,43 @@ class PhiolaQueue {
 	void save(String filepath) {
 		phi.quSave(q, filepath);
 	}
+
+	private String[] cache;
+	private int cache_start_index, cache_size;
+	static int display_reqs, display_cache_hits;
+
+	/**
+	Scrolling up/down: 1 request for 10 rows.
+	Redrawing: 1-2 requests (10-20 rows) per screen. */
+	String display_line(int i) {
+		if (i >= cache_start_index
+			&& i < cache_start_index + cache_size) {
+			display_cache_hits++;
+			return cache[i - cache_start_index];
+		}
+
+		int from = i, n = 10, target = 0;
+
+		if (i == cache_start_index - 1) { // scrolling up
+			from = i + 1 - n;
+			if (from < 0)
+				from = 0;
+			n = i + 1 - from;
+			target = i - from;
+		}
+
+		cache = phi.quDisplayLine(q, from, n);
+		cache_start_index = from;
+		cache_size = n;
+		display_reqs++;
+		return cache[target];
+	}
+
+	void changed() {
+		cache = null;
+		cache_start_index = 0;
+		cache_size = 0;
+	}
 }
 
 interface QueueNotify {
@@ -222,6 +259,26 @@ class Queue {
 		nfy = new ArrayList<>();
 	}
 
+	private int q_index(long q) {
+		if (q == queues.get(i_selected).q)
+			return i_selected;
+
+		if (q == queues.get(i_active).q)
+			return i_active;
+
+		if (i_conversion >= 0 && q == queues.get(i_conversion).q)
+			return i_conversion;
+
+		int i = 0;
+		for (PhiolaQueue it : queues) {
+			if (q == it.q)
+				return i;
+			i++;
+		}
+
+		return -1;
+	}
+
 	private void q_on_change(long q, int flags, int pos) {
 		core.tq.post(() -> {
 				if (queues.size() == 0)
@@ -241,8 +298,14 @@ class Queue {
 					break;
 				}
 
-				if (i_selected < 0 // after Queue.close()
-					|| q != queues.get(i_selected).q)
+				if (i_selected < 0) // after Queue.close()
+					return;
+
+				int iq = q_index(q);
+				if (iq >= 0)
+					queues.get(iq).changed();
+
+				if (q != queues.get(i_selected).q)
 					return;
 
 				switch (flags) {
@@ -579,6 +642,7 @@ class Queue {
 		curpos = trk_idx;
 		active = true;
 		queues.get(i_active).modified = true;
+		queues.get(i_active).changed();
 		nfy_all(QueueNotify.UPDATE, trk_idx); // redraw item to display artist-title info
 	}
 
@@ -600,9 +664,7 @@ class Queue {
 		return phi.quEntry(q_visible().q, i);
 	}
 
-	String display_line(int i) {
-		return phi.quDisplayLine(q_visible().q, i);
-	}
+	String display_line(int i) { return q_visible().display_line(i); }
 
 	int visible_move_all(String dst_dir) {
 		return phi.quMoveAll(q_visible().q, dst_dir);
@@ -694,6 +756,9 @@ class Queue {
 	}
 
 	String conf_write() {
+		core.dbglog(TAG, "display-reqs/-cache-hits: %d/%d"
+			, PhiolaQueue.display_reqs, PhiolaQueue.display_cache_hits);
+
 		return String.format(
 			"list_curpos %d\n"
 			+ "list_active %d\n"
@@ -867,6 +932,7 @@ class Queue {
 			convert_update_timer = null;
 			nfy_all(QueueNotify.CONVERT_COMPLETE, 0);
 		}
+		queues.get(i_conversion).changed();
 		if (i_selected == i_conversion)
 			nfy_all(QueueNotify.UPDATE, -1);
 	}
