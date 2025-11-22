@@ -299,7 +299,7 @@ static void on_complete(void *param)
 		&& !hls_f_complete(h))
 		return;
 
-	if (FF_SWAP(&h->state, ST_ERR) == ST_WAIT)
+	if (FF_SWAP(&h->state, (h->done) ? ST_DATA : ST_ERR) == ST_WAIT)
 		core->track->wake(h->trk);
 }
 

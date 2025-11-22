@@ -183,6 +183,7 @@ static void hls_f_request(struct httpcl *h, ffstr name)
 	}
 
 	http_request(h, url);
+	nml_http_client_run(h->cl);
 }
 
 static void hls_f_next(void *param)
