@@ -5,6 +5,9 @@
 IMAGE_NAME=phiola-debianbw-builder
 CONTAINER_NAME=phiola_debianBW_build
 BUILD_TARGET=linux
+if test "$CPU" == "" ; then
+	CPU=amd64
+fi
 if test "$CPU" == "arm64" ; then
 	IMAGE_NAME=phiola-debianbw-arm64-builder
 	CONTAINER_NAME=phiola_debianBW_arm64_build
@@ -26,13 +29,8 @@ if ! test -d "../phiola" ; then
 	exit 1
 fi
 
-if ! podman container exists $CONTAINER_NAME ; then
-	if ! podman image exists $IMAGE_NAME ; then
-
-		# Create builder image
-		if test "$OS" == "windows" ; then
-
-			cat <<EOF | podman build -t $IMAGE_NAME -f - .
+image_linux_amd64() {
+	cat <<EOF | podman build -t $IMAGE_NAME -f - .
 FROM debian:bookworm-slim
 RUN apt update && \
  apt install -y \
@@ -49,12 +47,17 @@ RUN apt install -y \
  gettext \
  pkg-config
 RUN apt install -y \
- gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64
+ gcc g++
+RUN apt install -y \
+ libasound2-dev libpulse-dev libjack-dev \
+ libdbus-1-dev
+RUN apt install -y \
+ libgtk-3-dev
 EOF
+}
 
-		elif test "$CPU" == "arm64" ; then
-
-			cat <<EOF | podman build -t $IMAGE_NAME -f - .
+image_linux_arm64() {
+	cat <<EOF | podman build -t $IMAGE_NAME -f - .
 FROM debian:bookworm-slim
 RUN apt update && \
  apt install -y \
@@ -80,10 +83,10 @@ RUN dpkg --add-architecture arm64 && \
 RUN apt install -y \
  libgtk-3-dev:arm64
 EOF
+}
 
-		else
-
-			cat <<EOF | podman build -t $IMAGE_NAME -f - .
+image_windows_amd64() {
+	cat <<EOF | podman build -t $IMAGE_NAME -f - .
 FROM debian:bookworm-slim
 RUN apt update && \
  apt install -y \
@@ -100,22 +103,23 @@ RUN apt install -y \
  gettext \
  pkg-config
 RUN apt install -y \
- gcc g++
-RUN apt install -y \
- libasound2-dev libpulse-dev libjack-dev \
- libdbus-1-dev
-RUN apt install -y \
- libgtk-3-dev
+ gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64
 EOF
-		fi
+}
+
+if ! podman container exists $CONTAINER_NAME ; then
+	if ! podman image exists $IMAGE_NAME ; then
+		# Create builder image
+		image_$OS_$CPU
 	fi
 
 	# Create builder container
 	podman create --attach --tty \
 	 -v `pwd`/..:/src \
+	 --workdir /src/phiola \
 	 --name $CONTAINER_NAME \
 	 $IMAGE_NAME \
-	 bash -c "cd /src/phiola && source ./build_$BUILD_TARGET.sh"
+	 bash ./build_$BUILD_TARGET.sh
 fi
 
 if ! podman container top $CONTAINER_NAME ; then
@@ -197,4 +201,4 @@ EOF
 
 # Build inside the container
 podman exec $CONTAINER_NAME \
- bash -c "cd /src/phiola && source ./build_$BUILD_TARGET.sh"
+ bash ./build_$BUILD_TARGET.sh
