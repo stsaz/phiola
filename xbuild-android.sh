@@ -100,9 +100,10 @@ EOF
 	 -v `pwd`/..:/src \
 	 -v $ANDROID_HOME:/Android \
 	 -v $GRADLE_DIR:/root/.gradle \
+	 --workdir /src/phiola \
 	 --name $CONTAINER_NAME \
 	 $IMAGE_NAME \
-	 bash -c 'cd /src/phiola && source ./build_android.sh'
+	 bash ./build_android.sh
 fi
 
 if ! podman container top $CONTAINER_NAME ; then
@@ -168,4 +169,4 @@ EOF
 
 # Build inside the container
 podman exec $CONTAINER_NAME \
- bash -c 'cd /src/phiola && source ./build_android.sh'
+ bash ./build_android.sh

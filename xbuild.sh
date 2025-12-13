@@ -5,6 +5,9 @@
 IMAGE_NAME=phiola-debianbw-builder
 CONTAINER_NAME=phiola_debianBW_build
 BUILD_TARGET=linux
+if test "$OS" == "" ; then
+	OS=linux
+fi
 if test "$CPU" == "" ; then
 	CPU=amd64
 fi
