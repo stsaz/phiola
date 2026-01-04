@@ -89,6 +89,7 @@ class CoreSettings {
 		"AAC-LC",
 		"AAC-HE",
 		"AAC-HEv2",
+		"MP3",
 		"FLAC",
 		"Opus",
 		"Opus-VOIP"
@@ -98,6 +99,7 @@ class CoreSettings {
 	String	conv_format;
 	int		conv_aac_quality;
 	int		conv_opus_quality;
+	int		conv_mp3_quality;
 	boolean	conv_copy;
 	boolean	conv_file_date_preserve;
 	boolean	conv_new_add_list;
@@ -119,33 +121,33 @@ class CoreSettings {
 		Phiola.AF_AAC_LC,
 		Phiola.AF_AAC_HE,
 		Phiola.AF_OPUS,
+		Phiola.AF_MP3,
 		Phiola.AF_FLAC,
-		0,
 		0,
 	};
 	static final String[] conv_formats = {
 		"m4a",
 		"m4a/aac-he",
 		"opus",
+		"mp3",
 		"flac",
 		"wav",
-		"mp3",
 	};
 	static final String[] conv_extensions = {
 		"m4a",
 		"m4a",
 		"opus",
+		"mp3",
 		"flac",
 		"wav",
-		"mp3",
 	};
 	static final String[] conv_format_display = {
 		".m4a (AAC-LC)",
 		".m4a (AAC-HE)",
 		".opus (Opus)",
+		".mp3 (MP3)",
 		".flac (FLAC)",
 		".wav (PCM)",
-		".mp3 (Copy)",
 	};
 
 	static final String[] code_pages = {
@@ -211,6 +213,7 @@ class CoreSettings {
 			+ "conv_format %s\n"
 			+ "conv_aac_q %d\n"
 			+ "conv_opus_q %d\n"
+			+ "conv_mp3_q %d\n"
 			+ "conv_copy %d\n"
 			+ "conv_file_date_pres %d\n"
 			+ "conv_new_add_list %d\n"
@@ -245,6 +248,7 @@ class CoreSettings {
 			, conv_format
 			, conv_aac_quality
 			, conv_opus_quality
+			, conv_mp3_quality + 1
 			, core.bool_to_int(conv_copy)
 			, core.bool_to_int(conv_file_date_preserve)
 			, core.bool_to_int(conv_new_add_list)
@@ -274,6 +278,8 @@ class CoreSettings {
 			conv_aac_quality = 5;
 		if (conv_opus_quality <= 0)
 			conv_opus_quality = 192;
+		if (conv_mp3_quality < 0)
+			conv_mp3_quality = 2;
 	}
 
 	void normalize_rec() {
@@ -289,10 +295,15 @@ class CoreSettings {
 		case "FLAC":
 			rec_fmt = "flac";
 			break;
+
 		case "Opus":
 		case "Opus-VOIP":
 			rec_fmt = "opus";
 			break;
+
+		case "MP3":
+			rec_fmt = "mp3";  break;
+
 		default:
 			rec_fmt = "m4a";
 			rec_enc = "AAC-LC";
@@ -361,6 +372,7 @@ class CoreSettings {
 		conv_format = c.value(Conf.CONV_FORMAT);
 		conv_aac_quality = c.number(Conf.CONV_AAC_Q);
 		conv_opus_quality = c.number(Conf.CONV_OPUS_Q);
+		conv_mp3_quality = c.number(Conf.CONV_MP3_Q) - 1;
 		conv_copy = c.enabled(Conf.CONV_COPY);
 		conv_file_date_preserve = c.enabled(Conf.CONV_FILE_DATE_PRES);
 		conv_new_add_list = c.enabled(Conf.CONV_NEW_ADD_LIST);

@@ -11,6 +11,7 @@ static const char setting_names[][20] = {
 	"conv_copy",
 	"conv_file_date_pres",
 	"conv_format",
+	"conv_mp3_q",
 	"conv_new_add_list",
 	"conv_opus_q",
 	"conv_out_dir",

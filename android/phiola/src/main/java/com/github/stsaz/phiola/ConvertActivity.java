@@ -95,6 +95,8 @@ public class ConvertActivity extends AppCompatActivity {
 
 				b.sbOpusQ.setEnabled(!checked);
 				b.eOpusQ.setEnabled(!checked);
+
+				b.eMp3Q.setEnabled(!checked);
 			});
 
 		b.bStart.setOnClickListener((v) -> convert());
@@ -179,6 +181,8 @@ public class ConvertActivity extends AppCompatActivity {
 		b.sbOpusQ.setProgress(opus_q_progress(core.setts.conv_opus_quality));
 		b.eOpusQ.setText(core.int_to_str(core.setts.conv_opus_quality));
 
+		b.eMp3Q.setText(core.int_to_str(core.setts.conv_mp3_quality));
+
 		b.swCopy.setChecked(core.setts.conv_copy);
 
 		b.swPreserveDate.setChecked(core.setts.conv_file_date_preserve);
@@ -210,6 +214,10 @@ public class ConvertActivity extends AppCompatActivity {
 		v = core.str_to_uint(b.eOpusQ.getText().toString(), 0);
 		if (v != 0)
 			core.setts.conv_opus_quality = v;
+
+		v = core.str_to_uint(b.eMp3Q.getText().toString(), -1);
+		if (v >= 0)
+			core.setts.conv_mp3_quality = v;
 
 		core.setts.conv_file_date_preserve = b.swPreserveDate.isChecked();
 		core.setts.conv_new_add_list = b.swPlAdd.isChecked();
@@ -250,6 +258,7 @@ public class ConvertActivity extends AppCompatActivity {
 		p.sample_rate = core.str_to_uint(b.eSampleRate.getText().toString(), 0);
 		p.aac_quality = core.setts.conv_aac_quality;
 		p.opus_quality = core.setts.conv_opus_quality;
+		p.mp3_quality = core.setts.conv_mp3_quality;
 
 		int iformat = b.spOutExt.getSelectedItemPosition();
 		p.format = CoreSettings.conv_encoders[iformat];

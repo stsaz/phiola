@@ -648,6 +648,9 @@ Java_com_github_stsaz_phiola_Phiola_quConvertBegin(JNIEnv *env, jobject thiz, jl
 	case AF_AAC_LC:
 		conf.aac.quality = jni_obj_int(jconf, jni_field_int(jc_conf, "aac_quality"));  break;
 
+	case AF_MP3:
+		conf.mp3.quality = jni_obj_int(jconf, jni_field_int(jc_conf, "mp3_quality")) + 1;  break;
+
 	case AF_OPUS:
 		conf.opus.bitrate = jni_obj_int(jconf, jni_field_int(jc_conf, "opus_quality"));  break;
 	}

@@ -51,7 +51,8 @@ class Phiola {
 		AF_AAC_HE2 = 2,
 		AF_FLAC = 3,
 		AF_OPUS = 4,
-		AF_OPUS_VOICE = 5;
+		AF_OPUS_VOICE = 5,
+		AF_MP3 = 6;
 
 	static class ConvertParams {
 		ConvertParams() {
@@ -79,6 +80,7 @@ class Phiola {
 		int sample_rate;
 		int aac_quality;
 		int opus_quality;
+		int mp3_quality;
 		long q_add_remove;
 		int q_pos;
 		String trash_dir_rel;

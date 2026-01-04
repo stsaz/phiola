@@ -172,6 +172,7 @@ struct phi_track {
 		int64	seek; // >0:msec; -1:unset
 		uint	seek_req :1; // New seek request is received (UI -> fmt.read)
 		uint	ogg_reset :1; // ogg.read -> opus.dec
+		uint	mp3_lametag :1; // mpeg.enc -> fmt.w
 		uint	bitrate;
 		double	maxpeak_db;
 		const char *decoder;

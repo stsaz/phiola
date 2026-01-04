@@ -42,7 +42,11 @@ static int fmtw_init(struct fmt_wr *w, phi_track *t)
 
 	switch (w->wif->format) {
 	case AVPKF_MP3:
-		if (!ffsz_eq(t->data_type, "mpeg")) {
+		if (ffsz_eq(t->data_type, "pcm")) {
+			if (!core->track->filter(t, core->mod("ac-mp3lame.encode"), PHI_TF_PREV))
+				return PHI_ERR;
+			return PHI_MORE;
+		} else if (!ffsz_eq(t->data_type, "mpeg")) {
 			t->error = PHI_E_OUT_FMT;
 			return PHI_ERR;
 		}
@@ -148,6 +152,9 @@ static int fmtw_process(struct fmt_wr *w, phi_track *t)
 	uint flags = 0;
 	if (t->chain_flags & PHI_FFIRST)
 		flags |= AVPKW_F_LAST;
+
+	if (t->audio.mp3_lametag)
+		flags |= AVPKW_F_MP3_LAME;
 
 	union avpk_write_result res;
 	for (;;) {

@@ -292,6 +292,9 @@ test_convert_encode() {
 	./phiola i co_wav.opus -peaks      | grep '96,000 total'
 	./phiola i -u 1 co_wav.opus -peaks | grep '48,000 total'
 	./phiola i -s 1 co_wav.opus -peaks | grep -E '48,000 total'
+
+	convert__from_to wav mp3
+	./phiola i co_wav.mp3 -peaks      | grep '96,000 total'
 }
 
 test_convert_parallel() {

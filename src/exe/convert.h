@@ -62,6 +62,8 @@ Options:\n\
   `-vorbis_quality` NUMBER\n\
                         Vorbis encoding quality:\n\
                           0..10\n\
+  `-mp3_quality` NUMBER   MP3 encoding quality:\n\
+                          9..0 (VBR) or 64..320 (CBR, kbit/s)\n\
 \n\
   `-meta` NAME=VALUE      Meta data\n\
                           .mp4 supports: album, albumartist, artist, comment, composer, copyright, date, discnumber, genre, lyrics, title, tracknumber.\n\
@@ -114,8 +116,9 @@ struct cmd_conv {
 	uint	aformat;
 	uint	channels;
 	uint	force;
-	uint	opus_q;
+	uint	mp3_q;
 	uint	opus_mode_n;
+	uint	opus_q;
 	uint	preserve_date;
 	uint	rate;
 	uint	vorbis_q;
@@ -245,6 +248,9 @@ static int conv_action(struct cmd_conv *v)
 		c.opus.mode = v->opus_mode_n;
 		break;
 
+	case PHI_AC_MP3:
+		c.mp3.quality = (v->mp3_q != ~0U) ? (v->mp3_q + 1) : 0;  break;
+
 	case PHI_AC_VORBIS:
 		c.vorbis.quality = (v->vorbis_q) ? (v->vorbis_q + 1) * 10 : 0;  break;
 	}
@@ -313,6 +319,7 @@ static const struct ffarg cmd_conv[] = {
 	{ "-help",			0,		conv_help },
 	{ "-include",		'+S',	conv_include },
 	{ "-meta",			'+S',	conv_meta },
+	{ "-mp3_quality",	'u',	O(mp3_q) },
 	{ "-o",				's',	O(output) },
 	{ "-opus_mode",		's',	O(opus_mode) },
 	{ "-opus_quality",	'u',	O(opus_q) },
@@ -339,5 +346,7 @@ static void cmd_conv_free(struct cmd_conv *v)
 
 static struct ffarg_ctx cmd_conv_init(void *obj)
 {
-	return SUBCMD_INIT(ffmem_new(struct cmd_conv), cmd_conv_free, conv_action, cmd_conv);
+	struct cmd_conv *v = ffmem_new(struct cmd_conv);
+	v->mp3_q = ~0U;
+	return SUBCMD_INIT(v, cmd_conv_free, conv_action, cmd_conv);
 }

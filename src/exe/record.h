@@ -50,6 +50,8 @@ Options:\n\
   `-vorbis_quality` NUMBER\n\
                         Vorbis encoding quality:\n\
                           0..10\n\
+  `-mp3_quality` NUMBER   MP3 encoding quality:\n\
+                          9..0 (VBR) or 64..320 (CBR, kbit/s)\n\
 \n\
   `-meta` NAME=VALUE      Meta data\n\
                           .mp4 supports: album, albumartist, artist, comment, composer, copyright, date, discnumber, genre, lyrics, title, tracknumber.\n\
@@ -95,6 +97,7 @@ struct cmd_rec {
 	uint	buffer;
 	uint	channels;
 	uint	device;
+	uint	mp3_q;
 	uint	opus_mode_n;
 	uint	opus_q;
 	uint	rate;
@@ -196,6 +199,9 @@ static int rec_action(struct cmd_rec *r)
 		c.opus.bitrate = r->opus_q;
 		c.opus.mode = r->opus_mode_n;
 		break;
+
+	case PHI_AC_MP3:
+		c.mp3.quality = (r->mp3_q != ~0U) ? (r->mp3_q + 1) : 0;  break;
 
 	case PHI_AC_VORBIS:
 		c.vorbis.quality = (r->vorbis_q) ? (r->vorbis_q + 1) * 10 : 0;  break;
@@ -321,6 +327,7 @@ static const struct ffarg cmd_rec[] = {
 	{ "-help",			0,		rec_help },
 	{ "-loopback",		'1',	O(loopback) },
 	{ "-meta",			'+S',	rec_meta },
+	{ "-mp3_quality",	'u',	O(mp3_q) },
 	{ "-noise_gate",	's',	O(noise_gate) },
 	{ "-o",				's',	O(output) },
 	{ "-opus_mode",		's',	O(opus_mode) },
@@ -344,5 +351,7 @@ static void cmd_rec_free(struct cmd_rec *r)
 
 static struct ffarg_ctx cmd_rec_init(void *obj)
 {
-	return SUBCMD_INIT(ffmem_new(struct cmd_rec), cmd_rec_free, rec_action, cmd_rec);
+	struct cmd_rec *r = ffmem_new(struct cmd_rec);
+	r->mp3_q = ~0U;
+	return SUBCMD_INIT(r, cmd_rec_free, rec_action, cmd_rec);
 }

@@ -117,6 +117,9 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 		c.aac.quality = (uint)q;
 		break;
 
+	case AF_MP3:
+		c.mp3.quality = (uint)q + 1;  break;
+
 	case AF_OPUS:
 	case AF_OPUS_VOICE:
 		c.opus.bitrate = q;

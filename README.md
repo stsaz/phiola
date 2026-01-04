@@ -31,7 +31,7 @@ Contents:
 ## Features
 
 * Play audio: `.mp3`, `.ogg`(Vorbis/Opus), `.mp4`/`.mov`(AAC/ALAC/MP3), `.mkv`/`.webm`(AAC/ALAC/MP3/Vorbis/Opus/PCM), `.caf`(AAC/ALAC/PCM), `.avi`(AAC/MP3/PCM), `.ts`(AAC/MP3), `.aac`, `.mpc`; `.flac`, `.ape`, `.wv`, `.wav`.
-* Record audio: `.m4a`(AAC), `.aac`(AAC-LC), `.ogg`(Vorbis), `.opus`; `.flac`, `.wav`
+* Record audio: `.m4a`(AAC), `.aac`(AAC-LC), `.mp3`, `.ogg`(Vorbis), `.opus`; `.flac`, `.wav`
 * Convert audio
 * Broadcast audio over HTTP
 * List/search file meta tags; edit file tags, write ReplayGain tags (`.mp3`, `.ogg/.opus`, `.flac`)
@@ -39,7 +39,7 @@ Contents:
 * Input: file, directory, ICY/HLS/HTTP/HTTPS URL, console (stdin), playlists: `.m3u`, `.pls`, `.cue`
 * Command Line Interface for Desktop OS
 * Terminal/Console UI for interaction at runtime
-* GUI for Windows, Linux, Android
+* GUI for Windows, Linux, Android: manage your playlists and audio files
 * Instant startup time: very short initial delay until the audio starts playing (e.g. Linux/PulseAudio: TUI: `~25ms`, GUI: `~50ms`)
 * Fast (small footprint, low overhead): keeps your CPU, memory & disk I/O at absolute minimum; spends 99% of time inside codec algorithms
 
@@ -366,6 +366,7 @@ phiola uses modified versions of these third party libraries:
 [libebur128](https://github.com/jiixyj/libebur128),
 libMAC,
 [libmpg123](https://mpg123.de),
+libmp3lame,
 libmpc,
 [libopus](https://github.com/xiph/opus),
 [libvorbis](https://github.com/xiph/vorbis),

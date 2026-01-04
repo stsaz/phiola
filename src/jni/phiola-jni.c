@@ -175,6 +175,7 @@ enum {
 	AF_FLAC = 3,
 	AF_OPUS = 4,
 	AF_OPUS_VOICE = 5,
+	AF_MP3 = 6,
 };
 
 #include <jni/android-utils.h>
@@ -207,6 +208,7 @@ static char* mod_loading(ffstr name)
 		{ "ac-aac",		"libfdk-aac-phi", 0 },
 		{ "ac-alac",	"libALAC-phi", 1 },
 		{ "ac-flac",	"libFLAC-phi", 0 },
+		{ "ac-mp3lame",	"libmp3lame-phi", 0 },
 		{ "ac-mpeg",	"libmpg123-phi", 0 },
 		{ "ac-opus",	"libopus-phi", 0 },
 		{ "ac-vorbis",	"libvorbis-phi", 0 },

@@ -198,7 +198,7 @@ static int cmd_oext_aenc(ffstr ext, uint stream_copy)
 			PHI_AC_AAC, // aac
 			PHI_AC_FLAC, // flac
 			PHI_AC_AAC, // m4a
-			0, // mp3
+			PHI_AC_MP3, // mp3
 			PHI_AC_AAC, // mp4
 			PHI_AC_VORBIS, // ogg
 			PHI_AC_OPUS, // opus

@@ -1,4 +1,4 @@
-/** phiola: MPEG Layer3 decode
+/** phiola: MPEG Layer3 encode
 2015, Simon Zolin */
 
 #include <track.h>
@@ -12,21 +12,21 @@ const phi_core *core;
 #define infolog(t, ...)  phi_infolog(core, NULL, t, __VA_ARGS__)
 #define dbglog(t, ...)  phi_dbglog(core, NULL, t, __VA_ARGS__)
 
-#include <acodec/mpeg-dec.h>
+#include <acodec/mp3lame-enc.h>
 
-static const void* mpeg_iface(const char *name)
+static const void* mp3lame_iface(const char *name)
 {
-	if (ffsz_eq(name, "decode")) return &phi_mpeg_dec;
+	if (ffsz_eq(name, "encode")) return &phi_mpeg_enc;
 	return NULL;
 }
 
-static const phi_mod phi_mpeg_mod = {
+static const phi_mod phi_mp3lame_mod = {
 	.ver = PHI_VERSION, .ver_core = PHI_VERSION_CORE,
-	mpeg_iface
+	mp3lame_iface
 };
 
 FF_EXPORT const phi_mod* phi_mod_init(const phi_core *_core)
 {
 	core = _core;
-	return &phi_mpeg_mod;
+	return &phi_mp3lame_mod;
 }

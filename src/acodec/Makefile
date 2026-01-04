@@ -38,6 +38,10 @@ MODS += $(ACPFX)mpeg.$(SO)
 LIBS3 += $(ALIB3_BIN)/libmpg123-phi.$(SO)
 $(ACPFX)mpeg.$(SO): LINKFLAGS += $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lmpg123-phi
 
+MODS += $(ACPFX)mp3lame.$(SO)
+LIBS3 += $(ALIB3_BIN)/libmp3lame-phi.$(SO)
+$(ACPFX)mp3lame.$(SO): LINKFLAGS += $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lmp3lame-phi
+
 MODS += $(ACPFX)vorbis.$(SO)
 LIBS3 += $(ALIB3_BIN)/libvorbis-phi.$(SO)
 VORBIS_ENC_LIB :=

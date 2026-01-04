@@ -5,8 +5,8 @@
 
 struct gui_wconvert {
 	ffui_windowxx		wnd;
-	ffui_labelxx		ldir, lname, lext, lfrom, luntil, ltags, laacq, lvorbisq, lopusq;
-	ffui_editxx			edir, ename, efrom, euntil, etags, eaacq, evorbisq, eopusq;
+	ffui_labelxx		ldir, lname, lext, lfrom, luntil, ltags, laacq, lvorbisq, lopusq, lmp3q;
+	ffui_editxx			edir, ename, efrom, euntil, etags, eaacq, evorbisq, eopusq, emp3q;
 	ffui_comboboxxx		cbext;
 	ffui_checkboxxx		cbcopy, cbkeepdate, cboverwrite;
 	ffui_buttonxx		bbrowse, bstart;
@@ -14,7 +14,7 @@ struct gui_wconvert {
 	xxstr conf_dir, conf_name, conf_ext;
 	char *wnd_pos;
 	uint conf_copy;
-	uint conf_aacq, conf_vorbisq, conf_opusq;
+	uint conf_aacq, conf_vorbisq, conf_opusq, conf_mp3q;
 	uint initialized :1;
 };
 
@@ -32,6 +32,7 @@ FF_EXTERN const ffui_ldr_ctl wconvert_ctls[] = {
 	_(laacq),	_(eaacq),
 	_(lvorbisq),_(evorbisq),
 	_(lopusq),	_(eopusq),
+	_(lmp3q),	_(emp3q),
 	_(cbkeepdate), _(cboverwrite),
 	_(bstart),
 	FFUI_LDR_CTL_END
@@ -44,6 +45,7 @@ const ffarg wconvert_args[] = {
 	{ "copy",	'u',	O(conf_copy) },
 	{ "dir",	'=S',	O(conf_dir) },
 	{ "ext",	'=S',	O(conf_ext) },
+	{ "mp3q",	'u',	O(conf_mp3q) },
 	{ "name",	'=S',	O(conf_name) },
 	{ "opusq",	'u',	O(conf_opusq) },
 	{ "vorbisq",'u',	O(conf_vorbisq) },
@@ -79,6 +81,7 @@ static void wconvert_ui_to_conf()
 	c->conf_aacq = xxvec(c->eaacq.text()).str().uint32(0);
 	c->conf_vorbisq = vorbisq_conf(xxvec(c->evorbisq.text()).str());
 	c->conf_opusq = xxvec(c->eopusq.text()).str().uint32(0);
+	c->conf_mp3q = xxvec(c->emp3q.text()).str().uint32(~0U);
 }
 
 void wconvert_userconf_write(ffconfw *cw)
@@ -93,6 +96,7 @@ void wconvert_userconf_write(ffconfw *cw)
 	ffconfw_add2u(cw, "aacq", c->conf_aacq);
 	ffconfw_add2u(cw, "vorbisq", c->conf_vorbisq);
 	ffconfw_add2u(cw, "opusq", c->conf_opusq);
+	ffconfw_add2u(cw, "mp3q", c->conf_mp3q);
 
 	if (c->initialized)
 		conf_wnd_pos_write(cw, "wconvert.pos", &c->wnd);
@@ -149,7 +153,8 @@ static void wconvert_ui_from_conf()
 	xxstr_buf<100> s;
 	c->eaacq.text(s.zfmt("%u", (c->conf_aacq) ? c->conf_aacq : 5));
 	c->evorbisq.text(s.zfmt("%d", (c->conf_vorbisq) ? vorbisq_user(c->conf_vorbisq) : 7));
-	c->eopusq.text(s.zfmt("%u", (c->conf_opusq) ? c->conf_opusq : 256));
+	c->eopusq.text(s.zfmt("%u", (c->conf_opusq) ? c->conf_opusq : 192));
+	c->emp3q.text(s.zfmt("%u", (c->conf_mp3q != ~0U) ? c->conf_mp3q : 2));
 }
 
 void wconvert_set(int id, uint pos)
@@ -215,6 +220,8 @@ static struct phi_track_conf* conv_conf_create()
 		tc->opus.bitrate = c->conf_opusq;  break;
 	case PHI_AC_VORBIS:
 		tc->vorbis.quality = c->conf_vorbisq;  break;
+	case PHI_AC_MP3:
+		tc->mp3.quality = (c->conf_mp3q != ~0U) ? c->conf_mp3q + 1 : 0;  break;
 	}
 
 	tc->ifile.preserve_date = c->cbkeepdate.checked();
@@ -275,6 +282,7 @@ void wconvert_init()
 	gui_wconvert *c = ffmem_new(gui_wconvert);
 	c->wnd.hide_on_close = 1;
 	c->wnd.on_action = wconvert_action;
+	c->conf_mp3q = ~0U;
 	gg->wconvert = c;
 }
 

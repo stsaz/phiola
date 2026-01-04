@@ -123,6 +123,8 @@ class Track {
 			return Phiola.AF_AAC_HE2;
 		case "FLAC":
 			return Phiola.AF_FLAC;
+		case "MP3":
+			return Phiola.AF_MP3;
 		case "Opus":
 			return Phiola.AF_OPUS;
 		case "Opus-VOIP":

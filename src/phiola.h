@@ -6,13 +6,13 @@
 #include <ffbase/string.h>
 #include <ffbase/time.h>
 
-#define PHI_VERSION  20607
+#define PHI_VERSION  20608
 
 /** Inter-module compatibility version.
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20600
+#define PHI_VERSION_CORE  20608
 
 typedef long long int64;
 typedef unsigned long long uint64;
@@ -324,6 +324,10 @@ struct phi_track_conf {
 		struct {
 			u_char	quality; // (q+1.0)*10
 		} vorbis;
+
+		struct {
+			ushort	quality; // +1
+		} mp3;
 
 		struct {
 			ushort	bitrate;

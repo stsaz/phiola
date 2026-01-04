@@ -10,6 +10,7 @@ LIBS := \
 	fdk-aac \
 	FLAC \
 	EBUR128 \
+	mp3lame \
 	mpg123 \
 	opus \
 	soxr \
@@ -46,6 +47,10 @@ EBUR128: libebur128-phi.$(SO)
 libMAC-phi.$(SO):
 	$(MAKE) -f $(ALIB3)/MAC/Makefile
 MAC: libMAC-phi.$(SO)
+
+libmp3lame-phi.$(SO):
+	$(MAKE) -f $(ALIB3)/mp3lame/Makefile
+mp3lame: libmp3lame-phi.$(SO)
 
 libmpg123-phi.$(SO):
 	$(MAKE) -f $(ALIB3)/mpg123/Makefile

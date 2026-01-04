@@ -3,13 +3,13 @@
 
 struct gui_wrecord {
 	ffui_windowxx		wnd;
-	ffui_labelxx		ldir, lname, lext, ldev, lchan, l_rate, luntil, laacq, lvorbisq, lopusq;
-	ffui_editxx			edir, ename, e_rate, euntil, eaacq, evorbisq, eopusq;
+	ffui_labelxx		ldir, lname, lext, ldev, lchan, l_rate, luntil, laacq, lvorbisq, lopusq, lmp3q;
+	ffui_editxx			edir, ename, e_rate, euntil, eaacq, evorbisq, eopusq, emp3q;
 	ffui_comboboxxx		cbext, cbdev, cbchan;
 	ffui_buttonxx		bstart;
 
 	xxstr conf_dir, conf_name, conf_ext;
-	uint conf_aacq, conf_vorbisq, conf_opusq;
+	uint conf_aacq, conf_vorbisq, conf_opusq, conf_mp3q;
 	uint conf_until;
 	uint conf_idev;
 	uint conf_rate;
@@ -32,6 +32,7 @@ FF_EXTERN const ffui_ldr_ctl wrecord_ctls[] = {
 	_(laacq),	_(eaacq),
 	_(lvorbisq),_(evorbisq),
 	_(lopusq),	_(eopusq),
+	_(lmp3q),	_(emp3q),
 	_(bstart),
 	FFUI_LDR_CTL_END
 };
@@ -45,6 +46,7 @@ const ffarg wrecord_args[] = {
 	{ "dir",		'=S',	O(conf_dir) },
 	{ "ext",		'=S',	O(conf_ext) },
 	{ "idev",		'u',	O(conf_idev) },
+	{ "mp3q",		'u',	O(conf_mp3q) },
 	{ "name",		'=S',	O(conf_name) },
 	{ "opusq",		'u',	O(conf_opusq) },
 	{ "rate",		'u',	O(conf_rate) },
@@ -108,6 +110,7 @@ static void wrecord_ui_to_conf()
 	c->conf_aacq = xxvec(c->eaacq.text()).str().uint32(0);
 	c->conf_vorbisq = wrec_vorbisq_conf(xxvec(c->evorbisq.text()).str());
 	c->conf_opusq = xxvec(c->eopusq.text()).str().uint32(0);
+	c->conf_mp3q = xxvec(c->emp3q.text()).str().uint32(~0U);
 }
 
 void wrecord_userconf_write(ffconfw *cw)
@@ -124,6 +127,7 @@ void wrecord_userconf_write(ffconfw *cw)
 	ffconfw_add2u(cw, "aacq", w->conf_aacq);
 	ffconfw_add2u(cw, "vorbisq", w->conf_vorbisq);
 	ffconfw_add2u(cw, "opusq", w->conf_opusq);
+	ffconfw_add2u(cw, "mp3q", w->conf_mp3q);
 	ffconfw_add2u(cw, "auto_stop", w->conf_until);
 
 	if (w->initialized)
@@ -160,6 +164,7 @@ static void file_extensions_fill()
 		"m4a",
 		"ogg",
 		"opus",
+		"mp3",
 		"flac",
 		"wav",
 	};
@@ -212,7 +217,8 @@ static void wrecord_ui_from_conf()
 		w->e_rate.text(s.zfmt("%u", w->conf_rate));
 	w->eaacq.text(s.zfmt("%u", (w->conf_aacq) ? w->conf_aacq : 5));
 	w->evorbisq.text(s.zfmt("%d", (w->conf_vorbisq) ? wrec_vorbisq_user(w->conf_vorbisq) : 7));
-	w->eopusq.text(s.zfmt("%u", (w->conf_opusq) ? w->conf_opusq : 256));
+	w->eopusq.text(s.zfmt("%u", (w->conf_opusq) ? w->conf_opusq : 192));
+	w->emp3q.text(s.zfmt("%u", (w->conf_mp3q != ~0U) ? w->conf_mp3q : 2));
 }
 
 static struct phi_track_conf* record_conf_create()
@@ -230,6 +236,7 @@ static struct phi_track_conf* record_conf_create()
 	c->aac.quality = w->conf_aacq;
 	c->opus.bitrate = w->conf_opusq;
 	c->vorbis.quality = w->conf_vorbisq;
+	c->mp3.quality = (w->conf_mp3q != ~0U) ? w->conf_mp3q + 1 : 0;
 
 	c->ofile.name = ffsz_allocfmt("%S/%S.%S", &w->conf_dir, &w->conf_name, &w->conf_ext);
 	return c;
@@ -274,6 +281,7 @@ void wrecord_init()
 	gui_wrecord *w = ffmem_new(gui_wrecord);
 	w->wnd.hide_on_close = 1;
 	w->wnd.on_action = wrecord_action;
+	w->conf_mp3q = ~0U;
 	gg->wrecord = w;
 }
 

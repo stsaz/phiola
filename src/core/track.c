@@ -176,7 +176,8 @@ static phi_track* track_create(struct phi_track_conf *conf)
 	t->id[0] = '*';
 	ffs_fromint(id, t->id+1, sizeof(t->id)-1, 0);
 
-	t->t_start = core->time(NULL, PHI_CORE_TIME_MONOTONIC);
+	if (t->conf.print_time)
+		t->t_start = core->time(NULL, PHI_CORE_TIME_MONOTONIC);
 
 	t->audio.seek = ~0ULL;
 	if (t->conf.seek_msec) {
