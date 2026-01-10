@@ -318,6 +318,7 @@ static const struct ffarg cmd_conv[] = {
 	{ "-gain",			'd',	O(gain) },
 	{ "-help",			0,		conv_help },
 	{ "-include",		'+S',	conv_include },
+	{ "-m",				'+S',	conv_meta },
 	{ "-meta",			'+S',	conv_meta },
 	{ "-mp3_quality",	'u',	O(mp3_q) },
 	{ "-o",				's',	O(output) },

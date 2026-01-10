@@ -136,30 +136,30 @@ class Track {
 	TrackHandle rec_start(Phiola.RecordCallback cb) {
 		if (Build.VERSION.SDK_INT < 26) return null;
 
-		core.dir_make(core.setts.rec_path);
+		core.dir_make(core.rec.rec_path);
 		String oname = String.format("%s/%s.%s"
-			, core.setts.rec_path
-			, core.setts.rec_name_template
-			, core.setts.rec_fmt);
+			, core.rec.rec_path
+			, core.rec.rec_name_template
+			, core.rec.rec_fmt);
 
 		Phiola.RecordParams p = new Phiola.RecordParams();
-		p.format = rec_fmt(core.setts.rec_enc);
-		p.channels = core.setts.rec_channels;
-		p.sample_rate = core.setts.rec_rate;
+		p.format = rec_fmt(core.rec.rec_enc);
+		p.channels = core.rec.rec_channels;
+		p.sample_rate = core.rec.rec_rate;
 
-		if (core.setts.rec_exclusive)
+		if (core.rec.rec_exclusive)
 			p.flags |= Phiola.RecordParams.RECF_EXCLUSIVE;
 		if (true)
 			p.flags |= Phiola.RecordParams.RECF_POWER_SAVE;
-		if (core.setts.rec_src_unprocessed)
+		if (core.rec.rec_src_unprocessed)
 			p.flags |= Phiola.RecordParams.RECF_UNPROCESSED;
-		if (core.setts.rec_danorm)
+		if (core.rec.rec_danorm)
 			p.flags |= Phiola.RecordParams.RECF_DANORM;
 
-		p.quality = core.setts.rec_bitrate;
-		p.buf_len_msec = core.setts.rec_buf_len_ms;
-		p.gain_db100 = core.setts.rec_gain_db100;
-		p.until_sec = core.setts.rec_until_sec;
+		p.quality = core.rec.rec_bitrate;
+		p.buf_len_msec = core.rec.rec_buf_len_ms;
+		p.gain_db100 = core.rec.rec_gain_db100;
+		p.until_sec = core.rec.rec_until_sec;
 
 		trec = new TrackHandle();
 		trec.phi_trk = core.phiola.recStart(oname, p, cb);

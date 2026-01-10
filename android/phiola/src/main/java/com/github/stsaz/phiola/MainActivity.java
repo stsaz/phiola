@@ -63,8 +63,8 @@ public class MainActivity extends AppCompatActivity {
 		if (gui.cur_path.isEmpty())
 			gui.cur_path = core.storage_path;
 
-		if (core.setts.rec_path.isEmpty())
-			core.setts.rec_path = core.storage_path + "/Recordings";
+		if (core.rec.rec_path.isEmpty())
+			core.rec.rec_path = core.storage_path + "/Recordings";
 
 		// Add file to the playlist and start playback if executed from an external file manager app
 		String ia = getIntent().getAction();
@@ -442,7 +442,7 @@ public class MainActivity extends AppCompatActivity {
 		b.brec.setOnClickListener((v) -> {
 				if (gui.playback_marker_show)
 					playback_marker_jump();
-				else if (core.setts.rec_longclick)
+				else if (core.rec.rec_longclick)
 					rec_pause_toggle();
 				else
 					rec_start_stop();
@@ -450,7 +450,7 @@ public class MainActivity extends AppCompatActivity {
 		b.brec.setOnLongClickListener((v) -> {
 				if (gui.playback_marker_show)
 					playback_marker_set();
-				else if (core.setts.rec_longclick)
+				else if (core.rec.rec_longclick)
 					rec_start_stop();
 				return true;
 			});
@@ -621,7 +621,7 @@ public class MainActivity extends AppCompatActivity {
 	private void rec_fin(int code, String filename) {
 		stopService(new Intent(this, RecSvc.class));
 		if (code == 0) {
-			if (core.setts.rec_list_add)
+			if (core.rec.rec_list_add)
 				queue.current_add(filename, 0);
 			gui.msg_show(this, getString(R.string.main_rec_fin));
 		}

@@ -326,6 +326,7 @@ static const struct ffarg cmd_rec[] = {
 	{ "-gain",			'd',	O(gain) },
 	{ "-help",			0,		rec_help },
 	{ "-loopback",		'1',	O(loopback) },
+	{ "-m",				'+S',	rec_meta },
 	{ "-meta",			'+S',	rec_meta },
 	{ "-mp3_quality",	'u',	O(mp3_q) },
 	{ "-noise_gate",	's',	O(noise_gate) },

@@ -36,7 +36,7 @@ public class ConvertActivity extends AppCompatActivity {
 			}));
 
 		ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item
-			, CoreSettings.conv_format_display);
+			, ConvertSettings.conv_format_display);
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		b.spOutExt.setAdapter(adapter);
 
@@ -64,7 +64,7 @@ public class ConvertActivity extends AppCompatActivity {
 		b.bUntilSetCur.setOnClickListener((v) -> pos_set_cur(false));
 
 		adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item
-			, CoreSettings.conv_sample_formats_str);
+			, ConvertSettings.conv_sample_formats_str);
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		b.spSampleFormat.setAdapter(adapter);
 
@@ -137,8 +137,8 @@ public class ConvertActivity extends AppCompatActivity {
 	}
 
 	private int conv_format_index(String name) {
-		for (int i = 0; i < CoreSettings.conv_formats.length; i++) {
-			if (CoreSettings.conv_formats[i].equals(name))
+		for (int i = 0; i < ConvertSettings.conv_formats.length; i++) {
+			if (ConvertSettings.conv_formats[i].equals(name))
 				return i;
 		}
 		return -1;
@@ -171,22 +171,22 @@ public class ConvertActivity extends AppCompatActivity {
 	private static int opus_q_progress(int q) { return (q - 16) / 16; }
 
 	private void load() {
-		b.eOutDir.setText(core.setts.conv_out_dir);
-		b.eOutName.setText(core.setts.conv_out_name);
-		b.spOutExt.setSelection(conv_format_index(core.setts.conv_format));
+		b.eOutDir.setText(core.convert.conv_out_dir);
+		b.eOutName.setText(core.convert.conv_out_name);
+		b.spOutExt.setSelection(conv_format_index(core.convert.conv_format));
 
-		b.sbAacQ.setProgress(aac_q_progress(core.setts.conv_aac_quality));
-		b.eAacQ.setText(core.int_to_str(core.setts.conv_aac_quality));
+		b.sbAacQ.setProgress(aac_q_progress(core.convert.conv_aac_quality));
+		b.eAacQ.setText(core.int_to_str(core.convert.conv_aac_quality));
 
-		b.sbOpusQ.setProgress(opus_q_progress(core.setts.conv_opus_quality));
-		b.eOpusQ.setText(core.int_to_str(core.setts.conv_opus_quality));
+		b.sbOpusQ.setProgress(opus_q_progress(core.convert.conv_opus_quality));
+		b.eOpusQ.setText(core.int_to_str(core.convert.conv_opus_quality));
 
-		b.eMp3Q.setText(core.int_to_str(core.setts.conv_mp3_quality));
+		b.eMp3Q.setText(core.int_to_str(core.convert.conv_mp3_quality));
 
-		b.swCopy.setChecked(core.setts.conv_copy);
+		b.swCopy.setChecked(core.convert.conv_copy);
 
-		b.swPreserveDate.setChecked(core.setts.conv_file_date_preserve);
-		b.swPlAdd.setChecked(core.setts.conv_new_add_list);
+		b.swPreserveDate.setChecked(core.convert.conv_file_date_preserve);
+		b.swPlAdd.setChecked(core.convert.conv_new_add_list);
 	}
 
 	private void save() {
@@ -195,38 +195,38 @@ public class ConvertActivity extends AppCompatActivity {
 			s = "@filepath";
 			b.eOutDir.setText(s);
 		}
-		core.setts.conv_out_dir = s;
+		core.convert.conv_out_dir = s;
 
 		s = b.eOutName.getText().toString();
 		if (s.isEmpty()) {
 			s = "@filename";
 			b.eOutName.setText(s);
 		}
-		core.setts.conv_out_name = s;
+		core.convert.conv_out_name = s;
 
-		core.setts.conv_format = CoreSettings.conv_formats[b.spOutExt.getSelectedItemPosition()];
-		core.setts.conv_copy = b.swCopy.isChecked();
+		core.convert.conv_format = ConvertSettings.conv_formats[b.spOutExt.getSelectedItemPosition()];
+		core.convert.conv_copy = b.swCopy.isChecked();
 
 		int v = aac_q_read(b.eAacQ.getText().toString());
 		if (v != 0)
-			core.setts.conv_aac_quality = v;
+			core.convert.conv_aac_quality = v;
 
 		v = core.str_to_uint(b.eOpusQ.getText().toString(), 0);
 		if (v != 0)
-			core.setts.conv_opus_quality = v;
+			core.convert.conv_opus_quality = v;
 
 		v = core.str_to_uint(b.eMp3Q.getText().toString(), -1);
 		if (v >= 0)
-			core.setts.conv_mp3_quality = v;
+			core.convert.conv_mp3_quality = v;
 
-		core.setts.conv_file_date_preserve = b.swPreserveDate.isChecked();
-		core.setts.conv_new_add_list = b.swPlAdd.isChecked();
+		core.convert.conv_file_date_preserve = b.swPreserveDate.isChecked();
+		core.convert.conv_new_add_list = b.swPlAdd.isChecked();
 	}
 
 	@Override
 	protected void onDestroy() {
 		save();
-		core.setts.normalize_convert();
+		core.convert.normalize();
 		core.unref();
 		super.onDestroy();
 	}
@@ -254,23 +254,23 @@ public class ConvertActivity extends AppCompatActivity {
 		p.from_msec = b.eFrom.getText().toString();
 		p.to_msec = b.eUntil.getText().toString();
 		p.tags = b.eTags.getText().toString();
-		p.sample_format = CoreSettings.conv_sample_formats[b.spSampleFormat.getSelectedItemPosition()];
+		p.sample_format = ConvertSettings.conv_sample_formats[b.spSampleFormat.getSelectedItemPosition()];
 		p.sample_rate = core.str_to_uint(b.eSampleRate.getText().toString(), 0);
-		p.aac_quality = core.setts.conv_aac_quality;
-		p.opus_quality = core.setts.conv_opus_quality;
-		p.mp3_quality = core.setts.conv_mp3_quality;
+		p.aac_quality = core.convert.conv_aac_quality;
+		p.opus_quality = core.convert.conv_opus_quality;
+		p.mp3_quality = core.convert.conv_mp3_quality;
 
 		int iformat = b.spOutExt.getSelectedItemPosition();
-		p.format = CoreSettings.conv_encoders[iformat];
+		p.format = ConvertSettings.conv_encoders[iformat];
 
-		if (core.setts.conv_copy)
+		if (core.convert.conv_copy)
 			p.flags |= Phiola.ConvertParams.COF_COPY;
-		if (core.setts.conv_file_date_preserve)
+		if (core.convert.conv_file_date_preserve)
 			p.flags |= Phiola.ConvertParams.COF_DATE_PRESERVE;
 		if (b.swOutOverwrite.isChecked() && b.swOutOverwriteConfirm.isChecked())
 			p.flags |= Phiola.ConvertParams.COF_OVERWRITE;
 
-		if (core.setts.conv_new_add_list) {
+		if (core.convert.conv_new_add_list) {
 			p.q_add_remove = getIntent().getLongExtra("current_list_id", 0);
 			p.flags |= Phiola.ConvertParams.COF_ADD;
 		}
@@ -282,7 +282,7 @@ public class ConvertActivity extends AppCompatActivity {
 		}
 
 		p.out_name = String.format("%s/%s.%s"
-			, core.setts.conv_out_dir, core.setts.conv_out_name, CoreSettings.conv_extensions[iformat]);
+			, core.convert.conv_out_dir, core.convert.conv_out_name, ConvertSettings.conv_extensions[iformat]);
 
 		String r = core.queue().convert_begin(p);
 		if (r != null) {

@@ -35,6 +35,8 @@ class Core extends Util {
 	String work_dir;
 	Context context;
 	CoreSettings setts;
+	RecSettings rec;
+	ConvertSettings convert;
 
 	static Core getInstance() {
 		instance.dbglog(TAG, "getInstance");
@@ -68,6 +70,8 @@ class Core extends Util {
 		util = new UtilNative(phiola);
 		util.storagePaths(storage_paths);
 		setts = new CoreSettings(this);
+		rec = new RecSettings(this);
+		convert = new ConvertSettings(this);
 		gui = new GUI(this);
 		track = new Track(this);
 		qu = new Queue(this);
@@ -107,6 +111,8 @@ class Core extends Util {
 	void saveconf() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(this.setts.conf_write());
+		sb.append(this.rec.conf_write());
+		sb.append(this.convert.conf_write());
 		sb.append(qu.conf_write());
 		sb.append(gui.conf_write());
 		dbglog(TAG, "%s", sb.toString());
@@ -117,12 +123,16 @@ class Core extends Util {
 	private void loadconf() {
 		if (conf.confRead(conf_file_name())) {
 			setts.conf_load(conf);
+			rec.conf_load(conf);
+			convert.conf_load(conf);
 			qu.conf_load(conf);
 			gui.conf_load(conf);
 			conf.reset();
 		}
 
 		setts.normalize();
+		rec.normalize();
+		convert.normalize();
 		qu.conf_normalize();
 		phiola.setConfig(setts.codepage, setts.deprecated_mods);
 	}

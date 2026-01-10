@@ -301,7 +301,7 @@ public class SettingsActivity extends AppCompatActivity {
 			});
 
 		adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item
-			, CoreSettings.rec_formats);
+			, RecSettings.rec_formats);
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		b.spRecEnc.setAdapter(adapter);
 
@@ -465,6 +465,8 @@ public class SettingsActivity extends AppCompatActivity {
 		rec_save();
 		core.queue().conf_normalize();
 		core.setts.normalize();
+		core.rec.normalize();
+		core.convert.normalize();
 		core.phiola.setConfig(core.setts.codepage, core.setts.deprecated_mods);
 	}
 
@@ -499,8 +501,8 @@ public class SettingsActivity extends AppCompatActivity {
 	private static int auto_stop_progress(int min) { return min / 6; }
 
 	private static int rec_format_index(String s) {
-		for (int i = 0; i < CoreSettings.rec_formats.length; i++) {
-			if (CoreSettings.rec_formats[i].equals(s))
+		for (int i = 0; i < RecSettings.rec_formats.length; i++) {
+			if (RecSettings.rec_formats[i].equals(s))
 				return i;
 		}
 		return -1;
@@ -540,42 +542,42 @@ public class SettingsActivity extends AppCompatActivity {
 	}
 
 	private void rec_load() {
-		b.swRecLongclick.setChecked(core.setts.rec_longclick);
-		b.eRecDir.setText(core.setts.rec_path);
-		b.eRecName.setText(core.setts.rec_name_template);
-		b.spRecChannels.setSelection(core.setts.rec_channels);
-		if (core.setts.rec_rate != 0) {
-			b.eRecRate.setText(core.int_to_str(core.setts.rec_rate));
-			b.sbRecRate.setProgress(rec_rate_progress(core.setts.rec_rate));
+		b.swRecLongclick.setChecked(core.rec.rec_longclick);
+		b.eRecDir.setText(core.rec.rec_path);
+		b.eRecName.setText(core.rec.rec_name_template);
+		b.spRecChannels.setSelection(core.rec.rec_channels);
+		if (core.rec.rec_rate != 0) {
+			b.eRecRate.setText(core.int_to_str(core.rec.rec_rate));
+			b.sbRecRate.setProgress(rec_rate_progress(core.rec.rec_rate));
 		}
-		b.spRecEnc.setSelection(rec_format_index(core.setts.rec_enc));
-		b.sbRecBitrate.setProgress(rec_bitrate_progress(core.setts.rec_bitrate));
-		b.eRecBitrate.setText(Integer.toString(core.setts.rec_bitrate));
-		b.eRecBufLen.setText(core.int_to_str(core.setts.rec_buf_len_ms));
-		b.sbRecUntil.setProgress(rec_until_progress(core.setts.rec_until_sec));
-		b.eRecUntil.setText(time_str(core.setts.rec_until_sec));
-		b.swRecDanorm.setChecked(core.setts.rec_danorm);
-		b.eRecGain.setText(core.float_to_str((float)core.setts.rec_gain_db100 / 100));
-		b.sbRecGain.setProgress((int)core.setts.rec_gain_db100 / 100);
-		b.swRecExclusive.setChecked(core.setts.rec_exclusive);
-		b.swRecSrcUnprocessed.setChecked(core.setts.rec_src_unprocessed);
-		b.swRecListAdd.setChecked(core.setts.rec_list_add);
+		b.spRecEnc.setSelection(rec_format_index(core.rec.rec_enc));
+		b.sbRecBitrate.setProgress(rec_bitrate_progress(core.rec.rec_bitrate));
+		b.eRecBitrate.setText(Integer.toString(core.rec.rec_bitrate));
+		b.eRecBufLen.setText(core.int_to_str(core.rec.rec_buf_len_ms));
+		b.sbRecUntil.setProgress(rec_until_progress(core.rec.rec_until_sec));
+		b.eRecUntil.setText(time_str(core.rec.rec_until_sec));
+		b.swRecDanorm.setChecked(core.rec.rec_danorm);
+		b.eRecGain.setText(core.float_to_str((float)core.rec.rec_gain_db100 / 100));
+		b.sbRecGain.setProgress((int)core.rec.rec_gain_db100 / 100);
+		b.swRecExclusive.setChecked(core.rec.rec_exclusive);
+		b.swRecSrcUnprocessed.setChecked(core.rec.rec_src_unprocessed);
+		b.swRecListAdd.setChecked(core.rec.rec_list_add);
 	}
 
 	private void rec_save() {
-		core.setts.rec_longclick = b.swRecLongclick.isChecked();
-		core.setts.rec_path = b.eRecDir.getText().toString();
-		core.setts.rec_name_template = b.eRecName.getText().toString();
-		core.setts.rec_bitrate = core.str_to_uint(b.eRecBitrate.getText().toString(), -1);
-		core.setts.rec_channels = b.spRecChannels.getSelectedItemPosition();
-		core.setts.rec_rate = core.str_to_uint(b.eRecRate.getText().toString(), 0);
-		core.setts.rec_enc = CoreSettings.rec_formats[b.spRecEnc.getSelectedItemPosition()];
-		core.setts.rec_buf_len_ms = core.str_to_uint(b.eRecBufLen.getText().toString(), -1);
-		core.setts.rec_until_sec = time_sec(b.eRecUntil.getText().toString());
-		core.setts.rec_danorm = b.swRecDanorm.isChecked();
-		core.setts.rec_gain_db100 = (int)(core.str_to_float(b.eRecGain.getText().toString(), 0) * 100);
-		core.setts.rec_exclusive = b.swRecExclusive.isChecked();
-		core.setts.rec_src_unprocessed = b.swRecSrcUnprocessed.isChecked();
-		core.setts.rec_list_add = b.swRecListAdd.isChecked();
+		core.rec.rec_longclick = b.swRecLongclick.isChecked();
+		core.rec.rec_path = b.eRecDir.getText().toString();
+		core.rec.rec_name_template = b.eRecName.getText().toString();
+		core.rec.rec_bitrate = core.str_to_uint(b.eRecBitrate.getText().toString(), -1);
+		core.rec.rec_channels = b.spRecChannels.getSelectedItemPosition();
+		core.rec.rec_rate = core.str_to_uint(b.eRecRate.getText().toString(), 0);
+		core.rec.rec_enc = RecSettings.rec_formats[b.spRecEnc.getSelectedItemPosition()];
+		core.rec.rec_buf_len_ms = core.str_to_uint(b.eRecBufLen.getText().toString(), -1);
+		core.rec.rec_until_sec = time_sec(b.eRecUntil.getText().toString());
+		core.rec.rec_danorm = b.swRecDanorm.isChecked();
+		core.rec.rec_gain_db100 = (int)(core.str_to_float(b.eRecGain.getText().toString(), 0) * 100);
+		core.rec.rec_exclusive = b.swRecExclusive.isChecked();
+		core.rec.rec_src_unprocessed = b.swRecSrcUnprocessed.isChecked();
+		core.rec.rec_list_add = b.swRecListAdd.isChecked();
 	}
 }
