@@ -88,6 +88,10 @@
 	<string name="sett_auto_skip_tail">Auto-Skip the Ending of Each Track (% or sec):</string>
 	<string name="sett_rg_norm">ReplayGain Normalizer</string>
 	<string name="sett_auto_norm">Auto Loudness Normalizer</string>
+	<string name="sett_equalizer_enable">Equalizer</string>
+	<string name="sett_equalizer_frequency">Frequency (Hz):</string>
+	<string name="sett_equalizer_width">Width:</string>
+	<string name="sett_equalizer_gain">Gain (dB):</string>
 
 	<string name="sett_operation">Operation</string>
 	<string name="sett_file_del">Don\'t Move Files to Trash</string>

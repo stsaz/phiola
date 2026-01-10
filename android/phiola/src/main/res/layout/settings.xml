@@ -209,6 +209,59 @@
 			android:textSize="@dimen/text_editbox" />
 
 		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/swEqualizer"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="@dimen/sett_margin"
+			android:text="@string/sett_equalizer_enable" />
+		<Spinner
+			android:id="@+id/spEqlzBand"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:spinnerMode="dropdown" />
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:layout_marginTop="@dimen/sett_margin"
+			android:text="@string/sett_equalizer_frequency"
+			android:textColor="@color/text" />
+		<SeekBar
+			android:id="@+id/sbEqlzFreq"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content" />
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:layout_marginTop="@dimen/sett_margin"
+			android:text="@string/sett_equalizer_width"
+			android:textColor="@color/text" />
+		<SeekBar
+			android:id="@+id/sbEqlzWidth"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content" />
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:layout_marginTop="@dimen/sett_margin"
+			android:text="@string/sett_equalizer_gain"
+			android:textColor="@color/text" />
+		<SeekBar
+			android:id="@+id/sbEqlzGain"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content" />
+		<EditText
+			android:id="@+id/eEqualizer"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:inputType="text"
+			android:textSize="@dimen/text_editbox" />
+
+		<androidx.appcompat.widget.SwitchCompat
 			android:id="@+id/sw_rg_norm"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"

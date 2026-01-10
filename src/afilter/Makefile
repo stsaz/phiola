@@ -45,6 +45,13 @@ soxr-conv.o: $(PHIOLA)/src/afilter/soxr-conv.c
 $(AFPFX)soxr.$(SO): soxr-conv.o
 	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lsoxr-phi -o $@
 
+MODS += $(AFPFX)sox.$(SO)
+LIBS3 += $(ALIB3_BIN)/libsox-phi.$(SO)
+sox.o: $(PHIOLA)/src/afilter/sox.c
+	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
+$(AFPFX)sox.$(SO): sox.o
+	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) -L$(ALIB3_BIN) -lsox-phi -o $@
+
 MODS += $(AFPFX)danorm.$(SO)
 LIBS3 += $(ALIB3_BIN)/libDynamicAudioNormalizer-phi.$(SO)
 dynanorm.o: $(PHIOLA)/src/afilter/dynanorm.c

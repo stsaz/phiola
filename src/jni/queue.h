@@ -331,6 +331,14 @@ static void qc_apply(struct phi_queue_conf *qc)
 	qc->random = x->play.random;
 	qc->tconf.afilter.rg_normalizer = (x->play.rg_normalizer && !x->play.auto_normalizer);
 	qc->tconf.afilter.auto_normalizer = (x->play.auto_normalizer) ? "" : NULL;
+	ffmem_free((void*)qc->tconf.afilter.equalizer);
+	qc->tconf.afilter.equalizer = (x->play.equalizer) ? ffsz_dup(x->play.equalizer) : NULL;
+}
+
+static void qc_apply_async(struct core_data *d)
+{
+	qc_apply(x->queue.conf(NULL));
+	ffmem_free(d);
 }
 
 static void qu_cmd(struct core_data *d)
@@ -439,9 +447,34 @@ Java_com_github_stsaz_phiola_Phiola_quConf(JNIEnv *env, jobject thiz, jint mask,
 
 	if (mask & (QC_REPEAT | QC_RANDOM | QC_RG_NORM | QC_AUTO_NORM)) {
 		// Apply settings for the active playlist
-		qc_apply(x->queue.conf(NULL));
+		struct core_data *d = ffmem_new(struct core_data);
+		core_task(d, qc_apply_async);
 	}
 
+	dbglog("%s: exit", __func__);
+}
+
+enum {
+	QC_EQUALIZER = 1,
+};
+
+JNIEXPORT void JNICALL
+Java_com_github_stsaz_phiola_Phiola_quConfStr(JNIEnv *env, jobject thiz, int setting, jstring jval)
+{
+	dbglog("%s: enter", __func__);
+	const char *val = jni_sz_js(jval);
+
+	switch (setting) {
+	case QC_EQUALIZER:
+		ffmem_free(x->play.equalizer);
+		x->play.equalizer = (*val) ? ffsz_dup(val) : NULL;  break;
+	}
+
+	// Apply settings for the active playlist
+	struct core_data *d = ffmem_new(struct core_data);
+	core_task(d, qc_apply_async);
+
+	jni_sz_free(val, jval);
 	dbglog("%s: exit", __func__);
 }
 

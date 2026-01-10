@@ -33,6 +33,7 @@ struct phiola_jni {
 
 		phi_timer auto_stop_timer;
 		phi_track *trk;
+		char *equalizer;
 		int64 seek_msec;
 		int auto_seek_sec_percent, auto_until_sec_percent;
 		uint pos_prev_sec;
@@ -214,6 +215,7 @@ static char* mod_loading(ffstr name)
 		{ "ac-vorbis",	"libvorbis-phi", 0 },
 		{ "af-danorm",	"libDynamicAudioNormalizer-phi", 0 },
 		{ "af-loudness","libebur128-phi", 0 },
+		{ "af-sox",		"libsox-phi", 0 },
 		{ "af-soxr",	"libsoxr-phi", 0 },
 		{ "zstd",		"libzstd-ffpack", 0 },
 	};
@@ -351,6 +353,7 @@ Java_com_github_stsaz_phiola_Phiola_destroy(JNIEnv *env, jobject thiz)
 	}
 	ffvec_free(&x->storage_paths);
 
+	ffmem_free(x->play.equalizer);
 	// ffmem_free(conv_track_info.error);
 	ffvec_free_align(&x->convert.tracks);
 	ffmem_free(x->convert.trash_dir_rel);

@@ -13,6 +13,7 @@ LIBS := \
 	mp3lame \
 	mpg123 \
 	opus \
+	sox \
 	soxr \
 	vorbis
 ifneq "$(SYS)" "android"
@@ -63,6 +64,10 @@ musepack: libmusepack-phi.$(SO)
 libopus-phi.$(SO):
 	$(MAKE) -f $(ALIB3)/opus/Makefile
 opus: libopus-phi.$(SO)
+
+libsox-phi.$(SO):
+	$(MAKE) -f $(ALIB3)/sox/Makefile
+sox: libsox-phi.$(SO)
 
 libsoxr-phi.$(SO):
 	$(MAKE) -f $(ALIB3)/soxr/Makefile

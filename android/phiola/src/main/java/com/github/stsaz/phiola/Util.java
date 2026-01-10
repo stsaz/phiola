@@ -56,6 +56,13 @@ abstract class Util {
 		return 0;
 	}
 
+	// (cmp) ? strue : sfalse
+	static String str_choice(boolean cmp, String strue, String sfalse) {
+		if (cmp)
+			return strue;
+		return sfalse;
+	}
+
 	static String color_str(int rgb) {
 		return String.format("#%06X", rgb);
 	}

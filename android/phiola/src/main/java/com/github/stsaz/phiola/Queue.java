@@ -429,6 +429,9 @@ class Queue {
 		if (v != 0)
 			phi.quConf(v, v);
 
+		if (core.setts.equalizer_enabled)
+			phi.quConfStr(Phiola.QC_EQUALIZER, core.setts.equalizer);
+
 		core.phiola.quSetCallback(new Phiola.QueueCallback() {
 				public void on_change(long q, int flags, int pos) { q_on_change(q, flags, pos); }
 				public void on_complete(int operation, int status) { q_on_complete(operation, status); }

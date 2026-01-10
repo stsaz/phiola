@@ -185,6 +185,8 @@ static int qe_play(struct q_entry *e)
 				&& (!track->filter(t, core->mod("afilter.auto-conv-f"), 0)
 				|| !track->filter(t, core->mod("af-loudness.analyze"), 0)
 				|| !track->filter(t, core->mod("afilter.auto-norm"), 0)))
+			|| ((c.afilter.equalizer && !c.afilter.auto_normalizer)
+				&& !track->filter(t, core->mod("af-sox.sox"), 0))
 			|| !track->filter(t, core->mod("afilter.gain"), 0)
 			|| !track->filter(t, core->mod("afilter.auto-conv"), 0)
 			|| (c.tee_output

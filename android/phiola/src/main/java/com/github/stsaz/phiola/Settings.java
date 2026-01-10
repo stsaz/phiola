@@ -69,6 +69,16 @@ class CoreSettings {
 		core.phiola.playCmd(Phiola.PC_AUTO_SKIP_TAIL, n);
 	}
 
+	boolean equalizer_enabled;
+	String equalizer;
+	void equalizer_set(boolean enabled, String s) {
+		if (equalizer_enabled != enabled
+			|| !s.equals(equalizer))
+			core.phiola.quConfStr(Phiola.QC_EQUALIZER, Util.str_choice(enabled, s, ""));
+		equalizer_enabled = enabled;
+		equalizer = s;
+	}
+
 	int		play_seek_fwd_percent, play_seek_back_percent;
 
 	String	rec_path; // directory for recordings
@@ -166,6 +176,7 @@ class CoreSettings {
 
 		auto_skip_head = new AutoSkip();
 		auto_skip_tail = new AutoSkip();
+		equalizer = "";
 
 		rec_path = "";
 		rec_fmt = "";
@@ -193,6 +204,9 @@ class CoreSettings {
 
 			+ "play_auto_skip %s\n"
 			+ "play_auto_skip_tail %s\n"
+			+ "play_eqlz_enabled %d\n"
+			+ "play_equalizer %s\n"
+
 			+ "rec_path %s\n"
 			+ "rec_name %s\n"
 			+ "rec_enc %s\n"
@@ -228,6 +242,9 @@ class CoreSettings {
 
 			, auto_skip_head.str()
 			, auto_skip_tail.str()
+			, core.bool_to_int(equalizer_enabled)
+			, equalizer
+
 			, rec_path
 			, rec_name_template
 			, rec_enc
@@ -351,6 +368,8 @@ class CoreSettings {
 
 		auto_skip_head_set(c.value(Conf.PLAY_AUTO_SKIP));
 		auto_skip_tail_set(c.value(Conf.PLAY_AUTO_SKIP_TAIL));
+		equalizer_enabled = c.enabled(Conf.PLAY_EQLZ_ENABLED);
+		equalizer = c.value(Conf.PLAY_EQUALIZER);
 
 		rec_path = c.value(Conf.REC_PATH);
 		rec_name_template = c.value(Conf.REC_NAME);

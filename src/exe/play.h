@@ -42,6 +42,9 @@ Options:\n\
                           `target`     Integer\n\
                           `attenuate`  Integer\n\
                           `gain`       Integer\n\
+  `-equalizer` \"OPTIONS\"  SoX Equalizer (doesn't work with `-norm`). Options:\n\
+                            frequency width gain ...\n\
+                          Refer to the official SoX documentation for more info.\n\
 \n\
   `-audio` STRING         Audio library name (e.g. alsa)\n\
   `-device` NUMBER        Playback device number\n\
@@ -65,8 +68,9 @@ struct cmd_play {
 	char*	audio_module;
 	const char*	auto_norm;
 	const char*	dup;
-	const char*	tee;
 	const char*	remote_id;
+	const char*	equalizer;
+	const char*	tee;
 	ffstr	audio;
 	ffvec	include, exclude; // ffstr[]
 	ffvec	input; // ffstr[]
@@ -158,6 +162,7 @@ static int play_action(struct cmd_play *p)
 		.afilter = {
 			.rg_normalizer = (p->rg_norm && !p->auto_norm),
 			.auto_normalizer = p->auto_norm,
+			.equalizer = p->equalizer,
 		},
 		.oaudio = {
 			.device_index = p->device,
@@ -222,6 +227,7 @@ static const struct ffarg cmd_play[] = {
 	{ "-connect_timeout",'u',	O(connect_timeout) },
 	{ "-device",		'u',	O(device) },
 	{ "-dup",			's',	O(dup) },
+	{ "-equalizer",		's',	O(equalizer) },
 	{ "-exclude",		'+S',	play_exclude },
 	{ "-exclusive",		'1',	O(exclusive) },
 	{ "-help",			0,		play_help },

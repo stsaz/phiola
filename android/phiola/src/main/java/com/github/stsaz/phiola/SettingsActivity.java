@@ -7,13 +7,17 @@ import android.os.Build;
 import android.os.Bundle;
 
 import android.graphics.PorterDuff;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.SeekBar;
 
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.github.stsaz.phiola.databinding.SettingsBinding;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class SettingsActivity extends AppCompatActivity {
 	private static final String TAG = "phiola.SettingsActivity";
@@ -79,6 +83,95 @@ public class SettingsActivity extends AppCompatActivity {
 		seekbar_color(b.sbColorBlue, 0x0074d9);
 	}
 
+	private static final int EQLZ_BANDS = 5;
+	private ArrayList<String> eqlz_vals;
+	private int eqlz_band, eqlz_freq, eqlz_width, eqlz_gain;
+
+	private void eqlz_enable(boolean enable) {
+		b.spEqlzBand.setEnabled(enable);
+		b.sbEqlzFreq.setEnabled(enable);
+		b.sbEqlzWidth.setEnabled(enable);
+		b.sbEqlzGain.setEnabled(enable);
+		b.eEqualizer.setEnabled(enable);
+	}
+
+	private static int eqlz_freq_value(int progress) { return progress * 100; }
+	private static int eqlz_freq_progress(int val) { return val / 100; }
+	private static int eqlz_width_value(int progress) { return progress; }
+	private static int eqlz_width_progress(int val) { return val; }
+	private static int eqlz_gain_value(int progress) { return progress - 120; }
+	private static int eqlz_gain_progress(int val) { return val + 120; }
+
+	private void eqlz_init() {
+		String[] v = core.setts.equalizer.split(" ");
+		int n = EQLZ_BANDS * 3;
+		eqlz_vals = new ArrayList<>(n);
+		eqlz_vals.addAll(Arrays.asList(v));
+		for (int i = eqlz_vals.size();  i < n;  i++) {
+			eqlz_vals.add("");
+		}
+		eqlz_show(1);
+	}
+
+	private void eqlz_show(int band) {
+		if (eqlz_band != 0) {
+			String[] v = b.eEqualizer.getText().toString().split(" ");
+			if (v.length != 3)
+				v = new String[]{"", "", ""};
+			eqlz_set(v);
+		}
+
+		eqlz_band = band;
+		int off = 3 * (band - 1);
+
+		eqlz_freq = Core.str_to_uint(eqlz_vals.get(off + 0), 0);
+		b.sbEqlzFreq.setProgress(eqlz_freq_progress(eqlz_freq));
+
+		String s = eqlz_vals.get(off + 1);
+		if (s.length() >= 2)
+			s = s.substring(0, s.length() - 1); // cut last 'q'
+		eqlz_width = (int)(Core.str_to_float(s, 0) * 10);
+		b.sbEqlzWidth.setProgress(eqlz_width_progress(eqlz_width));
+
+		eqlz_gain = (int)(Core.str_to_float(eqlz_vals.get(off + 2), 0) * 10);
+		b.sbEqlzGain.setProgress(eqlz_gain_progress(eqlz_gain));
+
+		s = String.format("%s %s %s"
+			, eqlz_vals.get(off + 0)
+			, eqlz_vals.get(off + 1)
+			, eqlz_vals.get(off + 2));
+		b.eEqualizer.setText(s);
+	}
+
+	private void eqlz_changed() {
+		String[] v = new String[] {
+			String.format("%d", eqlz_freq),
+			String.format("%.01fq", (double)eqlz_width / 10),
+			String.format("%.01f", (double)eqlz_gain / 10),
+		};
+		eqlz_set(v);
+		String s = String.format("%s %s %s", v[0], v[1], v[2]);
+		core.dbglog(TAG, "eqlz_vals band str: '%s'", s);
+		b.eEqualizer.setText(s);
+	}
+
+	private void eqlz_set(String[] v) {
+		int off = 3 * (eqlz_band - 1);
+		eqlz_vals.set(off + 0, v[0]);
+		eqlz_vals.set(off + 1, v[1]);
+		eqlz_vals.set(off + 2, v[2]);
+	}
+
+	private String eqlz_commit() {
+		StringBuilder sb = new StringBuilder();
+		for (String s : eqlz_vals) {
+			sb.append(String.format("%s ", s));
+		}
+		String es = sb.substring(0, sb.length() - 1);
+		core.dbglog(TAG, "eqlz_str: '%s'", es);
+		return es;
+	}
+
 	private void play_init() {
 		b.sbPlayAutoSkip.setMax(auto_skip_progress(200));
 		b.sbPlayAutoSkip.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
@@ -114,6 +207,53 @@ public class SettingsActivity extends AppCompatActivity {
 		b.swAutoNorm.setOnCheckedChangeListener((v, checked) -> {
 				if (checked)
 					b.swRgNorm.setChecked(false);
+			});
+
+		ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[] {
+				"Band #1","Band #2","Band #3","Band #4","Band #5",
+			});
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		b.spEqlzBand.setAdapter(adapter);
+		b.spEqlzBand.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+				@Override
+				public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+					eqlz_show(b.spEqlzBand.getSelectedItemPosition() + 1);
+				}
+				@Override
+				public void onNothingSelected(AdapterView<?> parent) {
+				}
+			});
+
+		b.swEqualizer.setOnCheckedChangeListener((v, checked) -> { eqlz_enable(checked); });
+		b.sbEqlzFreq.setMax(220); // 0..22000 Hz
+		b.sbEqlzWidth.setMax(40); // 0..4.0
+		b.sbEqlzGain.setMax(120+120); // -12.0..12.0
+		b.sbEqlzFreq.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
+				@Override
+				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+					if (fromUser) {
+						eqlz_freq = eqlz_freq_value(progress);
+						eqlz_changed();
+					}
+				}
+			});
+		b.sbEqlzWidth.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
+				@Override
+				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+					if (fromUser) {
+						eqlz_width = eqlz_width_value(progress);
+						eqlz_changed();
+					}
+				}
+			});
+		b.sbEqlzGain.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
+				@Override
+				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+					if (fromUser) {
+						eqlz_gain = eqlz_gain_value(progress);
+						eqlz_changed();
+					}
+				}
 			});
 	}
 
@@ -254,6 +394,10 @@ public class SettingsActivity extends AppCompatActivity {
 		b.eAutoSkip.setText(core.setts.auto_skip_head.str());
 		b.sbPlayAutoSkipTail.setProgress(auto_skip_progress(core.setts.auto_skip_tail.val));
 		b.eAutoSkipTail.setText(core.setts.auto_skip_tail.str());
+		b.swEqualizer.setChecked(core.setts.equalizer_enabled);
+		if (!core.setts.equalizer_enabled)
+			eqlz_enable(false);
+		eqlz_init();
 
 		// Operation
 		b.eDataDir.setText(core.setts.pub_data_dir);
@@ -304,6 +448,7 @@ public class SettingsActivity extends AppCompatActivity {
 		core.setts.set_codepage(b.spCodepage.getSelectedItemPosition());
 		core.setts.auto_skip_head_set(b.eAutoSkip.getText().toString());
 		core.setts.auto_skip_tail_set(b.eAutoSkipTail.getText().toString());
+		core.setts.equalizer_set(b.swEqualizer.isChecked(), eqlz_commit());
 
 		// Operation
 		String s = b.eDataDir.getText().toString();
