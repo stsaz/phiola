@@ -6,6 +6,7 @@
 #include <util/woeh.h>
 #endif
 #include <util/util.h>
+#include <util/ckv.h>
 #include <ffsys/dylib.h>
 #include <ffsys/path.h>
 #include <ffsys/process.h>
@@ -528,8 +529,58 @@ FF_EXPORT void phi_core_run()
 	wrkx_run(&cc->wx);
 }
 
+
+void meta_destroy(phi_meta *meta) { ckv_destroy((void*)meta); }
+
+static void meta_set(phi_meta *meta, ffstr name, ffstr val, uint flags)
+{
+	struct ckv *c = (struct ckv*)meta;
+	switch (ckv_set(c, name, val, flags)) {
+	case CKV_E_OK:
+	case CKV_E_OK_CACHED:
+	case CKV_E_OK_REPLACED:
+		dbglog("meta: %S = %S [%u / %u]", &name, &val, CKV_CAP(c), c->n);
+		break;
+
+	case CKV_E_LIMIT:
+		errlog("meta tags add: limit reached");
+		break;
+
+	default:
+		errlog("meta tags add: error");
+		break;
+	}
+}
+
+static int meta_list(const phi_meta *meta, uint *index, ffstr *name, ffstr *val, uint flags)
+{
+	while (CKV_E_DONE != ckv_list((void*)meta, index, name, val, flags)) {
+		if (!(flags & PHI_META_PRIVATE)
+			&& ffstr_matchz(name, "_phi_"))
+			continue;
+		return 1;
+	}
+	return 0;
+}
+
+static int meta_find(const phi_meta *meta, ffstr name, ffstr *val, uint flags)
+{
+	if (CKV_E_NOTEXIST == ckv_find((void*)meta, name, val, flags))
+		return -1;
+	dbglog("meta requested: %S = %S", &name, val);
+	return 0;
+}
+
+static const phi_meta_if phi_metaif = {
+	meta_set,
+	(void*)ckv_copy,
+	meta_find,
+	meta_list,
+	meta_destroy,
+};
+
+
 extern const phi_track_if phi_track_iface;
-extern const phi_meta_if phi_metaif;
 static phi_core _core = {
 	.version_str = PHI_VERSION_STR,
 	.track = &phi_track_iface,

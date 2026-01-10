@@ -13,7 +13,6 @@ extern const phi_track_if phi_track_iface;
 #define errlog(...)  phi_errlog(core, "queue", NULL, __VA_ARGS__)
 #define syserrlog(...)  phi_syserrlog(core, "queue", NULL, __VA_ARGS__)
 #define ERR_MAX  20
-#include <core/meta.h>
 
 typedef void (*on_change_t)(phi_queue_id, uint, uint);
 struct queue_mgr {
@@ -142,6 +141,7 @@ static void qm_move(uint from, uint to)
 	dbglog("move: %u -> %u", from, to);
 }
 
+extern void meta_destroy(phi_meta *meta);
 
 static void q_free(struct phi_queue *q)
 {
@@ -569,6 +569,7 @@ static phi_queue_id q_filter(phi_queue_id q, ffstr filter, uint flags)
 
 	struct q_entry **it, *e;
 	FFSLICE_WALK(&q->index, it) {
+		ffcpu_prefetch_l1(it[4]);
 		e = *it;
 		if (qe_filter(e, filter, flags))
 			*ffvec_pushT(&qf->index, void*) = qe_ref(e);

@@ -77,7 +77,8 @@ static void track_busytime_print(phi_track *t)
 
 	struct filter *f;
 	FF_FOREACH(t->conveyor.filters_pool, f) {
-		uint64 nsec = f->busytime_nsec;
+		uint i = f - t->conveyor.filters_pool;
+		uint64 nsec = t->conveyor.busytime_nsec[i];
 		if (nsec == 0)
 			continue;
 		uint percent = nsec / 1000 * 100 / total_usec;
@@ -166,8 +167,7 @@ static phi_track* track_create(struct phi_track_conf *conf)
 	phi_track *t = ffmem_align(4000, 4096);
 	ffmem_zero(t, 4000);
 	t->area_cap = 4000 - sizeof(phi_track);
-	FF_ASSERT(!((size_t)t->area & 7));
-	FF_ASSERT(!(t->area_cap & 7));
+	t->area_size = ffint_align_ceil2(FF_OFF(struct phi_track, area) & 63, 64);
 	t->conf = *conf;
 	conveyor_init(&t->conveyor);
 	t->worker = core->worker_assign(conf->cross_worker_assign);
@@ -244,9 +244,9 @@ static int trk_filter_run(phi_track *t, struct filter *f)
 {
 	struct phi_conveyor *v = &t->conveyor;
 
-	if (f->backward_skip) {
+	if (v->backward_skip[v->cur]) {
 		// last time the filter returned PHI_OK
-		f->backward_skip = 0;
+		v->backward_skip[v->cur] = 0;
 		if (v->cur != 0)
 			return PHI_MORE; // go to previous filter
 		// calling first-in-chain filter
@@ -325,7 +325,7 @@ static int trk_filter_handle_result(phi_track *t, struct filter *f, int r)
 		goto go_fwd;
 
 	case PHI_OK:
-		f->backward_skip = 1;
+		v->backward_skip[v->cur] = 1;
 		r = PHI_DATA;
 		// fallthrough
 
@@ -389,7 +389,7 @@ static void track_run(phi_track *t)
 		if (ff_unlikely(t->conf.print_time)) {
 			t2 = core->time(NULL, PHI_CORE_TIME_MONOTONIC);
 			fftime_sub(&t2, &t1);
-			f->busytime_nsec += t2.sec * 1000000 + t2.nsec;
+			t->conveyor.busytime_nsec[t->conveyor.cur] += t2.sec * 1000000 + t2.nsec;
 		}
 
 		r = trk_filter_handle_result(t, f, r);

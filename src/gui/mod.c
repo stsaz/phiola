@@ -761,7 +761,7 @@ void convert_begin(void *param)
 		core->metaif->destroy(&qc->tconf.meta);
 		ffmem_free(qc->tconf.ofile.name);
 		qc->tconf = *c;
-		c->meta = NULL;
+		meta_zero(&c->meta);
 		c->ofile.name = NULL;
 		gd->queue->play(NULL, gd->queue->at(gd->q_convert, 0));
 	}

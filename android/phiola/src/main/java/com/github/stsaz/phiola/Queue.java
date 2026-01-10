@@ -116,7 +116,7 @@ class PhiolaQueue {
 			return cache[i - cache_start_index];
 		}
 
-		int from = i, n = 10, target = 0;
+		int from = i, n = 16, target = 0;
 
 		if (i == cache_start_index - 1) { // scrolling up
 			from = i + 1 - n;

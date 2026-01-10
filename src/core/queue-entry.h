@@ -27,13 +27,13 @@ static void qe_free(struct q_entry *e)
 	core->metaif->destroy(&e->pub.meta);
 	if (e->pub.url != e->name)
 		ffmem_free(e->pub.url);
-	ffmem_free(e);
+	ffmem_alignfree(e);
 }
 
 static struct q_entry* qe_new(struct phi_queue_entry *qe)
 {
 	size_t n = ffsz_len(qe->url) + 1;
-	struct q_entry *e = ffmem_alloc(sizeof(struct q_entry) + n);
+	struct q_entry *e = ffmem_align(sizeof(struct q_entry) + n, 64);
 	ffmem_zero_obj(e);
 	e->pub = *qe;
 	e->used = 1;
@@ -67,15 +67,13 @@ static void qe_close(void *f, phi_track *t)
 		e->trk = NULL;
 
 		if (e->q && !e->q->conf.conversion && !e->pub.meta_priority) {
-			int mod = (e->pub.meta || t->meta); // empty meta == not modified
-			if (t->meta) {
+			int mod = (META_LEN(&e->pub.meta) || META_LEN(&t->meta)); // empty meta == not modified
+			if (META_LEN(&t->meta)) {
 				fflock_lock((fflock*)&e->pub.lock); // UI thread may read or write `conf.meta` at this moment
-				phi_meta meta_old = e->pub.meta;
+				core->metaif->destroy(&e->pub.meta);
 				e->pub.meta = t->meta; // Remember the tags we read from file in this track
 				fflock_unlock((fflock*)&e->pub.lock);
-
-				core->metaif->destroy(&meta_old);
-				t->meta = NULL;
+				meta_zero(&t->meta);
 			}
 
 			if (t->audio.total != ~0ULL && t->audio.format.rate) {
@@ -195,10 +193,10 @@ static int qe_play(struct q_entry *e)
 			goto err;
 	}
 
-	if (e->q->conf.tconf.meta)
+	if (META_LEN(&e->q->conf.tconf.meta))
 		core->metaif->copy(&t->meta, &e->q->conf.tconf.meta, 0); // from user
-	if (e->pub.meta && e->pub.meta_priority)
-		core->metaif->copy(&t->meta, &e->pub.meta, (e->q->conf.tconf.meta) ? PHI_META_UNIQUE : 0); // from .cue
+	if (META_LEN(&e->pub.meta) && e->pub.meta_priority)
+		core->metaif->copy(&t->meta, &e->pub.meta, (META_LEN(&e->q->conf.tconf.meta)) ? PHI_META_UNIQUE : 0); // from .cue
 
 	e->trk = t;
 	e->used++;

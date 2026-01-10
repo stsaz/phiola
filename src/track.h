@@ -104,14 +104,13 @@ struct filter {
 	void *obj;
 	int (*process)(void *obj, phi_track *t);
 	const struct phi_filter *iface;
-
-	uint64 busytime_nsec :63;
-	uint64 backward_skip :1;
 };
 
 struct phi_conveyor {
 	struct filter filters_pool[MAX_FILTERS];
+	uint64 busytime_nsec[MAX_FILTERS];
 	u_char filters_active[MAX_FILTERS];
+	u_char backward_skip[MAX_FILTERS];
 	uint i_fpool, n_active, cur;
 };
 
@@ -138,19 +137,27 @@ enum PHI_E {
 
 /** Track instance */
 struct phi_track {
-	ffchain_item sib;
-	uint worker;
-	phi_task task_wake, task_stop;
-	struct phi_conveyor conveyor;
-	fftime t_start;
-	uint error; // enum PHI_E
-	uint state; // enum STATE
-	char id[12];
-
+	// const:
 	struct phi_track_conf conf;
-	uint chain_flags; // enum PHI_F
-	ffstr data_in, data_out;
-	const char *data_type;
+	char id[12];
+	ushort worker;
+	ushort area_cap;
+	fftime t_start;
+
+	// internal:
+	uint state; // enum STATE
+	uint area_size;
+	ffchain_item sib;
+	phi_task task_wake, task_stop;
+
+	// hot:
+	struct {
+		struct phi_conveyor conveyor;
+		uint chain_flags; // enum PHI_F
+		ffstr data_in, data_out;
+	} FF_STRUCTALIGN(64);
+
+	// shared:
 
 	struct {
 		uint64 size; // Input file size. -1:unset
@@ -162,6 +169,8 @@ struct phi_track {
 	phi_meta meta;
 	void *qent;
 	void *udata;
+	const char *data_type;
+	uint error; // enum PHI_E
 	uint icy_meta_interval; // Upon receiving HTTP response, 'http' filter sets ICY meta interval for 'icy' filter
 	uint meta_changed :1; // Set by 'icy' filter when meta is changed; reset by 'ui' filter
 	uint meta_reading :1;
@@ -253,8 +262,8 @@ struct phi_track {
 		uint allow_async :1;
 	} output;
 
-	uint area_cap, area_size;
 	u_char area[0];
+	// padding[]
 	// filter private data[]
 	// padding[]
 	// ...
@@ -262,13 +271,12 @@ struct phi_track {
 
 static inline void* phi_track_alloc(phi_track *t, uint n)
 {
-	uint sz = t->area_size + ffint_align_ceil2(n, 8);
+	uint sz = t->area_size + ffint_align_ceil2(n, 64);
 	if (sz > t->area_cap) {
 		return ffmem_calloc(1, n);
 	}
 	void *p = t->area + t->area_size;
 	t->area_size = sz;
-	// ffmem_zero(p, n);
 	return p;
 }
 

@@ -6,13 +6,13 @@
 #include <ffbase/string.h>
 #include <ffbase/time.h>
 
-#define PHI_VERSION  20608
+#define PHI_VERSION  20700
 
 /** Inter-module compatibility version.
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20608
+#define PHI_VERSION_CORE  20700
 
 typedef long long int64;
 typedef unsigned long long uint64;
@@ -30,7 +30,7 @@ typedef struct _phi_fftask phi_task;
 struct _phi_fftimerqueue_node { size_t a[8]; };
 typedef struct _phi_fftimerqueue_node phi_timer;
 struct phi_meta_if;
-typedef struct _phi_meta* phi_meta;
+typedef struct { char data[64]; } phi_meta;
 
 enum PHI_LOG {
 	PHI_LOG_ERR,
@@ -399,13 +399,14 @@ struct phi_track_if {
 
 
 enum PHI_META_LIST {
-	PHI_META_UNIQUE = 1, // exclude duplicate (with the same key) entries
-	PHI_META_PRIVATE = 2, // include private entries starting with "_phi_"
+	PHI_META_UNIQUE = 1,	// Exclude entries with the same key
+	PHI_META_PRIVATE = 2,	// Include private entries starting with "_phi_"
 };
 
 enum PHI_META_SET {
-	// PHI_META_UNIQUE
-	PHI_META_REPLACE = 4, // replace existing key-value pair
+	// PHI_META_UNIQUE = 1	// Do nothing if the key exists
+	PHI_META_REPLACE = 4,	// Replace existing key-value pair
+	PHI_META_CACHE = 8		// Store data in cache (if it fits)
 };
 
 typedef struct phi_meta_if phi_meta_if;
@@ -474,8 +475,8 @@ struct phi_queue_conf {
 };
 
 struct phi_queue_entry {
-	char*	url;
 	phi_meta meta;
+	char*	url;
 	uint	length_sec :24;
 	uint	meta_priority :1; // Supplied `meta` has higher priority than meta from input file (e.g. for .cue track)
 	uint	lock; // For synchronizing access to `meta`

@@ -55,7 +55,7 @@ static int m3u_add(struct m3u *m, phi_track *t)
 		core->metaif->set(&qe.meta, FFSTR_Z("artist"), *(ffstr*)&m->pls_ent.artist, 0);
 
 	if (m->pls_ent.title.len)
-		core->metaif->set(&qe.meta, FFSTR_Z("title"), *(ffstr*)&m->pls_ent.title, 0);
+		core->metaif->set(&qe.meta, FFSTR_Z("title"), *(ffstr*)&m->pls_ent.title, PHI_META_CACHE);
 
 	m->qu_cur = queue->insert(m->qu_cur, &qe);
 	ffstr_free(&url);

@@ -580,7 +580,7 @@ Java_com_github_stsaz_phiola_Phiola_quDisplayLine(JNIEnv *env, jobject thiz, jlo
 			val.ptr = buf;
 			uint flags = x->queue.conf(q)->conversion;
 			display_name_prepare(&val, sizeof(buf) - 1, qe, i, flags);
-			x->metaif.set(&qe->meta, FFSTR_Z("_phi_display"), val, 0);
+			x->metaif.set(&qe->meta, FFSTR_Z("_phi_display"), val, PHI_META_CACHE);
 			val.ptr[val.len] = '\0';
 		}
 		jstring js = jni_js_sz(val.ptr);
@@ -687,7 +687,7 @@ Java_com_github_stsaz_phiola_Phiola_quConvertBegin(JNIEnv *env, jobject thiz, jl
 		x->metaif.destroy(&qc->tconf.meta);
 		qc->tconf = conf;
 		qc->tconf.meta = conf.meta;
-		conf.meta = NULL;
+		meta_zero(&conf.meta);
 		conf.ofile.name = NULL;
 	}
 
@@ -757,7 +757,7 @@ static void qu_conv_update(phi_queue_id q)
 		}
 
 		fflock_lock((fflock*)&qe->lock); // UI thread may read or write `conf.meta` at this moment
-		x->metaif.set(&qe->meta, FFSTR_Z("_phi_display"), val, PHI_META_REPLACE);
+		x->metaif.set(&qe->meta, FFSTR_Z("_phi_display"), val, PHI_META_CACHE | PHI_META_REPLACE);
 		fflock_unlock((fflock*)&qe->lock);
 	}
 	FFINT_WRITEONCE(x->convert.n_tracks_updated, n);

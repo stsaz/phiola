@@ -219,17 +219,17 @@ static inline void phi_af_update(struct phi_af *dst, const struct phi_af *src)
 
 #include <ffbase/lock.h>
 
+#define META_LEN(m)  ((m)->data[0])
+
+#define meta_zero(m)  ffmem_zero_obj(m)
+
 static inline void qe_meta_update(struct phi_queue_entry *qe, phi_meta *src, const phi_meta_if *metaif)
 {
-	phi_meta m = NULL;
-	metaif->copy(&m, src, 0);
-
 	fflock_lock((fflock*)&qe->lock); // UI thread may read or write `conf.meta` at this moment
-	phi_meta meta_old = qe->meta;
-	qe->meta = m;
+	metaif->destroy(&qe->meta);
+	qe->meta = *src;
 	fflock_unlock((fflock*)&qe->lock);
-
-	metaif->destroy(&meta_old);
+	meta_zero(src);
 }
 
 static inline void qe_copy(struct phi_queue_entry *dst, const struct phi_queue_entry *src, const phi_meta_if *metaif)
