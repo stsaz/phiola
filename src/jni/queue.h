@@ -601,17 +601,20 @@ Java_com_github_stsaz_phiola_Phiola_quDisplayLine(JNIEnv *env, jobject thiz, jlo
 	phi_queue_id q = (phi_queue_id)jq;
 	char buf[256];
 	jobjectArray jsa = jni_joa(n, jni_class(JNI_CSTR));
+	int flags = -1;
 	uint ijsa = 0;
-	jint end = i + n;
-	for (;  i < end;  i++) {
+	struct phi_queue_entry *qev[32], *qe;
+	n = ffmin(n, FF_COUNT(qev));
+	n = x->queue.ref_bulk(q, i, n, qev);
+	uint end = i + n;
+	for (;  (uint)i < end;  i++) {
+		qe = qev[ijsa];
 		ffstr val = {};
-		struct phi_queue_entry *qe = x->queue.ref(q, i);
-		if (!qe)
-			break;
 		fflock_lock((fflock*)&qe->lock); // core thread may read or write `conf.meta` at this moment
 		if (x->metaif.find(&qe->meta, FFSTR_Z("_phi_display"), &val, PHI_META_PRIVATE)) {
 			val.ptr = buf;
-			uint flags = x->queue.conf(q)->conversion;
+			if (flags < 0)
+				flags = x->queue.conf(q)->conversion;
 			display_name_prepare(&val, sizeof(buf) - 1, qe, i, flags);
 			x->metaif.set(&qe->meta, FFSTR_Z("_phi_display"), val, PHI_META_CACHE);
 			val.ptr[val.len] = '\0';

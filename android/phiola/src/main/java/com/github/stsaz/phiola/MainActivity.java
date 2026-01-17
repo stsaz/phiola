@@ -1261,17 +1261,13 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void seek_back() {
-		int percent = b.seekbar.getProgress() - core.setts.play_seek_back_percent;
-		if (percent < 0)
-			percent = 0;
-		seek(percent);
+		int percent = b.seekbar.getProgress() - core.play.play_seek_back_percent;
+		seek((percent >= 0) ? percent : 0);
 	}
 
 	private void seek_fwd() {
-		int percent = b.seekbar.getProgress() + core.setts.play_seek_fwd_percent;
-		if (percent >= 100)
-			percent = 99;
-		seek(percent);
+		int percent = b.seekbar.getProgress() + core.play.play_seek_fwd_percent;
+		seek((percent < 100) ? percent : 99);
 	}
 
 	private void playback_marker_set() {

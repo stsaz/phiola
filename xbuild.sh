@@ -200,6 +200,8 @@ make -j$JOBS \
  CFLAGS_USER=-fno-diagnostics-color \
  $ARGS_PHI \
  $ARGS
+
+# cp -au /usr/lib/x86_64-linux-gnu/libasan.so.8* /src/phiola/_linux-amd64/phiola-2/
 EOF
 
 # Build inside the container

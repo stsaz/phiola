@@ -365,7 +365,7 @@ class ConvertSettings {
 		Phiola.AF_OPUS,
 		Phiola.AF_MP3,
 		Phiola.AF_FLAC,
-		0,
+		Phiola.AF_WAV,
 	};
 	static final String[] conv_formats = {
 		"m4a",

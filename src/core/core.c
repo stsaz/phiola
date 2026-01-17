@@ -6,6 +6,7 @@
 #include <util/woeh.h>
 #endif
 #include <util/util.h>
+#define CKV_STRUCT_SIZE  56
 #include <util/ckv.h>
 #include <ffsys/dylib.h>
 #include <ffsys/path.h>

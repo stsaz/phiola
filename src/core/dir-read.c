@@ -8,6 +8,7 @@
 extern const phi_core *core;
 extern const phi_queue_if phi_queueif;
 #define syswarnlog(t, ...)  phi_syswarnlog(core, NULL, t, __VA_ARGS__)
+#define warnlog(t, ...)  phi_warnlog(core, NULL, t, __VA_ARGS__)
 
 /**
 'include' filter matches files only.
@@ -40,97 +41,127 @@ static ffbool file_matches(phi_track *t, const char *fn, ffbool dir)
 	return ok;
 }
 
-/** Recursively add file tree into queue */
-static int qu_add_dir_r(const char *fn, phi_track *t)
+struct dir_r {
+	struct phi_queue_entry qe[8];
+	uint num_qe, dir_removed;
+	void *qcur;
+
+	phi_track *trk;
+	fntree_block *root, *blk;
+	fntree_cursor cur;
+};
+
+static void dir_r_commit(struct dir_r *d)
 {
-	void *qcur = t->qent;
+	d->qcur = phi_queueif.insert_bulk(d->qcur, d->qe, d->num_qe, NULL);
+
+	for (uint i = 0;  i < d->num_qe;  i++) {
+		ffmem_free(d->qe[i].url);
+		d->qe[i].url = NULL;
+	}
+
+	if (!d->dir_removed) {
+		d->dir_removed = 1;
+		phi_queueif.remove(d->trk->qent);
+	}
+}
+
+/** Add files from the directory into the queue; add directories into a file tree block. */
+static uint dir_read(struct dir_r *d, fntree_block **blk)
+{
+	uint n = 0;
 	ffdirscan ds = {};
-	fntree_block *root = NULL;
 	char *fpath = NULL;
-	int rc = -1;
-	int dir_removed = 0;
 
-	if (ffdirscan_open(&ds, fn, 0))
+	ffstr path = fntree_path(*blk);
+	if (ffdirscan_open(&ds, path.ptr, 0)) {
+		syswarnlog(d->trk, "ffdirscan_open: %s", path.ptr);
 		goto end;
+	}
 
-	if (!(root = fntree_from_dirscan(FFSTR_Z(fn), &ds, 0)))
-		goto end;
-	ffdirscan_close(&ds);
-
-	fntree_block *blk = root;
-	fntree_cursor cur = {};
-	for (;;) {
-		fntree_entry *e;
-		if (!(e = fntree_cur_next_r_ctx(&cur, &blk)))
-			break;
-
-		ffstr path = fntree_path(blk);
-		ffstr name = fntree_name(e);
+	const char *name;
+	while ((name = ffdirscan_next(&ds))) {
 		ffmem_free(fpath);
-		fpath = ffsz_allocfmt("%S%c%S", &path, FFPATH_SLASH, &name);
+		fpath = ffsz_allocfmt("%S%c%s", &path, FFPATH_SLASH, name);
 
 		fffileinfo fi;
-		if (fffile_info_path(fpath, &fi))
+		if (fffile_info_path(fpath, &fi)) {
+			syswarnlog(d->trk, "fffile_info_path: %s", fpath);
 			continue;
-		uint isdir = fffile_isdir(fffileinfo_attr(&fi));
+		}
+		uint dir = fffile_isdir(fffileinfo_attr(&fi));
 
-		if (!file_matches(t, fpath, isdir))
+		if (!file_matches(d->trk, fpath, dir))
 			continue;
 
-		if (isdir) {
-			ffmem_zero_obj(&ds);
-			if (ffdirscan_open(&ds, fpath, 0))
+		if (dir) {
+			fntree_entry *e;
+			if (!(e = fntree_addz(blk, name, 0))) {
+				warnlog(d->trk, "fntree_addz: %s", fpath);
 				continue;
-
-			ffstr_setz(&path, fpath);
-			if (!(blk = fntree_from_dirscan(path, &ds, 0)))
-				continue;
-			ffdirscan_close(&ds);
-
-			fntree_attach(e, blk);
+			}
+			fntree_block *nb = fntree_create(FFSTR_Z(fpath));
+			fntree_attach(e, nb);
 			continue;
 		}
 
-		struct phi_queue_entry qe = {
-			.url = fpath,
-		};
-		qcur = phi_queueif.insert(qcur, &qe);
-		ffmem_free(fpath);
+		d->qe[d->num_qe].url = fpath;
 		fpath = NULL;
 
-		if (!dir_removed) {
-			dir_removed = 1;
-			phi_queueif.remove(t->qent);
+		if (++d->num_qe == FF_COUNT(d->qe)) {
+			dir_r_commit(d);
+			n += d->num_qe;
+			d->num_qe = 0;
 		}
 	}
 
-	rc = 0;
-
 end:
-	if (!dir_removed) {
-		dir_removed = 1;
-		phi_queueif.remove(t->qent);
-	}
-
+	dir_r_commit(d);
+	n += d->num_qe;
+	d->num_qe = 0;
 	ffmem_free(fpath);
 	ffdirscan_close(&ds);
-	fntree_free_all(root);
-	return rc;
+	return n;
 }
 
 static void* dir_open(phi_track *t)
 {
-	if (!!qu_add_dir_r(t->conf.ifile.name, t))
-		return PHI_OPEN_ERR;
-	return (void*)1;
+	struct dir_r *d = phi_track_allocT(t, struct dir_r);
+	d->qcur = t->qent;
+	d->root = fntree_create(FFSTR_Z(t->conf.ifile.name));
+	d->blk = d->root;
+	d->trk = t;
+	return d;
 }
 
-static int dir_process(void *ctx, phi_track *t)
+static void dir_close(struct dir_r *d, phi_track *t)
 {
-	return PHI_FIN;
+	for (uint i = 0;  i < d->num_qe;  i++) {
+		ffmem_free(d->qe[i].url);
+	}
+	fntree_free_all(d->root);
+	phi_track_free(d->trk, d);
+}
+
+static int dir_process(struct dir_r *d, phi_track *t)
+{
+	uint n = 0;
+	while (n < 8) {
+		n += dir_read(d, &d->blk);
+		if (d->cur.cur)
+			((fntree_entry*)d->cur.cur)->children = d->blk;
+
+		fntree_entry *e;
+		if (!(e = fntree_cur_next_r(&d->cur, &d->blk)))
+			return PHI_FIN;
+		d->blk = e->children;
+	}
+
+	core->track->wake(t);
+	return PHI_ASYNC;
 }
 
 const phi_filter phi_dir_r = {
-	dir_open, NULL, dir_process,
+	dir_open, (void*)dir_close, (void*)dir_process,
 	"dir-read"
 };

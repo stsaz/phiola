@@ -163,10 +163,10 @@ static char* conveyor_print(struct phi_conveyor *v, const struct filter *mark, c
 
 static phi_track* track_create(struct phi_track_conf *conf)
 {
-	FF_ASSERT(sizeof(phi_track) < 4000);
-	phi_track *t = ffmem_align(4000, 4096);
-	ffmem_zero(t, 4000);
-	t->area_cap = 4000 - sizeof(phi_track);
+	FF_ASSERT(sizeof(phi_track) < 4096);
+	phi_track *t = ffmem_align(4096, 4096);
+	ffmem_zero(t, 4096);
+	t->area_cap = 4096 - sizeof(phi_track);
 	t->area_size = ffint_align_ceil2(FF_OFF(struct phi_track, area) & 63, 64);
 	t->conf = *conf;
 	conveyor_init(&t->conveyor);
@@ -244,9 +244,9 @@ static int trk_filter_run(phi_track *t, struct filter *f)
 {
 	struct phi_conveyor *v = &t->conveyor;
 
-	if (v->backward_skip[v->cur]) {
+	if (v->backward_skip[v->filters_active[v->cur]]) {
 		// last time the filter returned PHI_OK
-		v->backward_skip[v->cur] = 0;
+		v->backward_skip[v->filters_active[v->cur]] = 0;
 		if (v->cur != 0)
 			return PHI_MORE; // go to previous filter
 		// calling first-in-chain filter
@@ -325,7 +325,7 @@ static int trk_filter_handle_result(phi_track *t, struct filter *f, int r)
 		goto go_fwd;
 
 	case PHI_OK:
-		v->backward_skip[v->cur] = 1;
+		v->backward_skip[v->filters_active[v->cur]] = 1;
 		r = PHI_DATA;
 		// fallthrough
 
@@ -389,7 +389,7 @@ static void track_run(phi_track *t)
 		if (ff_unlikely(t->conf.print_time)) {
 			t2 = core->time(NULL, PHI_CORE_TIME_MONOTONIC);
 			fftime_sub(&t2, &t1);
-			t->conveyor.busytime_nsec[t->conveyor.cur] += t2.sec * 1000000 + t2.nsec;
+			t->conveyor.busytime_nsec[t->conveyor.filters_active[t->conveyor.cur]] += t2.sec * 1000000 + t2.nsec;
 		}
 
 		r = trk_filter_handle_result(t, f, r);

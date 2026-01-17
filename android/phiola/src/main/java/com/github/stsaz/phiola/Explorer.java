@@ -33,10 +33,7 @@ class Explorer {
 	int count() {
 		if (display_rows == null)
 			return 0;
-		int n = 1;
-		if (up_dir)
-			n++;
-		return display_rows.length + n;
+		return display_rows.length + ((up_dir) ? 2 : 1);
 	}
 
 	String display_line(int pos) {

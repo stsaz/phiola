@@ -5,12 +5,16 @@ package com.github.stsaz.phiola;
 
 import android.os.Bundle;
 
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.SeekBar;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.github.stsaz.phiola.databinding.ConvertBinding;
+
+import java.util.Arrays;
 
 public class ConvertActivity extends AppCompatActivity {
 	private static final String TAG = "phiola.ConvertActivity";
@@ -28,79 +32,8 @@ public class ConvertActivity extends AppCompatActivity {
 
 		core = Core.getInstance();
 		core.gui().on_activity_show(this);
-		varmenu = new VarMenu(this);
-		explorer = new ExplorerMenu(core, this);
-		b.eOutDir.setOnClickListener(v -> explorer.show(b.eOutDir, 0));
-		b.eOutName.setOnClickListener(v -> varmenu.show(b.eOutName, new String[]{
-				"@filename", "@album", "@artist", "@title", "@tracknumber",
-			}));
 
-		ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item
-			, ConvertSettings.conv_format_display);
-		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		b.spOutExt.setAdapter(adapter);
-
-		b.sbRangeFrom.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
-				@Override
-				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser) {
-						b.eFrom.setText(time_str(time_value(progress)));
-					}
-				}
-			});
-		b.bFromSetCur.setOnClickListener((v) -> pos_set_cur(true));
-
-		b.sbRangeUntil.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
-				@Override
-				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser) {
-						String s = "";
-						if (!(progress == 0 || progress == 100))
-							s = time_str(time_value(progress));
-						b.eUntil.setText(s);
-					}
-				}
-			});
-		b.bUntilSetCur.setOnClickListener((v) -> pos_set_cur(false));
-
-		adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item
-			, ConvertSettings.conv_sample_formats_str);
-		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		b.spSampleFormat.setAdapter(adapter);
-
-		b.sbAacQ.setMax(aac_q_progress(5));
-		b.sbAacQ.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
-				@Override
-				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser)
-						b.eAacQ.setText(aac_q_write(aac_q_value(progress)));
-				}
-			});
-
-		b.sbOpusQ.setMax(opus_q_progress(510));
-		b.sbOpusQ.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
-				@Override
-				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser)
-						b.eOpusQ.setText(core.int_to_str(opus_q_value(progress)));
-				}
-			});
-
-		b.swCopy.setOnCheckedChangeListener((v, checked) -> {
-				b.spSampleFormat.setEnabled(!checked);
-				b.eSampleRate.setEnabled(!checked);
-
-				b.sbAacQ.setEnabled(!checked);
-				b.eAacQ.setEnabled(!checked);
-
-				b.sbOpusQ.setEnabled(!checked);
-				b.eOpusQ.setEnabled(!checked);
-
-				b.eMp3Q.setEnabled(!checked);
-			});
-
-		b.bStart.setOnClickListener((v) -> convert());
-
+		init();
 		load();
 
 		String iname = getIntent().getStringExtra("iname");
@@ -116,6 +49,14 @@ public class ConvertActivity extends AppCompatActivity {
 		}
 	}
 
+	@Override
+	protected void onDestroy() {
+		save();
+		core.convert.normalize();
+		core.unref();
+		super.onDestroy();
+	}
+
 	private static abstract class SBOnSeekBarChangeListener implements SeekBar.OnSeekBarChangeListener {
 		@Override
 		public void onStartTrackingTouch(SeekBar seekBar) {}
@@ -124,10 +65,109 @@ public class ConvertActivity extends AppCompatActivity {
 		public void onStopTrackingTouch(SeekBar seekBar) {}
 	}
 
+	private void init() {
+		varmenu = new VarMenu(this);
+		explorer = new ExplorerMenu(core, this);
+		b.eOutDir.setOnClickListener(v -> explorer.show(b.eOutDir, 0));
+		b.eOutName.setOnClickListener(v -> varmenu.show(b.eOutName, new String[]{
+				"@filename", "@album", "@artist", "@title", "@tracknumber",
+			}));
+
+		ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item
+			, ConvertSettings.conv_format_display);
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		b.spOutExt.setAdapter(adapter);
+		b.spOutExt.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+				@Override
+				public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+					enc_setts_enable(position);
+				}
+				@Override
+				public void onNothingSelected(AdapterView<?> parent) {}
+			});
+
+		b.sbRangeFrom.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
+				@Override
+				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+					if (fromUser)
+						b.eFrom.setText(time_str(time_value(progress)));
+				}
+			});
+		b.bFromSetCur.setOnClickListener((v) -> pos_set_cur(true));
+
+		b.sbRangeUntil.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
+				@Override
+				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+					if (fromUser)
+						b.eUntil.setText((progress > 0 && progress < 100) ? time_str(time_value(progress)) : "");
+				}
+			});
+		b.bUntilSetCur.setOnClickListener((v) -> pos_set_cur(false));
+
+		adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item
+			, ConvertSettings.conv_sample_formats_str);
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		b.spSampleFormat.setAdapter(adapter);
+
+		b.sbAACQ.setMax(aac_q_progress(5));
+		b.sbAACQ.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
+				@Override
+				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+					if (fromUser)
+						b.eAACQ.setText(aac_q_write(aac_q_value(progress)));
+				}
+			});
+
+		b.sbOpusQ.setMax(opus_q_progress(510));
+		b.sbOpusQ.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
+				@Override
+				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+					if (fromUser)
+						b.eOpusQ.setText(core.int_to_str(opus_q_value(progress)));
+				}
+			});
+
+		b.sbMp3Q.setMax(9);
+		b.sbMp3Q.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
+				@Override
+				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+					if (fromUser)
+						b.eMp3Q.setText(core.int_to_str(mp3_q_value(progress)));
+				}
+			});
+
+		b.swCopy.setOnCheckedChangeListener((v, checked) -> {
+				b.spSampleFormat.setEnabled(!checked);
+				b.eSampleRate.setEnabled(!checked);
+				enc_setts_enable((!checked) ? b.spOutExt.getSelectedItemPosition() : -1);
+			});
+
+		b.bStart.setOnClickListener((v) -> convert());
+	}
+
+	private void enc_setts_enable(int iformat) {
+		boolean[] v = new boolean[3];
+		if (iformat >= 0) {
+			switch (ConvertSettings.conv_encoders[iformat]) {
+			case Phiola.AF_AAC_LC:
+			case Phiola.AF_AAC_HE:
+				v[0] = true;  break;
+			case Phiola.AF_OPUS:
+				v[1] = true;  break;
+			case Phiola.AF_MP3:
+				v[2] = true;  break;
+			}
+		}
+		b.sbAACQ.setEnabled(v[0]);
+		b.eAACQ.setEnabled(v[0]);
+		b.sbOpusQ.setEnabled(v[1]);
+		b.eOpusQ.setEnabled(v[1]);
+		b.sbMp3Q.setEnabled(v[2]);
+		b.eMp3Q.setEnabled(v[2]);
+	}
+
 	private int time_progress(long sec) {
-		if (length_msec == 0)
-			return 0;
-		return (int)(sec * 100 / (length_msec/1000));
+		return (length_msec != 0) ? (int)(sec * 100 / (length_msec/1000)) : 0;
 	}
 	private long time_value(int progress) {
 		return length_msec/1000 * progress / 100;
@@ -137,11 +177,7 @@ public class ConvertActivity extends AppCompatActivity {
 	}
 
 	private int conv_format_index(String name) {
-		for (int i = 0; i < ConvertSettings.conv_formats.length; i++) {
-			if (ConvertSettings.conv_formats[i].equals(name))
-				return i;
-		}
-		return -1;
+		return Arrays.asList(ConvertSettings.conv_formats).indexOf(name);
 	}
 
 	// 16..800 by 16; 1..5
@@ -170,17 +206,22 @@ public class ConvertActivity extends AppCompatActivity {
 	private static int opus_q_value(int progress) { return 16 + progress * 16; }
 	private static int opus_q_progress(int q) { return (q - 16) / 16; }
 
+	// 9..0
+	private static int mp3_q_value(int progress) { return 9 - progress; }
+	private static int mp3_q_progress(int q) { return 9 - q; }
+
 	private void load() {
 		b.eOutDir.setText(core.convert.conv_out_dir);
 		b.eOutName.setText(core.convert.conv_out_name);
 		b.spOutExt.setSelection(conv_format_index(core.convert.conv_format));
 
-		b.sbAacQ.setProgress(aac_q_progress(core.convert.conv_aac_quality));
-		b.eAacQ.setText(core.int_to_str(core.convert.conv_aac_quality));
+		b.sbAACQ.setProgress(aac_q_progress(core.convert.conv_aac_quality));
+		b.eAACQ.setText(core.int_to_str(core.convert.conv_aac_quality));
 
 		b.sbOpusQ.setProgress(opus_q_progress(core.convert.conv_opus_quality));
 		b.eOpusQ.setText(core.int_to_str(core.convert.conv_opus_quality));
 
+		b.sbMp3Q.setProgress(mp3_q_progress(core.convert.conv_mp3_quality));
 		b.eMp3Q.setText(core.int_to_str(core.convert.conv_mp3_quality));
 
 		b.swCopy.setChecked(core.convert.conv_copy);
@@ -207,7 +248,7 @@ public class ConvertActivity extends AppCompatActivity {
 		core.convert.conv_format = ConvertSettings.conv_formats[b.spOutExt.getSelectedItemPosition()];
 		core.convert.conv_copy = b.swCopy.isChecked();
 
-		int v = aac_q_read(b.eAacQ.getText().toString());
+		int v = aac_q_read(b.eAACQ.getText().toString());
 		if (v != 0)
 			core.convert.conv_aac_quality = v;
 
@@ -223,14 +264,6 @@ public class ConvertActivity extends AppCompatActivity {
 		core.convert.conv_new_add_list = b.swPlAdd.isChecked();
 	}
 
-	@Override
-	protected void onDestroy() {
-		save();
-		core.convert.normalize();
-		core.unref();
-		super.onDestroy();
-	}
-
 	/** Set 'from/until' position equal to the current playing position */
 	private void pos_set_cur(boolean from) {
 		long sec = core.track.curpos_msec() / 1000;
@@ -244,7 +277,6 @@ public class ConvertActivity extends AppCompatActivity {
 		}
 	}
 
-	String iname, oname;
 	private void convert() {
 		b.bStart.setEnabled(false);
 

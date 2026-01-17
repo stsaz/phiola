@@ -46,6 +46,7 @@ enum {
 };
 
 static void* q_insert(struct phi_queue *q, uint pos, struct phi_queue_entry *qe);
+static void* q_insert_bulk(struct phi_queue *q, uint pos, struct phi_queue_entry *qe, uint n, struct phi_queue_entry **result);
 static int q_remove_at(struct phi_queue *q, uint pos, uint n);
 static struct q_entry* q_get(struct phi_queue *q, uint i);
 static int q_find(struct phi_queue *q, struct q_entry *e);
@@ -209,6 +210,35 @@ static void* q_insert(struct phi_queue *q, uint pos, struct phi_queue_entry *qe)
 	q_modified(q);
 	qm->on_change(q, 'a', pos);
 	return e;
+}
+
+static void* q_insert_bulk(struct phi_queue *q, uint pos, struct phi_queue_entry *qe, uint n, struct phi_queue_entry **result)
+{
+	struct q_entry* ents[8];
+	if (!n || n > FF_COUNT(ents))
+		return NULL;
+
+	qe_new_bulk(qe, n, ents);
+	for (uint i = 0;  i < n;  i++) {
+		struct q_entry *e = ents[i];
+		e->q = q;
+		e->index = pos + i;
+		if (result)
+			*result++ = &e->pub;
+	}
+
+	fflock_lock(&q->lock);
+	ffvec_insert(&q->index, pos, ents, n, sizeof(void*));
+	fflock_unlock(&q->lock);
+
+	q_modified(q);
+	for (uint i = 0;  i < n;  i++) {
+		uint ipos = pos + i;
+		dbglog("added '%s' [%u/%L]", ents[i]->pub.url, ipos, q->index.len);
+		qm->on_change(q, 'a', ipos);
+	}
+
+	return ents[n - 1];
 }
 
 static int q_add(struct phi_queue *q, struct phi_queue_entry *qe)
@@ -532,6 +562,23 @@ end:
 	return (e) ? &e->pub : NULL;
 }
 
+static int q_ref_bulk(phi_queue_id q, uint pos, uint n, struct phi_queue_entry **result)
+{
+	if (!q) q = qm_default();
+
+	uint i = 0;
+	fflock_lock(&q->lock);
+	n = ffmin(pos + n, q->index.len);
+	for (;  pos < n;  pos++) {
+		struct q_entry *e = *ffslice_itemT(&q->index, pos, struct q_entry*);
+		e->used++;
+		result[i++] = &e->pub;
+	}
+
+	fflock_unlock(&q->lock);
+	return i;
+}
+
 static int q_remove_at(struct phi_queue *q, uint pos, uint n)
 {
 	if (!q) q = qm_default();
@@ -569,7 +616,6 @@ static phi_queue_id q_filter(phi_queue_id q, ffstr filter, uint flags)
 
 	struct q_entry **it, *e;
 	FFSLICE_WALK(&q->index, it) {
-		ffcpu_prefetch_l1(it[4]);
 		e = *it;
 		if (qe_filter(e, filter, flags))
 			*ffvec_pushT(&qf->index, void*) = qe_ref(e);
@@ -777,10 +823,12 @@ const phi_queue_if phi_queueif = {
 
 	q_at,
 	q_ref,
+	q_ref_bulk,
 	(void*)qe_unref,
 
 	(void*)qe_queue,
 	(void*)qe_insert,
+	(void*)qe_insert_bulk,
 	(void*)qe_index,
 	(void*)qe_remove,
 	(void*)qe_rename,

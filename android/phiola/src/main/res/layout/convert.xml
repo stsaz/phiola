@@ -184,11 +184,11 @@
 			android:text="@string/conv_aac_q"
 			android:textColor="@color/text" />
 		<SeekBar
-			android:id="@+id/sb_aac_q"
+			android:id="@+id/sbAACQ"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content" />
 		<EditText
-			android:id="@+id/e_aac_q"
+			android:id="@+id/eAACQ"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
@@ -202,11 +202,11 @@
 			android:text="@string/conv_opus_q"
 			android:textColor="@color/text" />
 		<SeekBar
-			android:id="@+id/sb_opus_q"
+			android:id="@+id/sbOpusQ"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content" />
 		<EditText
-			android:id="@+id/e_opus_q"
+			android:id="@+id/eOpusQ"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
@@ -219,8 +219,12 @@
 			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/conv_mp3_q"
 			android:textColor="@color/text" />
+		<SeekBar
+			android:id="@+id/sbMp3Q"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content" />
 		<EditText
-			android:id="@+id/e_mp3_q"
+			android:id="@+id/eMp3Q"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"

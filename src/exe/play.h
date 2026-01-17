@@ -56,7 +56,7 @@ Options:\n\
   `-remote_id` STRING     phiola instance ID\n\
   `-volume` NUMBER        Set initial volume level: 0..100\n\
   `-connect_timeout` NUMBER\n\
-                          Connection timeout (in seconds): 1..255\n\
+                        Connection timeout (in seconds): 1..255\n\
   `-recv_timeout` NUMBER  Receive timeout (in seconds): 1..255\n\
   `-no_meta`              Disable ICY meta data\n\
 ");

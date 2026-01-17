@@ -6,12 +6,50 @@
 
 static int qe_heal_ext(char *fn);
 
+
+struct q_entry_bukt {
+	uint offsets[8];
+};
+
+static struct q_entry_bukt* qeb_alloc(uint cap)
+{
+	cap += ffint_align_ceil2(sizeof(struct q_entry_bukt), 64);
+	char *p = ffmem_align(cap, 64);
+	ffmem_zero(p, 64);
+	return (void*)p;
+}
+
+static void qeb_free(struct q_entry_bukt *eb) { ffmem_alignfree(eb); }
+
+static void* qeb_data(struct q_entry_bukt *eb) { return (char*)eb + 64; }
+
+/** Mark the region at `ptr` as used */
+static uint qeb_add(struct q_entry_bukt *eb, uint i, void *ptr)
+{
+	return (eb->offsets[i] = (char*)ptr - (char*)eb);
+}
+
+/** Mark the region as free.
+Return 0 if the bucket becomes free. */
+static uint qeb_unref(struct q_entry_bukt *eb, uint off)
+{
+	uint sum = 0;
+	for (uint i = 0;  i < 8;  i++) {
+		if (off == eb->offsets[i])
+			eb->offsets[i] = 0;
+		sum |= eb->offsets[i];
+	}
+	return sum;
+}
+
+
 struct q_entry {
 	struct phi_queue_entry pub;
 	struct phi_queue *q;
 	phi_track *trk;
 	uint index;
 	uint used;
+	uint bucket_offset;
 	uint expand :1;
 	uint play_next_on_close :1;
 	char name[0];
@@ -27,19 +65,51 @@ static void qe_free(struct q_entry *e)
 	core->metaif->destroy(&e->pub.meta);
 	if (e->pub.url != e->name)
 		ffmem_free(e->pub.url);
+
+	if (e->bucket_offset) {
+		struct q_entry_bukt *eb = (void*)((char*)e - e->bucket_offset);
+		if (!qeb_unref(eb, e->bucket_offset))
+			qeb_free(eb);
+		return;
+	}
+
 	ffmem_alignfree(e);
+}
+
+static void qe_init(struct q_entry *e, uint url_len, const struct phi_queue_entry *qe)
+{
+	ffmem_zero_obj(e);
+	e->pub = *qe;
+	e->used = 1;
+	ffmem_copy(e->name, qe->url, url_len);
+	e->pub.url = e->name;
 }
 
 static struct q_entry* qe_new(struct phi_queue_entry *qe)
 {
 	size_t n = ffsz_len(qe->url) + 1;
 	struct q_entry *e = ffmem_align(sizeof(struct q_entry) + n, 64);
-	ffmem_zero_obj(e);
-	e->pub = *qe;
-	e->used = 1;
-	ffmem_copy(e->name, qe->url, n);
-	e->pub.url = e->name;
+	qe_init(e, n, qe);
 	return e;
+}
+
+static void qe_new_bulk(const struct phi_queue_entry *qe, uint n, struct q_entry* result[])
+{
+	FF_ASSERT(n <= 8);
+	uint url_len[8];
+	uint cap = 0;
+	for (uint i = 0;  i < n;  i++) {
+		url_len[i] = ffsz_len(qe[i].url) + 1;
+		cap += ffint_align_ceil2(sizeof(struct q_entry) + url_len[i], 64);
+	}
+	struct q_entry_bukt *eb = qeb_alloc(cap);
+	struct q_entry *e = qeb_data(eb);
+	for (uint i = 0;  i < n;  i++) {
+		qe_init(e, url_len[i], qe + i);
+		e->bucket_offset = qeb_add(eb, i, e);
+		result[i] = e;
+		e = (void*)((char*)e + ffint_align_ceil2(sizeof(struct q_entry) + url_len[i], 64));
+	}
 }
 
 struct q_entry* qe_ref(struct q_entry *e)
@@ -93,7 +163,7 @@ static void qe_close(void *f, phi_track *t)
 	if (e->q) {
 		uint flags = (t->error) ? Q_TKCL_ERR : 0;
 		if ((t->chain_flags & (PHI_FSTOP | PHI_FSTOP_AFTER)) // track stopped by user
-			|| (e->expand && !e->play_next_on_close))
+			|| (e->expand && !e->play_next_on_close)) // The expanding process has finished without 'play' command issued on the root QE
 			flags |= Q_TKCL_STOP;
 		flags |= (t->meta_reading) ? Q_TKCL_META_READ : 0;
 		q_ent_closed(e->q, flags);
@@ -149,7 +219,8 @@ static int qe_play(struct q_entry *e)
 			|| (c.afilter.danorm
 				&& !track->filter(t, core->mod("af-danorm.f"), 0))
 			|| !track->filter(t, ui_if, 0)
-			|| !track->filter(t, core->mod("afilter.gain"), 0)
+			|| (c.afilter.gain_db
+				&& !track->filter(t, core->mod("afilter.gain"), 0))
 			|| !track->filter(t, core->mod("afilter.auto-conv"), 0)
 			|| !track->filter(t, core->mod("format.auto-write"), 0)
 			|| !track->filter(t, core->mod("core.auto-output"), 0))
@@ -346,6 +417,12 @@ static int qe_index(struct q_entry *e)
 static void* qe_insert(struct q_entry *e, struct phi_queue_entry *qe)
 {
 	return q_insert(e->q, qe_index(e) + 1, qe);
+}
+
+static void* qe_insert_bulk(struct q_entry *e, struct phi_queue_entry *qe, uint n, struct phi_queue_entry **result)
+{
+	if (!n) return &e->pub;
+	return q_insert_bulk(e->q, qe_index(e) + 1, qe, n, result);
 }
 
 static int qe_remove(struct q_entry *e)

@@ -5,8 +5,9 @@
 
 struct m3u {
 	m3uread m3u;
-	struct phi_queue_entry ent;
 	pls_entry pls_ent;
+	struct phi_queue_entry qe[8];
+	uint num_qe;
 	void *qu_cur;
 	uint fin :1;
 	uint m3u_removed :1;
@@ -31,6 +32,9 @@ static void m3u_close(void *ctx, phi_track *t)
 	}
 	m3uread_close(&m->m3u);
 	pls_entry_free(&m->pls_ent);
+	for (uint i = 0;  i < FF_COUNT(m->qe);  i++) {
+		ffmem_free(m->qe[i].url);
+	}
 	phi_track_free(t, m);
 
 	/* When auto-loading playlist at GUI startup - set it as "not modified" */
@@ -39,34 +43,36 @@ static void m3u_close(void *ctx, phi_track *t)
 		qc->modified = 0;
 }
 
-static int m3u_add(struct m3u *m, phi_track *t)
+static void m3u_add(struct m3u *m, phi_track *t, struct phi_queue_entry *qe)
 {
 	ffstr url;
+	plist_fullname(t, *(ffstr*)&m->pls_ent.url, &url);
+	qe->url = url.ptr;
 
-	if (0 != plist_fullname(t, *(ffstr*)&m->pls_ent.url, &url))
-		return 1;
-
-	struct phi_queue_entry qe = {
-		.url = url.ptr,
-		.length_sec = (m->pls_ent.duration != -1) ? m->pls_ent.duration : 0,
-	};
+	qe->length_sec = (m->pls_ent.duration != -1) ? m->pls_ent.duration : 0;
 
 	if (m->pls_ent.artist.len)
-		core->metaif->set(&qe.meta, FFSTR_Z("artist"), *(ffstr*)&m->pls_ent.artist, 0);
+		core->metaif->set(&qe->meta, FFSTR_Z("artist"), *(ffstr*)&m->pls_ent.artist, 0);
 
 	if (m->pls_ent.title.len)
-		core->metaif->set(&qe.meta, FFSTR_Z("title"), *(ffstr*)&m->pls_ent.title, PHI_META_CACHE);
+		core->metaif->set(&qe->meta, FFSTR_Z("title"), *(ffstr*)&m->pls_ent.title, PHI_META_CACHE);
 
-	m->qu_cur = queue->insert(m->qu_cur, &qe);
-	ffstr_free(&url);
+	pls_entry_free(&m->pls_ent);
+}
+
+static void m3u_commit(struct m3u *m, phi_track *t)
+{
+	m->qu_cur = queue->insert_bulk(m->qu_cur, m->qe, m->num_qe, NULL);
+
+	for (uint i = 0;  i < m->num_qe;  i++) {
+		ffmem_free(m->qe[i].url);
+	}
+	ffmem_zero(m->qe, sizeof(m->qe));
 
 	if (!m->m3u_removed) {
 		m->m3u_removed = 1;
 		queue->remove(t->qent);
 	}
-
-	pls_entry_free(&m->pls_ent);
-	return 0;
 }
 
 /** Allocate and copy data from memory pointed by 'a.ptr'. */
@@ -102,6 +108,7 @@ static int m3u_process(void *ctx, phi_track *t)
 				continue;
 			}
 
+			m3u_commit(m, t);
 			return PHI_FIN;
 
 		case M3UREAD_ARTIST:
@@ -123,8 +130,11 @@ static int m3u_process(void *ctx, phi_track *t)
 			}
 
 			ffstr_set2(&m->pls_ent.url, &val);
-			if (0 != m3u_add(m, t))
-				return PHI_ERR;
+			m3u_add(m, t, m->qe + m->num_qe);
+			if (++m->num_qe == FF_COUNT(m->qe)) {
+				m3u_commit(m, t);
+				m->num_qe = 0;
+			}
 			break;
 
 		case M3UREAD_WARN:

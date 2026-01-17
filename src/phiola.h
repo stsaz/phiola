@@ -6,13 +6,13 @@
 #include <ffbase/string.h>
 #include <ffbase/time.h>
 
-#define PHI_VERSION  20700
+#define PHI_VERSION  20701
 
 /** Inter-module compatibility version.
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20700
+#define PHI_VERSION_CORE  20701
 
 typedef long long int64;
 typedef unsigned long long uint64;
@@ -30,7 +30,7 @@ typedef struct _phi_fftask phi_task;
 struct _phi_fftimerqueue_node { size_t a[8]; };
 typedef struct _phi_fftimerqueue_node phi_timer;
 struct phi_meta_if;
-typedef struct { char data[64]; } phi_meta;
+typedef struct { char data[56]; } phi_meta;
 
 enum PHI_LOG {
 	PHI_LOG_ERR,
@@ -478,8 +478,8 @@ struct phi_queue_conf {
 };
 
 struct phi_queue_entry {
-	phi_meta meta;
 	char*	url;
+	phi_meta meta;
 	uint	length_sec :24;
 	uint	meta_priority :1; // Supplied `meta` has higher priority than meta from input file (e.g. for .cue track)
 	uint	lock; // For synchronizing access to `meta`
@@ -581,6 +581,8 @@ struct phi_queue_if {
 	Each ref() must be paired with unref(). */
 	struct phi_queue_entry* (*ref)(phi_queue_id q, uint pos);
 
+	int (*ref_bulk)(phi_queue_id q, uint pos, uint n, struct phi_queue_entry **result);
+
 	/** Decrease refcount for the item obtained by ref(). */
 	void (*unref)(struct phi_queue_entry *qe);
 
@@ -588,6 +590,7 @@ struct phi_queue_if {
 	phi_queue_id (*queue)(void *e);
 
 	void* (*insert)(void *e, struct phi_queue_entry *qe);
+	void* (*insert_bulk)(void *e, struct phi_queue_entry *qe, uint n, struct phi_queue_entry **result);
 	int (*index)(void *e);
 
 	/** Remove item.
