@@ -53,34 +53,6 @@ class CoreSettings {
 	String	plist_save_dir;
 	String	library_dir;
 
-	AutoSkip auto_skip_head, auto_skip_tail;
-	void auto_skip_head_set(String s) {
-		int n = AutoSkip.parse(s);
-		if (n == auto_skip_head.val)
-			return;
-		auto_skip_head.val = n;
-		core.phiola.playCmd(Phiola.PC_AUTO_SKIP_HEAD, n);
-	}
-	void auto_skip_tail_set(String s) {
-		int n = AutoSkip.parse(s);
-		if (n == auto_skip_tail.val)
-			return;
-		auto_skip_tail.val = n;
-		core.phiola.playCmd(Phiola.PC_AUTO_SKIP_TAIL, n);
-	}
-
-	boolean equalizer_enabled;
-	String equalizer;
-	void equalizer_set(boolean enabled, String s) {
-		if (equalizer_enabled != enabled
-			|| !s.equals(equalizer))
-			core.phiola.quConfStr(Phiola.QC_EQUALIZER, Util.str_choice(enabled, s, ""));
-		equalizer_enabled = enabled;
-		equalizer = s;
-	}
-
-	int		play_seek_fwd_percent, play_seek_back_percent;
-
 	static final String[] code_pages = {
 		"win1251",
 		"win1252",
@@ -94,10 +66,6 @@ class CoreSettings {
 		pub_data_dir = "";
 		plist_save_dir = "";
 		library_dir = "";
-
-		auto_skip_head = new AutoSkip();
-		auto_skip_tail = new AutoSkip();
-		equalizer = "";
 	}
 
 	String conf_write() {
@@ -111,11 +79,6 @@ class CoreSettings {
 			+ "op_trash_dir_rel %s\n"
 			+ "op_deprecated_mods %d\n"
 
-			+ "play_auto_skip %s\n"
-			+ "play_auto_skip_tail %s\n"
-			+ "play_eqlz_enabled %d\n"
-			+ "play_equalizer %s\n"
-
 			, core.bool_to_int(svc_notification_disable)
 			, codepage
 			, core.bool_to_int(file_del)
@@ -124,11 +87,6 @@ class CoreSettings {
 			, plist_save_dir
 			, trash_dir
 			, core.bool_to_int(deprecated_mods)
-
-			, auto_skip_head.str()
-			, auto_skip_tail.str()
-			, core.bool_to_int(equalizer_enabled)
-			, equalizer
 			);
 	}
 
@@ -155,11 +113,6 @@ class CoreSettings {
 
 		if (trash_dir.isEmpty())
 			trash_dir = "Trash";
-
-		if (play_seek_fwd_percent <= 0 || play_seek_fwd_percent > 50)
-			play_seek_fwd_percent = 5;
-		if (play_seek_back_percent <= 0 || play_seek_back_percent > 50)
-			play_seek_back_percent = 5;
 	}
 
 	void conf_load(Conf c) {
@@ -171,11 +124,74 @@ class CoreSettings {
 		trash_dir = c.value(Conf.OP_TRASH_DIR_REL);
 		deprecated_mods = c.enabled(Conf.OP_DEPRECATED_MODS);
 		set_codepage_str(c.value(Conf.CODEPAGE));
+	}
+}
 
+class PlaySettings {
+	private Core core;
+
+	AutoSkip auto_skip_head, auto_skip_tail;
+	void auto_skip_head_set(String s) {
+		int n = AutoSkip.parse(s);
+		if (n == auto_skip_head.val)
+			return;
+		auto_skip_head.val = n;
+		core.phiola.playCmd(Phiola.PC_AUTO_SKIP_HEAD, n);
+	}
+	void auto_skip_tail_set(String s) {
+		int n = AutoSkip.parse(s);
+		if (n == auto_skip_tail.val)
+			return;
+		auto_skip_tail.val = n;
+		core.phiola.playCmd(Phiola.PC_AUTO_SKIP_TAIL, n);
+	}
+
+	boolean equalizer_enabled;
+	String equalizer;
+	void equalizer_set(boolean enabled, String s) {
+		if (equalizer_enabled != enabled
+			|| !s.equals(equalizer))
+			core.phiola.quConfStr(Phiola.QC_EQUALIZER, (enabled) ? s : "");
+		equalizer_enabled = enabled;
+		equalizer = s;
+	}
+
+	int play_seek_fwd_percent, play_seek_back_percent;
+
+	PlaySettings(Core core) {
+		this.core = core;
+
+		auto_skip_head = new AutoSkip();
+		auto_skip_tail = new AutoSkip();
+		equalizer = "";
+	}
+
+	void conf_load(Conf c) {
 		auto_skip_head_set(c.value(Conf.PLAY_AUTO_SKIP));
 		auto_skip_tail_set(c.value(Conf.PLAY_AUTO_SKIP_TAIL));
 		equalizer_enabled = c.enabled(Conf.PLAY_EQLZ_ENABLED);
 		equalizer = c.value(Conf.PLAY_EQUALIZER);
+	}
+
+	void normalize() {
+		if (play_seek_fwd_percent <= 0 || play_seek_fwd_percent > 50)
+			play_seek_fwd_percent = 5;
+		if (play_seek_back_percent <= 0 || play_seek_back_percent > 50)
+			play_seek_back_percent = 5;
+	}
+
+	String conf_write() {
+		return String.format(
+			"play_auto_skip %s\n"
+			+ "play_auto_skip_tail %s\n"
+			+ "play_eqlz_enabled %d\n"
+			+ "play_equalizer %s\n"
+
+			, auto_skip_head.str()
+			, auto_skip_tail.str()
+			, core.bool_to_int(equalizer_enabled)
+			, equalizer
+			);
 	}
 }
 
@@ -193,7 +209,7 @@ class RecSettings {
 	int		rec_gain_db100;
 	boolean	rec_danorm;
 	boolean	rec_exclusive;
-	boolean	rec_src_unprocessed;
+	String	rec_src_preset;
 	boolean	rec_longclick;
 	boolean	rec_list_add;
 	static final String[] rec_formats = {
@@ -204,6 +220,15 @@ class RecSettings {
 		"FLAC",
 		"Opus",
 		"Opus-VOIP"
+	};
+	static final String[] rec_src_presets = {
+		"default",
+		"generic",
+		"camcorder",
+		"voice_recognition",
+		"voice_communication",
+		"unprocessed",
+		"voice_performance",
 	};
 
 	RecSettings(Core core) {
@@ -216,6 +241,7 @@ class RecSettings {
 		rec_buf_len_ms = 500;
 		rec_until_sec = 3600;
 		rec_name_template = "";
+		rec_src_preset = "";
 	}
 
 	void conf_load(Conf c) {
@@ -228,7 +254,7 @@ class RecSettings {
 		rec_buf_len_ms = c.number(Conf.REC_BUF_LEN);
 		rec_danorm = c.enabled(Conf.REC_DANORM);
 		rec_exclusive = c.enabled(Conf.REC_EXCLUSIVE);
-		rec_src_unprocessed = c.enabled(Conf.REC_SRC_UNPROC);
+		rec_src_preset = c.value(Conf.REC_SRC_PRESET);
 		rec_list_add = c.enabled(Conf.REC_LIST_ADD);
 		rec_longclick = c.enabled(Conf.REC_LONGCLICK);
 		rec_until_sec = core.str_to_uint(c.value(Conf.REC_UNTIL), rec_until_sec);
@@ -248,7 +274,7 @@ class RecSettings {
 			+ "rec_danorm %d\n"
 			+ "rec_gain %d\n"
 			+ "rec_exclusive %d\n"
-			+ "rec_src_unproc %d\n"
+			+ "rec_src_preset %s\n"
 			+ "rec_list_add %d\n"
 			+ "rec_longclick %d\n"
 
@@ -263,7 +289,7 @@ class RecSettings {
 			, core.bool_to_int(rec_danorm)
 			, rec_gain_db100
 			, core.bool_to_int(rec_exclusive)
-			, core.bool_to_int(rec_src_unprocessed)
+			, rec_src_preset
 			, core.bool_to_int(rec_list_add)
 			, core.bool_to_int(rec_longclick)
 			);
@@ -303,6 +329,8 @@ class RecSettings {
 			rec_buf_len_ms = 500;
 		if (rec_until_sec < 0)
 			rec_until_sec = 3600;
+		if (rec_src_preset.equals("default"))
+			rec_src_preset = "";
 	}
 }
 

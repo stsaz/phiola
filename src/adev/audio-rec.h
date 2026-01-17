@@ -43,7 +43,7 @@ static int audio_in_open(audio_in *a, phi_track *t)
 		t->conf.iaudio.format.channels = 2;
 
 	conf.device_id = a->dev_id;
-	a->dev_idx = t->conf.iaudio.device_index;
+	a->dev_idx = (t->conf.iaudio.device_id < 0xff) ? t->conf.iaudio.device_index : 0;
 	if (a->dev_idx != 0) {
 		ffuint mode = (a->loopback) ? FFAUDIO_DEV_PLAYBACK : FFAUDIO_DEV_CAPTURE;
 		if (0 != audio_devbyidx(a->audio, &dev, a->dev_idx, mode)) {

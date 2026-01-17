@@ -66,7 +66,6 @@ static const phi_filter phi_android_rec_ctl = {
 
 #define RECF_EXCLUSIVE  1
 #define RECF_POWER_SAVE  2
-#define RECF_UNPROCESSED  4
 #define RECF_DANORM  8
 
 JNIEXPORT jlong JNICALL
@@ -77,29 +76,29 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 	const char *oname = jni_sz_js(joname);
 
 	jclass jc_conf = jni_class_obj(jconf);
-	jint buf_len_msec = jni_obj_int(jconf, jni_field(jc_conf, "buf_len_msec", JNI_TINT));
-	jint gain_db100 = jni_obj_int(jconf, jni_field(jc_conf, "gain_db100", JNI_TINT));
-	jint fmt = jni_obj_int(jconf, jni_field(jc_conf, "format", JNI_TINT));
-	jint chan = jni_obj_int(jconf, jni_field(jc_conf, "channels", JNI_TINT));
-	jint rate = jni_obj_int(jconf, jni_field(jc_conf, "sample_rate", JNI_TINT));
-	jint q = jni_obj_int(jconf, jni_field(jc_conf, "quality", JNI_TINT));
-	jint until_sec = jni_obj_int(jconf, jni_field(jc_conf, "until_sec", JNI_TINT));
-	jint flags = jni_obj_int(jconf, jni_field(jc_conf, "flags", JNI_TINT));
+	jstring jdev_id = jni_obj_jo(jconf, jni_field_str(jc_conf, "src_preset"));
+	const char *dev_id = jni_sz_js(jdev_id);
+	ffmem_free(x->rec.device_id);
+	x->rec.device_id = (*dev_id) ? ffsz_dup(dev_id) : NULL;
+
+	jint fmt = jni_obj_int(jconf, jni_field_int(jc_conf, "format"));
+	jint q = jni_obj_int(jconf, jni_field_int(jc_conf, "quality"));
+	jint flags = jni_obj_int(jconf, jni_field_int(jc_conf, "flags"));
 
 	struct phi_track_conf c = {
 		.iaudio = {
 			.format = {
-				.channels = chan,
-				.rate = rate,
+				.channels = jni_obj_int(jconf, jni_field_int(jc_conf, "channels")),
+				.rate = jni_obj_int(jconf, jni_field_int(jc_conf, "sample_rate")),
 			},
-			.buf_time = buf_len_msec,
+			.device_id = (size_t)x->rec.device_id,
+			.buf_time = jni_obj_int(jconf, jni_field_int(jc_conf, "buf_len_msec")),
 			.exclusive = !!(flags & RECF_EXCLUSIVE),
 			.power_save = !!(flags & RECF_POWER_SAVE),
-			.aa_unprocessed = !!(flags & RECF_UNPROCESSED),
 		},
-		.until_msec = (uint)until_sec*1000,
+		.until_msec = jni_obj_int(jconf, jni_field_int(jc_conf, "until_sec")) * 1000,
 		.afilter = {
-			.gain_db = (double)gain_db100 / 100,
+			.gain_db = (double)jni_obj_int(jconf, jni_field_int(jc_conf, "gain_db100")) / 100,
 			.danorm = (flags & RECF_DANORM) ? "" : NULL,
 		},
 		.ofile = {
@@ -108,12 +107,14 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 	};
 
 	switch (fmt) {
-	case AF_AAC_LC:
 	case AF_AAC_HE:
+		c.aac.profile = 'h';
+		c.aac.quality = (uint)q;
+		break;
 	case AF_AAC_HE2:
-		c.aac.profile = (fmt == AF_AAC_HE) ? 'h'
-			: (fmt == AF_AAC_HE2) ? 'H'
-			: 0;
+		c.aac.profile = 'H';
+		// fallthrough
+	case AF_AAC_LC:
 		c.aac.quality = (uint)q;
 		break;
 
@@ -152,6 +153,7 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 	e = 0;
 
 end:
+	jni_sz_free(dev_id, jdev_id);
 	jni_sz_free(oname, joname);
 	if (e != 0) {
 		track->close(t);

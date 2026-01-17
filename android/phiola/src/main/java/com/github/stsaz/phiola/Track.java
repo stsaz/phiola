@@ -151,8 +151,7 @@ class Track {
 			p.flags |= Phiola.RecordParams.RECF_EXCLUSIVE;
 		if (true)
 			p.flags |= Phiola.RecordParams.RECF_POWER_SAVE;
-		if (core.rec.rec_src_unprocessed)
-			p.flags |= Phiola.RecordParams.RECF_UNPROCESSED;
+		p.src_preset = core.rec.rec_src_preset;
 		if (core.rec.rec_danorm)
 			p.flags |= Phiola.RecordParams.RECF_DANORM;
 

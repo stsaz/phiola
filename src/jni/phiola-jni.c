@@ -48,6 +48,10 @@ struct phiola_jni {
 	} play;
 
 	struct {
+		char *device_id;
+	} rec;
+
+	struct {
 		ffvec tracks; // struct conv_track_info[]
 		phi_queue_id q, q_add_remove;
 		char *trash_dir_rel;
@@ -354,6 +358,7 @@ Java_com_github_stsaz_phiola_Phiola_destroy(JNIEnv *env, jobject thiz)
 	ffvec_free(&x->storage_paths);
 
 	ffmem_free(x->play.equalizer);
+	ffmem_free(x->rec.device_id);
 	// ffmem_free(conv_track_info.error);
 	ffvec_free_align(&x->convert.tracks);
 	ffmem_free(x->convert.trash_dir_rel);

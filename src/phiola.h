@@ -291,12 +291,14 @@ struct phi_track_conf {
 
 	struct {
 		struct phi_af format;
+		union {
 		uint	device_index; // 0:default
+		size_t	device_id;
+		};
 		uint	buf_time; // msec
 		uint	exclusive :1;
 		uint	loopback :1;
 		uint	power_save :1;
-		uint	aa_unprocessed :1; // AAudio: use UNPROCESSED audio source
 	} iaudio;
 
 	struct {

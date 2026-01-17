@@ -394,6 +394,19 @@
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:text="@string/sett_rec_src"
+			android:textColor="@color/text" />
+		<Spinner
+			android:id="@+id/spRecSource"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:spinnerMode="dropdown" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:layout_marginTop="@dimen/sett_margin"
 			android:text="@string/sett_rec_chan"
 			android:textColor="@color/text" />
@@ -518,13 +531,6 @@
 			android:layout_height="wrap_content"
 			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/sett_rec_exclusive" />
-
-		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/sw_rec_src_unprocessed"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:layout_margin="@dimen/sett_margin"
-			android:text="@string/sett_rec_src_unprocessed" />
 
 		<androidx.appcompat.widget.SwitchCompat
 			android:id="@+id/sw_rec_list_add"
