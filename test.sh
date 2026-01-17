@@ -546,6 +546,15 @@ test_norm() {
 	./phiola pl pl.wav -norm ""
 }
 
+test_equalizer() {
+	if ! test -f pl.wav ; then
+		./phiola rec -rate 48000 -o pl.wav -f -u 2
+	fi
+	./phiola pl -equ " f 1000 w 1.0q" pl.wav || true # missing parameter
+	./phiola pl -equ " f 1000 unknown 1.0q g -6.0" pl.wav || true # unknown parameter
+	./phiola -D pl -equ " w 1.0q g -6.0 f 1000 , w 1.0q f 10000 g -6.0 " pl.wav | grep equalizer
+}
+
 test_dir_read() {
 	./phiola i -inc '*.wav' .
 	./phiola i -inc '*.wav' -exc 'co*.wav' .
@@ -931,6 +940,7 @@ TESTS=(
 	rename
 	server
 	# http
+	equalizer
 	clean
 	# rec_play_alsa
 	# wasapi_exclusive

@@ -5,6 +5,7 @@
 #include <sox/sox-phi.h>
 #include <util/aformat.h>
 #include <ffsys/globals.h>
+#include <ffbase/args.h>
 
 static const phi_core *core;
 #define errlog(t, ...)  phi_errlog(core, NULL, t, __VA_ARGS__)
@@ -39,24 +40,44 @@ static int request_input_conversion(phi_track *t)
 	t->aconv.out = t->audio.format;
 	t->aconv.out.format = PHI_PCM_32;
 	t->aconv.out.interleaved = 1;
-	if (!t->conf.oaudio.format.format)
-		t->conf.oaudio.format.format = PHI_PCM_FLOAT64;
 	t->oaudio.format = t->aconv.out;
 	t->data_out = t->data_in;
 	return PHI_BACK;
 }
 
-static int argv_extract(ffstr *s, char **argv, uint n)
+struct sox_eq_conf {
+	const char *frequency, *width, *gain;
+};
+
+#define O(m)  (void*)(ffsize)FF_OFF(struct sox_eq_conf, m)
+static const struct ffarg sox_eq_args[] = {
+	{ "frequency",	's',	O(frequency) },
+	{ "gain",		's',	O(gain) },
+	{ "width",		's',	O(width) },
+	{}
+};
+#undef O
+
+static int sox_argv_extract(struct sox *c, phi_track *t, ffstr *s, char **argv, uint n)
 {
-	for (uint i = 0;  i < n;  i++) {
-		ffstr a;
-		ffstr_splitby(s, ' ', &a, s);
-		if (!a.len)
-			return -1;
-		a.ptr[a.len] = '\0';
-		argv[i] = a.ptr;
-	}
+	struct sox_eq_conf eqc = {};
+	ffstr sc = {};
+	ffstr_splitby(s, ',', &sc, s);
 	ffstr_skipchar(s, ' ');
+	sc.ptr[sc.len] = '\0';
+
+	struct ffargs a = {};
+	if (ffargs_process_line(&a, sox_eq_args, &eqc, FFARGS_O_PARTIAL | FFARGS_O_DUPLICATES, sc.ptr)) {
+		errlog(t, "%s", a.error);
+		return -1;
+	}
+
+	if (!eqc.frequency || !eqc.width || !eqc.gain)
+		return -1;
+
+	argv[0] = (char*)eqc.frequency;
+	argv[1] = (char*)eqc.width;
+	argv[2] = (char*)eqc.gain;
 	return 0;
 }
 
@@ -94,7 +115,7 @@ static int sox_process(struct sox *c, phi_track *t)
 		uint i = 1;
 		while (s.len) {
 			char *argv[3];
-			if (argv_extract(&s, argv, 3)) {
+			if (sox_argv_extract(c, t, &s, argv, 3)) {
 				errlog(t, "Equalizer: incorrect parameters");
 				t->error = PHI_E_FILTER_CONF;
 				return PHI_ERR;
@@ -103,7 +124,7 @@ static int sox_process(struct sox *c, phi_track *t)
 				errlog(t, "phi_sox_filter");
 				return PHI_ERR;
 			}
-			dbglog(t, "added filter #%u 'equalizer'", i);
+			dbglog(t, "added filter #%u 'equalizer': %s %s %s", i, argv[0], argv[1], argv[2]);
 			i++;
 		}
 

@@ -43,8 +43,12 @@ Options:\n\
                           `attenuate`  Integer\n\
                           `gain`       Integer\n\
   `-equalizer` \"OPTIONS\"  SoX Equalizer (doesn't work with `-norm`). Options:\n\
-                            frequency width gain ...\n\
-                          Refer to the official SoX documentation for more info.\n\
+                          `frequency`  Hz\n\
+                          `width`q     Q-factor value plus 'q' character (larger = narrower)\n\
+                          `gain`       dB\n\
+                          [, ...]\n\
+                        Add more parameters after comma for multi-band equalizer.\n\
+                        Refer to the official SoX documentation for more info.\n\
 \n\
   `-audio` STRING         Audio library name (e.g. alsa)\n\
   `-device` NUMBER        Playback device number\n\

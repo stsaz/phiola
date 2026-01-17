@@ -458,6 +458,27 @@ enum {
 	QC_EQUALIZER = 1,
 };
 
+/* "F W G ..." -> "f F w W g G, ..." */
+static char* eq_convert(const char *sz)
+{
+	ffvec buf = {};
+	ffstr s = FFSTR_INITZ(sz), f, w, g;
+	ffstr_skipchar(&s, ' ');
+	while (s.len) {
+		ffstr_splitby(&s, ' ', &f, &s);
+		ffstr_splitby(&s, ' ', &w, &s);
+		ffstr_splitby(&s, ' ', &g, &s);
+		ffstr_skipchar(&s, ' ');
+		if (!f.len || !w.len || !g.len)
+			break;
+		if (buf.len)
+			ffvec_addchar(&buf, ',');
+		ffvec_addfmt(&buf, "f %S w %S g %S", &f, &w, &g);
+	}
+	ffvec_addchar(&buf, '\0');
+	return buf.ptr;
+}
+
 JNIEXPORT void JNICALL
 Java_com_github_stsaz_phiola_Phiola_quConfStr(JNIEnv *env, jobject thiz, int setting, jstring jval)
 {
@@ -467,7 +488,7 @@ Java_com_github_stsaz_phiola_Phiola_quConfStr(JNIEnv *env, jobject thiz, int set
 	switch (setting) {
 	case QC_EQUALIZER:
 		ffmem_free(x->play.equalizer);
-		x->play.equalizer = (*val) ? ffsz_dup(val) : NULL;  break;
+		x->play.equalizer = (*val) ? eq_convert(val) : NULL;  break;
 	}
 
 	// Apply settings for the active playlist

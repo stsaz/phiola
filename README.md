@@ -130,7 +130,7 @@ phiola http://server/stream -tee "@artist - @title.mp3"
 phiola http://server/music.mp3 -dup @stdout.wav | phiola convert @stdin -aac_q 64 -o output.m4a
 
 # Play audio with 2-band Equalizer (at 600Hz, 2.0 Q-factor width, -6 dB gain; at 10KHz, +3 dB gain)
-phiola file.mp3 -equalizer "600 2.0q -6.0  10000 2.0q 3.0"
+phiola file.mp3 -equalizer "f 600 w 2.0q g -6.0,  f 10000 w 2.0q g 3.0"
 ```
 
 While audio is playing, you can control phiola via keyboard.  The most commonly used commands are:
