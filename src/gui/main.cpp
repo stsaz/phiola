@@ -24,7 +24,7 @@ struct gui_wmain {
 	ffui_icon ico_play, ico_pause;
 
 	phi_timer tmr_redraw;
-	uint redraw_n, redraw_offset;
+	uint redraw_n, redraw_offset, redraw_cmd;
 
 	char *vlist_col;
 	char *wnd_pos;
@@ -254,7 +254,7 @@ static void list_display(ffui_viewxx_disp *disp)
 	// gui_wmain *m = gg->wmain;
 	xxstr_buf<1000> buf;
 	ffstr *val = NULL, s;
-	struct phi_queue_entry *qe = gd->queue->ref(list_id_visible(), i);
+	struct phi_queue_entry *qe = list_vis_qe_ref(i);
 	if (!qe)
 		return;
 
@@ -350,39 +350,18 @@ static void list_update(uint cmd, uint n, uint pos)
 	case 'm':
 		m->vlist.update(pos, 0);
 		break;
+
+	case 'u':
+		wmain_list_draw(n, 1);  break;
 	}
 }
-
-#ifdef FF_WIN
 
 static void list_update_delayed(void *param)
 {
 	gui_wmain *m = gg->wmain;
-	list_update((size_t)param, m->redraw_n, m->redraw_offset);
+	list_update(m->redraw_cmd, m->redraw_n, m->redraw_offset);
+	m->redraw_cmd = 0;
 }
-
-static void list_update_schedule(uint cmd, uint n, uint pos)
-{
-	gui_wmain *m = gg->wmain;
-	switch (cmd) {
-	case 'a':
-	case 'r':
-		// Note: view.length() here is very slow
-		m->redraw_n = n;
-		m->redraw_offset = pos;
-		core->timer(0, &m->tmr_redraw, -50, list_update_delayed, (void*)(size_t)cmd);
-		break;
-
-	default:
-		core->timer(0, &m->tmr_redraw, 0, NULL, NULL);
-	}
-}
-
-#else // linux:
-
-#define list_update_schedule  list_update
-
-#endif
 
 /** A queue is created/deleted/modified.
 Thread: worker */
@@ -393,52 +372,50 @@ static void q_on_change(phi_queue_id q, uint flags, uint pos)
 	if (q == gd->q_filtered)
 		return;
 
-	uint q_len = 0;
+	uint cmd = (flags & 0xff);
 
-	switch (flags & 0xff) {
+	switch (cmd) {
 	case 'a':
 	case 'r':
+	case 'm':
+		if (q != gd->q_selected)
+			break; // an inactive list is changed
+		if (m->redraw_cmd) {
+			// Multiple changes within short time period: redraw the whole list
+			m->redraw_cmd = 'u';
+		} else {
+			m->redraw_cmd = cmd;
+			m->redraw_offset = pos;
+		}
+		m->redraw_n = gd->queue->count(q);
+		core->timer(0, &m->tmr_redraw, -50, list_update_delayed, NULL);
+		break;
+
 	case 'u':
-		q_len = gd->queue->count(q);
-		// fallthrough
+		if (q != gd->q_selected)
+			break; // an inactive list is changed
+		wmain_list_draw(gd->queue->count(q), 1);
+		break;
 
 	case 'c':
 		if (q != gd->q_selected)
-			return; // an inactive list is changed
+			break; // an inactive list is changed
+		m->vlist.clear();
 		break;
 
 	case 'n':
 		if (gd->filtering)
-			return; // a filtered list is created
+			break; // a filtered list is created
+		list_created(q);
 		break;
 
 	case 'd':
-	case 'm':
-		break;
+		list_deleted(q);  break;
 
 	case '.':
 		if (q == gd->q_convert)
 			wconvert_done();
-		return;
-
-	default:
-		return;
-	}
-
-	list_update_schedule(flags & 0xff, q_len, pos);
-
-	switch (flags & 0xff) {
-	case 'u':
-		wmain_list_draw(q_len, 1);  break;
-
-	case 'c':
-		m->vlist.clear();  break;
-
-	case 'n':
-		list_created(q);  break;
-
-	case 'd':
-		list_deleted(q);  break;
+		break;
 	}
 }
 

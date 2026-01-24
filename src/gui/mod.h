@@ -5,6 +5,7 @@
 #include <phiola.h>
 #include <util/conf-write.h>
 #include <ffsys/thread.h>
+#include <ffbase/lock.h>
 
 FF_EXTERN const phi_core *core;
 
@@ -46,7 +47,7 @@ FF_EXTERN void lists_load();
 FF_EXTERN void list_deleted(phi_queue_id q);
 FF_EXTERN void list_select(uint i);
 FF_EXTERN void list_filter(ffstr filter);
-FF_EXTERN phi_queue_id list_id_visible();
+FF_EXTERN struct phi_queue_entry* list_vis_qe_ref(uint i);
 
 FF_EXTERN void ctl_play(uint i);
 FF_EXTERN void volume_set(uint vol);
@@ -139,6 +140,7 @@ struct gui_data {
 	The only operations allowed: "play at pos", "add to convert list". */
 	phi_queue_id q_filtered;
 
+	fflock lock; // Synchronize access to the playlist refs between Main and GUI threads
 	uint filter_len; // Length of the current filter text
 	uint current_scroll_vpos;
 	uint auto_select;

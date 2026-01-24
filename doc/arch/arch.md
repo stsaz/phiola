@@ -222,6 +222,24 @@ Example:
 	aac-decode:    decoded 2048 samples @2048  aot:29 rate:44100 chan:2 br:3789
 
 
+## GUI Playlist Synchronization
+
+```C
+dir-read         queue                  Core       GUI                GTK
+================================================================================
+[Main Thread]
+* (8 entries) -> * -> onchange('a') ->             *
+                                        * timer <- * cmd=ADD
+                      onchange('a') ->             * cmd=UPD
+                      ...           ->             .
+...
+                                        * ->       * view.length() -> *
+[GUI Thread]
+                 . ref()                        <- * display()     <- *
+                                                                   <- ...
+```
+
+
 ## Build
 
 Global call+include+targets map:

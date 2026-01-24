@@ -109,7 +109,7 @@ void winfo_show(uint show, uint idx)
 		return;
 	}
 
-	struct phi_queue_entry *qe = gd->queue->ref(list_id_visible(), idx);
+	struct phi_queue_entry *qe = list_vis_qe_ref(idx);
 	if (qe == NULL) return;
 
 	if (!w->initialized) {

@@ -27,6 +27,7 @@ struct gui_data *gd;
 #define USER_CONF_NAME_ALT  "user.conf"
 
 static void list_filter_close();
+static phi_queue_id list_id_visible();
 static void gui_finish();
 
 #define O(m)  (void*)FF_OFF(struct gui_data, m)
@@ -196,8 +197,7 @@ void list_created(phi_queue_id q)
 {
 	struct list_info *li = ffvec_zpushT(&gd->lists, struct list_info);
 	li->q = q;
-	phi_queue_id old = gd->q_selected;
-	gd->q_selected = q;
+	phi_queue_id old = FF_SWAP(&gd->q_selected, q);
 
 	uint scroll_vpos = wmain_list_add(gd->queue->conf(q)->name, gd->lists.len - 1);
 
@@ -211,15 +211,13 @@ static void list_close()
 	uint play_lists_n = gd->lists.len - !!(gd->q_convert);
 
 	if (gd->q_selected == gd->q_convert) {
-		gd->queue->destroy(gd->q_selected);
 		gd->q_convert = NULL;
-
-	} else if (play_lists_n > 1) {
-		gd->queue->destroy(gd->q_selected);
-
-	} else {
+	} else if (play_lists_n == 1) {
 		gd->queue->clear(gd->q_selected);
+		return;
 	}
+
+	gd->queue->destroy(gd->q_selected); // on_change('d') handler will continue
 }
 
 /** A queue is deleted */
@@ -235,6 +233,10 @@ void list_deleted(phi_queue_id q)
 	ffslice_rmT((ffslice*)&gd->lists, i, 1, struct list_info);
 
 	wmain_list_delete(i);
+
+	fflock_lock(&gd->lock);
+	// GUI thread inside list_vis_qe_ref() has definitely finished reading this list
+	fflock_unlock(&gd->lock);
 }
 
 /** Change current list */
@@ -243,8 +245,7 @@ void list_select(uint i)
 	list_filter_close();
 	struct list_info *li = ffslice_itemT(&gd->lists, i, struct list_info);
 	gd->tab_conversion = (gd->q_convert == li->q);
-	phi_queue_id old = gd->q_selected;
-	gd->q_selected = li->q;
+	phi_queue_id old = FF_SWAP(&gd->q_selected, li->q);
 	uint n = gd->queue->count(gd->q_selected);
 
 	list_scroll_store(old, gd->current_scroll_vpos);
@@ -252,19 +253,34 @@ void list_select(uint i)
 }
 
 /** Get currently visible (filtered) queue */
-phi_queue_id list_id_visible()
+static phi_queue_id list_id_visible()
 {
 	return (gd->q_filtered) ? gd->q_filtered : gd->q_selected;
 }
 
-/** Close filtered queue */
-static void list_filter_close()
+/** Get reference to an item in the currently visible list.
+Thread: GUI */
+struct phi_queue_entry* list_vis_qe_ref(uint i)
 {
-	if (!gd->q_filtered) return;
-
-	gd->queue->destroy(gd->q_filtered);
-	gd->q_filtered = NULL;
+	fflock_lock(&gd->lock);
+	phi_queue_id q = list_id_visible();
+	struct phi_queue_entry *qe = gd->queue->ref(q, i);
+	fflock_unlock(&gd->lock);
+	return qe;
 }
+
+static void list_filter_set(phi_queue_id q)
+{
+	fflock_lock(&gd->lock);
+	// GUI thread inside list_vis_qe_ref() has definitely finished reading this list
+	if (gd->q_filtered)
+		gd->queue->destroy(gd->q_filtered); // Note: on_change('d') handler will skip this event
+	gd->q_filtered = q;
+	fflock_unlock(&gd->lock);
+}
+
+/** Close filtered queue */
+static void list_filter_close() { list_filter_set(NULL); }
 
 /** Filter the listing */
 void list_filter(ffstr filter)
@@ -279,9 +295,7 @@ void list_filter(ffstr filter)
 		q = gd->queue->filter(q, filter, 0);
 		gd->filtering = 0;
 
-		if (gd->q_filtered)
-			gd->queue->destroy(gd->q_filtered);
-		gd->q_filtered = q;
+		list_filter_set(q);
 
 		uint total = gd->queue->count(gd->q_selected);
 		uint n = gd->queue->count(gd->q_filtered);

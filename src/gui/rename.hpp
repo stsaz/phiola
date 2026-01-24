@@ -41,7 +41,7 @@ void wrename_show(uint show, uint idx)
 
 	if (w->qe)
 		gd->queue->unref(w->qe);
-	if (!(w->qe = gd->queue->ref(list_id_visible(), idx)))
+	if (!(w->qe = list_vis_qe_ref(idx)))
 		return;
 
 	w->turl.text(w->qe->url);
