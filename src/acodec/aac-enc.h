@@ -26,7 +26,7 @@ static void aacw_free(struct aac_enc *a, phi_track *t)
 {
 	if (a->enc)
 		fdkaac_encode_free(a->enc);
-	ffmem_free(a->buf);
+	phi_track_free(t, a->buf);
 	phi_track_free(t, a);
 }
 
@@ -56,7 +56,7 @@ static int aac_enc_init(struct aac_enc *a, phi_track *t, ffstr *out)
 		return PHI_ERR;
 	}
 
-	a->buf = ffmem_alloc(a->info.max_frame_size);
+	a->buf = phi_track_alloc(t, a->info.max_frame_size);
 
 	t->oaudio.mp4_delay = a->info.enc_delay;
 	t->oaudio.mp4_frame_samples = a->info.frame_samples;

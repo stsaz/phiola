@@ -24,7 +24,7 @@ ifeq "$(OS)" "windows"
 	CORE_O += sys-sleep-win.o
 endif
 ifeq "$(SYS)" "android"
-	CORE_O += phiola-jni.o
+	CORE_O += jni.o
 	LINKFLAGS_CORE += -llog -landroid
 endif
 CORE_O += \

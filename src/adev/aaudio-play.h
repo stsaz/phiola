@@ -53,6 +53,17 @@ static int aao_create(audio_out *a, phi_track *t)
 			goto done;
 		}
 
+		const struct phi_af *good_fmt;
+		if (a->try_open
+			&& (good_fmt = fmt_conv_find(&mod->formats_failed, &t->oaudio.format))
+			&& af_eq(good_fmt, &mod->fmt)) {
+			// Don't try to reopen the buffer, because it's likely to fail again.
+			// Instead, just use the format ffaudio set for us previously.
+			t->oaudio.conv_format = *good_fmt;
+			t->oaudio.conv_format.interleaved = 1;
+			return PHI_MORE;
+		}
+
 		aa_buf_close(NULL);
 	}
 
@@ -60,6 +71,9 @@ static int aao_create(audio_out *a, phi_track *t)
 	r = audio_out_open(a, t, &t->oaudio.format);
 	if (r == FFAUDIO_EFORMAT) {
 		t->oaudio.conv_format.interleaved = 1;
+		struct phi_af req_fmt = t->oaudio.format;
+		phi_af_update(&req_fmt, &t->oaudio.conv_format);
+		fmt_conv_add(&mod->formats_failed, &t->oaudio.format, &req_fmt);
 		return PHI_MORE;
 	} else if (r != 0) {
 		return PHI_ERR;

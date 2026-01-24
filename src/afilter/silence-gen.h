@@ -20,7 +20,7 @@ static void* silgen_open(phi_track *t)
 static void silgen_close(void *ctx, phi_track *t)
 {
 	struct silgen *c = ctx;
-	ffmem_free(c->buf);
+	phi_track_free(t, c->buf);
 	phi_track_free(t, c);
 }
 
@@ -48,7 +48,7 @@ static int silgen_process(void *ctx, phi_track *t)
 
 		t->oaudio.format = t->oaudio.conv_format;
 		c->cap = pcm_size1(&t->oaudio.format) * pcm_samples(SILGEN_BUF_MSEC, t->oaudio.format.rate);
-		c->buf = ffmem_zalloc(c->cap);
+		c->buf = phi_track_alloc(t, c->cap);
 		c->state = 2;
 		// fallthrough
 

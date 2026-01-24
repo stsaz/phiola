@@ -39,7 +39,7 @@ static void* aac_open(phi_track *t)
 	a->fmt.format = PHI_PCM_16;
 	a->fmt.rate = a->contr_sample_rate;
 	a->fmt.channels = t->audio.format.channels;
-	a->pcmbuf = ffmem_alloc(AAC_MAXFRAMESAMPLES * pcm_size(PHI_PCM_16, AAC_MAXCHANNELS));
+	a->pcmbuf = phi_track_alloc(t, AAC_MAXFRAMESAMPLES * pcm_size(PHI_PCM_16, AAC_MAXCHANNELS));
 	a->rate_mul = 1;
 	t->data_in.len = 0;
 	t->audio.format.format = a->fmt.format;
@@ -54,7 +54,7 @@ static void aac_close(struct aac_in *a, phi_track *t)
 {
 	if (a->dec)
 		fdkaac_decode_free(a->dec);
-	ffmem_free(a->pcmbuf);
+	phi_track_free(t, a->pcmbuf);
 	ffvec_free(&a->cache);
 	phi_track_free(t, a);
 }

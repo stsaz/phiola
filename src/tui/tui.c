@@ -86,7 +86,7 @@ enum {
 
 	VOL_STEP = 5,
 	VOL_MAX = 125,
-	VOL_LO = /*-*/48,
+	VOL_LO = -40,
 	VOL_HI = 6,
 
 	MINDB = 40,

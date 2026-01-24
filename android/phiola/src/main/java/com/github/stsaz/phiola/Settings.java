@@ -3,6 +3,8 @@
 
 package com.github.stsaz.phiola;
 
+import java.util.Arrays;
+
 class AutoSkip {
 	int val;
 
@@ -216,10 +218,28 @@ class RecSettings {
 		"AAC-LC",
 		"AAC-HE",
 		"AAC-HEv2",
-		"MP3",
 		"FLAC",
+		"MP3",
 		"Opus",
 		"Opus-VOIP"
+	};
+	static final int[] rec_encoders = {
+		Phiola.AF_AAC_LC,
+		Phiola.AF_AAC_HE,
+		Phiola.AF_AAC_HE2,
+		Phiola.AF_FLAC,
+		Phiola.AF_MP3,
+		Phiola.AF_OPUS,
+		Phiola.AF_OPUS_VOICE,
+	};
+	static final String[] rec_extensions = {
+		"m4a",
+		"m4a",
+		"m4a",
+		"flac",
+		"mp3",
+		"opus",
+		"opus",
 	};
 	static final String[] rec_src_presets = {
 		"default",
@@ -245,20 +265,20 @@ class RecSettings {
 	}
 
 	void conf_load(Conf c) {
-		rec_path = c.value(Conf.REC_PATH);
-		rec_name_template = c.value(Conf.REC_NAME);
-		rec_enc = c.value(Conf.REC_ENC);
-		rec_channels = c.number(Conf.REC_CHANNELS);
-		rec_rate = c.number(Conf.REC_RATE);
-		rec_bitrate = c.number(Conf.REC_BITRATE);
-		rec_buf_len_ms = c.number(Conf.REC_BUF_LEN);
-		rec_danorm = c.enabled(Conf.REC_DANORM);
-		rec_exclusive = c.enabled(Conf.REC_EXCLUSIVE);
-		rec_src_preset = c.value(Conf.REC_SRC_PRESET);
-		rec_list_add = c.enabled(Conf.REC_LIST_ADD);
-		rec_longclick = c.enabled(Conf.REC_LONGCLICK);
-		rec_until_sec = core.str_to_uint(c.value(Conf.REC_UNTIL), rec_until_sec);
-		rec_gain_db100 = c.number(Conf.REC_GAIN);
+		rec_path			= c.value(Conf.REC_PATH);
+		rec_name_template	= c.value(Conf.REC_NAME);
+		rec_enc				= c.value(Conf.REC_ENC);
+		rec_channels		= c.number(Conf.REC_CHANNELS);
+		rec_rate			= c.number(Conf.REC_RATE);
+		rec_bitrate			= c.number(Conf.REC_BITRATE);
+		rec_buf_len_ms		= c.number(Conf.REC_BUF_LEN);
+		rec_danorm			= c.enabled(Conf.REC_DANORM);
+		rec_exclusive		= c.enabled(Conf.REC_EXCLUSIVE);
+		rec_src_preset		= c.value(Conf.REC_SRC_PRESET);
+		rec_list_add		= c.enabled(Conf.REC_LIST_ADD);
+		rec_longclick		= c.enabled(Conf.REC_LONGCLICK);
+		rec_until_sec		= core.str_to_uint(c.value(Conf.REC_UNTIL), rec_until_sec);
+		rec_gain_db100		= c.number(Conf.REC_GAIN);
 	}
 
 	String conf_write() {
@@ -299,28 +319,12 @@ class RecSettings {
 		if (rec_name_template.isEmpty())
 			rec_name_template = "rec-@year@month@day-@hour@minute@second";
 
-		switch (rec_enc) {
-		case "AAC-LC":
-		case "AAC-HE":
-		case "AAC-HEv2":
-			rec_fmt = "m4a";
-			break;
-		case "FLAC":
-			rec_fmt = "flac";
-			break;
-
-		case "Opus":
-		case "Opus-VOIP":
-			rec_fmt = "opus";
-			break;
-
-		case "MP3":
-			rec_fmt = "mp3";  break;
-
-		default:
-			rec_fmt = "m4a";
+		int i = Arrays.asList(rec_formats).indexOf(rec_enc);
+		if (i < 0) {
 			rec_enc = "AAC-LC";
-			break;
+			rec_fmt = "m4a";
+		} else {
+			rec_fmt = rec_extensions[i];
 		}
 
 		if (rec_bitrate <= 0)
@@ -401,15 +405,15 @@ class ConvertSettings {
 	}
 
 	void conf_load(Conf c) {
-		conv_out_dir = c.value(Conf.CONV_OUT_DIR);
-		conv_out_name = c.value(Conf.CONV_OUT_NAME);
-		conv_format = c.value(Conf.CONV_FORMAT);
-		conv_aac_quality = c.number(Conf.CONV_AAC_Q);
-		conv_opus_quality = c.number(Conf.CONV_OPUS_Q);
-		conv_mp3_quality = c.number(Conf.CONV_MP3_Q) - 1;
-		conv_copy = c.enabled(Conf.CONV_COPY);
-		conv_file_date_preserve = c.enabled(Conf.CONV_FILE_DATE_PRES);
-		conv_new_add_list = c.enabled(Conf.CONV_NEW_ADD_LIST);
+		conv_out_dir			= c.value(Conf.CONV_OUT_DIR);
+		conv_out_name			= c.value(Conf.CONV_OUT_NAME);
+		conv_format				= c.value(Conf.CONV_FORMAT);
+		conv_aac_quality		= c.number(Conf.CONV_AAC_Q);
+		conv_opus_quality		= c.number(Conf.CONV_OPUS_Q);
+		conv_mp3_quality		= c.number(Conf.CONV_MP3_Q) - 1;
+		conv_copy				= c.enabled(Conf.CONV_COPY);
+		conv_file_date_preserve	= c.enabled(Conf.CONV_FILE_DATE_PRES);
+		conv_new_add_list		= c.enabled(Conf.CONV_NEW_ADD_LIST);
 	}
 
 	String conf_write() {

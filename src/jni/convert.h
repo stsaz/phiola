@@ -120,7 +120,7 @@ struct conv_track {
 
 static void* conv_ui_open(phi_track *t)
 {
-	struct conv_track *c = phi_track_allocT(t, struct conv_track);
+	struct conv_track *c = jni_phi_track_allocT(t, struct conv_track);
 	c->sample_rate = t->audio.format.rate;
 	c->duration_sec = samples_to_msec(t->audio.total, c->sample_rate) / 1000;
 	c->index = x->queue.index(t->qent);
@@ -143,7 +143,7 @@ static void conv_ui_close(void *ctx, phi_track *t)
 	cti->ct = NULL;
 	fflock_unlock(&cti->lock);
 
-	phi_track_free(t, c);
+	jni_phi_track_free(t, c);
 }
 
 static int conv_ui_process(void *ctx, phi_track *t)

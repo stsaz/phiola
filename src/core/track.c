@@ -516,6 +516,31 @@ static ffssize track_cmd(phi_track *t, uint cmd, ...)
 	return 0;
 }
 
+void* track_memalloc(phi_track *t, uint n)
+{
+	uint sz = t->area_size + ffint_align_ceil2(n, 64);
+	if (n > 256 || sz > t->area_cap) {
+		dbglog(t, "alloc %u bytes", n);
+		void *p = ffmem_align(n, 64);
+		ffmem_zero(p, n);
+		return p;
+	}
+
+	dbglog(t, "reserve %u bytes", n);
+	void *p = t->area + t->area_size;
+	t->area_size = sz;
+	return p;
+}
+
+void track_memfree(phi_track *t, void *ptr)
+{
+	if ((u_char*)ptr >= t->area
+		&& (u_char*)ptr < t->area + t->area_cap) {
+		return;
+	}
+	ffmem_alignfree(ptr);
+}
+
 const phi_track_if phi_track_iface = {
 	track_conf,
 	track_create,
@@ -524,5 +549,7 @@ const phi_track_if phi_track_iface = {
 	track_xstart,
 	track_xstop,
 	track_wake,
+	track_memalloc,
+	track_memfree,
 	track_cmd,
 };

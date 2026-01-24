@@ -72,6 +72,8 @@ struct core_ctx {
 #ifdef FF_WIN
 	woeh *woeh_obj;
 #endif
+
+	uint meta_cache_hits, meta_find_reqs;
 };
 
 struct core_ctx *cc;
@@ -427,8 +429,10 @@ FF_EXPORT void phi_core_destroy()
 {
 	if (cc == NULL) return;
 
-	dbglog("stats: %L modules; %L workers"
-		, cc->mods.len, cc->wx.workers.len);
+	dbglog("stats: %L modules;  %L workers;"
+		"  %u/%u meta cache hits"
+		, cc->mods.len, cc->wx.workers.len
+		, cc->meta_cache_hits, cc->meta_find_reqs);
 
 #ifdef FF_WIN
 	woeh_free(cc->woeh_obj);
@@ -482,8 +486,8 @@ FF_EXPORT phi_core* phi_core_create(struct phi_core_conf *conf)
 		core->conf.log = core_log;
 		core->conf.logv = core_logv;
 	}
-	if (!core->conf.code_page) core->conf.code_page = FFUNICODE_WIN1252;
-	if (!core->conf.timer_interval_msec) core->conf.timer_interval_msec = 100;
+	FF_CAS(core->conf.code_page, 0, FFUNICODE_WIN1252);
+	FF_CAS(core->conf.timer_interval_msec, 0, 100);
 
 	cc = ffmem_new(struct core_ctx);
 	ffvec_allocT(&cc->mods, 8, struct core_mod);
@@ -566,9 +570,17 @@ static int meta_list(const phi_meta *meta, uint *index, ffstr *name, ffstr *val,
 
 static int meta_find(const phi_meta *meta, ffstr name, ffstr *val, uint flags)
 {
-	if (CKV_E_NOTEXIST == ckv_find((void*)meta, name, val, flags))
+	int r;
+	if (CKV_E_NOTEXIST == (r = ckv_find((void*)meta, name, val, flags)))
 		return -1;
+
 	dbglog("meta requested: %S = %S", &name, val);
+	if (core->conf.log_level >= PHI_LOG_DEBUG) {
+		cc->meta_find_reqs++; // Note: not atomic as we don't care
+		if (r == CKV_E_OK_CACHED)
+			cc->meta_cache_hits++;
+	}
+
 	return 0;
 }
 

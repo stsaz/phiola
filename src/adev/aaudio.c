@@ -16,6 +16,7 @@ struct aa_mod {
 	ffaudio_buf*	abuf;
 	uint			buf_len_msec;
 	struct phi_af	fmt;
+	ffvec			formats_failed; // struct fmt_pair[]
 	phi_timer		tmr;
 	audio_out*		user;
 };
@@ -44,6 +45,7 @@ static const void* aa_iface(const char *name)
 static void aa_destroy()
 {
 	aa_buf_close(NULL);
+	ffvec_free(&mod->formats_failed);
 	ffmem_free(mod);
 	mod = NULL;
 }

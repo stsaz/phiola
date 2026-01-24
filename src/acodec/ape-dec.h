@@ -26,7 +26,7 @@ static void ape_dec_free(void *ctx, phi_track *t)
 	struct ape_dec *a = ctx;
 	if (a->dec)
 		ape_decode_free(a->dec);
-	ffmem_free(a->pcm);
+	phi_track_free(t, a->pcm);
 	phi_track_free(t, a);
 }
 
@@ -77,7 +77,7 @@ static int ape_dec_init(struct ape_dec *a, phi_track *t)
 	}
 
 	a->sample_size = a->info.bits/8 * a->info.channels;
-	a->pcm = ffmem_alloc(a->info.block_samples * a->sample_size);
+	a->pcm = phi_track_alloc(t, a->info.block_samples * a->sample_size);
 	ape_info(a, t, &a->info);
 	return 0;
 }

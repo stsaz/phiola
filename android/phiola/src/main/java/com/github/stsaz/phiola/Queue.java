@@ -181,7 +181,8 @@ class Queue {
 		F_RM_ON_NEXT = 8,
 		F_RM_ON_ERR = 0x10,
 		F_AUTO_NORM = 0x20,
-		F_RG_NORM = 0x40;
+		F_RG_NORM = 0x40,
+		F_ALL = 0xff;
 	private int flags;
 	void flags_set1(int mask, boolean val) {
 		int i = 0;

@@ -82,6 +82,9 @@ struct phiola_jni {
 static struct phiola_jni *x;
 static JavaVM *jvm;
 
+#define jni_phi_track_allocT(t, T)  x->core->track->memalloc(t, sizeof(T))
+#define jni_phi_track_free(t, ptr)  x->core->track->memfree(t, ptr)
+
 static void exe_logv(void *log_obj, uint flags, const char *module, phi_track *t, const char *fmt, va_list va)
 {
 	const char *id = (!!t) ? t->id : NULL;
@@ -185,6 +188,7 @@ enum {
 };
 
 #include <jni/android-utils.h>
+#include <jni/conf.h>
 #include <jni/record.h>
 #include <jni/convert.h>
 #include <jni/playback.h>

@@ -35,12 +35,9 @@ static int audio_in_open(audio_in *a, phi_track *t)
 	ffaudio_dev *dev = NULL;
 	ffaudio_conf conf = {};
 
-	if (!t->conf.iaudio.format.format)
-		t->conf.iaudio.format.format = PHI_PCM_16;
-	if (!t->conf.iaudio.format.rate)
-		t->conf.iaudio.format.rate = 44100;
-	if (!t->conf.iaudio.format.channels)
-		t->conf.iaudio.format.channels = 2;
+	FF_CAS(t->conf.iaudio.format.format, 0, PHI_PCM_16);
+	FF_CAS(t->conf.iaudio.format.rate, 0, 44100);
+	FF_CAS(t->conf.iaudio.format.channels, 0, 2);
 
 	conf.device_id = a->dev_id;
 	a->dev_idx = (t->conf.iaudio.device_id < 0xff) ? t->conf.iaudio.device_index : 0;

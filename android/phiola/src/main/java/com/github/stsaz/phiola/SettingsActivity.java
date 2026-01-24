@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.github.stsaz.phiola.databinding.SettingsBinding;
 
+import java.lang.Math;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -95,8 +96,12 @@ public class SettingsActivity extends AppCompatActivity {
 		b.eEqualizer.setEnabled(enable);
 	}
 
-	private static int eqlz_freq_value(int progress) { return progress * 100; }
-	private static int eqlz_freq_progress(int val) { return val / 100; }
+	// ~20..20000 Hz
+	private static int eqlz_freq_value(int progress) {
+		return (int)((20000 - 20) * Math.pow((double)(progress + 1) / 100, 3) + 20);
+	}
+	private static int eqlz_freq_progress(int val) { return 0; }
+
 	private static int eqlz_width_value(int progress) { return progress; }
 	private static int eqlz_width_progress(int val) { return val; }
 	private static int eqlz_gain_value(int progress) { return progress - 120; }
@@ -225,7 +230,7 @@ public class SettingsActivity extends AppCompatActivity {
 			});
 
 		b.swEqualizer.setOnCheckedChangeListener((v, checked) -> { eqlz_enable(checked); });
-		b.sbEqlzFreq.setMax(220); // 0..22000 Hz
+		b.sbEqlzFreq.setMax(99);
 		b.sbEqlzWidth.setMax(40); // 0..4.0
 		b.sbEqlzGain.setMax(120+120); // -12.0..12.0
 		b.sbEqlzFreq.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
@@ -298,6 +303,54 @@ public class SettingsActivity extends AppCompatActivity {
 		public void onStopTrackingTouch(SeekBar seekBar) {}
 	}
 
+	private void list_load() {
+		Queue queue = core.queue();
+		b.swRandom.setChecked(queue.flags_test(Queue.F_RANDOM));
+		b.swRepeat.setChecked(queue.flags_test(Queue.F_REPEAT));
+		b.swListAddRmOnNext.setChecked(queue.flags_test(Queue.F_MOVE_ON_NEXT));
+		b.swListRmOnNext.setChecked(queue.flags_test(Queue.F_RM_ON_NEXT));
+		b.swListRmOnErr.setChecked(queue.flags_test(Queue.F_RM_ON_ERR));
+		b.swRgNorm.setChecked(queue.flags_test(Queue.F_RG_NORM));
+		b.swAutoNorm.setChecked(queue.flags_test(Queue.F_AUTO_NORM));
+		b.sbPlayAutoStop.setProgress(auto_stop_progress(queue.auto_stop_value_min));
+		b.eAutoStop.setText(core.int_to_str(queue.auto_stop_value_min));
+	}
+
+	private void list_save() {
+		int f = 0;
+		f |= (b.swRandom.isChecked()) ? Queue.F_RANDOM : 0;
+		f |= (b.swRepeat.isChecked()) ? Queue.F_REPEAT : 0;
+		f |= (b.swListAddRmOnNext.isChecked()) ? Queue.F_MOVE_ON_NEXT : 0;
+		f |= (b.swListRmOnNext.isChecked()) ? Queue.F_RM_ON_NEXT : 0;
+		f |= (b.swListRmOnErr.isChecked()) ? Queue.F_RM_ON_ERR : 0;
+		f |= (b.swRgNorm.isChecked()) ? Queue.F_RG_NORM : 0;
+		f |= (b.swAutoNorm.isChecked()) ? Queue.F_AUTO_NORM : 0;
+		core.queue().flags_set(Queue.F_ALL, f);
+
+		core.queue().auto_stop_value_min = core.str_to_uint(b.eAutoStop.getText().toString(), 0);
+	}
+
+	private void oper_load() {
+		b.eDataDir.setText(core.setts.pub_data_dir);
+		b.eTrashDir.setText(core.setts.trash_dir);
+		b.swFileDel.setChecked(core.setts.file_del);
+		b.eLibraryDir.setText(core.setts.library_dir);
+		b.swDeprecatedMods.setChecked(core.setts.deprecated_mods);
+	}
+
+	private void oper_save() {
+		String s = b.eDataDir.getText().toString();
+		if (s.isEmpty())
+			s = core.storage_path + "/phiola";
+		core.setts.pub_data_dir = s;
+
+		core.setts.svc_notification_disable = b.swSvcNotifDisable.isChecked();
+		core.setts.trash_dir = b.eTrashDir.getText().toString();
+		core.setts.file_del = b.swFileDel.isChecked();
+		core.setts.library_dir = b.eLibraryDir.getText().toString();
+		core.setts.deprecated_mods = b.swDeprecatedMods.isChecked();
+	}
+
 	private void load() {
 		// Interface
 		b.swDark.setChecked(core.gui().theme == GUI.THM_DARK);
@@ -314,17 +367,7 @@ public class SettingsActivity extends AppCompatActivity {
 		b.swSvcNotifDisable.setChecked(core.setts.svc_notification_disable);
 		b.swUiInfoInTitle.setChecked(core.gui().ainfo_in_title);
 
-		// Playlist
-		Queue queue = core.queue();
-		b.swRandom.setChecked(queue.flags_test(Queue.F_RANDOM));
-		b.swRepeat.setChecked(queue.flags_test(Queue.F_REPEAT));
-		b.swListAddRmOnNext.setChecked(queue.flags_test(Queue.F_MOVE_ON_NEXT));
-		b.swListRmOnNext.setChecked(queue.flags_test(Queue.F_RM_ON_NEXT));
-		b.swListRmOnErr.setChecked(queue.flags_test(Queue.F_RM_ON_ERR));
-		b.swRgNorm.setChecked(queue.flags_test(Queue.F_RG_NORM));
-		b.swAutoNorm.setChecked(queue.flags_test(Queue.F_AUTO_NORM));
-		b.sbPlayAutoStop.setProgress(auto_stop_progress(queue.auto_stop_value_min));
-		b.eAutoStop.setText(core.int_to_str(queue.auto_stop_value_min));
+		list_load();
 
 		// Playback
 		ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, core.setts.code_pages);
@@ -333,21 +376,8 @@ public class SettingsActivity extends AppCompatActivity {
 		b.spCodepage.setSelection(core.setts.codepage_index);
 
 		play_load();
-
-		// Operation
-		b.eDataDir.setText(core.setts.pub_data_dir);
-		b.eTrashDir.setText(core.setts.trash_dir);
-		b.swFileDel.setChecked(core.setts.file_del);
-		b.eLibraryDir.setText(core.setts.library_dir);
-		b.swDeprecatedMods.setChecked(core.setts.deprecated_mods);
-
+		oper_load();
 		rec_load();
-	}
-
-	private static int flag(int mask, boolean val) {
-		if (val)
-			return mask;
-		return 0;
 	}
 
 	private void save() {
@@ -363,36 +393,9 @@ public class SettingsActivity extends AppCompatActivity {
 		core.gui().playback_marker_show = b.swShowPlaybackMarker.isChecked();
 		core.gui().ainfo_in_title = b.swUiInfoInTitle.isChecked();
 
-		// Playlist
-		Queue queue = core.queue();
-
-		int f = 0;
-		f |= flag(Queue.F_RANDOM, b.swRandom.isChecked());
-		f |= flag(Queue.F_REPEAT, b.swRepeat.isChecked());
-		f |= flag(Queue.F_MOVE_ON_NEXT, b.swListAddRmOnNext.isChecked());
-		f |= flag(Queue.F_RM_ON_NEXT, b.swListRmOnNext.isChecked());
-		f |= flag(Queue.F_RM_ON_ERR, b.swListRmOnErr.isChecked());
-		f |= flag(Queue.F_RG_NORM, b.swRgNorm.isChecked());
-		f |= flag(Queue.F_AUTO_NORM, b.swAutoNorm.isChecked());
-		int mask = Queue.F_RANDOM | Queue.F_REPEAT | Queue.F_MOVE_ON_NEXT | Queue.F_RM_ON_NEXT | Queue.F_RM_ON_ERR | Queue.F_RG_NORM | Queue.F_AUTO_NORM;
-		queue.flags_set(mask, f);
-
-		queue.auto_stop_value_min = core.str_to_uint(b.eAutoStop.getText().toString(), 0);
-
+		list_save();
 		play_save();
-
-		// Operation
-		String s = b.eDataDir.getText().toString();
-		if (s.isEmpty())
-			s = core.storage_path + "/phiola";
-		core.setts.pub_data_dir = s;
-
-		core.setts.svc_notification_disable = b.swSvcNotifDisable.isChecked();
-		core.setts.trash_dir = b.eTrashDir.getText().toString();
-		core.setts.file_del = b.swFileDel.isChecked();
-		core.setts.library_dir = b.eLibraryDir.getText().toString();
-		core.setts.deprecated_mods = b.swDeprecatedMods.isChecked();
-
+		oper_save();
 		rec_save();
 		core.queue().conf_normalize();
 		core.setts.normalize();

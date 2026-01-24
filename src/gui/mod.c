@@ -337,7 +337,7 @@ void ctl_play(uint i)
 void volume_set(uint vol)
 {
 	if (vol <= 100)
-		gd->gain_db = vol2db(vol, 48);
+		gd->gain_db = vol2db(vol, -40);
 	else
 		gd->gain_db = vol2db_inc(vol - 100, 25, 6);
 	gd->volume = vol;

@@ -6,6 +6,7 @@ package com.github.stsaz.phiola;
 import android.os.Build;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 abstract class PlaybackObserver {
 	/** Called for each new track.
@@ -115,22 +116,8 @@ class Track {
 		return String.format("%s - %s", t.pmeta.artist, t.pmeta.title);
 	}
 
-	private int rec_fmt(String s) {
-		switch (s) {
-		case "AAC-HE":
-			return Phiola.AF_AAC_HE;
-		case "AAC-HEv2":
-			return Phiola.AF_AAC_HE2;
-		case "FLAC":
-			return Phiola.AF_FLAC;
-		case "MP3":
-			return Phiola.AF_MP3;
-		case "Opus":
-			return Phiola.AF_OPUS;
-		case "Opus-VOIP":
-			return Phiola.AF_OPUS_VOICE;
-		}
-		return Phiola.AF_AAC_LC;
+	private int rec_format_index(String name) {
+		return Arrays.asList(RecSettings.rec_formats).indexOf(name);
 	}
 
 	TrackHandle rec_start(Phiola.RecordCallback cb) {
@@ -143,7 +130,7 @@ class Track {
 			, core.rec.rec_fmt);
 
 		Phiola.RecordParams p = new Phiola.RecordParams();
-		p.format = rec_fmt(core.rec.rec_enc);
+		p.format = RecSettings.rec_encoders[rec_format_index(core.rec.rec_enc)];
 		p.channels = core.rec.rec_channels;
 		p.sample_rate = core.rec.rec_rate;
 

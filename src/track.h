@@ -270,24 +270,6 @@ struct phi_track {
 	// ...
 };
 
-static inline void* phi_track_alloc(phi_track *t, uint n)
-{
-	uint sz = t->area_size + ffint_align_ceil2(n, 64);
-	if (sz > t->area_cap) {
-		return ffmem_calloc(1, n);
-	}
-	void *p = t->area + t->area_size;
-	t->area_size = sz;
-	return p;
-}
-
-#define phi_track_allocT(t, T)  phi_track_alloc(t, sizeof(T))
-
-static inline void phi_track_free(phi_track *t, void *ptr)
-{
-	if ((u_char*)ptr >= t->area
-		&& (u_char*)ptr < t->area + t->area_cap) {
-		return;
-	}
-	ffmem_free(ptr);
-}
+#define phi_track_alloc(t, n)  (core)->track->memalloc(t, n)
+#define phi_track_allocT(t, T)  (core)->track->memalloc(t, sizeof(T))
+#define phi_track_free(t, ptr)  (core)->track->memfree(t, ptr)

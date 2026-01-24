@@ -33,7 +33,7 @@ static void* aconv_open(phi_track *t)
 static void aconv_close(void *ctx, phi_track *t)
 {
 	struct aconv *c = ctx;
-	ffmem_alignfree(c->buf.ptr);
+	phi_track_free(t, c->buf.ptr);
 	phi_track_free(t, c);
 }
 
@@ -107,7 +107,7 @@ static int aconv_prepare(struct aconv *c, phi_track *t)
 	uint n = cap;
 	if (!c->fo.interleaved)
 		n = sizeof(void*) * out_ch + cap;
-	c->buf.ptr = ffmem_align(n, 16);
+	c->buf.ptr = phi_track_alloc(t, n);
 	c->buf.cap = n;
 	if (!c->fo.interleaved) {
 		arrp_setbuf((void**)c->buf.ptr, out_ch, c->buf.ptr + sizeof(void*) * out_ch, cap / out_ch);

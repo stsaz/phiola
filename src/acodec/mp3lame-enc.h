@@ -59,7 +59,7 @@ static const char* mpeg_enc_errstr(struct mpeg_enc *m)
 /**
 @qual: 9..0(better) for VBR or 10..320 for CBR
 Return enum MPG_E. */
-static int mpg_create(struct mpeg_enc *m, struct phi_af *af, int qual)
+static int mpg_create(struct mpeg_enc *m, phi_track *t, struct phi_af *af, int qual)
 {
 	int r;
 
@@ -90,11 +90,8 @@ static int mpg_create(struct mpeg_enc *m, struct phi_af *af, int qual)
 		return MPG_EFMT;
 	}
 
-	if (!ffvec_realloc(&m->buf, 125 * (8 * 1152) / 100 + 7200, 1)) {
-		m->err = MPG_ESYS;
-		return MPG_ESYS;
-	}
-
+	m->buf.cap = 125 * (8 * 1152) / 100 + 7200;
+	m->buf.ptr = phi_track_alloc(t, m->buf.cap);
 	m->fmt = *af;
 	m->samp_size = pcm_size1(af);
 	return MPG_EOK;
@@ -170,7 +167,7 @@ void* mpeg_enc_open(phi_track *t)
 		return PHI_OPEN_ERR;
 	}
 
-	struct mpeg_enc *m = ffmem_new(struct mpeg_enc);
+	struct mpeg_enc *m = phi_track_allocT(t, struct mpeg_enc);
 	t->audio.mp3_lametag = 0;
 	return m;
 }
@@ -178,9 +175,9 @@ void* mpeg_enc_open(phi_track *t)
 void mpeg_enc_close(void *ctx, phi_track *t)
 {
 	struct mpeg_enc *m = ctx;
-	ffvec_free(&m->buf);
+	phi_track_free(t, m->buf.ptr);
 	lame_free(m->lam);
-	ffmem_free(m);
+	phi_track_free(t, m);
 }
 
 int mpeg_enc_process(void *ctx, phi_track *t)
@@ -193,7 +190,7 @@ int mpeg_enc_process(void *ctx, phi_track *t)
 	case 1: {
 		struct phi_af af = t->oaudio.format;
 		int q = (t->conf.mp3.quality) ? t->conf.mp3.quality - 1 : 2;
-		if ((r = mpg_create(m, &af, q))) {
+		if ((r = mpg_create(m, t, &af, q))) {
 
 			if (r == MPG_EFMT && m->state1 == 0) {
 				t->oaudio.conv_format.format = af.format;

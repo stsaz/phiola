@@ -79,7 +79,7 @@ static void* soxr_open(phi_track *t)
 	}
 	uint channel_len = oaf.rate * (oaf.format & 0xff) / 8;
 	c->buf_cap = channel_len * oaf.channels;
-	c->buf = ffmem_alloc(c->buf_cap);
+	c->buf = phi_track_alloc(t, c->buf_cap);
 	if (!oaf.interleaved) {
 		for (uint i = 0;  i < oaf.channels;  i++) {
 			c->buf_v[i] = (char*)c->buf + channel_len * i;
@@ -96,7 +96,7 @@ end:
 static void soxr_close(struct soxr *c, phi_track *t)
 {
 	phi_soxr_destroy(c->soxr);
-	ffmem_free(c->buf);
+	phi_track_free(t, c->buf);
 	phi_track_free(t, c);
 }
 

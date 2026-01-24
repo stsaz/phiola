@@ -1,6 +1,13 @@
 /** phiola: utility functions
 2023, Simon Zolin */
 
+/** Compare and, if equal, set new value */
+#define FF_CAS(var, old, _new) \
+do { \
+	if (var == old) \
+		var = _new; \
+} while (0)
+
 #include <ffbase/stringz.h>
 
 static inline int ffbit_test_array32(const uint *ar, uint bit)

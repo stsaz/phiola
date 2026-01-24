@@ -25,7 +25,7 @@ static void* mpc_dec_open(phi_track *t)
 		phi_track_free(t, m);
 		return PHI_OPEN_ERR;
 	}
-	m->pcm = ffmem_alloc(MPC_ABUF_CAP);
+	m->pcm = phi_track_alloc(t, MPC_ABUF_CAP);
 	t->audio.format.format = PHI_PCM_FLOAT32;
 	t->audio.format.interleaved = 1;
 	m->channels = t->audio.format.channels;
@@ -39,7 +39,7 @@ static void* mpc_dec_open(phi_track *t)
 static void mpc_dec_close(void *ctx, phi_track *t)
 {
 	struct mpc_dec *m = ctx;
-	ffmem_free(m->pcm);
+	phi_track_free(t, m->pcm);
 	if (m->mpc)
 		mpc_decode_free(m->mpc);
 	phi_track_free(t, m);

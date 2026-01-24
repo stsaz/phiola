@@ -42,12 +42,16 @@ union pcmdata {
 /** Convert 16LE sample to FLOAT. */
 #define pcm_16le_flt(sh)  ((double)(sh) * (1 / 32768.0))
 
-/** Convert volume knob position to dB value. */
+/** Convert volume knob position (0..100) to a negative dB value:
+	db = db_min - db_min * log(pos) / 2
+Returns -6dB for -40dB at 50%. */
 #define vol2db(pos, db_min) \
-	(((pos) != 0) ? (log10(pos) * (db_min)/2 /*log10(100)*/ - (db_min)) : -100)
+	(((pos) != 0) ? (double)(db_min) - (double)(db_min) / 2 * log10(pos) : -100)
 
+/** Convert volume knob position (1..MAX) to a positive dB value.
+Returns +10dB for +40dB at 50%. */
 #define vol2db_inc(pos, pos_max, db_max) \
-	(pow(10, (double)(pos) / (pos_max)) / 10 * (db_max))
+	(double)(db_max) * (pow((double)(pos) / (pos_max), 2))
 
 #ifndef db_gain
 /* gain = 10 ^ (db / 20) */
