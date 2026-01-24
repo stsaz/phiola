@@ -1,0 +1,28 @@
+From cfb2beb72256c88ca9a6fc4222651ae9dd8daf07 Mon Sep 17 00:00:00 2001
+From: Simon Zolin <4729655+stsaz@users.noreply.github.com>
+Date: Sat, 17 Jan 2026 08:51:49 +0300
+Subject: [PATCH 3/5] sox_effect_t: static `obuf` buffer
+
+---
+ src/effects.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/src/effects.c b/src/effects.c
+index 577e655..fa1bddf 100644
+--- a/src/effects.c
++++ b/src/effects.c
+@@ -412,8 +412,9 @@ int sox_flow_effects(sox_effects_chain_t * chain, int (* callback)(sox_bool all_
+ 
+   for (e = 0; e < chain->length; ++e) {
+     sox_effect_t *effp = chain->effects[e];
+-    effp->obuf =
+-        lsx_realloc(effp->obuf, sox_globals.bufsiz * sizeof(*effp->obuf));
++    if (!effp->obuf)
++      effp->obuf = lsx_malloc(sox_globals.bufsiz * sizeof(*effp->obuf));
++
+       /* Memory will be freed by sox_delete_effect() later. */
+       /* Possibly there was already a buffer, if this is a used effect;
+          it may still contain samples in that case. */
+-- 
+2.49.0
+

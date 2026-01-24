@@ -46,39 +46,113 @@ static int request_input_conversion(phi_track *t)
 }
 
 struct sox_eq_conf {
-	const char *frequency, *width, *gain;
+	const char *type, *frequency, *width, *gain;
 };
 
 #define O(m)  (void*)(ffsize)FF_OFF(struct sox_eq_conf, m)
 static const struct ffarg sox_eq_args[] = {
 	{ "frequency",	's',	O(frequency) },
 	{ "gain",		's',	O(gain) },
+	{ "type",		's',	O(type) },
 	{ "width",		's',	O(width) },
 	{}
 };
 #undef O
 
-static int sox_argv_extract(struct sox *c, phi_track *t, ffstr *s, char **argv, uint n)
+enum {
+	EQ_BAND,
+	EQ_SHELVE_BASS,
+	EQ_SHELVE_TREBLE,
+};
+
+static int sox_argv_extract(struct sox *c, phi_track *t, ffstr *s, struct sox_eq_conf *eqc)
 {
-	struct sox_eq_conf eqc = {};
 	ffstr sc = {};
 	ffstr_splitby(s, ',', &sc, s);
 	ffstr_skipchar(s, ' ');
 	sc.ptr[sc.len] = '\0';
 
 	struct ffargs a = {};
-	if (ffargs_process_line(&a, sox_eq_args, &eqc, FFARGS_O_PARTIAL | FFARGS_O_DUPLICATES, sc.ptr)) {
+	if (ffargs_process_line(&a, sox_eq_args, eqc, FFARGS_O_PARTIAL | FFARGS_O_DUPLICATES, sc.ptr)) {
 		errlog(t, "%s", a.error);
 		return -1;
 	}
 
-	if (!eqc.frequency || !eqc.width || !eqc.gain)
-		return -1;
+	if (!eqc->type)
+		return EQ_BAND;
 
-	argv[0] = (char*)eqc.frequency;
-	argv[1] = (char*)eqc.width;
-	argv[2] = (char*)eqc.gain;
+	static const struct {
+		char name[7];
+		u_char type;
+	} eq_types[] = {
+		{ "band",	EQ_BAND },
+		{ "bass",	EQ_SHELVE_BASS },
+		{ "treble",	EQ_SHELVE_TREBLE },
+	};
+	for (uint i = 0;  i < FF_COUNT(eq_types);  i++) {
+		if (ffsz_eq(eqc->type, eq_types[i].name))
+			return eq_types[i].type;
+	}
+	return -1;
+}
+
+static int sox_filter_add(struct sox *c, phi_track *t, ffstr *conf, uint index)
+{
+	int r;
+	uint ia;
+	const char *argv[3] = {}, *filter_name;
+	struct sox_eq_conf eqc = {};
+
+	switch ((r = sox_argv_extract(c, t, conf, &eqc))) {
+	case EQ_BAND:
+		if (!eqc.gain || !eqc.frequency || !eqc.width)
+			goto err;
+		argv[0] = eqc.frequency;
+		argv[1] = eqc.width;
+		argv[2] = eqc.gain;
+		ia = 3;
+		filter_name = "equalizer";
+		break;
+
+	case EQ_SHELVE_BASS:
+	case EQ_SHELVE_TREBLE:
+		if (!eqc.gain)
+			goto err;
+		argv[0] = eqc.gain;
+		ia = 1;
+		if (eqc.frequency)
+			argv[ia++] = eqc.frequency;
+		if (eqc.width)
+			argv[ia++] = eqc.width;
+		filter_name = eqc.type;
+		break;
+
+	default:
+		goto err;
+	}
+
+	dbglog(t, "adding filter #%u '%s': %s %s %s"
+		, index, filter_name, argv[0], argv[1], argv[2]);
+	if (phi_sox_filter(c->sox, filter_name, argv, ia)) {
+		goto err;
+	}
+
 	return 0;
+
+err:
+	errlog(t, "Equalizer: incorrect parameters");
+	t->error = PHI_E_FILTER_CONF;
+	return PHI_ERR;
+}
+
+static void* sox_mem_alloc(void *opaque, uint n)
+{
+	return phi_track_alloc(opaque, n);
+}
+
+static void sox_mem_free(void *opaque, void *ptr)
+{
+	phi_track_free(opaque, ptr);
 }
 
 static int sox_process(struct sox *c, phi_track *t)
@@ -101,6 +175,10 @@ static int sox_process(struct sox *c, phi_track *t)
 		struct sox_conf conf = {
 			.rate = t->oaudio.format.rate,
 			.channels = t->oaudio.format.channels,
+
+			.mem_alloc = sox_mem_alloc,
+			.mem_free = sox_mem_free,
+			.opaque = t,
 		};
 		if (phi_sox_create(&c->sox, &conf)) {
 			errlog(t, "phi_sox_create");
@@ -114,17 +192,8 @@ static int sox_process(struct sox *c, phi_track *t)
 
 		uint i = 1;
 		while (s.len) {
-			char *argv[3];
-			if (sox_argv_extract(c, t, &s, argv, 3)) {
-				errlog(t, "Equalizer: incorrect parameters");
-				t->error = PHI_E_FILTER_CONF;
+			if (sox_filter_add(c, t, &s, i))
 				return PHI_ERR;
-			}
-			if (phi_sox_filter(c->sox, "equalizer", (const char**)argv, 3)) {
-				errlog(t, "phi_sox_filter");
-				return PHI_ERR;
-			}
-			dbglog(t, "added filter #%u 'equalizer': %s %s %s", i, argv[0], argv[1], argv[2]);
 			i++;
 		}
 

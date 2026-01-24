@@ -552,7 +552,8 @@ test_equalizer() {
 	fi
 	./phiola pl -equ " f 1000 w 1.0q" pl.wav || true # missing parameter
 	./phiola pl -equ " f 1000 unknown 1.0q g -6.0" pl.wav || true # unknown parameter
-	./phiola -D pl -equ " w 1.0q g -6.0 f 1000 , w 1.0q f 10000 g -6.0 " pl.wav | grep equalizer
+	./phiola -D pl -equ " w 1.0q g -6.0 f 1000 , w 1.0q f 10000 g -6.0 " pl.wav | grep 'adding filter'
+	./phiola -D pl -equ "t bass g 6, f 1000 w 1.0q g 3, t treble g -6" pl.wav | grep 'adding filter'
 }
 
 test_dir_read() {

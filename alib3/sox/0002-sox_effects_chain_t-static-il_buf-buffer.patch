@@ -1,0 +1,51 @@
+From 0f6cdbb77978b5a39e5d05ca9c0ba321ca9f3b17 Mon Sep 17 00:00:00 2001
+From: Simon Zolin <4729655+stsaz@users.noreply.github.com>
+Date: Sat, 17 Jan 2026 08:51:49 +0300
+Subject: [PATCH 2/5] sox_effects_chain_t: static `il_buf` buffer
+
+---
+ src/effects.c | 7 ++-----
+ 1 file changed, 2 insertions(+), 5 deletions(-)
+
+diff --git a/src/effects.c b/src/effects.c
+index 7aaf449..577e655 100644
+--- a/src/effects.c
++++ b/src/effects.c
+@@ -95,6 +95,7 @@ sox_effects_chain_t * sox_create_effects_chain(
+   result->global_info = *sox_get_effects_globals();
+   result->in_enc = in_enc;
+   result->out_enc = out_enc;
++  result->il_buf = lsx_malloc(sox_globals.bufsiz * sizeof(sox_sample_t));
+   return result;
+ } /* sox_create_effects_chain */
+ 
+@@ -103,6 +104,7 @@ void sox_delete_effects_chain(sox_effects_chain_t *ecp)
+     if (ecp && ecp->length)
+         sox_delete_effects(ecp);
+     free(ecp->effects);
++    free(ecp->il_buf);
+     free(ecp);
+ } /* sox_delete_effects_chain */
+ 
+@@ -422,10 +424,6 @@ int sox_flow_effects(sox_effects_chain_t * chain, int (* callback)(sox_bool all_
+       }
+     max_flows = max(max_flows, effp->flows);
+   }
+-  if (max_flows > 1) /* might need interleave buffer */
+-    chain->il_buf = lsx_malloc(sox_globals.bufsiz * sizeof(sox_sample_t));
+-  else
+-    chain->il_buf = NULL;
+ 
+   /* Go through the effects, and if there are samples in one of the
+      buffers, deinterleave it (if necessary).  */
+@@ -481,7 +479,6 @@ int sox_flow_effects(sox_effects_chain_t * chain, int (* callback)(sox_bool all_
+     }
+   }
+ 
+-  free(chain->il_buf);
+   return flow_status;
+ }
+ 
+-- 
+2.49.0
+

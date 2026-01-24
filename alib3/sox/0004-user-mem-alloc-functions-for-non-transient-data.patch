@@ -1,0 +1,155 @@
+From 5b56bcef156cde7cd2a379a0d7de6106ca1a1344 Mon Sep 17 00:00:00 2001
+From: Simon Zolin <4729655+stsaz@users.noreply.github.com>
+Date: Sat, 17 Jan 2026 08:51:49 +0300
+Subject: [PATCH 4/5] user mem alloc functions for non-transient data
+
+---
+ src/effects.c | 32 +++++++++++++++++---------------
+ src/sox.h     |  4 ++++
+ src/xmalloc.h |  5 +++++
+ 3 files changed, 26 insertions(+), 15 deletions(-)
+
+diff --git a/src/effects.c b/src/effects.c
+index fa1bddf..8f70568 100644
+--- a/src/effects.c
++++ b/src/effects.c
+@@ -55,9 +55,10 @@ static int default_getopts(sox_effect_t * effp, int argc, char **argv UNUSED)
+ }
+ 
+ /* Partially initialise the effect structure; signal info will come later */
+-sox_effect_t * sox_create_effect(sox_effect_handler_t const * eh)
++sox_effect_t * sox_create_effect2(sox_effect_handler_t const * eh, void *opaque)
+ {
+   sox_effect_t * effp = lsx_calloc(1, sizeof(*effp));
++  effp->opaque = opaque;
+   effp->obuf = NULL;
+ 
+   effp->global_info = sox_get_effects_globals();
+@@ -69,7 +70,7 @@ sox_effect_t * sox_create_effect(sox_effect_handler_t const * eh)
+   if (!effp->handler.stop   ) effp->handler.stop    = default_function;
+   if (!effp->handler.kill   ) effp->handler.kill    = default_function;
+ 
+-  effp->priv = lsx_calloc(1, effp->handler.priv_size);
++  effp->priv = lsx_ucalloc(opaque, 1, effp->handler.priv_size);
+ 
+   return effp;
+ } /* sox_create_effect */
+@@ -88,14 +89,15 @@ int sox_effect_options(sox_effect_t *effp, int argc, char * const argv[])
+ 
+ /* Effects chain: */
+ 
+-sox_effects_chain_t * sox_create_effects_chain(
+-    sox_encodinginfo_t const * in_enc, sox_encodinginfo_t const * out_enc)
++sox_effects_chain_t * sox_create_effects_chain3(
++    sox_encodinginfo_t const * in_enc, sox_encodinginfo_t const * out_enc, void *opaque)
+ {
+-  sox_effects_chain_t * result = lsx_calloc(1, sizeof(sox_effects_chain_t));
++  sox_effects_chain_t * result = lsx_ucalloc(opaque, 1, sizeof(sox_effects_chain_t));
++  result->opaque = opaque;
+   result->global_info = *sox_get_effects_globals();
+   result->in_enc = in_enc;
+   result->out_enc = out_enc;
+-  result->il_buf = lsx_malloc(sox_globals.bufsiz * sizeof(sox_sample_t));
++  result->il_buf = lsx_ualloc(opaque, sox_globals.bufsiz * sizeof(sox_sample_t));
+   return result;
+ } /* sox_create_effects_chain */
+ 
+@@ -104,8 +106,8 @@ void sox_delete_effects_chain(sox_effects_chain_t *ecp)
+     if (ecp && ecp->length)
+         sox_delete_effects(ecp);
+     free(ecp->effects);
+-    free(ecp->il_buf);
+-    free(ecp);
++    lsx_ufree(ecp->opaque, ecp->il_buf);
++    lsx_ufree(ecp->opaque, ecp);
+ } /* sox_delete_effects_chain */
+ 
+ /* Effect can call in start() or flow() to set minimum input size to flow() */
+@@ -161,7 +163,7 @@ int sox_add_effect(sox_effects_chain_t * chain, sox_effect_t * effp, sox_signali
+     lsx_report("has no effect in this configuration");
+     free(eff0.priv);
+     effp->handler.kill(effp);
+-    free(effp->priv);
++    lsx_ufree(effp->opaque, effp->priv);
+     effp->priv = NULL;
+     return SOX_SUCCESS;
+   }
+@@ -194,13 +196,13 @@ int sox_add_effect(sox_effects_chain_t * chain, sox_effect_t * effp, sox_signali
+   }
+ 
+   chain->effects[chain->length] =
+-    lsx_calloc(effp->flows, sizeof(chain->effects[chain->length][0]));
++    lsx_ucalloc(effp->opaque, effp->flows, sizeof(chain->effects[chain->length][0]));
+   chain->effects[chain->length][0] = *effp;
+ 
+   for (f = 1; f < effp->flows; ++f) {
+     chain->effects[chain->length][f] = eff0;
+     chain->effects[chain->length][f].flow = f;
+-    chain->effects[chain->length][f].priv = lsx_memdup(eff0.priv, eff0.handler.priv_size);
++    chain->effects[chain->length][f].priv = lsx_umemdup(eff0.opaque, eff0.priv, eff0.handler.priv_size);
+     if (start(&chain->effects[chain->length][f]) != SOX_SUCCESS) {
+       free(eff0.priv);
+       return SOX_EOF;
+@@ -413,7 +415,7 @@ int sox_flow_effects(sox_effects_chain_t * chain, int (* callback)(sox_bool all_
+   for (e = 0; e < chain->length; ++e) {
+     sox_effect_t *effp = chain->effects[e];
+     if (!effp->obuf)
+-      effp->obuf = lsx_malloc(sox_globals.bufsiz * sizeof(*effp->obuf));
++      effp->obuf = lsx_ualloc(effp->opaque, sox_globals.bufsiz * sizeof(*effp->obuf));
+ 
+       /* Memory will be freed by sox_delete_effect() later. */
+       /* Possibly there was already a buffer, if this is a used effect;
+@@ -550,9 +552,9 @@ void sox_delete_effect(sox_effect_t *effp)
+          processing, or if an effect like "trim" stopped early. */
+   effp->handler.kill(effp); /* N.B. only one kill; not one per flow */
+   for (f = 0; f < effp->flows; ++f)
+-    free(effp[f].priv);
+-  free(effp->obuf);
+-  free(effp);
++    lsx_ufree(effp->opaque, effp[f].priv);
++  lsx_ufree(effp->opaque, effp->obuf);
++  lsx_ufree(effp->opaque, effp);
+ }
+ 
+ void sox_delete_effect_last(sox_effects_chain_t *chain)
+diff --git a/src/sox.h b/src/sox.h
+index 155742e..27a11af 100644
+--- a/src/sox.h
++++ b/src/sox.h
+@@ -1620,6 +1620,8 @@ struct sox_effect_t {
+   size_t                   obeg;      /**< output buffer: start of valid data section */
+   size_t                   oend;      /**< output buffer: one past valid data section (oend-obeg is length of current content) */
+   size_t               imin;          /**< minimum input buffer content required for calling this effect's flow function; set via lsx_effect_set_imin() */
++
++  void *opaque;
+ };
+ 
+ /**
+@@ -1635,6 +1637,8 @@ typedef struct sox_effects_chain_t {
+   /* The following items are private to the libSoX effects chain functions. */
+   size_t table_size;                       /**< Size of effects table (including unused entries) */
+   sox_sample_t *il_buf;                    /**< Channel interleave buffer */
++
++  void *opaque;
+ } sox_effects_chain_t;
+ 
+ /*****************************************************************************
+diff --git a/src/xmalloc.h b/src/xmalloc.h
+index 9ee77f6..2c8437c 100644
+--- a/src/xmalloc.h
++++ b/src/xmalloc.h
+@@ -23,6 +23,11 @@
+ #include <stddef.h>
+ #include <string.h>
+ 
++void* lsx_ualloc(void *opaque, size_t n);
++#define lsx_ucalloc(opaque, n, s) (((n)*(s))? memset(lsx_ualloc(opaque, (n)*(s)), 0, (n)*(s)) : NULL)
++#define lsx_umemdup(opaque, p, s) ((p)? memcpy(lsx_ualloc(opaque, s), p, s) : NULL)
++void lsx_ufree(void *opaque, void *ptr);
++
+ #define lsx_malloc(size) lsx_realloc(NULL, (size))
+ #define lsx_calloc(n,s) (((n)*(s))? memset(lsx_malloc((n)*(s)),0,(n)*(s)) : NULL)
+ #define lsx_Calloc(v,n)  v = lsx_calloc(n,sizeof(*(v)))
+-- 
+2.49.0
+

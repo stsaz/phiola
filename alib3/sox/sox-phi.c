@@ -6,7 +6,12 @@
 #include <string.h>
 #include <sox.h>
 
+sox_effects_chain_t * sox_create_effects_chain3(sox_encodinginfo_t const * in_enc, sox_encodinginfo_t const * out_enc, void *opaque);
+sox_effect_t * sox_create_effect2(sox_effect_handler_t const * eh, void *opaque);
+
 struct sox_ctx {
+	struct sox_conf conf;
+
 	sox_effects_chain_t *chain;
 	sox_signalinfo_t signal;
 
@@ -17,18 +22,37 @@ struct sox_ctx {
 	const sox_sample_t *output;
 };
 
+static void* mem_alloc(void *opaque, unsigned n) { return malloc(n); }
+static void mem_free(void *opaque, void *ptr) { free(ptr); }
+
+void* lsx_ualloc(void *opaque, size_t n)
+{
+	sox_ctx *c = opaque;
+	void *ptr;
+	if (!(ptr = c->conf.mem_alloc(c->conf.opaque, n)))
+		abort();
+	return ptr;
+}
+
+void lsx_ufree(void *opaque, void *ptr)
+{
+	sox_ctx *c = opaque;
+	c->conf.mem_free(c->conf.opaque, ptr);
+}
+
 void phi_sox_destroy(sox_ctx *c)
 {
 	if (!c) return;
 
 	if (c->chain)
 		sox_delete_effects_chain(c->chain);
-	free(c);
+	lsx_ufree(c, c);
 }
+
 
 static int input_drain(sox_effect_t *e, sox_sample_t *obuf, size_t *osamp)
 {
-	struct sox_ctx *c = *(void**)e->priv;
+	struct sox_ctx *c = e->opaque;
 	if (*osamp > c->input_len4)
 		*osamp = c->input_len4;
 	memcpy(obuf, c->input, *osamp * 4);
@@ -39,12 +63,12 @@ static int input_drain(sox_effect_t *e, sox_sample_t *obuf, size_t *osamp)
 
 static const sox_effect_handler_t input_handler = {
 	"input", NULL, SOX_EFF_MCHAN, NULL, NULL, NULL, input_drain, NULL, NULL,
-	.priv_size = sizeof(void*)
 };
+
 
 static int output_flow(sox_effect_t *e, const sox_sample_t *ibuf, sox_sample_t *obuf, size_t *isamp, size_t *osamp)
 {
-	struct sox_ctx *c = *(void**)e->priv;
+	struct sox_ctx *c = e->opaque;
 	c->output = ibuf;
 	c->output_len4 = *isamp;
 	*osamp = 0;
@@ -53,12 +77,19 @@ static int output_flow(sox_effect_t *e, const sox_sample_t *ibuf, sox_sample_t *
 
 static const sox_effect_handler_t output_handler = {
 	"output", NULL, SOX_EFF_MCHAN, NULL, NULL, output_flow, NULL, NULL, NULL,
-	.priv_size = sizeof(void*)
 };
+
 
 int phi_sox_create(sox_ctx **pc, struct sox_conf *conf)
 {
-	sox_ctx *c = calloc(1, sizeof(struct sox_ctx));
+	sox_ctx *c = (conf->mem_alloc) ? conf->mem_alloc(conf->opaque, sizeof(sox_ctx)) : malloc(sizeof(sox_ctx));
+	memset(c, 0, sizeof(*c));
+	c->conf = *conf;
+
+	if (!c->conf.mem_alloc) {
+		c->conf.mem_alloc = mem_alloc;
+		c->conf.mem_free = mem_free;
+	}
 
 	sox_signalinfo_t signal = {
 		.rate = conf->rate,
@@ -67,51 +98,52 @@ int phi_sox_create(sox_ctx **pc, struct sox_conf *conf)
 	c->signal = signal;
 
 	sox_encodinginfo_t encoding = {};
-	c->chain = sox_create_effects_chain(&encoding, &encoding);
+	c->chain = sox_create_effects_chain3(&encoding, &encoding, c);
 
-	sox_effect_t *e = sox_create_effect(&input_handler);
-	*(void**)e->priv = c;
-	if (sox_add_effect(c->chain, e, &signal, &signal))
-		goto err;
-	free(e);  e = NULL;
+	sox_effect_t *e = sox_create_effect2(&input_handler, c);
+	sox_add_effect(c->chain, e, &signal, &signal);
+	free(e);
 
 	*pc = c;
 	return 0;
 
 err:
-	free(e);
 	phi_sox_destroy(c);
 	return 1;
 }
 
+/*
+sox_effects_chain_t.effects[] -> sox_effect_t[channels] -> sox_effect_t.priv
+*/
 int phi_sox_filter(sox_ctx *c, const char *name, const char* argv[], unsigned argc)
 {
+	int rc = 1;
 	sox_effect_t *e = NULL;
 
 	if (!name) {
-		e = sox_create_effect(&output_handler);
-		*(void**)e->priv = c;
-		goto done;
+		e = sox_create_effect2(&output_handler, c);
+		goto add;
 	}
 
 	const sox_effect_handler_t *eh;
 	if (!(eh = sox_find_effect(name)))
-		goto err;
-	e = sox_create_effect(eh);
+		goto end;
+	e = sox_create_effect2(eh, c);
 
 	if (argc
 		&& sox_effect_options(e, argc, (char**)argv))
-		goto err;
+		goto end;
 
-done:
+add:
 	if (sox_add_effect(c->chain, e, &c->signal, &c->signal))
-		goto err;
-	free(e);  e = NULL;
-	return 0;
+		goto end;
+	rc = 0;
 
-err:
+end:
+	if (rc)
+		lsx_ufree(c, e->priv);
 	free(e);
-	return 1;
+	return rc;
 }
 
 int phi_sox_process(sox_ctx *c, const int *input, size_t *len, int **output)
@@ -129,19 +161,19 @@ int phi_sox_process(sox_ctx *c, const int *input, size_t *len, int **output)
 static void output_message(unsigned level, const char *filename, const char *fmt, va_list ap) {}
 
 static sox_globals_t s_sox_globals = {
-	2,               /* unsigned     verbosity */
-	output_message,  /* sox_output_message_handler */
-	sox_false,       /* sox_bool     repeatable */
-	8192,            /* size_t       bufsiz */
-	0,               /* size_t       input_bufsiz */
-	0,               /* int32_t      ranqd1 */
-	NULL,            /* char const * stdin_in_use_by */
-	NULL,            /* char const * stdout_in_use_by */
-	NULL,            /* char const * subsystem */
-	NULL,            /* char       * tmp_path */
-	sox_false,       /* sox_bool     use_magic */
-	sox_false,       /* sox_bool     use_threads */
-	10               /* size_t       log2_dft_min_size */
+	2,
+	output_message,
+	sox_false,
+	8192,
+	0,
+	0,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	sox_false,
+	sox_false,
+	10
 };
 
 sox_globals_t* sox_get_globals() { return &s_sox_globals; }

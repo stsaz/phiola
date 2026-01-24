@@ -1,0 +1,24 @@
+From 1bfe4e0a7620072ff3c87e0cfc21509df5581742 Mon Sep 17 00:00:00 2001
+From: Simon Zolin <4729655+stsaz@users.noreply.github.com>
+Date: Sat, 17 Jan 2026 08:51:49 +0300
+Subject: [PATCH 1/5] sox_add_effect: more reliable behavior
+
+---
+ src/effects.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/effects.c b/src/effects.c
+index 99bc862..7aaf449 100644
+--- a/src/effects.c
++++ b/src/effects.c
+@@ -207,6 +207,7 @@ int sox_add_effect(sox_effects_chain_t * chain, sox_effect_t * effp, sox_signali
+ 
+   ++chain->length;
+   free(eff0.priv);
++  effp->priv = NULL;
+   return SOX_SUCCESS;
+ }
+ 
+-- 
+2.49.0
+

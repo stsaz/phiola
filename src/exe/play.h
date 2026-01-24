@@ -43,6 +43,7 @@ Options:\n\
                           `attenuate`  Integer\n\
                           `gain`       Integer\n\
   `-equalizer` \"OPTIONS\"  SoX Equalizer (doesn't work with `-norm`). Options:\n\
+                          `type`       band (default), bass or treble\n\
                           `frequency`  Hz\n\
                           `width`q     Q-factor value plus 'q' character (larger = narrower)\n\
                           `gain`       dB\n\

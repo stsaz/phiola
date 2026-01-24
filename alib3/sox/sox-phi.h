@@ -13,6 +13,11 @@ typedef struct sox_ctx sox_ctx;
 struct sox_conf {
 	unsigned rate;
 	unsigned channels;
+
+	/** Memory allocation for non-transient data */
+	void* (*mem_alloc)(void *opaque, unsigned n);
+	void (*mem_free)(void *opaque, void *ptr);
+	void *opaque;
 };
 
 #ifdef __cplusplus
