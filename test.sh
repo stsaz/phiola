@@ -833,6 +833,17 @@ EOF
 	kill $nml_pid
 }
 
+test_tee() {
+	if ! test -f tee.opus ; then
+		./phiola rec -o tee.opus -f -u 2
+	fi
+
+	rm teeout.opus || true
+	cat tee.opus | ./phiola pl @stdin -tee teeout.opus
+	./phiola pl teeout.opus
+	rm teeout.opus
+}
+
 test_ofile_vars() {
 	if ! test -f ofv.wav ; then
 		./phiola rec -o ofv.wav -f -u 2
@@ -941,6 +952,7 @@ TESTS=(
 	rename
 	server
 	# http
+	tee
 	equalizer
 	clean
 	# rec_play_alsa

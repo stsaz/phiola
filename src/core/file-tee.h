@@ -72,7 +72,6 @@ static const phi_filter phi_tee_brg = {
 
 
 struct tee {
-	uint	state;
 	uint	o_stdout :1;
 	uint	meta_change_seen :1;
 
@@ -124,7 +123,6 @@ static int tee_process(void *f, phi_track *t)
 {
 	struct tee *c = f;
 	uint start_track = 0, wake_track = 0;
-	enum { I_WAIT_META, I_DATA };
 
 	uint new_meta = (t->meta_changed && !c->meta_change_seen);
 	c->meta_change_seen = t->meta_changed;
@@ -132,21 +130,17 @@ static int tee_process(void *f, phi_track *t)
 	if (!(t->chain_flags & PHI_FFWD))
 		return PHI_MORE;
 
-	switch (c->state) {
-	case I_DATA:
-		if (!new_meta) {
-			wake_track = 1;
-			break; // pass data through
-		}
-
-		core->track->stop(c->out_trk); // close current file
+	if (new_meta) {
+		if (c->out_trk)
+			core->track->stop(c->out_trk); // close current file
 		c->out_trk = NULL;
 		tee_brg_unref(c->brg);
 		c->brg = NULL;
-		break;
+	} else {
+		wake_track = 1;
 	}
 
-	if (new_meta) {
+	if (!c->out_trk) {
 		/*
 		icy -> tee -> ... -> audio.output
 		          \
@@ -172,7 +166,6 @@ static int tee_process(void *f, phi_track *t)
 			return PHI_ERR;
 
 		start_track = 1;
-		c->state = I_DATA;
 	}
 
 	if (!c->brg)
