@@ -50,7 +50,7 @@ void wgoto_show(uint pos)
 
 void wgoto_init()
 {
-	gui_wgoto *g = ffmem_new(gui_wgoto);
+	gui_wgoto *g = gui_allocT(gui_wgoto);
 	gg->wgoto = g;
 	g->wnd.hide_on_close = 1;
 	g->wnd.on_action = wgoto_action;

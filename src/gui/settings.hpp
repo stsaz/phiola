@@ -139,7 +139,7 @@ void wsettings_show(uint show)
 
 void wsettings_init()
 {
-	gui_wsettings *w = ffmem_new(gui_wsettings);
+	gui_wsettings *w = gui_allocT(gui_wsettings);
 	w->wnd.hide_on_close = 1;
 	w->wnd.on_action = wsettings_action;
 	w->wnd.onclose_id = A_SETTINGS_APPLY;

@@ -776,12 +776,14 @@ test_server() {
 	fi
 
 	./phiola server sv.flac -shuffle -opus_q 64 -max_cl 10000 &
-	sleep 3
+	sleep .1
+	./phiola pl http://127.0.0.1:21014/ -u 3
 	kill -9 $!
 	sleep .1
 
 	./phiola server sv.flac -aac_q 64 &
-	sleep 3
+	sleep .1
+	./phiola pl http://127.0.0.1:21014/ -u 3
 	kill -9 $!
 }
 
@@ -806,14 +808,21 @@ test_http() {
 	./phiola pl "http://localhost:8080/http.m3u"
 
 	# -tee
-	./phiola pl "http://localhost:8080/http.ogg" -tee @stdout.ogg >http-tee-stdout.ogg ; ./phiola http-tee-stdout.ogg
-	./phiola pl "http://localhost:8080/http.ogg" -tee http-tee.ogg ; ./phiola http-tee.ogg
+	./phiola pl "http://localhost:8080/http.ogg" -tee @stdout.ogg >http-tee-stdout.ogg
+	./phiola http-tee-stdout.ogg
+
+	./phiola pl "http://localhost:8080/http.ogg" -tee http-tee.ogg
+	./phiola http-tee.ogg
+
 	./phiola pl "http://localhost:8080/http.ogg" -tee http-tee.ogg # file already exists
 	# ./phiola pl "http://localhost:8080/http.ogg" -tee http-@title.ogg ; ./phiola http-mytrack.ogg
 
 	# -dup
-	./phiola pl "http://localhost:8080/http.mp3" -dup @stdout.wav >http-dup-stdout.wav ; ./phiola http-dup-stdout.wav
-	./phiola pl "http://localhost:8080/http.mp3" -dup http-dup-@title.wav ; ./phiola http-dup-mytrack.wav
+	./phiola pl "http://localhost:8080/http.mp3" -dup @stdout.wav >http-dup-stdout.wav
+	./phiola http-dup-stdout.wav
+
+	./phiola pl "http://localhost:8080/http.mp3" -dup http-dup-@title.wav
+	./phiola http-dup-mytrack.wav
 
 	# HLS
 	cp http.ogg hls1.ogg

@@ -683,7 +683,7 @@ static void wmain_action(ffui_window *wnd, int id)
 
 void wmain_init()
 {
-	gui_wmain *m = ffmem_new(gui_wmain);
+	gui_wmain *m = gui_allocT(gui_wmain);
 	gg->wmain = m;
 #ifdef FF_WIN
 	m->wnd.top = 1;

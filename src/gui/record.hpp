@@ -278,7 +278,7 @@ static void wrecord_action(ffui_window *wnd, int id)
 
 void wrecord_init()
 {
-	gui_wrecord *w = ffmem_new(gui_wrecord);
+	gui_wrecord *w = gui_allocT(gui_wrecord);
 	w->wnd.hide_on_close = 1;
 	w->wnd.on_action = wrecord_action;
 	w->conf_mp3q = ~0U;

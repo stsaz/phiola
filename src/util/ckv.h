@@ -165,7 +165,7 @@ static inline int ckv_set(struct ckv *c, ffstr key, ffstr val, unsigned flags)
 			if (flags & CKV_F_UNIQUE)
 				return CKV_E_EXISTS;
 
-			_INT4_READ(p);
+			unsigned size_cur = _INT4_READ(p);
 			if (flags & CKV_F_CACHE) {
 				// Case CR3: remove row; add new row to cache
 				// Note: holes are not reused!
@@ -173,7 +173,6 @@ static inline int ckv_set(struct ckv *c, ffstr key, ffstr val, unsigned flags)
 				*p = '\0';
 
 			} else {
-				unsigned size_cur = _INT4_READ(p);
 				if (size <= size_cur) {
 					// Case R1: replace value
 					_INT4_WRITE(p, len);

@@ -104,9 +104,9 @@ static int pulse_create(audio_out *a, phi_track *t)
 	mod->dev_idx = a->dev_idx;
 
 fin:
-	dbglog(t, "%s buffer %ums, %uHz"
+	dbglog(t, "%s buffer %ums, %s/%uHz"
 		, reused ? "reused" : "opened", mod->buffer_length_msec
-		, mod->fmt.rate);
+		, phi_af_name(mod->fmt.format), mod->fmt.rate);
 
 	mod->usedby = a;
 	t->oaudio.adev_ctx = a;

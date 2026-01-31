@@ -12,6 +12,7 @@
 #endif
 #include <ffgui/loader.h>
 #include <util/conf-write.h>
+#include <util/util.h>
 #include <ffbase/args.h>
 
 struct gui_wmain;
@@ -99,8 +100,14 @@ struct gui {
 	struct gui_wconvert*	wconvert;
 	struct gui_wabout*		wabout;
 	struct gui_wlog*		wlog;
+
+	struct memarea area;
 };
 FF_EXTERN struct gui *gg;
+
+FF_EXTERN void* gui_alloc(uint n);
+#define gui_allocT(T)  ((T*)gui_alloc(sizeof(T)))
+static inline void gui_free(void *ptr) { memarea_free(&gg->area, ptr); }
 
 FF_EXTERN void conf_wnd_pos_read(ffui_window *w, ffstr val);
 static inline void conf_wnd_pos_write(ffconfw *cw, const char *name, ffui_window *w)

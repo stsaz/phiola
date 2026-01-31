@@ -35,7 +35,7 @@ void wlistfilter_show(uint show)
 
 void wlistfilter_init()
 {
-	gui_wlistfilter *w = ffmem_new(gui_wlistfilter);
+	gui_wlistfilter *w = gui_allocT(gui_wlistfilter);
 	w->wnd.on_action = wlistfilter_action;
 	w->wnd.hide_on_close = 1;
 	gg->wlistfilter = w;

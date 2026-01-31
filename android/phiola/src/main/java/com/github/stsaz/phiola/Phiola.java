@@ -183,6 +183,7 @@ class Phiola {
 		QC_AUTO_NORM = 0x10,
 		QC_RG_NORM = 0x20;
 	native void quConf(int mask, int val);
+
 	static final int
 		QC_EQUALIZER = 1;
 	native void quConfStr(int setting, String val);

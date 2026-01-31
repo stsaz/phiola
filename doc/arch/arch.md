@@ -229,6 +229,51 @@ Example:
 	aac-decode:    decoded 2048 samples @2048  aot:29 rate:44100 chan:2 br:3789
 
 
+## Track Metadata
+
+* There are 3 metadata sources: user, .cue, media file.
+	User metadata may be set when converting or recording, and it has the highest priority (i.e. the values from .cue or media file are overwritten).
+* Queue-agent filter combines all metadata into one array; UI reads it to display the info on currently playing track; while converting, media-writer filter copies the unique entries from it into output file.
+* At any time UI thread may read or write the metadata associated with playlist rows.
+	Normally, this metadata is updated by queue-agent filter in a worker thread when the file is being played back (or a new logical stream begins); for CUE entries the metadata *is not* updated.
+
+```C
+user:
+q->conf.tconf.meta = ... <- e.g. `convert -m title=value`
+
+	-> cue.read
+	qe->meta = ...       <- e.g. `TITLE value`
+	qe->meta_priority = 1
+
+	-> q
+
+		-> fmt.read:
+		if (new stream)
+			t->meta = ... <- e.g. `title=value` from .opus
+			t->meta_changed = 1
+
+		-> icy.read:
+		if (new meta)
+			t->meta = ...
+			t->meta_changed = 1
+
+			-> q.agent:
+			if (qe->meta_priority)
+				t->meta << qe->meta
+			if (t->meta_changed && !qe->meta_priority)
+				qe->meta = t->meta
+			t->meta << q->conf.tconf.meta
+
+				-> ui:
+				if (t->meta_changed)
+					read t->meta
+
+					-> fmt.write
+					output <- unique t->meta
+
+ui: read qe->meta
+```
+
 ## GUI Playlist Synchronization
 
 ```C

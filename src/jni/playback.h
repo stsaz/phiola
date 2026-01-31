@@ -79,7 +79,7 @@ static void meta_fill(JNIEnv *env, jobject jmeta, const phi_track *t)
 	jni_obj_sz_set(env, jmeta, jni_field_str(x->Phiola_Meta, "url"), t->conf.ifile.name);
 
 	struct phi_queue_entry *qe = (struct phi_queue_entry*)t->qent;
-	const phi_meta *meta = &qe->meta;
+	const phi_meta *meta = &t->meta;
 
 	uint i = 0;
 	ffstr k, v;
@@ -110,7 +110,6 @@ static void meta_fill(JNIEnv *env, jobject jmeta, const phi_track *t)
 	if (t->audio.total != ~0ULL && t->audio.format.rate) {
 		uint64 duration_msec = samples_to_msec(t->audio.total, t->audio.format.rate);
 		jni_obj_long_set(jmeta, jni_field_long(x->Phiola_Meta, "length_msec"), duration_msec);
-		qe->length_sec = duration_msec / 1000;
 	}
 
 	jni_obj_int_set(jmeta, jni_field_int(x->Phiola_Meta, "queue_pos"), x->queue.index(qe));
@@ -170,20 +169,14 @@ static int play_ui_process(void *f, phi_track *t)
 	if (!x->play.opened) {
 		x->play.opened = 1;
 
-		struct phi_queue_entry *qe = (struct phi_queue_entry*)t->qent;
-
 		char buf[100];
-		ffsz_format(buf, sizeof(buf), "%u kbps, %s, %u Hz, %s, %s"
+		ffsz_format(buf, sizeof(buf), "%u kbps, %s, %s %uHz %s"
 			, (t->audio.bitrate + 500) / 1000
 			, t->audio.decoder
+			, phi_af_name(t->audio.format.format)
 			, t->audio.format.rate
-			, pcm_channelstr(t->audio.format.channels)
-			, phi_af_name(t->audio.format.format));
+			, pcm_channelstr(t->audio.format.channels));
 		x->metaif.set(&t->meta, FFSTR_Z("_phi_info"), FFSTR_Z(buf), 0);
-
-		// We need to display the currently active track's meta data before `queue` does this on track close
-		if (!qe->meta_priority)
-			qe_meta_update(qe, &t->meta, &x->metaif);
 
 		JNIEnv *env;
 		int r = jni_vm_attach(jvm, &env);

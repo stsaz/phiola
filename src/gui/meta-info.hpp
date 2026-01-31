@@ -252,7 +252,7 @@ static void winfo_action(ffui_window *wnd, int id)
 
 void winfo_init()
 {
-	gui_winfo *w = ffmem_new(gui_winfo);
+	gui_winfo *w = gui_allocT(gui_winfo);
 	w->wnd.hide_on_close = 1;
 	w->wnd.on_action = winfo_action;
 	w->vinfo.edit_id = A_INFO_EDIT_DONE;

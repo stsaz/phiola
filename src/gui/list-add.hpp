@@ -43,7 +43,7 @@ void wlistadd_show(uint show)
 
 void wlistadd_init()
 {
-	gui_wlistadd *w = ffmem_new(gui_wlistadd);
+	gui_wlistadd *w = gui_allocT(gui_wlistadd);
 	w->wnd.hide_on_close = 1;
 	w->wnd.on_action = wlistadd_action;
 	gg->wlistadd = w;

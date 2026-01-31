@@ -30,7 +30,7 @@ static void wabout_action(ffui_window *wnd, int id)
 
 void wabout_init()
 {
-	gui_wabout *a = ffmem_new(gui_wabout);
+	gui_wabout *a = gui_allocT(gui_wabout);
 	a->wnd.hide_on_close = 1;
 	a->wnd.on_action = wabout_action;
 	gg->wabout = a;

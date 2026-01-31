@@ -290,7 +290,12 @@ void theme_switch(uint i)
 
 void gui_init()
 {
-	gg = ffmem_new(struct gui);
+	FF_ASSERT(sizeof(struct gui) <= 4096);
+	uint n = 4096;
+	gg = ffmem_align(n, 4096);
+	ffmem_zero(gg, n);
+	memarea_init(&gg->area, n - sizeof(struct gui));
+
 	wmain_init();
 	winfo_init();
 	wrename_init();
@@ -302,6 +307,12 @@ void gui_init()
 	wconvert_init();
 	wabout_init();
 	wlog_init();
+}
+
+void* gui_alloc(uint n)
+{
+	dbglog("alloc %u bytes [%u]", n, gg->area.size);
+	return memarea_alloc(&gg->area, n);
 }
 
 extern phi_log_ctl gui_log_ctl;

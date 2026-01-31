@@ -136,25 +136,6 @@ static void qe_close(void *f, phi_track *t)
 	if (e->trk == t) {
 		e->trk = NULL;
 
-		if (e->q && !e->q->conf.conversion && !e->pub.meta_priority) {
-			int mod = (META_LEN(&e->pub.meta) || META_LEN(&t->meta)); // empty meta == not modified
-			if (META_LEN(&t->meta)) {
-				fflock_lock((fflock*)&e->pub.lock); // UI thread may read or write `conf.meta` at this moment
-				core->metaif->destroy(&e->pub.meta);
-				e->pub.meta = t->meta; // Remember the tags we read from file in this track
-				fflock_unlock((fflock*)&e->pub.lock);
-				meta_zero(&t->meta);
-			}
-
-			if (t->audio.total != ~0ULL && t->audio.format.rate) {
-				uint64 duration_msec = samples_to_msec(t->audio.total, t->audio.format.rate);
-				e->pub.length_sec = duration_msec / 1000;
-			}
-
-			if (mod)
-				q_modified(e->q);
-		}
-
 		if (e->expand || t->meta_reading)
 			core->track->stop(t);
 	}
@@ -193,6 +174,45 @@ static const phi_filter phi_queue_guard = {
 	"queue-guard"
 };
 
+
+static int qagt_process(void *f, phi_track *t)
+{
+	struct q_entry *e = t->qent;
+
+	// 't->meta' currently contains the metadata read from file
+
+	if (META_LEN(&e->pub.meta) && e->pub.meta_priority)
+		core->metaif->copy(&t->meta, &e->pub.meta, PHI_META_REPLACE); // Copy tags from .cue, e.g. `TITLE value`
+
+	if (t->meta_changed && !e->pub.meta_priority) {
+
+		if (t->audio.total != ~0ULL && t->audio.format.rate)
+			e->pub.length_sec = samples_to_msec(t->audio.total, t->audio.format.rate) / 1000;
+
+		if (META_LEN(&e->pub.meta) || META_LEN(&t->meta)) { // empty meta == not modified
+			fflock_lock((fflock*)&e->pub.lock); // UI thread may read or write `meta` at this moment
+			core->metaif->destroy(&e->pub.meta);
+			core->metaif->copy(&e->pub.meta, &t->meta, 0); // Remember the tags we read from file
+			fflock_unlock((fflock*)&e->pub.lock);
+			q_modified(e->q);
+		}
+	}
+
+	if (META_LEN(&e->q->conf.tconf.meta))
+		core->metaif->copy(&t->meta, &e->q->conf.tconf.meta, PHI_META_REPLACE); // Copy tags from user, e.g. `convert -m title=...`
+
+	// 't->meta' contains the aggregated metadata from user + from .cue + from file
+
+	t->data_out = t->data_in;
+	return !(t->chain_flags & PHI_FFIRST) ? PHI_OK : PHI_DONE;
+}
+
+static const phi_filter queue_agent = {
+	NULL, NULL, qagt_process,
+	"queue-agent"
+};
+
+
 static int qe_play(struct q_entry *e)
 {
 	if (e->expand) {
@@ -215,13 +235,15 @@ static int qe_play(struct q_entry *e)
 		&& !track->filter(t, e->q->conf.first_filter, 0))
 		goto err;
 
+	track->filter(t, &phi_queue_guard, 0);
+	track->filter(t, core->mod("core.auto-input"), 0);
+
 	if (e->q->conf.conversion) {
-		if (!track->filter(t, &phi_queue_guard, 0)
-			|| !track->filter(t, core->mod("core.auto-input"), 0)
-			|| !track->filter(t, core->mod("format.detect"), 0)
+		if (!track->filter(t, core->mod("format.detect"), 0)
 			|| !track->filter(t, core->mod("afilter.until"), 0)
 			|| (c.afilter.danorm
 				&& !track->filter(t, core->mod("af-danorm.f"), 0))
+			|| !track->filter(t, &queue_agent, 0)
 			|| !track->filter(t, ui_if, 0)
 			|| (c.afilter.gain_db
 				&& !track->filter(t, core->mod("afilter.gain"), 0))
@@ -232,10 +254,9 @@ static int qe_play(struct q_entry *e)
 		t->output.allow_async = 1;
 
 	} else if (e->q->conf.analyze) {
-		if (!track->filter(t, &phi_queue_guard, 0)
-			|| !track->filter(t, core->mod("core.auto-input"), 0)
-			|| !track->filter(t, core->mod("format.detect"), 0)
+		if (!track->filter(t, core->mod("format.detect"), 0)
 			|| !track->filter(t, core->mod("afilter.until"), 0)
+			|| !track->filter(t, &queue_agent, 0)
 			|| !track->filter(t, ui_if, 0)
 			|| ((c.afilter.peaks_info
 				|| c.afilter.loudness_summary)
@@ -247,12 +268,11 @@ static int qe_play(struct q_entry *e)
 			goto err;
 
 	} else {
-		if (!track->filter(t, &phi_queue_guard, 0)
-			|| !track->filter(t, core->mod("core.auto-input"), 0)
-			|| (c.tee && !c.tee_output
+		if ((c.tee && !c.tee_output
 				&& !track->filter(t, core->mod("core.tee"), 0))
 			|| !track->filter(t, core->mod("format.detect"), 0)
 			|| !track->filter(t, core->mod("afilter.until"), 0)
+			|| !track->filter(t, &queue_agent, 0)
 			|| !track->filter(t, ui_if, 0)
 			|| (c.afilter.rg_normalizer
 				&& !track->filter(t, core->mod("afilter.rg-norm"), 0))
@@ -269,11 +289,6 @@ static int qe_play(struct q_entry *e)
 			|| !track->filter(t, core->mod(e->q->conf.audio_module), 0))
 			goto err;
 	}
-
-	if (META_LEN(&e->q->conf.tconf.meta))
-		core->metaif->copy(&t->meta, &e->q->conf.tconf.meta, 0); // from user
-	if (META_LEN(&e->pub.meta) && e->pub.meta_priority)
-		core->metaif->copy(&t->meta, &e->pub.meta, (META_LEN(&e->q->conf.tconf.meta)) ? PHI_META_UNIQUE : 0); // from .cue
 
 	e->trk = t;
 	e->used++;

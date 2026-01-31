@@ -158,4 +158,10 @@ struct xxpath {
 		ffpath_splitpath(data.ptr, data.len, NULL, &name);
 		return name;
 	}
+	ffstr	name_no_ext() const {
+		ffstr name;
+		ffpath_splitpath(data.ptr, data.len, NULL, &name);
+		ffpath_splitname(name.ptr, name.len, &name, NULL);
+		return name;
+	}
 };

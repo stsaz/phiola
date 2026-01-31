@@ -5,9 +5,12 @@ static int gui_help()
 {
 	help_info_write("\
 Show graphical interface:\n\
-    `phiola gui` [INPUT...]\n\
+    `phiola gui` [OPTIONS] [INPUT...]\n\
 \n\
 INPUT                   File name, directory or URL\n\
+\n\
+Options:\n\
+  `-multi`                Multi-window mode\n\
 ");
 	x->exit_code = 0;
 	return 1;
@@ -15,6 +18,7 @@ INPUT                   File name, directory or URL\n\
 
 struct cmd_gui {
 	ffvec input; // ffstr[]
+	u_char	multi_window;
 };
 
 static int gui_input(struct cmd_gui *g, ffstr s)
@@ -30,8 +34,9 @@ static void gui_log_ctl(uint flags)
 		x->log.func = NULL;
 }
 
-static int gui_action(struct cmd_gui *g)
+static int gui_single_mode(struct cmd_gui *g)
 {
+	int rc = 1;
 	const phi_remote_cl_if *rcl = x->core->mod("remote.client");
 	ffvec inz = {};
 	ffstr *it;
@@ -45,6 +50,17 @@ static int gui_action(struct cmd_gui *g)
 
 	const phi_remote_sv_if *rsv = x->core->mod("remote.server");
 	rsv->start("gui");
+	rc = 0;
+
+end:
+	ffvec_free(&inz);
+	return rc;
+}
+
+static int gui_action(struct cmd_gui *g)
+{
+	if (!g->multi_window && gui_single_mode(g))
+		goto end;
 
 	struct phi_queue_conf qc = {
 		.first_filter = &phi_guard_gui,
@@ -52,6 +68,7 @@ static int gui_action(struct cmd_gui *g)
 	};
 	x->queue->create(&qc);
 
+	ffstr *it;
 	FFSLICE_WALK(&g->input, it) {
 		struct phi_queue_entry qe = {
 			.url = it->ptr,
@@ -73,7 +90,6 @@ static int gui_action(struct cmd_gui *g)
 	}
 
 end:
-	ffvec_free(&inz);
 	x->exit_code = 0;
 	return 0;
 }
@@ -83,11 +99,14 @@ static int gui_open()
 	return 0;
 }
 
+#define O(m)  (void*)FF_OFF(struct cmd_gui, m)
 static const struct ffarg cmd_gui[] = {
 	{ "-help",		0,		gui_help },
+	{ "-multi",		'1',	O(multi_window) },
 	{ "\0\1",		'S',	gui_input },
 	{ "",			0,		gui_open },
 };
+#undef O
 
 static void cmd_gui_free(struct cmd_gui *g)
 {

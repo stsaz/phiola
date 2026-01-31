@@ -121,11 +121,14 @@ struct gui_conf {
 };
 
 struct gui_data {
+	// const:
 	const phi_queue_if *queue;
-	char *user_conf_dir;
-	char *user_conf_name;
 	const phi_filter *playback_first_filter;
 	const phi_adev_if *adev_if;
+	char *user_conf_dir;
+	char *user_conf_name;
+	phi_task task;
+	ffthread th;
 
 	struct gui_track_info playback_track_info;
 	struct gtrk *playing_track;
@@ -140,9 +143,6 @@ struct gui_data {
 	double gain_db;
 
 	struct phi_queue_entry *qe_rename;
-
-	phi_task task;
-	ffthread th;
 
 	ffvec lists; // struct list_info[]
 	uint playlist_counter;

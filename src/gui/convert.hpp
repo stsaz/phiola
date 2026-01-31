@@ -279,7 +279,7 @@ static void wconvert_action(ffui_window *wnd, int id)
 
 void wconvert_init()
 {
-	gui_wconvert *c = ffmem_new(gui_wconvert);
+	gui_wconvert *c = gui_allocT(gui_wconvert);
 	c->wnd.hide_on_close = 1;
 	c->wnd.on_action = wconvert_action;
 	c->conf_mp3q = ~0U;

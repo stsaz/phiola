@@ -47,15 +47,16 @@ void wrename_show(uint show, uint idx)
 	w->turl.text(w->qe->url);
 	w->turl.focus();
 	w->wnd.show(1);
+	w->wnd.present();
 
-	ffstr name = xxpath(w->qe->url).name();
+	ffstr name = xxpath(w->qe->url).name_no_ext();
 	uint off = name.ptr - w->qe->url;
 	w->turl.select(off, off + name.len);
 }
 
 void wrename_init()
 {
-	gui_wrename *w = ffmem_new(gui_wrename);
+	gui_wrename *w = gui_allocT(gui_wrename);
 	w->wnd.hide_on_close = 1;
 	w->wnd.on_action = wrename_action;
 	gg->wrename = w;

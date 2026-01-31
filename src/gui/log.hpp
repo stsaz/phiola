@@ -77,7 +77,7 @@ static void wlog_action(ffui_window *wnd, int id)
 
 void wlog_init()
 {
-	gui_wlog *w = ffmem_new(gui_wlog);
+	gui_wlog *w = gui_allocT(gui_wlog);
 	w->wnd.on_action = wlog_action;
 	w->wnd.hide_on_close = 1;
 	gg->wlog = w;

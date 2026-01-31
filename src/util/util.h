@@ -1,12 +1,48 @@
 /** phiola: utility functions
 2023, Simon Zolin */
 
+#pragma once
+
 /** Compare and, if equal, set new value */
 #define FF_CAS(var, old, _new) \
 do { \
 	if (var == old) \
 		var = _new; \
 } while (0)
+
+
+struct memarea {
+	uint size, cap4;
+	char area[0];
+};
+
+static inline void memarea_init(struct memarea *m, uint cap)
+{
+	m->cap4 = cap / 4;
+}
+
+static inline void* memarea_alloc(struct memarea *m, uint n)
+{
+	FF_ASSERT(!(n % 4));
+	uint cap = m->cap4 * 4;
+	if (m->size + n > cap)
+		return ffmem_calloc(1, n);
+
+	void *p = m->area + m->size;
+	m->size += n;
+	return p;
+}
+
+static inline void memarea_free(struct memarea *m, void *ptr)
+{
+	uint cap = m->cap4 * 4;
+	if ((char*)ptr >= m->area
+		&& (char*)ptr < m->area + cap)
+		return;
+
+	ffmem_free(ptr);
+}
+
 
 #include <ffbase/stringz.h>
 
@@ -85,32 +121,6 @@ static inline int ffstr_var_next(ffstr *in, ffstr *out, char c)
 }
 
 
-static inline ffssize ffcharr_findsorted_padding(const void *ar, ffsize n, ffsize elsize, ffsize padding, const char *search, ffsize search_len)
-{
-	if (search_len > elsize)
-		return -1; // the string's too large for this array
-
-	ffsize start = 0;
-	while (start != n) {
-		ffsize i = start + (n - start) / 2;
-		const char *ptr = (char*)ar + i * (elsize + padding);
-		int r = ffmem_cmp(search, ptr, search_len);
-
-		if (r == 0
-			&& search_len != elsize
-			&& ptr[search_len] != '\0')
-			r = -1; // found "01" in {0,1,2}
-
-		if (r == 0)
-			return i;
-		else if (r < 0)
-			n = i;
-		else
-			start = i + 1;
-	}
-	return -1;
-}
-
 struct map_sz_vptr {
 	char key[16];
 	const void *val;
@@ -125,14 +135,14 @@ static inline const void* map_sz_vptr_find(const struct map_sz_vptr *m, const ch
 }
 static inline const void* map_sz_vptr_findz2(const struct map_sz_vptr *m, ffsize n, const char *name)
 {
-	ffssize i = ffcharr_findsorted_padding(m, n, sizeof(m->key), sizeof(m->val), name, ffsz_len(name));
+	ffssize i = ffcharr_find_sorted_padding(m, n, sizeof(m->key), sizeof(m->val), name, ffsz_len(name));
 	if (i < 0)
 		return NULL;
 	return m[i].val;
 }
 static inline const void* map_sz_vptr_findstr(const struct map_sz_vptr *m, ffsize n, ffstr name)
 {
-	ffssize i = ffcharr_findsorted_padding(m, n, sizeof(m->key), sizeof(m->val), name.ptr, name.len);
+	ffssize i = ffcharr_find_sorted_padding(m, n, sizeof(m->key), sizeof(m->val), name.ptr, name.len);
 	if (i < 0)
 		return NULL;
 	return m[i].val;
@@ -145,7 +155,7 @@ struct map_sz24_vptr {
 };
 static inline const void* map_sz24_vptr_findstr(const struct map_sz24_vptr *m, ffsize n, ffstr name)
 {
-	ffssize i = ffcharr_findsorted_padding(m, n, sizeof(m->key), sizeof(m->val), name.ptr, name.len);
+	ffssize i = ffcharr_find_sorted_padding(m, n, sizeof(m->key), sizeof(m->val), name.ptr, name.len);
 	if (i < 0)
 		return NULL;
 	return m[i].val;
@@ -240,15 +250,6 @@ static inline void phi_af_update(struct phi_af *dst, const struct phi_af *src)
 #define META_LEN(m)  ((m)->data[0])
 
 #define meta_zero(m)  ffmem_zero_obj(m)
-
-static inline void qe_meta_update(struct phi_queue_entry *qe, phi_meta *src, const phi_meta_if *metaif)
-{
-	fflock_lock((fflock*)&qe->lock); // UI thread may read or write `conf.meta` at this moment
-	metaif->destroy(&qe->meta);
-	qe->meta = *src;
-	fflock_unlock((fflock*)&qe->lock);
-	meta_zero(src);
-}
 
 static inline void qe_copy(struct phi_queue_entry *dst, const struct phi_queue_entry *src, const phi_meta_if *metaif)
 {

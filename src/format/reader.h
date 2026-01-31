@@ -216,6 +216,7 @@ static int fmtr_process(struct fmt_rd *f, phi_track *t)
 		ffmem_zero_obj(&res);
 		switch (avpk_read(&f->rd, in, &res)) {
 		case AVPK_HEADER: {
+			t->meta_changed = 1;
 			if (f->sample_rate) {
 				if (!(t->audio.format.rate == res.hdr.sample_rate
 					&& t->audio.format.channels == res.hdr.channels)) {
@@ -225,7 +226,6 @@ static int fmtr_process(struct fmt_rd *f, phi_track *t)
 
 				dbglog(t, "new logical stream");
 				core->metaif->destroy(&t->meta);
-				t->meta_changed = 1;
 				t->audio.ogg_reset = 1;
 				break;
 			}
