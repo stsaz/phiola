@@ -42,7 +42,7 @@ Options:\n\
                           `target`     Integer\n\
                           `attenuate`  Integer\n\
                           `gain`       Integer\n\
-  `-equalizer` \"OPTIONS\"  SoX Equalizer (doesn't work with `-norm`). Options:\n\
+  `-equalizer` \"OPTIONS\"  SoX Equalizer. Options:\n\
                           `type`       band (default), bass or treble\n\
                           `frequency`  Hz\n\
                           `width`q     Q-factor value plus 'q' character (larger = narrower)\n\
@@ -167,7 +167,7 @@ static int play_action(struct cmd_play *p)
 		.afilter = {
 			.rg_normalizer = (p->rg_norm && !p->auto_norm),
 			.auto_normalizer = p->auto_norm,
-			.equalizer = p->equalizer,
+			.equalizer = ffsz_dup_safe(p->equalizer),
 		},
 		.oaudio = {
 			.device_index = p->device,

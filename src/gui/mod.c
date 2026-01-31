@@ -33,17 +33,19 @@ static void gui_finish();
 #define O(m)  (void*)FF_OFF(struct gui_data, m)
 const struct ffarg guimod_args[] = {
 	{ "list.auto_sel",	'u',	O(auto_select) },
-	{ "play.auto_norm",	'u',	O(conf.auto_norm) },
+	{ "play.auto_norm",	'b',	O(conf.auto_norm) },
 	{ "play.auto_skip",	'd',	O(conf.auto_skip_sec_percent) },
 	{ "play.cursor",	'u',	O(cursor) },
 	{ "play.dev",		'u',	O(conf.odev) },
-	{ "play.random",	'u',	O(conf.random) },
+	{ "play.eqlz",		'=s',	O(conf.eqlz) },
+	{ "play.eqlz_on",	'b',	O(conf.eqlz_on) },
+	{ "play.random",	'b',	O(conf.random) },
 	{ "play.repeat",	'u',	O(conf.repeat) },
-	{ "play.rg_norm",	'u',	O(conf.rg_norm) },
+	{ "play.rg_norm",	'b',	O(conf.rg_norm) },
 	{ "play.seek_leap",	'u',	O(conf.seek_leap_delta) },
 	{ "play.seek_step",	'u',	O(conf.seek_step_delta) },
 	{ "play.volume",	'u',	O(volume) },
-	{ "tags.keep_date",	'u',	O(conf.tags_keep_date) },
+	{ "tags.keep_date",	'b',	O(conf.tags_keep_date) },
 	{ "theme",			'=s',	O(conf.theme) },
 	{}
 };
@@ -56,15 +58,30 @@ void mod_userconf_write(ffconfw *cw)
 	ffconfw_add2u(cw, "play.auto_skip", (ffint64)gd->conf.auto_skip_sec_percent);
 	ffconfw_add2u(cw, "play.cursor", gd->cursor);
 	ffconfw_add2u(cw, "play.dev", gd->conf.odev);
+	ffconfw_add2u(cw, "play.eqlz_on", gd->conf.eqlz_on);
 	ffconfw_add2u(cw, "play.random", gd->conf.random);
 	ffconfw_add2u(cw, "play.repeat", gd->conf.repeat);
 	ffconfw_add2u(cw, "play.rg_norm", gd->conf.rg_norm);
 	ffconfw_add2u(cw, "play.seek_leap", gd->conf.seek_leap_delta);
 	ffconfw_add2u(cw, "play.seek_step", gd->conf.seek_step_delta);
 	ffconfw_add2u(cw, "play.volume", gd->volume);
+	ffconfw_add2z(cw, "play.eqlz", gd->conf.eqlz);
 	ffconfw_add2u(cw, "tags.keep_date", gd->conf.tags_keep_date);
 	if (gd->conf.theme)
 		ffconfw_add2z(cw, "theme", gd->conf.theme);
+}
+
+static void conf_norm()
+{
+	if (!gd->conf.eqlz)
+		gd->conf.eqlz = ffsz_dup("");
+	volume_set(gd->volume);
+}
+
+static void conf_destroy()
+{
+	ffmem_free(gd->conf.eqlz);
+	ffmem_free(gd->conf.theme);
 }
 
 void file_rename(void *name)
@@ -314,13 +331,27 @@ end:
 	ffstr_free(&filter);
 }
 
-static void qc_apply(struct phi_queue_conf *qc)
+static void qc_apply()
 {
+	struct phi_queue_conf *qc = gd->queue->conf(NULL);
 	qc->repeat_all = gd->conf.repeat;
 	qc->random = gd->conf.random;
 	qc->tconf.afilter.rg_normalizer = gd->conf.rg_norm;
 	qc->tconf.afilter.auto_normalizer = (gd->conf.auto_norm) ? "" : NULL;
+	ffmem_free(qc->tconf.afilter.equalizer);
+	qc->tconf.afilter.equalizer = (gd->conf.eqlz_on && *gd->conf.eqlz) ? ffsz_dup(gd->conf.eqlz) : NULL;
 	qc->tconf.oaudio.device_index = gd->conf.odev;
+}
+
+void list_conf_set(void *new_conf)
+{
+	struct gui_conf *nc = new_conf;
+	gd->conf.eqlz_on = nc->eqlz_on;
+	ffmem_free(gd->conf.eqlz);
+	gd->conf.eqlz = nc->eqlz;
+	ffmem_free(nc);
+
+	qc_apply();
 }
 
 void ctl_play(uint i)
@@ -328,7 +359,7 @@ void ctl_play(uint i)
 	if (!gd->q_filtered && !gd->tab_conversion) {
 		gd->queue->qselect(gd->q_selected); // set the visible list as default
 		// Apply settings for the list that we're activating
-		qc_apply(gd->queue->conf(NULL));
+		qc_apply();
 	}
 	phi_queue_id q = (gd->q_filtered) ? gd->q_filtered : NULL;
 	gd->queue->play(NULL, gd->queue->at(q, i));
@@ -901,7 +932,7 @@ static void gui_start(void *param)
 
 	gui_init();
 	gui_userconf_load();
-	volume_set(gd->volume);
+	conf_norm();
 	if (FFTHREAD_NULL == (gd->th = ffthread_create(gui_worker, NULL, 0)))
 		return;
 
@@ -942,6 +973,7 @@ static void gui_destroy()
 {
 	if (!gd->ui_thread_busy)
 		ffthread_join(gd->th, -1, NULL);
+	conf_destroy();
 	ffmem_free(gd->user_conf_dir);
 	ffvec_free(&gd->lists);
 	ffmem_free(gd);

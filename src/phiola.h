@@ -309,7 +309,7 @@ struct phi_track_conf {
 		const char *auto_normalizer;
 		const char *danorm;
 		const char *noise_gate;
-		const char *equalizer;
+		char *equalizer;
 	} afilter;
 
 	// Audio encoder selected by `ofile.name`

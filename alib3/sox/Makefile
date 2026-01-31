@@ -3,10 +3,10 @@
 include ../config.mk
 
 VER := 14.4.2
-URL := /sox-$(VER).tar.bz2
-MD5SUM := ba804bb1ce5c71dd484a102a5b27d0dd
-PKG := $(ALIB3)/sox/sox-$(VER).tar.bz2
-DIR := sox-$(VER)
+URL := https://github.com/chirlu/sox/archive/refs/tags/sox-$(VER).tar.gz
+MD5SUM := 189cd02929e4acf3b9ee45730967e7c7
+PKG := $(ALIB3)/sox/sox-$(VER).tar.gz
+DIR := sox-sox-$(VER)
 LIB := libsox-phi.$(SO)
 
 default: $(DIR)/src/soxconfig.h
@@ -19,7 +19,7 @@ $(PKG):
 # unpack
 $(DIR): $(PKG)
 	echo "$(MD5SUM) *$(PKG)" | md5sum -c -
-	$(UNTAR_BZ2) $(PKG)
+	$(UNTAR_GZ) $(PKG)
 
 CONFIGURE_FLAGS := --without-libltdl
 ifeq "$(OS)" "windows"
@@ -27,6 +27,7 @@ ifeq "$(OS)" "windows"
 endif
 
 $(DIR)/src/soxconfig.h: | $(DIR)
+	cd $(DIR) && autoreconf -i
 	cd $(DIR) && ./configure $(CONFIGURE_FLAGS)
 	cat $@
 	cat $(ALIB3)/sox/*.patch | patch -d $(DIR) -p1

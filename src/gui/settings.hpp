@@ -4,8 +4,8 @@
 struct gui_wsettings {
 	ffui_windowxx	wnd;
 	ffui_label		ldev, lseek_by, lleap_by, lauto_skip;
-	ffui_editxx		eseek_by, eleap_by, eauto_skip;
-	ffui_checkboxxx	cbdarktheme, cbrg_norm, cbauto_norm;
+	ffui_editxx		eseek_by, eleap_by, eauto_skip, eeqlz;
+	ffui_checkboxxx	cbdarktheme, cbrg_norm, cbauto_norm, cbeqlz;
 	ffui_comboboxxx	cbdev;
 
 	char*	wnd_pos;
@@ -23,6 +23,7 @@ FF_EXTERN const ffui_ldr_ctl wsettings_ctls[] = {
 	_(lauto_skip),	_(eauto_skip),
 	_(cbrg_norm),
 	_(cbauto_norm),
+	_(cbeqlz),		_(eeqlz),
 	FFUI_LDR_CTL_END
 };
 #undef _
@@ -59,29 +60,14 @@ static void wsettings_ui_to_conf()
 	if (w->cbdarktheme.h)
 		theme_switch(w->cbdarktheme.checked());
 
-	uint mod = 0, r;
+	gd->conf.auto_norm = w->cbauto_norm.checked();
+	gd->conf.rg_norm = w->cbrg_norm.checked() && !gd->conf.auto_norm;
+	gd->conf.odev = w->cbdev.get();
 
-	if (gd->conf.auto_norm != (r = w->cbauto_norm.checked())) {
-		gd->conf.auto_norm = r;
-		mod = 1;
-	}
-	if (gd->conf.rg_norm != (r = w->cbrg_norm.checked())) {
-		gd->conf.rg_norm = (r && !gd->conf.auto_norm);
-		mod = 1;
-	}
-
-	if (gd->conf.odev != (r = w->cbdev.get())) {
-		gd->conf.odev = r;
-		mod = 1;
-	}
-
-	if (mod) {
-		// Apply settings for the active playlist
-		struct phi_queue_conf *qc = gd->queue->conf(NULL);
-		qc->tconf.afilter.rg_normalizer = gd->conf.rg_norm;
-		qc->tconf.afilter.auto_normalizer = (gd->conf.auto_norm) ? "" : NULL;
-		qc->tconf.oaudio.device_index = gd->conf.odev;
-	}
+	struct gui_conf *conf = ffmem_new(struct gui_conf);
+	conf->eqlz_on = w->cbeqlz.checked();
+	conf->eqlz = w->eeqlz.text().ptr;
+	gui_core_task_ptr(list_conf_set, conf);
 
 	gd->conf.seek_step_delta = xxvec(w->eseek_by.text()).str().uint32(10);
 	gd->conf.seek_leap_delta = xxvec(w->eleap_by.text()).str().uint32(60);
@@ -107,6 +93,8 @@ static void wsettings_ui_from_conf()
 	w->eseek_by.text(s.zfmt("%u", gd->conf.seek_step_delta));
 	w->eleap_by.text(s.zfmt("%u", gd->conf.seek_leap_delta));
 	w->eauto_skip.text(auto_skip_write(s));
+	w->cbeqlz.check(gd->conf.eqlz_on);
+	w->eeqlz.text(gd->conf.eqlz);
 }
 
 void wsettings_userconf_write(ffconfw *cw)

@@ -36,8 +36,8 @@ static int request_input_conversion(phi_track *t)
 	if (!core->track->filter(t, core->mod("afilter.conv"), PHI_TF_PREV))
 		return PHI_ERR;
 
-	t->aconv.in = t->audio.format;
-	t->aconv.out = t->audio.format;
+	t->aconv.in = (t->oaudio.format.format) ? t->oaudio.format : t->audio.format;
+	t->aconv.out = t->aconv.in;
 	t->aconv.out.format = PHI_PCM_32;
 	t->aconv.out.interleaved = 1;
 	t->oaudio.format = t->aconv.out;
@@ -63,6 +63,7 @@ enum {
 	EQ_BAND,
 	EQ_SHELVE_BASS,
 	EQ_SHELVE_TREBLE,
+	EQ_EMPTY,
 };
 
 static int sox_argv_extract(struct sox *c, phi_track *t, ffstr *s, struct sox_eq_conf *eqc)
@@ -77,6 +78,9 @@ static int sox_argv_extract(struct sox *c, phi_track *t, ffstr *s, struct sox_eq
 		errlog(t, "%s", a.error);
 		return -1;
 	}
+
+	if (!a.argi)
+		return EQ_EMPTY;
 
 	if (!eqc->type)
 		return EQ_BAND;
@@ -126,6 +130,9 @@ static int sox_filter_add(struct sox *c, phi_track *t, ffstr *conf, uint index)
 			argv[ia++] = eqc.width;
 		filter_name = eqc.type;
 		break;
+
+	case EQ_EMPTY:
+		return 0;
 
 	default:
 		goto err;

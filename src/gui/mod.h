@@ -48,6 +48,7 @@ FF_EXTERN void list_deleted(phi_queue_id q);
 FF_EXTERN void list_select(uint i);
 FF_EXTERN void list_filter(ffstr filter);
 FF_EXTERN struct phi_queue_entry* list_vis_qe_ref(uint i);
+FF_EXTERN void list_conf_set(void *new_conf);
 
 FF_EXTERN void ctl_play(uint i);
 FF_EXTERN void volume_set(uint vol);
@@ -106,6 +107,19 @@ struct gui_track_info {
 	char buf[256];
 };
 
+struct gui_conf {
+	char*	eqlz;
+	char*	theme;
+	int		auto_skip_sec_percent;
+	u_char	eqlz_on;
+	u_char	random;
+	u_char	rg_norm, auto_norm;
+	u_char	tags_keep_date;
+	uint	odev;
+	uint	repeat;
+	uint	seek_leap_delta, seek_step_delta;
+};
+
 struct gui_data {
 	const phi_queue_if *queue;
 	char *user_conf_dir;
@@ -150,17 +164,7 @@ struct gui_data {
 	uint quit :1;
 	uint ui_thread_busy :1;
 
-	struct {
-		char*	theme;
-		uint	odev;
-		uint	repeat;
-		uint	random;
-		uint	rg_norm, auto_norm;
-		uint	seek_step_delta;
-		uint	seek_leap_delta;
-		int		auto_skip_sec_percent;
-		uint	tags_keep_date;
-	} conf;
+	struct gui_conf conf;
 };
 FF_EXTERN struct gui_data *gd;
 

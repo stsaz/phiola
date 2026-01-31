@@ -20,6 +20,89 @@ import java.lang.Math;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+class EQBand {
+	int type, freq, width, gain;
+
+	static final int
+		LOW_SHELF = 1,
+		HIGH_SHELF = 3;
+	EQBand(int t) { this.type = t; }
+
+	boolean shelf() { return (this.type & 1) != 0; }
+
+	void parse(String s) {
+		this.freq = 0;
+		this.width = 0;
+		this.gain = 0;
+
+		String[] v = s.split(" ");
+		if ((v.length % 2) != 0)
+			return;
+
+		for (int i = 0;  i < v.length;  i += 2) {
+			if (v[i].equals("f") && !shelf()) {
+				this.freq = Core.str_to_uint(v[i + 1], 0);
+
+			} else if (v[i].equals("w") && !shelf()) {
+				String w = v[i + 1];
+				if (w.length() > 1 && w.charAt(w.length() - 1) == 'q') {
+					w = w.substring(0, w.length() - 1); // cut last 'q'
+					this.width = (int)(Core.str_to_float(w, 0) * 10);
+				}
+
+			} else if (v[i].equals("g")) {
+				this.gain = (int)(Core.str_to_float(v[i + 1], 0) * 10);
+			}
+		}
+	}
+
+	String str() {
+		if (shelf()) {
+			return String.format("t %s g %.01f"
+				, (this.type == 1) ? "bass" : "treble", (double)this.gain / 10);
+		}
+		return String.format("f %d w %.01fq g %.01f"
+			, this.freq, (double)this.width / 10, (double)this.gain / 10);
+	}
+}
+
+class EQSet {
+	static final int BANDS = 5;
+	private ArrayList<String> parts;
+	int band;
+
+	// "t T f F w W g G,..."
+	void init(String conf) {
+		String[] v = conf.split(",");
+		parts = new ArrayList<>(BANDS);
+		parts.addAll(Arrays.asList(v));
+		for (int i = parts.size();  i < BANDS;  i++) {
+			parts.add("");
+		}
+	}
+
+	String commit() {
+		StringBuilder sb = new StringBuilder();
+		for (String s : parts) {
+			sb.append(String.format("%s,", s));
+		}
+		return sb.substring(0, sb.length() - 1);
+	}
+
+	String current() { return parts.get(band - 1); }
+	void current_set(String s) { parts.set(band - 1, s); }
+
+	EQBand select(int i) {
+		band = i;
+		int t = (band == 1) ? EQBand.LOW_SHELF
+			: (band == BANDS) ? EQBand.HIGH_SHELF
+			: 0;
+		EQBand b = new EQBand(t);
+		b.parse(current());
+		return b;
+	}
+}
+
 public class SettingsActivity extends AppCompatActivity {
 	private static final String TAG = "phiola.SettingsActivity";
 	private Core core;
@@ -84,19 +167,18 @@ public class SettingsActivity extends AppCompatActivity {
 		seekbar_color(b.sbColorBlue, 0x0074d9);
 	}
 
-	private static final int EQLZ_BANDS = 5;
-	private ArrayList<String> eqlz_vals;
-	private int eqlz_band, eqlz_freq, eqlz_width, eqlz_gain;
+	private EQSet eqset;
+	private EQBand eqband;
 
 	private void eqlz_enable(boolean enable) {
 		b.spEqlzBand.setEnabled(enable);
-		b.sbEqlzFreq.setEnabled(enable);
-		b.sbEqlzWidth.setEnabled(enable);
+		b.sbEqlzFreq.setEnabled(enable && !eqband.shelf());
+		b.sbEqlzWidth.setEnabled(enable && !eqband.shelf());
 		b.sbEqlzGain.setEnabled(enable);
 		b.eEqualizer.setEnabled(enable);
 	}
 
-	// ~20..20000 Hz
+	// 20..20000 Hz
 	private static int eqlz_freq_value(int progress) {
 		return (int)((20000 - 20) * Math.pow((double)(progress + 1) / 100, 3) + 20);
 	}
@@ -104,77 +186,27 @@ public class SettingsActivity extends AppCompatActivity {
 
 	private static int eqlz_width_value(int progress) { return progress; }
 	private static int eqlz_width_progress(int val) { return val; }
-	private static int eqlz_gain_value(int progress) { return progress - 120; }
-	private static int eqlz_gain_progress(int val) { return val + 120; }
-
-	private void eqlz_init() {
-		String[] v = core.play.equalizer.split(" ");
-		int n = EQLZ_BANDS * 3;
-		eqlz_vals = new ArrayList<>(n);
-		eqlz_vals.addAll(Arrays.asList(v));
-		for (int i = eqlz_vals.size();  i < n;  i++) {
-			eqlz_vals.add("");
-		}
-		eqlz_show(1);
-	}
+	private static int eqlz_gain_value(int progress) { return (progress * 5) - 120; }
+	private static int eqlz_gain_progress(int val) { return (val + 120) / 5; }
 
 	private void eqlz_show(int band) {
-		if (eqlz_band != 0) {
-			String[] v = b.eEqualizer.getText().toString().split(" ");
-			if (v.length != 3)
-				v = new String[]{"", "", ""};
-			eqlz_set(v);
-		}
+		eqband = eqset.select(band);
 
-		eqlz_band = band;
-		int off = 3 * (band - 1);
+		b.sbEqlzFreq.setProgress(eqlz_freq_progress(eqband.freq));
+		b.sbEqlzFreq.setEnabled(!eqband.shelf());
 
-		eqlz_freq = Core.str_to_uint(eqlz_vals.get(off + 0), 0);
-		b.sbEqlzFreq.setProgress(eqlz_freq_progress(eqlz_freq));
+		b.sbEqlzWidth.setProgress(eqlz_width_progress(eqband.width));
+		b.sbEqlzWidth.setEnabled(!eqband.shelf());
 
-		String s = eqlz_vals.get(off + 1);
-		if (s.length() >= 2)
-			s = s.substring(0, s.length() - 1); // cut last 'q'
-		eqlz_width = (int)(Core.str_to_float(s, 0) * 10);
-		b.sbEqlzWidth.setProgress(eqlz_width_progress(eqlz_width));
+		b.sbEqlzGain.setProgress(eqlz_gain_progress(eqband.gain));
 
-		eqlz_gain = (int)(Core.str_to_float(eqlz_vals.get(off + 2), 0) * 10);
-		b.sbEqlzGain.setProgress(eqlz_gain_progress(eqlz_gain));
-
-		s = String.format("%s %s %s"
-			, eqlz_vals.get(off + 0)
-			, eqlz_vals.get(off + 1)
-			, eqlz_vals.get(off + 2));
-		b.eEqualizer.setText(s);
+		b.eEqualizer.setText(eqset.current());
 	}
 
 	private void eqlz_changed() {
-		String[] v = new String[] {
-			String.format("%d", eqlz_freq),
-			String.format("%.01fq", (double)eqlz_width / 10),
-			String.format("%.01f", (double)eqlz_gain / 10),
-		};
-		eqlz_set(v);
-		String s = String.format("%s %s %s", v[0], v[1], v[2]);
-		core.dbglog(TAG, "eqlz_vals band str: '%s'", s);
+		String s = eqband.str();
+		eqset.current_set(s);
 		b.eEqualizer.setText(s);
-	}
-
-	private void eqlz_set(String[] v) {
-		int off = 3 * (eqlz_band - 1);
-		eqlz_vals.set(off + 0, v[0]);
-		eqlz_vals.set(off + 1, v[1]);
-		eqlz_vals.set(off + 2, v[2]);
-	}
-
-	private String eqlz_commit() {
-		StringBuilder sb = new StringBuilder();
-		for (String s : eqlz_vals) {
-			sb.append(String.format("%s ", s));
-		}
-		String es = sb.substring(0, sb.length() - 1);
-		core.dbglog(TAG, "eqlz_str: '%s'", es);
-		return es;
 	}
 
 	private void play_init() {
@@ -214,30 +246,33 @@ public class SettingsActivity extends AppCompatActivity {
 					b.swRgNorm.setChecked(false);
 			});
 
+		eqset = new EQSet();
+		eqband = new EQBand(0);
+
 		ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[] {
-				"Band #1","Band #2","Band #3","Band #4","Band #5",
+				"Low Shelf","Band #2","Band #3","Band #4","High Shelf",
 			});
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		b.spEqlzBand.setAdapter(adapter);
 		b.spEqlzBand.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 				@Override
 				public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-					eqlz_show(b.spEqlzBand.getSelectedItemPosition() + 1);
+					eqset.current_set(b.eEqualizer.getText().toString());
+					eqlz_show(position + 1);
 				}
 				@Override
-				public void onNothingSelected(AdapterView<?> parent) {
-				}
+				public void onNothingSelected(AdapterView<?> parent) {}
 			});
 
 		b.swEqualizer.setOnCheckedChangeListener((v, checked) -> { eqlz_enable(checked); });
 		b.sbEqlzFreq.setMax(99);
 		b.sbEqlzWidth.setMax(40); // 0..4.0
-		b.sbEqlzGain.setMax(120+120); // -12.0..12.0
+		b.sbEqlzGain.setMax((120+120) / 5); // -12.0..12.0 by 0.5
 		b.sbEqlzFreq.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
 				@Override
 				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 					if (fromUser) {
-						eqlz_freq = eqlz_freq_value(progress);
+						eqband.freq = eqlz_freq_value(progress);
 						eqlz_changed();
 					}
 				}
@@ -246,7 +281,7 @@ public class SettingsActivity extends AppCompatActivity {
 				@Override
 				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 					if (fromUser) {
-						eqlz_width = eqlz_width_value(progress);
+						eqband.width = eqlz_width_value(progress);
 						eqlz_changed();
 					}
 				}
@@ -255,7 +290,7 @@ public class SettingsActivity extends AppCompatActivity {
 				@Override
 				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 					if (fromUser) {
-						eqlz_gain = eqlz_gain_value(progress);
+						eqband.gain = eqlz_gain_value(progress);
 						eqlz_changed();
 					}
 				}
@@ -270,14 +305,15 @@ public class SettingsActivity extends AppCompatActivity {
 		b.swEqualizer.setChecked(core.play.equalizer_enabled);
 		if (!core.play.equalizer_enabled)
 			eqlz_enable(false);
-		eqlz_init();
+		eqset.init(core.play.equalizer);
+		eqlz_show(1);
 	}
 
 	private void play_save() {
 		core.setts.set_codepage(b.spCodepage.getSelectedItemPosition());
 		core.play.auto_skip_head_set(b.eAutoSkip.getText().toString());
 		core.play.auto_skip_tail_set(b.eAutoSkipTail.getText().toString());
-		core.play.equalizer_set(b.swEqualizer.isChecked(), eqlz_commit());
+		core.play.equalizer_set(b.swEqualizer.isChecked(), eqset.commit());
 		core.play.normalize();
 	}
 

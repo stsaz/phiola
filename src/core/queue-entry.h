@@ -160,6 +160,9 @@ static void qe_close(void *f, phi_track *t)
 	}
 
 	core->metaif->destroy(&t->meta);
+	ffmem_free(t->conf.afilter.equalizer);
+	t->conf.afilter.equalizer = NULL;
+
 	if (e->q) {
 		uint flags = (t->error) ? Q_TKCL_ERR : 0;
 		if ((t->chain_flags & (PHI_FSTOP | PHI_FSTOP_AFTER)) // track stopped by user
@@ -202,6 +205,7 @@ static int qe_play(struct q_entry *e)
 	c.ifile.name = e->pub.url;
 	c.seek_cdframes = e->pub.seek_cdframes;
 	c.until_cdframes = e->pub.until_cdframes;
+	c.afilter.equalizer = ffsz_dup_safe(c.afilter.equalizer);
 	const phi_filter *ui_if = (e->q->conf.ui_module_if_set) ? e->q->conf.ui_module_if : core->mod(e->q->conf.ui_module);
 
 	const phi_track_if *track = core->track;
@@ -256,7 +260,7 @@ static int qe_play(struct q_entry *e)
 				&& (!track->filter(t, core->mod("afilter.auto-conv-f"), 0)
 				|| !track->filter(t, core->mod("af-loudness.analyze"), 0)
 				|| !track->filter(t, core->mod("afilter.auto-norm"), 0)))
-			|| ((c.afilter.equalizer && !c.afilter.auto_normalizer)
+			|| (c.afilter.equalizer
 				&& !track->filter(t, core->mod("af-sox.sox"), 0))
 			|| !track->filter(t, core->mod("afilter.gain"), 0)
 			|| !track->filter(t, core->mod("afilter.auto-conv"), 0)
@@ -280,6 +284,7 @@ static int qe_play(struct q_entry *e)
 	return 0;
 
 err:
+	ffmem_free(c.afilter.equalizer);
 	track->close(t);
 	return -1;
 }

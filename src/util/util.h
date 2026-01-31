@@ -10,6 +10,17 @@ do { \
 
 #include <ffbase/stringz.h>
 
+static inline char* ffsz_dup_safe(const char *s)
+{
+	return (s) ? ffsz_dup(s) : NULL;
+}
+
+static inline int ffsz_eq_safe(const char *s1, const char *s2)
+{
+	return ((!s1 && !s2)
+		|| (s1 && s2 && ffsz_eq(s1, s2)));
+}
+
 static inline int ffbit_test_array32(const uint *ar, uint bit)
 {
 	return ffbit_test32(&ar[bit / 32], bit % 32);

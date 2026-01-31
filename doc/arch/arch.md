@@ -66,6 +66,13 @@ dec -> aconv-f -> af -> aconv -> adev.play
           *  -> * ->    *   -> *
 ```
 
+f64 filter + i32 filter (x3 conversion):
+
+```
+dec ->   aconv -> loudness -> aconv -> eq -> aconv -> adev
+    (f32)      (f64)                (i32)          (i16)
+```
+
 
 ## Seeking
 

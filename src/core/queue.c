@@ -158,6 +158,7 @@ static void q_free(struct phi_queue *q)
 	}
 
 	ffmem_free(q->conf.tconf.ofile.name);
+	ffmem_free(q->conf.tconf.afilter.equalizer);
 	ffslice_free(&q->conf.tconf.tracks);
 	meta_destroy(&q->conf.tconf.meta);
 
