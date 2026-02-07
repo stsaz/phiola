@@ -55,6 +55,7 @@ static void* fmtr_open(phi_track *t)
 
 	struct fmt_rd *f = phi_track_allocT(t, struct fmt_rd);
 	f->trk = t;
+
 	struct avpk_reader_conf c = {
 		.total_size = (t->input.size != ~0ULL) ? t->input.size : 0,
 		.flags = (t->input.no_auto_seek) ? AVPKR_F_NO_SEEK : 0,
@@ -70,7 +71,10 @@ static void* fmtr_open(phi_track *t)
 			c.flags |= AVPKR_F_AAC_FRAMES;
 	}
 
-	if (avpk_open(&f->rd, avpk_reader_find(ext.ptr, avpk_formats, FF_COUNT(avpk_formats)), &c)) {
+	const struct avpkr_if *rif = avpk_reader_find(ext.ptr, avpk_formats, FF_COUNT(avpk_formats));
+	if (rif)
+		f->rd.ctx = phi_track_alloc(t, rif->context_size);
+	if (avpk_open(&f->rd, rif, &c)) {
 		errlog(t, "avpk_open");
 		return PHI_OPEN_ERR;
 	}
@@ -80,6 +84,7 @@ static void* fmtr_open(phi_track *t)
 static void fmtr_close(struct fmt_rd *f, phi_track *t)
 {
 	avpk_close(&f->rd);
+	phi_track_free(t, f->rd.ctx);
 	phi_track_free(t, f);
 }
 

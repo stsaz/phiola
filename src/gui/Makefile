@@ -99,15 +99,15 @@ app-gui:
 	$(MKDIR) $(APP_DIR)/mod/gui
 ifeq "$(OS)" "windows"
 	$(CP) phiola-gui.exe $(APP_DIR)/
-	$(CP) $(PHIOLA)/src/gui/ui-winapi.conf $(APP_DIR)/mod/gui/ui.conf
-	$(CP) $(PHIOLA)/src/gui/lang_*.conf \
+	$(CP) $(PHIOLA)/src/gui/res/ui-winapi.conf $(APP_DIR)/mod/gui/ui.conf
+	$(CP) $(PHIOLA)/src/gui/res/lang_*.conf \
 		$(PHIOLA)/src/gui/res/theme-*.conf \
 		$(APP_DIR)/mod/gui/
 	sed -i 's/_/\&/' $(APP_DIR)/mod/gui/lang_*.conf
 	unix2dos $(APP_DIR)/mod/gui/*.conf
 else
-	$(CP) $(PHIOLA)/src/gui/ui-gtk.conf $(APP_DIR)/mod/gui/ui.conf
-	$(CP) $(PHIOLA)/src/gui/lang_*.conf \
+	$(CP) $(PHIOLA)/src/gui/res/ui-gtk.conf $(APP_DIR)/mod/gui/ui.conf
+	$(CP) $(PHIOLA)/src/gui/res/lang_*.conf \
 		$(PHIOLA)/res/phiola.svg \
 		$(PHIOLA)/src/gui/res/*.png \
 		$(PHIOLA)/src/gui/res/phiola.desktop \
