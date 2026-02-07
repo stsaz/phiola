@@ -118,6 +118,8 @@ static void wsettings_action(ffui_window *wnd, int id)
 void wsettings_show(uint show)
 {
 	gui_wsettings *w = gg->wsettings;
+	if (gui_dlg_load())
+		return;
 
 	if (!show) {
 		w->wnd.show(0);

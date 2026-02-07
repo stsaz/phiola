@@ -42,6 +42,8 @@ static void wgoto_action(ffui_window *wnd, int id)
 void wgoto_show(uint pos)
 {
 	gui_wgoto *g = gg->wgoto;
+	if (gui_dlg_load())
+		return;
 	g->etime.text(xxvec().add_f("%02u:%02u", pos / 60, pos % 60).str());
 	g->etime.sel_all();
 	g->etime.focus();

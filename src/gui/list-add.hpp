@@ -36,6 +36,8 @@ static void wlistadd_action(ffui_window *wnd, int id)
 void wlistadd_show(uint show)
 {
 	gui_wlistadd *w = gg->wlistadd;
+	if (gui_dlg_load())
+		return;
 	if (show)
 		w->turi.focus();
 	w->wnd.show(show);

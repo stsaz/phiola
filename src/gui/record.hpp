@@ -288,6 +288,8 @@ void wrecord_init()
 void wrecord_show(uint show)
 {
 	gui_wrecord *w = gg->wrecord;
+	if (gui_dlg_load())
+		return;
 
 	if (!show) {
 		w->wnd.show(0);
@@ -302,6 +304,9 @@ void wrecord_show(uint show)
 		ffmem_free(w->wnd_pos);
 		
 		wrecord_ui_from_conf();
+
+		if (gd->recording_track)
+			w->bstart.enable(0);
 	}
 
 	w->wnd.show(1);

@@ -99,6 +99,8 @@ static void winfo_display(struct phi_queue_entry *qe)
 void winfo_show(uint show, uint idx)
 {
 	gui_winfo *w = gg->winfo;
+	if (gui_dlg_load())
+		return;
 
 	if (w->qe)
 		gd->queue->unref(w->qe);

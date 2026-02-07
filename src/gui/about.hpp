@@ -39,6 +39,8 @@ void wabout_init()
 void wabout_show(uint show)
 {
 	gui_wabout *a = gg->wabout;
+	if (gui_dlg_load())
+		return;
 
 	if (!show) {
 		a->wnd.show(0);

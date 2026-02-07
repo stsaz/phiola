@@ -28,6 +28,8 @@ static void wlistfilter_action(ffui_window *wnd, int id)
 void wlistfilter_show(uint show)
 {
 	gui_wlistfilter *w = gg->wlistfilter;
+	if (gui_dlg_load())
+		return;
 	if (show)
 		w->tfilter.focus();
 	w->wnd.show(show);

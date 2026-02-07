@@ -230,7 +230,8 @@ struct installer {
 			return -1;
 		}
 #else
-		if (ffui_ldr_load(&ldr, ui)) {
+		ffui_ldr_source(&ldr, FFSTR_Z(""), ui);
+		if (ffui_ldr_load(&ldr, NULL)) {
 			return -1;
 		}
 #endif

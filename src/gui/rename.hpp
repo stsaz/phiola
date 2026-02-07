@@ -38,6 +38,8 @@ static void wrename_action(ffui_window *wnd, int id)
 void wrename_show(uint show, uint idx)
 {
 	gui_wrename *w = gg->wrename;
+	if (gui_dlg_load())
+		return;
 
 	if (w->qe)
 		gd->queue->unref(w->qe);

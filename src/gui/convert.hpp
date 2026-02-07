@@ -289,6 +289,8 @@ void wconvert_init()
 void wconvert_show(uint show, ffslice items)
 {
 	gui_wconvert *c = gg->wconvert;
+	if (gui_dlg_load())
+		return;
 
 	if (!show) {
 		c->wnd.show(0);

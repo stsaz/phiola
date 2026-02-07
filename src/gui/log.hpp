@@ -43,6 +43,9 @@ static void wlog_add()
 	w->buf.reset();
 	fflock_unlock(&w->lock);
 
+	if (gui_dlg_load())
+		return;
+
 	w->tlog.add(d);
 	d.free();
 
@@ -61,7 +64,7 @@ static void wlog_add()
 Thread: worker */
 extern "C" void gui_log(void *udata, ffstr s)
 {
-	FF_ASSERT(gg && gg->wlog && gg->wlog->wnd.h);
+	FF_ASSERT(gg && gg->wlog);
 
 	gui_wlog *w = gg->wlog;
 

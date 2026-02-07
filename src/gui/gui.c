@@ -43,9 +43,13 @@ void gui_dragdrop(ffstr data)
 
 void conf_wnd_pos_read(ffui_window *w, ffstr val)
 {
-	ffui_pos pos;
-	if (!ffstr_matchfmt(&val, "%d %d %u %u", &pos.x, &pos.y, &pos.cx, &pos.cy))
-		ffui_post_wnd_place(w, SW_SHOWNORMAL, &pos);
+	ffui_pos cur, pos;
+	if (ffstr_matchfmt(&val, "%d %d %u %u", &pos.x, &pos.y, &pos.cx, &pos.cy))
+		return;
+	ffui_wnd_pos(w, &cur);
+	pos.cx = ffmax(pos.cx, cur.cx);
+	pos.cy = ffmax(pos.cy, cur.cy);
+	ffui_post_wnd_place(w, SW_SHOWNORMAL, &pos);
 }
 
 extern const struct ffarg guimod_args[];
@@ -220,36 +224,59 @@ static int load_ui()
 {
 	int r = -1;
 	char *fn = ffsz_allocfmt("%Smod/gui/ui.conf", &core->conf.root);
-	ffui_loader ldr;
-	ffui_ldr_init(&ldr, gui_getctl, gui_getcmd, gg);
-	ffmem_copy(ldr.language, core->conf.language, sizeof(ldr.language));
+	ffui_ldr_init(&gg->ldr, gui_getctl, gui_getcmd, gg);
+	ffmem_copy(gg->ldr.language, core->conf.language, sizeof(gg->ldr.language));
 #ifdef FF_WIN
-	ldr.hmod_resource = GetModuleHandleW(L"gui.dll");
-	ldr.dark_mode = (gd->conf.theme && ffsz_eq(gd->conf.theme, "dark"));
+	gg->ldr.hmod_resource = GetModuleHandleW(L"gui.dll");
+	gg->ldr.dark_mode = (gd->conf.theme && ffsz_eq(gd->conf.theme, "dark"));
 #endif
 
 	fftime t1;
 	if (core->conf.log_level >= PHI_LOG_DEBUG)
 		t1 = core->time(NULL, PHI_CORE_TIME_MONOTONIC);
 
-	if (ffui_ldr_loadfile(&ldr, fn)) {
-		errlog("parsing ui.conf: %s", ffui_ldr_errstr(&ldr));
+	if (fffile_readwhole(fn, &gg->ui_conf, 1*1024*1024)) {
+		syserrlog("file read: %s", fn);
+		goto done;
+	}
+
+	ffstr path, path2 = {};
+	ffpath_splitpath(fn, ffsz_len(fn), &path, NULL);
+	ffstr_dupstr(&path2, &path);
+	ffui_ldr_source(&gg->ldr, path2, *(ffstr*)&gg->ui_conf);
+
+	if (ffui_ldr_load(&gg->ldr, "wmain")) {
+		errlog("parsing ui.conf: %s", ffui_ldr_errstr(&gg->ldr));
 		goto done;
 	}
 
 	theme_apply(gd->conf.theme);
 	r = 0;
 
-done:
 	if (core->conf.log_level >= PHI_LOG_DEBUG) {
 		fftime t2 = core->time(NULL, PHI_CORE_TIME_MONOTONIC);
 		fftime_sub(&t2, &t1);
 		dbglog("loaded GUI in %Ums", (int64)fftime_to_msec(&t2));
 	}
 
-	ffui_ldr_fin(&ldr);
+done:
 	ffmem_free(fn);
 	return r;
+}
+
+/** Finish parsing 'ui.conf' file */
+int gui_dlg_load()
+{
+	if (!gg->ldr.conf.len)
+		return 0;
+
+	if (ffui_ldr_load(&gg->ldr, NULL)) {
+		errlog("parsing ui.conf: %s", ffui_ldr_errstr(&gg->ldr));
+		return 1;
+	}
+	ffvec_free(&gg->ui_conf);
+	theme_apply(gd->conf.theme);
+	return 0;
 }
 
 static void theme_apply(const char *theme)
@@ -335,6 +362,9 @@ int FFTHREAD_PROCCALL gui_worker(void *param)
 
 end:
 	ffui_uninit();
+	ffstr_free(&gg->ldr.path);
+	ffui_ldr_fin(&gg->ldr);
+	ffvec_free(&gg->ui_conf);
 	gui_core_task_uint(gui_stop, 0);
 	return 0;
 }

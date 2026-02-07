@@ -101,6 +101,9 @@ struct gui {
 	struct gui_wabout*		wabout;
 	struct gui_wlog*		wlog;
 
+	ffui_loader	ldr;
+	ffvec		ui_conf; // Contents of 'ui.conf' file
+
 	struct memarea area;
 };
 FF_EXTERN struct gui *gg;
@@ -119,3 +122,4 @@ static inline void conf_wnd_pos_write(ffconfw *cw, const char *name, ffui_window
 FF_EXTERN void theme_switch(uint i);
 FF_EXTERN void gui_dragdrop(ffstr data);
 FF_EXTERN void gui_quit();
+FF_EXTERN int gui_dlg_load();
