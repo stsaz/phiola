@@ -36,10 +36,7 @@ class EQBand {
 		this.gain = 0;
 
 		String[] v = s.split(" ");
-		if ((v.length % 2) != 0)
-			return;
-
-		for (int i = 0;  i < v.length;  i += 2) {
+		for (int i = 0;  i + 1 < v.length;  i += 2) {
 			if (v[i].equals("f") && !shelf()) {
 				this.freq = Core.str_to_uint(v[i + 1], 0);
 
@@ -55,6 +52,15 @@ class EQBand {
 			}
 		}
 	}
+
+	// 20..20000 Hz
+	void freq_set(int progress) {
+		freq = (int)((20000 - 20) * Math.pow((double)(progress + 1) / 100, 3) + 20);
+	}
+	int freq_progress() { return 0; }
+
+	void gain_set(int progress) { gain = (progress * 5) - 120; }
+	int gain_progress() { return (gain + 120) / 5; }
 
 	String str() {
 		if (shelf()) {
@@ -178,28 +184,14 @@ public class SettingsActivity extends AppCompatActivity {
 		b.eEqualizer.setEnabled(enable);
 	}
 
-	// 20..20000 Hz
-	private static int eqlz_freq_value(int progress) {
-		return (int)((20000 - 20) * Math.pow((double)(progress + 1) / 100, 3) + 20);
-	}
-	private static int eqlz_freq_progress(int val) { return 0; }
-
-	private static int eqlz_width_value(int progress) { return progress; }
-	private static int eqlz_width_progress(int val) { return val; }
-	private static int eqlz_gain_value(int progress) { return (progress * 5) - 120; }
-	private static int eqlz_gain_progress(int val) { return (val + 120) / 5; }
-
 	private void eqlz_show(int band) {
 		eqband = eqset.select(band);
 
-		b.sbEqlzFreq.setProgress(eqlz_freq_progress(eqband.freq));
+		b.sbEqlzFreq.setProgress(eqband.freq_progress());
 		b.sbEqlzFreq.setEnabled(!eqband.shelf());
-
-		b.sbEqlzWidth.setProgress(eqlz_width_progress(eqband.width));
+		b.sbEqlzWidth.setProgress(eqband.width);
 		b.sbEqlzWidth.setEnabled(!eqband.shelf());
-
-		b.sbEqlzGain.setProgress(eqlz_gain_progress(eqband.gain));
-
+		b.sbEqlzGain.setProgress(eqband.gain_progress());
 		b.eEqualizer.setText(eqset.current());
 	}
 
@@ -250,7 +242,11 @@ public class SettingsActivity extends AppCompatActivity {
 		eqband = new EQBand(0);
 
 		ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[] {
-				"Low Shelf","Band #2","Band #3","Band #4","High Shelf",
+				"Low Shelf",
+				"Band #2",
+				"Band #3",
+				"Band #4",
+				"High Shelf",
 			});
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		b.spEqlzBand.setAdapter(adapter);
@@ -272,7 +268,7 @@ public class SettingsActivity extends AppCompatActivity {
 				@Override
 				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 					if (fromUser) {
-						eqband.freq = eqlz_freq_value(progress);
+						eqband.freq_set(progress);
 						eqlz_changed();
 					}
 				}
@@ -281,7 +277,7 @@ public class SettingsActivity extends AppCompatActivity {
 				@Override
 				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 					if (fromUser) {
-						eqband.width = eqlz_width_value(progress);
+						eqband.width = progress;
 						eqlz_changed();
 					}
 				}
@@ -290,7 +286,7 @@ public class SettingsActivity extends AppCompatActivity {
 				@Override
 				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 					if (fromUser) {
-						eqband.gain = eqlz_gain_value(progress);
+						eqband.gain_set(progress);
 						eqlz_changed();
 					}
 				}

@@ -19,6 +19,7 @@ struct xxstr : ffstr {
 	bool	equals(xxstr s) const { return ffstr_eq2(this, &s); }
 	bool	equals_i(xxstr s) const { return ffstr_ieq(this, s.ptr, s.len); }
 	char	at(size_t i) const { FF_ASSERT(i < len); return ptr[i]; }
+	char	last_char() const { FF_ASSERT(len > 0); return ptr[len - 1]; }
 	ffssize	split_by(char by, xxstr *left, xxstr *right) const { return ffstr_splitby(this, by, left, right); }
 	ffssize	split_at(ffssize index, xxstr *left, xxstr *right) const { return ffstr_split(this, index, left, right); }
 	ffssize	find_char(char c) const { return ffstr_findchar(this, c); }
@@ -48,6 +49,12 @@ struct xxstr : ffstr {
 		if (!ffstr_toint(this, &n, FFS_INT32))
 			n = _default;
 		return n;
+	}
+	double float64(double _default) const {
+		double d;
+		if (!ffstr_to_float(this, &d))
+			d = _default;
+		return d;
 	}
 };
 

@@ -326,6 +326,7 @@ static int qe_expand(struct q_entry *e)
 
 	struct phi_track_conf c = e->q->conf.tconf;
 	c.ifile.name = e->pub.url;
+	c.afilter.equalizer = NULL;
 	phi_track *t = track->create(&c);
 	if (dir) {
 		if (!track->filter(t, &phi_queue_guard, 0)

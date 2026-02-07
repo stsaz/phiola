@@ -75,6 +75,12 @@
 	X(A_CONVERT_POS_START),
 	X(A_CONVERT_POS_END),
 
+// Settings
+	X(A_EQ_CHBAND),
+	X(A_EQ_FREQ),
+	X(A_EQ_WIDTH),
+	X(A_EQ_GAIN),
+
 // Help
 	X(A_ABOUT_SHOW),
 	X(A_ABOUT_HOMEPAGE),
