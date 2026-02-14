@@ -279,6 +279,15 @@ static int rec_check(struct cmd_rec *r)
 	if (!(r->aenc = cmd_oext_aenc(ext, 0)))
 		return _ffargs_err(&x->cmd, 1, "Specified output file format is not supported: \"%S\"", &ext);
 
+	if (!r->aformat) {
+		switch (r->aenc) {
+		case PHI_AC_MP3:
+		case PHI_AC_OPUS:
+		case PHI_AC_VORBIS:
+			r->aformat = PHI_PCM_FLOAT32;
+		}
+	}
+
 	if (r->buffer)
 		x->timer_int_msec = ffmin(r->buffer / 2, x->timer_int_msec);
 	return 0;

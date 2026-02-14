@@ -119,10 +119,13 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 		break;
 
 	case AF_MP3:
-		c.mp3.quality = (uint)q + 1;  break;
+		c.iaudio.format.format = PHI_PCM_FLOAT32;
+		c.mp3.quality = (uint)q + 1;
+		break;
 
 	case AF_OPUS:
 	case AF_OPUS_VOICE:
+		c.iaudio.format.format = PHI_PCM_FLOAT32;
 		c.opus.bitrate = q;
 		c.opus.mode = !!(fmt == AF_OPUS_VOICE);
 		break;
