@@ -1,6 +1,18 @@
 /** phiola: GUI: record audio
 2023, Simon Zolin */
 
+static const struct {
+	char ext[5];
+	u_char fmt;
+} out_fmt[] = {
+	{ "m4a",	PHI_AC_AAC },
+	{ "ogg",	PHI_AC_VORBIS },
+	{ "opus",	PHI_AC_OPUS },
+	{ "mp3",	PHI_AC_MP3 },
+	{ "flac",	0 },
+	{ "wav",	0 },
+};
+
 struct gui_wrecord {
 	ffui_windowxx		wnd;
 	ffui_labelxx		ldir, lname, lext, ldev, lchan, l_rate, luntil, laacq, lvorbisq, lopusq, lmp3q;
@@ -160,17 +172,9 @@ static void file_extensions_fill()
 {
 	gui_wrecord *w = gg->wrecord;
 	uint index = 0 /*m4a*/;
-	static const char oext[][5] = {
-		"m4a",
-		"ogg",
-		"opus",
-		"mp3",
-		"flac",
-		"wav",
-	};
-	for (uint i = 0;  i < FF_COUNT(oext);  i++) {
-		w->cbext.add(oext[i]);
-		if (w->conf_ext.equals(oext[i]))
+	for (uint i = 0;  i < FF_COUNT(out_fmt);  i++) {
+		w->cbext.add(out_fmt[i].ext);
+		if (w->conf_ext.equals(out_fmt[i].ext))
 			index = i;
 	}
 	w->cbext.set(index);
@@ -269,8 +273,18 @@ void wrecord_done()
 
 static void wrecord_action(ffui_window *wnd, int id)
 {
-	// gui_wrecord *w = gg->wrecord;
+	gui_wrecord *w = gg->wrecord;
 	switch (id) {
+	case A_REC_EXT_CHG: {
+		int i = w->cbext.get();
+		i = out_fmt[i].fmt;
+		w->eaacq.enable(i == PHI_AC_AAC);
+		w->evorbisq.enable(i == PHI_AC_VORBIS);
+		w->eopusq.enable(i == PHI_AC_OPUS);
+		w->emp3q.enable(i == PHI_AC_MP3);
+		break;
+	}
+
 	case A_RECORD_START_STOP:
 		wrecord_start_stop();  break;
 	}

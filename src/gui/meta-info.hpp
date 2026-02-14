@@ -257,6 +257,9 @@ void winfo_init()
 	gui_winfo *w = gui_allocT(gui_winfo);
 	w->wnd.hide_on_close = 1;
 	w->wnd.on_action = winfo_action;
+#ifdef FF_WIN
+	w->vinfo.lclick_id = A_INFO_EDIT;
+#endif
 	w->vinfo.edit_id = A_INFO_EDIT_DONE;
 	gg->winfo = w;
 }

@@ -104,28 +104,11 @@ void wconvert_userconf_write(ffconfw *cw)
 		ffconfw_add2z(cw, "wconvert.pos", c->wnd_pos);
 }
 
-static const char out_file_ext[][5] = {
-	"m4a",
-	"ogg",
-	"opus",
-	"flac",
-	"wav",
-	"mp3",
-};
-static const char out_file_aenc[] = {
-	PHI_AC_AAC,
-	PHI_AC_VORBIS,
-	PHI_AC_OPUS,
-	0,
-	0,
-	0,
-};
-
 /** Get file extension index by value */
 static int out_file_ext_index(xxstr val)
 {
-	for (uint i = 0;  i < FF_COUNT(out_file_ext);  i++) {
-		if (val.equals_i(out_file_ext[i]))
+	for (uint i = 0;  i < FF_COUNT(out_fmt);  i++) {
+		if (val.equals_i(out_fmt[i].ext))
 			return i;
 	}
 	return -1;
@@ -140,9 +123,9 @@ static void wconvert_ui_from_conf()
 	c->conf_name.free();
 
 	uint cbext_index = 0 /*m4a*/;
-	for (uint i = 0;  i < FF_COUNT(out_file_ext);  i++) {
-		c->cbext.add(out_file_ext[i]);
-		if (c->conf_ext.equals(out_file_ext[i]))
+	for (uint i = 0;  i < FF_COUNT(out_fmt);  i++) {
+		c->cbext.add(out_fmt[i].ext);
+		if (c->conf_ext.equals(out_fmt[i].ext))
 			cbext_index = i;
 	}
 	c->cbext.set(cbext_index);
@@ -213,7 +196,7 @@ static struct phi_track_conf* conv_conf_create()
 	}
 
 	int i = out_file_ext_index(c->conf_ext);
-	switch (out_file_aenc[i]) {
+	switch (out_fmt[i].fmt) {
 	case PHI_AC_AAC:
 		tc->aac.quality = c->conf_aacq;  break;
 	case PHI_AC_OPUS:
@@ -264,6 +247,17 @@ static void wconvert_action(ffui_window *wnd, int id)
 
 	case A_CONVERT_BROWSE:
 		wconvert_browse();  break;
+
+	case A_CO_EXT_CHG: {
+		int i = c->cbext.get();
+		i = out_fmt[i].fmt;
+		c->cbcopy.enable(i != 0);
+		c->eaacq.enable(i == PHI_AC_AAC);
+		c->evorbisq.enable(i == PHI_AC_VORBIS);
+		c->eopusq.enable(i == PHI_AC_OPUS);
+		c->emp3q.enable(i == PHI_AC_MP3);
+		break;
+	}
 
 	case A_CONVERT_START: {
 		c->bstart.enable(0);

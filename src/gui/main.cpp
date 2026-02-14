@@ -655,7 +655,7 @@ static void wmain_action(ffui_window *wnd, int id)
 
 	case A_CONVERT_POS_START:
 	case A_CONVERT_POS_END:
-		wconvert_set(id, m->tpos.get());  break;
+		wconvert_set(id, ffmax((int)m->tpos.get() - 1, 0));  break;
 
 // Misc:
 	case A_ABOUT_SHOW:

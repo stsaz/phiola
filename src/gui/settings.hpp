@@ -100,6 +100,7 @@ struct gui_wsettings {
 
 	ffui_checkboxxx		cbeqlz;
 	ffui_comboboxxx		cbeqlz_band;
+	ffui_labelxx		leqlz_freq, leqlz_width, leqlz_gain;
 	ffui_trackbarxx		tbeqlz_freq, tbeqlz_width, tbeqlz_gain;
 	ffui_editxx			eeqlz;
 	struct eqlz_set		eqlz;
@@ -120,7 +121,14 @@ FF_EXTERN const ffui_ldr_ctl wsettings_ctls[] = {
 	_(lauto_skip),	_(eauto_skip),
 	_(cbrg_norm),
 	_(cbauto_norm),
-	_(cbeqlz), _(cbeqlz_band), _(tbeqlz_freq), _(tbeqlz_width), _(tbeqlz_gain), _(eeqlz),
+
+	_(cbeqlz),
+	_(cbeqlz_band),
+	_(leqlz_freq),	_(tbeqlz_freq),
+	_(leqlz_width),	_(tbeqlz_width),
+	_(leqlz_gain),	_(tbeqlz_gain),
+	_(eeqlz),
+
 	FFUI_LDR_CTL_END
 };
 #undef _

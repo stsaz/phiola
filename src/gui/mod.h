@@ -163,6 +163,7 @@ struct gui_data {
 	uint filtering :1;
 	uint quit :1;
 	uint ui_thread_busy :1;
+	uint lists_load_done :1;
 
 	struct gui_conf conf;
 };

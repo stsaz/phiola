@@ -546,6 +546,9 @@ static void list_save_complete(void *param, phi_track *t)
 /** Save playlists to disk */
 static void lists_save()
 {
+	if (!gd->lists_load_done)
+		return;
+
 	if (!!ffdir_make(gd->user_conf_dir) && !fferr_exist(fferr_last()))
 		syserrlog("dir make: %s", gd->user_conf_dir);
 
@@ -604,6 +607,7 @@ void lists_load()
 	}
 
 	ffmem_free(fn);
+	gd->lists_load_done = 1;
 }
 
 void list_add(ffstr fn)
