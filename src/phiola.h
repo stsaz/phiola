@@ -503,6 +503,7 @@ enum PHI_Q_SORT {
 
 enum PHI_Q_REMOVE {
 	PHI_Q_RM_NONEXIST = 1,
+	PHI_Q_RM_NONUNIQ = 2, // remove all duplicate rows
 };
 
 enum PHI_QUEUE_FILTER {

@@ -759,17 +759,49 @@ static int q_rename_all(phi_queue_id q, const char *pattern, uint flags)
 	return 0;
 }
 
+static void q_rm_non_uniq(phi_queue_id q, ffvec *new_index)
+{
+	struct q_entry **qe = q->index.ptr;
+	uint dup = 0;
+	for (size_t i = 1;;  i++) {
+		if (i == q->index.len) {
+			if (!dup)
+				*ffvec_pushT(new_index, void*) = qe[i - 1];
+			break;
+		}
+
+		if (!ffsz_eq(qe[i]->pub.url, qe[i - 1]->pub.url)) {
+			if (!dup)
+				*ffvec_pushT(new_index, void*) = qe[i - 1];
+			dup = 0;
+			continue;
+		}
+
+		qe_unref(qe[i - 1]);
+		dup = 1;
+	}
+}
+
 static void q_remove_multi(phi_queue_id q, uint flags)
 {
 	if (!q) q = qm_default();
 
+	if (!q->index.len)
+		return;
+
+	if (flags & PHI_Q_RM_NONUNIQ)
+		q_sort(q, PHI_Q_SORT_FILENAME);
+
 	ffvec new_index = {};
 	ffvec_allocT(&new_index, q->index.len, void*);
 
-	struct q_entry **it;
-	FFSLICE_WALK(&q->index, it) {
-		struct q_entry *qe = *it;
-		if (flags & PHI_Q_RM_NONEXIST) {
+	if (flags & PHI_Q_RM_NONUNIQ) {
+		q_rm_non_uniq(q, &new_index);
+
+	} else if (flags & PHI_Q_RM_NONEXIST) {
+		struct q_entry **it;
+		FFSLICE_WALK(&q->index, it) {
+			struct q_entry *qe = *it;
 			const char *fn = qe->pub.url;
 			if (fffile_exists(fn)) {
 				*ffvec_pushT(&new_index, void*) = qe;
@@ -777,8 +809,9 @@ static void q_remove_multi(phi_queue_id q, uint flags)
 			} else {
 				dbglog("remove: file doesn't exist: '%s'", fn);
 			}
+
+			qe_unref(qe);
 		}
-		qe_unref(qe);
 	}
 
 	if (new_index.len == q->index.len) {

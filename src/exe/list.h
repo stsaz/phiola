@@ -14,6 +14,7 @@ Options:\n\
 \n\
   `-include` WILDCARD     Only include files matching a wildcard (case-insensitive)\n\
   `-exclude` WILDCARD     Exclude files & directories matching a wildcard (case-insensitive)\n\
+  `-unique`               Leave unique files, remove the rest\n\
   `-out` FILE             Output file name\n\
 ");
 	x->exit_code = 0;
@@ -24,6 +25,9 @@ struct list_create {
 	ffvec	include, exclude; // ffstr[]
 	ffvec	input; // char*[]
 	const char *output;
+	u_char unique;
+
+	phi_task task;
 };
 
 static int lc_input(struct list_create *lc, const char *fn)
@@ -50,6 +54,12 @@ static void lc_done(void *lc, phi_track *t)
 	x->core->sig(PHI_CORE_STOP);
 }
 
+static void lc_filled(struct list_create *lc)
+{
+	x->queue->remove_multi(NULL, PHI_Q_RM_NONUNIQ);
+	x->queue->save(NULL, lc->output, lc_done, NULL);
+}
+
 static int lc_action(struct list_create *lc)
 {
 	struct phi_queue_conf qc = {
@@ -70,8 +80,7 @@ static int lc_action(struct list_create *lc)
 	ffvec_free(&lc->input);
 
 	// it's safe to call this immediately because 'add' task will complete before 'save'
-	if (x->queue->save(q, lc->output, lc_done, NULL))
-		return 1;
+	x->core->task(0, &lc->task, (void*)lc_filled, lc);
 	return 0;
 }
 
@@ -86,6 +95,7 @@ static const struct ffarg list_create_args[] = {
 	{ "-help",		'1',	lc_help },
 	{ "-include",	'+S',	lc_include },
 	{ "-out",		's',	O(output) },
+	{ "-unique",	'1',	O(unique) },
 	{ "\0\1",		's',	lc_input },
 	{ "",			'1',	lc_fin }
 };

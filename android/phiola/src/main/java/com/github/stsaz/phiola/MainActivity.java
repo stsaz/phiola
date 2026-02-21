@@ -189,7 +189,10 @@ public class MainActivity extends AppCompatActivity {
 			list_rm();  break;
 
 		case R.id.action_list_rm_non_existing:
-			queue.current_remove_non_existing();  break;
+			queue.current_remove_multi(Phiola.QUCOM_REMOVE_NON_EXISTING);  break;
+
+		case R.id.action_list_rm_non_unique:
+			queue.current_remove_multi(Phiola.QUCOM_REMOVE_NON_UNIQUE);  break;
 
 		case R.id.action_list_clear:
 			list_clear();  break;

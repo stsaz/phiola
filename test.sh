@@ -577,6 +577,11 @@ test_list() {
 	./phiola info test-sort.m3u | grep '#1 "A2 - T2" "list2.ogg"'
 	./phiola info test-sort2.m3u | grep '#1 "A2 - T2" "list2.ogg"'
 
+	./phiola list create test.m3u ./list2.ogg -unique -o test-uniq.m3u
+	cat test-uniq.m3u
+	grep list3.ogg test-uniq.m3u
+	grep list2.ogg test-uniq.m3u && false
+
 	cat <<EOF >/tmp/phiola-test.pls
 [playlist]
 File1=`pwd`/list1.wav

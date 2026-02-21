@@ -57,10 +57,10 @@ class PhiolaQueue {
 		modified = true;
 	}
 
-	void remove_non_existing() {
+	void remove_multi(int flags) {
 		if (conversion) return;
 
-		phi.quCmd(q, Phiola.QUCOM_REMOVE_NON_EXISTING, 0);
+		phi.quCmd(q, flags, 0);
 		modified = true;
 	}
 
@@ -708,8 +708,8 @@ class Queue {
 		queues.get(i_selected).remove(i);
 	}
 
-	void current_remove_non_existing() {
-		queues.get(i_selected).remove_non_existing();
+	void current_remove_multi(int flags) {
+		queues.get(i_selected).remove_multi(flags);
 	}
 
 	void current_read_meta() { queues.get(i_selected).read_meta(); }
