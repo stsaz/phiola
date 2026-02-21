@@ -68,6 +68,7 @@
 
 // Record
 	X(A_RECORD_SHOW),
+		X(A_REC_LOOPBACK),
 		X(A_REC_EXT_CHG),
 	X(A_RECORD_START_STOP),
 

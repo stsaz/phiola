@@ -18,6 +18,7 @@ struct gui_wrecord {
 	ffui_labelxx		ldir, lname, lext, ldev, lchan, l_rate, luntil, laacq, lvorbisq, lopusq, lmp3q;
 	ffui_editxx			edir, ename, e_rate, euntil, eaacq, evorbisq, eopusq, emp3q;
 	ffui_comboboxxx		cbext, cbdev, cbchan;
+	ffui_checkboxxx		cbloopback, cbexcl;
 	ffui_buttonxx		bstart;
 
 	xxstr conf_dir, conf_name, conf_ext;
@@ -26,6 +27,8 @@ struct gui_wrecord {
 	uint conf_idev;
 	uint conf_rate;
 	uint conf_channels;
+	u_char conf_exclusive;
+	u_char conf_loopback;
 	char *wnd_pos;
 
 	uint initialized;
@@ -38,6 +41,8 @@ FF_EXTERN const ffui_ldr_ctl wrecord_ctls[] = {
 	_(lname),	_(ename),
 	_(lext),	_(cbext),
 	_(ldev),	_(cbdev),
+	_(cbloopback),
+	_(cbexcl),
 	_(lchan),	_(cbchan),
 	_(l_rate),	_(e_rate),
 	_(luntil),	_(euntil),
@@ -56,6 +61,7 @@ const ffarg wrecord_args[] = {
 	{ "auto_stop",	'u',	O(conf_until) },
 	{ "channels",	'u',	O(conf_channels) },
 	{ "dir",		'=S',	O(conf_dir) },
+	{ "exclusive",	'b',	O(conf_exclusive) },
 	{ "ext",		'=S',	O(conf_ext) },
 	{ "idev",		'u',	O(conf_idev) },
 	{ "mp3q",		'u',	O(conf_mp3q) },
@@ -67,6 +73,9 @@ const ffarg wrecord_args[] = {
 	{}
 };
 #undef O
+
+static void check_safe(ffui_checkboxxx &cb, bool val) { if (cb.h) cb.check(val); }
+static bool checked_safe(ffui_checkboxxx &cb) { return (cb.h) ? cb.checked() : 0; }
 
 static uint wrec_vorbisq_conf(xxstr s)
 {
@@ -115,6 +124,8 @@ static void wrecord_ui_to_conf()
 	c->conf_ext = c->cbext.text();
 
 	c->conf_idev = c->cbdev.get();
+	c->conf_loopback = checked_safe(c->cbloopback);
+	c->conf_exclusive = checked_safe(c->cbexcl);
 	c->conf_channels = c->cbchan.get();
 	c->conf_rate = xxvec(c->e_rate.text()).str().uint32(0);
 	c->conf_until = wrec_time_value(xxvec(c->euntil.text()).str());
@@ -134,6 +145,7 @@ void wrecord_userconf_write(ffconfw *cw)
 	ffconfw_add2s(cw, "name", w->conf_name);
 	ffconfw_add2s(cw, "ext", w->conf_ext);
 	ffconfw_add2u(cw, "idev", w->conf_idev);
+	ffconfw_add2u(cw, "exclusive", w->conf_exclusive);
 	ffconfw_add2u(cw, "channels", w->conf_channels);
 	ffconfw_add2u(cw, "rate", w->conf_rate);
 	ffconfw_add2u(cw, "aacq", w->conf_aacq);
@@ -220,7 +232,9 @@ static void wrecord_ui_from_conf()
 	w->conf_dir.free();
 	w->conf_name.free();
 
-	w->conf_idev = adevices_fill(PHI_ADEV_CAPTURE, w->cbdev, w->conf_idev);
+	check_safe(w->cbloopback, w->conf_loopback);
+	w->conf_idev = adevices_fill((w->conf_loopback) ? PHI_ADEV_PLAYBACK : PHI_ADEV_CAPTURE, w->cbdev, w->conf_idev);
+	check_safe(w->cbexcl, w->conf_exclusive);
 
 	channels_fill();
 	file_extensions_fill();
@@ -242,6 +256,8 @@ static struct phi_track_conf* record_conf_create()
 	struct phi_track_conf *c = ffmem_new(struct phi_track_conf);
 
 	c->iaudio.device_index = w->conf_idev;
+	c->iaudio.exclusive = w->conf_exclusive;
+	c->iaudio.loopback = w->conf_loopback;
 	c->iaudio.format.channels = w->conf_channels;
 	c->iaudio.format.rate = w->conf_rate;
 	// .iaudio.buf_time =
@@ -286,6 +302,14 @@ static void wrecord_action(ffui_window *wnd, int id)
 {
 	gui_wrecord *w = gg->wrecord;
 	switch (id) {
+	case A_REC_LOOPBACK:
+		w->conf_loopback = checked_safe(w->cbloopback);
+		if (w->cbexcl.h)
+			w->cbexcl.enable(!w->conf_loopback);
+		w->cbdev.clear();
+		w->conf_idev = adevices_fill((w->conf_loopback) ? PHI_ADEV_PLAYBACK : PHI_ADEV_CAPTURE, w->cbdev, w->conf_idev);
+		break;
+
 	case A_REC_EXT_CHG:
 		wrec_ext_chg(w->cbext.get());  break;
 
