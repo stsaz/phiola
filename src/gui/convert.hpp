@@ -114,6 +114,18 @@ static int out_file_ext_index(xxstr val)
 	return -1;
 }
 
+static void wconvert_ext_chg(uint i)
+{
+	gui_wconvert *c = gg->wconvert;
+	i = out_fmt[i].fmt;
+	bool copy = c->cbcopy.checked();
+	c->cbcopy.enable(copy || i != 0);
+	c->eaacq.enable(!copy && i == PHI_AC_AAC);
+	c->evorbisq.enable(!copy && i == PHI_AC_VORBIS);
+	c->eopusq.enable(!copy && i == PHI_AC_OPUS);
+	c->emp3q.enable(!copy && i == PHI_AC_MP3);
+}
+
 static void wconvert_ui_from_conf()
 {
 	gui_wconvert *c = gg->wconvert;
@@ -129,6 +141,7 @@ static void wconvert_ui_from_conf()
 			cbext_index = i;
 	}
 	c->cbext.set(cbext_index);
+	wconvert_ext_chg(cbext_index);
 	c->conf_ext.free();
 
 	c->cbcopy.check(!!c->conf_copy);
@@ -248,16 +261,9 @@ static void wconvert_action(ffui_window *wnd, int id)
 	case A_CONVERT_BROWSE:
 		wconvert_browse();  break;
 
-	case A_CO_EXT_CHG: {
-		int i = c->cbext.get();
-		i = out_fmt[i].fmt;
-		c->cbcopy.enable(i != 0);
-		c->eaacq.enable(i == PHI_AC_AAC);
-		c->evorbisq.enable(i == PHI_AC_VORBIS);
-		c->eopusq.enable(i == PHI_AC_OPUS);
-		c->emp3q.enable(i == PHI_AC_MP3);
-		break;
-	}
+	case A_CO_EXT_CHG:
+	case A_CO_COPY:
+		wconvert_ext_chg(c->cbext.get());  break;
 
 	case A_CONVERT_START: {
 		c->bstart.enable(0);

@@ -35,6 +35,9 @@ static int conv_process(void *ctx, phi_track *t)
 		t->audio.seek = ~0ULL; // prev. seek is complete
 	}
 
+	if (t->meta_changed)
+		t->meta_changed = 0;
+
 	if (t->audio.pos == ~0ULL)
 		goto end;
 

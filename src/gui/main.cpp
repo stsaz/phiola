@@ -220,7 +220,9 @@ static void conv_track_update(phi_track *t, const char *progress)
 {
 	gui_wmain *m = gg->wmain;
 	struct phi_queue_entry *qe = (struct phi_queue_entry*)t->qent;
+	fflock_lock((fflock*)&qe->lock);
 	core->metaif->set(&qe->meta, FFSTR_Z("_phi_dur"), FFSTR_Z(progress), PHI_META_REPLACE);
+	fflock_unlock((fflock*)&qe->lock);
 	if (gd->tab_conversion) {
 		int idx = gd->queue->index(t->qent);
 		m->vlist.update(idx, 0);

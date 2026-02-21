@@ -141,7 +141,9 @@ static void winfo_edit(uint idx, const char *new_text)
 	if ((int)ki < 0)
 		return;
 	ffstr name = *w->keys.at<ffstr>(ki);
+	fflock_lock((fflock*)&w->qe->lock); // core thread may read or write `meta` at this moment
 	core->metaif->set(&w->qe->meta, name, val, PHI_META_REPLACE);
+	fflock_unlock((fflock*)&w->qe->lock);
 	if (ki >= 32)
 		warnlog("can write only up to 32 tags");
 	ffbit_set32(&w->changed, ki);
@@ -160,7 +162,9 @@ static void winfo_tag_add(ffstr name)
 		return;
 	}
 	val = FFSTR_Z("");
+	fflock_lock((fflock*)&w->qe->lock); // core thread may read or write `meta` at this moment
 	core->metaif->set(&w->qe->meta, name, val, 0);
+	fflock_unlock((fflock*)&w->qe->lock);
 	winfo_addpair(name, val);
 	ffstr_dupstr(w->keys.push_z<ffstr>(), &name);
 	ffbit_set32(&w->changed, w->keys.len - 1);

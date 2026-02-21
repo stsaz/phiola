@@ -155,6 +155,9 @@ static int conv_ui_process(void *ctx, phi_track *t)
 		return PHI_ERR;
 	}
 
+	if (t->meta_changed)
+		t->meta_changed = 0;
+
 	if (t->audio.pos != ~0ULL)
 		c->pos_sec = (uint)(samples_to_msec(t->audio.pos, c->sample_rate) / 1000);
 

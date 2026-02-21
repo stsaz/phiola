@@ -168,6 +168,16 @@ uint adevices_fill(uint flags, ffui_comboboxxx &cb, uint index)
 	return index;
 }
 
+static void wrec_ext_chg(uint i)
+{
+	gui_wrecord *w = gg->wrecord;
+	i = out_fmt[i].fmt;
+	w->eaacq.enable(i == PHI_AC_AAC);
+	w->evorbisq.enable(i == PHI_AC_VORBIS);
+	w->eopusq.enable(i == PHI_AC_OPUS);
+	w->emp3q.enable(i == PHI_AC_MP3);
+}
+
 static void file_extensions_fill()
 {
 	gui_wrecord *w = gg->wrecord;
@@ -178,6 +188,7 @@ static void file_extensions_fill()
 			index = i;
 	}
 	w->cbext.set(index);
+	wrec_ext_chg(index);
 	w->conf_ext.free();
 }
 
@@ -275,15 +286,8 @@ static void wrecord_action(ffui_window *wnd, int id)
 {
 	gui_wrecord *w = gg->wrecord;
 	switch (id) {
-	case A_REC_EXT_CHG: {
-		int i = w->cbext.get();
-		i = out_fmt[i].fmt;
-		w->eaacq.enable(i == PHI_AC_AAC);
-		w->evorbisq.enable(i == PHI_AC_VORBIS);
-		w->eopusq.enable(i == PHI_AC_OPUS);
-		w->emp3q.enable(i == PHI_AC_MP3);
-		break;
-	}
+	case A_REC_EXT_CHG:
+		wrec_ext_chg(w->cbext.get());  break;
 
 	case A_RECORD_START_STOP:
 		wrecord_start_stop();  break;

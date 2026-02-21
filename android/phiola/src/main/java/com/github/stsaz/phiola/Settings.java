@@ -165,7 +165,7 @@ class PlaySettings {
 
 		auto_skip_head = new AutoSkip();
 		auto_skip_tail = new AutoSkip();
-		equalizer = "t bass g 3,f 600 w 1.0q g -6,,,t treble g 3";
+		equalizer = "";
 	}
 
 	void conf_load(Conf c) {
