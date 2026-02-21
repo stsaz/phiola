@@ -16,7 +16,6 @@ enum {
 };
 
 struct aconv {
-	uint state;
 	uint out_samp_size;
 	struct pcm_af fi, fo;
 	ffstr in;
@@ -123,18 +122,14 @@ static int aconv_process(void *ctx, phi_track *t)
 	uint samples;
 	int r;
 
-	switch (c->state) {
-	case 0:
+	if (!c->fi.format) {
 		r = aconv_prepare(c, t);
 		if (r != PHI_DATA)
 			return r;
-		c->state = 2;
-		break;
 	}
 
-	if (t->chain_flags & PHI_FFWD) {
+	if (t->data_in.len) {
 		c->in = t->data_in;
-		t->data_in.len = 0;
 		c->off = 0;
 	}
 
@@ -145,16 +140,11 @@ static int aconv_process(void *ctx, phi_track *t)
 		return PHI_MORE;
 	}
 
+	const void *data = (char*)c->in.ptr + c->off * c->fi.channels;
 	void *in[8];
-	const void *data;
 	if (!c->fi.interleaved) {
-		void **datani = (void**)c->in.ptr;
-		for (uint i = 0;  i != c->fi.channels;  i++) {
-			in[i] = (char*)datani[i] + c->off;
-		}
+		pcm_ni_off(in, (void**)c->in.ptr, c->fi.channels, c->off);
 		data = in;
-	} else {
-		data = (char*)c->in.ptr + c->off * c->fi.channels;
 	}
 
 	if (0 != pcm_convert(&c->fo, c->buf.ptr, &c->fi, data, samples)) {

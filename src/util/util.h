@@ -240,6 +240,14 @@ static inline void phi_af_update(struct phi_af *dst, const struct phi_af *src)
 		dst->channels = src->channels;
 }
 
+/** Apply byte-offset to each channel of non-interleaved PCM data. */
+static inline void pcm_ni_off(void *dst[8], void **src, uint channels, size_t offset)
+{
+	for (uint i = 0;  i < channels;  i++) {
+		dst[i] = (char*)src[i] + offset;
+	}
+}
+
 /* gain = 10 ^ (db / 20) */
 #define db_gain(db)  pow(10, (double)(db) / 20)
 #define gain_db(gain)  (log10(gain) * 20)
