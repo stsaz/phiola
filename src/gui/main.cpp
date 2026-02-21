@@ -170,7 +170,7 @@ void wmain_track_new(void *param)
 
 	if (ti->index_new != ~0U) {
 		m->vlist.update(ti->index_new, 0);
-		if (gd->auto_select)
+		if (gd->conf.auto_select)
 			m->vlist.select(ti->index_new);
 	}
 
@@ -426,7 +426,7 @@ static void q_on_change(phi_queue_id q, uint flags, uint pos)
 static void vol_set(uint id)
 {
 	gui_wmain *m = gg->wmain;
-	uint v = gd->volume;
+	uint v = gd->conf.volume;
 
 	switch (id) {
 	case A_VOL:
@@ -645,9 +645,9 @@ static void wmain_action(ffui_window *wnd, int id)
 		break;
 
 	case A_LIST_AUTOSELECT:
-		gd->auto_select = !gd->auto_select;
-		gg->mlist.check(A_LIST_AUTOSELECT, gd->auto_select);
-		wmain_status("Auto Select Current: %s", (gd->auto_select) ? "On" : "Off");
+		gd->conf.auto_select = !gd->conf.auto_select;
+		gg->mlist.check(A_LIST_AUTOSELECT, gd->conf.auto_select);
+		wmain_status("Auto Select Current: %s", (gd->conf.auto_select) ? "On" : "Off");
 		break;
 
 	case A_LIST_DISPLAY:
@@ -722,7 +722,7 @@ void wmain_show()
 		conf_wnd_pos_read(&m->wnd, FFSTR_Z(m->wnd_pos));
 	ffmem_free(m->wnd_pos);
 
-	m->tvol.set(gd->volume);
+	m->tvol.set(gd->conf.volume);
 	m->tabs.add("Playlist 1");
 	m->wnd.show(1);
 	wmain_list_draw(gd->queue->count(gd->q_selected), 0);
@@ -731,7 +731,7 @@ void wmain_show()
 	gd->queue->on_change(q_on_change);
 	gui_core_task(lists_load);
 
-	if (gd->auto_select)
+	if (gd->conf.auto_select)
 		gg->mlist.check(A_LIST_AUTOSELECT, 1);
 	if (gd->conf.repeat)
 		gg->mplay.check(A_REPEAT_TOGGLE, 1);

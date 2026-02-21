@@ -32,7 +32,7 @@ static void gui_finish();
 
 #define O(m)  (void*)FF_OFF(struct gui_data, m)
 const struct ffarg guimod_args[] = {
-	{ "list.auto_sel",	'u',	O(auto_select) },
+	{ "list.auto_sel",	'b',	O(conf.auto_select) },
 	{ "play.auto_norm",	'b',	O(conf.auto_norm) },
 	{ "play.auto_skip",	'd',	O(conf.auto_skip_sec_percent) },
 	{ "play.cursor",	'u',	O(cursor) },
@@ -40,11 +40,11 @@ const struct ffarg guimod_args[] = {
 	{ "play.eqlz",		'=s',	O(conf.eqlz) },
 	{ "play.eqlz_on",	'b',	O(conf.eqlz_on) },
 	{ "play.random",	'b',	O(conf.random) },
-	{ "play.repeat",	'u',	O(conf.repeat) },
+	{ "play.repeat",	'b',	O(conf.repeat) },
 	{ "play.rg_norm",	'b',	O(conf.rg_norm) },
 	{ "play.seek_leap",	'u',	O(conf.seek_leap_delta) },
 	{ "play.seek_step",	'u',	O(conf.seek_step_delta) },
-	{ "play.volume",	'u',	O(volume) },
+	{ "play.volume",	'u',	O(conf.volume) },
 	{ "tags.keep_date",	'b',	O(conf.tags_keep_date) },
 	{ "theme",			'=s',	O(conf.theme) },
 	{}
@@ -53,20 +53,16 @@ const struct ffarg guimod_args[] = {
 
 void mod_userconf_write(ffconfw *cw)
 {
-	ffconfw_add2u(cw, "list.auto_sel", gd->auto_select);
-	ffconfw_add2u(cw, "play.auto_norm", gd->conf.auto_norm);
+	const struct ffarg *it;
+	FF_FOREACH(guimod_args, it) {
+		const void *p = (char*)gd + (size_t)it->value;
+		if (it->flags == 'b')
+			ffconfw_add2u(cw, it->name, *(u_char*)p);
+		else if (it->flags == 'u')
+			ffconfw_add2u(cw, it->name, *(uint*)p);
+	}
 	ffconfw_add2u(cw, "play.auto_skip", (ffint64)gd->conf.auto_skip_sec_percent);
-	ffconfw_add2u(cw, "play.cursor", gd->cursor);
-	ffconfw_add2u(cw, "play.dev", gd->conf.odev);
-	ffconfw_add2u(cw, "play.eqlz_on", gd->conf.eqlz_on);
-	ffconfw_add2u(cw, "play.random", gd->conf.random);
-	ffconfw_add2u(cw, "play.repeat", gd->conf.repeat);
-	ffconfw_add2u(cw, "play.rg_norm", gd->conf.rg_norm);
-	ffconfw_add2u(cw, "play.seek_leap", gd->conf.seek_leap_delta);
-	ffconfw_add2u(cw, "play.seek_step", gd->conf.seek_step_delta);
-	ffconfw_add2u(cw, "play.volume", gd->volume);
 	ffconfw_add2z(cw, "play.eqlz", gd->conf.eqlz);
-	ffconfw_add2u(cw, "tags.keep_date", gd->conf.tags_keep_date);
 	if (gd->conf.theme)
 		ffconfw_add2z(cw, "theme", gd->conf.theme);
 }
@@ -75,7 +71,7 @@ static void conf_norm()
 {
 	if (!gd->conf.eqlz)
 		gd->conf.eqlz = ffsz_dup("");
-	volume_set(gd->volume);
+	volume_set(gd->conf.volume);
 }
 
 static void conf_destroy()
@@ -371,7 +367,7 @@ void volume_set(uint vol)
 		gd->gain_db = vol2db(vol, -40);
 	else
 		gd->gain_db = vol2db_inc(vol - 100, 25, 6);
-	gd->volume = vol;
+	gd->conf.volume = vol;
 }
 
 void ctl_volume()
@@ -921,7 +917,7 @@ static void gui_start(void *param)
 	gd->conf.seek_step_delta = 10;
 	gd->conf.seek_leap_delta = 60;
 	gd->marker_sec = ~0;
-	gd->volume = 100;
+	gd->conf.volume = 100;
 	gd->queue = core->mod("core.queue");
 
 	char *user_conf_fn = ffsz_allocfmt("%Smod/gui/%s", &core->conf.root, USER_CONF_NAME_ALT);

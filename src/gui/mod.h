@@ -111,13 +111,15 @@ struct gui_conf {
 	char*	eqlz;
 	char*	theme;
 	int		auto_skip_sec_percent;
+	uint	seek_leap_delta, seek_step_delta;
+	uint	odev;
+	uint	volume;
 	u_char	eqlz_on;
 	u_char	random;
 	u_char	rg_norm, auto_norm;
 	u_char	tags_keep_date;
-	uint	odev;
-	uint	repeat;
-	uint	seek_leap_delta, seek_step_delta;
+	u_char	repeat;
+	u_char	auto_select;
 };
 
 struct gui_data {
@@ -139,7 +141,6 @@ struct gui_data {
 
 	phi_track *recording_track;
 
-	uint volume;
 	double gain_db;
 
 	struct phi_queue_entry *qe_rename;
@@ -157,7 +158,6 @@ struct gui_data {
 	fflock lock; // Synchronize access to the playlist refs between Main and GUI threads
 	uint filter_len; // Length of the current filter text
 	uint current_scroll_vpos;
-	uint auto_select;
 	uint list_save_pending; // N of lists that are being saved to disk
 	uint tab_conversion :1;
 	uint filtering :1;

@@ -140,7 +140,9 @@ fi
 
 # Prepare build script
 
-ODIR=_linux-amd64
+if test "$ODIR" == "" ; then
+	ODIR=_$OS-$CPU
+fi
 ARGS_OS=""
 ARGS_PHI=""
 ENV_CPU=""
@@ -148,7 +150,6 @@ FFPACK_TARGETS=zstd
 SSL_DISABLE=0
 
 if test "$CPU" == "arm64" ; then
-	ODIR=_linux-arm64
 	ARGS_OS="CPU=arm64 \
 CROSS_PREFIX=aarch64-linux-gnu-"
 	ENV_CPU="export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig"
@@ -157,7 +158,6 @@ CROSS_PREFIX=aarch64-linux-gnu-"
 fi
 
 if test "$OS" == "windows" ; then
-	ODIR=_windows-amd64
 	ARGS_OS="OS=windows \
 COMPILER=gcc \
 CROSS_PREFIX=x86_64-w64-mingw32-"

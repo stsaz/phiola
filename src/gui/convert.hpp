@@ -13,8 +13,8 @@ struct gui_wconvert {
 
 	xxstr conf_dir, conf_name, conf_ext;
 	char *wnd_pos;
-	uint conf_copy;
 	uint conf_aacq, conf_vorbisq, conf_opusq, conf_mp3q;
+	u_char conf_copy;
 	uint initialized :1;
 };
 
@@ -42,7 +42,7 @@ FF_EXTERN const ffui_ldr_ctl wconvert_ctls[] = {
 #define O(m)  (void*)FF_OFF(gui_wconvert, m)
 const ffarg wconvert_args[] = {
 	{ "aacq",	'u',	O(conf_aacq) },
-	{ "copy",	'u',	O(conf_copy) },
+	{ "copy",	'b',	O(conf_copy) },
 	{ "dir",	'=S',	O(conf_dir) },
 	{ "ext",	'=S',	O(conf_ext) },
 	{ "mp3q",	'u',	O(conf_mp3q) },
@@ -92,11 +92,14 @@ void wconvert_userconf_write(ffconfw *cw)
 	ffconfw_add2s(cw, "dir", c->conf_dir);
 	ffconfw_add2s(cw, "name", c->conf_name);
 	ffconfw_add2s(cw, "ext", c->conf_ext);
-	ffconfw_add2u(cw, "copy", c->conf_copy);
-	ffconfw_add2u(cw, "aacq", c->conf_aacq);
-	ffconfw_add2u(cw, "vorbisq", c->conf_vorbisq);
-	ffconfw_add2u(cw, "opusq", c->conf_opusq);
-	ffconfw_add2u(cw, "mp3q", c->conf_mp3q);
+	const ffarg *it;
+	FF_FOREACH(wconvert_args, it) {
+		const void *p = (char*)c + (size_t)it->value;
+		if (it->flags == 'b')
+			ffconfw_add2u(cw, it->name, *(u_char*)p);
+		else if (it->flags == 'u')
+			ffconfw_add2u(cw, it->name, *(uint*)p);
+	}
 
 	if (c->initialized)
 		conf_wnd_pos_write(cw, "wconvert.pos", &c->wnd);

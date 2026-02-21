@@ -64,6 +64,7 @@ const ffarg wrecord_args[] = {
 	{ "exclusive",	'b',	O(conf_exclusive) },
 	{ "ext",		'=S',	O(conf_ext) },
 	{ "idev",		'u',	O(conf_idev) },
+	{ "loopback",	'b',	O(conf_loopback) },
 	{ "mp3q",		'u',	O(conf_mp3q) },
 	{ "name",		'=S',	O(conf_name) },
 	{ "opusq",		'u',	O(conf_opusq) },
@@ -144,15 +145,14 @@ void wrecord_userconf_write(ffconfw *cw)
 	ffconfw_add2s(cw, "dir", w->conf_dir);
 	ffconfw_add2s(cw, "name", w->conf_name);
 	ffconfw_add2s(cw, "ext", w->conf_ext);
-	ffconfw_add2u(cw, "idev", w->conf_idev);
-	ffconfw_add2u(cw, "exclusive", w->conf_exclusive);
-	ffconfw_add2u(cw, "channels", w->conf_channels);
-	ffconfw_add2u(cw, "rate", w->conf_rate);
-	ffconfw_add2u(cw, "aacq", w->conf_aacq);
-	ffconfw_add2u(cw, "vorbisq", w->conf_vorbisq);
-	ffconfw_add2u(cw, "opusq", w->conf_opusq);
-	ffconfw_add2u(cw, "mp3q", w->conf_mp3q);
-	ffconfw_add2u(cw, "auto_stop", w->conf_until);
+	const ffarg *it;
+	FF_FOREACH(wrecord_args, it) {
+		const void *p = (char*)w + (size_t)it->value;
+		if (it->flags == 'b')
+			ffconfw_add2u(cw, it->name, *(u_char*)p);
+		else if (it->flags == 'u')
+			ffconfw_add2u(cw, it->name, *(uint*)p);
+	}
 
 	if (w->initialized)
 		conf_wnd_pos_write(cw, "wrecord.pos", &w->wnd);
@@ -242,8 +242,9 @@ static void wrecord_ui_from_conf()
 	xxstr_buf<100> s;
 	if (w->conf_until)
 		w->euntil.text(wrec_time_str(s.ptr, 100, w->conf_until));
-	if (w->conf_rate)
-		w->e_rate.text(s.zfmt("%u", w->conf_rate));
+	if (!w->conf_rate)
+		w->conf_rate = 44100;
+	w->e_rate.text(s.zfmt("%u", w->conf_rate));
 	w->eaacq.text(s.zfmt("%u", (w->conf_aacq) ? w->conf_aacq : 5));
 	w->evorbisq.text(s.zfmt("%d", (w->conf_vorbisq) ? wrec_vorbisq_user(w->conf_vorbisq) : 7));
 	w->eopusq.text(s.zfmt("%u", (w->conf_opusq) ? w->conf_opusq : 192));
