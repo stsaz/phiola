@@ -3,8 +3,8 @@
 
 static void* wasapi_open(phi_track *t)
 {
-	if (!ffsz_eq(t->data_type, "pcm")) {
-		errlog(t, "unsupported input data type: %s", t->data_type);
+	if (t->data_type != PHI_AC_PCM) {
+		errlog(t, "unsupported input data type: %u", t->data_type);
 		return PHI_OPEN_ERR;
 	}
 

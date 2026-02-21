@@ -130,8 +130,8 @@ static int flac_out_encode(void *ctx, phi_track *t)
 		return PHI_MORE;
 
 	case I_INIT:
-		if (!ffsz_eq(t->data_type, "flac")) {
-			errlog(t, "unsupported input data format: %s", t->data_type);
+		if (t->data_type != PHI_AC_FLAC) {
+			errlog(t, "unsupported input data format: %u", t->data_type);
 			return PHI_ERR;
 		}
 

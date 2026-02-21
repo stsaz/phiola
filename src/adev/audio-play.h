@@ -36,8 +36,8 @@ Return FFAUDIO_E*
 Return FFAUDIO_EFORMAT (if try_open==1): requesting audio conversion */
 static int audio_out_open(audio_out *a, phi_track *t, const struct phi_af *fmt)
 {
-	if (!ffsz_eq(t->data_type, "pcm")) {
-		errlog(t, "input data type not supported: %s", t->data_type);
+	if (t->data_type != PHI_AC_PCM) {
+		errlog(t, "input data type not supported: %u", t->data_type);
 		return FFAUDIO_ERROR;
 	}
 

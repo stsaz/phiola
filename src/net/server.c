@@ -599,7 +599,7 @@ static void* ausv_open(phi_track *t)
 	core->track->filter(t, core->mod("format.auto-write"), PHI_TF_PREV);
 
 	t->oaudio.format = t->conf.oaudio.format;
-	t->data_type = "pcm";
+	t->data_type = PHI_AC_PCM;
 
 	struct ausv *s = phi_track_allocT(t, struct ausv);
 	gs = s;

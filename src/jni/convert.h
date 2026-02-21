@@ -36,6 +36,7 @@ static const char* trk_errstr(uint e)
 		"Cancelled", // PHI_E_CANCELLED
 		"Sample conversion", // PHI_E_ACONV
 		"Output format is not supported", // PHI_E_OUT_FMT
+		"Input format is not supported", // PHI_E_IN_FMT
 	};
 	const char *s = "Unknown";
 	if (e < FF_COUNT(errstr))

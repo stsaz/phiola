@@ -53,7 +53,7 @@ static int opus_dec_init(struct opus_dec *o, phi_track *t, ffstr in)
 	t->audio.start_delay = ffmin(o->preskip, 4800);
 
 	o->sample_size = phi_af_size(&t->audio.format);
-	t->data_type = "pcm";
+	t->data_type = PHI_AC_PCM;
 	ffvec_alloc(&o->obuf, OPUS_BUFLEN(48000) * o->channels * sizeof(float), 1);
 	return 0;
 }

@@ -6,13 +6,13 @@
 #include <ffbase/string.h>
 #include <ffbase/time.h>
 
-#define PHI_VERSION  20705
+#define PHI_VERSION  20706
 
 /** Inter-module compatibility version.
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20702
+#define PHI_VERSION_CORE  20706
 
 typedef long long int64;
 typedef unsigned long long uint64;
@@ -244,7 +244,7 @@ enum PHI_AC {
 	PHI_AC_MP3,
 	PHI_AC_OPUS,
 	PHI_AC_VORBIS,
-	PHI_AC_WAV,
+	PHI_AC_PCM,
 };
 
 enum PHI_CUE_GAP {

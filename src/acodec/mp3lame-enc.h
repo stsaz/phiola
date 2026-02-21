@@ -162,8 +162,8 @@ static int mpeg_encode(struct mpeg_enc *m)
 
 void* mpeg_enc_open(phi_track *t)
 {
-	if (!ffsz_eq(t->data_type, "pcm")) {
-		errlog(t, "unsupported input data format: %s", t->data_type);
+	if (t->data_type != PHI_AC_PCM) {
+		errlog(t, "unsupported input data format: %u", t->data_type);
 		return PHI_OPEN_ERR;
 	}
 
@@ -202,7 +202,7 @@ int mpeg_enc_process(void *ctx, phi_track *t)
 			return PHI_ERR;
 		}
 
-		t->data_type = "mpeg";
+		t->data_type = PHI_AC_MP3;
 		m->state1 = 2;
 	}
 	}

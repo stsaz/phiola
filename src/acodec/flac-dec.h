@@ -51,7 +51,7 @@ static void* flac_dec_create(phi_track *t)
 
 	f->info = info;
 	f->sample_size = phi_af_size(&t->audio.format);
-	t->data_type = "pcm";
+	t->data_type = PHI_AC_PCM;
 	return f;
 }
 

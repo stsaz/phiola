@@ -35,7 +35,7 @@ static void vorbis_enc_free(void *ctx, phi_track *t)
 
 static int vorbis_enc_init(struct vorbis_enc *v, phi_track *t, ffstr *out)
 {
-	t->data_type = "Vorbis";
+	t->data_type = PHI_AC_VORBIS;
 	v->fmt = t->oaudio.format;
 	uint q_x10 = (t->conf.vorbis.quality) ? (t->conf.vorbis.quality - 10) : 5*10;
 

@@ -32,7 +32,7 @@ static void* mpc_dec_open(phi_track *t)
 	m->need_data = 1;
 	m->sample_size = phi_af_size(&t->audio.format);
 	t->data_in.len = 0;
-	t->data_type = "pcm";
+	t->data_type = PHI_AC_PCM;
 	return m;
 }
 

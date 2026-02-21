@@ -131,6 +131,7 @@ enum PHI_E {
 	PHI_E_CANCELLED,
 	PHI_E_ACONV, // audio conversion
 	PHI_E_OUT_FMT,
+	PHI_E_IN_FMT,
 	PHI_E_FILTER_CONF,
 	PHI_E_OTHER = 255,
 	PHI_E_SYS = 0x80000000,
@@ -170,7 +171,8 @@ struct phi_track {
 	phi_meta meta;
 	void *qent;
 	void *udata;
-	const char *data_type;
+	char ifile_ext[4];
+	u_char data_type; // enum PHI_AC
 	uint error; // enum PHI_E
 	uint icy_meta_interval; // Upon receiving HTTP response, 'http' filter sets ICY meta interval for 'icy' filter
 	uint meta_changed :1; // Set by 'icy' filter when meta is changed; reset by 'ui' filter
@@ -242,6 +244,7 @@ struct phi_track {
 			// (ogg|mkv).read -> ogg.write
 			uint64 ogg_granule_pos; // stream_copy=1: granule-position value from source
 			uint ogg_gen_opus_tag :1; // ogg.write must generate Opus-tag packet
+			uint ogg_copy :1; // copying ogg -> ogg
 
 			/** Order AO filter to pause playing, then just wait until the track is woken up.
 			After the flag is set, at some point AO will see it and reset. */

@@ -146,7 +146,7 @@ static void split_next(struct split *c, phi_track *t)
 	phi_track *ot = c->out_trk;
 	core->metaif->copy(&ot->meta, &t->meta, 0);
 
-	ot->data_type = "pcm";
+	ot->data_type = PHI_AC_PCM;
 	ot->audio.format = t->audio.format;
 	ot->oaudio.format = t->oaudio.format;
 

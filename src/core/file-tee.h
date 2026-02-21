@@ -154,7 +154,7 @@ static int tee_process(void *f, phi_track *t)
 		core->metaif->copy(&c->out_trk->meta, &t->meta, 0);
 
 		if (t->conf.tee_output) {
-			c->out_trk->data_type = "pcm";
+			c->out_trk->data_type = PHI_AC_PCM;
 			c->out_trk->oaudio.format = t->oaudio.format;
 		}
 

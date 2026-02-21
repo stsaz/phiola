@@ -42,34 +42,31 @@ static int fmtw_init(struct fmt_wr *w, phi_track *t)
 
 	switch (w->wif->format) {
 	case AVPKF_MP3:
-		if (ffsz_eq(t->data_type, "pcm")) {
+		if (t->data_type == PHI_AC_PCM) {
 			if (!core->track->filter(t, core->mod("ac-mp3lame.encode"), PHI_TF_PREV))
 				return PHI_ERR;
 			return PHI_MORE;
-		} else if (!ffsz_eq(t->data_type, "mpeg")) {
-			t->error = PHI_E_OUT_FMT;
-			return PHI_ERR;
+		} else if (t->data_type == PHI_AC_MP3) {
+		} else {
+			goto err;
 		}
 		break;
 
 	case AVPKF_MP4:
-		if (ffsz_eq(t->data_type, "pcm")) {
+		if (t->data_type == PHI_AC_PCM) {
 			if (!core->track->filter(t, core->mod("ac-aac.encode"), PHI_TF_PREV))
 				return PHI_ERR;
 			return PHI_MORE;
-		} else if (ffsz_eq(t->data_type, "aac")) {
-		} else if (ffsz_eq(t->data_type, "mp4")) {
+		} else if (t->data_type == PHI_AC_AAC) {
 		} else {
-			t->error = PHI_E_OUT_FMT;
-			return PHI_ERR;
+			goto err;
 		}
 		break;
 
 	case AVPKF_WAV:
-		if (!ffsz_eq(t->data_type, "pcm")
+		if (t->data_type != PHI_AC_PCM
 			|| t->oaudio.format.format == PHI_PCM_8) {
-			t->error = PHI_E_OUT_FMT;
-			return PHI_ERR;
+			goto err;
 		}
 		if (!t->oaudio.format.interleaved) {
 			t->oaudio.conv_format.interleaved = 1;
@@ -79,6 +76,10 @@ static int fmtw_init(struct fmt_wr *w, phi_track *t)
 	}
 
 	return PHI_DATA;
+
+err:
+	t->error = PHI_E_IN_FMT;
+	return PHI_ERR;
 }
 
 static int fmtw_create(struct fmt_wr *w, phi_track *t)

@@ -106,7 +106,7 @@ static int ogg_w_encode(void *ctx, phi_track *t)
 		switch (o->state) {
 
 		case I_ENC:
-			if (ffsz_eq(t->data_type, "pcm")) {
+			if (t->data_type == PHI_AC_PCM) {
 				const char *enc = ogg_enc_mod(t->conf.ofile.name);
 				if (!core->track->filter(t, core->mod(enc), PHI_TF_PREV))
 					return PHI_ERR;
@@ -122,7 +122,7 @@ static int ogg_w_encode(void *ctx, phi_track *t)
 				max_page_samples = max_page_samples * t->conf.ogg.max_page_length_msec / 1000;
 
 			o->state = I_PKT;
-			if (ffsz_eq(t->data_type, "OGG")) {
+			if (t->oaudio.ogg_copy) {
 				max_page_samples = 0; // ogg->ogg copy must replicate the pages exactly
 				o->state = I_PAGE_EXACT;
 			} else {

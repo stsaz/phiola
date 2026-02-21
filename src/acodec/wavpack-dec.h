@@ -57,7 +57,7 @@ static int wvpk_dec_init(struct wvpk_dec *w, phi_track *t)
 
 	t->audio.decoder = "WavPack";
 	t->audio.format.interleaved = 1;
-	t->data_type = "pcm";
+	t->data_type = PHI_AC_PCM;
 	w->frame_size = phi_af_size(&t->audio.format);
 	return 0;
 }

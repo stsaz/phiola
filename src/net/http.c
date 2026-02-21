@@ -140,7 +140,10 @@ int phi_hc_resp(void *ctx, struct phi_http_data *d)
 		return NMLR_ERR;
 	}
 
-	static const struct map_sz24_vptr ct_ext[] = {
+	static const struct {
+		char key[24];
+		char ext[4];
+	} ct_ext[] = {
 		{ "application/ogg",	"ogg" },
 		{ "application/x-mpegURL",	"m3u" },
 		{ "audio/aac",		"aac" },
@@ -151,10 +154,10 @@ int phi_hc_resp(void *ctx, struct phi_http_data *d)
 		{ "audio/x-aac",	"aac" },
 		{ "video/MP2T",		"ts" },
 	};
-	const char *dt = map_sz24_vptr_findstr(ct_ext, FF_COUNT(ct_ext), d->content_type); // help format.detector in case it didn't detect format
-	if (!h->trk->data_type)
-		h->trk->data_type = dt;
-	if (!dt
+	int i = ffcharr_find_sorted_padding(ct_ext, FF_COUNT(ct_ext), sizeof(ct_ext[0].key), sizeof(ct_ext[0].ext), d->content_type.ptr, d->content_type.len);
+	if (i >= 0)
+		ffmem_copy(h->trk->ifile_ext, ct_ext[i].ext, sizeof(h->trk->ifile_ext)); // help format.detector in case it can't detect format
+	if (i < 0
 		&& ffstr_eqz(&d->content_type, "application/vnd.apple.mpegurl")
 		&& !h->hls) {
 		h->hls = hls_new(h);

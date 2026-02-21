@@ -17,8 +17,8 @@ struct flac_enc {
 
 static void* flac_enc_create(phi_track *t)
 {
-	if (!ffsz_eq(t->data_type, "pcm")) {
-		errlog(t, "unsupported input data format: %s", t->data_type);
+	if (t->data_type != PHI_AC_PCM) {
+		errlog(t, "unsupported input data format: %u", t->data_type);
 		return PHI_OPEN_ERR;
 	}
 
@@ -75,7 +75,7 @@ static int flac_enc_init(struct flac_enc *f, phi_track *t)
 	f->cap_pcm32 = f->info.minblock + 1;
 
 	t->oaudio.flac_vendor = flac_vendor();
-	t->data_type = "flac";
+	t->data_type = PHI_AC_FLAC;
 	return 0;
 }
 

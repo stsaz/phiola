@@ -42,7 +42,7 @@ static void* alac_open(phi_track *t)
 	t->audio.format = a->fmt;
 	t->audio.format.interleaved = 1;
 	t->audio.decoder = "ALAC";
-	t->data_type = "pcm";
+	t->data_type = PHI_AC_PCM;
 	return a;
 }
 

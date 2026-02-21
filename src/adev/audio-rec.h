@@ -132,7 +132,7 @@ static int audio_in_open(audio_in *a, phi_track *t)
 		.interleaved = 1,
 	};
 	t->audio.format = f;
-	t->data_type = "pcm";
+	t->data_type = PHI_AC_PCM;
 	a->frame_size = pcm_size1(&t->conf.iaudio.format);
 	a->state = ST_SIGNALLED;
 

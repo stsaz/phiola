@@ -14,7 +14,7 @@ static void* autoconv_open(phi_track *t)
 {
 	if (!t->oaudio.format.format)
 		t->oaudio.format = t->audio.format;
-	if (t->conf.stream_copy || !t->data_type || !ffsz_eq(t->data_type, "pcm"))
+	if (t->conf.stream_copy || !t->data_type || t->data_type != PHI_AC_PCM)
 		return PHI_OPEN_SKIP;
 
 	struct autoconv *c = phi_track_allocT(t, struct autoconv);
@@ -67,7 +67,7 @@ const phi_filter phi_autoconv = {
 
 static void* autoconv_f_open(phi_track *t)
 {
-	PHI_ASSERT(t->data_type && ffsz_eq(t->data_type, "pcm"));
+	PHI_ASSERT(t->data_type == PHI_AC_PCM);
 	struct autoconv *c = phi_track_allocT(t, struct autoconv);
 	return c;
 }

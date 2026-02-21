@@ -45,7 +45,7 @@ static void* aac_open(phi_track *t)
 	t->audio.format.format = a->fmt.format;
 	t->audio.format.interleaved = 1;
 	a->sample_rate = t->audio.format.rate;
-	t->data_type = "pcm";
+	t->data_type = PHI_AC_PCM;
 	t->audio.decoder = "AAC";
 	return a;
 }

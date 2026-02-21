@@ -25,15 +25,15 @@ static void aac_adts_w_close(void *ctx, phi_track *t)
 static void* aac_adts_w_open(phi_track *t)
 {
 	struct aac_adts_w *a = phi_track_allocT(t, struct aac_adts_w);
-	if (ffsz_eq(t->data_type, "pcm")) {
+	if (t->data_type == PHI_AC_PCM) {
 		if (!core->track->filter(t, core->mod("ac-aac.encode"), PHI_TF_PREV))
 			goto err;
 		a->hdr.sample_rate = t->oaudio.format.rate;
 		a->hdr.chan_conf = t->oaudio.format.channels;
-	} else if (ffsz_eq(t->data_type, "aac")) {
+	} else if (t->data_type == PHI_AC_AAC) {
 		a->state = I_COPY;
 	} else {
-		errlog(t, "input data format not supported: %s", t->data_type);
+		errlog(t, "input data format not supported: %u", t->data_type);
 		goto err;
 	}
 	return a;

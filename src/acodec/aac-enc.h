@@ -94,7 +94,7 @@ static int aacw_encode(struct aac_enc *a, phi_track *t)
 			return PHI_ERR;
 		}
 		a->fmt = t->oaudio.format;
-		t->data_type = "AAC";
+		t->data_type = PHI_AC_AAC;
 
 		if (aac_enc_init(a, t, &t->data_out))
 			return PHI_ERR;

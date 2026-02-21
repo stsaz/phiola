@@ -22,7 +22,7 @@ static void* vorbis_open(phi_track *t)
 	struct vorbis_dec *v = phi_track_allocT(t, struct vorbis_dec);
 	t->audio.format.format = PHI_PCM_FLOAT32;
 	t->audio.end_padding = (t->audio.total != ~0ULL);
-	t->data_type = "pcm";
+	t->data_type = PHI_AC_PCM;
 	return v;
 }
 

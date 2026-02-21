@@ -58,8 +58,8 @@ static void* fdetcr_open(phi_track *t)
 	ffstr ext;
 	const char *fn = t->conf.ifile.name;
 	ffpath_split3_str(FFSTR_Z(fn), NULL, NULL, &ext);
-	if (t->data_type)
-		ffstr_setz(&ext, t->data_type);
+	if (*t->ifile_ext)
+		ffstr_setz(&ext, t->ifile_ext);
 
 	char ext_s[8] = {};
 	if (ext.len < 8) {

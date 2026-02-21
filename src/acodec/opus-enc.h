@@ -131,7 +131,7 @@ static int opus_enc_encode(void *ctx, phi_track *t)
 			errlog(t, "input format must be float32 48kHz interleaved");
 			return PHI_ERR;
 		}
-		t->data_type = "Opus";
+		t->data_type = PHI_AC_OPUS;
 
 		if (opus_enc_init(o, t, &t->data_out))
 			return PHI_ERR;

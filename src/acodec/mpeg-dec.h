@@ -36,7 +36,7 @@ static void* mpeg_dec_open(phi_track *t)
 	t->audio.format.interleaved = 1;
 	t->audio.decoder = "MP3";
 	m->fr_size = phi_af_size(&t->audio.format);
-	t->data_type = "pcm";
+	t->data_type = PHI_AC_PCM;
 	return m;
 }
 

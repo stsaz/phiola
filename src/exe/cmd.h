@@ -202,7 +202,7 @@ static int cmd_oext_aenc(ffstr ext, uint stream_copy)
 			PHI_AC_AAC, // mp4
 			PHI_AC_VORBIS, // ogg
 			PHI_AC_OPUS, // opus
-			PHI_AC_WAV, // wav
+			PHI_AC_PCM, // wav
 		},
 		// copy
 		{

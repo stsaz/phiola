@@ -36,7 +36,7 @@ static int silgen_process(void *ctx, phi_track *t)
 
 	case 0:
 		t->oaudio.conv_format = t->oaudio.format;
-		t->data_type = "pcm";
+		t->data_type = PHI_AC_PCM;
 		c->state = 1;
 		return PHI_DATA;
 

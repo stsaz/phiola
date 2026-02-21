@@ -40,7 +40,7 @@ static void ape_info(struct ape_dec *a, phi_track *t, const struct ape_info *inf
 		.interleaved = 1,
 	};
 	t->audio.format = f;
-	t->data_type = "pcm";
+	t->data_type = PHI_AC_PCM;
 	t->audio.bitrate = bitrate_compute(t->input.size, t->audio.total, info->sample_rate);
 	t->audio.total = info->total_samples;
 }
