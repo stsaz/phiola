@@ -17,6 +17,7 @@ struct gui_wmain {
 	ffui_tabxx		tabs;
 	ffui_viewxx		vlist;
 	ffui_statusbarxx stbar;
+	ffui_trayiconxx	tray;
 #ifdef FF_WIN
 	ffui_paned pntop;
 #endif
@@ -42,6 +43,7 @@ FF_EXTERN const ffui_ldr_ctl wmain_ctls[] = {
 	_(tabs),
 	_(vlist),
 	_(stbar),
+	_(tray),
 #ifdef FF_WIN
 	_(pntop),
 #endif
@@ -540,6 +542,13 @@ static void list_save_choose_filename()
 	gui_core_task_ptr(list_save, fn2);
 }
 
+static void tray_show(uint tray)
+{
+	gui_wmain *m = gg->wmain;
+	m->wnd.show(!tray);
+	m->tray.show(tray);
+}
+
 static void wmain_action(ffui_window *wnd, int id)
 {
 	gui_wmain *m = gg->wmain;
@@ -568,6 +577,11 @@ static void wmain_action(ffui_window *wnd, int id)
 
 	case A_SETTINGS_SHOW:
 		wsettings_show(1);  break;
+
+	case A_TRAY_MIN:
+		tray_show(1);  break;
+	case A_TRAY_CLICK:
+		tray_show(0);  break;
 
 	case A_QUIT:
 		m->wnd.close();  break;
