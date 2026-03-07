@@ -27,10 +27,8 @@ typedef struct fftask {
 	(t)->handler = (func),  (t)->param = (udata)
 
 
-// User must define these values:
+// User may define these values:
 // #define FFTASKQUEUE_LOG_DEBUG  ?
-// Optional:
-// #define FFTASKQUEUE_LOG_EXTRA  ?
 
 struct fftaskqueue_conf_log {
 	ffuint level;
@@ -39,13 +37,13 @@ struct fftaskqueue_conf_log {
 	const char *ctx;
 };
 
-#define fftaskqueue_extralog(tq, ...)
-#ifdef FFTASKQUEUE_LOG_EXTRA
-	#undef fftaskqueue_extralog
-	#define fftaskqueue_extralog(tq, ...) \
+#define _fftq_dbglog(tq, ...)
+#ifdef FFTASKQUEUE_LOG_DEBUG
+	#undef _fftq_dbglog
+	#define _fftq_dbglog(tq, ...) \
 	do { \
 		if (ff_unlikely(tq->log.level >= FFTASKQUEUE_LOG_DEBUG)) \
-			tq->log.func(tq->log.obj, FFTASKQUEUE_LOG_EXTRA, tq->log.ctx, NULL, __VA_ARGS__); \
+			tq->log.func(tq->log.obj, FFTASKQUEUE_LOG_DEBUG, tq->log.ctx, NULL, __VA_ARGS__); \
 	} while (0)
 #endif
 
@@ -119,7 +117,7 @@ static inline ffuint fftaskqueue_run(fftaskqueue *tq)
 		fflock_unlock(&tq->lk);
 
 		fftask *t = FF_CONTAINER(fftask, sib, it);
-		fftaskqueue_extralog(tq, "task:%p  handler:%p  param:%p", t, t->handler, t->param);
+		_fftq_dbglog(tq, "task:%p  handler:%p  param:%p", t, t->handler, t->param);
 		t->handler(t->param);
 
 		n++;
