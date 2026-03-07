@@ -31,6 +31,16 @@ struct audio_out {
 #endif
 };
 
+static void audio_out_reuse(audio_out *a)
+{
+	if (a->trk->oaudio.clear) {
+		a->trk->oaudio.clear = 0;
+		dbglog(a->trk, "reuse buffer: stop/clear");
+		a->audio->stop(a->stream);
+		a->audio->clear(a->stream);
+	}
+}
+
 /**
 Return FFAUDIO_E*
 Return FFAUDIO_EFORMAT (if try_open==1): requesting audio conversion */

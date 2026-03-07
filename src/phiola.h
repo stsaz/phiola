@@ -266,6 +266,13 @@ enum PHI_CUE_GAP {
 	PHI_CUE_GAP_SKIP,
 };
 
+/** `until_msec` meaning */
+enum PHI_UN {
+	PHI_UN_MSEC_BEGIN, // msec from beginning
+	PHI_UN_MSEC_END, // msec from ending
+	PHI_UN_PERCENT,
+};
+
 /** Track configuration */
 struct phi_track_conf {
 	struct {
@@ -365,6 +372,7 @@ struct phi_track_conf {
 	uint	stream_copy :1;
 	uint	cross_worker_assign :1;
 	uint	tee_output :1; // `tee` is the file name for *output* data, not *input* data
+	uint	until_type :2; // enum PHI_UN
 };
 
 enum PHI_TF {

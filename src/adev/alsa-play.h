@@ -49,10 +49,8 @@ static int alsa_create(audio_out *a, phi_track *t)
 		// Note: we don't support cases when devices are switched
 		if (mod->dev_idx == t->conf.oaudio.device_index) {
 			if (af_eq(&t->oaudio.format, &mod->fmt)) {
-				dbglog(NULL, "stop/clear");
-				ffalsa.stop(mod->out);
-				ffalsa.clear(mod->out);
 				a->stream = mod->out;
+				audio_out_reuse(a);
 
 				ffalsa.dev_free(a->dev);
 				a->dev = NULL;

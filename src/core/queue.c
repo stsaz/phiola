@@ -45,6 +45,10 @@ enum {
 	Q_PLAYING,
 };
 
+enum {
+	Q_PL_MANUAL = 1, // Start track by user command
+};
+
 static void* q_insert(struct phi_queue *q, uint pos, struct phi_queue_entry *qe);
 static void* q_insert_bulk(struct phi_queue *q, uint pos, struct phi_queue_entry *qe, uint n, struct phi_queue_entry **result);
 static int q_remove_at(struct phi_queue *q, uint pos, uint n);
@@ -54,6 +58,8 @@ enum Q_TKCL_F {
 	Q_TKCL_ERR = 1,
 	Q_TKCL_STOP = 2,
 	Q_TKCL_META_READ = 4,
+	Q_TKCL_NEXT = 8,
+	Q_TKCL_FIN = 0x10,
 };
 static void q_ent_closed(struct phi_queue *q, uint flags);
 static void q_modified(struct phi_queue *q);
@@ -337,7 +343,7 @@ static struct q_entry* q_get(struct phi_queue *q, uint i)
 	return *ffslice_itemT(&q->index, i, struct q_entry*);
 }
 
-static int q_play(struct phi_queue *q, void *_e)
+static int q_playx(struct phi_queue *q, void *_e, uint flags)
 {
 	dbglog("%s", __func__);
 	struct q_entry *e = _e;
@@ -365,7 +371,7 @@ static int q_play(struct phi_queue *q, void *_e)
 		for (;;) {
 			q->cursor = e;
 			q->cursor_index = qe_index(e);
-			if (qe_play(e))
+			if (qe_play(e, 0))
 				return -1;
 
 			uint i = e->index + 1;
@@ -383,15 +389,20 @@ static int q_play(struct phi_queue *q, void *_e)
 		return 0;
 	}
 
-	if (qm->cursor)
+	if ((flags & Q_PL_MANUAL) && qm->cursor)
 		qe_stop(qm->cursor);
 
 	qm->cursor = e;
 	q->cursor = e;
 	q->cursor_index = qe_index(e);
-	if (!!qe_play(e))
+	if (qe_play(e, flags))
 		return -1;
 	return 0;
+}
+
+static int q_play(struct phi_queue *q, void *e)
+{
+	return q_playx(q, e, Q_PL_MANUAL);
 }
 
 static void q_trk_closed(void *param)
@@ -417,10 +428,10 @@ static void q_trk_closed(void *param)
 		return;
 	}
 
-	if (!(flags & Q_TKCL_STOP)) {
+	if ((flags & (Q_TKCL_STOP | Q_TKCL_NEXT)) == Q_TKCL_NEXT) {
 		if (!(q->conf.conversion
 			&& core->conf.workers > 1 && !core->workers_available()))
-			q_play(q, PHI_Q_PLAY_NEXT);
+			q_playx(q, PHI_Q_PLAY_NEXT, 0);
 	}
 
 	if (q->active_n == 0) {
@@ -439,6 +450,11 @@ Thread: worker */
 static void q_ent_closed(struct phi_queue *q, uint flags)
 {
 	dbglog("%s  flags:%u", __func__, flags);
+
+	if (flags & Q_TKCL_FIN) {
+		q_playx(q, PHI_Q_PLAY_NEXT, 0);
+		return;
+	}
 
 	/* Don't start the next track when there are too many consecutive errors.
 	When in Random or Repeat-All mode we may waste CPU resources without making any progress, e.g.:

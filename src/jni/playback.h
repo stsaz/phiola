@@ -8,12 +8,23 @@ static void* play_grd_open(phi_track *t)
 	x->play.trk = t;
 	x->play.seek_msec = -1;
 	x->play.paused = 0;
+
+	int au = x->play.auto_until_sec_percent;
+	if (au > 0) {
+		t->conf.until_msec = au * 1000;
+		t->conf.until_type = PHI_UN_MSEC_END;
+	} else if (au < 0) {
+		t->conf.until_msec = 100 - -au;
+		t->conf.until_type = PHI_UN_PERCENT;
+	}
+
 	return (void*)1;
 }
 
 static void play_grd_close(void *f, phi_track *t)
 {
-	x->play.trk = NULL;
+	if (t == x->play.trk)
+		x->play.trk = NULL;
 
 	if (t->chain_flags & PHI_FFINISHED) {
 		if (t->error == PHI_E_NOSRC
@@ -62,7 +73,6 @@ static void play_ui_close(void *f, phi_track *t)
 
 	if (x->play.auto_stop_timer_expired) {
 		x->play.auto_stop_timer_expired = 0;
-		t->chain_flags |= PHI_FSTOP;
 		status |= PCS_AUTOSTOP;
 	}
 
@@ -162,20 +172,14 @@ static int handle_seek(phi_track *t)
 
 static void auto_skip(phi_track *t)
 {
-	int as = x->play.auto_seek_sec_percent, au = x->play.auto_until_sec_percent;
-	if (!(as || au))
+	int as = x->play.auto_seek_sec_percent;
+	if (!as)
 		return;
 
 	uint64 dur_msec = samples_to_msec(t->audio.total, t->audio.format.rate);
-
-	if (as) {
-		x->play.seek_msec = (as > 0) ? (uint64)as * 1000
-			: dur_msec * -as / 100;
-	}
-	if (au) {
-		t->conf.until_msec = (au > 0) ? dur_msec - au * 1000
-			: dur_msec - (dur_msec * -au / 100);
-	}
+	x->play.seek_msec = (as > 0) ? (uint64)as * 1000
+		: dur_msec * -as / 100;
+	t->audio.seek_req = 1;
 }
 
 static int play_ui_process(void *f, phi_track *t)
@@ -230,11 +234,6 @@ static int play_ui_process(void *f, phi_track *t)
 
 	if (pos_sec != x->play.pos_prev_sec) {
 		x->play.pos_prev_sec = pos_sec;
-
-		if (t->conf.until_msec && pos_msec >= t->conf.until_msec) {
-			trk_dbglog(t, "reached position %U", t->conf.until_msec / 1000);
-			return PHI_LASTOUT;
-		}
 
 		JNIEnv *env;
 		int r = jni_vm_attach(jvm, &env);
@@ -300,6 +299,8 @@ end:
 static void play_auto_stop_timer(void *param)
 {
 	x->play.auto_stop_timer_expired = 1;
+	if (x->play.trk)
+		x->play.trk->chain_flags |= PHI_FSTOP_AFTER;
 }
 
 static void play_auto_stop(struct core_data *d)

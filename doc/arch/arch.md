@@ -8,6 +8,24 @@
 ![](phiola-arch-android.svg)
 
 
+## Playback Track
+
+```
+q_guard  file  q_agent  ui  adev
+================================
+...
+               *                  # Prepare meta data
+...
+         * ->                     # EOF
+           <-
+         * ->                     # no seek request, EOF -> PHI_DONE
+               *                  # start next track
+                          -> *    # [current track] PHI_FSTOP -> PHI_FIN
+                                  # [last track] drain -> PHI_DONE
+                          -> *    # [next track] write
+```
+
+
 ## Track's Audio Conversion
 
 Example of a track chain for audio conversion:

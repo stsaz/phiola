@@ -56,10 +56,8 @@ static int pulse_create(audio_out *a, phi_track *t)
 		if (af_eq(&t->oaudio.format, &mod->fmt)
 			&& a->dev_idx == mod->dev_idx) {
 
-			dbglog(a->trk, "reuse buffer: ffpulse.stop/clear");
-			ffpulse.stop(mod->out);
-			ffpulse.clear(mod->out);
 			a->stream = mod->out;
+			audio_out_reuse(a);
 
 			ffpulse.dev_free(a->dev);
 			a->dev = NULL;

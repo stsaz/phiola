@@ -36,10 +36,8 @@ static int wasapi_create(audio_out *w, phi_track *t)
 		// Note: we don't support cases when devices are switched
 		if (mod->dev_idx == w->dev_idx && mod->excl == t->conf.oaudio.exclusive) {
 			if (af_eq(&t->oaudio.format, &mod->fmt)) {
-				dbglog(NULL, "stop/clear");
-				ffwasapi.stop(mod->out);
-				ffwasapi.clear(mod->out);
 				w->stream = mod->out;
+				audio_out_reuse(w);
 
 				ffwasapi.dev_free(w->dev);
 				w->dev = NULL;

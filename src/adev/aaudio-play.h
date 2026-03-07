@@ -44,10 +44,8 @@ static int aao_create(audio_out *a, phi_track *t)
 		}
 
 		if (af_eq(&t->oaudio.format, &mod->fmt)) {
-			dbglog(NULL, "stop/clear");
-			ffaaudio.stop(mod->abuf);
-			ffaaudio.clear(mod->abuf);
 			a->stream = mod->abuf;
+			audio_out_reuse(a);
 
 			reused = 1;
 			goto done;

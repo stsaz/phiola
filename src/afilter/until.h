@@ -18,11 +18,21 @@ static void* until_open(phi_track *t)
 	struct until *u;
 	u = phi_track_allocT(t, struct until);
 	u->until = msec_to_samples(t->conf.until_msec, t->audio.format.rate);
-
 	u->sampsize = pcm_size(t->audio.format.format, t->audio.format.channels);
 
-	if (t->audio.total != ~0ULL)
-		t->audio.total = u->until;
+	if (t->audio.total != ~0ULL) {
+		if (t->conf.until_type == PHI_UN_MSEC_END
+			&& t->audio.total > u->until) {
+			u->until = t->audio.total - u->until;
+		} else if (t->conf.until_type == PHI_UN_PERCENT) {
+			FF_ASSERT(t->conf.until_msec <= 100);
+			u->until = t->audio.total * t->conf.until_msec / 100;
+		}
+
+		if (t->conf.until_type == PHI_UN_MSEC_BEGIN)
+			t->audio.total = u->until;
+	}
+
 	return u;
 }
 

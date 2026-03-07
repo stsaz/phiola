@@ -149,6 +149,7 @@ static void qe_close(void *f, phi_track *t)
 		if ((t->chain_flags & (PHI_FSTOP | PHI_FSTOP_AFTER)) // track stopped by user
 			|| (e->expand && !e->play_next_on_close)) // The expanding process has finished without 'play' command issued on the root QE
 			flags |= Q_TKCL_STOP;
+		flags |= (!t->q_notified) ? Q_TKCL_NEXT : 0;
 		flags |= (t->meta_reading) ? Q_TKCL_META_READ : 0;
 		q_ent_closed(e->q, flags);
 	}
@@ -205,6 +206,14 @@ static int qagt_process(void *f, phi_track *t)
 		// 't->meta' contains the aggregated metadata from user + from .cue + from file
 	}
 
+	if ((t->chain_flags & PHI_FFIRST)
+		&& !(t->chain_flags & (PHI_FSTOP | PHI_FSTOP_AFTER)) // not stopped by user
+		&& t->playback) {
+		// Playback track is finishing
+		q_ent_closed(e->q, Q_TKCL_FIN);
+		t->q_notified = 1;
+	}
+
 	t->data_out = t->data_in;
 	return !(t->chain_flags & PHI_FFIRST) ? PHI_OK : PHI_DONE;
 }
@@ -215,7 +224,7 @@ static const phi_filter queue_agent = {
 };
 
 
-static int qe_play(struct q_entry *e)
+static int qe_play(struct q_entry *e, uint flags)
 {
 	if (e->expand) {
 		e->play_next_on_close = 1; // wait until expanding is finished and then play next track
@@ -290,6 +299,9 @@ static int qe_play(struct q_entry *e)
 				&& !track->filter(t, core->mod("core.tee"), 0))
 			|| !track->filter(t, core->mod(e->q->conf.audio_module), 0))
 			goto err;
+
+		t->oaudio.clear = !!(flags & Q_PL_MANUAL);
+		t->playback = 1;
 	}
 
 	e->trk = t;
