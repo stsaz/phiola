@@ -14,6 +14,19 @@
 #define PJT_META  "Lcom/github/stsaz/phiola/Phiola$Meta;"
 #define PJC_UN_FILES  "com/github/stsaz/phiola/UtilNative$Files"
 
+struct PlayObserver {
+	jobject obj;
+	jmethodID on_create;
+	jmethodID on_close;
+	jmethodID on_update;
+};
+
+struct QueueCallback {
+	jobject obj;
+	jmethodID on_change;
+	jmethodID on_complete;
+};
+
 struct phiola_jni {
 	phi_core *core;
 	phi_queue_if queue;
@@ -26,11 +39,7 @@ struct phiola_jni {
 	AAssetManager *am;
 
 	struct {
-		jmethodID PlayObserver_on_create;
-		jmethodID PlayObserver_on_close;
-		jmethodID PlayObserver_on_update;
-		jobject obj_PlayObserver;
-
+		struct PlayObserver PlayObserver;
 		phi_timer auto_stop_timer;
 		phi_track *trk;
 		char *equalizer;
@@ -69,15 +78,9 @@ struct phiola_jni {
 	jclass Phiola_class;
 	jmethodID Phiola_lib_load;
 
-	jclass Phiola_Meta;
-	jmethodID Phiola_Meta_init;
-
-	jclass UtilNative_Files;
-	jmethodID UtilNative_Files_init;
-
-	jmethodID Phiola_QueueCallback_on_change;
-	jmethodID Phiola_QueueCallback_on_complete;
-	jobject obj_QueueCallback;
+	struct jni_class_t Meta;
+	struct jni_class_t UtilNative_Files;
+	struct QueueCallback QueueCallback;
 };
 static struct phiola_jni *x;
 static JavaVM *jvm;
@@ -256,13 +259,13 @@ Java_com_github_stsaz_phiola_Phiola_init(JNIEnv *env, jobject thiz, jstring jlib
 	x->Phiola_class = jni_global_ref(jni_class(PJC_PHIOLA));
 	x->Phiola_lib_load = jni_sfunc(x->Phiola_class, "lib_load", "(" JNI_TSTR ")" JNI_TBOOL);
 
-	x->Phiola_Meta = jni_global_ref(jni_class(PJC_META));
-	x->Phiola_Meta_init = jni_func(x->Phiola_Meta, "<init>", "()V");
+	x->Meta.cls = jni_global_ref(jni_class(PJC_META));
+	x->Meta.init = jni_func(x->Meta.cls, "<init>", "()V");
 
-	x->UtilNative_Files = jni_global_ref(jni_class(PJC_UN_FILES));
-	x->UtilNative_Files_init = jni_func(x->UtilNative_Files, "<init>", "()V");
+	x->UtilNative_Files.cls = jni_global_ref(jni_class(PJC_UN_FILES));
+	x->UtilNative_Files.init = jni_func(x->UtilNative_Files.cls, "<init>", "()V");
 
-	FF_ASSERT(x->Phiola_class && x->Phiola_Meta && x->Phiola_lib_load);
+	FF_ASSERT(x->Phiola_class && x->Meta.cls && x->Phiola_lib_load);
 
 	x->am = AAssetManager_fromJava(env, jasset_mgr);
 
@@ -278,9 +281,10 @@ Java_com_github_stsaz_phiola_Phiola_destroy(JNIEnv *env, jobject thiz)
 
 	dbglog("%s: enter", __func__);
 	phi_core_destroy();
-	jni_global_unref(x->play.obj_PlayObserver);
-	jni_global_unref(x->obj_QueueCallback);
-	jni_global_unref(x->Phiola_Meta);
+	jni_global_unref(x->play.PlayObserver.obj);
+	jni_global_unref(x->QueueCallback.obj);
+	jni_global_unref(x->Meta.cls);
+	jni_global_unref(x->UtilNative_Files.cls);
 	jni_global_unref(x->Phiola_class);
 
 	char **it;
@@ -329,13 +333,10 @@ enum {
 	TE_PRESERVE_DATE = 2,
 };
 
-JNIEXPORT jint JNICALL
-Java_com_github_stsaz_phiola_Phiola_tagsEdit(JNIEnv *env, jobject thiz, jstring jfilename, jobjectArray jtags, jint flags)
+/** {k=v}... <- {k, v, ...} */
+static ffvec tags_from_java(JNIEnv *env, jobjectArray jtags)
 {
-	dbglog("%s: enter", __func__);
-	int rc = 1;
 	ffvec tags = {};
-
 	uint n = jni_arr_len(jtags);
 	ffvec_allocT(&tags, n / 2, ffstr);
 	for (uint i = 0;  i + 1 < n;  i += 2) {
@@ -352,6 +353,16 @@ Java_com_github_stsaz_phiola_Phiola_tagsEdit(JNIEnv *env, jobject thiz, jstring 
 		jni_sz_free(val, jval);
 		jni_local_unref(jval);
 	}
+
+	return tags;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_github_stsaz_phiola_Phiola_tagsEdit(JNIEnv *env, jobject thiz, jstring jfilename, jobjectArray jtags, jint flags)
+{
+	dbglog("%s: enter", __func__);
+	int rc = 1;
+	ffvec tags = tags_from_java(env, jtags);
 
 	struct phi_tag_conf conf = {
 		.filename = jni_sz_js(jfilename),

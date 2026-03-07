@@ -78,7 +78,12 @@ class PhiolaQueue {
 		modified = true;
 	}
 
-	int count() { return phi.quCmd(q, Phiola.QUCOM_COUNT, 0); }
+	int count() {
+		// RecyclerView.Adapter.getItemCount() gets called too many times
+		if (list_size == 0)
+			list_size = phi.quCmd(q, Phiola.QUCOM_COUNT, 0);
+		return list_size;
+	}
 
 	void sort(int flags) {
 		if (conversion) return;
@@ -102,6 +107,7 @@ class PhiolaQueue {
 		phi.quSave(q, filepath);
 	}
 
+	private int list_size;
 	private String[] cache;
 	private int cache_start_index, cache_size;
 	static int display_reqs, display_cache_hits;
@@ -134,6 +140,7 @@ class PhiolaQueue {
 	}
 
 	void changed() {
+		list_size = 0;
 		cache = null;
 		cache_start_index = 0;
 		cache_size = 0;

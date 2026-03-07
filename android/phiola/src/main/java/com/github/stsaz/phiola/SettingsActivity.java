@@ -220,7 +220,7 @@ public class SettingsActivity extends AppCompatActivity {
 				}
 			});
 
-		b.sbPlayAutoStop.setMax(auto_stop_progress(600));
+		b.sbPlayAutoStop.setMax(auto_stop_progress(6*60));
 		b.sbPlayAutoStop.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
 				@Override
 				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -461,8 +461,9 @@ public class SettingsActivity extends AppCompatActivity {
 		return 20;
 	}
 
-	private static int auto_stop_value(int progress) { return progress * 6; }
-	private static int auto_stop_progress(int min) { return min / 6; }
+	// 5m..6h by 5m
+	private static int auto_stop_value(int progress) { return 5 + progress * 5; }
+	private static int auto_stop_progress(int min) { return (min - 5) / 5; }
 
 	private static int rec_format_index(String s) {
 		return Arrays.asList(RecSettings.rec_formats).indexOf(s);

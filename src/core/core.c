@@ -557,6 +557,15 @@ static void meta_set(phi_meta *meta, ffstr name, ffstr val, uint flags)
 	}
 }
 
+static void meta_copy(phi_meta *dst, const phi_meta *src, unsigned flags)
+{
+	unsigned i = 0;
+	ffstr k, v;
+	while (CKV_E_DONE != ckv_list((void*)src, &i, &k, &v, 0)) {
+		meta_set(dst, k, v, flags);
+	}
+}
+
 static int meta_list(const phi_meta *meta, uint *index, ffstr *name, ffstr *val, uint flags)
 {
 	while (CKV_E_DONE != ckv_list((void*)meta, index, name, val, flags)) {
@@ -586,7 +595,7 @@ static int meta_find(const phi_meta *meta, ffstr name, ffstr *val, uint flags)
 
 static const phi_meta_if phi_metaif = {
 	meta_set,
-	(void*)ckv_copy,
+	meta_copy,
 	meta_find,
 	meta_list,
 	meta_destroy,

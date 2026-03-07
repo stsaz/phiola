@@ -133,13 +133,30 @@ Java_com_github_stsaz_phiola_UtilNative_trash(JNIEnv *env, jobject thiz, jstring
 	return js;
 }
 
+struct UtilNative_Files {
+	jobjectArray display_rows;
+	jobjectArray file_names;
+	jint n_directories;
+};
+
+#define _I(name)  { #name, 'i', FF_OFF(struct UtilNative_Files, name), 0 }
+#define _SA(name)  { #name, 'S', FF_OFF(struct UtilNative_Files, name), 0 }
+static struct jni_cmap UtilNative_Files_map[] = {
+	_SA(display_rows),
+	_SA(file_names),
+	_I(n_directories),
+	{}
+};
+#undef _I
+#undef _SA
+
 JNIEXPORT jobject JNICALL
 Java_com_github_stsaz_phiola_UtilNative_dirList(JNIEnv *env, jobject thiz, jstring jpath, jint flags)
 {
 	dbglog("%s: enter", __func__);
 	const char *path = jni_sz_js(jpath);
 	char *fullname = NULL, *fullname_name;
-	size_t i = 0, n = 0, ndirs = 0;
+	size_t i = 0, n = 0;
 	ffdirscanx dx = {};
 
 	uint dsof = FFDIRSCANX_SORT_DIRS;
@@ -157,9 +174,10 @@ Java_com_github_stsaz_phiola_UtilNative_dirList(JNIEnv *env, jobject thiz, jstri
 	fullname[s_path.len] = '/';
 	fullname_name = fullname + s_path.len + 1;
 
+	struct UtilNative_Files unf = {};
 	jclass jcs = jni_class(JNI_CSTR);
-	jobjectArray jsa_names = jni_joa(n, jcs);
-	jobjectArray jsa_rows = jni_joa(n, jcs);
+	unf.file_names = jni_joa(n, jcs);
+	unf.display_rows = jni_joa(n, jcs);
 
 	const char *fn;
 	while ((fn = ffdirscanx_next(&dx))) {
@@ -177,25 +195,23 @@ Java_com_github_stsaz_phiola_UtilNative_dirList(JNIEnv *env, jobject thiz, jstri
 
 		ffsz_copyz(fullname_name, 255, fn);
 		jstring js = jni_js_sz(fullname);
-		jni_joa_i_set(jsa_names, i, js);
+		jni_joa_i_set(unf.file_names, i, js);
 		jni_local_unref(js);
 
 		if (off & 0x80000000) {
 			js = jni_js_szf(env, "<DIR> %s", fn);
-			ndirs++;
+			unf.n_directories++;
 		} else {
 			js = jni_js_sz(fn);
 		}
-		jni_joa_i_set(jsa_rows, i, js);
+		jni_joa_i_set(unf.display_rows, i, js);
 		jni_local_unref(js);
 
 		i++;
 	}
 
-	jobject jo = jni_obj_new(x->UtilNative_Files, x->UtilNative_Files_init);
-	jni_obj_jo_set(jo, jni_field(x->UtilNative_Files, "file_names", JNI_TARR JNI_TSTR), jsa_names);
-	jni_obj_jo_set(jo, jni_field(x->UtilNative_Files, "display_rows", JNI_TARR JNI_TSTR), jsa_rows);
-	jni_obj_int_set(jo, jni_field_int(x->UtilNative_Files, "n_directories"), ndirs);
+	jobject jo = jni_obj_new(x->UtilNative_Files.cls, x->UtilNative_Files.init);
+	jni_obj_write(env, jo, x->UtilNative_Files.cls, UtilNative_Files_map, &unf);
 
 	ffdirscanx_close(&dx);
 	jni_sz_free(path, jpath);

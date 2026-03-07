@@ -178,30 +178,32 @@ static const phi_filter phi_queue_guard = {
 static int qagt_process(void *f, phi_track *t)
 {
 	struct q_entry *e = t->qent;
+	if (t->meta_changed) {
 
-	// 't->meta' currently contains the metadata read from file
+		// 't->meta' currently contains the metadata read from file
 
-	if (META_LEN(&e->pub.meta) && e->pub.meta_priority)
-		core->metaif->copy(&t->meta, &e->pub.meta, PHI_META_REPLACE); // Copy tags from .cue, e.g. `TITLE value`
+		if (e->pub.meta_priority) {
+			if (META_LEN(&e->pub.meta))
+				core->metaif->copy(&t->meta, &e->pub.meta, PHI_META_REPLACE); // Copy tags from .cue, e.g. `TITLE value`
 
-	if (t->meta_changed && !e->pub.meta_priority) {
+		} else {
+			if (t->audio.total != ~0ULL && t->audio.format.rate)
+				e->pub.length_sec = samples_to_msec(t->audio.total, t->audio.format.rate) / 1000;
 
-		if (t->audio.total != ~0ULL && t->audio.format.rate)
-			e->pub.length_sec = samples_to_msec(t->audio.total, t->audio.format.rate) / 1000;
-
-		if (META_LEN(&e->pub.meta) || META_LEN(&t->meta)) { // empty meta == not modified
-			fflock_lock((fflock*)&e->pub.lock); // UI thread may read or write `meta` at this moment
-			core->metaif->destroy(&e->pub.meta);
-			core->metaif->copy(&e->pub.meta, &t->meta, 0); // Remember the tags we read from file
-			fflock_unlock((fflock*)&e->pub.lock);
-			q_modified(e->q);
+			if (META_LEN(&e->pub.meta) || META_LEN(&t->meta)) { // empty meta == not modified
+				fflock_lock((fflock*)&e->pub.lock); // UI thread may read or write `meta` at this moment
+				core->metaif->destroy(&e->pub.meta);
+				core->metaif->copy(&e->pub.meta, &t->meta, 0); // Remember the tags we read from file
+				fflock_unlock((fflock*)&e->pub.lock);
+				q_modified(e->q);
+			}
 		}
+
+		if (META_LEN(&e->q->conf.tconf.meta))
+			core->metaif->copy(&t->meta, &e->q->conf.tconf.meta, PHI_META_REPLACE); // Copy tags from user, e.g. `convert -m title=...`
+
+		// 't->meta' contains the aggregated metadata from user + from .cue + from file
 	}
-
-	if (META_LEN(&e->q->conf.tconf.meta))
-		core->metaif->copy(&t->meta, &e->q->conf.tconf.meta, PHI_META_REPLACE); // Copy tags from user, e.g. `convert -m title=...`
-
-	// 't->meta' contains the aggregated metadata from user + from .cue + from file
 
 	t->data_out = t->data_in;
 	return !(t->chain_flags & PHI_FFIRST) ? PHI_OK : PHI_DONE;

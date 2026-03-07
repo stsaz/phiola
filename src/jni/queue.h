@@ -12,7 +12,7 @@ static void list_redraw_delayed(void *param)
 		goto end;
 	}
 
-	jni_call_void(x->obj_QueueCallback, x->Phiola_QueueCallback_on_change, (jlong)x->q_adding, 'u', 0);
+	jni_call_void(x->QueueCallback.obj, x->QueueCallback.on_change, (jlong)x->q_adding, 'u', 0);
 
 end:
 	jni_vm_detach(jvm);
@@ -61,7 +61,7 @@ static void qu_on_change(phi_queue_id q, uint flags, uint pos)
 		goto end;
 	}
 
-	jni_call_void(x->obj_QueueCallback, x->Phiola_QueueCallback_on_change, (jlong)q, flags, pos);
+	jni_call_void(x->QueueCallback.obj, x->QueueCallback.on_change, (jlong)q, flags, pos);
 
 end:
 	jni_vm_detach(jvm);
@@ -70,9 +70,9 @@ end:
 JNIEXPORT void JNICALL
 Java_com_github_stsaz_phiola_Phiola_quSetCallback(JNIEnv *env, jobject thiz, jobject jcb)
 {
-	x->Phiola_QueueCallback_on_change = jni_func(jni_class_obj(jcb), "on_change", "(" JNI_TLONG JNI_TINT JNI_TINT ")" JNI_TVOID);
-	x->Phiola_QueueCallback_on_complete = jni_func(jni_class_obj(jcb), "on_complete", "(" JNI_TINT JNI_TINT ")" JNI_TVOID);
-	x->obj_QueueCallback = jni_global_ref(jcb);
+	x->QueueCallback.on_change = jni_func(jni_class_obj(jcb), "on_change", "(" JNI_TLONG JNI_TINT JNI_TINT ")" JNI_TVOID);
+	x->QueueCallback.on_complete = jni_func(jni_class_obj(jcb), "on_complete", "(" JNI_TINT JNI_TINT ")" JNI_TVOID);
+	x->QueueCallback.obj = jni_global_ref(jcb);
 	x->queue.on_change(qu_on_change);
 }
 
@@ -137,7 +137,7 @@ static void qu_save_complete(void *c, phi_track *t)
 		goto end;
 	}
 
-	jni_call_void(x->obj_QueueCallback, x->Phiola_QueueCallback_on_complete, 0, t->error);
+	jni_call_void(x->QueueCallback.obj, x->QueueCallback.on_complete, 0, t->error);
 
 end:
 	jni_vm_detach(jvm);
@@ -573,9 +573,9 @@ Java_com_github_stsaz_phiola_Phiola_quMeta(JNIEnv *env, jobject thiz, jlong jq, 
 		p[I_MTIME*2+1] = ffsz_dup("");
 	}
 
-	jobject jmeta = jni_obj_new(x->Phiola_Meta, x->Phiola_Meta_init);
+	jobject jmeta = jni_obj_new(x->Meta.cls, x->Meta.init);
 	jobjectArray jsa = jni_jsa_sza(env, info.ptr, info.len);
-	jni_obj_jo_set(jmeta, jni_field(x->Phiola_Meta, "meta", JNI_TARR JNI_TSTR), jsa);
+	jni_obj_jo_set(jmeta, jni_field(x->Meta.cls, "meta", JNI_TARR JNI_TSTR), jsa);
 
 	FFSLICE_FOREACH_PTR_T(&info, ffmem_free, char*);
 	ffvec_free(&info);
@@ -663,47 +663,83 @@ Java_com_github_stsaz_phiola_Phiola_quFilter(JNIEnv *env, jobject thiz, jlong q,
 	return (jlong)qf;
 }
 
+struct ConvertParams {
+	jint format;
+	jint flags;
+	jstring out_name;
+	jstring from_msec, to_msec;
+	jstring tags;
+	jint sample_format;
+	jint sample_rate;
+	jint aac_quality;
+	jint opus_quality;
+	jint mp3_quality;
+	jlong q_add_remove;
+	jint q_pos;
+	jstring trash_dir_rel;
+};
+
+#define _I(name)  { #name, 'i', FF_OFF(struct ConvertParams, name), 0 }
+#define _L(name)  { #name, 'l', FF_OFF(struct ConvertParams, name), 0 }
+#define _S(name)  { #name, 's', FF_OFF(struct ConvertParams, name), 0 }
+static struct jni_cmap ConvertParams_map[] = {
+	_I(format),
+	_I(flags),
+	_S(out_name),
+	_S(from_msec),
+	_S(to_msec),
+	_S(tags),
+	_I(sample_format),
+	_I(sample_rate),
+	_I(aac_quality),
+	_I(opus_quality),
+	_I(mp3_quality),
+	_L(q_add_remove),
+	_I(q_pos),
+	_S(trash_dir_rel),
+	{},
+};
+#undef _I
+#undef _L
+#undef _S
+
 JNIEXPORT jstring JNICALL
 Java_com_github_stsaz_phiola_Phiola_quConvertBegin(JNIEnv *env, jobject thiz, jlong jq, jobject jconf)
 {
 	dbglog("%s: enter", __func__);
 	const char *error = "";
+	struct ConvertParams cp = {};
 	jclass jc_conf = jni_class_obj(jconf);
-	jstring jout_name = jni_obj_jo(jconf, jni_field_str(jc_conf, "out_name"));
-	jstring jfrom = jni_obj_jo(jconf, jni_field_str(jc_conf, "from_msec"));
-	jstring jto = jni_obj_jo(jconf, jni_field_str(jc_conf, "to_msec"));
-	jstring jtags = jni_obj_jo(jconf, jni_field_str(jc_conf, "tags"));
-	jstring jtrash_dir_rel = jni_obj_jo(jconf, jni_field_str(jc_conf, "trash_dir_rel"));
-	uint flags = jni_obj_int(jconf, jni_field_int(jc_conf, "flags"));
-	const char *ofn = jni_sz_js(jout_name)
-		, *from = jni_sz_js(jfrom)
-		, *to = jni_sz_js(jto)
-		, *tags = jni_sz_js(jtags)
-		, *trash_dir_rel = jni_sz_js(jtrash_dir_rel);
+	jni_obj_read(env, &cp, ConvertParams_map, jconf, jc_conf);
+	const char *ofn = jni_sz_js(cp.out_name)
+		, *from = jni_sz_js(cp.from_msec)
+		, *to = jni_sz_js(cp.to_msec)
+		, *tags = jni_sz_js(cp.tags)
+		, *trash_dir_rel = jni_sz_js(cp.trash_dir_rel);
 
 	struct phi_track_conf conf = {
-		.ifile.preserve_date = !!(flags & COF_DATE_PRESERVE),
-		.stream_copy = !!(flags & COF_COPY),
-		.oaudio.format.format = jni_obj_int(jconf, jni_field_int(jc_conf, "sample_format")),
-		.oaudio.format.rate = jni_obj_int(jconf, jni_field_int(jc_conf, "sample_rate")),
+		.ifile.preserve_date = !!(cp.flags & COF_DATE_PRESERVE),
+		.stream_copy = !!(cp.flags & COF_COPY),
+		.oaudio.format.format = cp.sample_format,
+		.oaudio.format.rate = cp.sample_rate,
 
 		.ofile.name = ffsz_dup(ofn),
 		.ofile.name_tmp = 1,
-		.ofile.overwrite = !!(flags & COF_OVERWRITE),
+		.ofile.overwrite = !!(cp.flags & COF_OVERWRITE),
 
 		.cross_worker_assign = 1,
 	};
 
-	int fmt = jni_obj_int(jconf, jni_field_int(jc_conf, "format"));
+	int fmt = cp.format;
 	switch (fmt) {
 	case AF_AAC_LC:
-		conf.aac.quality = jni_obj_int(jconf, jni_field_int(jc_conf, "aac_quality"));  break;
+		conf.aac.quality = cp.aac_quality;  break;
 
 	case AF_MP3:
-		conf.mp3.quality = jni_obj_int(jconf, jni_field_int(jc_conf, "mp3_quality")) + 1;  break;
+		conf.mp3.quality = cp.mp3_quality + 1;  break;
 
 	case AF_OPUS:
-		conf.opus.bitrate = jni_obj_int(jconf, jni_field_int(jc_conf, "opus_quality"));  break;
+		conf.opus.bitrate = cp.opus_quality;  break;
 	}
 
 	if (msec_apos(from, (int64*)&conf.seek_msec)) {
@@ -726,9 +762,9 @@ Java_com_github_stsaz_phiola_Phiola_quConvertBegin(JNIEnv *env, jobject thiz, jl
 	ffmem_free(x->convert.trash_dir_rel);
 	x->convert.trash_dir_rel = (trash_dir_rel[0]) ? ffsz_dup(trash_dir_rel) : NULL;
 
-	x->convert.q_add_remove = (phi_queue_id)jni_obj_long(jconf, jni_field_long(jc_conf, "q_add_remove"));
-	x->convert.q_add = !!(flags & COF_ADD);
-	x->convert.q_pos = jni_obj_int(jconf, jni_field_int(jc_conf, "q_pos"));
+	x->convert.q_add_remove = (phi_queue_id)cp.q_add_remove;
+	x->convert.q_add = !!(cp.flags & COF_ADD);
+	x->convert.q_pos = cp.q_pos;
 
 	phi_queue_id q = (phi_queue_id)jq;
 	struct phi_queue_entry *qe;
@@ -754,11 +790,11 @@ Java_com_github_stsaz_phiola_Phiola_quConvertBegin(JNIEnv *env, jobject thiz, jl
 		x->queue.play(NULL, x->queue.at(q, 0));
 
 end:
-	jni_sz_free(trash_dir_rel, jtrash_dir_rel);
-	jni_sz_free(ofn, jout_name);
-	jni_sz_free(from, jfrom);
-	jni_sz_free(to, jto);
-	jni_sz_free(tags, jtags);
+	jni_sz_free(trash_dir_rel, cp.trash_dir_rel);
+	jni_sz_free(ofn, cp.out_name);
+	jni_sz_free(from, cp.from_msec);
+	jni_sz_free(to, cp.to_msec);
+	jni_sz_free(tags, cp.tags);
 	jstring js = jni_js_sz(error);
 	dbglog("%s: exit", __func__);
 	return js;

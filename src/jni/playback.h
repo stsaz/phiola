@@ -68,51 +68,76 @@ static void play_ui_close(void *f, phi_track *t)
 
 	status |= (t->chain_flags & PHI_FSTOP) ? PCS_STOP : 0;
 
-	trk_dbglog(t, "PlayObserver_on_close");
-	jni_call_void(x->play.obj_PlayObserver, x->play.PlayObserver_on_close, status);
+	trk_dbglog(t, "PlayObserver.on_close");
+	jni_call_void(x->play.PlayObserver.obj, x->play.PlayObserver.on_close, status);
 	jni_vm_detach(jvm);
-
 }
 
-static void meta_fill(JNIEnv *env, jobject jmeta, const phi_track *t)
+struct Meta {
+	jint queue_pos;
+	jlong length_msec;
+	jstring url, artist, title, album, date, info;
+};
+
+#define _I(name)  { #name, 'i', FF_OFF(struct Meta, name), 0 }
+#define _L(name)  { #name, 'l', FF_OFF(struct Meta, name), 0 }
+#define _S(name)  { #name, 's', FF_OFF(struct Meta, name), 0 }
+static struct jni_cmap Meta_map[] = {
+	_I(queue_pos),
+	_L(length_msec),
+	_S(url),
+	_S(artist),
+	_S(title),
+	_S(album),
+	_S(date),
+	_S(info),
+	{},
+};
+#undef _I
+#undef _L
+#undef _S
+
+static void meta_fill(JNIEnv *env, struct Meta *m, const phi_track *t)
 {
-	jni_obj_sz_set(env, jmeta, jni_field_str(x->Phiola_Meta, "url"), t->conf.ifile.name);
+	m->url = jni_js_sz(t->conf.ifile.name);
 
 	struct phi_queue_entry *qe = (struct phi_queue_entry*)t->qent;
-	const phi_meta *meta = &t->meta;
+	const phi_meta *meta = &qe->meta;
 
 	uint i = 0;
 	ffstr k, v;
 	while (x->metaif.list(meta, &i, &k, &v, PHI_META_UNIQUE | PHI_META_PRIVATE)) {
-		const char *kz = NULL;
-
 		switch (k.ptr[0]) {
 		case 'a':
+			if (ffstr_eqz(&k, "artist"))
+				m->artist = jni_js_sz(v.ptr);
+			else if (ffstr_eqz(&k, "album"))
+				m->album = jni_js_sz(v.ptr);
+			break;
+
 		case 't':
+			if (ffstr_eqz(&k, "title"))
+				m->title = jni_js_sz(v.ptr);
+			break;
+
 		case 'd':
-			if (ffstr_eqz(&k, "artist")
-				|| ffstr_eqz(&k, "title")
-				|| ffstr_eqz(&k, "album")
-				|| ffstr_eqz(&k, "date"))
-				kz = k.ptr;
+			if (ffstr_eqz(&k, "date"))
+				m->date = jni_js_sz(v.ptr);
 			break;
 
 		case '_':
 			if (ffstr_eqz(&k, "_phi_info"))
-				kz = "info";
+				m->info = jni_js_sz(v.ptr);
 			break;
 		}
-
-		if (kz)
-			jni_obj_sz_set(env, jmeta, jni_field_str(x->Phiola_Meta, kz), v.ptr);
 	}
 
 	if (t->audio.total != ~0ULL && t->audio.format.rate) {
 		uint64 duration_msec = samples_to_msec(t->audio.total, t->audio.format.rate);
-		jni_obj_long_set(jmeta, jni_field_long(x->Phiola_Meta, "length_msec"), duration_msec);
+		m->length_msec = duration_msec;
 	}
 
-	jni_obj_int_set(jmeta, jni_field_int(x->Phiola_Meta, "queue_pos"), x->queue.index(qe));
+	m->queue_pos = x->queue.index(qe);
 }
 
 static int handle_seek(phi_track *t)
@@ -169,6 +194,7 @@ static int play_ui_process(void *f, phi_track *t)
 	if (!x->play.opened) {
 		x->play.opened = 1;
 
+		struct phi_queue_entry *qe = (struct phi_queue_entry*)t->qent;
 		char buf[100];
 		ffsz_format(buf, sizeof(buf), "%u kbps, %s, %s %uHz %s"
 			, (t->audio.bitrate + 500) / 1000
@@ -176,7 +202,7 @@ static int play_ui_process(void *f, phi_track *t)
 			, phi_af_name(t->audio.format.format)
 			, t->audio.format.rate
 			, pcm_channelstr(t->audio.format.channels));
-		x->metaif.set(&t->meta, FFSTR_Z("_phi_info"), FFSTR_Z(buf), 0);
+		x->metaif.set(&qe->meta, FFSTR_Z("_phi_info"), FFSTR_Z(buf), 0);
 
 		JNIEnv *env;
 		int r = jni_vm_attach(jvm, &env);
@@ -185,14 +211,19 @@ static int play_ui_process(void *f, phi_track *t)
 			return PHI_ERR;
 		}
 
-		jobject jmeta = jni_obj_new(x->Phiola_Meta, x->Phiola_Meta_init);
-		meta_fill(env, jmeta, t);
-		trk_dbglog(t, "PlayObserver_on_create");
-		jni_call_void(x->play.obj_PlayObserver, x->play.PlayObserver_on_create, jmeta);
+		jobject jmeta = jni_obj_new(x->Meta.cls, x->Meta.init);
+		struct Meta m = {};
+		meta_fill(env, &m, t);
+		jni_obj_write(env, jmeta, x->Meta.cls, Meta_map, &m);
+		trk_dbglog(t, "PlayObserver.on_create");
+		jni_call_void(x->play.PlayObserver.obj, x->play.PlayObserver.on_create, jmeta);
 		jni_vm_detach(jvm);
 
 		auto_skip(t);
 	}
+
+	if (t->meta_changed)
+		t->meta_changed = 0;
 
 	if (handle_seek(t))
 		return PHI_MORE;
@@ -211,8 +242,8 @@ static int play_ui_process(void *f, phi_track *t)
 			errlog("jni_vm_attach: %d", r);
 			return PHI_ERR;
 		}
-		trk_dbglog(t, "PlayObserver_on_update");
-		jni_call_void(x->play.obj_PlayObserver, x->play.PlayObserver_on_update, (jlong)pos_msec);
+		trk_dbglog(t, "PlayObserver.on_update");
+		jni_call_void(x->play.PlayObserver.obj, x->play.PlayObserver.on_update, (jlong)pos_msec);
 		jni_vm_detach(jvm);
 	}
 
@@ -231,10 +262,10 @@ Java_com_github_stsaz_phiola_Phiola_playObserverSet(JNIEnv *env, jobject thiz, j
 {
 	dbglog("%s: enter", __func__);
 	jclass jc = jni_class_obj(jo);
-	x->play.PlayObserver_on_create = jni_func(jc, "on_create", "(" PJT_META ")" JNI_TVOID);
-	x->play.PlayObserver_on_close = jni_func(jc, "on_close", "(" JNI_TINT ")" JNI_TVOID);
-	x->play.PlayObserver_on_update = jni_func(jc, "on_update", "(" JNI_TLONG ")" JNI_TVOID);
-	x->play.obj_PlayObserver = jni_global_ref(jo);
+	x->play.PlayObserver.on_create = jni_func(jc, "on_create", "(" PJT_META ")" JNI_TVOID);
+	x->play.PlayObserver.on_close = jni_func(jc, "on_close", "(" JNI_TINT ")" JNI_TVOID);
+	x->play.PlayObserver.on_update = jni_func(jc, "on_update", "(" JNI_TLONG ")" JNI_TVOID);
+	x->play.PlayObserver.obj = jni_global_ref(jo);
 	dbglog("%s: exit", __func__);
 }
 
@@ -307,7 +338,7 @@ enum {
 JNIEXPORT void JNICALL
 Java_com_github_stsaz_phiola_Phiola_playCmd(JNIEnv *env, jobject thiz, jint cmd, jlong val)
 {
-	dbglog("%s: enter", __func__);
+	dbglog("%s: enter %d %d", __func__, cmd, val);
 	struct core_data *d;
 	switch (cmd) {
 	case PC_PAUSE_TOGGLE:

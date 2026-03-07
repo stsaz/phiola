@@ -73,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
 			core.dbglog(TAG, "Intent.ACTION_VIEW: %s", fn);
 			fn = Util.path_real(fn, core.storage_paths);
 			if (fn != null)
-				explorer_event(fn, Queue.ADD);
+				explorer_event(fn, Queue.ADD | ADD_PLAY);
 		}
 	}
 
@@ -853,7 +853,8 @@ public class MainActivity extends AppCompatActivity {
 		explorer_event(fn, Queue.ADD_RECURSE);
 	}
 
-	static final int EC_ADD_PLAY = 0,
+	private static final int
+		EC_ADD_PLAY = 0,
 		EC_ADD_CUR = 1,
 		EC_ADD_NEW = 2;
 
@@ -868,7 +869,7 @@ public class MainActivity extends AppCompatActivity {
 			return;
 		}
 
-		int flags = Queue.ADD;
+		int flags = Queue.ADD | ADD_PLAY;
 		switch (cmd) {
 		case EC_ADD_NEW:
 			flags = Queue.ADD_RECURSE;
@@ -887,7 +888,11 @@ public class MainActivity extends AppCompatActivity {
 			|| ext.equalsIgnoreCase("m3u8");
 	}
 
+	private static final int ADD_PLAY = 0x80000000;
+
 	private void explorer_event(String fn, int flags) {
+		boolean play = ((flags & ADD_PLAY) != 0);
+		flags &= ~ADD_PLAY;
 		if (flags == Queue.ADD && is_playlist(Util.path_split3(fn)[2])) {
 			plist_open_new(fn);
 			return;
@@ -896,7 +901,7 @@ public class MainActivity extends AppCompatActivity {
 		int n = queue.current_items();
 		queue.current_add(fn, flags);
 		gui.msg_show(this, "Added %d items to playlist", 1);
-		if (flags == Queue.ADD)
+		if (play)
 			queue.current_play(n);
 	}
 
