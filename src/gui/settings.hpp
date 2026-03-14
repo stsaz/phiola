@@ -93,8 +93,8 @@ struct eqlz_set {
 
 struct gui_wsettings {
 	ffui_windowxx	wnd;
-	ffui_label		ldev, lseek_by, lleap_by, lauto_skip;
-	ffui_editxx		eseek_by, eleap_by, eauto_skip;
+	ffui_label		ldev, lseek_by, lleap_by, lauto_skip, lauto_skip_tail;
+	ffui_editxx		eseek_by, eleap_by, eauto_skip, eauto_skip_tail;
 	ffui_checkboxxx	cbdarktheme, cbrg_norm, cbauto_norm;
 	ffui_comboboxxx	cbdev;
 
@@ -119,6 +119,7 @@ FF_EXTERN const ffui_ldr_ctl wsettings_ctls[] = {
 	_(lseek_by),	_(eseek_by),
 	_(lleap_by),	_(eleap_by),
 	_(lauto_skip),	_(eauto_skip),
+	_(lauto_skip_tail),	_(eauto_skip_tail),
 	_(cbrg_norm),
 	_(cbauto_norm),
 
@@ -140,10 +141,10 @@ const ffarg wsettings_args[] = {
 };
 #undef O
 
-static const char* auto_skip_write(xxstr_buf<100> &s)
+static const char* auto_skip_write(xxstr_buf<100> &s, int val)
 {
-	s.zfmt("%u", ffint_abs(gd->conf.auto_skip_sec_percent));
-	if (gd->conf.auto_skip_sec_percent < 0) {
+	s.zfmt("%u", ffint_abs(val));
+	if (val < 0) {
 		s.add_char('%').add_char('\0');
 	}
 	return s.ptr;
@@ -177,6 +178,7 @@ static void wsettings_ui_to_conf()
 	gd->conf.seek_step_delta = xxvec(w->eseek_by.text()).str().uint32(10);
 	gd->conf.seek_leap_delta = xxvec(w->eleap_by.text()).str().uint32(60);
 	gd->conf.auto_skip_sec_percent = auto_skip_read(xxvec(w->eauto_skip.text()).str());
+	gd->conf.auto_skip_tail_sec_pct = auto_skip_read(xxvec(w->eauto_skip_tail.text()).str());
 }
 
 static void wsettings_ui_from_conf()
@@ -197,7 +199,8 @@ static void wsettings_ui_from_conf()
 	xxstr_buf<100> s;
 	w->eseek_by.text(s.zfmt("%u", gd->conf.seek_step_delta));
 	w->eleap_by.text(s.zfmt("%u", gd->conf.seek_leap_delta));
-	w->eauto_skip.text(auto_skip_write(s));
+	w->eauto_skip.text(auto_skip_write(s, gd->conf.auto_skip_sec_percent));
+	w->eauto_skip_tail.text(auto_skip_write(s, gd->conf.auto_skip_tail_sec_pct));
 
 	w->cbeqlz.check(gd->conf.eqlz_on);
 	w->eeqlz.text(gd->conf.eqlz);

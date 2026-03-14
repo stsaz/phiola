@@ -35,6 +35,7 @@ const struct ffarg guimod_args[] = {
 	{ "list.auto_sel",	'b',	O(conf.auto_select) },
 	{ "play.auto_norm",	'b',	O(conf.auto_norm) },
 	{ "play.auto_skip",	'd',	O(conf.auto_skip_sec_percent) },
+	{ "play.auto_skip_tail",	'd',	O(conf.auto_skip_tail_sec_pct) },
 	{ "play.cursor",	'u',	O(cursor) },
 	{ "play.dev",		'u',	O(conf.odev) },
 	{ "play.eqlz",		'=s',	O(conf.eqlz) },
@@ -62,6 +63,7 @@ void mod_userconf_write(ffconfw *cw)
 			ffconfw_add2u(cw, it->name, *(uint*)p);
 	}
 	ffconfw_add2u(cw, "play.auto_skip", (ffint64)gd->conf.auto_skip_sec_percent);
+	ffconfw_add2u(cw, "play.auto_skip_tail", (ffint64)gd->conf.auto_skip_tail_sec_pct);
 	ffconfw_add2z(cw, "play.eqlz", gd->conf.eqlz);
 	if (gd->conf.theme)
 		ffconfw_add2z(cw, "theme", gd->conf.theme);
@@ -79,6 +81,37 @@ static void conf_destroy()
 	ffmem_free(gd->conf.eqlz);
 	ffmem_free(gd->conf.theme);
 }
+
+
+static void* gui_grd_open(phi_track *t)
+{
+	int au = gd->conf.auto_skip_tail_sec_pct;
+	if (au > 0) {
+		t->conf.until_msec = au * 1000;
+		t->conf.until_type = PHI_UN_MSEC_END;
+	} else if (au < 0 && -au <= 100) {
+		t->conf.until_msec = 100 - -au;
+		t->conf.until_type = PHI_UN_PERCENT;
+	}
+
+	return (void*)1;
+}
+
+static void gui_grd_close(void *f, phi_track *t)
+{
+	core->track->stop(t);
+}
+
+static int gui_grd_process(void *f, phi_track *t)
+{
+	return gd->playback_first_filter->process(f, t);
+}
+
+static const phi_filter gui_guard = {
+	gui_grd_open, gui_grd_close, gui_grd_process,
+	"gui-guard"
+};
+
 
 void file_rename(void *name)
 {
@@ -185,7 +218,7 @@ static phi_queue_id list_new()
 	list_filter_close();
 	struct phi_queue_conf qc = {
 		.name = ffsz_allocfmt("Playlist %u", ++gd->playlist_counter),
-		.first_filter = gd->playback_first_filter,
+		.first_filter = &gui_guard,
 		.ui_module = "gui.track",
 	};
 	gd->tab_conversion = 0;
@@ -940,6 +973,7 @@ static void gui_start(void *param)
 
 	struct phi_queue_conf *qc = gd->queue->conf(q);
 	gd->playback_first_filter = qc->first_filter;
+	qc->first_filter = &gui_guard;
 	qc->name = ffsz_dup("Playlist 1");
 	qc_apply(qc);
 

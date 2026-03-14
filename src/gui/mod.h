@@ -110,7 +110,7 @@ struct gui_track_info {
 struct gui_conf {
 	char*	eqlz;
 	char*	theme;
-	int		auto_skip_sec_percent;
+	int		auto_skip_sec_percent, auto_skip_tail_sec_pct; // >0: sec; <0: percent
 	uint	seek_leap_delta, seek_step_delta;
 	uint	odev;
 	uint	volume;
