@@ -180,7 +180,7 @@ static phi_track* track_create(struct phi_track_conf *conf)
 		t->t_start = core->time(NULL, PHI_CORE_TIME_MONOTONIC);
 
 	t->audio.seek = ~0ULL;
-	if (t->conf.seek_msec) {
+	if (t->conf.seek_msec && !t->conf.seek_type) {
 		t->audio.seek = t->conf.seek_msec;
 		t->audio.seek_req = 1;
 	}

@@ -25,7 +25,6 @@ static void* tuiplay_open(phi_track *t)
 	}
 
 	tui_prepare(1);
-	u->show_info = 1;
 	return u;
 }
 
@@ -207,13 +206,19 @@ static int tuiplay_process(void *ctx, phi_track *t)
 
 	uint new_meta = (t->meta_changed && !u->meta_change_seen);
 	u->meta_change_seen = t->meta_changed;
-	if (u->show_info || new_meta) {
+	if (new_meta) {
 		if (!t->audio.format.rate) {
 			errlog(t, "audio sample rate is not set");
 			return PHI_ERR;
 		}
 
-		u->show_info = 0;
+		if (!u->sampsize
+			&& t->conf.seek_msec
+			&& t->conf.seek_type == PHI_UN_PERCENT) {
+			u->seek_msec = samples_to_msec(t->audio.total, t->audio.format.rate) * t->conf.seek_msec / 100;
+			t->audio.seek_req = 1;
+		}
+
 		u->total_samples = t->audio.total;
 		u->played_samples = 0;
 		tui_info(u);

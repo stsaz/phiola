@@ -33,9 +33,9 @@ Options:\n\
   `-number` NUMBER        Exit after N tracks played\n\
   `-tracks` NUMBER[,...]  Select only specific tracks in a .cue list\n\
 \n\
-  `-seek` TIME            Seek to time:\n\
-                          [[HH:]MM:]SS[.MSC]\n\
-  `-until` TIME           Stop at time\n\
+  `-seek` VALUE           Seek to time: [[HH:]MM:]SS[.MSC]\n\
+                        or percentage: NN%\n\
+  `-until` VALUE          Stop at time or percentage\n\
 \n\
   `-rgnorm`               ReplayGain normalizer\n\
   `-norm` \"OPTIONS\"       Auto loudness normalizer. Options:\n\
@@ -87,6 +87,8 @@ struct cmd_play {
 	u_char	remote;
 	u_char	repeat_all;
 	u_char	rg_norm;
+	u_char	until_type;
+	u_char	seek_type;
 	uint	buffer;
 	uint	connect_timeout;
 	uint	device;
@@ -98,9 +100,35 @@ struct cmd_play {
 	uint64	until;
 };
 
-static int play_seek(struct cmd_play *p, ffstr s) { return cmd_time_value(&p->seek, s); }
+static int play_seek(struct cmd_play *p, ffstr s)
+{
+	if (s.len && s.ptr[s.len - 1] == '%') {
+		s.len--;
+		uint i;
+		if (!ffstr_to_uint32(&s, &i) || i > 100)
+			return _ffargs_err(&x->cmd, 1, "incorrect percent value '%S'", &s);
+		p->seek = i;
+		p->seek_type = PHI_UN_PERCENT;
+		return 0;
+	}
 
-static int play_until(struct cmd_play *p, ffstr s) { return cmd_time_value(&p->until, s); }
+	return cmd_time_value(&p->seek, s);
+}
+
+static int play_until(struct cmd_play *p, ffstr s)
+{
+	if (s.len && s.ptr[s.len - 1] == '%') {
+		s.len--;
+		uint i;
+		if (!ffstr_to_uint32(&s, &i) || i > 100)
+			return _ffargs_err(&x->cmd, 1, "incorrect percent value '%S'", &s);
+		p->until = i;
+		p->until_type = PHI_UN_PERCENT;
+		return 0;
+	}
+
+	return cmd_time_value(&p->until, s);
+}
 
 static int play_include(struct cmd_play *p, ffstr s)
 {
@@ -162,8 +190,12 @@ static int play_action(struct cmd_play *p)
 		.tee = (p->tee) ? p->tee : p->dup,
 		.tee_output = !!p->dup,
 		.tracks = *(ffslice*)&p->tracks,
+
 		.seek_msec = p->seek,
+		.seek_type = p->seek_type,
 		.until_msec = p->until,
+		.until_type = p->until_type,
+
 		.afilter = {
 			.rg_normalizer = (p->rg_norm && !p->auto_norm),
 			.auto_normalizer = p->auto_norm,

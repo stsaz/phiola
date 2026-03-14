@@ -29,7 +29,6 @@ typedef struct tui_track {
 	uint total_time_sec;
 	ffvec buf;
 	uint nback;
-	uint show_info :1;
 	uint meta_change_seen :1;
 	uint paused :1;
 } tui_track;

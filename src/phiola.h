@@ -6,13 +6,13 @@
 #include <ffbase/string.h>
 #include <ffbase/time.h>
 
-#define PHI_VERSION  20707
+#define PHI_VERSION  20708
 
 /** Inter-module compatibility version.
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20707
+#define PHI_VERSION_CORE  20708
 
 typedef long long int64;
 typedef unsigned long long uint64;
@@ -266,7 +266,7 @@ enum PHI_CUE_GAP {
 	PHI_CUE_GAP_SKIP,
 };
 
-/** `until_msec` meaning */
+/** `seek_msec` and `until_msec` meaning */
 enum PHI_UN {
 	PHI_UN_MSEC_BEGIN, // msec from beginning
 	PHI_UN_MSEC_END, // msec from ending
@@ -372,6 +372,7 @@ struct phi_track_conf {
 	uint	stream_copy :1;
 	uint	cross_worker_assign :1;
 	uint	tee_output :1; // `tee` is the file name for *output* data, not *input* data
+	uint	seek_type :2; // enum PHI_UN
 	uint	until_type :2; // enum PHI_UN
 };
 
