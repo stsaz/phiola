@@ -33,6 +33,8 @@ static void play_grd_close(void *f, phi_track *t)
 				x->queue.remove(t->qent);
 		}
 	}
+
+	x->core->track->stop(t);
 }
 
 static int play_grd_process(void *f, phi_track *t)
@@ -185,7 +187,7 @@ static void auto_skip(phi_track *t)
 static int play_ui_process(void *f, phi_track *t)
 {
 	uint64 pos_msec = 0;
-	uint pos_sec = 0;
+	uint pos_sec = 0, notify = 0;
 	if (t->audio.format.rate) {
 		if (t->audio.pos != ~0ULL) {
 			pos_msec = samples_to_msec(t->audio.pos, t->audio.format.rate);
@@ -197,6 +199,7 @@ static int play_ui_process(void *f, phi_track *t)
 
 	if (!x->play.opened) {
 		x->play.opened = 1;
+		notify |= 1;
 
 		struct phi_queue_entry *qe = (struct phi_queue_entry*)t->qent;
 		char buf[100];
@@ -208,43 +211,46 @@ static int play_ui_process(void *f, phi_track *t)
 			, pcm_channelstr(t->audio.format.channels));
 		x->metaif.set(&qe->meta, FFSTR_Z("_phi_info"), FFSTR_Z(buf), 0);
 
-		JNIEnv *env;
-		int r = jni_vm_attach(jvm, &env);
-		if (r != 0) {
-			errlog("jni_vm_attach: %d", r);
-			return PHI_ERR;
-		}
-
-		jobject jmeta = jni_obj_new(x->Meta.cls, x->Meta.init);
-		struct Meta m = {};
-		meta_fill(env, &m, t);
-		jni_obj_write(env, jmeta, x->Meta.cls, Meta_map, &m);
-		trk_dbglog(t, "PlayObserver.on_create");
-		jni_call_void(x->play.PlayObserver.obj, x->play.PlayObserver.on_create, jmeta);
-		jni_vm_detach(jvm);
-
 		auto_skip(t);
 	}
 
 	if (t->meta_changed)
 		t->meta_changed = 0;
 
-	if (handle_seek(t))
-		return PHI_MORE;
+	int rc = handle_seek(t);
 
 	if (pos_sec != x->play.pos_prev_sec) {
 		x->play.pos_prev_sec = pos_sec;
+		notify |= 2;
+	}
 
+	if (notify) {
 		JNIEnv *env;
 		int r = jni_vm_attach(jvm, &env);
-		if (r != 0) {
+		if (r) {
 			errlog("jni_vm_attach: %d", r);
 			return PHI_ERR;
 		}
-		trk_dbglog(t, "PlayObserver.on_update");
-		jni_call_void(x->play.PlayObserver.obj, x->play.PlayObserver.on_update, (jlong)pos_msec);
+
+		if (notify & 1) {
+			jobject jmeta = jni_obj_new(x->Meta.cls, x->Meta.init);
+			struct Meta m = {};
+			meta_fill(env, &m, t);
+			jni_obj_write(env, jmeta, x->Meta.cls, Meta_map, &m);
+			trk_dbglog(t, "PlayObserver.on_create");
+			jni_call_void(x->play.PlayObserver.obj, x->play.PlayObserver.on_create, jmeta);
+		}
+
+		if (notify & 2) {
+			trk_dbglog(t, "PlayObserver.on_update");
+			jni_call_void(x->play.PlayObserver.obj, x->play.PlayObserver.on_update, (jlong)pos_msec);
+		}
+
 		jni_vm_detach(jvm);
 	}
+
+	if (rc)
+		return rc;
 
 	t->data_out = t->data_in;
 	return (t->chain_flags & PHI_FFIRST) ? PHI_DONE : PHI_OK;

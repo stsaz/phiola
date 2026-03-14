@@ -89,6 +89,8 @@ public class MainActivity extends AppCompatActivity {
 
 		// If already playing - get in sync
 		track.observer_notify(trk_nfy);
+
+		list_on_change(QueueNotify.UPDATE, -1);
 	}
 
 	protected void onStop() {
