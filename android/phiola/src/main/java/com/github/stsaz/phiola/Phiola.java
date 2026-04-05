@@ -53,7 +53,8 @@ class Phiola {
 		AF_OPUS = 4,
 		AF_OPUS_VOICE = 5,
 		AF_MP3 = 6,
-		AF_WAV = 7;
+		AF_WAV = 7,
+		AF_FLAC24 = 8;
 
 	static class ConvertParams {
 		ConvertParams() {

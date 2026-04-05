@@ -136,6 +136,11 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 	};
 
 	switch (rp.format) {
+	case AF_FLAC24:
+		c.iaudio.format.format = PHI_PCM_24;
+		c.oaudio.format.format = PHI_PCM_24;
+		break;
+
 	case AF_AAC_HE:
 		c.aac.profile = 'h';
 		c.aac.quality = (uint)rp.quality;

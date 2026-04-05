@@ -219,6 +219,7 @@ class RecSettings {
 		"AAC-HE",
 		"AAC-HEv2",
 		"FLAC",
+		"FLAC (24 bit)",
 		"MP3",
 		"Opus",
 		"Opus-VOIP"
@@ -228,6 +229,7 @@ class RecSettings {
 		Phiola.AF_AAC_HE,
 		Phiola.AF_AAC_HE2,
 		Phiola.AF_FLAC,
+		Phiola.AF_FLAC24,
 		Phiola.AF_MP3,
 		Phiola.AF_OPUS,
 		Phiola.AF_OPUS_VOICE,
@@ -236,6 +238,7 @@ class RecSettings {
 		"m4a",
 		"m4a",
 		"m4a",
+		"flac",
 		"flac",
 		"mp3",
 		"opus",
