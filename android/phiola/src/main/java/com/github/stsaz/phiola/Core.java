@@ -5,13 +5,21 @@ package com.github.stsaz.phiola;
 
 import androidx.annotation.NonNull;
 
+import android.app.Activity;
 import android.content.ClipboardManager;
 import android.content.ClipData;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.util.Log;
+
+import androidx.core.app.ActivityCompat;
 
 class Core extends Util {
 	private static Core instance;
@@ -98,6 +106,28 @@ class Core extends Util {
 		qu.close();
 		sysjobs.uninit();
 		phiola.destroy();
+	}
+
+	boolean sys_permisson_request(Activity activity, String[] perms, int code, int ext_stg_mgr_req_code) {
+		boolean r = true;
+
+		for (String p : perms) {
+			if (ActivityCompat.checkSelfPermission(activity, p) != PackageManager.PERMISSION_GRANTED) {
+				ActivityCompat.requestPermissions(activity, perms, code);
+				r = false;
+				break;
+			}
+		}
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+			if (ext_stg_mgr_req_code != 0 && !Environment.isExternalStorageManager()) {
+				Intent it = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:" + BuildConfig.APPLICATION_ID));
+				ActivityCompat.startActivityForResult(activity, it, ext_stg_mgr_req_code, null);
+				r = false;
+			}
+		}
+
+		return r;
 	}
 
 	Queue queue() {

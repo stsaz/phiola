@@ -2,7 +2,7 @@
 2023, Simon Zolin */
 
 #include <track.h>
-#include <netmill.h>
+#include <netmill-http.h>
 #include <util/http1.h>
 #include <util/kq.h>
 #include <util/util.h>

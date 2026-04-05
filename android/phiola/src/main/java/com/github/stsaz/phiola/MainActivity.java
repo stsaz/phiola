@@ -5,7 +5,6 @@ package com.github.stsaz.phiola;
 
 import android.Manifest;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.PorterDuff;
 import android.os.Build;
@@ -21,7 +20,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.SearchView;
-import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import java.io.File;
@@ -385,29 +383,23 @@ public class MainActivity extends AppCompatActivity {
 		}
 	}
 
-	/** Request system permissions */
 	private void init_system() {
-		String[] perms = new String[]{
-				Manifest.permission.READ_EXTERNAL_STORAGE,
-				Manifest.permission.WRITE_EXTERNAL_STORAGE,
+	}
+
+	private boolean user_ask_storage() {
+		final String[] perms = new String[]{
+			Manifest.permission.READ_EXTERNAL_STORAGE,
+			Manifest.permission.WRITE_EXTERNAL_STORAGE,
 		};
-		for (String perm : perms) {
-			if (ActivityCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED) {
-				core.dbglog(TAG, "ActivityCompat.requestPermissions: %s", perm);
-				ActivityCompat.requestPermissions(this, perms, REQUEST_PERM_READ_STORAGE);
-				break;
-			}
-		}
+		return core.sys_permisson_request(this, perms, REQUEST_PERM_READ_STORAGE, REQUEST_STORAGE_ACCESS);
 	}
 
 	private boolean user_ask_record() {
-		String perm = Manifest.permission.RECORD_AUDIO;
-		if (ActivityCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED) {
-			core.dbglog(TAG, "ActivityCompat.requestPermissions: %s", perm);
-			ActivityCompat.requestPermissions(this, new String[]{perm}, REQUEST_PERM_RECORD);
-			return false;
-		}
-		return true;
+		final String[] perms = new String[]{
+			Manifest.permission.WRITE_EXTERNAL_STORAGE,
+			Manifest.permission.RECORD_AUDIO,
+		};
+		return core.sys_permisson_request(this, perms, REQUEST_PERM_RECORD, REQUEST_STORAGE_ACCESS);
 	}
 
 	/** Initialize core and modules */
@@ -674,9 +666,17 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void explorer_click() {
+		list_leave();
+
+		if (gui.view == GUI.V_PLAYLIST) {
+			if (!user_ask_storage()) {
+				b.bexplorer.setChecked(false);
+				return;
+			}
+		}
+
 		b.bexplorer.setChecked(true);
 		b.bplaylist.setChecked(false);
-		list_leave();
 
 		String name = null;
 		if (gui.view == GUI.V_PLAYLIST) {

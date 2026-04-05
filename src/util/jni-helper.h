@@ -93,6 +93,12 @@ struct jni_class_t {
 	jmethodID init; // = jni_func(cls, "<init>", "()V")
 };
 
+static inline void jni_class_set(JNIEnv *env, struct jni_class_t *c, const char *cname)
+{
+	c->cls = (*env)->NewGlobalRef(env, (*env)->FindClass(env, cname));
+	c->init = (*env)->GetMethodID(env, c->cls, "<init>", "()V");
+}
+
 /** jclass = typeof(obj) */
 #define jni_class_obj(jobj) \
 	(*env)->GetObjectClass(env, jobj)
@@ -355,14 +361,14 @@ static inline void jni_obj_read(JNIEnv *env, void *dst, struct jni_cmap *map, jo
 		else if (it->type == 'l')
 			*(jlong*)ptr = jni_obj_long(src, it->field_id);
 		else if (it->type == 'z')
-			*(jlong*)ptr = jni_obj_bool(src, it->field_id);
+			*(jboolean*)ptr = jni_obj_bool(src, it->field_id);
 		else
 			*(jobject*)ptr = jni_obj_jo(src, it->field_id);
 	}
 }
 
 /** Java.obj = C.obj */
-static inline void jni_obj_write(JNIEnv *env, jobject *dst, jclass cls, struct jni_cmap *map, const void *src)
+static inline void jni_obj_write(JNIEnv *env, jobject dst, jclass cls, struct jni_cmap *map, const void *src)
 {
 	if (!map->field_id)
 		jni_obj_fields(env, map, cls);
@@ -376,15 +382,24 @@ static inline void jni_obj_write(JNIEnv *env, jobject *dst, jclass cls, struct j
 	} u;
 	for (const struct jni_cmap *it = map;  *it->name;  it++) {
 		u.ptr = (char*)src + it->off;
-		if (it->type == 'i' && *u.i) {
-			jni_obj_int_set(dst, it->field_id, *u.i);
-		} else if (it->type == 'l' && *u.l) {
-			jni_obj_long_set(dst, it->field_id, *u.l);
-		} else if (it->type == 'z' && *u.z) {
-			jni_obj_bool_set(dst, it->field_id, *u.z);
-		} else if (*u.o) {
-			jni_obj_jo_set(dst, it->field_id, *u.o);
-			jni_local_unref(*u.o);
+		switch (it->type) {
+		case 'i':
+			if (*u.i)
+				jni_obj_int_set(dst, it->field_id, *u.i);
+			break;
+		case 'l':
+			if (*u.l)
+				jni_obj_long_set(dst, it->field_id, *u.l);
+			break;
+		case 'z':
+			if (*u.z)
+				jni_obj_bool_set(dst, it->field_id, *u.z);
+			break;
+		default:
+			if (*u.o) {
+				jni_obj_jo_set(dst, it->field_id, *u.o);
+				jni_local_unref(*u.o);
+			}
 		}
 	}
 }

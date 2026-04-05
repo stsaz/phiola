@@ -4,10 +4,6 @@
 package com.github.stsaz.phiola;
 
 import android.content.Intent;
-import android.net.Uri;
-import android.os.Build;
-import android.os.Environment;
-import android.provider.Settings;
 
 import androidx.core.app.ActivityCompat;
 
@@ -101,14 +97,6 @@ class Explorer {
 	Request user permission to access file system. */
 	private void list_show(String path) {
 		core.dbglog(TAG, "list_show: %s", path);
-
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-			if (!Environment.isExternalStorageManager()) {
-				Intent it = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION
-						, Uri.parse("package:" + BuildConfig.APPLICATION_ID));
-				ActivityCompat.startActivityForResult(main, it, MainActivity.REQUEST_STORAGE_ACCESS, null);
-			}
-		}
 
 		UtilNative.Files f = core.util.dirList(path, 0);
 		this.file_names_full = f.file_names;
