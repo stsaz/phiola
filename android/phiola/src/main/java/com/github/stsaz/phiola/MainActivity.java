@@ -387,18 +387,26 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private boolean user_ask_storage() {
-		final String[] perms = new String[]{
-			Manifest.permission.READ_EXTERNAL_STORAGE,
-			Manifest.permission.WRITE_EXTERNAL_STORAGE,
-		};
+		String[] perms = new String[]{};
+		if (Build.VERSION.SDK_INT < 30) {
+			perms = new String[]{
+				Manifest.permission.READ_EXTERNAL_STORAGE,
+				Manifest.permission.WRITE_EXTERNAL_STORAGE,
+			};
+		}
 		return core.sys_permisson_request(this, perms, REQUEST_PERM_READ_STORAGE, REQUEST_STORAGE_ACCESS);
 	}
 
 	private boolean user_ask_record() {
-		final String[] perms = new String[]{
-			Manifest.permission.WRITE_EXTERNAL_STORAGE,
+		String[] perms = new String[]{
 			Manifest.permission.RECORD_AUDIO,
 		};
+		if (Build.VERSION.SDK_INT < 30) {
+			perms = new String[]{
+				Manifest.permission.RECORD_AUDIO,
+				Manifest.permission.WRITE_EXTERNAL_STORAGE,
+			};
+		}
 		return core.sys_permisson_request(this, perms, REQUEST_PERM_RECORD, REQUEST_STORAGE_ACCESS);
 	}
 
@@ -670,6 +678,7 @@ public class MainActivity extends AppCompatActivity {
 
 		if (gui.view == GUI.V_PLAYLIST) {
 			if (!user_ask_storage()) {
+				core.errlog(TAG, "No permissions for accessing storage");
 				b.bexplorer.setChecked(false);
 				return;
 			}
@@ -1249,8 +1258,10 @@ public class MainActivity extends AppCompatActivity {
 
 	/** Start recording */
 	private void rec_start() {
-		if (!user_ask_record())
+		if (!user_ask_record()) {
+			core.errlog(TAG, "No permissions for recording");
 			return;
+		}
 
 		TrackHandle trec = track.rec_start((code, filename) -> {
 				core.tq.post(() -> {
