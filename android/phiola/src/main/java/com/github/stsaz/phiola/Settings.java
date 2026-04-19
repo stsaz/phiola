@@ -205,6 +205,7 @@ class RecSettings {
 	String	rec_enc, rec_fmt;
 	int		rec_channels;
 	int		rec_rate;
+	int		rec_input_format;
 	int		rec_bitrate;
 	int		rec_buf_len_ms;
 	int		rec_until_sec;
@@ -253,6 +254,20 @@ class RecSettings {
 		"unprocessed",
 		"voice_performance",
 	};
+	static final String[] sample_formats_str = {
+		"Auto",
+		"int16",
+		"int24",
+		"int32",
+		"float32",
+	};
+	static final Integer[] sample_formats = {
+		0,
+		Phiola.SF_INT16,
+		Phiola.SF_INT24,
+		Phiola.SF_INT32,
+		Phiola.SF_FLOAT32,
+	};
 
 	RecSettings(Core core) {
 		this.core = core;
@@ -273,6 +288,7 @@ class RecSettings {
 		rec_enc				= c.value(Conf.REC_ENC);
 		rec_channels		= c.number(Conf.REC_CHANNELS);
 		rec_rate			= c.number(Conf.REC_RATE);
+		rec_input_format	= sample_format(c.value(Conf.REC_IN_FMT));
 		rec_bitrate			= c.number(Conf.REC_BITRATE);
 		rec_buf_len_ms		= c.number(Conf.REC_BUF_LEN);
 		rec_danorm			= c.enabled(Conf.REC_DANORM);
@@ -291,6 +307,7 @@ class RecSettings {
 			+ "rec_enc %s\n"
 			+ "rec_channels %d\n"
 			+ "rec_rate %d\n"
+			+ "rec_in_fmt %s\n"
 			+ "rec_bitrate %d\n"
 			+ "rec_buf_len %d\n"
 			+ "rec_until %d\n"
@@ -306,6 +323,7 @@ class RecSettings {
 			, rec_enc
 			, rec_channels
 			, rec_rate
+			, sample_format_str(rec_input_format)
 			, rec_bitrate
 			, rec_buf_len_ms
 			, rec_until_sec
@@ -338,6 +356,15 @@ class RecSettings {
 			rec_until_sec = 3600;
 		if (rec_src_preset.equals("default"))
 			rec_src_preset = "";
+	}
+
+	static int sample_format(String s) {
+		int i = Arrays.asList(sample_formats_str).indexOf(s);
+		return (i >= 0) ? sample_formats[i] : 0;
+	}
+	static String sample_format_str(int sf) {
+		int i = Arrays.asList(sample_formats).indexOf(sf);
+		return sample_formats_str[i];
 	}
 }
 

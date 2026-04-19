@@ -113,7 +113,7 @@ EOF
 if ! podman container exists $CONTAINER_NAME ; then
 	if ! podman image exists $IMAGE_NAME ; then
 		# Create builder image
-		image_$OS_$CPU
+		image_${OS}_$CPU
 	fi
 
 	# Create builder container

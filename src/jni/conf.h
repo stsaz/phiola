@@ -41,6 +41,7 @@ static const char setting_names[][20] = {
 	"rec_enc",
 	"rec_exclusive",
 	"rec_gain",
+	"rec_in_fmt",
 	"rec_list_add",
 	"rec_longclick",
 	"rec_name",

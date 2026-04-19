@@ -56,6 +56,13 @@ class Phiola {
 		AF_WAV = 7,
 		AF_FLAC24 = 8;
 
+	// enum PHI_PCM
+	static final int
+		SF_INT16 = 16,
+		SF_INT24 = 24,
+		SF_INT32 = 32,
+		SF_FLOAT32 = 32 | 0x0100;
+
 	static class ConvertParams {
 		ConvertParams() {
 			out_name = "";
@@ -95,6 +102,7 @@ class Phiola {
 
 		int channels;
 		int sample_rate;
+		int sample_format; // SF_*
 
 		static final int
 			RECF_EXCLUSIVE = 1,

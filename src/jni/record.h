@@ -75,6 +75,7 @@ struct RecordParams {
 	jint format;
 	jint channels;
 	jint sample_rate;
+	jint sample_format;
 	jint flags;
 	jstring src_preset;
 	jint buf_len_msec;
@@ -89,6 +90,7 @@ static struct jni_cmap RecordParams_map[] = {
 	_I(format),
 	_I(channels),
 	_I(sample_rate),
+	_I(sample_format),
 	_I(flags),
 	_S(src_preset),
 	_I(buf_len_msec),
@@ -164,6 +166,9 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 		c.opus.mode = !!(rp.format == AF_OPUS_VOICE);
 		break;
 	}
+
+	if (rp.sample_format)
+		c.iaudio.format.format = rp.sample_format;
 
 	const phi_track_if *track = x->core->track;
 	phi_track *t = track->create(&c);

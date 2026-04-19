@@ -133,6 +133,7 @@ class Track {
 		p.format = RecSettings.rec_encoders[rec_format_index(core.rec.rec_enc)];
 		p.channels = core.rec.rec_channels;
 		p.sample_rate = core.rec.rec_rate;
+		p.sample_format = core.rec.rec_input_format;
 
 		if (core.rec.rec_exclusive)
 			p.flags |= Phiola.RecordParams.RECF_EXCLUSIVE;

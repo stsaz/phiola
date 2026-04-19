@@ -469,6 +469,10 @@ public class SettingsActivity extends AppCompatActivity {
 		return Arrays.asList(RecSettings.rec_formats).indexOf(s);
 	}
 
+	private static int rec_sample_format_i(int sf) {
+		return Arrays.asList(RecSettings.sample_formats).indexOf(sf);
+	}
+
 	private static int rec_src_preset_index(String s) {
 		return Arrays.asList(RecSettings.rec_src_presets).indexOf(s);
 	}
@@ -598,6 +602,12 @@ public class SettingsActivity extends AppCompatActivity {
 		b.spRecEnc.setSelection(rec_format_index(core.rec.rec_enc));
 		b.sbRecBitrate.setProgress(rec_bitrate_progress(core.rec.rec_bitrate));
 		b.eRecBitrate.setText(Integer.toString(core.rec.rec_bitrate));
+
+		ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, RecSettings.sample_formats_str);
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		b.spInFmt.setAdapter(adapter);
+		b.spInFmt.setSelection(rec_sample_format_i(core.rec.rec_input_format));
+
 		b.eRecBufLen.setText(core.int_to_str(core.rec.rec_buf_len_ms));
 		b.sbRecUntil.setProgress(rec_until_progress(core.rec.rec_until_sec));
 		b.eRecUntil.setText(time_str(core.rec.rec_until_sec));
@@ -617,6 +627,7 @@ public class SettingsActivity extends AppCompatActivity {
 		core.rec.rec_channels = b.spRecChannels.getSelectedItemPosition();
 		core.rec.rec_rate = core.str_to_uint(b.eRecRate.getText().toString(), 0);
 		core.rec.rec_enc = RecSettings.rec_formats[b.spRecEnc.getSelectedItemPosition()];
+		core.rec.rec_input_format = core.rec.sample_format(RecSettings.sample_formats_str[b.spInFmt.getSelectedItemPosition()]);
 		core.rec.rec_buf_len_ms = core.str_to_uint(b.eRecBufLen.getText().toString(), -1);
 		core.rec.rec_until_sec = time_sec(b.eRecUntil.getText().toString());
 		core.rec.rec_danorm = b.swRecDanorm.isChecked();

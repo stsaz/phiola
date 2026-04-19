@@ -407,6 +407,19 @@
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:text="@string/sett_rec_in_format"
+			android:textColor="@color/text" />
+		<Spinner
+			android:id="@+id/spInFmt"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:spinnerMode="dropdown" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:layout_marginTop="@dimen/sett_margin"
 			android:text="@string/sett_rec_chan"
 			android:textColor="@color/text" />
