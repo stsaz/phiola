@@ -285,6 +285,13 @@ static void lh_save_complete(void *param, phi_track *t)
 	if (ffint_fetch_add(&lh->counter, -1) - 1)
 		return;
 
+	ffvec_free(&lh->tasks);
+	ffvec_free(&lh->buf);
+	ffvec_free(&lh->pl_dir);
+	ffvec_free(&lh->ds_path);
+	ffdirscan_close(&lh->ds);
+	lh_free_table(lh);
+
 	x->exit_code = t->error & 0xff;
 	x->core->sig(PHI_CORE_STOP);
 }
@@ -329,13 +336,6 @@ static void lh_ready(void *param)
 		}
 		ntotal++;
 	}
-
-	ffvec_free(&lh->tasks);
-	ffvec_free(&lh->buf);
-	ffvec_free(&lh->pl_dir);
-	ffvec_free(&lh->ds_path);
-	ffdirscan_close(&lh->ds);
-	lh_free_table(lh);
 
 	infolog("%s: corrected %u/%u paths", lname, nfixed, ntotal);
 	x->queue->save(q, lname, lh_save_complete, lh);
