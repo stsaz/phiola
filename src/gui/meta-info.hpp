@@ -131,6 +131,7 @@ void winfo_show(uint show, uint idx)
 	// keep the entry locked
 
 	w->wnd.show(1);
+	w->wnd.present();
 }
 
 static void winfo_edit(uint idx, const char *new_text)

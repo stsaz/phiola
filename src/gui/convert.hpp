@@ -236,8 +236,9 @@ static void wconvert_browse()
 	gui_wconvert *c = gg->wconvert;
 
 	xxvec v;
-	v.add_f("%S/%S.%S"
+	v.add_f("%S%c%S.%S"
 		, &xxvec(c->edir.text()).str()
+		, FFPATH_SLASH
 		, &xxvec(c->ename.text()).str()
 		, &xxvec(c->cbext.text()).str());
 
@@ -312,4 +313,5 @@ void wconvert_show(uint show, ffslice items)
 
 	gui_core_task_slice(convert_add, items);
 	c->wnd.show(1);
+	c->wnd.present();
 }

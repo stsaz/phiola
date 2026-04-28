@@ -48,6 +48,7 @@ void wgoto_show(uint pos)
 	g->etime.sel_all();
 	g->etime.focus();
 	g->wnd.show(1);
+	g->wnd.present();
 }
 
 void wgoto_init()

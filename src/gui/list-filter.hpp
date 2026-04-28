@@ -33,6 +33,8 @@ void wlistfilter_show(uint show)
 	if (show)
 		w->tfilter.focus();
 	w->wnd.show(show);
+	if (show)
+		w->wnd.present();
 }
 
 void wlistfilter_init()

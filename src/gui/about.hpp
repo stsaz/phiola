@@ -63,4 +63,5 @@ void wabout_show(uint show)
 #endif
 
 	a->wnd.show(1);
+	a->wnd.present();
 }

@@ -284,6 +284,7 @@ void wsettings_show(uint show)
 	}
 
 	w->wnd.show(1);
+	w->wnd.present();
 }
 
 void wsettings_init()

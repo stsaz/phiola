@@ -345,7 +345,7 @@ void wrecord_show(uint show)
 		if (w->wnd_pos)
 			conf_wnd_pos_read(&w->wnd, FFSTR_Z(w->wnd_pos));
 		ffmem_free(w->wnd_pos);
-		
+
 		wrecord_ui_from_conf();
 
 		if (gd->recording_track)
@@ -353,4 +353,5 @@ void wrecord_show(uint show)
 	}
 
 	w->wnd.show(1);
+	w->wnd.present();
 }

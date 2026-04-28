@@ -41,6 +41,8 @@ void wlistadd_show(uint show)
 	if (show)
 		w->turi.focus();
 	w->wnd.show(show);
+	if (show)
+		w->wnd.present();
 }
 
 void wlistadd_init()
