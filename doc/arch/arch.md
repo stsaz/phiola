@@ -292,6 +292,32 @@ q->conf.tconf.meta = ... <- e.g. `convert -m title=value`
 ui: read qe->meta
 ```
 
+## AF: Auto-Normalizer
+
+Chain:
+
+```
+... -> loudness -----> auto-norm ---------> ...
+                LM=...           pcm_gain()
+                LG=...
+```
+
+e.g. for Target=-14:
+
+```
+LoudnessG  LM   Gain
+======================
+-inf       -16  0     // LG is not yet ready
+-inf       -12  -2
+
+-8              -6
+-14             0
+-20             +6
+
+< -10      -8   -6    // LM is way louder than LG
+```
+
+
 ## GUI Playlist Synchronization
 
 ```C
