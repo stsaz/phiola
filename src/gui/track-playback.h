@@ -144,6 +144,7 @@ static int gtrk_process(void *ctx, phi_track *t)
 		gd->qe_active = qe;
 
 		struct gui_track_info *ti = &gd->playback_track_info;
+		ti->q = gd->queue->queue(qe);
 		ti->duration_sec = gt->duration_sec;
 		ti->pos_sec = 0;
 		ti->index_old = ~0U;

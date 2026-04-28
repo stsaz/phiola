@@ -102,6 +102,7 @@ struct list_info {
 };
 
 struct gui_track_info {
+	phi_queue_id q;
 	uint index_old, index_new;
 	uint pos_sec, duration_sec;
 	char buf[256];
