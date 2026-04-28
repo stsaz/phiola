@@ -13,13 +13,15 @@ static const struct {
 	{ "wav",	0 },
 };
 
+static int out_file_ext_index(xxstr val);
+
 struct gui_wrecord {
 	ffui_windowxx		wnd;
 	ffui_labelxx		ldir, lname, lext, ldev, lchan, l_rate, luntil, laacq, lvorbisq, lopusq, lmp3q;
 	ffui_editxx			edir, ename, e_rate, euntil, eaacq, evorbisq, eopusq, emp3q;
 	ffui_comboboxxx		cbext, cbdev, cbchan;
 	ffui_checkboxxx		cbloopback, cbexcl;
-	ffui_buttonxx		bstart;
+	ffui_buttonxx		bbrowse, bstart;
 
 	xxstr conf_dir, conf_name, conf_ext;
 	uint conf_aacq, conf_vorbisq, conf_opusq, conf_mp3q;
@@ -37,6 +39,7 @@ struct gui_wrecord {
 #define _(m)  FFUI_LDR_CTL(gui_wrecord, m)
 FF_EXTERN const ffui_ldr_ctl wrecord_ctls[] = {
 	_(wnd),
+	_(bbrowse),
 	_(ldir),	_(edir),
 	_(lname),	_(ename),
 	_(lext),	_(cbext),
@@ -112,6 +115,32 @@ static char* wrec_time_str(char *buf, size_t cap, uint msec)
 	uint n = fftime_tostr1(&dt, buf, cap, FFTIME_HMS_MSEC);
 	buf[n] = '\0';
 	return buf;
+}
+
+static void wrec_browse()
+{
+	gui_wrecord *w = gg->wrecord;
+
+	xxvec v;
+	v.add_f("%S%c%S.%S"
+		, &xxvec(w->edir.text()).str()
+		, FFPATH_SLASH
+		, &xxvec(w->ename.text()).str()
+		, &xxvec(w->cbext.text()).str());
+
+	char *fn;
+	if (!(fn = ffui_dlg_save(&gg->dlg, &w->wnd, (char*)v.ptr, v.len)))
+		return;
+
+	ffstr path, name, ext;
+	ffpath_split3_str(FFSTR_Z(fn), &path, &name, &ext);
+
+	w->edir.text(path);
+	w->ename.text(name);
+
+	int i = out_file_ext_index(ext);
+	if (i >= 0)
+		w->cbext.set(i);
 }
 
 static void wrecord_ui_to_conf()
@@ -227,7 +256,10 @@ static void channels_fill()
 static void wrecord_ui_from_conf()
 {
 	gui_wrecord *w = gg->wrecord;
-	w->edir.text((w->conf_dir.len) ? w->conf_dir : gd->user_conf_dir);
+	xxstr ss = (w->conf_dir.len) ? w->conf_dir : gd->user_conf_dir;
+	if (ss.len && ffpath_slash(ss.last_char()))
+		ss.len--;
+	w->edir.text(ss);
 	w->ename.text((w->conf_name.len) ? w->conf_name : "rec-@nowdate-@nowtime");
 	w->conf_dir.free();
 	w->conf_name.free();
@@ -310,6 +342,9 @@ static void wrecord_action(ffui_window *wnd, int id)
 		w->cbdev.clear();
 		w->conf_idev = adevices_fill((w->conf_loopback) ? PHI_ADEV_PLAYBACK : PHI_ADEV_CAPTURE, w->cbdev, w->conf_idev);
 		break;
+
+	case A_REC_BROWSE:
+		wrec_browse();  break;
 
 	case A_REC_EXT_CHG:
 		wrec_ext_chg(w->cbext.get());  break;
