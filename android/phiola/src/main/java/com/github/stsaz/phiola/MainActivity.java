@@ -142,11 +142,21 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private boolean menu_file_click(MenuItem item) {
+		String url = track.cur_url();
+
 		switch (item.getItemId()) {
-
 		case R.id.action_file_tags_show:
-			file_tags_show();  break;
+			file_tags_show();
+			return true;
+		}
 
+		if (!url.startsWith("/")) {
+			if (!url.isEmpty())
+				core.errlog(TAG, "Not a local file: %s", url);
+			return false;
+		}
+
+		switch (item.getItemId()) {
 		case R.id.action_file_convert:
 			file_convert(); break;
 
@@ -275,42 +285,41 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private boolean menu_item_click(MenuItem item) {
-		String fn;
+		String url = queue.visible_url(item_menu_qi);
 
 		switch (item.getItemId()) {
 
 		case R.id.action_list_remove:
-			queue.current_remove(item_menu_qi);  break;
+			queue.current_remove(item_menu_qi);
+			return true;
+
+		case R.id.action_file_show_info:
+			file_tags_show_sel(item_menu_qi);
+			return true;
+
+		case R.id.action_list_next_add_sel:
+			list_next_add(url);
+			return true;
+		}
+
+		if (!url.startsWith("/")) {
+			core.errlog(TAG, "Not a local file: %s", url);
+			return false;
+		}
+
+		switch (item.getItemId()) {
 
 		case R.id.action_file_explore:
 			explorer_file_show(queue.visible_url(item_menu_qi));  break;
 
 		case R.id.action_file_delete:
-			fn = queue.visible_url(item_menu_qi);
-			if (!fn.isEmpty())
-				file_delete_ask(FD_VISIBLE, item_menu_qi, fn);
-			break;
+			file_delete_ask(FD_VISIBLE, item_menu_qi, url);  break;
 
 		case R.id.action_file_move:
-			fn = queue.visible_url(item_menu_qi);
-			if (!fn.isEmpty())
-				file_move(fn, item_menu_qi);
-			break;
+			file_move(url, item_menu_qi);  break;
 
 		case R.id.action_file_rename:
-			fn = queue.visible_url(item_menu_qi);
-			if (!fn.isEmpty())
-				file_rename_ask(fn, item_menu_qi);
-			break;
-
-		case R.id.action_file_show_info:
-			file_tags_show_sel(item_menu_qi);  break;
-
-		case R.id.action_list_next_add_sel:
-			fn = queue.visible_url(item_menu_qi);
-			if (!fn.isEmpty())
-				list_next_add(fn);
-			break;
+			file_rename_ask(url, item_menu_qi);  break;
 
 		default:
 			return false;

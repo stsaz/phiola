@@ -14,5 +14,3 @@ It's probably because Windows denies access to your microphone device.  Here's h
 1. Open `Microphone Privacy Settings` window.
 2. Enable `Allow apps to access your microphone` checkbox.
 3. Enable `Allow desktop apps to access your microphone` checkbox.
-
-More info and screenshots are here: https://github.com/stsaz/fmedia/issues/71#issuecomment-1115407629

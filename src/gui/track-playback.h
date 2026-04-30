@@ -172,10 +172,19 @@ static int gtrk_process(void *ctx, phi_track *t)
 		ffstr artist = {}, title = {};
 		core->metaif->find(&t->meta, FFSTR_Z("artist"), &artist, 0);
 		core->metaif->find(&t->meta, FFSTR_Z("title"), &title, 0);
-		if (!title.len)
-			ffpath_split3_str(FFSTR_Z(t->conf.ifile.name), NULL, &title, NULL); // use filename as a title
-		ffsz_format(ti->buf, sizeof(ti->buf), "%S - %S - phiola"
-			, &artist, &title);
+		if (title.len) {
+			ffsz_format(ti->buf, sizeof(ti->buf), "%S - %S - phiola"
+				, &artist, &title);
+		} else {
+			ffstr s;
+			if (url_checkz(qe->url))
+				ffstr_setz(&s, qe->url); // use URL as a title
+			else
+				ffpath_split3_str(FFSTR_Z(qe->url), NULL, &s, NULL); // use filename as a title
+
+			ffsz_format(ti->buf, sizeof(ti->buf), "%S - phiola"
+				, &s);
+		}
 
 		gui_task_ptr(wmain_track_new, ti);
 

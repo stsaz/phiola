@@ -97,7 +97,7 @@ EOF
 
 	# Create builder container
 	podman create --attach --tty \
-	 -v `pwd`/..:/src \
+	 -v $(pwd)/..:/src \
 	 -v $ANDROID_HOME:/Android \
 	 -v $GRADLE_DIR:/root/.gradle \
 	 --workdir /src/phiola \

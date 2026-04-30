@@ -10,6 +10,8 @@
 
 ## Playback Track
 
+Start next track when the current one is almost finished.
+
 ```
 q_guard  file  q_agent  ui  adev
 ================================

@@ -152,7 +152,7 @@ LIB_DIR := $(PHIOLA)/android/phiola/libs/$(LIB_DIR_CPU)
 ifeq "$(TARGETS)" ""
 override TARGETS := libphiola.so $(MODS)
 endif
-libs:
+libs: $(TARGETS)
 	$(MKDIR) $(LIB_DIR)
 	$(SUBMAKE) strip-debug
 	cp -u $(LIBS3) *.so *.debug \
