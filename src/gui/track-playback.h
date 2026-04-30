@@ -132,7 +132,7 @@ static int gtrk_process(void *ctx, phi_track *t)
 		}
 
 		gt->sample_rate = t->audio.format.rate;
-		gt->duration_sec = samples_to_msec(t->audio.total, gt->sample_rate) / 1000;
+		gt->duration_sec = (t->audio.total != ~0ULL) ? samples_to_msec(t->audio.total, gt->sample_rate) / 1000 : ~0U;
 	}
 
 	if ((!gt->opened || t->meta_changed) && wmain_ready()) {

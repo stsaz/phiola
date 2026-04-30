@@ -180,7 +180,7 @@ void wmain_track_new(void *param)
 	}
 
 	wmain_status_id(ST_UNPAUSED);
-	m->tpos.range(ti->duration_sec);
+	m->tpos.range((ti->duration_sec != ~0U) ? ti->duration_sec : 0);
 
 	m->wnd.title(ti->buf);
 }
@@ -208,9 +208,14 @@ void wmain_track_update(void *param)
 	m->tpos.set(ti->pos_sec);
 
 	char buf[256];
-	ffsz_format(buf, sizeof(buf), "%u:%02u / %u:%02u"
-		, ti->pos_sec / 60, ti->pos_sec % 60
-		, ti->duration_sec / 60, ti->duration_sec % 60);
+	if (ti->duration_sec == ~0U) {
+		ffsz_format(buf, sizeof(buf), "%u:%02u / --"
+			, ti->pos_sec / 60, ti->pos_sec % 60);
+	} else {
+		ffsz_format(buf, sizeof(buf), "%u:%02u / %u:%02u"
+			, ti->pos_sec / 60, ti->pos_sec % 60
+			, ti->duration_sec / 60, ti->duration_sec % 60);
+	}
 	m->lpos.text(buf);
 }
 
