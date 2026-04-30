@@ -629,7 +629,6 @@ static void* ausv_open(phi_track *t)
 	nml_http_server_interface.conf(NULL, &sc);
 	sc.response.server_name = FFSTR_Z("phiola/2");
 	sc.opaque = s;
-	sc.boss = s;
 	sc.server.wif = &nmlwrk_if;
 	sc.server.lsif = &nml_tcp_listener_interface;
 	s->addr.port = ac->port;
