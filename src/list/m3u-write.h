@@ -48,13 +48,15 @@ static int m3uw_process(void *ctx, phi_track *t)
 			.duration_sec = (qe->length_sec) ? (int)qe->length_sec : -1,
 		};
 
-		ffvec_realloc(&m->fn, m3e.url.len, 1);
-		m->fn.len = ffpath_normalize(m->fn.ptr, m->fn.cap, m3e.url.ptr, m3e.url.len, 0);
-		m3e.url = *(ffstr*)&m->fn;
+		if (!url_checkz(qe->url)) {
+			ffvec_realloc(&m->fn, m3e.url.len, 1);
+			m->fn.len = ffpath_normalize(m->fn.ptr, m->fn.cap, m3e.url.ptr, m3e.url.len, 0);
+			m3e.url = *(ffstr*)&m->fn;
 
-		// "/dir/list.m3u" + "/dir/artist/title.mp3" => "artist/title.mp3"
-		if (path_isparent(m->odir, m3e.url)) {
-			ffstr_shift(&m3e.url, m->odir.len + 1);
+			// "/dir/list.m3u" + "/dir/artist/title.mp3" => "artist/title.mp3"
+			if (path_isparent(m->odir, m3e.url)) {
+				ffstr_shift(&m3e.url, m->odir.len + 1);
+			}
 		}
 
 		core->metaif->find(&qe->meta, FFSTR_Z("artist"), &m3e.artist, 0);
