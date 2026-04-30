@@ -175,7 +175,7 @@ static int handle_seek(phi_track *t)
 static void auto_skip(phi_track *t)
 {
 	int as = x->play.auto_seek_sec_percent;
-	if (!as)
+	if (!as || t->audio.total == ~0ULL)
 		return;
 
 	uint64 dur_msec = samples_to_msec(t->audio.total, t->audio.format.rate);

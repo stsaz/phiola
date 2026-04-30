@@ -12,7 +12,8 @@ struct until {
 
 static void* until_open(phi_track *t)
 {
-	if (t->conf.until_msec == 0)
+	if (t->conf.until_msec == 0
+		|| (t->audio.total == ~0ULL && t->conf.until_type != PHI_UN_MSEC_BEGIN))
 		return PHI_OPEN_SKIP;
 
 	struct until *u;

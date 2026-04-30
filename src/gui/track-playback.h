@@ -54,6 +54,9 @@ void gtrk_play_pause(struct gtrk *gt)
 /** Set seek position */
 void gtrk_seek(struct gtrk *gt, uint pos_sec)
 {
+	if (gt->t->audio.total == ~0ULL)
+		return;
+
 	gt->seek_msec = pos_sec * 1000;
 	gt->t->audio.seek_req = 1;
 	gt->t->oaudio.clear = 1;
@@ -96,6 +99,10 @@ static void gtrk_close(void *ctx, phi_track *t)
 static int handle_seek(struct gtrk *gt, phi_track *t)
 {
 	if (gt->seek_msec != -1) {
+		if (t->audio.total == ~0ULL) {
+			gt->seek_msec = -1;
+			return 0;
+		}
 		t->audio.seek = gt->seek_msec;
 		gt->seek_msec = -1;
 		return PHI_MORE; // new seek request
