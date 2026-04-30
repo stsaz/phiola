@@ -197,8 +197,9 @@ static int play_ui_process(void *f, phi_track *t)
 
 	trk_dbglog(t, "@%U (%Umsec)", t->audio.pos, pos_msec);
 
-	if (!x->play.opened) {
+	if (!x->play.opened || t->meta_changed) {
 		x->play.opened = 1;
+		t->meta_changed = 0;
 		notify |= 1;
 
 		struct phi_queue_entry *qe = (struct phi_queue_entry*)t->qent;
@@ -213,9 +214,6 @@ static int play_ui_process(void *f, phi_track *t)
 
 		auto_skip(t);
 	}
-
-	if (t->meta_changed)
-		t->meta_changed = 0;
 
 	int rc = handle_seek(t);
 

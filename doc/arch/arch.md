@@ -280,6 +280,7 @@ q->conf.tconf.meta = ... <- e.g. `convert -m title=value`
 				t->meta << qe->meta
 			if (t->meta_changed && !qe->meta_priority)
 				qe->meta = t->meta
+				on_change('m')
 			t->meta << q->conf.tconf.meta
 
 				-> ui:

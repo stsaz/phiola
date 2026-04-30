@@ -5,6 +5,7 @@
 #include <ffsys/dirscan.h>
 
 static int qe_heal_ext(char *fn);
+static int qe_index(struct q_entry *e);
 
 
 struct q_entry_bukt {
@@ -196,6 +197,8 @@ static int qagt_process(void *f, phi_track *t)
 				core->metaif->destroy(&e->pub.meta);
 				core->metaif->copy(&e->pub.meta, &t->meta, 0); // Remember the tags we read from file
 				fflock_unlock((fflock*)&e->pub.lock);
+
+				qm->on_change(e->q, 'm', qe_index(e));
 				q_modified(e->q);
 			}
 		}
