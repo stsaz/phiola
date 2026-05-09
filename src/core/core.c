@@ -488,6 +488,7 @@ FF_EXPORT phi_core* phi_core_create(struct phi_core_conf *conf)
 	}
 	FF_CAS(core->conf.code_page, 0, FFUNICODE_WIN1252);
 	FF_CAS(core->conf.timer_interval_msec, 0, 100);
+	FF_CAS(core->conf.audio_out_module, NULL, "core.auto-play");
 
 	cc = ffmem_new(struct core_ctx);
 	ffvec_allocT(&cc->mods, 8, struct core_mod);

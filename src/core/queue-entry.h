@@ -227,6 +227,76 @@ static const phi_filter queue_agent = {
 };
 
 
+enum {
+	FMC_DAN = 4,
+	FMC_UI = 6,
+	FMC_GAIN,
+};
+static struct filter_map FF_STRUCTALIGN(64) convert_f_map[] = {
+	{ "",						&phi_queue_guard },
+	{ "core.auto-input",		FM_UNDEF },
+	{ "format.detect",			FM_UNDEF },
+	{ "afilter.until",			FM_UNDEF },
+	{ "af-danorm.f",			FM_UNDEF },
+	{ "",						&queue_agent },
+	{ "",						FM_UNDEF },
+	{ "afilter.gain",			FM_UNDEF },
+	{ "afilter.auto-conv",		FM_UNDEF },
+	{ "format.auto-write",		FM_UNDEF },
+	{ "core.auto-output",		FM_UNDEF },
+	{ FM_END,					NULL }
+};
+
+enum {
+	FMA_UI = 5,
+	FMA_AC,
+	FMA_PK,
+	FMA_LD,
+};
+static struct filter_map FF_STRUCTALIGN(64) analyze_f_map[] = {
+	{ "",						&phi_queue_guard },
+	{ "core.auto-input",		FM_UNDEF },
+	{ "format.detect",			FM_UNDEF },
+	{ "afilter.until",			FM_UNDEF },
+	{ "",						&queue_agent },
+	{ "",						FM_UNDEF },
+	{ "afilter.auto-conv-f",	FM_UNDEF },
+	{ "afilter.peaks",			FM_UNDEF },
+	{ "af-loudness.analyze",	FM_UNDEF },
+	{ FM_END,					NULL }
+};
+
+enum {
+	FMP_ITEE = 2,
+	FMP_UI = 6,
+	FMP_RG,
+	FMP_AC,
+	FMP_LD,
+	FMP_AN,
+	FMP_EQ,
+	FMP_OTEE = 14,
+	FMP_AO,
+};
+static struct filter_map FF_STRUCTALIGN(64) play_f_map[] = {
+	{ "",						&phi_queue_guard },
+	{ "core.auto-input",		FM_UNDEF },
+	{ "core.tee",				FM_UNDEF },
+	{ "format.detect",			FM_UNDEF },
+	{ "afilter.until",			FM_UNDEF },
+	{ "",						&queue_agent },
+	{ "",						FM_UNDEF },
+	{ "afilter.rg-norm",		FM_UNDEF },
+	{ "afilter.auto-conv-f",	FM_UNDEF },
+	{ "af-loudness.analyze",	FM_UNDEF },
+	{ "afilter.auto-norm",		FM_UNDEF },
+	{ "af-sox.sox",				FM_UNDEF },
+	{ "afilter.gain",			FM_UNDEF },
+	{ "afilter.auto-conv",		FM_UNDEF },
+	{ "core.tee",				FM_UNDEF },
+	{ "",						FM_UNDEF },
+	{ FM_END,					NULL }
+};
+
 static int qe_play(struct q_entry *e, uint flags)
 {
 	if (e->expand) {
@@ -249,63 +319,62 @@ static int qe_play(struct q_entry *e, uint flags)
 		&& !track->filter(t, e->q->conf.first_filter, 0))
 		goto err;
 
-	track->filter(t, &phi_queue_guard, 0);
-	track->filter(t, core->mod("core.auto-input"), 0);
-
+	struct filter_map m[18], *gm;
 	if (e->q->conf.conversion) {
-		if (!track->filter(t, core->mod("format.detect"), 0)
-			|| !track->filter(t, core->mod("afilter.until"), 0)
-			|| (c.afilter.danorm
-				&& !track->filter(t, core->mod("af-danorm.f"), 0))
-			|| !track->filter(t, &queue_agent, 0)
-			|| !track->filter(t, ui_if, 0)
-			|| (c.afilter.gain_db
-				&& !track->filter(t, core->mod("afilter.gain"), 0))
-			|| !track->filter(t, core->mod("afilter.auto-conv"), 0)
-			|| !track->filter(t, core->mod("format.auto-write"), 0)
-			|| !track->filter(t, core->mod("core.auto-output"), 0))
-			goto err;
+		FF_ASSERT(sizeof(m) >= sizeof(convert_f_map));
+		ffmem_copy(m, convert_f_map, sizeof(convert_f_map));
+		gm = convert_f_map;
+		if (!c.afilter.danorm)
+			m[FMC_DAN].iface = NULL;
+		m[FMC_UI].iface = ui_if;
+		if (!c.afilter.gain_db)
+			m[FMC_GAIN].iface = NULL;
+
 		t->output.allow_async = 1;
 
 	} else if (e->q->conf.analyze) {
-		if (!track->filter(t, core->mod("format.detect"), 0)
-			|| !track->filter(t, core->mod("afilter.until"), 0)
-			|| !track->filter(t, &queue_agent, 0)
-			|| !track->filter(t, ui_if, 0)
-			|| ((c.afilter.peaks_info
-				|| c.afilter.loudness_summary)
-				&& !track->filter(t, core->mod("afilter.auto-conv-f"), 0))
-			|| (c.afilter.peaks_info
-				&& !track->filter(t, core->mod("afilter.peaks"), 0))
-			|| (c.afilter.loudness_summary
-				&& !track->filter(t, core->mod("af-loudness.analyze"), 0)))
-			goto err;
+		FF_ASSERT(sizeof(m) >= sizeof(analyze_f_map));
+		ffmem_copy(m, analyze_f_map, sizeof(analyze_f_map));
+		gm = analyze_f_map;
+		m[FMA_UI].iface = ui_if;
+		if (!(c.afilter.peaks_info || c.afilter.loudness_summary))
+			m[FMA_AC].iface = NULL;
+		if (!c.afilter.peaks_info)
+			m[FMA_PK].iface = NULL;
+		if (!c.afilter.loudness_summary)
+			m[FMA_LD].iface = NULL;
 
 	} else {
-		if ((c.tee && !c.tee_output
-				&& !track->filter(t, core->mod("core.tee"), 0))
-			|| !track->filter(t, core->mod("format.detect"), 0)
-			|| !track->filter(t, core->mod("afilter.until"), 0)
-			|| !track->filter(t, &queue_agent, 0)
-			|| !track->filter(t, ui_if, 0)
-			|| (c.afilter.rg_normalizer
-				&& !track->filter(t, core->mod("afilter.rg-norm"), 0))
-			|| (c.afilter.auto_normalizer
-				&& (!track->filter(t, core->mod("afilter.auto-conv-f"), 0)
-				|| !track->filter(t, core->mod("af-loudness.analyze"), 0)
-				|| !track->filter(t, core->mod("afilter.auto-norm"), 0)))
-			|| (c.afilter.equalizer
-				&& !track->filter(t, core->mod("af-sox.sox"), 0))
-			|| !track->filter(t, core->mod("afilter.gain"), 0)
-			|| !track->filter(t, core->mod("afilter.auto-conv"), 0)
-			|| (c.tee_output
-				&& !track->filter(t, core->mod("core.tee"), 0))
-			|| !track->filter(t, core->mod(e->q->conf.audio_module), 0))
-			goto err;
+		FF_ASSERT(sizeof(m) >= sizeof(play_f_map));
+		ffmem_copy(m, play_f_map, sizeof(play_f_map));
+		gm = play_f_map;
+		if (!c.tee) {
+			m[FMP_ITEE].iface = NULL;
+			m[FMP_OTEE].iface = NULL;
+		} else {
+			if (c.tee_output)
+				m[FMP_ITEE].iface = NULL;
+			else
+				m[FMP_OTEE].iface = NULL;
+		}
+		m[FMC_UI].iface = ui_if;
+		if (!c.afilter.rg_normalizer)
+			m[FMP_RG].iface = NULL;
+		if (!c.afilter.auto_normalizer) {
+			m[FMP_AC].iface = NULL;
+			m[FMP_LD].iface = NULL;
+			m[FMP_AN].iface = NULL;
+		}
+		if (!c.afilter.equalizer)
+			m[FMP_EQ].iface = NULL;
+		ffsz_copyz(m[FMP_AO].name, sizeof(m[FMP_AO].name), core->conf.audio_out_module);
 
 		t->oaudio.clear = !!(flags & Q_PL_MANUAL);
 		t->playback = 1;
 	}
+
+	if (trk_add_filters(core, t, m, gm))
+		goto err;
 
 	e->trk = t;
 	e->used++;

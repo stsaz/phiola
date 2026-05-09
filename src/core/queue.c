@@ -176,7 +176,6 @@ static struct phi_queue* q_create(struct phi_queue_conf *conf)
 {
 	struct phi_queue *q = ffmem_new(struct phi_queue);
 	q->conf = *conf;
-	if (!q->conf.audio_module) q->conf.audio_module = "core.auto-play";
 	qm_add(q);
 	qm->on_change(q, 'n', 0);
 	return q;

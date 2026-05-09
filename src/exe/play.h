@@ -176,7 +176,7 @@ static int play_action(struct cmd_play *p)
 	}
 
 	if (p->audio.len)
-		p->audio_module = ffsz_allocfmt("ad-%S.play", &p->audio);
+		((phi_core*)x->core)->conf.audio_out_module = p->audio_module = ffsz_allocfmt("ad-%S.play", &p->audio);
 
 	struct phi_track_conf c = {
 		.ifile = {
@@ -212,7 +212,6 @@ static int play_action(struct cmd_play *p)
 	x->queue->on_change(q_on_change);
 	struct phi_queue_conf qc = {
 		.first_filter = &play_guard,
-		.audio_module = p->audio_module,
 		.ui_module = "tui.play",
 		.tconf = c,
 		.random = p->random,

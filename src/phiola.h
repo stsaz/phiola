@@ -76,6 +76,9 @@ struct phi_core_conf {
 	/** Get data from resource file. */
 	ffstr (*resource_load)(const char *name);
 
+	/** 'queue' adds the filter by this name for playback tracks */
+	const char *audio_out_module;
+
 	/** 'tee' module adds this filter as first-in-chain when creating a new output track */
 	const phi_filter *tee_out_first;
 
@@ -478,7 +481,6 @@ struct phi_adev_if {
 struct phi_queue_conf {
 	char *name;
 	const phi_filter *first_filter;
-	const char *audio_module;
 	union {
 		const char *ui_module;
 		const phi_filter *ui_module_if;
