@@ -217,9 +217,6 @@ public class MainActivity extends AppCompatActivity {
 			break;
 		}
 
-		case R.id.action_list_next_add_cur:
-			list_next_add_cur();  break;
-
 		case R.id.action_list_sort:
 			list_sort_menu_show();  break;
 
@@ -1158,12 +1155,6 @@ public class MainActivity extends AppCompatActivity {
 		int qi = queue.next_add(url);
 		if (qi >= 0)
 			gui.msg_show(this, String.format(getString(R.string.mlist_trk_added), qi+1));
-	}
-
-	private void list_next_add_cur() {
-		String url = core.track.cur_url();
-		if (!url.isEmpty())
-			list_next_add(url);
 	}
 
 	private void list_files_move() {

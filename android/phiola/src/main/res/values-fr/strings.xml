@@ -34,7 +34,6 @@
     <string name="mlist_clear">Liste: Effacer</string>
     <string name="mlist_close">Liste: Fermer</string>
     <string name="mlist_new">Liste: Nouvelle</string>
-    <string name="mlist_next_add">Liste: Ajouter l\'actuelle à la prochaine</string>
     <string name="mlist_remove">Liste: Enlever la piste actuelle</string>
     <string name="mlist_save">Liste: Sauvegarder…</string>
     <string name="mlist_show_track">Liste: Montrer la piste actuelle</string>
