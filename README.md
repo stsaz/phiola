@@ -55,7 +55,6 @@ Features and notes by platform:
 | --- | --- | --- | --- |
 | Dark themed GUI      | ✅ (GTK default) | incomplete | ✅ |
 | File formats         | ✅ all supported | ✅ all supported | all supported except `.mpc`, `.ape`, `.wv` |
-| Record from Internet | ✅ | ✅ | ❌ |
 | Record what you hear | ✅ (PulseAudio) | ✅ | ❌ |
 | Audio Streaming Server | ✅ (AAC,Opus) | ✅ (AAC,Opus) | ❌ |
 | Requirements         | glibc-2.36 | Windows 7 | Android 8 (ARM64), Android 6 (ARM) |
@@ -336,6 +335,18 @@ First time start:
 * Tap on the music file you want to listen
 * Or long-press on the directory with your music, it will be added to the playlist; tap `Play`
 * Tap on `Playlist` tab to switch the view to your playlist
+
+### Recording From Radio on Android
+
+By default the `Record` button starts recording from microphone.
+Here's how you can reconfigure phiola for recording audio from Internet radio:
+
+1. Go to `Settings` and for the `First Control Button` setting choose `Record From Radio`;  return to main screen.
+1. Go to `List` -> `List: Add...` and paste the URL; tap `Add`.
+1. Tap on the URL in the playlist to start playback.
+1. Tap on `Record` button (bottom-left button) to start recording; tap again to stop recording.  Your recorded files are stored inside `Recording` directory.
+
+> Note: phiola supports recording from AAC or MP3 radio streams.
 
 
 ## How to Use SDK

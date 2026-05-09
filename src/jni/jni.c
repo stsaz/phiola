@@ -80,6 +80,7 @@ struct phiola_jni {
 		phi_timer auto_stop_timer;
 		phi_track *trk;
 		char *equalizer;
+		char *tee_filename;
 		int64 seek_msec;
 		int auto_seek_sec_percent, auto_until_sec_percent;
 		uint pos_prev_sec;
@@ -270,6 +271,7 @@ static int core()
 
 		.mod_loading = mod_loading,
 		.resource_load = resource_load,
+		.tee_out_first = &tee_out_guard,
 
 		.workers = ~0U,
 		.io_workers = ~0U,
@@ -328,6 +330,7 @@ Java_com_github_stsaz_phiola_Phiola_destroy(JNIEnv *env, jobject thiz)
 	ffvec_free(&x->storage_paths);
 
 	ffmem_free(x->play.equalizer);
+	ffmem_free(x->play.tee_filename);
 	ffmem_free(x->rec.device_id);
 	// ffmem_free(conv_track_info.error);
 	ffvec_free_align(&x->convert.tracks);

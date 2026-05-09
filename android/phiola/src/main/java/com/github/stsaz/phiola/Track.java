@@ -159,6 +159,13 @@ class Track {
 		return 0;
 	}
 
+	RecCallback rec_rad_cb;
+	void rec_radio(RecCallback cb) {
+		rec_rad_cb = cb;
+		core.phiola.playRecord(String.format("%s/%s"
+			, core.rec.rec_path, core.rec.rec_name_template));
+	}
+
 	private void trk_close() {
 		tplay.state = STATE_NONE;
 		for (int i = observers.size() - 1; i >= 0; i--) {

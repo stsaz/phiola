@@ -12,6 +12,8 @@
 # SO
 # SYS
 
+AVPACK := $(ROOT_DIR)/avpack
+
 LINKFLAGS_CORE := $(LINKFLAGS)
 CORE_O := \
 	core.o \
@@ -41,4 +43,4 @@ endif
 %.o: $(PHIOLA)/src/core/%.c
 	$(C) $(CFLAGS_CORE) $< -o $@
 %.o: $(PHIOLA)/src/jni/%.c
-	$(C) $(CFLAGS_CORE) $< -o $@
+	$(C) $(CFLAGS_CORE) -I$(AVPACK) $< -o $@

@@ -6,13 +6,13 @@
 #include <ffbase/string.h>
 #include <ffbase/time.h>
 
-#define PHI_VERSION  20714
+#define PHI_VERSION  20800
 
 /** Inter-module compatibility version.
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20708
+#define PHI_VERSION_CORE  20800
 
 typedef long long int64;
 typedef unsigned long long uint64;
@@ -75,6 +75,9 @@ struct phi_core_conf {
 
 	/** Get data from resource file. */
 	ffstr (*resource_load)(const char *name);
+
+	/** 'tee' module adds this filter as first-in-chain when creating a new output track */
+	const phi_filter *tee_out_first;
 
 	char language[2];
 	uint code_page; // enum FFUNICODE_CP
@@ -372,6 +375,7 @@ struct phi_track_conf {
 	uint	stream_copy :1;
 	uint	cross_worker_assign :1;
 	uint	tee_output :1; // `tee` is the file name for *output* data, not *input* data
+	uint	tee_dynamic :1; // 'tee' module waits for the signal via `phi_track.tee_active`
 	uint	seek_type :2; // enum PHI_UN
 	uint	until_type :2; // enum PHI_UN
 };

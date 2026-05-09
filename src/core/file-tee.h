@@ -130,6 +130,22 @@ static int tee_process(void *f, phi_track *t)
 	if (!(t->chain_flags & PHI_FFWD))
 		return PHI_MORE;
 
+	if (t->conf.tee_dynamic) {
+		if (!t->tee_active) {
+			if (c->out_trk) {
+				dbglog(t, "stopping output track");
+				core->track->stop(c->out_trk);
+				c->out_trk = NULL;
+				tee_brg_unref(c->brg);
+				c->brg = NULL;
+			}
+			t->data_out = t->data_in;
+			return (t->chain_flags & PHI_FFIRST) ? PHI_DONE : PHI_OK;
+		}
+		dbglog(t, "starting output track");
+		new_meta = 0;
+	}
+
 	if (new_meta) {
 		if (c->out_trk)
 			core->track->stop(c->out_trk); // close current file
@@ -159,7 +175,9 @@ static int tee_process(void *f, phi_track *t)
 		}
 
 		const char *writer = (c->o_stdout) ? "core.stdout" : "core.file-write";
-		if (!core->track->filter(c->out_trk, &phi_tee_brg, 0)
+		if ((core->conf.tee_out_first
+				&& !core->track->filter(c->out_trk, core->conf.tee_out_first, 0))
+			|| !core->track->filter(c->out_trk, &phi_tee_brg, 0)
 			|| (t->conf.tee_output
 				&& !core->track->filter(c->out_trk, core->mod("format.wav-write"), 0))
 			|| !core->track->filter(c->out_trk, core->mod(writer), 0))

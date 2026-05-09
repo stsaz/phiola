@@ -57,6 +57,8 @@ class Phiola {
 		PC_SEEK = 6; // `val`: seek pos (msec)
 	native void playCmd(int cmd, long val);
 
+	native void playRecord(String oname); // -> Callbacks.recording()
+
 	static final int
 		AF_AAC_LC = 0,
 		AF_AAC_HE = 1,

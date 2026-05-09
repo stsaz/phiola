@@ -194,6 +194,7 @@ public class SettingsActivity extends AppCompatActivity {
 
 	static final int
 		RECBTN_REC_MIC = 0,
+		RECBTN_REC_RADIO = 1,
 		RECBTN_PL_MARKER = 2,
 		RECBTN_REC_HIDE = 3;
 
@@ -204,12 +205,14 @@ public class SettingsActivity extends AppCompatActivity {
 		b.swShowFilter.setChecked(core.gui().filter_hide);
 		b.spRecBtn.setAdapter(spinner_adapter(new String[] {
 				"Record From Mic",
+				"Record From Radio",
 				"Playback Marker Set/Jump",
 				"Hide Button",
 			}));
 		int rm = core.gui().record_mode;
 		b.spRecBtn.setSelection(
 			(core.gui().playback_marker_show) ? RECBTN_PL_MARKER
+			: (rm == GUI.RECMODE_RADIO) ? RECBTN_REC_RADIO
 			: (rm == GUI.RECMODE_HIDE) ? RECBTN_REC_HIDE
 			: RECBTN_REC_MIC);
 		b.swSvcNotifDisable.setChecked(core.setts.svc_notification_disable);
@@ -238,6 +241,7 @@ public class SettingsActivity extends AppCompatActivity {
 		i = b.spRecBtn.getSelectedItemPosition();
 		core.gui().record_mode =
 			(i == RECBTN_REC_HIDE) ? GUI.RECMODE_HIDE
+			: (i == RECBTN_REC_RADIO) ? GUI.RECMODE_RADIO
 			: GUI.RECMODE_MIC;
 		core.gui().playback_marker_show = (i == RECBTN_PL_MARKER);
 		core.gui().ainfo_in_title = b.swUiInfoInTitle.isChecked();

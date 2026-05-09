@@ -78,6 +78,7 @@ static void* fmtr_open(phi_track *t)
 		errlog(t, "avpk_open");
 		return PHI_OPEN_ERR;
 	}
+	t->input.format = rif->format;
 	return f;
 }
 

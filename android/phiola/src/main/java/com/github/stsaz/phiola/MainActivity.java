@@ -451,6 +451,8 @@ public class MainActivity extends AppCompatActivity {
 		b.brec.setOnClickListener((v) -> {
 				if (gui.playback_marker_show)
 					playback_marker_jump();
+				else if (gui.record_mode == GUI.RECMODE_RADIO)
+					rec_radio_start_stop();
 				else if (core.rec.rec_longclick)
 					rec_pause_toggle();
 				else
@@ -459,6 +461,8 @@ public class MainActivity extends AppCompatActivity {
 		b.brec.setOnLongClickListener((v) -> {
 				if (gui.playback_marker_show)
 					playback_marker_set();
+				else if (gui.record_mode == GUI.RECMODE_RADIO)
+					;
 				else if (core.rec.rec_longclick)
 					rec_start_stop();
 				return true;
@@ -578,6 +582,8 @@ public class MainActivity extends AppCompatActivity {
 			b.brec.setImageResource(R.drawable.ic_replay);
 		else if (gui.record_mode == GUI.RECMODE_HIDE)
 			b.brec.setVisibility(View.INVISIBLE);
+		else if (gui.record_mode == GUI.RECMODE_RADIO)
+			b.brec.setImageResource(R.drawable.outline_arrow_circle_down);
 
 		if (gui.filter_hide)
 			b.tfilter.setVisibility(View.INVISIBLE);
@@ -671,6 +677,22 @@ public class MainActivity extends AppCompatActivity {
 			trackctl.pause();
 		} else {
 			trackctl.unpause();
+		}
+	}
+
+	private void rec_radio_start_stop() {
+		core.track.rec_radio((code, filename) -> {
+				rec_state_set(false);
+				state(GUI.STATE_RECORDING, 0);
+
+				if (code == 0 && core.rec.rec_list_add)
+					queue.current_add(filename, 0);
+
+				GUI.msg_show(this, (code == 0) ? "Finished recording" : String.format("Recording: %s", core.errstr(code)));
+			});
+		if (!gui.state_test(GUI.STATE_RECORDING)) {
+			rec_state_set(true);
+			state(GUI.STATE_RECORDING, GUI.STATE_RECORDING);
 		}
 	}
 

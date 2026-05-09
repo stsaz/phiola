@@ -2,6 +2,7 @@
 2024, Simon Zolin */
 
 #include <util/aformat.h>
+#include <jni/pl-rec.h>
 
 static void* play_grd_open(phi_track *t)
 {

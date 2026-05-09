@@ -158,6 +158,10 @@ class Core extends Util {
 								track.rec_mic_cb.f(code, filename);
 								track.rec_mic_cb = null;
 							}
+							if (track.rec_rad_cb != null) {
+								track.rec_rad_cb.f(code, filename);
+								track.rec_rad_cb = null;
+							}
 						});
 				}
 			});

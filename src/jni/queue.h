@@ -93,6 +93,12 @@ Java_com_github_stsaz_phiola_Phiola_quNew(JNIEnv *env, jobject thiz, jint flags)
 		c.ui_module_if = &phi_convert_ui;
 		c.ui_module_if_set = 1;
 	}
+
+	if (1) {
+		c.tconf.tee = "";
+		c.tconf.tee_dynamic = 1;
+	}
+
 	phi_queue_id q = x->queue.create(&c);
 	dbglog("%s: exit", __func__);
 	return (ffsize)q;

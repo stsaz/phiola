@@ -165,6 +165,7 @@ struct phi_track {
 		uint64 size; // Input file size. -1:unset
 		uint64 seek; // Seek to offset and reset. -1:unset
 		fftime mtime; // Modification date/time
+		u_char format; // AVPKF_*
 		uint no_auto_seek :1;
 	} input;
 
@@ -179,6 +180,7 @@ struct phi_track {
 	uint meta_reading :1;
 	uint playback :1;
 	uint q_notified :1;
+	uint tee_active :1;
 
 	struct {
 		struct phi_af format;
