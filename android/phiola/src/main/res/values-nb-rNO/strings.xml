@@ -11,7 +11,6 @@
     <string name="lssv_bsave">Lagre</string>
     <string name="lssv_lname">Spillelistenavn:</string>
     <string name="menu_settings">Innstillinger…</string>
-    <string name="mfile_show">Fil: Vis nåværende spor</string>
     <string name="mfile_convert">Fil: Konverter…</string>
     <string name="mfile_del">Fil: Slett fra lagring</string>
     <string name="mfile_tags_show">Fil: Vis tagger</string>

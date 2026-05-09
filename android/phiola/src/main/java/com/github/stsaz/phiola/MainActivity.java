@@ -164,6 +164,15 @@ public class MainActivity extends AppCompatActivity {
 		case R.id.action_file_move:
 			file_move(null, queue.active_pos());  break;
 
+		case R.id.action_list_showcur: {
+			if (gui.view != GUI.V_PLAYLIST)
+				plist_click();
+			int pos = queue.active_pos();
+			if (pos >= 0)
+				b.list.scrollToPosition(pos);
+			break;
+		}
+
 		default:
 			return false;
 		}
@@ -207,15 +216,6 @@ public class MainActivity extends AppCompatActivity {
 
 		case R.id.action_list_rename:
 			list_rename();  break;
-
-		case R.id.action_list_showcur: {
-			if (gui.view != GUI.V_PLAYLIST)
-				plist_click();
-			int pos = queue.active_pos();
-			if (pos >= 0)
-				b.list.scrollToPosition(pos);
-			break;
-		}
 
 		case R.id.action_list_sort:
 			list_sort_menu_show();  break;

@@ -19,9 +19,10 @@
 	<string name="menu_settings">Settings</string>
 	<string name="mfile_tags_show">File: Show Tags</string>
 	<string name="mfile_convert">File: Convert...</string>
-	<string name="mfile_show">File: Show Current Track</string>
+	<string name="mfile_show">File: Show in Explorer</string>
 	<string name="mfile_del">File: Delete from Storage</string>
 	<string name="mfile_move">File: Quick Move</string>
+	<string name="mfile_list_show">File: Show in Playlist</string>
 
 	<string name="mplay_auto_stop">Auto-Stop Timer: Toggle</string>
 	<string name="mplay_auto_stop_msg">Will stop playing after %d min</string>
@@ -38,7 +39,6 @@
 	<string name="mlist_remove_non_unique">List: Remove Non-Unique Files</string>
 	<string name="mlist_trk_rm">Removed 1 entry</string>
 	<string name="mlist_clear">List: Clear</string>
-	<string name="mlist_show_track">List: Show Current Track</string>
 	<string name="mlist_next_add_sel">Add to Next List</string>
 	<string name="mlist_trk_added">Added track to Playlist %d</string>
 	<string name="mlist_sort">List: Sort...</string>

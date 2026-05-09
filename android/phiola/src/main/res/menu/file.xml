@@ -16,4 +16,7 @@
 
 	<item android:id="@+id/action_file_move"
 		android:title="@string/mfile_move" />
+
+	<item android:id="@+id/action_list_showcur"
+		android:title="@string/mfile_list_show" />
 </menu>
