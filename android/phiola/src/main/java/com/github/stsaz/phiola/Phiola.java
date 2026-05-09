@@ -4,14 +4,14 @@
 package com.github.stsaz.phiola;
 
 class Phiola {
-	Phiola(String libdir, Object asset_mgr) {
-		System.load(String.format("%s/libphiola.so", libdir));
-		init(libdir, asset_mgr);
+	Phiola(Object asset_mgr) {
+		System.loadLibrary("phiola");
+		init(asset_mgr);
 	}
-	private native void init(String libdir, Object asset_mgr);
+	private native void init(Object asset_mgr);
 	native void destroy();
-	private static boolean lib_load(String filename) {
-		System.load(filename);
+	private static boolean lib_load(String name) {
+		System.loadLibrary(name);
 		return true;
 	}
 

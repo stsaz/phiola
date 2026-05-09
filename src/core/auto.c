@@ -12,21 +12,21 @@ static void* phi_autorec_open(phi_track *t)
 {
 	static const char rec_mods[][20] = {
 #if defined FF_WIN
-		"wasapi.rec",
+		"ad-wasapi.rec",
 
 #elif defined FF_BSD
-		"oss.rec",
+		"ad-oss.rec",
 
 #elif defined FF_APPLE
-		"coreaudio.rec",
+		"ad-coreaudio.rec",
 
 #elif defined FF_ANDROID
-		"aaudio.rec",
+		"ad-aaudio.rec",
 
 #else
-		"pulse.rec",
-		"alsa.rec",
-		"jack.rec",
+		"ad-pulse.rec",
+		"ad-alsa.rec",
+		"ad-jack.rec",
 #endif
 	};
 	for (uint i = 0;  i < FF_COUNT(rec_mods);  i++) {
@@ -54,20 +54,20 @@ static void* phi_autoplay_open(phi_track *t)
 {
 	static const char play_mods[][20] = {
 #if defined FF_WIN
-		"wasapi.play",
+		"ad-wasapi.play",
 
 #elif defined FF_BSD
-		"oss.play",
+		"ad-oss.play",
 
 #elif defined FF_APPLE
-		"coreaudio.play",
+		"ad-coreaudio.play",
 
 #elif defined FF_ANDROID
-		"aaudio.play",
+		"ad-aaudio.play",
 
 #else
-		"pulse.play",
-		"alsa.play",
+		"ad-pulse.play",
+		"ad-alsa.play",
 #endif
 	};
 	for (uint i = 0;  i < FF_COUNT(play_mods);  i++) {

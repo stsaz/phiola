@@ -212,7 +212,7 @@ static int rec_action(struct cmd_rec *r)
 
 	const char *input = "core.auto-rec";
 	if (r->audio) {
-		r->audio_module = ffsz_allocfmt("%s.rec%Z", r->audio);
+		r->audio_module = ffsz_allocfmt("ad-%s.rec%Z", r->audio);
 		input = r->audio_module;
 	}
 

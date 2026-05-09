@@ -860,10 +860,10 @@ const phi_adev_if* adev_find_mod()
 
 	static const char mods[][20] = {
 #if defined FF_WIN
-		"wasapi.dev",
+		"ad-wasapi.dev",
 #else
-		"pulse.dev",
-		"alsa.dev",
+		"ad-pulse.dev",
+		"ad-alsa.dev",
 #endif
 	};
 	for (uint i = 0;  i < FF_COUNT(mods);  i++) {

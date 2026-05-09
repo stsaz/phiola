@@ -176,7 +176,7 @@ static int play_action(struct cmd_play *p)
 	}
 
 	if (p->audio.len)
-		p->audio_module = ffsz_allocfmt("%S.play", &p->audio);
+		p->audio_module = ffsz_allocfmt("ad-%S.play", &p->audio);
 
 	struct phi_track_conf c = {
 		.ifile = {

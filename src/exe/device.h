@@ -68,20 +68,20 @@ static const void* dev_find_mod()
 {
 	static const char mods[][20] = {
 #if defined FF_WIN
-		"wasapi.dev",
+		"ad-wasapi.dev",
 
 #elif defined FF_BSD
-		"oss.dev",
+		"ad-oss.dev",
 
 #elif defined FF_APPLE
-		"coreaudio.dev",
+		"ad-coreaudio.dev",
 
 #elif defined FF_ANDROID
-		"aaudio.dev",
+		"ad-aaudio.dev",
 
 #else
-		"pulse.dev",
-		"alsa.dev",
+		"ad-pulse.dev",
+		"ad-alsa.dev",
 #endif
 	};
 	for (uint i = 0;  i < FF_COUNT(mods);  i++) {
@@ -100,7 +100,7 @@ static int dev_list_action(struct cmd_dev_list *l)
 
 	const phi_adev_if *adev;
 	if (l->audio) {
-		ffsz_format(sbuf, sizeof(sbuf), "%s.dev", l->audio);
+		ffsz_format(sbuf, sizeof(sbuf), "ad-%s.dev", l->audio);
 		adev = x->core->mod(sbuf);
 
 	} else {

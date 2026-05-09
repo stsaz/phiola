@@ -16,17 +16,18 @@
 # MODS
 
 FFAUDIO := $(ROOT_DIR)/ffaudio
+ADPFX := ad-
 
 ifeq "$(OS)" "windows"
-	MODS += wasapi.$(SO)
+	MODS += $(ADPFX)wasapi.$(SO)
 else ifeq "$(OS)" "apple"
-	MODS += coreaudio.$(SO)
+	MODS += $(ADPFX)coreaudio.$(SO)
 else ifeq "$(OS)" "freebsd"
-	MODS += oss.$(SO)
+	MODS += $(ADPFX)oss.$(SO)
 else ifeq "$(SYS)" "android"
-	MODS += aaudio.$(SO)
+	MODS += $(ADPFX)aaudio.$(SO)
 else ifeq "$(OS)" "linux"
-	MODS += alsa.$(SO) pulse.$(SO) jack.$(SO)
+	MODS += $(ADPFX)alsa.$(SO) $(ADPFX)pulse.$(SO) $(ADPFX)jack.$(SO)
 endif
 
 %.o: $(PHIOLA)/src/adev/%.c
@@ -35,15 +36,15 @@ endif
 ffaudio-%.o: $(FFAUDIO)/ffaudio/%.c
 	$(C) -I$(FFAUDIO) $(CFLAGS_BASE) $< -o $@
 
-%.$(SO): %.o ffaudio-%.o
+$(ADPFX)%.$(SO): %.o ffaudio-%.o
 	$(LINK) -shared $+ $(LINKFLAGS) -o $@
 
-wasapi.$(SO): LINKFLAGS += -lole32
+$(ADPFX)wasapi.$(SO): LINKFLAGS += -lole32
 
-alsa.$(SO): LINKFLAGS += -lasound
+$(ADPFX)alsa.$(SO): LINKFLAGS += -lasound
 
-pulse.$(SO): LINKFLAGS += -lpulse
+$(ADPFX)pulse.$(SO): LINKFLAGS += -lpulse
 
-jack.$(SO): LINKFLAGS += -L/usr/lib64/pipewire-0.3/jack -ljack
+$(ADPFX)jack.$(SO): LINKFLAGS += -L/usr/lib64/pipewire-0.3/jack -ljack
 
-aaudio.$(SO): LINKFLAGS += -laaudio
+$(ADPFX)aaudio.$(SO): LINKFLAGS += -laaudio

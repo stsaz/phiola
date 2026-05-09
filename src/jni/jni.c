@@ -32,7 +32,6 @@ struct phiola_jni {
 	phi_queue_if queue;
 	phi_meta_if metaif;
 
-	ffstr dir_libs;
 	u_char debug;
 	u_char deprecated_mods;
 	ffvec storage_paths; // char*[]
@@ -146,21 +145,21 @@ static char* mod_loading(ffstr name)
 		char dependency[31];
 		u_char deprecated;
 	} mods[] = {
-		{ "ac-aac",		"libfdk-aac-phi", 0 },
-		{ "ac-alac",	"libALAC-phi", 1 },
-		{ "ac-flac",	"libFLAC-phi", 0 },
-		{ "ac-mp3lame",	"libmp3lame-phi", 0 },
-		{ "ac-mpeg",	"libmpg123-phi", 0 },
-		{ "ac-opus",	"libopus-phi", 0 },
-		{ "ac-vorbis",	"libvorbis-phi", 0 },
-		{ "af-danorm",	"libDynamicAudioNormalizer-phi", 0 },
-		{ "af-loudness","libebur128-phi", 0 },
-		{ "af-sox",		"libsox-phi", 0 },
-		{ "af-soxr",	"libsoxr-phi", 0 },
-		{ "zstd",		"libzstd-ffpack", 0 },
+		{ "ac-aac",		"fdk-aac-phi",	0 },
+		{ "ac-alac",	"ALAC-phi",		1 },
+		{ "ac-flac",	"FLAC-phi",		0 },
+		{ "ac-mp3lame",	"mp3lame-phi",	0 },
+		{ "ac-mpeg",	"mpg123-phi",	0 },
+		{ "ac-opus",	"opus-phi",		0 },
+		{ "ac-vorbis",	"vorbis-phi",	0 },
+		{ "af-danorm",	"DynamicAudioNormalizer-phi",	0 },
+		{ "af-loudness","ebur128-phi",	0 },
+		{ "af-sox",		"sox-phi",		0 },
+		{ "af-soxr",	"soxr-phi",		0 },
+		{ "zstd",		"zstd-ffpack",	0 },
 	};
 	int i = ffcharr_find_sorted_padding(mods, FF_COUNT(mods), sizeof(mods[0].module), sizeof(mods[0]) - sizeof(mods[0].module), name.ptr, name.len);
-	znames[0] = ffsz_allocfmt("%S/lib%S.so", &x->dir_libs, &name);
+	znames[0] = ffsz_dupstr(&name);
 	if (i >= 0) {
 
 		if (mods[i].deprecated
@@ -169,7 +168,7 @@ static char* mod_loading(ffstr name)
 			goto end;
 		}
 
-		znames[1] = ffsz_allocfmt("%S/%s.so", &x->dir_libs, mods[i].dependency);
+		znames[1] = ffsz_dup(mods[i].dependency);
 	}
 
 	if ((r = jni_vm_attach_once(jvm, &env, &attached, JNI_VERSION_1_6))) {
@@ -192,12 +191,11 @@ end:
 	if (attached)
 		jni_vm_detach(jvm);
 
+	ffmem_free(znames[0]);
 	ffmem_free(znames[1]);
-	if (e) {
-		ffmem_free(znames[0]);
+	if (e)
 		return NULL;
-	}
-	return znames[0];
+	return ffsz_allocfmt("lib%S.so", &name);
 }
 
 static inline ffstr android_asset_read(AAssetManager *am, const char *path)
@@ -245,17 +243,12 @@ static int core()
 }
 
 JNIEXPORT void JNICALL
-Java_com_github_stsaz_phiola_Phiola_init(JNIEnv *env, jobject thiz, jstring jlibdir, jobject jasset_mgr)
+Java_com_github_stsaz_phiola_Phiola_init(JNIEnv *env, jobject thiz, jobject jasset_mgr)
 {
 	if (x != NULL) return;
 
 	x = ffmem_new(struct phiola_jni);
 	if (!!conf()) return;
-
-	const char *libdir = jni_sz_js(jlibdir);
-	x->dir_libs.ptr = ffsz_dup(libdir);
-	jni_sz_free(libdir, jlibdir);
-	x->dir_libs.len = ffsz_len(x->dir_libs.ptr);
 
 	x->Phiola_class = jni_global_ref(jni_class(PJC_PHIOLA));
 	x->Phiola_lib_load = jni_sfunc(x->Phiola_class, "lib_load", "(" JNI_TSTR ")" JNI_TBOOL);
@@ -299,7 +292,6 @@ Java_com_github_stsaz_phiola_Phiola_destroy(JNIEnv *env, jobject thiz)
 	// ffmem_free(conv_track_info.error);
 	ffvec_free_align(&x->convert.tracks);
 	ffmem_free(x->convert.trash_dir_rel);
-	ffstr_free(&x->dir_libs);
 	ffmem_free(x);  x = NULL;
 }
 
