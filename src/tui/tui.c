@@ -20,6 +20,7 @@ static const phi_core *core;
 
 typedef struct tui_track {
 	phi_track *t;
+	char *tee_filename;
 	uint64 total_samples;
 	uint64 played_samples;
 	int64 seek_msec;
@@ -258,6 +259,7 @@ struct key {
 static const struct key hotkeys[] = {
 	{ ' ', _CMD_PLAYBACK | _CMD_F1 | _CMD_CORE,		cmd_play },
 	{ 'L', _CMD_PLAYBACK | _CMD_F1 | _CMD_CORE,		list_save },
+	{ 'R', _CMD_CURTRK | _CMD_CORE,					cmd_play_rec },
 
 	{ 'd', _CMD_CURTRK | _CMD_CORE,					tuiplay_rm },
 	{ 'h', _CMD_F1,									tui_help },

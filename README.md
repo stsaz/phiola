@@ -125,6 +125,10 @@ phiola file.mp3 -audio alsa
 # These files will be named automatically using the meta data sent by server.
 phiola http://server/stream -tee "@artist - @title.mp3"
 
+# Play Internet radio with on-demand recording
+phiola http://server/stream -recordable
+# Then at any time press Shift+R to start/stop recording
+
 # Play MP3 audio via HTTP and convert to a local 64-kbit/sec AAC file
 phiola http://server/music.mp3 -dup @stdout.wav | phiola convert @stdin -aac_q 64 -o output.m4a
 

@@ -1,6 +1,8 @@
 /** phiola: tui: play/convert mode filter
 2015, Simon Zolin */
 
+#include <avpack/decl.h>
+
 static double tui_setvol(tui_track *u, uint vol);
 
 
@@ -36,6 +38,7 @@ static void tuiplay_close(void *ctx, phi_track *t)
 		mod->curtrk = NULL;
 	}
 	ffvec_free(&u->buf);
+	ffmem_free(u->tee_filename);
 	phi_track_free(t, u);
 }
 
@@ -332,6 +335,35 @@ static void tuiplay_rm_playnext(tui_track *u)
 
 	tuiplay_rm(u);
 	cmd_activate(CMD_NEXT);
+}
+
+static const char* rec_ext(uint fmt)
+{
+	switch (fmt) {
+	case AVPKF_MP3: return "mp3";
+	case AVPKF_AAC: return "aac";
+	}
+	return NULL;
+}
+
+static void cmd_play_rec(tui_track *c, uint cmd)
+{
+	if (!c->t->conf.tee_dynamic)
+		return;
+
+	if (!c->t->tee_active) {
+		const char *ext = rec_ext(c->t->input.format);
+		if (!ext) {
+			errlog(c->t, "Recording from this stream is not supported");
+			return;
+		}
+		ffmem_free(c->tee_filename);
+		c->tee_filename = ffsz_allocfmt("%s.%s"
+			, "rec-@nowdate-@nowtime", ext);
+		c->t->conf.tee = c->tee_filename;
+		infolog(c->t, "Recording...");
+	}
+	c->t->tee_active = !c->t->tee_active;
 }
 
 static const phi_filter phi_tuiplay = {

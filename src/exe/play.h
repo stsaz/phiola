@@ -24,6 +24,7 @@ Options:\n\
                           `@counter`   Sequentially incremented number\n\
                           `@STRING`    Expands to file meta data,\n\
                                        e.g. `-tee \"@artist - @title.mp3\"`\n\
+  `-recordable`           Enable on-demand stream recording by Ctrl+R\n\
   `-dup` FILE.wav         Copy output data to a file.\n\
                           `@stdout`    Write to standard output\n\
                         Supports runtime variable expansion (see `-tee`)\n\
@@ -84,11 +85,12 @@ struct cmd_play {
 	u_char	no_meta;
 	u_char	perf;
 	u_char	random;
+	u_char	recordable;
 	u_char	remote;
 	u_char	repeat_all;
 	u_char	rg_norm;
-	u_char	until_type;
 	u_char	seek_type;
+	u_char	until_type;
 	uint	buffer;
 	uint	connect_timeout;
 	uint	device;
@@ -187,8 +189,11 @@ static int play_action(struct cmd_play *p)
 			.recv_timeout_sec = ffmin(p->recv_timeout, 0xff),
 			.no_meta = p->no_meta,
 		},
-		.tee = (p->tee) ? p->tee : p->dup,
+		.tee = (p->tee) ? p->tee
+			: (p->recordable) ? ""
+			: p->dup,
 		.tee_output = !!p->dup,
+		.tee_dynamic = !!p->recordable,
 		.tracks = *(ffslice*)&p->tracks,
 
 		.seek_msec = p->seek,
@@ -274,6 +279,7 @@ static const struct ffarg cmd_play[] = {
 	{ "-perf",			'1',	O(perf) },
 	{ "-random",		'1',	O(random) },
 	{ "-rbuffer",		'u',	O(rbuffer_kb) },
+	{ "-recordable",	'1',	O(recordable) },
 	{ "-recv_timeout",	'u',	O(recv_timeout) },
 	{ "-remote",		'1',	O(remote) },
 	{ "-remote_id",		's',	O(remote_id) },
