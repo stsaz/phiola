@@ -173,6 +173,9 @@ public class MainActivity extends AppCompatActivity {
 			break;
 		}
 
+		case R.id.action_list_rm:
+			list_rm();  break;
+
 		default:
 			return false;
 		}
@@ -198,9 +201,6 @@ public class MainActivity extends AppCompatActivity {
 
 		case R.id.action_list_add:
 			list_add_show();  break;
-
-		case R.id.action_list_rm:
-			list_rm();  break;
 
 		case R.id.action_list_rm_non_existing:
 			queue.current_remove_multi(Phiola.QUCOM_REMOVE_NON_EXISTING);  break;

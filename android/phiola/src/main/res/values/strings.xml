@@ -23,6 +23,7 @@
 	<string name="mfile_del">File: Delete from Storage</string>
 	<string name="mfile_move">File: Quick Move</string>
 	<string name="mfile_list_show">File: Show in Playlist</string>
+	<string name="mfile_list_remove">File: Remove from Playlist</string>
 
 	<string name="mplay_auto_stop">Auto-Stop Timer: Toggle</string>
 	<string name="mplay_auto_stop_msg">Will stop playing after %d min</string>
@@ -34,7 +35,6 @@
 	<string name="mlist_save">List: Save...</string>
 	<string name="mlist_rename">List: Rename...</string>
 	<string name="mlist_add">List: Add...</string>
-	<string name="mlist_remove">List: Remove Current Track</string>
 	<string name="mlist_remove_non_existing">List: Remove Non-Existing Files</string>
 	<string name="mlist_remove_non_unique">List: Remove Non-Unique Files</string>
 	<string name="mlist_trk_rm">Removed 1 entry</string>

@@ -19,4 +19,7 @@
 
 	<item android:id="@+id/action_list_showcur"
 		android:title="@string/mfile_list_show" />
+
+	<item android:id="@+id/action_list_rm"
+		android:title="@string/mfile_list_remove" />
 </menu>

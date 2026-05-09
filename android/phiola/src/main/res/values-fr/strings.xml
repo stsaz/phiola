@@ -33,7 +33,6 @@
     <string name="mlist_clear">Liste: Effacer</string>
     <string name="mlist_close">Liste: Fermer</string>
     <string name="mlist_new">Liste: Nouvelle</string>
-    <string name="mlist_remove">Liste: Enlever la piste actuelle</string>
     <string name="mlist_save">Liste: Sauvegarder…</string>
     <string name="mlist_shuffle">Liste: Mélanger</string>
     <string name="mlist_sort">Liste: Trier</string>
