@@ -71,24 +71,6 @@
 				android:value="com.github.stsaz.phiola.MainActivity" />
 		</activity>
 
-		<activity
-			android:name=".ListSaveActivity"
-			android:label="Save Playlist"
-			android:parentActivityName=".MainActivity">
-			<meta-data
-				android:name="android.support.PARENT_ACTIVITY"
-				android:value="com.github.stsaz.phiola.MainActivity" />
-		</activity>
-
-		<activity
-			android:name=".AboutActivity"
-			android:label="About phiola"
-			android:parentActivityName=".MainActivity">
-			<meta-data
-				android:name="android.support.PARENT_ACTIVITY"
-				android:value="com.github.stsaz.phiola.MainActivity" />
-		</activity>
-
 		<service
 			android:name=".Svc"
 			android:enabled="true"

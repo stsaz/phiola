@@ -5,14 +5,14 @@
 	<LinearLayout
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
-		android:focusableInTouchMode="true"
 		android:orientation="vertical">
 
 		<TextView
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:text="@string/sett_interface"
-			android:textColor="@color/sett_group" />
+			android:textColor="@color/sett_group"
+			android:textSize="@dimen/grp_name_size" />
 
 		<androidx.appcompat.widget.SwitchCompat
 			android:id="@+id/swDark"
@@ -21,52 +21,35 @@
 			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/sett_dark" />
 
-		<TextView
-			android:layout_width="match_parent"
+		<Button
+			android:id="@+id/bColor"
+			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:layout_marginTop="@dimen/sett_margin"
 			android:text="@string/sett_color"
 			android:textColor="@color/text" />
-		<SeekBar
-			android:id="@+id/sbColorRed"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content" />
-		<SeekBar
-			android:id="@+id/sbColorGreen"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content" />
-		<SeekBar
-			android:id="@+id/sbColorBlue"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content" />
-		<EditText
-			android:id="@+id/eColor"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="@dimen/sett_margin"
-			android:textSize="@dimen/text_editbox" />
 
 		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/swShowfilter"
+			android:id="@+id/swShowFilter"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/sett_show_filter" />
 
-		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/swShowrec"
+		<TextView
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_margin="@dimen/sett_margin"
-			android:text="@string/sett_show_record" />
-
-		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/swShowPlaybackMarker"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:layout_marginTop="@dimen/sett_margin"
+			android:text="@string/sett_rec_btn"
+			android:textColor="@color/text" />
+		<Spinner
+			android:id="@+id/spRecBtn"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_margin="@dimen/sett_margin"
-			android:text="@string/sett_show_playback_marker" />
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:spinnerMode="dropdown" />
 
 		<androidx.appcompat.widget.SwitchCompat
 			android:id="@+id/swUiInfoInTitle"
@@ -87,7 +70,8 @@
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:text="@string/sett_playlist"
-			android:textColor="@color/sett_group" />
+			android:textColor="@color/sett_group"
+			android:textSize="@dimen/grp_name_size" />
 
 		<androidx.appcompat.widget.SwitchCompat
 			android:id="@+id/swRandom"
@@ -131,10 +115,12 @@
 			android:layout_marginTop="@dimen/sett_margin"
 			android:text="@string/sett_auto_stop"
 			android:textColor="@color/text" />
+
 		<SeekBar
 			android:id="@+id/sbPlayAutoStop"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content" />
+
 		<EditText
 			android:id="@+id/eAutoStop"
 			android:layout_width="match_parent"
@@ -150,7 +136,8 @@
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:text="@string/sett_playback"
-			android:textColor="@color/sett_group" />
+			android:textColor="@color/sett_group"
+			android:textSize="@dimen/grp_name_size" />
 
 		<TextView
 			android:layout_width="match_parent"
@@ -159,6 +146,7 @@
 			android:layout_marginTop="@dimen/sett_margin"
 			android:text="@string/sett_codepage"
 			android:textColor="@color/text" />
+
 		<Spinner
 			android:id="@+id/spCodepage"
 			android:layout_width="match_parent"
@@ -173,10 +161,12 @@
 			android:layout_marginTop="@dimen/sett_margin"
 			android:text="@string/sett_auto_skip"
 			android:textColor="@color/text" />
+
 		<SeekBar
 			android:id="@+id/sbPlayAutoSkip"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content" />
+
 		<EditText
 			android:id="@+id/eAutoSkip"
 			android:layout_width="match_parent"
@@ -194,10 +184,12 @@
 			android:layout_marginTop="@dimen/sett_margin"
 			android:text="@string/sett_auto_skip_tail"
 			android:textColor="@color/text" />
+
 		<SeekBar
 			android:id="@+id/sbPlayAutoSkipTail"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content" />
+
 		<EditText
 			android:id="@+id/eAutoSkipTail"
 			android:layout_width="match_parent"
@@ -228,58 +220,13 @@
 			android:layout_height="wrap_content"
 			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/sett_equalizer_enable" />
-		<Spinner
-			android:id="@+id/spEqlzBand"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="@dimen/sett_margin"
-			android:spinnerMode="dropdown" />
-		<TextView
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="@dimen/sett_margin"
-			android:layout_marginTop="@dimen/sett_margin"
-			android:text="@string/sett_equalizer_frequency"
-			android:textColor="@color/text" />
-		<SeekBar
-			android:id="@+id/sbEqlzFreq"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content" />
-		<TextView
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="@dimen/sett_margin"
-			android:layout_marginTop="@dimen/sett_margin"
-			android:text="@string/sett_equalizer_width"
-			android:textColor="@color/text" />
-		<SeekBar
-			android:id="@+id/sbEqlzWidth"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content" />
-		<TextView
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="@dimen/sett_margin"
-			android:layout_marginTop="@dimen/sett_margin"
-			android:text="@string/sett_equalizer_gain"
-			android:textColor="@color/text" />
-		<SeekBar
-			android:id="@+id/sbEqlzGain"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content" />
-		<EditText
-			android:id="@+id/eEqualizer"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="@dimen/sett_margin"
-			android:inputType="text"
-			android:textSize="@dimen/text_editbox" />
 
 		<TextView
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:text="@string/sett_operation"
-			android:textColor="@color/sett_group" />
+			android:textColor="@color/sett_group"
+			android:textSize="@dimen/grp_name_size" />
 
 		<TextView
 			android:layout_width="match_parent"
@@ -288,6 +235,7 @@
 			android:layout_marginTop="@dimen/sett_margin"
 			android:text="@string/sett_data_dir"
 			android:textColor="@color/text" />
+
 		<EditText
 			android:id="@+id/eDataDir"
 			android:layout_width="match_parent"
@@ -303,6 +251,7 @@
 			android:layout_marginTop="@dimen/sett_margin"
 			android:text="@string/sett_trash_dir"
 			android:textColor="@color/text" />
+
 		<EditText
 			android:id="@+id/eTrashDir"
 			android:layout_width="match_parent"
@@ -327,6 +276,7 @@
 			android:layout_marginTop="@dimen/sett_margin"
 			android:text="@string/sett_library_dir"
 			android:textColor="@color/text" />
+
 		<EditText
 			android:id="@+id/eLibraryDir"
 			android:layout_width="match_parent"
@@ -345,8 +295,9 @@
 		<TextView
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
+			android:textColor="@color/sett_group"
 			android:text="@string/sett_recording"
-			android:textColor="@color/sett_group" />
+			android:textSize="@dimen/grp_name_size" />
 
 		<androidx.appcompat.widget.SwitchCompat
 			android:id="@+id/swRecLongclick"
@@ -380,6 +331,7 @@
 			android:layout_marginTop="@dimen/sett_margin"
 			android:text="@string/sett_rec_name"
 			android:textColor="@color/text" />
+
 		<EditText
 			android:id="@+id/eRecName"
 			android:layout_width="match_parent"
@@ -396,6 +348,7 @@
 			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/sett_rec_src"
 			android:textColor="@color/text" />
+
 		<Spinner
 			android:id="@+id/spRecSource"
 			android:layout_width="match_parent"
@@ -409,6 +362,7 @@
 			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/sett_rec_in_format"
 			android:textColor="@color/text" />
+
 		<Spinner
 			android:id="@+id/spInFmt"
 			android:layout_width="match_parent"
@@ -423,6 +377,7 @@
 			android:layout_marginTop="@dimen/sett_margin"
 			android:text="@string/sett_rec_chan"
 			android:textColor="@color/text" />
+
 		<Spinner
 			android:id="@+id/spRecChannels"
 			android:layout_width="match_parent"
@@ -436,10 +391,12 @@
 			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/sett_rec_rate"
 			android:textColor="@color/text" />
+
 		<SeekBar
 			android:id="@+id/sbRecRate"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content" />
+
 		<EditText
 			android:id="@+id/eRecRate"
 			android:layout_width="match_parent"
@@ -454,6 +411,7 @@
 			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/sett_rec_enc"
 			android:textColor="@color/text" />
+
 		<Spinner
 			android:id="@+id/spRecEnc"
 			android:layout_width="match_parent"
@@ -467,10 +425,12 @@
 			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/sett_rec_bitrate"
 			android:textColor="@color/text" />
+
 		<SeekBar
 			android:id="@+id/sbRecBitrate"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content" />
+
 		<EditText
 			android:id="@+id/eRecBitrate"
 			android:layout_width="match_parent"
@@ -487,6 +447,7 @@
 			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/sett_rec_buf_len"
 			android:textColor="@color/text" />
+
 		<EditText
 			android:id="@+id/eRecBufLen"
 			android:layout_width="match_parent"
@@ -501,10 +462,12 @@
 			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/sett_rec_until"
 			android:textColor="@color/text" />
+
 		<SeekBar
 			android:id="@+id/sbRecUntil"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content" />
+
 		<EditText
 			android:id="@+id/eRecUntil"
 			android:layout_width="match_parent"
@@ -526,10 +489,12 @@
 			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:text="@string/sett_rec_gain"
 			android:textColor="@color/text" />
+
 		<SeekBar
 			android:id="@+id/sbRecGain"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content" />
+
 		<EditText
 			android:id="@+id/eRecGain"
 			android:layout_width="match_parent"

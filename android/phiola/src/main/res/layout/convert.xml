@@ -12,7 +12,8 @@
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:text="@string/conv_in_out"
-			android:textColor="@color/sett_group" />
+			android:textColor="@color/sett_group"
+			android:textSize="@dimen/grp_name_size" />
 
 		<TextView
 			android:layout_width="match_parent"
@@ -22,7 +23,7 @@
 			android:textColor="@color/text" />
 
 		<EditText
-			android:id="@+id/e_in_name"
+			android:id="@+id/eInName"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
@@ -36,7 +37,7 @@
 			android:text="@string/conv_out_dir"
 			android:textColor="@color/text" />
 		<EditText
-			android:id="@+id/e_out_dir"
+			android:id="@+id/eOutDir"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
@@ -50,7 +51,7 @@
 			android:text="@string/conv_out_name"
 			android:textColor="@color/text" />
 		<EditText
-			android:id="@+id/e_out_name"
+			android:id="@+id/eOutName"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
@@ -64,7 +65,7 @@
 			android:text="@string/conv_out_fmt"
 			android:textColor="@color/text" />
 		<Spinner
-			android:id="@+id/sp_out_ext"
+			android:id="@+id/spOutExt"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
@@ -73,8 +74,22 @@
 		<TextView
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:text="@string/conv_tags"
+			android:textColor="@color/text" />
+		<EditText
+			android:id="@+id/eTags"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginHorizontal="@dimen/sett_margin"
+			android:textSize="@dimen/text_editbox" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
 			android:text="@string/conv_range"
-			android:textColor="@color/sett_group" />
+			android:textColor="@color/sett_group"
+			android:textSize="@dimen/grp_name_size" />
 
 		<TextView
 			android:layout_width="match_parent"
@@ -83,19 +98,19 @@
 			android:text="@string/conv_apos_start"
 			android:textColor="@color/text" />
 		<SeekBar
-			android:id="@+id/sb_range_from"
+			android:id="@+id/sbRangeFrom"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:max="100" />
 		<EditText
-			android:id="@+id/e_from"
+			android:id="@+id/eFrom"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:inputType="time"
 			android:textSize="@dimen/text_editbox" />
 		<Button
-			android:id="@+id/b_from_set_cur"
+			android:id="@+id/bFromSetCur"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
@@ -108,19 +123,19 @@
 			android:text="@string/conv_apos_end"
 			android:textColor="@color/text" />
 		<SeekBar
-			android:id="@+id/sb_range_until"
+			android:id="@+id/sbRangeUntil"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:max="100" />
 		<EditText
-			android:id="@+id/e_until"
+			android:id="@+id/eUntil"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
 			android:inputType="time"
 			android:textSize="@dimen/text_editbox" />
 		<Button
-			android:id="@+id/b_until_set_cur"
+			android:id="@+id/bUntilSetCur"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
@@ -129,21 +144,9 @@
 		<TextView
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="@dimen/sett_margin"
-			android:text="@string/conv_tags"
-			android:textColor="@color/text" />
-		<EditText
-			android:id="@+id/e_tags"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:layout_marginHorizontal="@dimen/sett_margin"
-			android:textSize="@dimen/text_editbox" />
-
-		<TextView
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
 			android:text="@string/conv_filters"
-			android:textColor="@color/sett_group" />
+			android:textColor="@color/sett_group"
+			android:textSize="@dimen/grp_name_size" />
 
 		<TextView
 			android:layout_width="match_parent"
@@ -152,7 +155,7 @@
 			android:text="@string/conv_sample_format"
 			android:textColor="@color/text" />
 		<Spinner
-			android:id="@+id/sp_sample_format"
+			android:id="@+id/spSampleFormat"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin" />
@@ -164,7 +167,7 @@
 			android:text="@string/conv_sample_rate"
 			android:textColor="@color/text" />
 		<EditText
-			android:id="@+id/e_sample_rate"
+			android:id="@+id/eSampleRate"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
@@ -175,7 +178,8 @@
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:text="@string/conv_encoding"
-			android:textColor="@color/sett_group" />
+			android:textColor="@color/sett_group"
+			android:textSize="@dimen/grp_name_size" />
 
 		<TextView
 			android:layout_width="match_parent"
@@ -235,57 +239,58 @@
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:text="@string/conv_behaviour"
-			android:textColor="@color/sett_group" />
+			android:textColor="@color/sett_group"
+			android:textSize="@dimen/grp_name_size" />
 
 		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/sw_copy"
+			android:id="@+id/swCopy"
 			android:layout_width="match_parent"
-			android:layout_height="match_parent"
+			android:layout_height="wrap_content"
 			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/conv_copy" />
 
 		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/sw_preserve_date"
+			android:id="@+id/swPreserveDate"
 			android:layout_width="match_parent"
-			android:layout_height="match_parent"
+			android:layout_height="wrap_content"
 			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/conv_preserve_date" />
 
 		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/sw_out_overwrite"
+			android:id="@+id/swOutOverwrite"
 			android:layout_width="match_parent"
-			android:layout_height="match_parent"
+			android:layout_height="wrap_content"
 			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/conv_overwrite" />
 		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/sw_out_overwrite_confirm"
+			android:id="@+id/swOutOverwriteConfirm"
 			android:layout_width="match_parent"
-			android:layout_height="match_parent"
+			android:layout_height="wrap_content"
 			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/conv_overwrite2" />
 
 		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/sw_trash_orig"
+			android:id="@+id/swTrashOrig"
 			android:layout_width="match_parent"
-			android:layout_height="match_parent"
+			android:layout_height="wrap_content"
 			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/conv_trash_orig" />
 
 		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/sw_pl_add"
+			android:id="@+id/swPlAdd"
 			android:layout_width="match_parent"
-			android:layout_height="match_parent"
+			android:layout_height="wrap_content"
 			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/conv_pl_add" />
 
 		<Button
-			android:id="@+id/b_start"
+			android:id="@+id/bStart"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:text="@string/conv_go" />
 
 		<TextView
-			android:id="@+id/l_result"
+			android:id="@+id/lResult"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:text=""

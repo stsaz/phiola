@@ -1,14 +1,8 @@
 /** phiola/Android: recording functionality
 2023, Simon Zolin */
 
-struct RecordCallback {
-	jobject obj;
-	jmethodID on_finish;
-};
-
 struct rec_ctx {
 	uint state;
-	struct RecordCallback RecordCallback;
 };
 
 enum {
@@ -28,10 +22,9 @@ static void rectrk_close(void *ctx, phi_track *t)
 
 	const char *fn = (t->output.name) ? t->output.name : t->conf.ofile.name;
 	jstring joname = jni_js_sz(fn);
-	jni_call_void(rx->RecordCallback.obj, rx->RecordCallback.on_finish, t->error, joname);
+	jni_call_void(x->Callbacks.obj, x->Callbacks.recording, t->error, joname);
 
 end:
-	jni_global_unref(rx->RecordCallback.obj);
 	ffmem_free(rx);
 	jni_vm_detach(jvm);
 }
@@ -103,7 +96,7 @@ static struct jni_cmap RecordParams_map[] = {
 #undef _S
 
 JNIEXPORT jlong JNICALL
-Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring joname, jobject jconf, jobject jcb)
+Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring joname, jobject jconf)
 {
 	dbglog("%s: enter", __func__);
 	int e = -1;
@@ -186,8 +179,6 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 		goto end;
 
 	struct rec_ctx *rx = ffmem_new(struct rec_ctx);
-	rx->RecordCallback.on_finish = jni_func(jni_class_obj(jcb), "on_finish", "(" JNI_TINT JNI_TSTR ")V");
-	rx->RecordCallback.obj = jni_global_ref(jcb);
 	t->udata = rx;
 
 	t->output.allow_async = 1;

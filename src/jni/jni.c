@@ -14,11 +14,20 @@
 #define PJT_META  "Lcom/github/stsaz/phiola/Phiola$Meta;"
 #define PJC_UN_FILES  "com/github/stsaz/phiola/UtilNative$Files"
 
-struct PlayObserver {
+struct Callbacks {
 	jobject obj;
-	jmethodID on_create;
-	jmethodID on_close;
-	jmethodID on_update;
+	jmethodID play_new;
+	jmethodID play_fin;
+	jmethodID play_update;
+	jmethodID recording;
+};
+
+static const struct jni_ifmap Callbacks_map[] = {
+	{ "play_new", "(" PJT_META ")" JNI_TVOID },
+	{ "play_fin", "(" JNI_TINT ")" JNI_TVOID },
+	{ "play_update", "(" JNI_TLONG ")" JNI_TVOID },
+	{ "recording", "(" JNI_TINT JNI_TSTR ")" JNI_TVOID },
+	{}
 };
 
 struct QueueCallback {
@@ -27,18 +36,47 @@ struct QueueCallback {
 	jmethodID on_complete;
 };
 
+static const struct jni_ifmap QueueCallback_map[] = {
+	{ "on_change", "(" JNI_TLONG JNI_TINT JNI_TINT ")" JNI_TVOID },
+	{ "on_complete", "(" JNI_TINT JNI_TINT ")" JNI_TVOID },
+	{}
+};
+
+struct Config {
+	jstring		codepage;
+	jstring		equalizer;
+	jint		queue_flags;
+	jint		auto_seek;
+	jint		auto_until;
+	jboolean	deprecated_mods;
+};
+
+#define _S(name)  { #name, 's', FF_OFF(struct Config, name), 0 }
+#define _I(name)  { #name, 'i', FF_OFF(struct Config, name), 0 }
+#define _Z(name)  { #name, 'z', FF_OFF(struct Config, name), 0 }
+static struct jni_cmap Config_map[] = {
+	_S(codepage),
+	_S(equalizer),
+	_I(queue_flags),
+	_I(auto_seek),
+	_I(auto_until),
+	_Z(deprecated_mods),
+	{},
+};
+#undef _S
+#undef _I
+#undef _Z
+
 struct phiola_jni {
 	phi_core *core;
 	phi_queue_if queue;
 	phi_meta_if metaif;
 
 	u_char debug;
-	u_char deprecated_mods;
 	ffvec storage_paths; // char*[]
 	AAssetManager *am;
 
 	struct {
-		struct PlayObserver PlayObserver;
 		phi_timer auto_stop_timer;
 		phi_track *trk;
 		char *equalizer;
@@ -80,6 +118,8 @@ struct phiola_jni {
 	struct jni_class_t Meta;
 	struct jni_class_t UtilNative_Files;
 	struct QueueCallback QueueCallback;
+	struct Config Config;
+	struct Callbacks Callbacks;
 };
 static struct phiola_jni *x;
 static JavaVM *jvm;
@@ -163,7 +203,7 @@ static char* mod_loading(ffstr name)
 	if (i >= 0) {
 
 		if (mods[i].deprecated
-			&& !x->deprecated_mods) {
+			&& !x->Config.deprecated_mods) {
 			errlog("Loading deprecated libraries is restricted: %S", &name);
 			goto end;
 		}
@@ -275,7 +315,7 @@ Java_com_github_stsaz_phiola_Phiola_destroy(JNIEnv *env, jobject thiz)
 
 	dbglog("%s: enter", __func__);
 	phi_core_destroy();
-	jni_global_unref(x->play.PlayObserver.obj);
+	jni_global_unref(x->Callbacks.obj);
 	jni_global_unref(x->QueueCallback.obj);
 	jni_global_unref(x->Meta.cls);
 	jni_global_unref(x->UtilNative_Files.cls);
@@ -302,23 +342,63 @@ Java_com_github_stsaz_phiola_Phiola_version(JNIEnv *env, jobject thiz)
 }
 
 JNIEXPORT void JNICALL
-Java_com_github_stsaz_phiola_Phiola_setConfig(JNIEnv *env, jobject thiz, jstring jcodepage, jboolean deprecated_mods)
-{
-	const char *sz = jni_sz_js(jcodepage);
-	if (ffsz_eq(sz, "win1251"))
-		x->core->conf.code_page = FFUNICODE_WIN1251;
-	else if (ffsz_eq(sz, "win1252"))
-		x->core->conf.code_page = FFUNICODE_WIN1252;
-	jni_sz_free(sz, jcodepage);
-
-	x->deprecated_mods = deprecated_mods;
-}
-
-JNIEXPORT void JNICALL
 Java_com_github_stsaz_phiola_Phiola_setDebug(JNIEnv *env, jobject thiz, jboolean enable)
 {
 	x->debug = !!enable;
 	x->core->conf.log_level = (x->debug) ? PHI_LOG_EXTRA : PHI_LOG_VERBOSE;
+}
+
+static void conf_apply(struct core_data *d)
+{
+	struct Config *c = (void*)d->param_str;
+
+	ffmem_free(x->play.equalizer);
+	x->play.equalizer = c->equalizer;
+
+	qc_apply(); // Apply settings for the active playlist
+
+	ffmem_free(c);
+	ffmem_free(d);
+}
+
+JNIEXPORT void JNICALL
+Java_com_github_stsaz_phiola_Phiola_setConfig(JNIEnv *env, jobject thiz, jint flags, jobject conf)
+{
+	dbglog("%s: enter", __func__);
+
+	struct Config *c = ffmem_new(struct Config);
+	jni_obj_read(env, c, Config_map, conf, jni_class_obj(conf));
+
+	const char *s = jni_sz_js(c->codepage);
+	if (ffsz_eq(s, "win1251"))
+		x->core->conf.code_page = FFUNICODE_WIN1251;
+	else if (ffsz_eq(s, "win1252"))
+		x->core->conf.code_page = FFUNICODE_WIN1252;
+	jni_sz_free(s, c->codepage);
+
+	x->play.remove_on_error = !!(c->queue_flags & QC_REMOVE_ON_ERROR);
+	x->play.repeat_all = !!(c->queue_flags & QC_REPEAT);
+	x->play.random = !!(c->queue_flags & QC_RANDOM);
+	x->play.rg_normalizer = !!(c->queue_flags & QC_RG_NORM);
+	x->play.auto_normalizer = !!(c->queue_flags & QC_AUTO_NORM);
+	x->play.auto_seek_sec_percent = c->auto_seek;
+	x->play.auto_until_sec_percent = c->auto_until;
+
+	c->equalizer = (jstring)jni_sz_js_dup(env, c->equalizer);
+
+	struct core_data *d = ffmem_new(struct core_data);
+	d->param_str = (void*)c;
+	core_task(d, conf_apply);
+
+	dbglog("%s: exit", __func__);
+}
+
+JNIEXPORT void JNICALL
+Java_com_github_stsaz_phiola_Phiola_setCallbacks(JNIEnv *env, jobject thiz, jobject cb)
+{
+	dbglog("%s: enter", __func__);
+	jni_if_read(env, (struct jni_if*)&x->Callbacks, Callbacks_map, cb);
+	dbglog("%s: exit", __func__);
 }
 
 enum {

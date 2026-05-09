@@ -179,60 +179,17 @@ class Queue {
 	private boolean converting;
 	private Core.CoreTimer convert_update_timer;
 
+	// Phiola.QC_*
 	static final int
-		F_REPEAT = 1,
-		F_RANDOM = 2,
-		F_MOVE_ON_NEXT = 4,
-		F_RM_ON_NEXT = 8,
-		F_RM_ON_ERR = 0x10,
-		F_AUTO_NORM = 0x20,
-		F_RG_NORM = 0x40,
-		F_ALL = 0xff;
-	private int flags;
+		F_MOVE_ON_NEXT = 0x010000,
+		F_RM_ON_NEXT = 0x020000,
+		F_ALL = 0xffffff;
+	int flags;
 	void flags_set1(int mask, boolean val) {
-		int i = 0;
-		if (val)
-			i = mask;
-		flags_set(mask, i);
+		flags_set(mask, (val) ? mask : 0);
 	}
 	void flags_set(int mask, int val) {
-		int m = 0, v = 0;
-
-		if ((mask & F_REPEAT) != 0 && (val & F_REPEAT) != (this.flags & F_REPEAT)) {
-			m |= Phiola.QC_REPEAT;
-			if ((val & F_REPEAT) != 0)
-				v |= Phiola.QC_REPEAT;
-		}
-
-		if ((mask & F_RANDOM) != 0 && (val & F_RANDOM) != (this.flags & F_RANDOM)) {
-			m |= Phiola.QC_RANDOM;
-			if ((val & F_RANDOM) != 0)
-				v |= Phiola.QC_RANDOM;
-		}
-
-		if ((mask & F_RG_NORM) != 0 && (val & F_RG_NORM) != (this.flags & F_RG_NORM)) {
-			m |= Phiola.QC_RG_NORM;
-			if ((val & F_RG_NORM) != 0)
-				v |= Phiola.QC_RG_NORM;
-		}
-
-		if ((mask & F_AUTO_NORM) != 0 && (val & F_AUTO_NORM) != (this.flags & F_AUTO_NORM)) {
-			m |= Phiola.QC_AUTO_NORM;
-			if ((val & F_AUTO_NORM) != 0)
-				v |= Phiola.QC_AUTO_NORM;
-		}
-
-		if ((mask & F_RM_ON_ERR) != 0 && (val & F_RM_ON_ERR) != (this.flags & F_RM_ON_ERR)) {
-			m |= Phiola.QC_REMOVE_ON_ERROR;
-			if ((val & F_RM_ON_ERR) != 0)
-				v |= Phiola.QC_REMOVE_ON_ERROR;
-		}
-
-		if (m != 0)
-			phi.quConf(m, v);
-
-		this.flags &= ~mask;
-		this.flags |= val;
+		this.flags = (this.flags & ~mask) | val;
 	}
 	boolean flags_test(int mask) {
 		return (this.flags & mask) != 0;
@@ -425,18 +382,6 @@ class Queue {
 		if (i_selected >= i)
 			i_selected = 0;
 		queues.get(i_selected).load_once();
-
-		int v = 0;
-		if (flags_test(F_REPEAT)) v |= Phiola.QC_REPEAT;
-		if (flags_test(F_RANDOM)) v |= Phiola.QC_RANDOM;
-		if (flags_test(F_RM_ON_ERR)) v |= Phiola.QC_REMOVE_ON_ERROR;
-		if (flags_test(F_RG_NORM)) v |= Phiola.QC_RG_NORM;
-		if (flags_test(F_AUTO_NORM)) v |= Phiola.QC_AUTO_NORM;
-		if (v != 0)
-			phi.quConf(v, v);
-
-		if (core.play.equalizer_enabled)
-			phi.quConfStr(Phiola.QC_EQUALIZER, core.play.equalizer);
 
 		core.phiola.quSetCallback(new Phiola.QueueCallback() {
 				public void on_change(long q, int flags, int pos) { q_on_change(q, flags, pos); }
@@ -781,13 +726,13 @@ class Queue {
 			+ "play_auto_stop %d\n"
 			, curpos
 			, i_active
-			, core.bool_to_int(flags_test(F_RANDOM))
-			, core.bool_to_int(flags_test(F_REPEAT))
+			, core.bool_to_int(flags_test(Phiola.QC_RANDOM))
+			, core.bool_to_int(flags_test(Phiola.QC_REPEAT))
 			, core.bool_to_int(flags_test(F_MOVE_ON_NEXT))
 			, core.bool_to_int(flags_test(F_RM_ON_NEXT))
-			, core.bool_to_int(flags_test(F_RM_ON_ERR))
-			, core.bool_to_int(flags_test(F_RG_NORM))
-			, core.bool_to_int(flags_test(F_AUTO_NORM))
+			, core.bool_to_int(flags_test(Phiola.QC_REMOVE_ON_ERROR))
+			, core.bool_to_int(flags_test(Phiola.QC_RG_NORM))
+			, core.bool_to_int(flags_test(Phiola.QC_AUTO_NORM))
 			, auto_stop_value_min
 			);
 	}
@@ -801,13 +746,13 @@ class Queue {
 		i_selected = i_active;
 
 		int f = 0;
-		if (c.enabled(Conf.LIST_RANDOM)) f |= F_RANDOM;
-		if (c.enabled(Conf.LIST_REPEAT)) f |= F_REPEAT;
+		if (c.enabled(Conf.LIST_RANDOM)) f |= Phiola.QC_RANDOM;
+		if (c.enabled(Conf.LIST_REPEAT)) f |= Phiola.QC_REPEAT;
 		if (c.enabled(Conf.LIST_ADD_RM_ON_NEXT)) f |= F_MOVE_ON_NEXT;
 		if (c.enabled(Conf.LIST_RM_ON_NEXT)) f |= F_RM_ON_NEXT;
-		if (c.enabled(Conf.LIST_RM_ON_ERR)) f |= F_RM_ON_ERR;
-		if (c.enabled(Conf.PLAY_RG_NORM)) f |= F_RG_NORM;
-		if (c.enabled(Conf.PLAY_AUTO_NORM)) f |= F_AUTO_NORM;
+		if (c.enabled(Conf.LIST_RM_ON_ERR)) f |= Phiola.QC_REMOVE_ON_ERROR;
+		if (c.enabled(Conf.PLAY_RG_NORM)) f |= Phiola.QC_RG_NORM;
+		if (c.enabled(Conf.PLAY_AUTO_NORM)) f |= Phiola.QC_AUTO_NORM;
 		this.flags = f;
 
 		auto_stop_value_min = c.number(Conf.PLAY_AUTO_STOP);

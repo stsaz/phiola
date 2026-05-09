@@ -80,8 +80,7 @@ static void play_ui_close(void *f, phi_track *t)
 
 	status |= (t->chain_flags & PHI_FSTOP) ? PCS_STOP : 0;
 
-	trk_dbglog(t, "PlayObserver.on_close");
-	jni_call_void(x->play.PlayObserver.obj, x->play.PlayObserver.on_close, status);
+	jni_call_void(x->Callbacks.obj, x->Callbacks.play_fin, status);
 	jni_vm_detach(jvm);
 }
 
@@ -235,13 +234,11 @@ static int play_ui_process(void *f, phi_track *t)
 			struct Meta m = {};
 			meta_fill(env, &m, t);
 			jni_obj_write(env, jmeta, x->Meta.cls, Meta_map, &m);
-			trk_dbglog(t, "PlayObserver.on_create");
-			jni_call_void(x->play.PlayObserver.obj, x->play.PlayObserver.on_create, jmeta);
+			jni_call_void(x->Callbacks.obj, x->Callbacks.play_new, jmeta);
 		}
 
 		if (notify & 2) {
-			trk_dbglog(t, "PlayObserver.on_update");
-			jni_call_void(x->play.PlayObserver.obj, x->play.PlayObserver.on_update, (jlong)pos_msec);
+			jni_call_void(x->Callbacks.obj, x->Callbacks.play_update, (jlong)pos_msec);
 		}
 
 		jni_vm_detach(jvm);
@@ -259,18 +256,6 @@ static const phi_filter phi_play_ui = {
 	"play-ui"
 };
 
-
-JNIEXPORT void JNICALL
-Java_com_github_stsaz_phiola_Phiola_playObserverSet(JNIEnv *env, jobject thiz, jobject jo, jint flags)
-{
-	dbglog("%s: enter", __func__);
-	jclass jc = jni_class_obj(jo);
-	x->play.PlayObserver.on_create = jni_func(jc, "on_create", "(" PJT_META ")" JNI_TVOID);
-	x->play.PlayObserver.on_close = jni_func(jc, "on_close", "(" JNI_TINT ")" JNI_TVOID);
-	x->play.PlayObserver.on_update = jni_func(jc, "on_update", "(" JNI_TLONG ")" JNI_TVOID);
-	x->play.PlayObserver.obj = jni_global_ref(jo);
-	dbglog("%s: exit", __func__);
-}
 
 static void play_pause_resume(struct core_data *d)
 {
@@ -334,8 +319,6 @@ end:
 enum {
 	PC_PAUSE_TOGGLE = 1,
 	PC_STOP = 2,
-	PC_AUTO_SKIP_HEAD = 3,
-	PC_AUTO_SKIP_TAIL = 4,
 	PC_AUTO_STOP = 5,
 	PC_SEEK = 6,
 };
@@ -359,12 +342,6 @@ Java_com_github_stsaz_phiola_Phiola_playCmd(JNIEnv *env, jobject thiz, jint cmd,
 		d->param_int = val;
 		core_task(d, play_seek);
 		break;
-
-	case PC_AUTO_SKIP_HEAD:
-		x->play.auto_seek_sec_percent = val;  break;
-
-	case PC_AUTO_SKIP_TAIL:
-		x->play.auto_until_sec_percent = val;  break;
 
 	case PC_AUTO_STOP:
 		d = ffmem_new(struct core_data);

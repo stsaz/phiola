@@ -5,7 +5,6 @@ package com.github.stsaz.phiola;
 
 import android.os.Bundle;
 
-import android.graphics.PorterDuff;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -19,100 +18,13 @@ import java.lang.Math;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-class EQBand {
-	int type, freq, width, gain;
-
-	static final int
-		LOW_SHELF = 1,
-		HIGH_SHELF = 3;
-	EQBand(int t) { this.type = t; }
-
-	boolean shelf() { return (this.type & 1) != 0; }
-
-	void parse(String s) {
-		this.freq = 0;
-		this.width = 0;
-		this.gain = 0;
-
-		String[] v = s.split(" ");
-		for (int i = 0;  i + 1 < v.length;  i += 2) {
-			if (v[i].equals("f") && !shelf()) {
-				this.freq = Core.str_to_uint(v[i + 1], 0);
-
-			} else if (v[i].equals("w") && !shelf()) {
-				String w = v[i + 1];
-				if (w.length() > 1 && w.charAt(w.length() - 1) == 'q') {
-					w = w.substring(0, w.length() - 1); // cut last 'q'
-					this.width = (int)(Core.str_to_float(w, 0) * 10);
-				}
-
-			} else if (v[i].equals("g")) {
-				this.gain = (int)(Core.str_to_float(v[i + 1], 0) * 10);
-			}
-		}
-	}
-
-	// 20..20000 Hz
-	void freq_set(int progress) {
-		freq = (int)((20000 - 20) * Math.pow((double)(progress + 1) / 100, 3) + 20);
-	}
-	int freq_progress() { return 0; }
-
-	void gain_set(int progress) { gain = (progress * 5) - 120; }
-	int gain_progress() { return (gain + 120) / 5; }
-
-	String str() {
-		if (shelf()) {
-			return String.format("t %s g %.01f"
-				, (this.type == 1) ? "bass" : "treble", (double)this.gain / 10);
-		}
-		return String.format("f %d w %.01fq g %.01f"
-			, this.freq, (double)this.width / 10, (double)this.gain / 10);
-	}
-}
-
-class EQSet {
-	static final int BANDS = 5;
-	private ArrayList<String> parts;
-	int band;
-
-	// "t T f F w W g G,..."
-	void init(String conf) {
-		String[] v = conf.split(",");
-		parts = new ArrayList<>(BANDS);
-		parts.addAll(Arrays.asList(v));
-		for (int i = parts.size();  i < BANDS;  i++) {
-			parts.add("");
-		}
-	}
-
-	String commit() {
-		StringBuilder sb = new StringBuilder();
-		for (String s : parts) {
-			sb.append(String.format("%s,", s));
-		}
-		return sb.substring(0, sb.length() - 1);
-	}
-
-	String current() { return parts.get(band - 1); }
-	void current_set(String s) { parts.set(band - 1, s); }
-
-	EQBand select(int i) {
-		band = i;
-		int t = (band == 1) ? EQBand.LOW_SHELF
-			: (band == BANDS) ? EQBand.HIGH_SHELF
-			: 0;
-		EQBand b = new EQBand(t);
-		b.parse(current());
-		return b;
-	}
-}
-
 public class SettingsActivity extends AppCompatActivity {
 	private static final String TAG = "phiola.SettingsActivity";
 	private Core core;
 	private SettingsBinding b;
 	private ExplorerMenu explorer;
+	private int color;
+	private String equ;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -135,98 +47,52 @@ public class SettingsActivity extends AppCompatActivity {
 		load();
 	}
 
-	private static void seekbar_color(SeekBar sb, int color) {
-		sb.getProgressDrawable().setColorFilter(0xff000000 | color, PorterDuff.Mode.SRC_IN);
-		sb.getThumb().setColorFilter(0xff000000 | color, PorterDuff.Mode.SRC_IN);
-	}
-
 	private void ui_init() {
-		b.sbColorRed.setMax(color_progress(256));
-		b.sbColorRed.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
-				@Override
-				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser)
-						color_modify(0x00ffff, (progress * 3) << 16);
-				}
-			});
-		seekbar_color(b.sbColorRed, 0xff4136);
-
-		b.sbColorGreen.setMax(color_progress(256));
-		b.sbColorGreen.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
-				@Override
-				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser)
-						color_modify(0xff00ff, (progress * 3) << 8);
-				}
-			});
-		seekbar_color(b.sbColorGreen, 0x2ecc40);
-
-		b.sbColorBlue.setMax(color_progress(256));
-		b.sbColorBlue.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
-				@Override
-				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser)
-						color_modify(0xffff00, progress * 3);
-				}
-			});
-		seekbar_color(b.sbColorBlue, 0x0074d9);
+		b.bColor.setOnClickListener(v -> new DlgColor().show(this, color, (color) -> {
+			this.color = color;
+		}));
 	}
 
-	private EQSet eqset;
-	private EQBand eqband;
-
-	private void eqlz_enable(boolean enable) {
-		b.spEqlzBand.setEnabled(enable);
-		b.sbEqlzFreq.setEnabled(enable && !eqband.shelf());
-		b.sbEqlzWidth.setEnabled(enable && !eqband.shelf());
-		b.sbEqlzGain.setEnabled(enable);
-		b.eEqualizer.setEnabled(enable);
-	}
-
-	private void eqlz_show(int band) {
-		eqband = eqset.select(band);
-
-		b.sbEqlzFreq.setProgress(eqband.freq_progress());
-		b.sbEqlzFreq.setEnabled(!eqband.shelf());
-		b.sbEqlzWidth.setProgress(eqband.width);
-		b.sbEqlzWidth.setEnabled(!eqband.shelf());
-		b.sbEqlzGain.setProgress(eqband.gain_progress());
-		b.eEqualizer.setText(eqset.current());
-	}
-
-	private void eqlz_changed() {
-		String s = eqband.str();
-		eqset.current_set(s);
-		b.eEqualizer.setText(s);
+	private ArrayAdapter<String> spinner_adapter(String[] options) {
+		ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, options);
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		return adapter;
 	}
 
 	private void play_init() {
-		b.sbPlayAutoSkip.setMax(auto_skip_progress(200));
-		b.sbPlayAutoSkip.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
-				@Override
-				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser)
+		SeekBar.OnSeekBarChangeListener sbcl = new SeekBar.OnSeekBarChangeListener() {
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+				if (fromUser) {
+					switch (seekBar.getId()) {
+					case R.id.sbPlayAutoSkip:
 						b.eAutoSkip.setText(AutoSkip.user_str(auto_skip_value(progress)));
-				}
-			});
+						break;
 
-		b.sbPlayAutoSkipTail.setMax(auto_skip_progress(200));
-		b.sbPlayAutoSkipTail.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
-				@Override
-				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser)
+					case R.id.sbPlayAutoSkipTail:
 						b.eAutoSkipTail.setText(AutoSkip.user_str(auto_skip_value(progress)));
-				}
-			});
+						break;
 
-		b.sbPlayAutoStop.setMax(auto_stop_progress(6*60));
-		b.sbPlayAutoStop.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
-				@Override
-				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser)
+					case R.id.sbPlayAutoStop:
 						b.eAutoStop.setText(Util.int_to_str(auto_stop_value(progress)));
+						break;
+					}
 				}
-			});
+			}
+
+			@Override
+			public void onStartTrackingTouch(SeekBar seekBar) {}
+
+			@Override
+			public void onStopTrackingTouch(SeekBar seekBar) {}
+		};
+		b.sbPlayAutoSkip.setOnSeekBarChangeListener(sbcl);
+		b.sbPlayAutoSkipTail.setOnSeekBarChangeListener(sbcl);
+		b.sbPlayAutoStop.setOnSeekBarChangeListener(sbcl);
+
+		b.sbPlayAutoSkip.setMax(auto_skip_progress(200));
+		b.sbPlayAutoSkipTail.setMax(auto_skip_progress(200));
+		b.sbPlayAutoStop.setMax(auto_stop_progress(6*60));
 
 		b.swRgNorm.setOnCheckedChangeListener((v, checked) -> {
 				if (checked)
@@ -237,59 +103,13 @@ public class SettingsActivity extends AppCompatActivity {
 					b.swRgNorm.setChecked(false);
 			});
 
-		eqset = new EQSet();
-		eqband = new EQBand(0);
-
-		ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[] {
-				"Low Shelf",
-				"Band #2",
-				"Band #3",
-				"Band #4",
-				"High Shelf",
-			});
-		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		b.spEqlzBand.setAdapter(adapter);
-		b.spEqlzBand.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-				@Override
-				public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-					eqset.current_set(b.eEqualizer.getText().toString());
-					eqlz_show(position + 1);
-				}
-				@Override
-				public void onNothingSelected(AdapterView<?> parent) {}
-			});
-
-		b.swEqualizer.setOnCheckedChangeListener((v, checked) -> { eqlz_enable(checked); });
-		b.sbEqlzFreq.setMax(99);
-		b.sbEqlzWidth.setMax(40); // 0..4.0
-		b.sbEqlzGain.setMax((120+120) / 5); // -12.0..12.0 by 0.5
-		b.sbEqlzFreq.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
-				@Override
-				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser) {
-						eqband.freq_set(progress);
-						eqlz_changed();
-					}
-				}
-			});
-		b.sbEqlzWidth.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
-				@Override
-				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser) {
-						eqband.width = progress;
-						eqlz_changed();
-					}
-				}
-			});
-		b.sbEqlzGain.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
-				@Override
-				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser) {
-						eqband.gain_set(progress);
-						eqlz_changed();
-					}
-				}
-			});
+		b.swEqualizer.setOnClickListener((v) -> {
+			if (b.swEqualizer.isChecked()) {
+				new EQ().show(this, equ, (s) -> {
+					equ = s;
+				});
+			}
+		});
 	}
 
 	private void play_load() {
@@ -298,17 +118,15 @@ public class SettingsActivity extends AppCompatActivity {
 		b.sbPlayAutoSkipTail.setProgress(auto_skip_progress(core.play.auto_skip_tail.val));
 		b.eAutoSkipTail.setText(core.play.auto_skip_tail.str());
 		b.swEqualizer.setChecked(core.play.equalizer_enabled);
-		if (!core.play.equalizer_enabled)
-			eqlz_enable(false);
-		eqset.init(core.play.equalizer);
-		eqlz_show(1);
+		equ = core.play.equalizer;
 	}
 
 	private void play_save() {
 		core.setts.set_codepage(b.spCodepage.getSelectedItemPosition());
 		core.play.auto_skip_head_set(b.eAutoSkip.getText().toString());
 		core.play.auto_skip_tail_set(b.eAutoSkipTail.getText().toString());
-		core.play.equalizer_set(b.swEqualizer.isChecked(), eqset.commit());
+		core.play.equalizer_enabled = b.swEqualizer.isChecked();
+		core.play.equalizer = equ;
 		core.play.normalize();
 	}
 
@@ -326,36 +144,28 @@ public class SettingsActivity extends AppCompatActivity {
 		super.onDestroy();
 	}
 
-	private static abstract class SBOnSeekBarChangeListener implements SeekBar.OnSeekBarChangeListener {
-		@Override
-		public void onStartTrackingTouch(SeekBar seekBar) {}
-
-		@Override
-		public void onStopTrackingTouch(SeekBar seekBar) {}
-	}
-
 	private void list_load() {
 		Queue queue = core.queue();
-		b.swRandom.setChecked(queue.flags_test(Queue.F_RANDOM));
-		b.swRepeat.setChecked(queue.flags_test(Queue.F_REPEAT));
+		b.swRandom.setChecked(queue.flags_test(Phiola.QC_RANDOM));
+		b.swRepeat.setChecked(queue.flags_test(Phiola.QC_REPEAT));
 		b.swListAddRmOnNext.setChecked(queue.flags_test(Queue.F_MOVE_ON_NEXT));
 		b.swListRmOnNext.setChecked(queue.flags_test(Queue.F_RM_ON_NEXT));
-		b.swListRmOnErr.setChecked(queue.flags_test(Queue.F_RM_ON_ERR));
-		b.swRgNorm.setChecked(queue.flags_test(Queue.F_RG_NORM));
-		b.swAutoNorm.setChecked(queue.flags_test(Queue.F_AUTO_NORM));
+		b.swListRmOnErr.setChecked(queue.flags_test(Phiola.QC_REMOVE_ON_ERROR));
+		b.swRgNorm.setChecked(queue.flags_test(Phiola.QC_RG_NORM));
+		b.swAutoNorm.setChecked(queue.flags_test(Phiola.QC_AUTO_NORM));
 		b.sbPlayAutoStop.setProgress(auto_stop_progress(queue.auto_stop_value_min));
 		b.eAutoStop.setText(core.int_to_str(queue.auto_stop_value_min));
 	}
 
 	private void list_save() {
 		int f = 0;
-		f |= (b.swRandom.isChecked()) ? Queue.F_RANDOM : 0;
-		f |= (b.swRepeat.isChecked()) ? Queue.F_REPEAT : 0;
+		f |= (b.swRandom.isChecked()) ? Phiola.QC_RANDOM : 0;
+		f |= (b.swRepeat.isChecked()) ? Phiola.QC_REPEAT : 0;
 		f |= (b.swListAddRmOnNext.isChecked()) ? Queue.F_MOVE_ON_NEXT : 0;
 		f |= (b.swListRmOnNext.isChecked()) ? Queue.F_RM_ON_NEXT : 0;
-		f |= (b.swListRmOnErr.isChecked()) ? Queue.F_RM_ON_ERR : 0;
-		f |= (b.swRgNorm.isChecked()) ? Queue.F_RG_NORM : 0;
-		f |= (b.swAutoNorm.isChecked()) ? Queue.F_AUTO_NORM : 0;
+		f |= (b.swListRmOnErr.isChecked()) ? Phiola.QC_REMOVE_ON_ERROR : 0;
+		f |= (b.swRgNorm.isChecked()) ? Phiola.QC_RG_NORM : 0;
+		f |= (b.swAutoNorm.isChecked()) ? Phiola.QC_AUTO_NORM : 0;
 		core.queue().flags_set(Queue.F_ALL, f);
 
 		core.queue().auto_stop_value_min = core.str_to_uint(b.eAutoStop.getText().toString(), 0);
@@ -382,28 +192,33 @@ public class SettingsActivity extends AppCompatActivity {
 		core.setts.deprecated_mods = b.swDeprecatedMods.isChecked();
 	}
 
+	static final int
+		RECBTN_REC_MIC = 0,
+		RECBTN_PL_MARKER = 2,
+		RECBTN_REC_HIDE = 3;
+
 	private void load() {
 		// Interface
 		b.swDark.setChecked(core.gui().theme == GUI.THM_DARK);
-		int n = core.gui().main_color;
-		if (n >= 0) {
-			b.sbColorRed.setProgress(color_progress((n & 0xff0000) >> 16));
-			b.sbColorGreen.setProgress(color_progress((n & 0x00ff00) >> 8));
-			b.sbColorBlue.setProgress(color_progress(n & 0x0000ff));
-			b.eColor.setText(Util.color_str(n));
-		}
-		b.swShowfilter.setChecked(core.gui().filter_hide);
-		b.swShowrec.setChecked(core.gui().record_hide);
-		b.swShowPlaybackMarker.setChecked(core.gui().playback_marker_show);
+		color = core.gui().main_color;
+		b.swShowFilter.setChecked(core.gui().filter_hide);
+		b.spRecBtn.setAdapter(spinner_adapter(new String[] {
+				"Record From Mic",
+				"Playback Marker Set/Jump",
+				"Hide Button",
+			}));
+		int rm = core.gui().record_mode;
+		b.spRecBtn.setSelection(
+			(core.gui().playback_marker_show) ? RECBTN_PL_MARKER
+			: (rm == GUI.RECMODE_HIDE) ? RECBTN_REC_HIDE
+			: RECBTN_REC_MIC);
 		b.swSvcNotifDisable.setChecked(core.setts.svc_notification_disable);
 		b.swUiInfoInTitle.setChecked(core.gui().ainfo_in_title);
 
 		list_load();
 
 		// Playback
-		ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, core.setts.code_pages);
-		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		b.spCodepage.setAdapter(adapter);
+		b.spCodepage.setAdapter(spinner_adapter(core.setts.code_pages));
 		b.spCodepage.setSelection(core.setts.codepage_index);
 
 		play_load();
@@ -418,10 +233,13 @@ public class SettingsActivity extends AppCompatActivity {
 			i = GUI.THM_DARK;
 		core.gui().theme = i;
 
-		core.gui().main_color = Util.color_from_str(b.eColor.getText().toString(), -1);
-		core.gui().filter_hide = b.swShowfilter.isChecked();
-		core.gui().record_hide = b.swShowrec.isChecked();
-		core.gui().playback_marker_show = b.swShowPlaybackMarker.isChecked();
+		core.gui().main_color = color;
+		core.gui().filter_hide = b.swShowFilter.isChecked();
+		i = b.spRecBtn.getSelectedItemPosition();
+		core.gui().record_mode =
+			(i == RECBTN_REC_HIDE) ? GUI.RECMODE_HIDE
+			: GUI.RECMODE_MIC;
+		core.gui().playback_marker_show = (i == RECBTN_PL_MARKER);
 		core.gui().ainfo_in_title = b.swUiInfoInTitle.isChecked();
 
 		list_save();
@@ -430,18 +248,7 @@ public class SettingsActivity extends AppCompatActivity {
 		rec_save();
 		core.queue().conf_normalize();
 		core.setts.normalize();
-		core.phiola.setConfig(core.setts.codepage, core.setts.deprecated_mods);
-	}
-
-	private static int color_progress(int value) { return value / 3; }
-	private void color_modify(int mask, int value) {
-		int n = core.gui().main_color;
-		if (n < 0)
-			n = 0; // default -> black
-		n = (n & mask) | value;
-		core.gui().main_color = n;
-		b.eColor.setText(Util.color_str(n));
-		b.eColor.setBackgroundColor(0xff000000 | n);
+		core.conf_apply();
 	}
 
 	// 20%..1%; 0; 10sec..200sec by 10
@@ -510,69 +317,56 @@ public class SettingsActivity extends AppCompatActivity {
 	}
 
 	private void rec_init() {
+		SeekBar.OnSeekBarChangeListener sbcl = new SeekBar.OnSeekBarChangeListener() {
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+				if (fromUser) {
+					String s;
+					switch (seekBar.getId()) {
+					case R.id.sbRecRate:
+						b.eRecRate.setText((progress != 0) ? Util.int_to_str(rec_rate_value(progress)) : "Default");
+						break;
+
+					case R.id.sbRecBitrate:
+						b.eRecBitrate.setText(String.format("%d", rec_bitrate_value(progress)));
+						break;
+
+					case R.id.sbRecUntil:
+						b.eRecUntil.setText(time_str(rec_until_value(progress)));
+						break;
+
+					case R.id.sbRecGain:
+						s = (progress > 0) ? "+" : "";
+						b.eRecGain.setText(s + core.int_to_str(progress));
+						break;
+					}
+				}
+			}
+
+			@Override
+			public void onStartTrackingTouch(SeekBar seekBar) {}
+
+			@Override
+			public void onStopTrackingTouch(SeekBar seekBar) {}
+		};
+		b.sbRecRate.setOnSeekBarChangeListener(sbcl);
+		b.sbRecBitrate.setOnSeekBarChangeListener(sbcl);
+		b.sbRecUntil.setOnSeekBarChangeListener(sbcl);
+		b.sbRecGain.setOnSeekBarChangeListener(sbcl);
+
 		b.eRecDir.setOnClickListener(v -> explorer.show(b.eRecDir, 0));
-
-		ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item
-			, RecSettings.rec_src_presets);
-		b.spRecSource.setAdapter(adapter);
-
-		adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[] {
+		b.spRecSource.setAdapter(spinner_adapter(RecSettings.rec_src_presets));
+		b.spRecChannels.setAdapter(spinner_adapter(new String[] {
 				"Default",
 				"1 (Mono)",
 				"2 (Stereo)",
-			});
-		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		b.spRecChannels.setAdapter(adapter);
+			}));
 
 		b.sbRecRate.setMax(rec_rate_progress(192000));
-		b.sbRecRate.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
-				@Override
-				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser) {
-						String s = "Default";
-						if (progress != 0)
-							s = Util.int_to_str(rec_rate_value(progress));
-						b.eRecRate.setText(s);
-					}
-				}
-			});
-
 		b.sbRecBitrate.setMax(rec_bitrate_progress(256));
-		b.sbRecBitrate.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
-				@Override
-				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser)
-						b.eRecBitrate.setText(String.format("%d", rec_bitrate_value(progress)));
-				}
-			});
-
 		b.sbRecUntil.setMax(rec_until_progress(12*3600));
-		b.sbRecUntil.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
-				@Override
-				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser)
-						b.eRecUntil.setText(time_str(rec_until_value(progress)));
-				}
-			});
-
-		adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item
-			, RecSettings.rec_formats);
-		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		b.spRecEnc.setAdapter(adapter);
-
-		// 0..60
-		b.sbRecGain.setMax(60);
-		b.sbRecGain.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
-				@Override
-				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser) {
-						String s = "";
-						if (progress > 0)
-							s = "+";
-						b.eRecGain.setText(s + core.int_to_str(progress));
-					}
-				}
-			});
+		b.spRecEnc.setAdapter(spinner_adapter(RecSettings.rec_formats));
+		b.sbRecGain.setMax(24); // 0..24
 	}
 
 	private void rec_load() {
@@ -588,9 +382,7 @@ public class SettingsActivity extends AppCompatActivity {
 		b.sbRecBitrate.setProgress(rec_bitrate_progress(core.rec.rec_bitrate));
 		b.eRecBitrate.setText(Integer.toString(core.rec.rec_bitrate));
 
-		ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, RecSettings.sample_formats_str);
-		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		b.spInFmt.setAdapter(adapter);
+		b.spInFmt.setAdapter(spinner_adapter(RecSettings.sample_formats_str));
 		b.spInFmt.setSelection(rec_sample_format_i(core.rec.rec_input_format));
 
 		b.eRecBufLen.setText(core.int_to_str(core.rec.rec_buf_len_ms));

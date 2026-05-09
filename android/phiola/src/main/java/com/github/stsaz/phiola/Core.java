@@ -122,22 +122,49 @@ class Core extends Util {
 				}
 			});
 		delayed_abandon_focus = sysaudio::audio_focus_abandon;
-		track.observer_add(new PlaybackObserver() {
-				public int open(TrackHandle t) {
-					tq.removeCallbacks(delayed_abandon_focus);
-					if (!sysaudio.audio_focus_request())
-						return -1;
-					return 0;
+
+		phiola.setCallbacks(new Phiola.Callbacks() {
+				public void play_new(Phiola.Meta meta) {
+					dbglog(TAG, "Callbacks.play_new()");
+					tq.post(() -> {
+							tq.removeCallbacks(delayed_abandon_focus);
+							if (sysaudio.audio_focus_request())
+								track.play_on_create(meta);
+						});
 				}
 
-				public void close(TrackHandle t) {
-					if ((t.close_status & Phiola.PCS_STOP) != 0)
-						tq.postDelayed(delayed_abandon_focus, 1000);
+				public void play_fin(int status) {
+					dbglog(TAG, "Callbacks.play_fin()");
+					tq.post(() -> {
+							track.play_on_close(status);
+							if ((status & Phiola.PCS_STOP) != 0)
+								tq.postDelayed(delayed_abandon_focus, 1000);
+						});
+				}
+
+				public void play_update(long pos_msec) {
+					dbglog(TAG, "Callbacks.play_update()");
+					tq.post(() -> {
+							track.play_on_update(pos_msec);
+						});
+				}
+
+				// Main -> Track -> phiola
+				// phiola -[Callbacks]-> Core -[TQ]-> Main
+				public void recording(int code, String filename) {
+					dbglog(TAG, "Callbacks.recording() code:%d", code);
+					tq.post(() -> {
+							if (track.rec_mic_cb != null) {
+								track.rec_mic_cb.f(code, filename);
+								track.rec_mic_cb = null;
+							}
+						});
 				}
 			});
 
 		loadconf();
 		qu.load();
+		conf_apply();
 		gui.lists_number(qu.number());
 	}
 
@@ -217,7 +244,17 @@ class Core extends Util {
 		rec.normalize();
 		convert.normalize();
 		qu.conf_normalize();
-		phiola.setConfig(setts.codepage, setts.deprecated_mods);
+	}
+
+	void conf_apply() {
+		Phiola.Config c = new Phiola.Config();
+		c.codepage = setts.codepage;
+		c.equalizer = (play.equalizer_enabled) ? play.equalizer : null;
+		c.queue_flags = qu.flags;
+		c.auto_seek = play.auto_skip_head.val;
+		c.auto_until = play.auto_skip_tail.val;
+		c.deprecated_mods = setts.deprecated_mods;
+		phiola.setConfig(0, c);
 	}
 
 	void clipboard_text_set(Context ctx, String s) {
@@ -263,10 +300,10 @@ class Core extends Util {
 
 	// enum PHI_E
 	private static final String[] errors = {
-		"", // PHI_E_OK
-		"Input file doesn't exist", // PHI_E_NOSRC
-		"Output file already exists", // PHI_E_DSTEXIST
-		"Unknown input file format", // PHI_E_UNKIFMT
+		"",								// PHI_E_OK
+		"Input file doesn't exist",		// PHI_E_NOSRC
+		"Output file already exists",	// PHI_E_DSTEXIST
+		"Unknown input file format",	// PHI_E_UNKIFMT
 		"Input audio device problem", // PHI_E_AUDIO_INPUT
 		"Cancelled", // PHI_E_CANCELLED
 		"Sample conversion", // PHI_E_ACONV

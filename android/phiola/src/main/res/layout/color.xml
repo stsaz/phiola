@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:orientation="vertical">
+
+	<SeekBar
+		android:id="@+id/sbRed"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content" />
+
+	<SeekBar
+		android:id="@+id/sbGreen"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content" />
+
+	<SeekBar
+		android:id="@+id/sbBlue"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content" />
+
+	<EditText
+		android:id="@+id/eColor"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginHorizontal="@dimen/sett_margin"
+		android:textSize="@dimen/text_editbox" />
+
+</LinearLayout>

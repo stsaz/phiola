@@ -57,14 +57,6 @@ public class ConvertActivity extends AppCompatActivity {
 		super.onDestroy();
 	}
 
-	private static abstract class SBOnSeekBarChangeListener implements SeekBar.OnSeekBarChangeListener {
-		@Override
-		public void onStartTrackingTouch(SeekBar seekBar) {}
-
-		@Override
-		public void onStopTrackingTouch(SeekBar seekBar) {}
-	}
-
 	private void init() {
 		varmenu = new VarMenu(this);
 		explorer = new ExplorerMenu(core, this);
@@ -86,22 +78,43 @@ public class ConvertActivity extends AppCompatActivity {
 				public void onNothingSelected(AdapterView<?> parent) {}
 			});
 
-		b.sbRangeFrom.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
-				@Override
-				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser)
-						b.eFrom.setText(time_str(time_value(progress)));
-				}
-			});
-		b.bFromSetCur.setOnClickListener((v) -> pos_set_cur(true));
+		SeekBar.OnSeekBarChangeListener sbcl = new SeekBar.OnSeekBarChangeListener() {
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+				if (fromUser) {
+					switch (seekBar.getId()) {
+					case R.id.sbRangeFrom:
+						b.eFrom.setText(time_str(time_value(progress)));  break;
 
-		b.sbRangeUntil.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
-				@Override
-				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser)
+					case R.id.sbRangeUntil:
 						b.eUntil.setText((progress > 0 && progress < 100) ? time_str(time_value(progress)) : "");
+						break;
+
+					case R.id.sbAACQ:
+						b.eAACQ.setText(aac_q_write(aac_q_value(progress)));  break;
+
+					case R.id.sbOpusQ:
+						b.eOpusQ.setText(core.int_to_str(opus_q_value(progress)));  break;
+
+					case R.id.sbMp3Q:
+						b.eMp3Q.setText(core.int_to_str(mp3_q_value(progress)));  break;
+					}
 				}
-			});
+			}
+
+			@Override
+			public void onStartTrackingTouch(SeekBar seekBar) {}
+
+			@Override
+			public void onStopTrackingTouch(SeekBar seekBar) {}
+		};
+		b.sbRangeFrom.setOnSeekBarChangeListener(sbcl);
+		b.sbRangeUntil.setOnSeekBarChangeListener(sbcl);
+		b.sbAACQ.setOnSeekBarChangeListener(sbcl);
+		b.sbOpusQ.setOnSeekBarChangeListener(sbcl);
+		b.sbMp3Q.setOnSeekBarChangeListener(sbcl);
+
+		b.bFromSetCur.setOnClickListener((v) -> pos_set_cur(true));
 		b.bUntilSetCur.setOnClickListener((v) -> pos_set_cur(false));
 
 		adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item
@@ -110,31 +123,8 @@ public class ConvertActivity extends AppCompatActivity {
 		b.spSampleFormat.setAdapter(adapter);
 
 		b.sbAACQ.setMax(aac_q_progress(5));
-		b.sbAACQ.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
-				@Override
-				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser)
-						b.eAACQ.setText(aac_q_write(aac_q_value(progress)));
-				}
-			});
-
 		b.sbOpusQ.setMax(opus_q_progress(510));
-		b.sbOpusQ.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
-				@Override
-				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser)
-						b.eOpusQ.setText(core.int_to_str(opus_q_value(progress)));
-				}
-			});
-
 		b.sbMp3Q.setMax(9);
-		b.sbMp3Q.setOnSeekBarChangeListener(new SBOnSeekBarChangeListener() {
-				@Override
-				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (fromUser)
-						b.eMp3Q.setText(core.int_to_str(mp3_q_value(progress)));
-				}
-			});
 
 		b.swCopy.setOnCheckedChangeListener((v, checked) -> {
 				b.spSampleFormat.setEnabled(!checked);

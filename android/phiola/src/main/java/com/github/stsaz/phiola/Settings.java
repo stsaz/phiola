@@ -134,29 +134,14 @@ class PlaySettings {
 
 	AutoSkip auto_skip_head, auto_skip_tail;
 	void auto_skip_head_set(String s) {
-		int n = AutoSkip.parse(s);
-		if (n == auto_skip_head.val)
-			return;
-		auto_skip_head.val = n;
-		core.phiola.playCmd(Phiola.PC_AUTO_SKIP_HEAD, n);
+		auto_skip_head.val = AutoSkip.parse(s);
 	}
 	void auto_skip_tail_set(String s) {
-		int n = AutoSkip.parse(s);
-		if (n == auto_skip_tail.val)
-			return;
-		auto_skip_tail.val = n;
-		core.phiola.playCmd(Phiola.PC_AUTO_SKIP_TAIL, n);
+		auto_skip_tail.val = AutoSkip.parse(s);
 	}
 
 	boolean equalizer_enabled;
 	String equalizer;
-	void equalizer_set(boolean enabled, String s) {
-		if (equalizer_enabled != enabled
-			|| !s.equals(equalizer))
-			core.phiola.quConfStr(Phiola.QC_EQUALIZER, (enabled) ? s : "");
-		equalizer_enabled = enabled;
-		equalizer = s;
-	}
 
 	int play_seek_fwd_percent, play_seek_back_percent;
 
@@ -337,6 +322,9 @@ class RecSettings {
 	}
 
 	void normalize() {
+		if (rec_path.isEmpty())
+			rec_path = core.storage_path + "/Recordings";
+
 		if (rec_name_template.isEmpty())
 			rec_name_template = "rec-@year@month@day-@hour@minute@second";
 

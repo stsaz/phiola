@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
 	android:layout_width="match_parent"
@@ -10,7 +11,7 @@
 		app:srcCompat="@drawable/ic_phiola" />
 
 	<TextView
-		android:id="@+id/l_about"
+		android:id="@+id/lAbout"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:layout_margin="10dp"
@@ -19,14 +20,14 @@
 		android:textAlignment="center" />
 
 	<ToggleButton
-		android:id="@+id/b_debug_log"
+		android:id="@+id/bDebugLog"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:textOff="@string/about_enable_debug_log"
 		android:textOn="@string/about_enable_debug_log" />
 
 	<Button
-		android:id="@+id/b_save_logs"
+		android:id="@+id/bSaveLogs"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:text="@string/about_save_logs" />

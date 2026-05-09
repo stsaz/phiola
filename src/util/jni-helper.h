@@ -30,6 +30,7 @@ Object:
 	jni_obj_int jni_obj_int_set
 	jni_obj_bool jni_obj_bool_set
 	jni_obj_read jni_obj_write
+	jni_if_read
 Functions:
 	jni_func jni_call_void
 	jni_sfunc jni_scall_void jni_scall_bool
@@ -149,6 +150,16 @@ do { \
 	if (js != NULL) \
 		(*env)->ReleaseStringUTFChars(env, js, sz); \
 } while(0)
+
+static inline char* jni_sz_js_dup(JNIEnv *env, jstring js)
+{
+	if (!js)
+		return NULL;
+	const char *sz = jni_sz_js(js);
+	char *r = ffsz_dup(sz);
+	jni_sz_free(sz, js);
+	return r;
+}
 
 
 #define jni_arr_len(ja) \
@@ -401,5 +412,24 @@ static inline void jni_obj_write(JNIEnv *env, jobject dst, jclass cls, struct jn
 				jni_local_unref(*u.o);
 			}
 		}
+	}
+}
+
+
+struct jni_ifmap {
+	const char *name, *spec;
+};
+
+struct jni_if {
+	jobject obj;
+	jmethodID methods[0];
+};
+
+static inline void jni_if_read(JNIEnv *env, struct jni_if *dst, const struct jni_ifmap *map, jobject src)
+{
+	jclass jc = jni_class_obj(src);
+	dst->obj = jni_global_ref(src);
+	for (uint i = 0;  (map[i].name);  i++) {
+		dst->methods[i] = jni_func(jc, map[i].name, map[i].spec);
 	}
 }

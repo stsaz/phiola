@@ -16,8 +16,28 @@ class Phiola {
 	}
 
 	native String version();
-	native void setConfig(String codepage, boolean deprecated_mods);
 	native void setDebug(boolean enable);
+
+	static class Config {
+		String	codepage;
+		String	equalizer;
+		int		queue_flags; // QC_*
+		int		auto_seek;
+		int		auto_until;
+		boolean	deprecated_mods;
+	}
+	native void setConfig(int flags, Config conf);
+
+	interface Callbacks {
+		void play_new(Meta meta);
+		/** status: PCS_* */
+		void play_fin(int status);
+		void play_update(long pos_msec);
+
+		/** code: enum PHI_E */
+		void recording(int code, String filename);
+	}
+	native void setCallbacks(Callbacks cb);
 
 	static class Meta {
 		int queue_pos;
@@ -29,20 +49,12 @@ class Phiola {
 	static final int
 		PCS_STOP = 1,
 		PCS_AUTOSTOP = 2;
-	interface PlayObserver {
-		void on_create(Meta meta);
-		void on_close(int status);
-		void on_update(long pos_msec);
-	}
-	native void playObserverSet(PlayObserver obs, int flags);
 
 	static final int
 		PC_PAUSE_TOGGLE = 1,
 		PC_STOP = 2,
-		PC_AUTO_SKIP_HEAD = 3,
-		PC_AUTO_SKIP_TAIL = 4,
-		PC_AUTO_STOP = 5,
-		PC_SEEK = 6;
+		PC_AUTO_STOP = 5, // `val`: timeout (msec)
+		PC_SEEK = 6; // `val`: seek pos (msec)
 	native void playCmd(int cmd, long val);
 
 	static final int
@@ -73,7 +85,13 @@ class Phiola {
 			q_pos = -1;
 		}
 
+		int sample_format;
+		int sample_rate;
+
 		int format; // AF_*
+		int aac_quality;
+		int opus_quality;
+		int mp3_quality;
 
 		static final int
 			COF_DATE_PRESERVE = 1,
@@ -85,11 +103,6 @@ class Phiola {
 		String out_name;
 		String from_msec, to_msec;
 		String tags;
-		int sample_format;
-		int sample_rate;
-		int aac_quality;
-		int opus_quality;
-		int mp3_quality;
 		long q_add_remove;
 		int q_pos;
 		String trash_dir_rel;
@@ -99,6 +112,7 @@ class Phiola {
 
 	static class RecordParams {
 		int format; // AF_*
+		int quality;
 
 		int channels;
 		int sample_rate;
@@ -113,13 +127,9 @@ class Phiola {
 
 		int buf_len_msec;
 		int gain_db100;
-		int quality;
 		int until_sec;
 	}
-	interface RecordCallback {
-		void on_finish(int code, String filename);
-	}
-	native long recStart(String oname, RecordParams conf, RecordCallback cb);
+	native long recStart(String oname, RecordParams conf); // -> Callbacks.recording()
 	static final int
 		RECL_STOP = 1,
 		RECL_PAUSE = 2,
@@ -192,11 +202,6 @@ class Phiola {
 		QC_REMOVE_ON_ERROR = 4,
 		QC_AUTO_NORM = 0x10,
 		QC_RG_NORM = 0x20;
-	native void quConf(int mask, int val);
-
-	static final int
-		QC_EQUALIZER = 1;
-	native void quConfStr(int setting, String val);
 
 	native Meta quMeta(long q, int i);
 

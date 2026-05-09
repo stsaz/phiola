@@ -60,9 +60,6 @@ public class MainActivity extends AppCompatActivity {
 		if (gui.cur_path.isEmpty())
 			gui.cur_path = core.storage_path;
 
-		if (core.rec.rec_path.isEmpty())
-			core.rec.rec_path = core.storage_path + "/Recordings";
-
 		// Add file to the playlist and start playback if executed from an external file manager app
 		String ia = getIntent().getAction();
 		if (ia != null && ia.equals(Intent.ACTION_VIEW)) {
@@ -130,8 +127,7 @@ public class MainActivity extends AppCompatActivity {
 			menu_list_show();  break;
 
 		case R.id.action_about:
-			startActivity(new Intent(this, AboutActivity.class));
-			break;
+			new About().show(this, core);  break;
 
 		default:
 			return super.onOptionsItemSelected(item);
@@ -580,7 +576,7 @@ public class MainActivity extends AppCompatActivity {
 
 		if (gui.playback_marker_show)
 			b.brec.setImageResource(R.drawable.ic_replay);
-		else if (gui.record_hide)
+		else if (gui.record_mode == GUI.RECMODE_HIDE)
 			b.brec.setVisibility(View.INVISIBLE);
 
 		if (gui.filter_hide)
@@ -633,8 +629,8 @@ public class MainActivity extends AppCompatActivity {
 		if (code == 0) {
 			if (core.rec.rec_list_add)
 				queue.current_add(filename, 0);
-			gui.msg_show(this, getString(R.string.main_rec_fin));
 		}
+		GUI.msg_show(this, (code == 0) ? getString(R.string.main_rec_fin) : String.format("Recording: %s", core.errstr(code)));
 
 		if (gui.state_test(GUI.STATE_RECORDING))
 			rec_stop();
@@ -1091,8 +1087,7 @@ public class MainActivity extends AppCompatActivity {
 
 	/** Show dialog for saving playlist file */
 	private void list_save() {
-		startActivity(new Intent(this, ListSaveActivity.class)
-			.putExtra("name", gui.list_name(queue.current_index())));
+		new ListSave().show(this, core, gui.list_name(queue.current_index()));
 	}
 
 	private void list_rename() {

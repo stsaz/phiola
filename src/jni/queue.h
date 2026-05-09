@@ -70,9 +70,7 @@ end:
 JNIEXPORT void JNICALL
 Java_com_github_stsaz_phiola_Phiola_quSetCallback(JNIEnv *env, jobject thiz, jobject jcb)
 {
-	x->QueueCallback.on_change = jni_func(jni_class_obj(jcb), "on_change", "(" JNI_TLONG JNI_TINT JNI_TINT ")" JNI_TVOID);
-	x->QueueCallback.on_complete = jni_func(jni_class_obj(jcb), "on_complete", "(" JNI_TINT JNI_TINT ")" JNI_TVOID);
-	x->QueueCallback.obj = jni_global_ref(jcb);
+	jni_if_read(env, (struct jni_if*)&x->QueueCallback, QueueCallback_map, jcb);
 	x->queue.on_change(qu_on_change);
 }
 
@@ -341,20 +339,6 @@ static void qc_apply()
 
 /**
 Thread: main */
-static void qc_apply_async(struct core_data *d)
-{
-	if (d->param_str) {
-		ffmem_free(x->play.equalizer);
-		x->play.equalizer = (*d->param_str) ? d->param_str : NULL;
-		if (!*d->param_str)
-			ffmem_free(d->param_str);
-	}
-	qc_apply();
-	ffmem_free(d);
-}
-
-/**
-Thread: main */
 static void qu_cmd(struct core_data *d)
 {
 	phi_queue_id q = d->q;
@@ -441,57 +425,6 @@ enum {
 	QC_AUTO_NORM = 0x10,
 	QC_RG_NORM = 0x20,
 };
-
-JNIEXPORT void JNICALL
-Java_com_github_stsaz_phiola_Phiola_quConf(JNIEnv *env, jobject thiz, jint mask, jint val)
-{
-	dbglog("%s: enter  mask:%u  val:%u", __func__, mask, val);
-
-	if (mask & QC_REMOVE_ON_ERROR)
-		x->play.remove_on_error = !!(val & QC_REMOVE_ON_ERROR);
-
-	if (mask & QC_REPEAT)
-		x->play.repeat_all = !!(val & QC_REPEAT);
-
-	if (mask & QC_RANDOM)
-		x->play.random = !!(val & QC_RANDOM);
-
-	if (mask & QC_RG_NORM)
-		x->play.rg_normalizer = !!(val & QC_RG_NORM);
-
-	if (mask & QC_AUTO_NORM)
-		x->play.auto_normalizer = !!(val & QC_AUTO_NORM);
-
-	if (mask & (QC_REPEAT | QC_RANDOM | QC_RG_NORM | QC_AUTO_NORM)) {
-		// Apply settings for the active playlist
-		struct core_data *d = ffmem_new(struct core_data);
-		core_task(d, qc_apply_async);
-	}
-
-	dbglog("%s: exit", __func__);
-}
-
-enum {
-	QC_EQUALIZER = 1,
-};
-
-JNIEXPORT void JNICALL
-Java_com_github_stsaz_phiola_Phiola_quConfStr(JNIEnv *env, jobject thiz, int setting, jstring jval)
-{
-	dbglog("%s: enter", __func__);
-	const char *val = jni_sz_js(jval);
-	struct core_data *d = ffmem_new(struct core_data);
-
-	switch (setting) {
-	case QC_EQUALIZER:
-		d->param_str = ffsz_dup(val);
-		core_task(d, qc_apply_async);
-		break;
-	}
-
-	jni_sz_free(val, jval);
-	dbglog("%s: exit", __func__);
-}
 
 static ffvec info_prepare(const struct phi_queue_entry *qe)
 {

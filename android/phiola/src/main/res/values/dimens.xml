@@ -4,4 +4,5 @@
 	<dimen name="text_editbox">15sp</dimen>
 	<dimen name="text_list">15sp</dimen>
 	<dimen name="text_label">15sp</dimen>
+	<dimen name="grp_name_size">22sp</dimen>
 </resources>

@@ -33,7 +33,6 @@ class TrackHandle {
 class Track {
 	private static final String TAG = "phiola.Track";
 	private Core core;
-	private Phiola phi;
 	private ArrayList<PlaybackObserver> observers;
 
 	private TrackHandle tplay;
@@ -47,24 +46,6 @@ class Track {
 
 	Track(Core core) {
 		this.core = core;
-		phi = core.phiola;
-		phi.playObserverSet(new Phiola.PlayObserver() {
-				public void on_create(Phiola.Meta meta) {
-					core.tq.post(() -> {
-						play_on_create(meta);
-					});
-				}
-				public void on_close(int status) {
-					core.tq.post(() -> {
-						play_on_close(status);
-					});
-				}
-				public void on_update(long pos_msec) {
-					core.tq.post(() -> {
-						play_on_update(pos_msec);
-					});
-				}
-			}, 0);
 		tplay = new TrackHandle();
 		observers = new ArrayList<>();
 		tplay.state = STATE_NONE;
@@ -118,7 +99,11 @@ class Track {
 		return Arrays.asList(RecSettings.rec_formats).indexOf(name);
 	}
 
-	TrackHandle rec_start(Phiola.RecordCallback cb) {
+	interface RecCallback {
+		void f(int code, String filename);
+	}
+	RecCallback rec_mic_cb;
+	TrackHandle rec_start(RecCallback cb) {
 		core.dir_make(core.rec.rec_path);
 		String oname = String.format("%s/%s.%s"
 			, core.rec.rec_path
@@ -145,11 +130,12 @@ class Track {
 		p.until_sec = core.rec.rec_until_sec;
 
 		trec = new TrackHandle();
-		trec.phi_trk = core.phiola.recStart(oname, p, cb);
+		trec.phi_trk = core.phiola.recStart(oname, p);
 		if (trec.phi_trk == 0) {
 			trec = null;
 			return null;
 		}
+		rec_mic_cb = cb;
 		return trec;
 	}
 
@@ -199,7 +185,7 @@ class Track {
 		core.dbglog(TAG, "pause");
 		if (tplay.state == STATE_PLAYING) {
 			tplay.state = STATE_PAUSED;
-			phi.playCmd(Phiola.PC_PAUSE_TOGGLE, 0);
+			core.phiola.playCmd(Phiola.PC_PAUSE_TOGGLE, 0);
 			update();
 		}
 	}
@@ -208,7 +194,7 @@ class Track {
 		core.dbglog(TAG, "unpause: %d", tplay.state);
 		if (tplay.state == STATE_PAUSED) {
 			tplay.state = STATE_PLAYING;
-			phi.playCmd(Phiola.PC_PAUSE_TOGGLE, 0);
+			core.phiola.playCmd(Phiola.PC_PAUSE_TOGGLE, 0);
 			update();
 		}
 	}
@@ -217,7 +203,7 @@ class Track {
 		core.dbglog(TAG, "seek: %d", msec);
 		if (tplay.state == STATE_PLAYING || tplay.state == STATE_PAUSED) {
 			tplay.pos_msec = msec;
-			phi.playCmd(Phiola.PC_SEEK, msec);
+			core.phiola.playCmd(Phiola.PC_SEEK, msec);
 			update();
 		}
 	}
@@ -231,7 +217,7 @@ class Track {
 		}
 	}
 
-	private void play_on_create(Phiola.Meta m) {
+	void play_on_create(Phiola.Meta m) {
 		tplay.state = STATE_PLAYING;
 		if (m.artist == null) m.artist = "";
 		if (m.title == null) m.title = "";
@@ -251,12 +237,12 @@ class Track {
 		}
 	}
 
-	private void play_on_close(int status) {
+	void play_on_close(int status) {
 		tplay.close_status = status;
 		trk_close();
 	}
 
-	private void play_on_update(long pos_msec) {
+	void play_on_update(long pos_msec) {
 		tplay.pos_msec = pos_msec;
 		update();
 	}

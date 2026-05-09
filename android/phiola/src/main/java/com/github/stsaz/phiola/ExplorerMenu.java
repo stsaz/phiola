@@ -3,7 +3,7 @@
 
 package com.github.stsaz.phiola;
 
-import android.app.Activity;
+import android.content.Context;
 import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.PopupMenu;
@@ -13,7 +13,7 @@ import java.util.Arrays;
 
 public class ExplorerMenu {
 	private Core core;
-	private Activity parent;
+	private Context parent;
 	private EditText ctl;
 	private String path_left, path;
 	private String[] files;
@@ -21,7 +21,7 @@ public class ExplorerMenu {
 
 	static final int F_MULTI = 1;
 
-	ExplorerMenu(Core core, Activity parent) {
+	ExplorerMenu(Core core, Context parent) {
 		this.core = core;
 		this.parent = parent;
 	}

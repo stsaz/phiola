@@ -115,11 +115,7 @@ public class Svc extends MediaBrowserServiceCompat {
 		state = PlaybackStateCompat.STATE_STOPPED;
 		pstate.setState(state, 0, 0);
 		sess.setPlaybackState(pstate.build());
-
-		int mode = PlaybackStateCompat.SHUFFLE_MODE_NONE;
-		if (queue.flags_test(Queue.F_RANDOM))
-			mode = PlaybackStateCompat.SHUFFLE_MODE_ALL;
-		sess.setShuffleMode(mode);
+		sess.setShuffleMode(queue.flags_test(Phiola.QC_RANDOM) ? PlaybackStateCompat.SHUFFLE_MODE_ALL : PlaybackStateCompat.SHUFFLE_MODE_NONE);
 
 		sess.setCallback(new MediaSessionCompat.Callback() {
 			public void onPlay() {
@@ -166,13 +162,13 @@ public class Svc extends MediaBrowserServiceCompat {
 
 			public void onSetShuffleMode(int shuffleMode) {
 				core.dbglog(TAG, "MediaSessionCompat.onSetShuffleMode");
-				queue.flags_set1(Queue.F_RANDOM, (shuffleMode == PlaybackStateCompat.SHUFFLE_MODE_ALL));
+				queue.flags_set1(Phiola.QC_RANDOM, (shuffleMode == PlaybackStateCompat.SHUFFLE_MODE_ALL));
 				sess.setShuffleMode(shuffleMode);
 			}
 
 			public void onSetRepeatMode(int repeatMode) {
 				core.dbglog(TAG, "MediaSessionCompat.onSetRepeatMode");
-				queue.flags_set1(Queue.F_REPEAT, (repeatMode == PlaybackStateCompat.REPEAT_MODE_ALL));
+				queue.flags_set1(Phiola.QC_REPEAT, (repeatMode == PlaybackStateCompat.REPEAT_MODE_ALL));
 				sess.setRepeatMode(repeatMode);
 			}
 		});

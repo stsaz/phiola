@@ -59,7 +59,7 @@ static const char setting_names[][20] = {
 	"ui_mlib_scroll_pos",
 	"ui_play_marker",
 	"ui_play_marker_pos",
-	"ui_record_hide",
+	"ui_record_mode",
 	"ui_svc_notfn_disable",
 	"ui_theme",
 	"ui_view",
@@ -72,7 +72,7 @@ Java_com_github_stsaz_phiola_Conf_confRead(JNIEnv *env, jobject thiz, jstring jf
 	dbglog("%s: enter", __func__);
 	const char *fn = jni_sz_js(jfilepath);
 	ffvec d = {};
-	if (fffile_readwhole(fn, &d, 1*1024*1024))
+	if (fffile_readwhole(fn, &d, 64*1024))
 		goto end;
 	jintArray jia = conf_read(env, *(ffstr*)&d, setting_names, FF_COUNT(setting_names), 0);
 
