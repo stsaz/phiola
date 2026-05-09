@@ -8,7 +8,6 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
-import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 import androidx.core.app.NotificationCompat;
@@ -18,9 +17,6 @@ public class RecSvc extends Service {
 	private Core core;
 
 	private String notification_channel_create(String id, String name) {
-		if (Build.VERSION.SDK_INT < 26)
-			return "";
-
 		String r = "";
 		NotificationManager mgr = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 		if (mgr != null) {

@@ -13,8 +13,8 @@ IMAGE_NAME=phiola-android-builder
 CONTAINER_NAME=phiola_android_build
 ARGS=${@@Q}
 
-if test "$JOBS" == "" ; then
-	JOBS=8
+if test -z "$JOBS" ; then
+	JOBS=$(nproc)
 fi
 
 set -xe
@@ -71,23 +71,23 @@ if ! podman container exists $CONTAINER_NAME ; then
 
 		# Create builder image
 		cat <<EOF | podman build -t $IMAGE_NAME -f - .
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 RUN apt update && \
  apt install -y \
   make
 RUN apt install -y \
+ curl \
  zstd zip unzip bzip2 xz-utils \
+ patch \
  perl \
  cmake \
- patch \
- dos2unix \
- curl
+ dos2unix
 RUN apt install -y \
  autoconf libtool libtool-bin \
  gettext \
  pkg-config
 RUN apt install -y \
- openjdk-17-jdk
+ openjdk-21-jdk
 EOF
 	fi
 
@@ -120,10 +120,6 @@ fi
 
 # Prepare build script
 
-ARGS_OS="COMPILER=clang \
-SYS=android \
-CPU=$CPU \
-NDK_DIR=/Android/ndk/$ANDROID_NDK_VER"
 ODIR=_android-$CPU
 
 cat >build_android.sh <<EOF
@@ -137,21 +133,10 @@ make -j$JOBS openssl \
  -C ../netmill/3pt/$ODIR \
  -f ../Makefile \
  -I .. \
- $ARGS_OS
-
-mkdir -p ../ffpack/$ODIR
-make -j$JOBS zstd \
- -C ../ffpack/$ODIR \
- -f ../Makefile \
- -I .. \
- $ARGS_OS
-
-mkdir -p alib3/$ODIR
-make -j$JOBS \
- -C alib3/$ODIR \
- -f ../Makefile \
- -I .. \
- $ARGS_OS
+ SYS=android \
+ COMPILER=clang \
+ CPU=$CPU \
+ NDK_DIR=/Android/ndk/$ANDROID_NDK_VER
 
 export ANDROID_HOME=/Android
 mkdir -p $ODIR
@@ -160,10 +145,9 @@ make -j$JOBS \
  -f ../android/Makefile \
  -I ../android \
  COMPILER=clang \
- ROOT_DIR=../.. \
- NDK_VER=$ANDROID_NDK_VER \
  CPU=$CPU \
- A_API=26 \
+ ROOT_DIR=../.. \
+ NDK_DIR=/Android/ndk/$ANDROID_NDK_VER \
  $ARGS
 EOF
 

@@ -125,10 +125,6 @@ cd phiola
 * Build on Linux:
 
 	```sh
-	make -j8 zstd \
-		-C ../ffpack
-	make -j8 \
-		-C alib3
 	make -j8
 	```
 
@@ -137,20 +133,12 @@ cd phiola
 	```sh
 	mingw32-make -j8 openssl \
 		-C ../netmill/3pt
-	mingw32-make -j8 zstd \
-		-C ../ffpack
-	mingw32-make -j8 \
-		-C alib3
 	mingw32-make -j8
 	```
 
 * Build on FreeBSD & macOS:
 
 	```sh
-	gmake -j8 zstd \
-		-C ../ffpack
-	gmake -j8 \
-		-C alib3
 	gmake -j8 PHI_HTTP_SSL=0
 	```
 
@@ -173,8 +161,6 @@ For security, ensure that the original 3rd party libs were used:
 ```sh
 make hash-check \
 	-C ../netmill/3pt
-make md5check \
-	-C ../ffpack
 ```
 
 

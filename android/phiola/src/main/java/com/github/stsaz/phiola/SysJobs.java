@@ -79,9 +79,6 @@ class SysJobs extends PlaybackObserver {
 		afocus_change = this::afocus_onchange;
 		delayed_abandon_focus = this::afocus_abandon;
 
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
-			return;
-
 		AudioFocusRequest.Builder afb = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN);
 		afb.setOnAudioFocusChangeListener(afocus_change);
 
@@ -96,11 +93,7 @@ class SysJobs extends PlaybackObserver {
 	 * Request audio focus
 	 */
 	private int afocus_request() {
-		int r;
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-			r = amgr.requestAudioFocus(focus_obj);
-		else
-			r = amgr.requestAudioFocus(afocus_change, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+		int r = amgr.requestAudioFocus(focus_obj);
 		core.dbglog(TAG, "requestAudioFocus: %d", r);
 		return r;
 	}
@@ -111,10 +104,7 @@ class SysJobs extends PlaybackObserver {
 	private void afocus_abandon() {
 		core.dbglog(TAG, "afocus_abandon");
 		afocus = false;
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-			amgr.abandonAudioFocusRequest(focus_obj);
-		else
-			amgr.abandonAudioFocus(afocus_change);
+		amgr.abandonAudioFocusRequest(focus_obj);
 	}
 
 	/**

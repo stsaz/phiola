@@ -8,7 +8,7 @@ MD5SUM := 50902641d358135f06a8392e61c9ac77
 PKG := $(ALIB3)/vorbis/$(notdir $(URL))
 DIR := libvorbis-$(VER)
 
-default: $(DIR)
+default: $(DIR) libogg.a
 	$(SUBMAKE) libvorbis-phi.$(SO) libvorbisenc-phi.$(SO)
 
 # download
@@ -62,6 +62,9 @@ OBJ_ENC := vorbisenc-phi.o $(SRC_ENC:.c=.o)
 
 %.o: %.c
 	$(C) $(CFLAGS) $< -o $@
+
+libogg.a:
+	$(MAKE) -f $(ALIB3)/ogg/Makefile
 
 _:=
 ifeq "$(OS)" "linux"

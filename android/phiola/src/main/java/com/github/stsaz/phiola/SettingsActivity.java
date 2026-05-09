@@ -3,7 +3,6 @@
 
 package com.github.stsaz.phiola;
 
-import android.os.Build;
 import android.os.Bundle;
 
 import android.graphics.PorterDuff;
@@ -574,20 +573,6 @@ public class SettingsActivity extends AppCompatActivity {
 					}
 				}
 			});
-
-		if (Build.VERSION.SDK_INT < 26) {
-			b.spRecChannels.setEnabled(false);
-			b.sbRecRate.setEnabled(false);
-			b.eRecRate.setEnabled(false);
-			b.spRecEnc.setEnabled(false);
-			b.eRecBufLen.setEnabled(false);
-			b.sbRecUntil.setEnabled(false);
-			b.eRecUntil.setEnabled(false);
-			b.swRecDanorm.setEnabled(false);
-			b.sbRecGain.setEnabled(false);
-			b.eRecGain.setEnabled(false);
-			b.swRecExclusive.setEnabled(false);
-		}
 	}
 
 	private void rec_load() {

@@ -8,7 +8,6 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaDescriptionCompat;
@@ -206,9 +205,6 @@ public class Svc extends MediaBrowserServiceCompat {
 	}
 
 	private String notification_channel_create(String id, String name) {
-		if (Build.VERSION.SDK_INT < 26)
-			return "";
-
 		String r = "";
 		NotificationManager mgr = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 		if (mgr != null) {
@@ -230,9 +226,8 @@ public class Svc extends MediaBrowserServiceCompat {
 
 		// Launch UI by clicking the notification
 		Intent intent = new Intent(this, MainActivity.class);
-		int flags = PendingIntent.FLAG_UPDATE_CURRENT;
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-			flags |= PendingIntent.FLAG_IMMUTABLE;
+		int flags = PendingIntent.FLAG_UPDATE_CURRENT
+			| PendingIntent.FLAG_IMMUTABLE;
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, intent, flags);
 		nfy.setContentIntent(contentIntent);
 

@@ -28,6 +28,7 @@ Filters:
 
 * DynamicAudioNormalizer-2.10
 * libebur128-1.2.6
+* SoX-14.4.2
 * soxr-0.1.3
 
 
@@ -40,11 +41,6 @@ Filters:
 * patch
 * gcc/clang
 * g++/clang++
-
-
-## Build
-
-	make -j8
 
 
 ## LICENSE

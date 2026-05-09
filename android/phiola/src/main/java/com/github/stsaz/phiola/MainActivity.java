@@ -16,7 +16,6 @@ import android.widget.PopupMenu;
 import android.widget.SeekBar;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.SearchView;
@@ -619,9 +618,6 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void rec_state_set(boolean active) {
-		if (Build.VERSION.SDK_INT < 21)
-			return;
-
 		int res = R.color.control_button;
 		if (active)
 			res = R.color.recording;

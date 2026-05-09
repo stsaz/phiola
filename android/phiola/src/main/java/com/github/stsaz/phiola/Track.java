@@ -3,8 +3,6 @@
 
 package com.github.stsaz.phiola;
 
-import android.os.Build;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -121,8 +119,6 @@ class Track {
 	}
 
 	TrackHandle rec_start(Phiola.RecordCallback cb) {
-		if (Build.VERSION.SDK_INT < 26) return null;
-
 		core.dir_make(core.rec.rec_path);
 		String oname = String.format("%s/%s.%s"
 			, core.rec.rec_path

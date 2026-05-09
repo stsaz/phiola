@@ -3,10 +3,10 @@ apply plugin: 'com.android.application'
 android {
 	namespace "com.github.stsaz.phiola"
 	compileSdk 33
-	buildToolsVersion '33.0.0'
+	buildToolsVersion '35.0.0'
 	defaultConfig {
 		applicationId "com.github.stsaz.phiola"
-		minSdkVersion 16
+		minSdkVersion 26
 		targetSdk 33
 		versionCode 20714
 		versionName '2.7.14'
@@ -14,10 +14,10 @@ android {
 
 	buildFeatures {
 		viewBinding true
+		buildConfig true
 	}
 
 	sourceSets.main {
-		jni.srcDirs = []
 		jniLibs.srcDir 'libs'
 	}
 

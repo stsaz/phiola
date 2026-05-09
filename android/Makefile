@@ -4,15 +4,15 @@
 MAKEFLAGS += -Rr
 
 # Set utils
-SUBMAKE := +$(MAKE) -f $(firstword $(MAKEFILE_LIST))
+SUBMAKE := $(MAKE) -f $(firstword $(MAKEFILE_LIST))
 MKDIR := mkdir -p
 RM := rm -rf
 CP := cp -au
 LS := ls -l
 
 ANDROID_HOME ?= /Android
-SDK_API := 33.0.0
-NDK_VER := 25.1.8937393
+SDK_API := 35.0.0
+NDK_VER := 29.0.14206865
 NDK_DIR := $(ANDROID_HOME)/ndk/$(NDK_VER)
 # ADB_FLAGS := -d
 

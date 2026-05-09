@@ -343,59 +343,60 @@ dir-read         queue                  Core       GUI                GTK
 
 Global call+include+targets map:
 
-```sh
-	xbuild-debian....sh ARGS=...
-		podman
-			! /netmill/3pt/Makefile
-				+ config.mk
-					+ /ffbase/conf.mk
-				! openssl/Makefile
-					> libssl.so
-			! /ffpack/Makefile
-				+ config.mk
-					+ /ffbase/conf.mk
-				! zstd/Makefile
-					> libzstd.so
-			! alib3/Makefile
-				> lib...-phi.so
-					! alib3/.../Makefile
-						+ alib3/config.mk
-			! Makefile $ARGS
+```
+xbuild.sh ARGS=...
+	podman
+		! /netmill/3pt/Makefile
+			+ config.mk
 				+ /ffbase/conf.mk
-				> ....so
-					+ src/.../Makefile
-				app
-					> phiola-2
-				package
-					> phiola...tar.zst
-	xbuild-android.sh ARGS=...
-		podman
-			! /netmill/3pt/Makefile
-				+ config.mk
-					+ /ffbase/conf.mk
-					+ android/andk.mk
-				! openssl/Makefile
-					> libssl.so
-			! /ffpack/Makefile
-				+ config.mk
-					+ /ffbase/conf.mk
-					+ andk.mk
-				! zstd/Makefile
+			! openssl/Makefile
+				> libssl.so
+		! Makefile $ARGS
+			+ /ffbase/conf.mk
+			> *.so
+				?! zstd/Makefile -C ... -f ... FFPACK=... OS=... COMPILER=...
+					+ config.mk
+						+ /ffbase/conf.mk
 					> libzstd.so
-			! alib3/Makefile
-				> lib...-phi.so
-					! alib3/.../Makefile
-						+ alib3/config.mk
-							+ android/andk.mk
-			! android/Makefile $ARGS
+				?! alib3/.../Makefile -C ... -f ... ALIB3=... OS=... COMPILER=...
+					+ alib3/config.mk
+						+ /ffbase/conf.mk
+					> lib...-phi.so
+				+ src/.../Makefile
+			strip-debug
+				*.debug <- *.so
+			app
+				> phiola-2
+			package
+				> phiola...tar.zst
+xbuild-android.sh ARGS=...
+	podman
+		! /netmill/3pt/Makefile
+			+ config.mk
 				+ /ffbase/conf.mk
 				+ android/andk.mk
-				libs
-					> ....so
-						+ src/.../Makefile
-					*.so -> lib*.so
-				apk
-					gradle
+			! openssl/Makefile
+				> libssl.so
+		! android/Makefile $ARGS
+			+ /ffbase/conf.mk
+			+ android/andk.mk
+			libs
+				> *.so
+					?! zstd/Makefile ... SYS=...
+						+ config.mk
+							+ /ffbase/conf.mk
+							+ andk.mk
+						> libzstd.so
+					?! alib3/.../Makefile ... SYS=...
+						+ alib3/config.mk
+							+ /ffbase/conf.mk
+							+ android/andk.mk
+						> lib...-phi.so
+					+ src/.../Makefile
+				*.debug <- *.so
+				*.so -> lib*.so
+			apk
+				gradle
 ```
 
 

@@ -2,29 +2,31 @@
 
 # phiola: cross-build on Linux for Linux/(AMD64|ARM64) | Windows/AMD64
 
-IMAGE_NAME=phiola-debianbw-builder
-CONTAINER_NAME=phiola_debianBW_build
-BUILD_TARGET=linux
-if test "$OS" == "" ; then
+if test -z "$OS" ; then
 	OS=linux
 fi
-if test "$CPU" == "" ; then
+if test -z "$CPU" ; then
 	CPU=amd64
 fi
-if test "$CPU" == "arm64" ; then
-	IMAGE_NAME=phiola-debianbw-arm64-builder
-	CONTAINER_NAME=phiola_debianBW_arm64_build
-fi
+
+IMAGE_NAME=phiola-debtx-builder
+CONTAINER_NAME=phiola_debtx_build
+BUILD_TARGET=linux
 if test "$OS" == "windows" ; then
-	IMAGE_NAME=phiola-win64-builder
-	CONTAINER_NAME=phiola_win64_build
+	IMAGE_NAME=phiola-win64-debtx-builder
+	CONTAINER_NAME=phiola_win64_debtx_build
 	BUILD_TARGET=mingw64
 fi
-ARGS=${@@Q}
-
-if test "$JOBS" == "" ; then
-	JOBS=8
+if test "$CPU" == "arm64" ; then
+	IMAGE_NAME=phiola-arm64-debtx-builder
+	CONTAINER_NAME=phiola_arm64_debtx_build
 fi
+
+if test -z "$JOBS" ; then
+	JOBS=$(nproc)
+fi
+
+ARGS=${@@Q}
 
 set -xe
 
@@ -34,17 +36,17 @@ fi
 
 image_linux_amd64() {
 	cat <<EOF | podman build -t $IMAGE_NAME -f - .
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 RUN apt update && \
  apt install -y \
   make
 RUN apt install -y \
+ curl \
  zstd zip unzip bzip2 xz-utils \
+ patch \
  perl \
  cmake \
- patch \
- dos2unix \
- curl
+ dos2unix
 RUN apt install -y \
  autoconf libtool libtool-bin \
  gettext \
@@ -61,17 +63,17 @@ EOF
 
 image_linux_arm64() {
 	cat <<EOF | podman build -t $IMAGE_NAME -f - .
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 RUN apt update && \
  apt install -y \
   make
 RUN apt install -y \
+ curl \
  zstd zip unzip bzip2 xz-utils \
+ patch \
  perl \
  cmake \
- patch \
- dos2unix \
- curl
+ dos2unix
 RUN apt install -y \
  autoconf libtool libtool-bin \
  gettext \
@@ -90,17 +92,17 @@ EOF
 
 image_windows_amd64() {
 	cat <<EOF | podman build -t $IMAGE_NAME -f - .
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 RUN apt update && \
  apt install -y \
   make
 RUN apt install -y \
+ curl \
  zstd zip unzip bzip2 xz-utils \
+ patch \
  perl \
  cmake \
- patch \
- dos2unix \
- curl
+ dos2unix
 RUN apt install -y \
  autoconf libtool libtool-bin \
  gettext \
@@ -175,20 +177,6 @@ if test "$SSL_DISABLE" != "1" ; then
 	 -I .. \
 	 $ARGS_OS
 fi
-
-mkdir -p ../ffpack/$ODIR
-make -j$JOBS $FFPACK_TARGETS \
- -C ../ffpack/$ODIR \
- -f ../Makefile \
- -I .. \
- $ARGS_OS
-
-mkdir -p alib3/$ODIR
-make -j$JOBS \
- -C alib3/$ODIR \
- -f ../Makefile \
- -I .. \
- $ARGS_OS
 
 $ENV_CPU
 mkdir -p $ODIR

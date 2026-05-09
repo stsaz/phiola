@@ -20,7 +20,10 @@ $(PKG):
 $(DIR): $(PKG)
 	echo "$(MD5SUM) *$(PKG)" | md5sum -c -
 	$(UNTAR_BZ2) $(PKG)
-	cat $(ALIB3)/wavpack/*.patch | patch -d $(DIR) -p1
+	cat $(ALIB3)/wavpack/0*.patch | patch -d $(DIR) -p1
+ifeq "$(OS)" "linux"
+	cat $(ALIB3)/wavpack/nonexec-stack.patch | patch -d $(DIR) -p1
+endif
 
 # build
 CFLAGS += -I$(ALIB3)/wavpack \
