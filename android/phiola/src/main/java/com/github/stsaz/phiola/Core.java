@@ -11,6 +11,7 @@ import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -20,6 +21,9 @@ import android.provider.Settings;
 import android.util.Log;
 
 import androidx.core.app.ActivityCompat;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 class Core extends Util {
 	private static Core instance;
@@ -32,11 +36,13 @@ class Core extends Util {
 	private GUI gui;
 	private Queue qu;
 	Track track;
-	private SysJobs sysjobs;
+	private SysAudio sysaudio;
 	Phiola phiola;
 	UtilNative util;
 	private Conf conf;
 	Handler tq;
+	private Runnable delayed_abandon_focus;
+	private boolean transient_pause;
 
 	String storage_path;
 	String[] storage_paths;
@@ -85,8 +91,50 @@ class Core extends Util {
 		gui = new GUI(this);
 		track = new Track(this);
 		qu = new Queue(this);
-		sysjobs = new SysJobs();
-		sysjobs.init(this);
+
+		sysaudio = new SysAudio(this, new SysAudio.Callback() {
+				public void audio_focus(int event) {
+					switch (event) {
+						case AudioManager.AUDIOFOCUS_LOSS:
+							sysaudio.audio_focus_abandon();
+							track.stop();
+							break;
+
+						case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+						case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+							if (track.state() == Track.STATE_PLAYING) {
+								transient_pause = true;
+								track.pause();
+							}
+							break;
+
+						case AudioManager.AUDIOFOCUS_GAIN:
+							if (transient_pause) {
+								transient_pause = false;
+								track.unpause();
+							}
+							break;
+					}
+				}
+
+				public void becoming_noisy() {
+					track.pause();
+				}
+			});
+		delayed_abandon_focus = sysaudio::audio_focus_abandon;
+		track.observer_add(new PlaybackObserver() {
+				public int open(TrackHandle t) {
+					tq.removeCallbacks(delayed_abandon_focus);
+					if (!sysaudio.audio_focus_request())
+						return -1;
+					return 0;
+				}
+
+				public void close(TrackHandle t) {
+					if ((t.close_status & Phiola.PCS_STOP) != 0)
+						tq.postDelayed(delayed_abandon_focus, 1000);
+				}
+			});
 
 		loadconf();
 		qu.load();
@@ -104,7 +152,7 @@ class Core extends Util {
 			return;
 		instance = null;
 		qu.close();
-		sysjobs.uninit();
+		sysaudio.uninit();
 		phiola.destroy();
 	}
 
@@ -176,6 +224,30 @@ class Core extends Util {
 		ClipboardManager cm = (ClipboardManager)ctx.getSystemService(Context.CLIPBOARD_SERVICE);
 		ClipData cd = ClipData.newPlainText("", s);
 		cm.setPrimaryClip(cd);
+	}
+
+	static class CoreTimer {
+		Timer t;
+	}
+
+	interface TimerFunc {
+		void run();
+	}
+
+	CoreTimer timer(int period_msec, TimerFunc cb) {
+		CoreTimer t = new CoreTimer();
+		t.t = new Timer();
+		t.t.schedule(new TimerTask() {
+				public void run() {
+					tq.post(() -> cb.run());
+				}
+			}, period_msec, period_msec);
+		return t;
+	}
+
+	void timer_stop(CoreTimer t) {
+		t.t.cancel();
+		t.t = null;
 	}
 
 	void errlog(String mod, String fmt, Object... args) {

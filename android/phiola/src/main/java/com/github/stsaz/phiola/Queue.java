@@ -8,8 +8,6 @@ import android.os.ConditionVariable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Timer;
-import java.util.TimerTask;
 
 class PhiolaQueue {
 	private Phiola phi;
@@ -179,7 +177,7 @@ class Queue {
 	private int filter_len;
 
 	private boolean converting;
-	private Timer convert_update_timer;
+	private Core.CoreTimer convert_update_timer;
 
 	static final int
 		F_REPEAT = 1,
@@ -926,21 +924,15 @@ class Queue {
 			return r;
 
 		converting = true;
-		convert_update_timer = new Timer();
-		convert_update_timer.schedule(new TimerTask() {
-				public void run() {
-					core.dbglog(TAG, "convert_update_timer fired");
-					core.tq.post(() -> convert_update());
-				}
-			}, 500, 500);
+		convert_update_timer = core.timer(500, this::convert_update);
 		return null;
 	}
 
 	private void convert_update() {
+		core.dbglog(TAG, "convert_update_timer");
 		if (0 == core.phiola.quCmd(queues.get(i_conversion).q, Phiola.QUCOM_CONV_UPDATE, 0)) {
 			converting = false;
-			convert_update_timer.cancel();
-			convert_update_timer = null;
+			core.timer_stop(convert_update_timer);
 			nfy_all(QueueNotify.CONVERT_COMPLETE, 0);
 		}
 		queues.get(i_conversion).changed();
