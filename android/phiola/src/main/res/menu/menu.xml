@@ -8,10 +8,12 @@
 
 	<item android:id="@+id/action_file_menu_show"
 		android:icon="@drawable/audio_file"
+		app:contentDescription="@string/mfile"
 		app:showAsAction="ifRoom" />
 
 	<item android:id="@+id/action_list_menu_show"
 		android:icon="@drawable/list"
+		app:contentDescription="@string/mlist"
 		app:showAsAction="ifRoom" />
 
 	<item android:id="@+id/action_play_auto_stop"

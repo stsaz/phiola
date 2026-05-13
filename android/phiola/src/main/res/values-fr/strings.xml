@@ -3,9 +3,11 @@
     <string name="about_save_logs">Enregistrer les logs dans un fichier</string>
     <string name="bexplorer">Explorateur</string>
     <string name="bnext">Suivant</string>
-    <string name="bplay">Lecture/Pause</string>
+    <string name="bplay">Lecture</string>
+    <string name="bpause">Pause</string>
     <string name="bprev">Précédent</string>
-    <string name="brec">Démarrer/Arrêter l\'enregistrement</string>
+    <string name="brec">l\'enregistrement</string>
+    <string name="brec_stop">Arrêter l\'enregistrement</string>
     <string name="conv_aac_q">[.m4a] Qualité AAC: 1..5 (VBR) ou 8..800 (CBR, kbit/s)</string>
     <string name="conv_apos_end">Position de fin audio:</string>
     <string name="conv_apos_start">Position de départ audio:</string>
@@ -25,10 +27,12 @@
     <string name="lssv_lname">Nom de la liste de lecture:</string>
     <string name="menu_about">À propos…</string>
     <string name="menu_settings">Paramètres…</string>
+    <string name="mfile">Fichier</string>
     <string name="mfile_convert">Fichier: Convertir…</string>
     <string name="mfile_del">Fichier: Supprimer du stockage</string>
     <string name="mfile_move">Fichier: Déplacement rapide</string>
     <string name="mfile_tags_show">Fichier: Montrer les tags</string>
+    <string name="mlist">Liste</string>
     <string name="mlist_add">Liste: Ajouter…</string>
     <string name="mlist_clear">Liste: Effacer</string>
     <string name="mlist_close">Liste: Fermer</string>

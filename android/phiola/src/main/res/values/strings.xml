@@ -5,11 +5,15 @@
 	<string name="bexplorer">Explorer</string>
 	<string name="main_playlist_n">Playlist %d</string>
 
-	<string name="brec">Start/Stop Recording</string>
+	<string name="brec">Record</string>
+	<string name="brec_stop">Stop Recording</string>
+	<string name="brec_marker">Set/Jump to Playback Marker</string>
+	<string name="brec_radio">Record Radio</string>
 	<string name="main_rec_fin">Finished recording</string>
 	<string name="main_rec_err">Recording failed</string>
 	<string name="main_rec_started">Started recording</string>
-	<string name="bplay">Play/Pause</string>
+	<string name="bplay">Play</string>
+	<string name="bpause">Pause</string>
 	<string name="bprev">Previous</string>
 	<string name="bnext">Next</string>
 
@@ -17,6 +21,7 @@
 	<string name="explorer_stg_dirs">[Storage directories]</string>
 
 	<string name="menu_settings">Settings</string>
+	<string name="mfile">File Menu</string>
 	<string name="mfile_tags_show">File: Show Tags</string>
 	<string name="mfile_convert">File: Convert...</string>
 	<string name="mfile_show">File: Show in Explorer</string>
@@ -28,6 +33,7 @@
 	<string name="mplay_auto_stop">Auto-Stop Timer: Toggle</string>
 	<string name="mplay_auto_stop_msg">Will stop playing after %d min</string>
 
+	<string name="mlist">Playlist Menu</string>
 	<string name="mlist_new">List: New</string>
 	<string name="mlist_created">Created Playlist %d</string>
 	<string name="mlist_close">List: Close</string>

@@ -575,12 +575,15 @@ public class MainActivity extends AppCompatActivity {
 			mode = AppCompatDelegate.MODE_NIGHT_YES;
 		AppCompatDelegate.setDefaultNightMode(mode);
 
-		if (gui.playback_marker_show)
+		if (gui.playback_marker_show) {
 			b.brec.setImageResource(R.drawable.ic_replay);
-		else if (gui.record_mode == GUI.RECMODE_HIDE)
+			b.brec.setContentDescription(getString(R.string.brec_marker));
+		} else if (gui.record_mode == GUI.RECMODE_HIDE)
 			b.brec.setVisibility(View.INVISIBLE);
-		else if (gui.record_mode == GUI.RECMODE_RADIO)
+		else if (gui.record_mode == GUI.RECMODE_RADIO) {
 			b.brec.setImageResource(R.drawable.outline_arrow_circle_down);
+			b.brec.setContentDescription(getString(R.string.brec_radio));
+		}
 
 		if (gui.filter_hide)
 			b.tfilter.setVisibility(View.INVISIBLE);
@@ -618,13 +621,17 @@ public class MainActivity extends AppCompatActivity {
 
 	private void rec_state_set(boolean active) {
 		int res = R.color.control_button;
-		if (active)
+		int desc = R.string.brec;
+		if (active) {
 			res = R.color.recording;
+			desc = R.string.brec_stop;
+		}
 		int color = getResources().getColor(res);
 		if (!active && gui.main_color >= 0)
 			color = 0xff000000 | gui.main_color;
 		b.brec.setImageTintMode(PorterDuff.Mode.SRC_IN);
 		b.brec.setImageTintList(ColorStateList.valueOf(color));
+		b.brec.setContentDescription(getString(desc));
 	}
 
 	private void rec_fin(int code, String filename) {
@@ -1367,9 +1374,13 @@ public class MainActivity extends AppCompatActivity {
 
 		if ((st & GUI.MASK_PLAYBACK) != (old & GUI.MASK_PLAYBACK)) {
 			int play_icon = R.drawable.ic_play;
-			if ((st & GUI.STATE_PLAYING) != 0)
+			int play_description = R.string.bplay;
+			if ((st & GUI.STATE_PLAYING) != 0) {
 				play_icon = R.drawable.ic_pause;
+				play_description = R.string.bpause;
+			}
 			b.bplay.setImageResource(play_icon);
+			b.bplay.setContentDescription(getString(play_description));
 		}
 	}
 
