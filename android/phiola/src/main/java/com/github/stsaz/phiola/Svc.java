@@ -72,17 +72,9 @@ public class Svc extends MediaBrowserServiceCompat {
 		queue.nfy_add(this::sess_setqueue);
 		track = core.track;
 		track.observer_add(new PlaybackObserver() {
-			public int open(TrackHandle t) {
-				return new_track(t);
-			}
-
-			public void close(TrackHandle t) {
-				close_track(t);
-			}
-
-			public int process(TrackHandle t) {
-				return update_track(t);
-			}
+			public void opened(TrackHandle t) { new_track(t); }
+			public void close(TrackHandle t) { close_track(t); }
+			public void process(TrackHandle t) { update_track(t); }
 		});
 
 		delayed_stop = this::stop_delayed;
@@ -131,8 +123,6 @@ public class Svc extends MediaBrowserServiceCompat {
 			public void onPause() {
 				core.dbglog(TAG, "MediaSessionCompat.onPause");
 				track.pause();
-				sess_state(PlaybackStateCompat.STATE_PAUSED, playtime_msec);
-				stopForeground(false);
 			}
 
 			public void onStop() {
@@ -263,7 +253,7 @@ public class Svc extends MediaBrowserServiceCompat {
 	/**
 	 * Called by Track when a new track is initialized
 	 */
-	int new_track(TrackHandle t) {
+	void new_track(TrackHandle t) {
 		core.tq.removeCallbacks(delayed_stop);
 		playtime_msec = (int) PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN;
 		if (state == PlaybackStateCompat.STATE_STOPPED) {
@@ -298,26 +288,28 @@ public class Svc extends MediaBrowserServiceCompat {
 		}
 
 		fg();
-		return 0;
 	}
 
-	/**
-	 * Called by Track after a track is finished
-	 */
+	/** Called by Track after a track is finished */
 	void close_track(TrackHandle t) {
 		sess_state(PlaybackStateCompat.STATE_SKIPPING_TO_NEXT, 0);
 		core.tq.postDelayed(delayed_stop, 1000);
 	}
 
-	/**
-	 * Called by Track during playback
-	 */
-	int update_track(TrackHandle t) {
+	/** Called by Track during playback */
+	void update_track(TrackHandle t) {
+		int st = PlaybackStateCompat.STATE_STOPPED;
+
 		if (t.state == Track.STATE_PLAYING) {
 			playtime_msec = t.pos_msec;
-			sess_state(PlaybackStateCompat.STATE_PLAYING, playtime_msec);
+			st = PlaybackStateCompat.STATE_PLAYING;
+		} else if (t.state == Track.STATE_PAUSED) {
+			stopForeground(false);
+			st = PlaybackStateCompat.STATE_PAUSED;
 		}
-		return 0;
+
+		if (st != PlaybackStateCompat.STATE_STOPPED)
+			sess_state(st, playtime_msec);
 	}
 
 	/**

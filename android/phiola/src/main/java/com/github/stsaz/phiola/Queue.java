@@ -212,12 +212,9 @@ class Queue {
 		this.core = core;
 		phi = core.phiola;
 		core.track.observer_add(new PlaybackObserver() {
-				public int open(TrackHandle t) {
-					play_on_open(t);
-					return 0;
-				}
-				public void close(TrackHandle t) { play_on_close(t); }
-			});
+			public void opened(TrackHandle t) { play_on_open(t); }
+			public void close(TrackHandle t) { play_on_close(t); }
+		});
 		queues = new ArrayList<>();
 		nfy = new ArrayList<>();
 	}

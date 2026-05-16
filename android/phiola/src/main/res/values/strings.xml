@@ -10,7 +10,7 @@
 	<string name="brec_marker">Set/Jump to Playback Marker</string>
 	<string name="brec_radio">Record Radio</string>
 	<string name="main_rec_fin">Finished recording</string>
-	<string name="main_rec_err">Recording failed</string>
+	<string name="main_rec_err">Recording error: %s</string>
 	<string name="main_rec_started">Started recording</string>
 	<string name="bplay">Play</string>
 	<string name="bpause">Pause</string>

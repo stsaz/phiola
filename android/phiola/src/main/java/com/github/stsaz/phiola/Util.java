@@ -90,7 +90,7 @@ abstract class Util {
 	static String path_real(String s, String[] storage_paths) {
 		int pos = s.indexOf(':');
 		if (pos < 0 || pos + 1 == s.length())
-			return null;
+			return s;
 
 		String path = s.substring(pos + 1);
 		for (String stg : storage_paths) {

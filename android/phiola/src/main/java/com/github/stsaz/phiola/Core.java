@@ -153,16 +153,7 @@ class Core extends Util {
 				// phiola -[Callbacks]-> Core -[TQ]-> Main
 				public void recording(int code, String filename) {
 					dbglog(TAG, "Callbacks.recording() code:%d", code);
-					tq.post(() -> {
-							if (track.rec_mic_cb != null) {
-								track.rec_mic_cb.f(code, filename);
-								track.rec_mic_cb = null;
-							}
-							if (track.rec_rad_cb != null) {
-								track.rec_rad_cb.f(code, filename);
-								track.rec_rad_cb = null;
-							}
-						});
+					tq.post(() -> { rec_finished(code, filename); });
 				}
 			});
 
@@ -185,6 +176,46 @@ class Core extends Util {
 		qu.close();
 		sysaudio.uninit();
 		phiola.destroy();
+	}
+
+	public boolean rec_start(Track.RecCallback cb) {
+		if (track.rec_start(cb) == null)
+			return false;
+		context.startService(new Intent(context, RecSvc.class));
+		gui.state_update(GUI.STATE_RECORDING, GUI.STATE_RECORDING);
+		GUI.msg_show(context, context.getString(R.string.main_rec_started));
+		return true;
+	}
+
+	public void rec_radio_start(Track.RecCallback cb) {
+		track.rec_radio(cb);
+		gui.state_update(GUI.STATE_RECORDING, GUI.STATE_RECORDING);
+		GUI.msg_show(context, context.getString(R.string.main_rec_started));
+	}
+
+	private void rec_finished(int code, String filename) {
+		gui.state_update(GUI.STATE_RECORDING | GUI.STATE_REC_PAUSED, 0);
+		GUI.msg_show(context, (code == 0) ? context.getString(R.string.main_rec_fin)
+			: String.format(context.getString(R.string.main_rec_err), errstr(code)));
+
+		if (code == 0 && rec.rec_list_add)
+			qu.current_add(filename, 0);
+
+		if (track.is_recording_mic()) {
+			track.record_stop(true);
+			context.stopService(new Intent(context, RecSvc.class));
+
+			if (track.rec_mic_cb != null) {
+				track.rec_mic_cb.f(code, filename);
+				track.rec_mic_cb = null;
+			}
+
+		} else {
+			if (track.rec_rad_cb != null) {
+				track.rec_rad_cb.f(code, filename);
+				track.rec_rad_cb = null;
+			}
+		}
 	}
 
 	boolean sys_permisson_request(Activity activity, String[] perms, int code, int ext_stg_mgr_req_code) {

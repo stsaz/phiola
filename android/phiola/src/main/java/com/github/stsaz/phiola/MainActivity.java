@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
 	private PlaylistAdapter pl_adapter;
 	private PopupMenu mfile, mlist, mitem;
 	private int item_menu_qi;
+	private int ui_state;
 
 	private MainBinding b;
 
@@ -91,6 +92,8 @@ public class MainActivity extends AppCompatActivity {
 		core.dbglog(TAG, "onStop()");
 		track.observer_rm(trk_nfy);
 		queue.nfy_rm(quenfy);
+		track.rec_mic_cb = null;
+		track.rec_rad_cb = null;
 		queue.saveconf();
 		list_leave();
 		core.saveconf();
@@ -99,6 +102,7 @@ public class MainActivity extends AppCompatActivity {
 
 	public void onDestroy() {
 		core.dbglog(TAG, "onDestroy()");
+		gui.cur_activity = null;
 		trackctl.close();
 		core.close();
 		super.onDestroy();
@@ -425,10 +429,10 @@ public class MainActivity extends AppCompatActivity {
 		};
 		track = core.track;
 		trk_nfy = new PlaybackObserver() {
-			public int open(TrackHandle t) { return track_opening(t); }
+			public void opened(TrackHandle t) { track_opening(t); }
 			public void close(TrackHandle t) { track_closing(t); }
 			public void closed(TrackHandle t) { track_closed(t); }
-			public int process(TrackHandle t) { return track_update(t); }
+			public void process(TrackHandle t) { track_update(t); }
 		};
 		trackctl = new TrackCtl(core, this);
 		trackctl.connect();
@@ -592,16 +596,14 @@ public class MainActivity extends AppCompatActivity {
 
 		color_apply();
 
-		int mask = GUI.MASK_PLAYBACK;
-		int st = GUI.STATE_DEF;
-		if (queue.auto_stop_active) {
-			mask |= GUI.STATE_AUTO_STOP;
-			st |= GUI.STATE_AUTO_STOP;
-		}
+		rec_state_set(gui.state_test(GUI.STATE_RECORDING));
 		if (gui.state_test(GUI.STATE_RECORDING)) {
-			rec_state_set(true);
+			if (track.is_recording_mic())
+				track.rec_mic_cb = this::rec_finished;
+			else
+				track.rec_rad_cb = this::rec_finished;
 		}
-		state_f(mask, st, true);
+		state_set(gui.state);
 	}
 
 	private void color_apply() {
@@ -636,29 +638,14 @@ public class MainActivity extends AppCompatActivity {
 		b.brec.setContentDescription(getString(desc));
 	}
 
-	private void rec_fin(int code, String filename) {
-		stopService(new Intent(this, RecSvc.class));
-		if (code == 0) {
-			if (core.rec.rec_list_add)
-				queue.current_add(filename, 0);
-		}
-		GUI.msg_show(this, (code == 0) ? getString(R.string.main_rec_fin) : String.format("Recording: %s", core.errstr(code)));
-
-		if (gui.state_test(GUI.STATE_RECORDING))
-			rec_stop();
-	}
-
-	private void rec_stop() {
-		state(GUI.STATE_RECORDING | GUI.STATE_REC_PAUSED, 0);
+	private void rec_finished(int code, String filename) {
+		state_set(gui.state);
 		rec_state_set(false);
-		String e = track.record_stop();
-		if (e != null)
-			core.errlog(TAG, String.format("%s: %s", getString(R.string.main_rec_err), e));
 	}
 
 	private void rec_start_stop() {
 		if (gui.state_test(GUI.STATE_RECORDING))
-			rec_stop();
+			track.record_stop(false);
 		else
 			rec_start();
 	}
@@ -687,18 +674,12 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void rec_radio_start_stop() {
-		core.track.rec_radio((code, filename) -> {
-				rec_state_set(false);
-				state(GUI.STATE_RECORDING, 0);
-
-				if (code == 0 && core.rec.rec_list_add)
-					queue.current_add(filename, 0);
-
-				GUI.msg_show(this, (code == 0) ? "Finished recording" : String.format("Recording: %s", core.errstr(code)));
-			});
-		if (!gui.state_test(GUI.STATE_RECORDING)) {
+		if (gui.state_test(GUI.STATE_RECORDING)) {
+			track.rec_radio_stop();
+		} else {
+			core.rec_radio_start(this::rec_finished);
 			rec_state_set(true);
-			state(GUI.STATE_RECORDING, GUI.STATE_RECORDING);
+			state_set(gui.state);
 		}
 	}
 
@@ -1285,17 +1266,10 @@ public class MainActivity extends AppCompatActivity {
 			return;
 		}
 
-		TrackHandle trec = track.rec_start((code, filename) -> {
-				core.tq.post(() -> {
-						rec_fin(code, filename);
-					});
-			});
-		if (trec == null)
-			return;
-		rec_state_set(true);
-		gui.msg_show(this, getString(R.string.main_rec_started));
-		startService(new Intent(this, RecSvc.class));
-		state(GUI.STATE_RECORDING, GUI.STATE_RECORDING);
+		if (core.rec_start(this::rec_finished)) {
+			rec_state_set(true);
+			state_set(gui.state);
+		}
 	}
 
 	/** UI event from seek bar */
@@ -1370,11 +1344,14 @@ public class MainActivity extends AppCompatActivity {
 		int st = (old & ~mask) | val;
 		if (!force && st == old)
 			return;
+		state_set(st);
+	}
 
+	private void state_set(int st) {
 		String title = "φphiola";
 		getSupportActionBar().setTitle(String.format("%s %s", title, state_flags(st)));
 
-		if ((st & GUI.MASK_PLAYBACK) != (old & GUI.MASK_PLAYBACK)) {
+		if ((st & GUI.MASK_PLAYBACK) != (this.ui_state & GUI.MASK_PLAYBACK)) {
 			int play_icon = R.drawable.ic_play;
 			int play_description = R.string.bplay;
 			if ((st & GUI.STATE_PLAYING) != 0) {
@@ -1384,10 +1361,12 @@ public class MainActivity extends AppCompatActivity {
 			b.bplay.setImageResource(play_icon);
 			b.bplay.setContentDescription(getString(play_description));
 		}
+
+		this.ui_state = st;
 	}
 
 	/** Called by Track when a new track is initialized */
-	private int track_opening(TrackHandle t) {
+	private void track_opening(TrackHandle t) {
 		String title = t.name;
 		if (!t.pmeta.date.isEmpty())
 			title = String.format("%s [%s]", title, t.pmeta.date);
@@ -1401,7 +1380,6 @@ public class MainActivity extends AppCompatActivity {
 		} else {
 			state(GUI.MASK_PLAYBACK, GUI.STATE_PLAYING);
 		}
-		return 0;
 	}
 
 	/** Called by Track after a track is finished */
@@ -1419,7 +1397,7 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	/** Called by Track during playback */
-	private int track_update(TrackHandle t) {
+	private void track_update(TrackHandle t) {
 		core.dbglog(TAG, "track_update: state:%d pos:%d", t.state, t.pos_msec);
 		switch (t.state) {
 		case Track.STATE_PAUSED:
@@ -1453,6 +1431,5 @@ public class MainActivity extends AppCompatActivity {
 
 		b.seekbar.setProgress(progress);
 		b.lpos.setText(s);
-		return 0;
 	}
 }

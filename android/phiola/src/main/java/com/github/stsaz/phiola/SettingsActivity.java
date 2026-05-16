@@ -231,20 +231,28 @@ public class SettingsActivity extends AppCompatActivity {
 
 	private void save() {
 		// Interface
+		GUI gui = core.gui();
+
 		int i = GUI.THM_DEF;
 		if (b.swDark.isChecked())
 			i = GUI.THM_DARK;
-		core.gui().theme = i;
+		gui.theme = i;
 
-		core.gui().main_color = color;
-		core.gui().filter_hide = b.swShowFilter.isChecked();
+		gui.main_color = color;
+		gui.filter_hide = b.swShowFilter.isChecked();
 		i = b.spRecBtn.getSelectedItemPosition();
-		core.gui().record_mode =
-			(i == RECBTN_REC_HIDE) ? GUI.RECMODE_HIDE
+		int mode = (i == RECBTN_REC_HIDE) ? GUI.RECMODE_HIDE
 			: (i == RECBTN_REC_RADIO) ? GUI.RECMODE_RADIO
 			: GUI.RECMODE_MIC;
-		core.gui().playback_marker_show = (i == RECBTN_PL_MARKER);
-		core.gui().ainfo_in_title = b.swUiInfoInTitle.isChecked();
+		if ((mode != gui.record_mode
+				|| (i == RECBTN_PL_MARKER) != gui.playback_marker_show)
+			&& gui.state_test(GUI.STATE_RECORDING)) {
+			core.errlog(TAG, "Can't change 'Record' button while recording");
+		} else {
+			gui.record_mode = mode;
+			gui.playback_marker_show = (i == RECBTN_PL_MARKER);
+		}
+		gui.ainfo_in_title = b.swUiInfoInTitle.isChecked();
 
 		list_save();
 		play_save();

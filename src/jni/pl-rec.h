@@ -67,6 +67,9 @@ static void play_rec(struct core_data *d)
 	}
 
 	if (!t->tee_active) {
+		if (!oname)
+			goto end; // duplicate 'rec-stop' request
+
 		const char *ext = rec_ext(t->input.format);
 		if (!ext) {
 			tee_out_nfy(PHI_E_UNKIFMT, NULL);

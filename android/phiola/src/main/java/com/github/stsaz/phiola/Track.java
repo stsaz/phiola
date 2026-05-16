@@ -7,9 +7,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 abstract class PlaybackObserver {
-	/** Called for each new track.
-	Return -1: close the track. */
-	public int open(TrackHandle t) { return 0; }
+	/** Called for each new track. */
+	public void opened(TrackHandle t) {}
 
 	/** Called when track is being closed */
 	public void close(TrackHandle t) {}
@@ -18,7 +17,7 @@ abstract class PlaybackObserver {
 	public void closed(TrackHandle t) {}
 
 	/** Called periodically while track is playing. */
-	public int process(TrackHandle t) { return 0; }
+	public void process(TrackHandle t) {}
 }
 
 class TrackHandle {
@@ -72,7 +71,7 @@ class Track {
 
 	void observer_notify(PlaybackObserver f) {
 		if (tplay.state != STATE_NONE) {
-			f.open(tplay);
+			f.opened(tplay);
 			f.process(tplay);
 		}
 	}
@@ -139,14 +138,19 @@ class Track {
 		return trec;
 	}
 
-	String record_stop() {
-		String e = core.phiola.recCtrl(trec.phi_trk, Phiola.RECL_STOP);
-		trec = null;
-		return e;
+	boolean is_recording_mic() { return trec != null; }
+
+	void record_stop(boolean fin) {
+		if (trec.phi_trk != 0) {
+			core.phiola.recCtrl(trec.phi_trk, Phiola.RECL_STOP);
+			trec.phi_trk = 0;
+		}
+		if (fin)
+			trec = null;
 	}
 
 	int record_pause_toggle() {
-		if (trec == null) return -1;
+		if (trec == null || trec.phi_trk == 0) return -1;
 
 		int cmd = Phiola.RECL_PAUSE;
 		if (rec_paused)
@@ -164,6 +168,9 @@ class Track {
 		rec_rad_cb = cb;
 		core.phiola.playRecord(String.format("%s/%s"
 			, core.rec.rec_path, core.rec.rec_name_template));
+	}
+	void rec_radio_stop() {
+		core.phiola.playRecord(null);
 	}
 
 	private void trk_close() {
@@ -232,12 +239,7 @@ class Track {
 
 		for (PlaybackObserver f : observers) {
 			core.dbglog(TAG, "opening observer %s", f);
-			int r = f.open(tplay);
-			if (r != 0) {
-				core.dbglog(TAG, "f.open(): %d", r);
-				trk_close();
-				return;
-			}
+			f.opened(tplay);
 		}
 	}
 
