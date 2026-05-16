@@ -180,12 +180,9 @@ class Track {
 		}
 	}
 
-	/**
-	 * Stop playing and notifiy observers
-	 */
 	void stop() {
 		core.dbglog(TAG, "stop");
-		trk_close();
+		core.phiola.playCmd(Phiola.PC_STOP, 0);
 	}
 
 	void pause() {
