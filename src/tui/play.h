@@ -26,6 +26,7 @@ static void* tuiplay_open(phi_track *t)
 			tui_setvol(u, vol);
 	}
 
+	u->tee_template = t->conf.tee;
 	tui_prepare(1);
 	return u;
 }
@@ -359,7 +360,7 @@ static void cmd_play_rec(tui_track *c, uint cmd)
 		}
 		ffmem_free(c->tee_filename);
 		c->tee_filename = ffsz_allocfmt("%s.%s"
-			, "rec-@nowdate-@nowtime", ext);
+			, c->tee_template, ext);
 		c->t->conf.tee = c->tee_filename;
 		infolog(c->t, "Recording...");
 	}

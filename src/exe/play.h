@@ -190,7 +190,7 @@ static int play_action(struct cmd_play *p)
 			.no_meta = p->no_meta,
 		},
 		.tee = (p->tee) ? p->tee
-			: (p->recordable) ? ""
+			: (p->recordable) ? "rec-@nowdate-@nowtime"
 			: p->dup,
 		.tee_output = !!p->dup,
 		.tee_dynamic = !!p->recordable,

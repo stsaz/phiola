@@ -20,6 +20,7 @@ static const phi_core *core;
 
 typedef struct tui_track {
 	phi_track *t;
+	const char *tee_template;
 	char *tee_filename;
 	uint64 total_samples;
 	uint64 played_samples;
