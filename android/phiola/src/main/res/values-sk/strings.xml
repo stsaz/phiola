@@ -1,0 +1,170 @@
+<resources>
+	<string name="main_st_playing">Prehrávanie</string>
+	<string name="blibrary">Knižnica</string>
+	<string name="bexplorer">Prieskumník</string>
+	<string name="main_playlist_n">Playlist %d</string>
+
+	<string name="brec">Nahrávať</string>
+	<string name="brec_stop">Zastaviť nahrávanie</string>
+	<string name="brec_marker">Nastaviť a prejsť na záložku</string>
+	<string name="brec_radio">Nahrávať rádio</string>
+	<string name="main_rec_fin">Nahrávanie dokončené</string>
+	<string name="main_rec_err">Chyba pri nahrávaní: %s</string>
+	<string name="main_rec_started">Nahrávanie spustené</string>
+	<string name="bplay">Prehrať</string>
+	<string name="bpause">Pozastaviť</string>
+	<string name="bprev">Predchádzajúci</string>
+	<string name="bnext">Nasledujúci</string>
+
+	<string name="explorer_up">&lt;SPÄŤ&gt;</string>
+	<string name="explorer_stg_dirs">[Priečinky úložiska]</string>
+
+	<string name="menu_settings">Nastavenia</string>
+	<string name="mfile">Ponuka Súbor</string>
+	<string name="mfile_tags_show">Súbor: Zobraziť značky</string>
+	<string name="mfile_convert">Súbor: Konvertovať...</string>
+	<string name="mfile_show">Súbor: Zobraziť v prieskumníku</string>
+	<string name="mfile_del">Súbor: Odstrániť z úložiska</string>
+	<string name="mfile_move">Súbor: Rýchlo presunúť</string>
+	<string name="mfile_list_show">Súbor: Zobraziť v playliste</string>
+	<string name="mfile_list_remove">Súbor: Odstrániť z playlistu</string>
+
+	<string name="mplay_auto_stop">Časovač zastavenia: Prepnúť</string>
+	<string name="mplay_auto_stop_msg">Zastaví prehrávanie o %d minút</string>
+
+	<string name="mlist">Ponuka Playlist</string>
+	<string name="mlist_new">Playlist: Nový</string>
+	<string name="mlist_created">Vytvorený Playlist %d</string>
+	<string name="mlist_close">Playlist: Zatvoriť</string>
+	<string name="mlist_closed">Playlist zatvorený</string>
+	<string name="mlist_save">Playlist: Uložiť...</string>
+	<string name="mlist_rename">Playlist: Premenovať...</string>
+	<string name="mlist_add">Playlist: Pridať...</string>
+	<string name="mlist_remove_non_existing">Playlist: Odstrániť neexistujúce súbory</string>
+	<string name="mlist_remove_non_unique">Playlist: Odstrániť duplicitné súbory</string>
+	<string name="mlist_trk_rm">Odstránených 1 položiek</string>
+	<string name="mlist_clear">Playlist: Vyprázdniť</string>
+	<string name="mlist_next_add_sel">Pridať do nasledujúceho playlistu</string>
+	<string name="mlist_trk_added">Súbor pridaný do Playlistu %d</string>
+	<string name="mlist_sort">Playlist: Usporiadať...</string>
+	<string name="mlist_sort_filename">Playlist: Usporiadať podľa názvu súboru</string>
+	<string name="mlist_sort_filesize">Playlist: Usporiadať podľa veľkosti súboru</string>
+	<string name="mlist_sort_filedate">Playlist: Usporiadať podľa dátumu</string>
+	<string name="mlist_shuffle">Playlist: Premiešať</string>
+	<string name="mlist_sort_tag_artist">Playlist: Zoradiť podľa interpréta</string>
+	<string name="mlist_sort_tag_date">Playlist: Zoradiť podľa dátumu</string>
+	<string name="mlist_move_left">Playlist: Presunúť vľavo</string>
+	<string name="mlist_convert">Playlist: Konvertovať všetko...</string>
+	<string name="mlist_files_move">Playlist: Rýchlo presunúť všetky súbory</string>
+	<string name="mlist_read_meta">Playlist: Načítať značky</string>
+
+	<string name="menu_about">O aplikácii</string>
+
+	<string name="mexplorer_add_list_cur">Pridať do aktuálneho playlistu</string>
+	<string name="mexplorer_add_list_new">Pridať do nového playlistu</string>
+
+	<string name="mitem_list_remove">Odstrániť z playlistu</string>
+	<string name="mitem_file_show">Zobraziť v prieskumníku</string>
+	<string name="mitem_file_delete">Vymazať súbor z úložiska</string>
+	<string name="mitem_file_move">Rýchlo presunúť súbor</string>
+	<string name="mitem_file_rename">Premenovať súbor...</string>
+	<string name="mitem_file_show_info">Zobraziť značky</string>
+
+	<string name="sett_interface">Rozhranie</string>
+	<string name="sett_dark">Tmavá téma</string>
+	<string name="sett_color">Farba...</string>
+	<string name="sett_show_filter">Skryť vyhľadávacie pole</string>
+	<string name="sett_rec_btn">Funkcia prvého tlačidla:</string>
+	<string name="sett_ui_info_in_title">Zahrnúť informácie o súbore v názve okna</string>
+	<string name="sett_svc_notif_disable">Zakázať systémové upozornenie (vyžaduje reštart)</string>
+
+	<string name="sett_playlist">Playlist</string>
+	<string name="sett_random">Náhodné prehrávanie</string>
+	<string name="sett_repeat_all">Opakovať všetko</string>
+	<string name="sett_list_move_on_next">Po klepnutí na tlačidlo \'Ďalší\': Presunúť súbor do nasledujúceho playlistu</string>
+	<string name="sett_list_rm_on_next">Po klepnutí na tlačidlo \'Ďalší\': Odstrániť súbor z playlistu</string>
+	<string name="sett_list_rm_on_err">Odstrániť súbor z playlistu pri chybe</string>
+	<string name="sett_auto_stop">Čas automatického zastavenia (min):</string>
+
+	<string name="sett_playback">Nahrávanie</string>
+	<string name="sett_codepage">Kódová stránka pre značky, ktoré nie sú v systéme unicode</string>
+	<string name="sett_auto_skip">Automaticky preskočiť začiatok každého súboru (% alebo sec):</string>
+	<string name="sett_auto_skip_tail">Automaticky preskočiť začiatok každého súboru (% alebo sec):</string>
+	<string name="sett_rg_norm">Normalizácia ReplayGain</string>
+	<string name="sett_auto_norm">Automatická normalizácia hlasitosti</string>
+	<string name="sett_equalizer_enable">Ekvalizér</string>
+	<string name="sett_equalizer_frequency">Frekvencia (Hz):</string>
+	<string name="sett_equalizer_width">Výška (Q):</string>
+	<string name="sett_equalizer_gain">Zosilnenie (dB):</string>
+
+	<string name="sett_operation">Operácie</string>
+	<string name="sett_file_del">Nepresúvať súbory do koša</string>
+	<string name="sett_trash_dir">Priečinok kôš (cesta je relatívna od koreňového priečinka úložiska):</string>
+	<string name="sett_library_dir">Priečinky hudobnej knižnice (Oddelené znakom ";"):</string>
+	<string name="sett_data_dir">Priečinok s údajmi aplikácie:</string>
+	<string name="sett_deprecated_mods">Povoliť zastarané moduly (ALAC)</string>
+
+	<string name="sett_recording">Nahrávanie</string>
+	<string name="sett_rec_longclick">Pridržaním spustiť a zastaviť; klepnutím pozastaviť/Pokračovať</string>
+	<string name="sett_rec_dir">Priečinok s nahrávkami:</string>
+	<string name="sett_rec_name">Vzor pre názov súboru:</string>
+	<string name="sett_rec_src">Zdroj zvuku:</string>
+	<string name="sett_rec_chan">Kanály:</string>
+	<string name="sett_rec_rate">Frekvencia vzorkovania (Hz):</string>
+	<string name="sett_rec_enc">Enkodér:</string>
+	<string name="sett_rec_bitrate">Bitová rýchlosť enkodéra (kbit/sec):</string>
+	<string name="sett_rec_in_format">Formát vzorkovania:</string>
+	<string name="sett_rec_buf_len">Dĺžka buffera (msec):</string>
+	<string name="sett_rec_until">Automaticky zastaviť po:</string>
+	<string name="sett_rec_danorm">Dynamická normalizácia zvuku</string>
+	<string name="sett_rec_gain">Úroveň zosilnenia/zoslabenia (dB):</string>
+	<string name="sett_rec_exclusive">Exkluzívny režim</string>
+	<string name="sett_rec_list_add">Pridať nahratý súbor do playlistu</string>
+
+	<string name="lssv_ldir">Výstupný priečinok:</string>
+	<string name="lssv_lname">Názov playlistu:</string>
+	<string name="lssv_bsave">Uložiť</string>
+
+	<string name="conv_in_out">Vstup a výstup</string>
+	<string name="conv_input_file">Vstupný súbor:</string>
+	<string name="conv_out_dir">Výstupný priečinok:</string>
+	<string name="conv_out_name">Názov výstupného súboru (bez prípony):</string>
+	<string name="conv_out_fmt">Výstupný formát:</string>
+
+	<string name="conv_range">Rozsah zvuku</string>
+	<string name="conv_apos_start">Počiatočná značka:</string>
+	<string name="conv_from_set_cur">Nastaviť aktuálnu pozíciu</string>
+	<string name="conv_apos_end">Koncová značka:</string>
+	<string name="conv_tags">Značky (NÁZOV=HODNOTA;...):</string>
+
+	<string name="conv_filters">Filtre</string>
+	<string name="conv_sample_format">Formát vzorkovania</string>
+	<string name="conv_sample_rate">Frekvencia vzorkovania (Hz):</string>
+
+	<string name="conv_encoding">Kódovanie</string>
+	<string name="conv_aac_q">[.m4a] Kvalita AAC: 1..5 (VBR) alebo 8..800 (CBR, kbit/s):</string>
+	<string name="conv_opus_q">[.opus] Kvalita Opus (VBR, kbit/s):</string>
+	<string name="conv_mp3_q">[.mp3] Kvalita MP3 9..0 (VBR) alebo 64..320 (CBR, kbit/s):</string>
+	<string name="conv_copy">Bezstratové kopírovanie [.mp3/.m4a/.ogg]</string>
+
+	<string name="conv_behaviour">Správanie</string>
+	<string name="conv_preserve_date">Zachovať čas zmeny súboru</string>
+	<string name="conv_overwrite">Prepísať výstupné súbory</string>
+	<string name="conv_overwrite2">Naozaj si želáte prepísať výstupné súbory?</string>
+	<string name="conv_trash_orig">Premiestniť vstupný súbor do koša</string>
+	<string name="conv_pl_add">Pridať nový súbor do playlistu</string>
+
+	<string name="conv_go">Konvertovať</string>
+
+	<string name="menu_tags_write">Zapísať značky do súboru!</string>
+	<string name="menu_tags_clear">Odstrániť všetky značky</string>
+	<string name="menu_tag_add">Pridať značku...</string>
+	<string name="menu_tag_add_artist">Pridať značku: Umelec</string>
+	<string name="menu_tag_add_title">Pridať značku: Názov</string>
+
+	<string name="about_enable_debug_log">Povoliť zaznamenávanie ladiacich informácií</string>
+	<string name="about_save_logs">Uložiť systémové záznamy do súboru</string>
+	<string name="about_log_saved">Záznamy uložené do súboru %s</string>
+
+	<string name="tag_edit_n_a">Upravovanie značiek pre tento formát súboru nie je podporované</string>
+</resources>
