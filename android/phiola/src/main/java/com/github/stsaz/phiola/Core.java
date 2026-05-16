@@ -178,8 +178,8 @@ class Core extends Util {
 		phiola.destroy();
 	}
 
-	public boolean rec_start(Track.RecCallback cb) {
-		if (track.rec_start(cb) == null)
+	public boolean rec_start(int flags, Track.RecCallback cb) {
+		if (track.rec_start(flags, cb) == null)
 			return false;
 		context.startService(new Intent(context, RecSvc.class));
 		gui.state_update(GUI.STATE_RECORDING, GUI.STATE_RECORDING);

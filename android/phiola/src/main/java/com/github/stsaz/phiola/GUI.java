@@ -34,6 +34,7 @@ class GUI {
 	private ArrayList<String> list_names;
 	int explorer_scroll_pos, mlib_scroll_pos;
 	int main_color = -1;
+	boolean rec_ext_app;
 
 	static final int
 		THM_DEF = 0,

@@ -98,14 +98,18 @@ class Track {
 		return Arrays.asList(RecSettings.rec_formats).indexOf(name);
 	}
 
+	static final int
+		RECF_EXPORT = 1;
+
 	interface RecCallback {
 		void f(int code, String filename);
 	}
 	RecCallback rec_mic_cb;
-	TrackHandle rec_start(RecCallback cb) {
-		core.dir_make(core.rec.rec_path);
+	TrackHandle rec_start(int flags, RecCallback cb) {
+		String path = ((flags & RECF_EXPORT) == 0) ? core.rec.rec_path : core.storage_path + "/Recordings";
+		core.dir_make(path);
 		String oname = String.format("%s/%s.%s"
-			, core.rec.rec_path
+			, path
 			, core.rec.rec_name_template
 			, core.rec.rec_fmt);
 

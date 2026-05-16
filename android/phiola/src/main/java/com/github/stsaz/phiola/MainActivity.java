@@ -7,8 +7,10 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.PorterDuff;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -61,14 +63,30 @@ public class MainActivity extends AppCompatActivity {
 		if (gui.cur_path.isEmpty())
 			gui.cur_path = core.storage_path;
 
-		// Add file to the playlist and start playback if executed from an external file manager app
 		String ia = getIntent().getAction();
+
 		if (ia != null && ia.equals(Intent.ACTION_VIEW)) {
+			// Add file to the playlist and start playback if executed from an external file manager app
 			String fn = getIntent().getData().getPath();
 			core.dbglog(TAG, "Intent.ACTION_VIEW: %s", fn);
 			fn = Util.path_real(fn, core.storage_paths);
 			if (fn != null)
 				explorer_event(fn, Queue.ADD | ADD_PLAY);
+		}
+
+		if (ia != null && ia.equals(MediaStore.Audio.Media.RECORD_SOUND_ACTION)) {
+			// Start recording by another app's request
+			core.dbglog(TAG, "MediaStore.Audio.Media.RECORD_SOUND_ACTION");
+			if (gui.record_mode != GUI.RECMODE_MIC) {
+				core.errlog(TAG, "Can not record in this UI configuration.  Please set `Record from Mic` control button.");
+
+			} else if (gui.state_test(GUI.STATE_RECORDING)) {
+				core.errlog(TAG, "Can not start new recording.  Please stop previous recording.");
+
+			} else {
+				gui.rec_ext_app = true;
+				rec_start();
+			}
 		}
 	}
 
@@ -641,6 +659,26 @@ public class MainActivity extends AppCompatActivity {
 	private void rec_finished(int code, String filename) {
 		state_set(gui.state);
 		rec_state_set(false);
+
+		if (gui.rec_ext_app) {
+			gui.rec_ext_app = false;
+			rec_ext_result((code == 0) ? filename : null);
+		}
+	}
+
+	private void rec_ext_result(String file_name) {
+		if (file_name == null) {
+			setResult(RESULT_CANCELED);
+			core.dbglog(TAG, "setResult RESULT_CANCELED");
+			return;
+		}
+
+		Uri u = new PhiFileProvider().uri(this, file_name);
+		Intent r = new Intent();
+		r.setData(u);
+		r.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+		setResult(RESULT_OK, r);
+		core.dbglog(TAG, "setResult RESULT_OK %s", u.getPath());
 	}
 
 	private void rec_start_stop() {
@@ -1266,7 +1304,7 @@ public class MainActivity extends AppCompatActivity {
 			return;
 		}
 
-		if (core.rec_start(this::rec_finished)) {
+		if (core.rec_start((gui.rec_ext_app) ? Track.RECF_EXPORT : 0, this::rec_finished)) {
 			rec_state_set(true);
 			state_set(gui.state);
 		}

@@ -24,7 +24,6 @@
 			android:theme="@style/AppTheme.NoActionBar">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
-
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
 
@@ -41,6 +40,11 @@
 				<data android:mimeType="audio/webm" />
 				<data android:mimeType="audio/x-caf" />
 				<data android:mimeType="audio/x-mpegurl" />
+			</intent-filter>
+
+			<intent-filter>
+				<action android:name="android.provider.MediaStore.RECORD_SOUND" />
+				<category android:name="android.intent.category.DEFAULT" />
 			</intent-filter>
 		</activity>
 
@@ -91,5 +95,15 @@
 		<service android:name=".RecSvc"
 			android:enabled="true">
 		</service>
+
+		<provider
+			android:name="com.github.stsaz.phiola.PhiFileProvider"
+			android:authorities="com.github.stsaz.phiola.fileprovider"
+			android:exported="false"
+			android:grantUriPermissions="true">
+			<meta-data
+				android:name="android.support.FILE_PROVIDER_PATHS"
+				android:resource="@xml/paths" />
+		</provider>
 	</application>
 </manifest>
