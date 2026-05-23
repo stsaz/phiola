@@ -6,8 +6,7 @@
 	* Install dependencies
 	* Build
 * Build Parameters
-* Step 3. Security Check
-* Step 4. Use
+* Use
 
 
 Supported targets:
@@ -86,7 +85,6 @@ cd phiola
 		libasound2-dev libpulse-dev libjack-dev \
 		libdbus-1-dev \
 		libgtk-3-dev \
-		libssl-dev \
 		zstd unzip cmake patch dos2unix curl
 	```
 
@@ -98,7 +96,6 @@ cd phiola
 		alsa-lib-devel pulseaudio-libs-devel pipewire-jack-audio-connection-kit-devel \
 		dbus-devel \
 		gtk3-devel \
-		openssl-devel \
 		zstd unzip cmake patch dos2unix curl
 	```
 
@@ -131,8 +128,6 @@ cd phiola
 * Build on Windows:
 
 	```sh
-	mingw32-make -j8 openssl \
-		-C ../netmill/3pt
 	mingw32-make -j8
 	```
 
@@ -152,18 +147,9 @@ cd phiola
 | `CFLAGS_USER=...` | Additional C/C++ compiler flags |
 | `PHI_CODECS=0`    | Disable all codecs |
 | `PHI_HTTP_SSL=0`  | Disable SSL |
+| `PHI_HTTP_SRV=0`  | Disable ICY server |
 
 
-## Step 3. Security Check
-
-For security, ensure that the original 3rd party libs were used:
-
-```sh
-make hash-check \
-	-C ../netmill/3pt
-```
-
-
-## Step 4. Use
+## Use
 
 Directory `phiola-2` is the application directory.  Copy it anywhere you want.

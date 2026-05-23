@@ -155,6 +155,32 @@ static const phi_filter rec_guard = {
 	"rec-guard"
 };
 
+enum {
+	FMR_INPUT = 1,
+	FMR_NG = 5,
+	FMR_DAN,
+	FMR_GAIN,
+	FMR_SPLIT = 9,
+	FMR_WRITE,
+	FMR_OUTPUT,
+};
+
+static struct filter_map FF_STRUCTALIGN(64) rec_f_map[] = {
+	{ "",					&rec_guard },
+	{ "",					FM_UNDEF },
+	{ "afilter.until",		FM_UNDEF },
+	{ "afilter.rtpeak",		FM_UNDEF },
+	{ "tui.rec",			FM_UNDEF },
+	{ "afilter.noise-gate",	FM_UNDEF },
+	{ "af-danorm.f",		FM_UNDEF },
+	{ "afilter.gain",		FM_UNDEF },
+	{ "afilter.auto-conv",	FM_UNDEF },
+	{ "afilter.split",		FM_UNDEF },
+	{ "format.auto-write",	FM_UNDEF },
+	{ "",					FM_UNDEF },
+	{ FM_END,				NULL }
+};
+
 static int rec_action(struct cmd_rec *r)
 {
 	struct phi_track_conf c = {
@@ -210,31 +236,32 @@ static int rec_action(struct cmd_rec *r)
 	const phi_track_if *track = x->core->track;
 	phi_track *t = track->create(&c);
 
-	const char *input = "core.auto-rec";
-	if (r->audio) {
+	struct filter_map map[FF_COUNT(rec_f_map)];
+	ffmem_copy(map, rec_f_map, sizeof(rec_f_map));
+
+	if (r->audio)
 		r->audio_module = ffsz_allocfmt("ad-%s.rec%Z", r->audio);
-		input = r->audio_module;
+	map[FMR_INPUT].name = (r->audio_module) ? r->audio_module : "core.auto-rec";
+
+	if (!r->noise_gate)
+		map[FMR_NG].iface = NULL;
+
+	if (!r->danorm)
+		map[FMR_DAN].iface = NULL;
+
+	if (!r->gain)
+		map[FMR_GAIN].iface = NULL;
+
+	if (!r->split) {
+		map[FMR_SPLIT].iface = NULL;
+	} else {
+		map[FMR_WRITE].iface = NULL;
+		map[FMR_OUTPUT].iface = NULL;
 	}
 
-	const char *output = (x->stdout_busy) ? "core.stdout" : "core.file-write";
+	map[FMR_OUTPUT].name = (x->stdout_busy) ? "core.stdout" : "core.file-write";
 
-	if (!track->filter(t, &rec_guard, 0)
-		|| !track->filter(t, x->core->mod(input), 0)
-		|| !track->filter(t, x->core->mod("afilter.until"), 0)
-		|| !track->filter(t, x->core->mod("afilter.rtpeak"), 0)
-		|| !track->filter(t, x->core->mod("tui.rec"), 0)
-		|| (r->noise_gate
-			&& !track->filter(t, x->core->mod("afilter.noise-gate"), 0))
-		|| (r->danorm
-			&& !track->filter(t, x->core->mod("af-danorm.f"), 0))
-		|| !track->filter(t, x->core->mod("afilter.gain"), 0)
-		|| !track->filter(t, x->core->mod("afilter.auto-conv"), 0)
-		|| (r->split
-			&& !track->filter(t, x->core->mod("afilter.split"), 0))
-		|| (!r->split
-			&& (!track->filter(t, x->core->mod("format.auto-write"), 0)
-				|| !track->filter(t, x->core->mod(output), 0)))
-		) {
+	if (trk_add_filters(x->core, t, map, rec_f_map)) {
 		track->close(t);
 		return -1;
 	}

@@ -3,6 +3,8 @@
 
 package com.github.stsaz.phiola;
 
+import android.content.Context;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,15 +12,15 @@ import java.util.Collections;
 /** Music Library is just a quicker way to access the set of .m3u8 playlist files in a user-defined directory. */
 class MLib {
 	private static final String TAG = "phiola.MLib";
-	private final MainActivity main;
+	private final Context ctx;
 	private final Core core;
 	private String[] display_rows, file_names, display_rows_full, file_names_full;
 	private String lib_dir_cached, cur_filter;
 	private long mtime_cached;
 
-	MLib(Core core, MainActivity main) {
+	MLib(Core core, Context ctx) {
 		this.core = core;
-		this.main = main;
+		this.ctx = ctx;
 	}
 
 	private boolean cached(String[] dirs) {
@@ -43,7 +45,7 @@ class MLib {
 
 	void fill() {
 		if (core.setts.library_dir.isEmpty()) {
-			GUI.msg_show(main, "Please set 'Music Library Directories' in Settings");
+			GUI.msg_show(ctx, "Please set 'Music Library Directories' in Settings");
 			return;
 		}
 
@@ -105,15 +107,5 @@ class MLib {
 		return this.display_rows[pos];
 	}
 
-	void on_click(int pos) {
-		if (this.file_names[pos] == null)
-			return;
-		main.library_event(this.file_names[pos], 0);
-	}
-
-	void on_longclick(int pos) {
-		if (this.file_names[pos] == null)
-			return;
-		main.library_event(this.file_names[pos], 1);
-	}
+	String file_name(int pos) { return this.file_names[pos]; }
 }

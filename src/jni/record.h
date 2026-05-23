@@ -22,7 +22,7 @@ static void rectrk_close(void *ctx, phi_track *t)
 
 	const char *fn = (t->output.name) ? t->output.name : t->conf.ofile.name;
 	jstring joname = jni_js_sz(fn);
-	jni_call_void(x->Callbacks.obj, x->Callbacks.recording, t->error, joname);
+	jni_call_void(x->Callbacks.obj, x->Callbacks.recording, 0, t->error, joname);
 
 end:
 	ffmem_free(rx);
@@ -34,7 +34,7 @@ static int rectrk_process(void *ctx, phi_track *t)
 	return PHI_DONE;
 }
 
-static const phi_filter phi_android_guard = {
+static const phi_filter rec_guard = {
 	NULL, rectrk_close, rectrk_process,
 	"rec-guard"
 };
@@ -54,7 +54,7 @@ static int rec_ctl_process(void *ctx, phi_track *t)
 	return PHI_DATA;
 }
 
-static const phi_filter phi_android_rec_ctl = {
+static const phi_filter rec_ctl = {
 	NULL, NULL, rec_ctl_process,
 	"rec-ctl"
 };
@@ -94,6 +94,23 @@ static struct jni_cmap RecordParams_map[] = {
 };
 #undef _I
 #undef _S
+
+enum {
+	FMR_DAN = 4,
+};
+
+static struct filter_map FF_STRUCTALIGN(64) rec_f_map[] = {
+	{ "",					&rec_guard },
+	{ "core.auto-rec",		FM_UNDEF },
+	{ "afilter.until",		FM_UNDEF },
+	{ "",					&rec_ctl },
+	{ "af-danorm.f",		FM_UNDEF },
+	{ "afilter.gain",		FM_UNDEF },
+	{ "afilter.auto-conv",	FM_UNDEF },
+	{ "format.auto-write",	FM_UNDEF },
+	{ "core.file-write",	FM_UNDEF },
+	{ FM_END,				NULL }
+};
 
 JNIEXPORT jlong JNICALL
 Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring joname, jobject jconf)
@@ -166,16 +183,13 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 	const phi_track_if *track = x->core->track;
 	phi_track *t = track->create(&c);
 
-	if (!track->filter(t, &phi_android_guard, 0)
-		|| !track->filter(t, x->core->mod("core.auto-rec"), 0)
-		|| !track->filter(t, x->core->mod("afilter.until"), 0)
-		|| !track->filter(t, &phi_android_rec_ctl, 0)
-		|| ((rp.flags & RECF_DANORM)
-			&& !track->filter(t, x->core->mod("af-danorm.f"), 0))
-		|| !track->filter(t, x->core->mod("afilter.gain"), 0)
-		|| !track->filter(t, x->core->mod("afilter.auto-conv"), 0)
-		|| !track->filter(t, x->core->mod("format.auto-write"), 0)
-		|| !track->filter(t, x->core->mod("core.file-write"), 0))
+	struct filter_map map[FF_COUNT(rec_f_map)];
+	ffmem_copy(map, rec_f_map, sizeof(rec_f_map));
+
+	if (!(rp.flags & RECF_DANORM))
+		map[FMR_DAN].iface = NULL;
+
+	if (trk_add_filters(x->core, t, map, rec_f_map))
 		goto end;
 
 	struct rec_ctx *rx = ffmem_new(struct rec_ctx);

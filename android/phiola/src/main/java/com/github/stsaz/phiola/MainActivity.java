@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
 			core.dbglog(TAG, "Intent.ACTION_VIEW: %s", fn);
 			fn = Util.path_real(fn, core.storage_paths);
 			if (fn != null)
-				explorer_event(fn, Queue.ADD | ADD_PLAY);
+				explorer_event(fn, EC_ADD_PLAY);
 		}
 
 		if (ia != null && ia.equals(MediaStore.Audio.Media.RECORD_SOUND_ACTION)) {
@@ -133,14 +133,18 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+		if (!menu_main_click(item))
+			return super.onOptionsItemSelected(item);
+		return true;
+	}
+
+	private boolean menu_main_click(MenuItem item) {
 		switch (item.getItemId()) {
 		case R.id.action_settings:
-			startActivity(new Intent(this, SettingsActivity.class));
-			break;
+			startActivity(new Intent(this, SettingsActivity.class));  break;
 
 		case R.id.action_play_auto_stop:
-			play_auto_stop();
-			break;
+			play_auto_stop();  break;
 
 		case R.id.action_file_menu_show:
 			menu_file_show();  break;
@@ -152,9 +156,8 @@ public class MainActivity extends AppCompatActivity {
 			new About().show(this, core);  break;
 
 		default:
-			return super.onOptionsItemSelected(item);
+			return false;
 		}
-
 		return true;
 	}
 
@@ -368,7 +371,10 @@ public class MainActivity extends AppCompatActivity {
 			return false;
 		}
 
-		explorer_cmd(cmd, menu_explorer_index);
+		if (gui.view == GUI.V_EXPLORER)
+			explorer_cmd(cmd, menu_explorer_index);
+		else
+			library_cmd(cmd, menu_explorer_index);
 		return true;
 	}
 
@@ -563,16 +569,15 @@ public class MainActivity extends AppCompatActivity {
 					if (gui.view == GUI.V_EXPLORER)
 						explorer_cmd(EC_ADD_PLAY, i);
 					else if (gui.view == GUI.V_LIBRARY)
-						library.on_click(i);
+						library_cmd(EC_ADD_PLAY, i);
 					else
 						queue.visible_play(i);
 				}
 
 				public void on_longclick(int i) {
-					if (gui.view == GUI.V_EXPLORER)
+					if (gui.view == GUI.V_EXPLORER
+						|| gui.view == GUI.V_LIBRARY)
 						menu_explorer_show(i);
-					else if (gui.view == GUI.V_LIBRARY)
-						library.on_longclick(i);
 					else
 						menu_item_show(i);
 				}
@@ -597,29 +602,26 @@ public class MainActivity extends AppCompatActivity {
 			mode = AppCompatDelegate.MODE_NIGHT_YES;
 		AppCompatDelegate.setDefaultNightMode(mode);
 
-		if (gui.playback_marker_show) {
+		if (gui.playback_marker_show)
 			b.brec.setImageResource(R.drawable.ic_replay);
-			b.brec.setContentDescription(getString(R.string.brec_marker));
-
-		} else if (gui.record_mode == GUI.RECMODE_HIDE) {
+		else if (gui.record_mode == GUI.RECMODE_HIDE)
 			b.brec.setVisibility(View.INVISIBLE);
-
-		} else if (gui.record_mode == GUI.RECMODE_RADIO) {
+		else if (gui.record_mode == GUI.RECMODE_RADIO)
 			b.brec.setImageResource(R.drawable.outline_arrow_circle_down);
-			b.brec.setContentDescription(getString(R.string.brec_radio));
-		}
 
 		if (gui.filter_hide)
 			b.tfilter.setVisibility(View.INVISIBLE);
 
 		color_apply();
 
-		rec_state_set(gui.state_test(GUI.STATE_RECORDING));
 		if (gui.state_test(GUI.STATE_RECORDING)) {
+			rec_state_set(true);
 			if (track.is_recording_mic())
 				track.rec_mic_cb = this::rec_finished;
 			else
 				track.rec_rad_cb = this::rec_finished;
+		} else {
+			brec_description_set(false);
 		}
 		state_set(gui.state);
 	}
@@ -642,18 +644,22 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void rec_state_set(boolean active) {
-		int res = R.color.control_button;
-		int desc = R.string.brec;
-		if (active) {
-			res = R.color.recording;
-			desc = R.string.brec_stop;
-		}
-		int color = getResources().getColor(res);
+		int r_color = (!active) ? R.color.control_button : R.color.recording;
+		int color = getResources().getColor(r_color);
 		if (!active && gui.main_color >= 0)
 			color = 0xff000000 | gui.main_color;
 		b.brec.setImageTintMode(PorterDuff.Mode.SRC_IN);
 		b.brec.setImageTintList(ColorStateList.valueOf(color));
-		b.brec.setContentDescription(getString(desc));
+
+		brec_description_set(active);
+	}
+
+	private void brec_description_set(boolean active) {
+		int r_desc = (active) ? R.string.brec_stop
+			: (gui.playback_marker_show) ? R.string.brec_marker
+			: (gui.record_mode == GUI.RECMODE_RADIO) ? R.string.brec_radio
+			: R.string.brec;
+		b.brec.setContentDescription(getString(r_desc));
 	}
 
 	private void rec_finished(int code, String filename) {
@@ -678,6 +684,7 @@ public class MainActivity extends AppCompatActivity {
 		r.setData(u);
 		r.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
 		setResult(RESULT_OK, r);
+		finish();
 		core.dbglog(TAG, "setResult RESULT_OK %s", u.getPath());
 	}
 
@@ -703,14 +710,6 @@ public class MainActivity extends AppCompatActivity {
 		gui.msg_show(this, s);
 	}
 
-	private void play_pause_click() {
-		if (track.state() == Track.STATE_PLAYING) {
-			trackctl.pause();
-		} else {
-			trackctl.unpause();
-		}
-	}
-
 	private void rec_radio_start_stop() {
 		if (gui.state_test(GUI.STATE_RECORDING)) {
 			track.rec_radio_stop();
@@ -718,6 +717,14 @@ public class MainActivity extends AppCompatActivity {
 			core.rec_radio_start(this::rec_finished);
 			rec_state_set(true);
 			state_set(gui.state);
+		}
+	}
+
+	private void play_pause_click() {
+		if (track.state() == Track.STATE_PLAYING) {
+			trackctl.pause();
+		} else {
+			trackctl.unpause();
 		}
 	}
 
@@ -903,15 +910,6 @@ public class MainActivity extends AppCompatActivity {
 		queue.current_play(0);
 	}
 
-	void library_event(String fn, int flags) {
-		if (flags == 0) {
-			plist_open_new(fn);
-			return;
-		}
-
-		explorer_event(fn, Queue.ADD_RECURSE);
-	}
-
 	private static final int
 		EC_ADD_PLAY = 0,
 		EC_ADD_CUR = 1,
@@ -928,18 +926,13 @@ public class MainActivity extends AppCompatActivity {
 			return;
 		}
 
-		int flags = Queue.ADD | ADD_PLAY;
-		switch (cmd) {
-		case EC_ADD_NEW:
-			flags = Queue.ADD_RECURSE;
-			list_new(Util.path_split3(r.filename)[1]);
-			break;
+		explorer_event(r.filename, cmd);
+	}
 
-		case EC_ADD_CUR:
-			flags = Queue.ADD_RECURSE;
-		}
-
-		explorer_event(r.filename, flags);
+	private void library_cmd(int cmd, int pos) {
+		String fn = library.file_name(pos);
+		if (fn != null)
+			explorer_event(fn, cmd);
 	}
 
 	private boolean is_playlist(String ext) {
@@ -947,20 +940,29 @@ public class MainActivity extends AppCompatActivity {
 			|| ext.equalsIgnoreCase("m3u8");
 	}
 
-	private static final int ADD_PLAY = 0x80000000;
+	private void explorer_event(String fn, int cmd) {
+		int flags = Queue.ADD_RECURSE, n = -1;
+		switch (cmd) {
+		case EC_ADD_PLAY:
+			flags = Queue.ADD;
+			if (is_playlist(Util.path_split3(fn)[2])) {
+				plist_open_new(fn);
+				return;
+			}
+			n = queue.current_items();
+			break;
 
-	private void explorer_event(String fn, int flags) {
-		boolean play = ((flags & ADD_PLAY) != 0);
-		flags &= ~ADD_PLAY;
-		if (flags == Queue.ADD && is_playlist(Util.path_split3(fn)[2])) {
-			plist_open_new(fn);
-			return;
+		case EC_ADD_CUR:
+			break;
+
+		case EC_ADD_NEW:
+			list_new(Util.path_split3(fn)[1]);
 		}
 
-		int n = queue.current_items();
 		queue.current_add(fn, flags);
 		gui.msg_show(this, "Added %d items to playlist", 1);
-		if (play)
+
+		if (n >= 0)
 			queue.current_play(n);
 	}
 

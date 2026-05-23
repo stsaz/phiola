@@ -3,9 +3,9 @@
 ![](phiola-arch.svg)
 
 
-## Android
+## Android (playback path)
 
-![](phiola-arch-android.svg)
+![](phiola-arch-android-playback.svg)
 
 
 ## Playback Track
@@ -341,7 +341,7 @@ dir-read         queue                  Core       GUI                GTK
 
 ## Build
 
-Global call+include+targets map:
+Global map for subcalls (`!`), includes (`+`), targets (`>`):
 
 ```
 xbuild.sh ARGS=...
@@ -363,11 +363,11 @@ xbuild.sh ARGS=...
 						+ /ffbase/conf.mk
 					> lib...-phi.so
 				+ src/.../Makefile
-			strip-debug
-				*.debug <- *.so
-			app
-				> phiola-2
-			package
+			> strip-debug
+				> *.debug <- *.so
+			> app
+				> phiola-2/
+			> package
 				> phiola...tar.zst
 xbuild-android.sh ARGS=...
 	podman
@@ -380,7 +380,7 @@ xbuild-android.sh ARGS=...
 		! android/Makefile $ARGS
 			+ /ffbase/conf.mk
 			+ android/andk.mk
-			libs
+			> libs
 				> *.so
 					?! zstd/Makefile ... SYS=...
 						+ config.mk
@@ -395,7 +395,7 @@ xbuild-android.sh ARGS=...
 					+ src/.../Makefile
 				*.debug <- *.so
 				*.so -> lib*.so
-			apk
+			> apk
 				gradle
 ```
 
@@ -425,7 +425,7 @@ amd64
 | ffmpeg* | 5.726 |          |          | 0.461      | 0.447        |
 
 * Encoder settings: `AACENC_AFTERBURNER=1`, `AACENC_SIGNALING_MODE=1`, `AACENC_TRANSMUX=TT_MP4_RAW`
-* NL means "no limiter", i.e. `AAC_PCM_LIMITER_ENABLE=0`
+* "NL" means "no limiter", i.e. `AAC_PCM_LIMITER_ENABLE=0`
 * !!! **v203 decoder is `18%` slower than v016**
 * v203 decoder is `27%` slower than v016 with "limiter" disabled and `200%` slower than ffmpeg
 * v014 introduced "limiter" feature that slows down decoder by `18%`

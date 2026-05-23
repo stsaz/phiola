@@ -169,15 +169,6 @@ fi
 cat >build_$BUILD_TARGET.sh <<EOF
 set -xe
 
-if test "$SSL_DISABLE" != "1" ; then
-	mkdir -p ../netmill/3pt/$ODIR
-	make -j$JOBS openssl \
-	 -C ../netmill/3pt/$ODIR \
-	 -f ../Makefile \
-	 -I .. \
-	 $ARGS_OS
-fi
-
 $ENV_CPU
 mkdir -p $ODIR
 make -j$JOBS \

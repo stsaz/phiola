@@ -26,7 +26,7 @@ static const struct jni_ifmap Callbacks_map[] = {
 	{ "play_new", "(" PJT_META ")" JNI_TVOID },
 	{ "play_fin", "(" JNI_TINT ")" JNI_TVOID },
 	{ "play_update", "(" JNI_TLONG ")" JNI_TVOID },
-	{ "recording", "(" JNI_TINT JNI_TSTR ")" JNI_TVOID },
+	{ "recording", "(" JNI_TINT JNI_TINT JNI_TSTR ")" JNI_TVOID },
 	{}
 };
 

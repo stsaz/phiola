@@ -399,7 +399,7 @@ libsox,
 [libzstd](https://github.com/facebook/zstd),
 [libDynamicAudioNormalizer](https://github.com/lordmulder/DynamicAudioNormalizer).
 And these unmodified libraries:
-[openssl](https://www.openssl.org).
+[openssl](https://github.com/openssl/openssl).
 Many thanks to their creators for the great work!!!
 Please consider their licenses before commercial use.
 See contents of `alib3/` for more info.

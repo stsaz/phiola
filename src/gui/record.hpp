@@ -132,7 +132,7 @@ static void wrec_browse()
 	if (!(fn = ffui_dlg_save(&gg->dlg, &w->wnd, (char*)v.ptr, v.len)))
 		return;
 
-	ffstr path, name, ext;
+	ffstr path, name, ext = {};
 	ffpath_split3_str(FFSTR_Z(fn), &path, &name, &ext);
 
 	w->edir.text(path);

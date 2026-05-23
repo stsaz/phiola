@@ -34,8 +34,10 @@ class Phiola {
 		void play_fin(int status);
 		void play_update(long pos_msec);
 
-		/** code: enum PHI_E */
-		void recording(int code, String filename);
+		/**
+		mode: 0:mic; 1:radio
+		code: enum PHI_E */
+		void recording(int mode, int code, String filename);
 	}
 	native void setCallbacks(Callbacks cb);
 

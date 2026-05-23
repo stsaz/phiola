@@ -80,7 +80,7 @@ struct gui {
 	ffui_menu
 #endif
 		mfile
-		, mlist
+		, mlist_sort, mlist
 		, mplay
 		, mrecord
 		, mconvert

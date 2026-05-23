@@ -151,9 +151,9 @@ class Core extends Util {
 
 				// Main -> Track -> phiola
 				// phiola -[Callbacks]-> Core -[TQ]-> Main
-				public void recording(int code, String filename) {
-					dbglog(TAG, "Callbacks.recording() code:%d", code);
-					tq.post(() -> { rec_finished(code, filename); });
+				public void recording(int mode, int code, String filename) {
+					dbglog(TAG, "Callbacks.recording() mode:%d code:%d", mode, code);
+					tq.post(() -> { rec_finished(mode, code, filename); });
 				}
 			});
 
@@ -193,7 +193,7 @@ class Core extends Util {
 		GUI.msg_show(context, context.getString(R.string.main_rec_started));
 	}
 
-	private void rec_finished(int code, String filename) {
+	private void rec_finished(int mode, int code, String filename) {
 		gui.state_update(GUI.STATE_RECORDING | GUI.STATE_REC_PAUSED, 0);
 		GUI.msg_show(context, (code == 0) ? context.getString(R.string.main_rec_fin)
 			: String.format(context.getString(R.string.main_rec_err), errstr(code)));
@@ -201,7 +201,7 @@ class Core extends Util {
 		if (code == 0 && rec.rec_list_add)
 			qu.current_add(filename, 0);
 
-		if (track.is_recording_mic()) {
+		if (mode == 0) {
 			track.record_stop(true);
 			context.stopService(new Intent(context, RecSvc.class));
 

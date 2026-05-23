@@ -177,7 +177,7 @@ static void* gui_getctl(void *udata, const ffstr *name)
 	#define _w(w, ctls)  FFUI_LDR_CTL3_PTR(struct gui, w, ctls)
 	static const ffui_ldr_ctl top_ctls[] = {
 		_(mfile),
-		_(mlist),
+		_(mlist_sort), _(mlist),
 		_(mplay),
 		_(mrecord),
 		_(mconvert),

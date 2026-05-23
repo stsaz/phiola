@@ -535,7 +535,9 @@ extern const phi_filter phi_audiosv;
 static const void* net_iface(const char *name)
 {
 	if (ffsz_eq(name, "client")) return &phi_http;
+#ifndef PHI_HTTP_NO_SRV
 	if (ffsz_eq(name, "server")) return &phi_audiosv;
+#endif
 	return NULL;
 }
 
