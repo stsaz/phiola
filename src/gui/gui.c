@@ -9,6 +9,14 @@
 struct gui *gg;
 static void theme_apply(const char *theme);
 
+#ifdef FF_WIN
+static int theme_dark()
+{
+	return (gd->conf.theme
+		&& ffsz_matchz(gd->conf.theme, "dark"));
+}
+#endif
+
 void gui_task_ptr(void (*func)(void*), void *ptr)
 {
 	ffui_thd_post(func, ptr);
@@ -230,7 +238,7 @@ static int load_ui()
 	ffmem_copy(gg->ldr.language, core->conf.language, sizeof(gg->ldr.language));
 #ifdef FF_WIN
 	gg->ldr.hmod_resource = GetModuleHandleW(L"gui.dll");
-	gg->ldr.dark_mode = (gd->conf.theme && ffsz_eq(gd->conf.theme, "dark"));
+	gg->ldr.dark_mode = theme_dark();
 	ffui_theme_init(&gg->theme);
 	gg->ldr.theme = &gg->theme;
 #endif
@@ -285,6 +293,7 @@ int gui_dlg_load()
 
 static void theme_apply(const char *theme)
 {
+#ifdef FF_WIN
 	if (!theme) return;
 
 	dbglog("applying theme %s", theme);
@@ -306,12 +315,13 @@ end:
 	ffmem_free(fn);
 	ffvec_free(&buf);
 	ffui_ldr_fin(&ldr);
+#endif
 }
 
-void theme_switch(uint i)
+void theme_switch(const char *name)
 {
-	if (i) {
-		gd->conf.theme = ffsz_dup("dark");
+	if (!ffsz_eq(name, "default")) {
+		gd->conf.theme = ffsz_dup(name);
 		theme_apply(gd->conf.theme);
 	} else {
 		ffmem_free(gd->conf.theme);
@@ -354,8 +364,7 @@ int FFTHREAD_PROCCALL gui_worker(void *param)
 	ffui_init();
 
 #ifdef FF_WIN
-	if (gd->conf.theme
-		&& ffsz_eq(gd->conf.theme, "dark"))
+	if (theme_dark())
 		ffui_app_theme(~0U);
 #endif
 

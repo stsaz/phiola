@@ -3,10 +3,10 @@
 
 struct gui_wsettings {
 	ffui_windowxx	wnd;
-	ffui_label		ldev, lseek_by, lleap_by, lauto_skip, lauto_skip_tail;
+	ffui_label		ltheme, ldev, lseek_by, lleap_by, lauto_skip, lauto_skip_tail;
 	ffui_editxx		eseek_by, eleap_by, eauto_skip, eauto_skip_tail;
-	ffui_checkboxxx	cbdarktheme, cbrg_norm, cbauto_norm, cbeqlz;
-	ffui_comboboxxx	cbdev;
+	ffui_checkboxxx	cbrg_norm, cbauto_norm, cbeqlz;
+	ffui_comboboxxx	cbdarktheme, cbdev;
 	char*	wnd_pos;
 	uint	conf_odev;
 	uint	initialized :1;
@@ -15,7 +15,7 @@ struct gui_wsettings {
 #define _(m)  FFUI_LDR_CTL(gui_wsettings, m)
 FF_EXTERN const ffui_ldr_ctl wsettings_ctls[] = {
 	_(wnd),
-	_(cbdarktheme),
+	_(ltheme),		_(cbdarktheme),
 	_(ldev),		_(cbdev),
 	_(lseek_by),	_(eseek_by),
 	_(lleap_by),	_(eleap_by),
@@ -34,6 +34,12 @@ const ffarg wsettings_args[] = {
 	{}
 };
 #undef O
+
+static const char* const themes[] = {
+	"default",
+	"dark",
+	"dark-purple",
+};
 
 static const char* auto_skip_write(xxstr_buf<100> &s, int val)
 {
@@ -57,8 +63,9 @@ static void wsettings_ui_to_conf()
 {
 	gui_wsettings *w = gg->wsettings;
 
-	if (w->cbdarktheme.h)
-		theme_switch(w->cbdarktheme.checked());
+#ifdef FF_WIN
+	theme_switch(themes[w->cbdarktheme.get()]);
+#endif
 
 	gd->conf.auto_norm = w->cbauto_norm.checked();
 	gd->conf.rg_norm = w->cbrg_norm.checked() && !gd->conf.auto_norm;
@@ -76,12 +83,25 @@ static void wsettings_ui_to_conf()
 	gd->conf.auto_skip_tail_sec_pct = auto_skip_read(xxvec(w->eauto_skip_tail.text()).str());
 }
 
+static void wsettings_theme(gui_wsettings *w)
+{
+#ifdef FF_WIN
+	for (uint i = 0;  i < FF_COUNT(themes);  i++) {
+		w->cbdarktheme.add(themes[i]);
+		if (gd->conf.theme
+			&& ffsz_eq(gd->conf.theme, themes[i]))
+			w->cbdarktheme.set(i);
+	}
+	if (!gd->conf.theme)
+		w->cbdarktheme.set(0);
+#endif
+}
+
 static void wsettings_ui_from_conf()
 {
 	gui_wsettings *w = gg->wsettings;
 
-	if (w->cbdarktheme.h)
-		w->cbdarktheme.check(!!gd->conf.theme);
+	wsettings_theme(w);
 
 	w->cbrg_norm.check(!!gd->conf.rg_norm);
 	w->cbauto_norm.check(!!gd->conf.auto_norm);

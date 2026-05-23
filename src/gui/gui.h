@@ -129,7 +129,7 @@ static inline void conf_wnd_pos_write(ffconfw *cw, const char *name, ffui_window
 	ffui_wnd_placement(w, &pos);
 	ffconfw_addf(cw, "%s \"%d %d %u %u\"", name, pos.x, pos.y, pos.cx, pos.cy);
 }
-FF_EXTERN void theme_switch(uint i);
+FF_EXTERN void theme_switch(const char *name);
 FF_EXTERN void gui_dragdrop(ffstr data);
 FF_EXTERN void gui_quit();
 FF_EXTERN int gui_dlg_load();
