@@ -231,6 +231,8 @@ static int load_ui()
 #ifdef FF_WIN
 	gg->ldr.hmod_resource = GetModuleHandleW(L"gui.dll");
 	gg->ldr.dark_mode = (gd->conf.theme && ffsz_eq(gd->conf.theme, "dark"));
+	ffui_theme_init(&gg->theme);
+	gg->ldr.theme = &gg->theme;
 #endif
 
 	fftime t1;
@@ -350,6 +352,13 @@ extern phi_log_ctl gui_log_ctl;
 int FFTHREAD_PROCCALL gui_worker(void *param)
 {
 	ffui_init();
+
+#ifdef FF_WIN
+	if (gd->conf.theme
+		&& ffsz_eq(gd->conf.theme, "dark"))
+		ffui_app_theme(~0U);
+#endif
+
 	if (load_ui())
 		goto end;
 	if (gui_log_ctl)
