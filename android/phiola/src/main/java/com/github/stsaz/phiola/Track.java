@@ -167,6 +167,13 @@ class Track {
 		return 0;
 	}
 
+	Phiola.RecInfo rec_info() {
+		if (trec.phi_trk == 0)
+			return new Phiola.RecInfo(); // recording track is being stopped
+
+		return core.phiola.recInfo(trec.phi_trk);
+	}
+
 	RecCallback rec_rad_cb;
 	void rec_radio(RecCallback cb) {
 		rec_rad_cb = cb;

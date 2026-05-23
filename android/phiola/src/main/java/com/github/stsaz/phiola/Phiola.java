@@ -140,6 +140,12 @@ class Phiola {
 		RECL_RESUME = 3;
 	native String recCtrl(long trk, int cmd);
 
+	static class RecInfo {
+		int sec;
+		double cur_db, max_db;
+	}
+	native RecInfo recInfo(long trk);
+
 	// TAGS EDIT
 
 	static final int

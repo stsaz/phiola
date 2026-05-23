@@ -4,18 +4,22 @@
 package com.github.stsaz.phiola;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.res.ColorStateList;
+import android.graphics.drawable.Drawable;
 import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.PopupMenu;
 import android.widget.SeekBar;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -151,6 +155,9 @@ public class MainActivity extends AppCompatActivity {
 
 		case R.id.action_list_menu_show:
 			menu_list_show();  break;
+
+		case R.id.action_rec_info_show:
+			rec_info_show();  break;
 
 		case R.id.action_about:
 			new About().show(this, core);  break;
@@ -718,6 +725,48 @@ public class MainActivity extends AppCompatActivity {
 			rec_state_set(true);
 			state_set(gui.state);
 		}
+	}
+
+	private void rec_info_show() {
+		if (!track.is_recording_mic()) {
+			GUI.msg_show(this, "Not recording currently");
+			return;
+		}
+
+		View v = LayoutInflater.from(this).inflate(R.layout.rec_info, null);
+		TextView lInfo = v.findViewById(R.id.lInfo);
+		rec_info_update(lInfo);
+		Core.CoreTimer tmr = core.timer(1000, () -> {
+				rec_info_update(lInfo);
+			});
+
+		Drawable d = getResources().getDrawable(R.drawable.ic_rec, getTheme());
+		int color = getResources().getColor(R.color.control_button);
+		if (gui.main_color >= 0)
+			color = 0xff000000 | gui.main_color;
+		d.setTintMode(PorterDuff.Mode.SRC_IN);
+		d.setTintList(ColorStateList.valueOf(color));
+
+		new AlertDialog.Builder(this)
+			.setTitle("Recording")
+			.setView(v)
+			.setIcon(d)
+			.setNegativeButton("Close", null)
+			.setOnDismissListener((dialog) -> {
+					core.timer_stop(tmr);
+				})
+			.show();
+	}
+
+	private void rec_info_update(TextView l) {
+		if (!track.is_recording_mic())
+			return;
+
+		Phiola.RecInfo ri = track.rec_info();
+		l.setText(String.format("%d:%02d\n"
+			+ "%.2fdB / %.2fdB"
+			, ri.sec / 60, ri.sec % 60
+			, ri.cur_db, ri.max_db));
 	}
 
 	private void play_pause_click() {

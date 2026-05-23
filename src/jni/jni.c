@@ -12,6 +12,7 @@
 #define PJC_PHIOLA  "com/github/stsaz/phiola/Phiola"
 #define PJC_META  "com/github/stsaz/phiola/Phiola$Meta"
 #define PJT_META  "Lcom/github/stsaz/phiola/Phiola$Meta;"
+#define PJC_RECINFO  "com/github/stsaz/phiola/Phiola$RecInfo"
 #define PJC_UN_FILES  "com/github/stsaz/phiola/UtilNative$Files"
 
 struct Callbacks {
@@ -95,6 +96,7 @@ struct phiola_jni {
 	} play;
 
 	struct {
+		struct jni_class_t RecInfo;
 		char *device_id;
 	} rec;
 
@@ -297,6 +299,9 @@ Java_com_github_stsaz_phiola_Phiola_init(JNIEnv *env, jobject thiz, jobject jass
 
 	x->Meta.cls = jni_global_ref(jni_class(PJC_META));
 	x->Meta.init = jni_func(x->Meta.cls, "<init>", "()V");
+
+	x->rec.RecInfo.cls = jni_global_ref(jni_class(PJC_RECINFO));
+	x->rec.RecInfo.init = jni_func(x->rec.RecInfo.cls, "<init>", "()V");
 
 	x->UtilNative_Files.cls = jni_global_ref(jni_class(PJC_UN_FILES));
 	x->UtilNative_Files.init = jni_func(x->UtilNative_Files.cls, "<init>", "()V");

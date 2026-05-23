@@ -3,6 +3,8 @@
 
 struct rec_ctx {
 	uint state;
+	uint64 apos;
+	double cur_db, max_db;
 };
 
 enum {
@@ -39,6 +41,12 @@ static const phi_filter rec_guard = {
 	"rec-guard"
 };
 
+static void* rec_ctl_open(phi_track *t)
+{
+	struct rec_ctx *rx = t->udata;
+	rx->cur_db = rx->max_db = -INFINITY;
+	return (void*)1;
+}
 
 static int rec_ctl_process(void *ctx, phi_track *t)
 {
@@ -50,12 +58,19 @@ static int rec_ctl_process(void *ctx, phi_track *t)
 			return PHI_ASYNC;
 		return PHI_MORE;
 	}
+
+	double db = t->audio.maxpeak_db;
+	rx->cur_db = db;
+	if (rx->max_db < db)
+		rx->max_db = db;
+
+	rx->apos = t->audio.pos;
 	t->data_out = t->data_in;
 	return PHI_DATA;
 }
 
 static const phi_filter rec_ctl = {
-	NULL, NULL, rec_ctl_process,
+	rec_ctl_open, NULL, rec_ctl_process,
 	"rec-ctl"
 };
 
@@ -96,13 +111,14 @@ static struct jni_cmap RecordParams_map[] = {
 #undef _S
 
 enum {
-	FMR_DAN = 4,
+	FMR_DAN = 5,
 };
 
 static struct filter_map FF_STRUCTALIGN(64) rec_f_map[] = {
 	{ "",					&rec_guard },
 	{ "core.auto-rec",		FM_UNDEF },
 	{ "afilter.until",		FM_UNDEF },
+	{ "afilter.rtpeak",		FM_UNDEF },
 	{ "",					&rec_ctl },
 	{ "af-danorm.f",		FM_UNDEF },
 	{ "afilter.gain",		FM_UNDEF },
@@ -246,4 +262,40 @@ Java_com_github_stsaz_phiola_Phiola_recCtrl(JNIEnv *env, jobject thiz, jlong trk
 
 	dbglog("%s: exit", __func__);
 	return e;
+}
+
+struct RecInfo {
+	int sec;
+	double cur_db, max_db;
+};
+
+#define _I(name)  { #name, 'i', FF_OFF(struct RecInfo, name), 0 }
+#define _D(name)  { #name, 'd', FF_OFF(struct RecInfo, name), 0 }
+static struct jni_cmap RecInfo_map[] = {
+	_I(sec),
+	_D(cur_db),
+	_D(max_db),
+	{}
+};
+#undef _I
+#undef _D
+
+JNIEXPORT jobject JNICALL
+Java_com_github_stsaz_phiola_Phiola_recInfo(JNIEnv *env, jobject thiz, jlong trk)
+{
+	dbglog("%s: enter", __func__);
+	if (trk == 0) return NULL;
+	phi_track *t = (void*)trk;
+	struct rec_ctx *rx = t->udata;
+
+	struct RecInfo ri = {
+		.sec = (t->audio.format.rate) ? rx->apos / t->audio.format.rate : 0,
+		.cur_db = rx->cur_db,
+		.max_db = rx->max_db,
+	};
+	jobject jri = jni_obj_new(x->rec.RecInfo.cls, x->rec.RecInfo.init);
+	jni_obj_write(env, jri, x->rec.RecInfo.cls, RecInfo_map, &ri);
+
+	dbglog("%s: exit", __func__);
+	return jri;
 }

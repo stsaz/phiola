@@ -19,6 +19,9 @@
 	<item android:id="@+id/action_play_auto_stop"
 		android:title="@string/mplay_auto_stop" />
 
+	<item android:id="@+id/action_rec_info_show"
+		android:title="@string/mrec_info_show" />
+
 	<item
 		android:id="@+id/action_about"
 		android:title="@string/menu_about" />

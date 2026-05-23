@@ -12,6 +12,7 @@
 	<string name="main_rec_fin">Finished recording</string>
 	<string name="main_rec_err">Recording error: %s</string>
 	<string name="main_rec_started">Started recording</string>
+	<string name="mrec_info_show">Recording Status</string>
 	<string name="bplay">Play</string>
 	<string name="bpause">Pause</string>
 	<string name="bprev">Previous</string>

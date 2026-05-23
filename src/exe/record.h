@@ -241,7 +241,7 @@ static int rec_action(struct cmd_rec *r)
 
 	if (r->audio)
 		r->audio_module = ffsz_allocfmt("ad-%s.rec%Z", r->audio);
-	map[FMR_INPUT].name = (r->audio_module) ? r->audio_module : "core.auto-rec";
+	ffsz_copyz(map[FMR_INPUT].name, sizeof(map[0].name), (r->audio_module) ? r->audio_module : "core.auto-rec");
 
 	if (!r->noise_gate)
 		map[FMR_NG].iface = NULL;
@@ -259,7 +259,7 @@ static int rec_action(struct cmd_rec *r)
 		map[FMR_OUTPUT].iface = NULL;
 	}
 
-	map[FMR_OUTPUT].name = (x->stdout_busy) ? "core.stdout" : "core.file-write";
+	ffsz_copyz(map[FMR_OUTPUT].name, sizeof(map[0].name), (x->stdout_busy) ? "core.stdout" : "core.file-write");
 
 	if (trk_add_filters(x->core, t, map, rec_f_map)) {
 		track->close(t);
