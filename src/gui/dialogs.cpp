@@ -15,4 +15,5 @@
 #include <gui/convert.hpp>
 #include <gui/about.hpp>
 #include <gui/settings.hpp>
+#include <gui/equalizer.hpp>
 #include <gui/log.hpp>

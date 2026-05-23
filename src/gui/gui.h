@@ -40,6 +40,10 @@ FF_EXTERN void wsettings_show(uint show);
 FF_EXTERN void wsettings_userconf_write(ffconfw *cw);
 FF_EXTERN const struct ffarg wsettings_args[];
 
+struct gui_weqlz;
+FF_EXTERN void weqlz_init();
+FF_EXTERN void weqlz_show(uint show);
+
 struct gui_wgoto;
 FF_EXTERN void wgoto_init();
 
@@ -93,6 +97,7 @@ struct gui {
 	struct gui_winfo*		winfo;
 	struct gui_wrename*		wrename;
 	struct gui_wsettings*	wsettings;
+	struct gui_weqlz*	weqlz;
 	struct gui_wgoto*		wgoto;
 	struct gui_wlistadd*	wlistadd;
 	struct gui_wlistfilter*	wlistfilter;
@@ -103,6 +108,8 @@ struct gui {
 
 	ffui_loader	ldr;
 	ffvec		ui_conf; // Contents of 'ui.conf' file
+
+	char *eqlz;
 
 	struct memarea area;
 };
