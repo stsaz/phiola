@@ -25,6 +25,8 @@ fi
 if test -z "$JOBS" ; then
 	JOBS=$(nproc)
 fi
+NFPM_VER=2.46.3
+NFPM_SHA256SUM=d6417f99d5fa32bba7a4e007084615d3897651498c2e443118c26b9ec3b698a8
 
 ARGS=${@@Q}
 
@@ -51,6 +53,10 @@ RUN apt install -y \
  autoconf libtool libtool-bin \
  gettext \
  pkg-config
+RUN curl -L -o nfpm_${NFPM_VER}_amd64.deb https://github.com/goreleaser/nfpm/releases/download/v${NFPM_VER}/nfpm_${NFPM_VER}_amd64.deb \
+ && echo "${NFPM_SHA256SUM} *nfpm_${NFPM_VER}_amd64.deb" | sha256sum -c - \
+ && dpkg -i nfpm_${NFPM_VER}_amd64.deb
+ && rm -f nfpm_${NFPM_VER}_amd64.deb
 RUN apt install -y \
  gcc g++
 RUN apt install -y \
@@ -78,6 +84,10 @@ RUN apt install -y \
  autoconf libtool libtool-bin \
  gettext \
  pkg-config
+RUN curl -L -o nfpm_${NFPM_VER}_amd64.deb https://github.com/goreleaser/nfpm/releases/download/v${NFPM_VER}/nfpm_${NFPM_VER}_amd64.deb \
+ && echo "${NFPM_SHA256SUM} *nfpm_${NFPM_VER}_amd64.deb" | sha256sum -c - \
+ && dpkg -i nfpm_${NFPM_VER}_amd64.deb
+ && rm -f nfpm_${NFPM_VER}_amd64.deb
 RUN apt install -y \
  gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 RUN dpkg --add-architecture arm64 && \

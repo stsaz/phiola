@@ -1,0 +1,25 @@
+name: "phiola"
+version: "__PHIOLA_VERSION__"
+platform: "linux"
+arch: "__ARCH__"
+section: "default"
+priority: "extra"
+maintainer: "Simon Zolin <stsaz@pm.me>"
+license: BSD 2-Clause
+description: |-
+  Fast audio player, recorder, converter, and streaming server.
+
+  phiola is a fast, low-overhead audio toolkit for playback, recording,
+  conversion, and streaming. Designed for a minimal CPU and memory footprint,
+  it is ideal for automation and resource-constrained environments.
+
+  It features bundled codecs and supports multiple control interfaces,
+  including CLI, TUI, and an optional GTK-based GUI.
+depends:
+  - alsa-lib
+  - pulseaudio-libs
+contents:
+  - src: opt
+    dst: /opt
+  - src: usr
+    dst: /usr

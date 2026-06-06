@@ -96,7 +96,8 @@ else
 	$(CP) $(PHIOLA)/src/gui/res/lang_*.conf \
 		$(PHIOLA)/res/phiola.svg \
 		$(PHIOLA)/src/gui/res/*.png \
-		$(PHIOLA)/src/gui/res/phiola.desktop \
 		$(APP_DIR)/mod/gui/
+	$(CP) $(PHIOLA)/src/gui/res/phiola-port.desktop \
+		$(APP_DIR)/mod/gui/phiola.desktop
 endif
 	chmod 644 $(APP_DIR)/mod/gui/*
