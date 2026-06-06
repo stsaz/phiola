@@ -126,6 +126,13 @@ endif
 
 PKG_VER := test
 PKG_ARCH := $(CPU)
+ifeq "$(OS)" "linux"
+ifeq "$(CPU)" "amd64"
+	PKG_ARCH := x86_64
+else
+	PKG_ARCH := aarch64
+endif
+endif
 PKG_PACKER := tar -c --owner=0 --group=0 --numeric-owner -v --zstd -f
 PKG_EXT := tar.zst
 ifeq "$(OS)" "windows"

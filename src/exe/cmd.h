@@ -154,7 +154,8 @@ err:
 
 static int cmd_input(ffvec *input, ffstr s)
 {
-	if (s.len && s.ptr[0] == '-')
+	if (s.len && s.ptr[0] == '-'
+		&& !(x->cmd.flags & FFARG_F_DASHDASH))
 		return _ffargs_err(&x->cmd, 1, "unknown option '%S'. Use '-h' for usage info.", &s);
 
 	if (ffstr_eqz(&s, "@names"))

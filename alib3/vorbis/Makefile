@@ -4,7 +4,7 @@ include ../config.mk
 
 VER := 1.3.7
 URL := http://downloads.xiph.org/releases/vorbis/libvorbis-$(VER).tar.xz
-MD5SUM := 50902641d358135f06a8392e61c9ac77
+SHA256SUM := b33cc4934322bcbf6efcbacf49e3ca01aadbea4114ec9589d1b1e9d20f72954b
 PKG := $(ALIB3)/vorbis/$(notdir $(URL))
 DIR := libvorbis-$(VER)
 
@@ -17,7 +17,7 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
-	echo "$(MD5SUM) *$(PKG)" | md5sum -c -
+	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
 	$(UNTAR_XZ) $(PKG)
 	cat $(ALIB3)/vorbis/*.patch | patch -d $(DIR) -p1
 

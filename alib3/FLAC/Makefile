@@ -4,7 +4,7 @@ include ../config.mk
 
 VER := 1.5.0
 URL := https://github.com/xiph/flac/archive/refs/tags/$(VER).zip
-MD5SUM := 49560e2be82d559c6ac0751fe51e43bf
+SHA256SUM := dc14b44202860c4eea88ee96dcbab17f31d25d906aab9f40784a00fcd40501cf
 PKG := $(ALIB3)/FLAC/$(notdir $(URL))
 DIR := flac-$(VER)
 LIB := libFLAC-phi.$(SO)
@@ -20,7 +20,7 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
-	echo "$(MD5SUM) *$(PKG)" | md5sum -c -
+	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
 	$(UNZIP) $(PKG)
 	touch $@
 

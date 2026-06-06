@@ -132,7 +132,7 @@ struct phi_core {
 	const struct phi_track_if* track; // track manager interface
 	const struct phi_meta_if* metaif;
 
-	/**
+	/** Get current time.
 	flags: enum PHI_CORE_TIME */
 	fftime (*time)(ffdatetime *dt, uint flags);
 
@@ -141,12 +141,17 @@ struct phi_core {
 	name: "module.interface" */
 	const void* (*mod)(const char *name);
 
-	/**
+	/** Send a signal to the core.
 	signal: enum PHI_CORE_SIG */
 	void (*sig)(uint signal);
 
+	/** Allocate a kevent object for a worker. */
 	phi_kevent* (*kev_alloc)(uint worker);
+
+	/** Free a kevent object. */
 	void (*kev_free)(uint worker, phi_kevent *kev);
+
+	/** Attach a file descriptor to the kernel queue for a worker. */
 	int (*kq_attach)(uint worker, phi_kevent *kev, fffd fd, uint flags);
 
 	/** Start/stop a oneshot/periodic timer.
@@ -183,7 +188,10 @@ struct phi_core {
 	void (*worker_release)(uint worker);
 };
 
+/** Create the core object (singleton). */
 FF_EXTERN phi_core* phi_core_create(struct phi_core_conf *conf);
+
+/** Destroy the core object and all its resources. */
 FF_EXTERN void phi_core_destroy();
 
 /** Run until stopped with core->sig(PHI_CORE_STOP) */
@@ -383,38 +391,52 @@ struct phi_track_conf {
 	uint	until_type :2; // enum PHI_UN
 };
 
+/** Flags for `phi_track_if.filter()` to specify filter position. */
 enum PHI_TF {
+	/** Insert the filter to the chain after the current filter. */
 	PHI_TF_NEXT,
+
+	/** Insert the filter to the chain before the current filter. */
 	PHI_TF_PREV,
 };
 
+/** Commands for `phi_track_if.cmd()`. */
 enum PHI_TRACK_CMD {
-	PHI_TRACK_STOP_ALL = 1,
-	PHI_TRACK_CUR_FILTER_NAME, // Get current filter name
+	PHI_TRACK_STOP_ALL = 1,		// Stop all tracks
+	PHI_TRACK_CUR_FILTER_NAME,	// Get the name of the current filter being processed
 };
 
 typedef struct phi_track_if phi_track_if;
 struct phi_track_if {
-	/** Create default configuration */
+	/** Create default configuration. */
 	int (*conf)(struct phi_track_conf *conf);
 
+	/** Create a new track. */
 	phi_track* (*create)(struct phi_track_conf *conf);
 
-	/** Close track (due to an error) before start() is called */
+	/** Close track (due to an error) before start() is called. */
 	void (*close)(phi_track *t);
 
-	/** Add filter to the processing chain
+	/** Add filter to the processing chain.
 	flags: enum PHI_TF */
 	int (*filter)(phi_track *t, const phi_filter *f, uint flags);
 
+	/** Start the track. */
 	void (*start)(phi_track *t);
+
+	/** Stop the track. */
 	void (*stop)(phi_track *t);
+
+	/** Wake up the track. */
 	void (*wake)(phi_track *t);
 
+	/** Allocate memory associated with the track. */
 	void* (*memalloc)(phi_track *t, uint n);
+
+	/** Free memory allocated by memalloc(). */
 	void (*memfree)(phi_track *t, void *ptr);
 
-	/**
+	/** Send a command to the track.
 	cmd: enum PHI_TRACK_CMD */
 	ffssize (*cmd)(phi_track *t, uint cmd, ...);
 };
@@ -434,24 +456,25 @@ enum PHI_META_SET {
 typedef struct phi_meta_if phi_meta_if;
 struct phi_meta_if {
 
-	/** Set meta data.
+	/** Set metadata.
 	flags: enum PHI_META_SET */
 	void (*set)(phi_meta *meta, ffstr name, ffstr val, uint flags);
 
-	/**
+	/** Copy metadata array.
 	flags: enum PHI_META_SET */
 	void (*copy)(phi_meta *dst, const phi_meta *src, uint flags);
 
-	/**
+	/** Find a metadata entry by name.
 	Return 0 on success */
 	int (*find)(const phi_meta *meta, ffstr name, ffstr *val, uint flags);
 
-	/**
+	/** Iterate over all metadata entries.
 	idx: must be initialized to 0
 	flags: enum PHI_META_LIST
 	Return 0 on complete */
 	int (*list)(const phi_meta *meta, uint *idx, ffstr *name, ffstr *val, uint flags);
 
+	/** Free metadata. */
 	void (*destroy)(phi_meta *meta);
 };
 
@@ -507,27 +530,31 @@ struct phi_queue_entry {
 #define PHI_Q_PLAY_NEXT  ((void*)1)
 #define PHI_Q_PLAY_PREVIOUS  ((void*)-1)
 
+/** Sort modes for `sort()`. */
 enum PHI_Q_SORT {
-	PHI_Q_SORT_FILENAME,
-	PHI_Q_SORT_FILESIZE,
-	PHI_Q_SORT_FILEDATE,
-	PHI_Q_SORT_RANDOM,
-	PHI_Q_SORT_TAG_ARTIST,
-	PHI_Q_SORT_TAG_DATE,
+	PHI_Q_SORT_FILENAME,		// Sort by filename
+	PHI_Q_SORT_FILESIZE,		// Sort by file size
+	PHI_Q_SORT_FILEDATE,		// Sort by file modification date
+	PHI_Q_SORT_RANDOM,		// Shuffle entries randomly
+	PHI_Q_SORT_TAG_ARTIST,	// Sort by artist tag
+	PHI_Q_SORT_TAG_DATE,		// Sort by date tag
 };
 
+/** Flags for `remove_multi()`. */
 enum PHI_Q_REMOVE {
-	PHI_Q_RM_NONEXIST = 1,
-	PHI_Q_RM_NONUNIQ = 2, // remove all duplicate rows
+	PHI_Q_RM_NONEXIST = 1,	// Remove entries whose files no longer exist on disk
+	PHI_Q_RM_NONUNIQ = 2,	// Remove all duplicate entries (by URL)
 };
 
+/** Filter match types for `filter()`. */
 enum PHI_QUEUE_FILTER {
-	PHI_QF_FILENAME = 1,
-	PHI_QF_META = 2,
+	PHI_QF_FILENAME = 1,		// Match entries by filename/URL
+	PHI_QF_META = 2,			// Match entries by metadata tag values
 };
 
+/** Flags for `rename()`. */
 enum PHI_Q_RENAME {
-	PHI_QRN_ACQUIRE = 1,
+	PHI_QRN_ACQUIRE = 1,		// Transfer ownership of `new_url` to the 'queue' module
 };
 
 typedef struct phi_queue* phi_queue_id;
@@ -546,34 +573,50 @@ struct phi_queue_if {
 	*/
 	void (*on_change)(void (*cb)(phi_queue_id q, uint flags, uint pos));
 
+	/** Create a new queue. */
 	phi_queue_id (*create)(struct phi_queue_conf *conf);
+
+	/** Destroy a queue. */
 	void (*destroy)(phi_queue_id q);
+
+	/** Select a queue by index. */
 	phi_queue_id (*select)(uint pos);
+
+	/** Get queue configuration. */
 	struct phi_queue_conf* (*conf)(phi_queue_id q);
+
+	/** Select a queue by ID. */
 	void (*qselect)(phi_queue_id q);
 
 	/** Move list to a new position. */
 	void (*move)(uint from, uint to);
 
+	/** Add an item. */
 	int (*add)(phi_queue_id q, struct phi_queue_entry *qe);
+
+	/** Get the number of rows. */
 	int (*count)(phi_queue_id q);
 
 	/** Create a new virtual queue with the items matching a filter
 	flags: enum PHI_QUEUE_FILTER */
 	phi_queue_id (*filter)(phi_queue_id q, ffstr filter, uint flags);
 
-	/** e: queue track pointer or PHI_Q_PLAY_* value */
+	/** Run the queue starting at the specified item.
+	e: queue track pointer or PHI_Q_PLAY_* value */
 	int (*play)(phi_queue_id q, void *e);
 
+	/** Save queue to playlist file. */
 	int (*save)(phi_queue_id q, const char *filename, void (*on_complete)(void*, phi_track*), void *param);
+
+	/** Get queue status (e.g., whether tracks are playing). */
 	int (*status)(phi_queue_id q);
 
-	/**
+	/** Sort the rows.
 	Generates on_change('u') event.
 	flags: enum PHI_Q_SORT */
 	void (*sort)(phi_queue_id q, uint flags);
 
-	/** Read meta data of all tracks.
+	/** Read metadata of all tracks.
 	Generates on_change('m') event. */
 	void (*read_meta)(phi_queue_id q);
 
@@ -593,6 +636,7 @@ struct phi_queue_if {
 	flags: enum PHI_Q_REMOVE */
 	void (*remove_multi)(phi_queue_id q, uint flags);
 
+	/** Get item at position. */
 	struct phi_queue_entry* (*at)(phi_queue_id q, uint pos);
 
 	/** Get item pointer, increase refcount.
@@ -600,6 +644,7 @@ struct phi_queue_if {
 	Each ref() must be paired with unref(). */
 	struct phi_queue_entry* (*ref)(phi_queue_id q, uint pos);
 
+	/** Get multiple items with increased refcounts. */
 	int (*ref_bulk)(phi_queue_id q, uint pos, uint n, struct phi_queue_entry **result);
 
 	/** Decrease refcount for the item obtained by ref(). */
@@ -608,8 +653,13 @@ struct phi_queue_if {
 	/** Get the queue containing this item */
 	phi_queue_id (*queue)(void *e);
 
+	/** Insert an item after the specified entry. */
 	void* (*insert)(void *e, struct phi_queue_entry *qe);
+
+	/** Insert multiple items after the specified entry. */
 	void* (*insert_bulk)(void *e, struct phi_queue_entry *qe, uint n, struct phi_queue_entry **result);
+
+	/** Get the index of an item in its queue. */
 	int (*index)(void *e);
 
 	/** Remove item.

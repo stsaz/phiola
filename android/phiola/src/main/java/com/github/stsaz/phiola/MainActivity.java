@@ -124,7 +124,6 @@ public class MainActivity extends AppCompatActivity {
 
 	public void onDestroy() {
 		core.dbglog(TAG, "onDestroy()");
-		gui.cur_activity = null;
 		trackctl.close();
 		core.close();
 		super.onDestroy();
@@ -475,6 +474,11 @@ public class MainActivity extends AppCompatActivity {
 
 		setSupportActionBar(b.toolbar);
 
+		int mode = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
+		if (gui.theme == GUI.THM_DARK)
+			mode = AppCompatDelegate.MODE_NIGHT_YES;
+		AppCompatDelegate.setDefaultNightMode(mode);
+
 		explorer = new Explorer(core, this);
 		library = new MLib(core, this);
 
@@ -589,8 +593,6 @@ public class MainActivity extends AppCompatActivity {
 						menu_item_show(i);
 				}
 			});
-
-		gui.cur_activity = this;
 	}
 
 	private void show_ui() {
@@ -603,11 +605,6 @@ public class MainActivity extends AppCompatActivity {
 				gui.view = GUI.V_LIBRARY;
 			explorer_click();
 		}
-
-		int mode = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
-		if (gui.theme == GUI.THM_DARK)
-			mode = AppCompatDelegate.MODE_NIGHT_YES;
-		AppCompatDelegate.setDefaultNightMode(mode);
 
 		if (gui.playback_marker_show)
 			b.brec.setImageResource(R.drawable.ic_replay);

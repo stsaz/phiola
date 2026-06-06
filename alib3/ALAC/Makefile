@@ -4,7 +4,7 @@ include ../config.mk
 
 VER :=
 URL := https://github.com/macosforge/alac/archive/refs/heads/master.zip
-MD5SUM := 32fd858fef53d82e1daaf3ac1b3a05ec
+SHA256SUM := a27637149bec72449f8747ef43be7334c4cd97b7d112be886f555da4bd4b63e6
 PKG := $(ALIB3)/ALAC/$(notdir $(URL))
 DIR := alac-master
 LIB := libALAC-phi.$(SO)
@@ -18,7 +18,7 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
-	echo "$(MD5SUM) *$(PKG)" | md5sum -c -
+	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
 	$(UNZIP) -n $(PKG)
 	cat $(ALIB3)/ALAC/*.patch | patch -d $(DIR) -p1
 

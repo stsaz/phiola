@@ -123,9 +123,7 @@ class PhiolaQueue {
 		int from = i, n = 16, target = 0;
 
 		if (i == cache_start_index - 1) { // scrolling up
-			from = i + 1 - n;
-			if (from < 0)
-				from = 0;
+			from = Math.max(0, i + 1 - n);
 			n = i + 1 - from;
 			target = i - from;
 		}

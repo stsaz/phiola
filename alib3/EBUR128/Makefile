@@ -4,7 +4,7 @@ include ../config.mk
 
 VER := 1.2.6
 URL := https://github.com/jiixyj/libebur128/archive/refs/tags/v$(VER).zip
-MD5SUM := 0b6a89f6a68d2213035ef27b526485f5
+SHA256SUM := edd60c1ed2ff45711ee1c372e723a1deda376ba9060c23fcc9262efddaee141b
 PKG := $(ALIB3)/EBUR128/$(notdir $(URL))
 DIR := libebur128-$(VER)
 LIB := libebur128-phi.$(SO)
@@ -18,7 +18,7 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
-	echo "$(MD5SUM) *$(PKG)" | md5sum -c -
+	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
 	$(UNZIP) $(PKG)
 
 # build

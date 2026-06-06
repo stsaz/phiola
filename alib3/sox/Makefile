@@ -4,7 +4,7 @@ include ../config.mk
 
 VER := 14.4.2
 URL := https://github.com/chirlu/sox/archive/refs/tags/sox-$(VER).tar.gz
-MD5SUM := 189cd02929e4acf3b9ee45730967e7c7
+SHA256SUM := ee871d23d9eae9ea885f071cefe1f31dd0b31e75bd28903d380e090db8a68b70
 PKG := $(ALIB3)/sox/sox-$(VER).tar.gz
 DIR := sox-sox-$(VER)
 LIB := libsox-phi.$(SO)
@@ -18,7 +18,7 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
-	echo "$(MD5SUM) *$(PKG)" | md5sum -c -
+	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
 	$(UNTAR_GZ) $(PKG)
 
 CONFIGURE_FLAGS := --without-libltdl

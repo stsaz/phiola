@@ -72,6 +72,7 @@
 	<string name="mitem_file_rename">Rename File...</string>
 	<string name="mitem_file_show_info">Show Tags</string>
 
+	<string name="sett_activity_label">Settings</string>
 	<string name="sett_interface">Interface</string>
 	<string name="sett_dark">Dark Theme</string>
 	<string name="sett_color">Main Color...</string>
@@ -127,6 +128,7 @@
 	<string name="lssv_lname">Playlist name:</string>
 	<string name="lssv_bsave">Save</string>
 
+	<string name="conv_activity_label">Convert Audio</string>
 	<string name="conv_in_out">Input &amp; Output</string>
 	<string name="conv_input_file">Input file:</string>
 	<string name="conv_out_dir">Output directory:</string>
@@ -158,6 +160,7 @@
 
 	<string name="conv_go">Begin Conversion</string>
 
+	<string name="tags_activity_label">File Tags</string>
 	<string name="menu_tags_write">Write Tags to File!</string>
 	<string name="menu_tags_clear">Remove All Tags</string>
 	<string name="menu_tag_add">Add Tag...</string>
@@ -169,4 +172,12 @@
 	<string name="about_log_saved">Saved logs to %s</string>
 
 	<string name="tag_edit_n_a">Editing tags for this file format is not supported</string>
+
+	<string name="err_phi_nosrc">Input file doesn\'t exist</string>
+	<string name="err_phi_dstexist">Output file already exists</string>
+	<string name="err_phi_unkifmt">Unknown input file format</string>
+	<string name="err_phi_audio_input">Input audio device problem</string>
+	<string name="err_phi_cancelled">Cancelled</string>
+	<string name="err_phi_aconv">Sample conversion</string>
+	<string name="err_phi_out_fmt">Output format is not supported</string>
 </resources>
