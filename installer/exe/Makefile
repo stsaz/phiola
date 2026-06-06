@@ -6,9 +6,11 @@ FFPACK := $(ROOT)/ffpack
 FFGUI := $(ROOT)/ffgui
 FFSYS := $(ROOT)/ffsys
 FFBASE := $(ROOT)/ffbase
-EXE := phiola-$(PHI_VERSION_STR)-windows-x64-setup.exe
 
 include $(FFBASE)/conf.mk
+FFPACK_BIN := $(FFPACK)/_windows-$(CPU)
+FFPACK_FLAGS := OS=$(OS) SYS=$(SYS) COMPILER=$(COMPILER) CPU=$(CPU)
+EXE := phiola-$(PHI_VERSION_STR)-windows-x64-setup.exe
 
 CFLAGS += -DFFBASE_MEM_ASSERT -DFFBASE_OPT_SIZE \
 	-MMD -MP \
@@ -53,23 +55,29 @@ crc32.o: $(FFPACK)/crc/crc.c
 
 CXXFLAGS_INST := $(CXXFLAGS) \
 	-DFFPACK_ZIPREAD_ZLIB -DPHI_VERSION_STR=\"$(PHI_VERSION_STR)\" \
-	-I$(PHIOLA)/installer -I$(PHIOLA)/src -I$(FFPACK)
-%.o: $(PHIOLA)/installer/%.cpp
+	-I$(PHIOLA)/installer/exe -I$(PHIOLA)/src -I$(FFPACK)
+%.o: $(PHIOLA)/installer/exe/%.cpp
 	$(CXX) $(CXXFLAGS_INST) $< -o $@
 
 installer-config.h: phiola-$(PHI_VERSION_STR)-windows-x64.zip
 	echo '#define __PACKAGE__  "phiola-$(PHI_VERSION_STR)-windows-x64.zip"' >$@
 
-installer.coff: $(PHIOLA)/installer/exe.rc \
+installer.coff: $(PHIOLA)/installer/exe/exe.rc \
 		installer-config.h \
-		$(PHIOLA)/installer/windows.ui \
+		$(PHIOLA)/installer/exe/windows.ui \
 		$(PHIOLA)/res/exe.manifest \
 		$(PHIOLA)/res/phiola.ico \
 		phiola-$(PHI_VERSION_STR)-windows-x64.zip
 	$(WINDRES) -I. -I$(PHIOLA)/res $< $@
 
-$(EXE): $(OBJ) installer.coff
-	$(LINKXX) $+ $(LINKXXFLAGS) $(FFPACK)/_windows-amd64/libz.a -o $@
+$(FFPACK_BIN)/libz.a: $(FFPACK)/zlib/Makefile | $(FFPACK_BIN)
+	$(MAKE)  -C $(FFPACK_BIN)  -f ../zlib/Makefile  -I ..  FFPACK=.. $(FFPACK_FLAGS) $@
+
+$(FFPACK_BIN):
+	$(MKDIR) $@
+
+$(EXE): $(OBJ) installer.coff | $(FFPACK_BIN)/libz.a
+	$(LINKXX) $+ $(LINKXXFLAGS) $(FFPACK_BIN)/libz.a -o $@
 
 strip-debug: $(addsuffix .debug,$(EXE))
 %.debug: %

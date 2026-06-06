@@ -58,6 +58,8 @@ struct installer {
 		ffui_image		ico;
 	} wmain;
 
+	struct dark_theme theme;
+
 	HGLOBAL	hpkg;
 	ffstr	pkg;
 	uint	done;
@@ -219,13 +221,21 @@ struct installer {
 		ffui_ldr_init(&ldr, gui_ctl_find, gui_cmd_find, this);
 		ldr.hmod_resource = GetModuleHandleW(NULL);
 
+		if (!dark_theme_init(&theme, 0)
+			&& DARK_THEME_DARK == dark_theme_ctl(&theme, DARK_THEME_QUERY, 0)) {
+			dark_theme_colors(&theme, 0xbb88ff, 0x222222);
+			dark_theme_ctl(&theme, DARK_THEME_APP, 0);
+			ldr.dark_theme = &theme;
+			ffui_theme = &theme;
+		}
+
 		HGLOBAL hres;
 		ffstr ui;
 		if (!(hres = ffui_res_load(ldr.hmod_resource, RES_UI, RT_RCDATA, &ui)))
 			return -1;
 
 #ifdef FF_DEBUG
-		if (ffui_ldr_loadfile(&ldr, "../installer/windows.ui")) {
+		if (ffui_ldr_loadfile(&ldr, "../installer/exe/windows.ui")) {
 			fflog("parsing ui: %s", ffui_ldr_errstr(&ldr));
 			return -1;
 		}

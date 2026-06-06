@@ -142,9 +142,12 @@ $(PKG_DEBUG_NAME):
 	$(PKG_PACKER) $@ *.debug
 package-debug: $(PKG_DEBUG_NAME)
 
+setup_exe:
+	$(MAKE) -f ../installer/exe/Makefile
+
 release: default
 	$(SUBMAKE) package
 	$(SUBMAKE) package-debug
 ifeq "$(WIN_INSTALLER)" "1"
-	$(MAKE) -f ../installer/Makefile
+	$(SUBMAKE) setup_exe
 endif
