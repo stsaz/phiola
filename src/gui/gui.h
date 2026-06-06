@@ -109,7 +109,8 @@ struct gui {
 	ffui_loader	ldr;
 	ffvec		ui_conf; // Contents of 'ui.conf' file
 #ifdef FF_WIN
-	ffui_theme	theme;
+	struct dark_theme dkth;
+	uint theme_dark_default :1;
 #endif
 
 	char *eqlz;

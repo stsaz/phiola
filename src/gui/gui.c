@@ -7,13 +7,16 @@
 #include <ffsys/perf.h>
 
 struct gui *gg;
-static void theme_apply(const char *theme);
 
 #ifdef FF_WIN
+static int theme_load(struct dark_theme *t, const char *theme);
 static int theme_dark()
 {
-	return (gd->conf.theme
-		&& ffsz_matchz(gd->conf.theme, "dark"));
+	gg->theme_dark_default = (!gd->conf.theme
+		&& DARK_THEME_DARK == dark_theme_ctl(&gg->dkth, DARK_THEME_QUERY, 0));
+	return (gg->theme_dark_default
+		|| (gd->conf.theme
+			&& ffsz_matchz(gd->conf.theme, "dark")));
 }
 #endif
 
@@ -238,9 +241,11 @@ static int load_ui()
 	ffmem_copy(gg->ldr.language, core->conf.language, sizeof(gg->ldr.language));
 #ifdef FF_WIN
 	gg->ldr.hmod_resource = GetModuleHandleW(L"gui.dll");
-	gg->ldr.dark_mode = theme_dark();
-	ffui_theme_init(&gg->theme);
-	gg->ldr.theme = &gg->theme;
+	if (!theme_load(&gg->dkth, (!gg->theme_dark_default) ? gd->conf.theme : "dark-white")) {
+		gg->ldr.dark_theme = &gg->dkth;
+		gg->ldr.dark_theme_wnd_manual = 1;
+		ffui_theme = &gg->dkth;
+	}
 #endif
 
 	fftime t1;
@@ -262,7 +267,6 @@ static int load_ui()
 		goto done;
 	}
 
-	theme_apply(gd->conf.theme);
 	r = 0;
 
 	if (core->conf.log_level >= PHI_LOG_DEBUG) {
@@ -287,19 +291,17 @@ int gui_dlg_load()
 		return 1;
 	}
 	ffvec_free(&gg->ui_conf);
-	theme_apply(gd->conf.theme);
 	return 0;
 }
 
-static void theme_apply(const char *theme)
-{
 #ifdef FF_WIN
-	if (!theme) return;
 
-	dbglog("applying theme %s", theme);
+static int theme_load(struct dark_theme *t, const char *theme)
+{
+	int rc = -1;
+	if (!theme) return -1;
 
-	ffui_loader ldr;
-	ffui_ldr_init(&ldr, gui_getctl, NULL, gg);
+	dbglog("loading theme %s", theme);
 
 	char *fn = ffsz_allocfmt("%Smod/gui/theme-%s.conf"
 		, &core->conf.root, theme);
@@ -308,21 +310,64 @@ static void theme_apply(const char *theme)
 		syserrlog("file read: %s", fn);
 		goto end;
 	}
+	ffstr data = *(ffstr*)&buf;
 
-	ffui_ldr_loadconf(&ldr, *(ffstr*)&buf);
+	rc = 1;
+
+	struct ffconf c = {};
+	ffstr s, key = {};
+	while (data.len) {
+		int r = ffconf_read(&c, &data, &s);
+		switch (r) {
+		case FFCONF_MORE: break;
+
+		case FFCONF_KEY:
+			key = s;  break;
+
+		case FFCONF_VAL: {
+			uint color, rgb;
+			if (!ffstr_toint(&s, &color, FFS_INTHEX | FFS_INT32))
+				goto end;
+			rgb = color_rgb_le(color);
+
+			if (ffstr_eqz(&key, "background")) {
+				t->background = rgb;
+				t->listview_bg = rgb;
+				t->menu_bg_light = color_rgb_le(color + 0x222222);
+
+			} else if (ffstr_eqz(&key, "text")) {
+				t->text = rgb;
+				t->listview_header = rgb;
+				t->listview_text = rgb;
+
+			} else {
+				goto end;
+			}
+			break;
+		}
+
+		default:
+			goto end;
+		}
+	}
+
+	t->wbr = CreateSolidBrush(t->background);
+	rc = 0;
 
 end:
+	if (rc > 0)
+		errlog("loading theme %s", theme);
 	ffmem_free(fn);
 	ffvec_free(&buf);
-	ffui_ldr_fin(&ldr);
-#endif
+	return rc;
 }
+
+#endif
 
 void theme_switch(const char *name)
 {
 	if (!ffsz_eq(name, "default")) {
 		gd->conf.theme = ffsz_dup(name);
-		theme_apply(gd->conf.theme);
 	} else {
 		ffmem_free(gd->conf.theme);
 		gd->conf.theme = NULL;
@@ -364,8 +409,10 @@ int FFTHREAD_PROCCALL gui_worker(void *param)
 	ffui_init();
 
 #ifdef FF_WIN
-	if (theme_dark())
-		ffui_app_theme(~0U);
+	if (!dark_theme_init(&gg->dkth, 0)
+		&& theme_dark()) {
+		dark_theme_ctl(&gg->dkth, DARK_THEME_APP, 0);
+	}
 #endif
 
 	if (load_ui())

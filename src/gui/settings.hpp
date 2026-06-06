@@ -37,8 +37,8 @@ const ffarg wsettings_args[] = {
 
 static const char* const themes[] = {
 	"default",
-	"dark",
 	"dark-purple",
+	"dark-white",
 };
 
 static const char* auto_skip_write(xxstr_buf<100> &s, int val)
