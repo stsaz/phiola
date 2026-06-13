@@ -975,7 +975,7 @@ static void gui_start(void *param)
 	gd->playback_first_filter = qc->first_filter;
 	qc->first_filter = &gui_guard;
 	qc->name = ffsz_dup("Playlist 1");
-	qc_apply(qc);
+	qc_apply();
 
 	struct list_info *li = ffvec_zpushT(&gd->lists, struct list_info);
 	li->q = q;

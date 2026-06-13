@@ -11,11 +11,8 @@
 # CPU=
 IMAGE_NAME=phiola-android-builder
 CONTAINER_NAME=phiola_android_build
+JOBS=${JOBS:-$(nproc)}
 ARGS=${@@Q}
-
-if test -z "$JOBS" ; then
-	JOBS=$(nproc)
-fi
 
 set -xe
 

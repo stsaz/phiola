@@ -660,7 +660,7 @@ public class MainActivity extends AppCompatActivity {
 
 	private void brec_description_set(boolean active) {
 		int r_desc = (active) ? R.string.brec_stop
-			: (gui.playback_marker_show) ? R.string.brec_marker
+			: (gui.playback_marker_show) ? R.string.brec_bookmark
 			: (gui.record_mode == GUI.RECMODE_RADIO) ? R.string.brec_radio
 			: R.string.brec;
 		b.brec.setContentDescription(getString(r_desc));
@@ -700,18 +700,19 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void rec_pause_toggle() {
-		int r = track.record_pause_toggle();
-		String s = "Long press to start recording";
+		int r = track.record_pause_toggle(), res, st;
 		if (r >= 0) {
-			s = "Paused Recording";
-			int st = GUI.STATE_REC_PAUSED;
+			res = R.string.brec_paused;
+			st = GUI.STATE_REC_PAUSED;
 			if (r == 0) {
-				s = "Resumed Recording";
+				res = R.string.brec_resumed;
 				st = 0;
 			}
 			state(GUI.STATE_REC_PAUSED, st);
+		} else {
+			res = R.string.brec_start_longpress_hint;
 		}
-		gui.msg_show(this, s);
+		gui.msg_show(this, getString(res));
 	}
 
 	private void rec_radio_start_stop() {
@@ -868,18 +869,19 @@ public class MainActivity extends AppCompatActivity {
 
 	/** Delete file and update view */
 	private void file_del(int how, int pos, String fn) {
+		int res = R.string.fdelete_trash_moved;
 		if (!core.setts.file_del) {
 			String e = core.util.trash(core.setts.trash_dir, fn);
 			if (!e.isEmpty()) {
 				core.errlog(TAG, "Can't trash file %s: %s", fn, e);
 				return;
 			}
-			gui.msg_show(this, "Moved file to Trash directory");
 		} else {
 			if (!core.file_delete(fn))
 				return;
-			gui.msg_show(this, "Deleted file");
+			res = R.string.fdelete_deleted;
 		}
+		gui.msg_show(this, getString(res));
 
 		if (how == FD_ACTIVE)
 			queue.active_remove(pos);
@@ -899,23 +901,22 @@ public class MainActivity extends AppCompatActivity {
 		FD_ACTIVE = 1;
 
 	private void file_delete_ask(int how, int pos, String fn) {
-		String msg, btn;
+		int msg_id = R.string.fdelete_msg_trash;
+		int ybtn_id = R.string.fdelete_btn_trash;
 		if (core.setts.file_del) {
-			msg = String.format("Delete file from storage: %s ?", fn);
-			btn = "Delete";
-		} else {
-			msg = String.format("Move file to Trash: %s ?", fn);
-			btn = "Trash";
+			msg_id = R.string.fdelete_msg_delete;
+			ybtn_id = R.string.fdelete_btn_delete;
 		}
-		GUI.dlg_question(this, "File Delete", msg
-			, btn, "Cancel"
+		GUI.dlg_question(this, getString(R.string.fdelete_title)
+			, String.format(getString(msg_id), fn)
+			, getString(ybtn_id), getString(R.string.btn_cancel)
 			, (dialog, which) -> file_del(how, pos, fn));
 	}
 
 	private void file_move(String fn, int pos) {
-		gui.dlg_question(this, "Move file"
-			, String.format("Move file to %s ?", gui.cur_path)
-			, "Move File", "Do nothing"
+		gui.dlg_question(this, getString(R.string.fmove_title)
+			, String.format(getString(R.string.fmove_msg), gui.cur_path)
+			, getString(R.string.fmove_btn_confirm), getString(R.string.fmove_btn_cancel)
 			, (dialog, which) -> { file_move_confirmed(fn, pos); }
 			);
 	}
@@ -931,13 +932,13 @@ public class MainActivity extends AppCompatActivity {
 			return;
 		}
 
-		gui.msg_show(this, "Moved file to %s", gui.cur_path);
+		gui.msg_show(this, String.format(getString(R.string.fmove_done), gui.cur_path));
 	}
 
 	private void file_rename_ask(String fn, int pos) {
-		gui.dlg_edit(this, "Rename file"
-			, "Specify new name", Util.path_split3(fn)[1]
-			, "Rename", "Cancel"
+		gui.dlg_edit(this, getString(R.string.frename_title)
+			, getString(R.string.frename_msg), Util.path_split3(fn)[1]
+			, getString(R.string.frename_btn_confirm), getString(R.string.btn_cancel)
 			, (new_text) -> { file_rename_confirmed(pos, new_text); }
 			);
 	}
@@ -947,7 +948,7 @@ public class MainActivity extends AppCompatActivity {
 			core.errlog(TAG, "file rename: ERROR");
 			return;
 		}
-		gui.msg_show(this, "Renamed file");
+		gui.msg_show(this, getString(R.string.frename_done));
 	}
 
 	private void plist_open_new(String fn) {
@@ -1376,12 +1377,12 @@ public class MainActivity extends AppCompatActivity {
 	private void playback_marker_set() {
 		int sec = (int)(core.track.curpos_msec() / 1000);
 		gui.playback_marker_pos_sec = sec;
-		gui.msg_show(this, "Marker is set to %d:%02d", sec / 60, sec % 60);
+		gui.msg_show(this, getString(R.string.bbmark_set), sec / 60, sec % 60);
 	}
 
 	private void playback_marker_jump() {
 		if (gui.playback_marker_pos_sec < 0) {
-			gui.msg_show(this, "Long-press the button to set marker");
+			gui.msg_show(this, getString(R.string.bbmark_set_hint));
 			return;
 		}
 		trackctl.seek((long)gui.playback_marker_pos_sec * 1000);

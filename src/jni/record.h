@@ -115,17 +115,17 @@ enum {
 };
 
 static struct filter_map FF_STRUCTALIGN(64) rec_f_map[] = {
-	{ "",					&rec_guard },
-	{ "core.auto-rec",		FM_UNDEF },
-	{ "afilter.until",		FM_UNDEF },
-	{ "afilter.rtpeak",		FM_UNDEF },
-	{ "",					&rec_ctl },
-	{ "af-danorm.f",		FM_UNDEF },
-	{ "afilter.gain",		FM_UNDEF },
-	{ "afilter.auto-conv",	FM_UNDEF },
-	{ "format.auto-write",	FM_UNDEF },
-	{ "core.file-write",	FM_UNDEF },
-	{ FM_END,				NULL }
+	{ "",					1, &rec_guard },
+	{ "core.auto-rec",		1, NULL },
+	{ "afilter.until",		1, NULL },
+	{ "afilter.rtpeak",		1, NULL },
+	{ "",					1, &rec_ctl },
+	{ "af-danorm.f",		0, NULL },
+	{ "afilter.gain",		1, NULL },
+	{ "afilter.auto-conv",	1, NULL },
+	{ "format.auto-write",	1, NULL },
+	{ "core.file-write",	1, NULL },
+	{ FM_END,				1, NULL }
 };
 
 JNIEXPORT jlong JNICALL
@@ -202,8 +202,7 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 	struct filter_map map[FF_COUNT(rec_f_map)];
 	ffmem_copy(map, rec_f_map, sizeof(rec_f_map));
 
-	if (!(rp.flags & RECF_DANORM))
-		map[FMR_DAN].iface = NULL;
+	map[FMR_DAN].use = !!(rp.flags & RECF_DANORM);
 
 	if (trk_add_filters(x->core, t, map, rec_f_map))
 		goto end;

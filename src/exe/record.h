@@ -166,19 +166,19 @@ enum {
 };
 
 static struct filter_map FF_STRUCTALIGN(64) rec_f_map[] = {
-	{ "",					&rec_guard },
-	{ "",					FM_UNDEF },
-	{ "afilter.until",		FM_UNDEF },
-	{ "afilter.rtpeak",		FM_UNDEF },
-	{ "tui.rec",			FM_UNDEF },
-	{ "afilter.noise-gate",	FM_UNDEF },
-	{ "af-danorm.f",		FM_UNDEF },
-	{ "afilter.gain",		FM_UNDEF },
-	{ "afilter.auto-conv",	FM_UNDEF },
-	{ "afilter.split",		FM_UNDEF },
-	{ "format.auto-write",	FM_UNDEF },
-	{ "",					FM_UNDEF },
-	{ FM_END,				NULL }
+	{ "",					1, &rec_guard },
+	{ "",					1, NULL },
+	{ "afilter.until",		1, NULL },
+	{ "afilter.rtpeak",		1, NULL },
+	{ "tui.rec",			1, NULL },
+	{ "afilter.noise-gate",	0, NULL },
+	{ "af-danorm.f",		0, NULL },
+	{ "afilter.gain",		0, NULL },
+	{ "afilter.auto-conv",	1, NULL },
+	{ "afilter.split",		0, NULL },
+	{ "format.auto-write",	0, NULL },
+	{ "",					1, NULL },
+	{ FM_END,				0, NULL }
 };
 
 static int rec_action(struct cmd_rec *r)
@@ -243,21 +243,12 @@ static int rec_action(struct cmd_rec *r)
 		r->audio_module = ffsz_allocfmt("ad-%s.rec%Z", r->audio);
 	ffsz_copyz(map[FMR_INPUT].name, sizeof(map[0].name), (r->audio_module) ? r->audio_module : "core.auto-rec");
 
-	if (!r->noise_gate)
-		map[FMR_NG].iface = NULL;
-
-	if (!r->danorm)
-		map[FMR_DAN].iface = NULL;
-
-	if (!r->gain)
-		map[FMR_GAIN].iface = NULL;
-
-	if (!r->split) {
-		map[FMR_SPLIT].iface = NULL;
-	} else {
-		map[FMR_WRITE].iface = NULL;
-		map[FMR_OUTPUT].iface = NULL;
-	}
+	map[FMR_NG].use = r->noise_gate;
+	map[FMR_DAN].use = r->danorm;
+	map[FMR_GAIN].use = r->gain;
+	map[FMR_SPLIT].use = r->split;
+	map[FMR_WRITE].use = !r->split;
+	map[FMR_OUTPUT].use = !r->split;
 
 	ffsz_copyz(map[FMR_OUTPUT].name, sizeof(map[0].name), (x->stdout_busy) ? "core.stdout" : "core.file-write");
 

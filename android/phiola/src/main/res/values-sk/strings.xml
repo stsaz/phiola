@@ -6,7 +6,6 @@
 
 	<string name="brec">Nahrávať</string>
 	<string name="brec_stop">Zastaviť nahrávanie</string>
-	<string name="brec_marker">Nastaviť a prejsť na záložku</string>
 	<string name="brec_radio">Nahrávať rádio</string>
 	<string name="main_rec_fin">Nahrávanie dokončené</string>
 	<string name="main_rec_err">Chyba pri nahrávaní: %s</string>
@@ -89,7 +88,7 @@
 	<string name="sett_playback">Nahrávanie</string>
 	<string name="sett_codepage">Kódová stránka pre značky, ktoré nie sú v systéme unicode</string>
 	<string name="sett_auto_skip">Automaticky preskočiť začiatok každého súboru (% alebo sec):</string>
-	<string name="sett_auto_skip_tail">Automaticky preskočiť začiatok každého súboru (% alebo sec):</string>
+	<string name="sett_auto_skip_tail">Automaticky preskočiť koniec každého súboru (% alebo sec):</string>
 	<string name="sett_rg_norm">Normalizácia ReplayGain</string>
 	<string name="sett_auto_norm">Automatická normalizácia hlasitosti</string>
 	<string name="sett_equalizer_enable">Ekvalizér</string>

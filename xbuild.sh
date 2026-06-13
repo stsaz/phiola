@@ -2,33 +2,25 @@
 
 # phiola: cross-build on Linux for Linux/(AMD64|ARM64) | Windows/AMD64
 
-if test -z "$OS" ; then
-	OS=linux
-fi
-if test -z "$CPU" ; then
-	CPU=amd64
-fi
+OS=${OS:-linux}
+CPU=${CPU:-amd64}
+JOBS=${JOBS:-$(nproc)}
+ARGS=${@@Q}
 
 IMAGE_NAME=phiola-debtx-builder
 CONTAINER_NAME=phiola_debtx_build
 BUILD_TARGET=linux
-if test "$OS" == "windows" ; then
+if [[ "$OS" == "windows" ]]; then
 	IMAGE_NAME=phiola-win64-debtx-builder
 	CONTAINER_NAME=phiola_win64_debtx_build
 	BUILD_TARGET=mingw64
-fi
-if test "$CPU" == "arm64" ; then
+elif [[ "$CPU" == "arm64" ]]; then
 	IMAGE_NAME=phiola-arm64-debtx-builder
 	CONTAINER_NAME=phiola_arm64_debtx_build
 fi
 
-if test -z "$JOBS" ; then
-	JOBS=$(nproc)
-fi
 NFPM_VER=2.46.3
 NFPM_SHA256SUM=d6417f99d5fa32bba7a4e007084615d3897651498c2e443118c26b9ec3b698a8
-
-ARGS=${@@Q}
 
 set -xe
 
@@ -43,22 +35,24 @@ RUN apt update && \
  apt install -y \
   make
 RUN apt install -y \
+ clang \
+ lld
+RUN apt install -y \
  curl \
  zstd zip unzip bzip2 xz-utils \
  patch \
- perl \
- cmake \
  dos2unix
 RUN apt install -y \
+ cmake \
  autoconf libtool libtool-bin \
  gettext \
  pkg-config
+RUN apt install -y \
+ perl
 RUN curl -L -o nfpm_${NFPM_VER}_amd64.deb https://github.com/goreleaser/nfpm/releases/download/v${NFPM_VER}/nfpm_${NFPM_VER}_amd64.deb \
  && echo "${NFPM_SHA256SUM} *nfpm_${NFPM_VER}_amd64.deb" | sha256sum -c - \
- && dpkg -i nfpm_${NFPM_VER}_amd64.deb
+ && dpkg -i nfpm_${NFPM_VER}_amd64.deb \
  && rm -f nfpm_${NFPM_VER}_amd64.deb
-RUN apt install -y \
- gcc g++
 RUN apt install -y \
  libasound2-dev libpulse-dev libjack-dev \
  libdbus-1-dev
@@ -74,19 +68,23 @@ RUN apt update && \
  apt install -y \
   make
 RUN apt install -y \
+ clang \
+ lld
+RUN apt install -y \
  curl \
  zstd zip unzip bzip2 xz-utils \
  patch \
- perl \
- cmake \
  dos2unix
 RUN apt install -y \
+ cmake \
  autoconf libtool libtool-bin \
  gettext \
  pkg-config
+RUN apt install -y \
+ perl
 RUN curl -L -o nfpm_${NFPM_VER}_amd64.deb https://github.com/goreleaser/nfpm/releases/download/v${NFPM_VER}/nfpm_${NFPM_VER}_amd64.deb \
  && echo "${NFPM_SHA256SUM} *nfpm_${NFPM_VER}_amd64.deb" | sha256sum -c - \
- && dpkg -i nfpm_${NFPM_VER}_amd64.deb
+ && dpkg -i nfpm_${NFPM_VER}_amd64.deb \
  && rm -f nfpm_${NFPM_VER}_amd64.deb
 RUN apt install -y \
  gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
@@ -107,16 +105,20 @@ RUN apt update && \
  apt install -y \
   make
 RUN apt install -y \
+ clang \
+ lld
+RUN apt install -y \
  curl \
  zstd zip unzip bzip2 xz-utils \
  patch \
- perl \
- cmake \
  dos2unix
 RUN apt install -y \
+ cmake \
  autoconf libtool libtool-bin \
  gettext \
  pkg-config
+RUN apt install -y \
+ perl
 RUN apt install -y \
  gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64
 EOF
@@ -152,28 +154,19 @@ fi
 
 # Prepare build script
 
-if test "$ODIR" == "" ; then
-	ODIR=_$OS-$CPU
-fi
-ARGS_OS=""
+ODIR=${ODIR:-_$OS-$CPU}
+ARGS_OS="COMPILER=clang LINKFLAGS_USER=-fuse-ld=lld"
 ARGS_PHI=""
 ENV_CPU=""
-FFPACK_TARGETS=zstd
-SSL_DISABLE=0
 
-if test "$CPU" == "arm64" ; then
-	ARGS_OS="CPU=arm64 \
-CROSS_PREFIX=aarch64-linux-gnu-"
+if [[ "$CPU" == "arm64" ]]; then
+	ARGS_OS="COMPILER=clang \
+CPU=arm64"
 	ENV_CPU="export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig"
 	ARGS_PHI="PHI_HTTP_SSL=0"
-	SSL_DISABLE=1
-fi
-
-if test "$OS" == "windows" ; then
+elif [[ "$OS" == "windows" ]]; then
 	ARGS_OS="OS=windows \
-COMPILER=gcc \
-CROSS_PREFIX=x86_64-w64-mingw32-"
-	FFPACK_TARGETS="zstd zlib"
+WINDRES=/usr/lib/llvm-19/bin/llvm-windres"
 fi
 
 cat >build_$BUILD_TARGET.sh <<EOF

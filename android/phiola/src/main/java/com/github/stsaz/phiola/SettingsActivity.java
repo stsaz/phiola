@@ -204,10 +204,10 @@ public class SettingsActivity extends AppCompatActivity {
 		color = core.gui().main_color;
 		b.swShowFilter.setChecked(core.gui().filter_hide);
 		b.spRecBtn.setAdapter(spinner_adapter(new String[] {
-				"Record From Mic",
-				"Record From Radio",
-				"Playback Marker Set/Jump",
-				"Hide Button",
+				getString(R.string.brec_mic),
+				getString(R.string.brec_radio),
+				getString(R.string.brec_bookmark),
+				getString(R.string.brec_hide),
 			}));
 		int rm = core.gui().record_mode;
 		b.spRecBtn.setSelection(
@@ -369,9 +369,9 @@ public class SettingsActivity extends AppCompatActivity {
 		b.eRecDir.setOnClickListener(v -> explorer.show(b.eRecDir, 0));
 		b.spRecSource.setAdapter(spinner_adapter(RecSettings.rec_src_presets));
 		b.spRecChannels.setAdapter(spinner_adapter(new String[] {
-				"Default",
-				"1 (Mono)",
-				"2 (Stereo)",
+				getString(R.string.sett_rec_chan_default),
+				getString(R.string.sett_rec_chan_mono),
+				getString(R.string.sett_rec_chan_stereo),
 			}));
 
 		b.sbRecRate.setMax(rec_rate_progress(192000));

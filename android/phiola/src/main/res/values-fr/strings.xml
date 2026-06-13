@@ -6,7 +6,7 @@
     <string name="bplay">Lecture</string>
     <string name="bpause">Pause</string>
     <string name="bprev">Précédent</string>
-    <string name="brec">l\'enregistrement</string>
+    <string name="brec">Enregistrer</string>
     <string name="brec_stop">Arrêter l\'enregistrement</string>
     <string name="conv_aac_q">[.m4a] Qualité AAC: 1..5 (VBR) ou 8..800 (CBR, kbit/s)</string>
     <string name="conv_apos_end">Position de fin audio:</string>
@@ -20,7 +20,7 @@
     <string name="conv_out_name">Nom du fichier de sortie (sans extension):</string>
     <string name="conv_pl_add">Ajouter un nouveau fichier à la liste de lecture</string>
     <string name="conv_preserve_date">Préserver la date du fichier</string>
-    <string name="conv_sample_rate">Taux d\'échatillonage (Hz):</string>
+    <string name="conv_sample_rate">Taux d\'échantillonnage (Hz):</string>
     <string name="conv_trash_orig">Déplacer le fichier d\'entrée dans la poubelle</string>
     <string name="lssv_bsave">Sauvegarder</string>
     <string name="lssv_ldir">Dossier de sortie:</string>
@@ -65,7 +65,7 @@
     <string name="sett_recording">Enregistrement</string>
     <string name="sett_repeat_all">Tout répéter</string>
     <string name="sett_show_filter">Cacher la zone de recherche-édition</string>
-    <string name="sett_svc_notif_disable">Désactiver les notifications système (recquiert un redémarrage)</string>
+    <string name="sett_svc_notif_disable">Désactiver les notifications système (requiert un redémarrage)</string>
     <string name="sett_trash_dir">Dossier poubelle (relatif au point de montage):</string>
     <string name="sett_ui_info_in_title">Montrer les infos audio dans le titre</string>
 </resources>

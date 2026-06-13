@@ -236,24 +236,24 @@ static inline void qe_copy(struct phi_queue_entry *dst, const struct phi_queue_e
 
 
 struct filter_map {
-	char name[24];
+	char name[23];
+	ffbyte use;
 	const phi_filter *iface;
 };
 
-#define FM_UNDEF  (void*)-1
 #define FM_END  "\x01"
 
 /** Add multiple filters to track's chain; resolve filters dynamically from their names */
 static inline int trk_add_filters(const phi_core *core, phi_track *t, struct filter_map *m, struct filter_map *gm)
 {
 	for (uint i = 0;  m[i].name[0] != 0x01;  i++) {
-		if (m[i].iface == FM_UNDEF && m[i].name[0]) {
-			// Resolve the filter interface
-			if (!(m[i].iface = (phi_filter*)core->mod(m[i].name)))
-				return -1;
-			gm[i].iface = m[i].iface;
-		}
-		if (m[i].iface) {
+		if (m[i].use) {
+			if (!m[i].iface) {
+				// Resolve the filter interface
+				if (!(m[i].iface = (phi_filter*)core->mod(m[i].name)))
+					return -1;
+				gm[i].iface = m[i].iface;
+			}
 			if (!core->track->filter(t, m[i].iface, 0))
 				return -1;
 		}

@@ -14,7 +14,7 @@ SYS := $(OS)
 CFLAGS += -DFFBASE_MEM_ASSERT \
 	-MMD -MP \
 	-I$(FFBASE) \
-	-Wall -Wextra -Wno-unused-parameter -Wno-multichar \
+	-Wall -Wextra -Wno-typedef-redefinition -Wno-unused-parameter -Wno-multichar \
 	-fPIC -fvisibility=hidden \
 	-g
 ifeq "$(DEBUG)" "1"
