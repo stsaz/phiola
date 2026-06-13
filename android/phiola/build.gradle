@@ -8,8 +8,8 @@ android {
 		applicationId "com.github.stsaz.phiola"
 		minSdkVersion 26
 		targetSdk 33
-		versionCode 20803
-		versionName '2.8-beta3'
+		versionCode 20804
+		versionName '2.8-beta4'
 	}
 
 	buildFeatures {
