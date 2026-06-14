@@ -6,14 +6,23 @@
 
 	<string name="brec">Nahrávať</string>
 	<string name="brec_stop">Zastaviť nahrávanie</string>
+	<string name="brec_mic">Nahrávať mikrofón</string>
 	<string name="brec_radio">Nahrávať rádio</string>
+	<string name="brec_bookmark">Nastaviť/Skočiť na záložku</string>
+	<string name="brec_hide">Skryť tlačidlo</string>
+	<string name="brec_start_longpress_hint">Dlhým stlačením spustíte nahrávanie</string>
+	<string name="brec_paused">Nahrávanie pozastavené</string>
+	<string name="brec_resumed">Pokračovanie v nahrávaní</string>
 	<string name="main_rec_fin">Nahrávanie dokončené</string>
 	<string name="main_rec_err">Chyba pri nahrávaní: %s</string>
 	<string name="main_rec_started">Nahrávanie spustené</string>
+	<string name="mrec_info_show">Stav nahrávania</string>
 	<string name="bplay">Prehrať</string>
 	<string name="bpause">Pozastaviť</string>
 	<string name="bprev">Predchádzajúci</string>
 	<string name="bnext">Nasledujúci</string>
+	<string name="bbmark_set">Záložka nastavená na %d:%02d</string>
+	<string name="bbmark_set_hint">Dlhým stlačením nastavíte záložku</string>
 
 	<string name="explorer_up">&lt;SPÄŤ&gt;</string>
 	<string name="explorer_stg_dirs">[Priečinky úložiska]</string>
@@ -48,10 +57,10 @@
 	<string name="mlist_sort">Playlist: Usporiadať...</string>
 	<string name="mlist_sort_filename">Playlist: Usporiadať podľa názvu súboru</string>
 	<string name="mlist_sort_filesize">Playlist: Usporiadať podľa veľkosti súboru</string>
-	<string name="mlist_sort_filedate">Playlist: Usporiadať podľa dátumu</string>
+	<string name="mlist_sort_filedate">Playlist: Usporiadať podľa dátumu súboru</string>
 	<string name="mlist_shuffle">Playlist: Premiešať</string>
-	<string name="mlist_sort_tag_artist">Playlist: Zoradiť podľa interpréta</string>
-	<string name="mlist_sort_tag_date">Playlist: Zoradiť podľa dátumu</string>
+	<string name="mlist_sort_tag_artist">Playlist: Usporiadať podľa umelca</string>
+	<string name="mlist_sort_tag_date">Playlist: Usporiadať podľa dátumu zo značiek</string>
 	<string name="mlist_move_left">Playlist: Presunúť vľavo</string>
 	<string name="mlist_convert">Playlist: Konvertovať všetko...</string>
 	<string name="mlist_files_move">Playlist: Rýchlo presunúť všetky súbory</string>
@@ -69,6 +78,7 @@
 	<string name="mitem_file_rename">Premenovať súbor...</string>
 	<string name="mitem_file_show_info">Zobraziť značky</string>
 
+	<string name="sett_activity_label">Nastavenia</string>
 	<string name="sett_interface">Rozhranie</string>
 	<string name="sett_dark">Tmavá téma</string>
 	<string name="sett_color">Farba...</string>
@@ -85,7 +95,7 @@
 	<string name="sett_list_rm_on_err">Odstrániť súbor z playlistu pri chybe</string>
 	<string name="sett_auto_stop">Čas automatického zastavenia (min):</string>
 
-	<string name="sett_playback">Nahrávanie</string>
+	<string name="sett_playback">Prehrávanie</string>
 	<string name="sett_codepage">Kódová stránka pre značky, ktoré nie sú v systéme unicode</string>
 	<string name="sett_auto_skip">Automaticky preskočiť začiatok každého súboru (% alebo sec):</string>
 	<string name="sett_auto_skip_tail">Automaticky preskočiť koniec každého súboru (% alebo sec):</string>
@@ -109,6 +119,9 @@
 	<string name="sett_rec_name">Vzor pre názov súboru:</string>
 	<string name="sett_rec_src">Zdroj zvuku:</string>
 	<string name="sett_rec_chan">Kanály:</string>
+	<string name="sett_rec_chan_default">Predvolené</string>
+	<string name="sett_rec_chan_mono">1 (Mono)</string>
+	<string name="sett_rec_chan_stereo">2 (Stereo)</string>
 	<string name="sett_rec_rate">Frekvencia vzorkovania (Hz):</string>
 	<string name="sett_rec_enc">Enkodér:</string>
 	<string name="sett_rec_bitrate">Bitová rýchlosť enkodéra (kbit/sec):</string>
@@ -120,10 +133,31 @@
 	<string name="sett_rec_exclusive">Exkluzívny režim</string>
 	<string name="sett_rec_list_add">Pridať nahratý súbor do playlistu</string>
 
+	<string name="btn_cancel">Zrušiť</string>
+	<string name="fdelete_title">Odstránenie súboru</string>
+	<string name="fdelete_msg_trash">Presunúť súbor do koša: %s ?</string>
+	<string name="fdelete_btn_trash">Do koša</string>
+	<string name="fdelete_msg_delete">Odstrániť súbor z úložiska: %s ?</string>
+	<string name="fdelete_btn_delete">Odstrániť</string>
+	<string name="fdelete_deleted">Súbor odstránený</string>
+	<string name="fdelete_trash_moved">Súbor presunutý do koša</string>
+
+	<string name="fmove_title">Premiestnenie súboru</string>
+	<string name="fmove_msg">Premiestniť súbor do priečinka %s ?</string>
+	<string name="fmove_btn_confirm">Premiestniť súbor</string>
+	<string name="fmove_btn_cancel">Neurobiť nič</string>
+	<string name="fmove_done">Súbor premiestnený do priečinka %s</string>
+
+	<string name="frename_title">Premenovanie súboru</string>
+	<string name="frename_msg">Zadajte nový názov</string>
+	<string name="frename_btn_confirm">Premenovať</string>
+	<string name="frename_done">Súbor premenovaný</string>
+
 	<string name="lssv_ldir">Výstupný priečinok:</string>
 	<string name="lssv_lname">Názov playlistu:</string>
 	<string name="lssv_bsave">Uložiť</string>
 
+	<string name="conv_activity_label">Konverzia zvuku</string>
 	<string name="conv_in_out">Vstup a výstup</string>
 	<string name="conv_input_file">Vstupný súbor:</string>
 	<string name="conv_out_dir">Výstupný priečinok:</string>
@@ -155,6 +189,7 @@
 
 	<string name="conv_go">Konvertovať</string>
 
+	<string name="tags_activity_label">Značky súboru</string>
 	<string name="menu_tags_write">Zapísať značky do súboru!</string>
 	<string name="menu_tags_clear">Odstrániť všetky značky</string>
 	<string name="menu_tag_add">Pridať značku...</string>
@@ -166,4 +201,12 @@
 	<string name="about_log_saved">Záznamy uložené do súboru %s</string>
 
 	<string name="tag_edit_n_a">Upravovanie značiek pre tento formát súboru nie je podporované</string>
+
+	<string name="err_phi_nosrc">Vstupný súbor neexistuje</string>
+	<string name="err_phi_dstexist">Výstupný súbor už existuje</string>
+	<string name="err_phi_unkifmt">Neznámy formát vstupného súboru</string>
+	<string name="err_phi_audio_input">Problém so vstupným zariadením zvuku</string>
+	<string name="err_phi_cancelled">Zrušené</string>
+	<string name="err_phi_aconv">Konverzia vzorky</string>
+	<string name="err_phi_out_fmt">Výstupný formát nie je podporovaný</string>
 </resources>
