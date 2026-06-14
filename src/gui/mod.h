@@ -186,7 +186,7 @@ do { \
 } while (0)
 
 enum ACTION {
-	A_NONE,
+	A_NONE = 999,
 
 	#define X(id)  id
 	#include "actions.h"

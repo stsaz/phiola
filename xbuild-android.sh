@@ -16,9 +16,7 @@ ARGS=${@@Q}
 
 set -xe
 
-if ! test -d "../phiola" ; then
-	exit 1
-fi
+test -d "../phiola"
 PHI_DIR=$(pwd)
 
 path_basename() {
@@ -63,11 +61,8 @@ if ! test -d "$ANDROID_HOME/platforms/android-$ANDROID_PF_VER" ; then
 	cd $PHI_DIR
 fi
 
-if ! podman container exists $CONTAINER_NAME ; then
-	if ! podman image exists $IMAGE_NAME ; then
-
-		# Create builder image
-		cat <<EOF | podman build -t $IMAGE_NAME -f - .
+image() {
+	cat <<EOF | podman build -t $IMAGE_NAME -f - .
 FROM debian:trixie-slim
 RUN apt update && \
  apt install -y \
@@ -76,16 +71,23 @@ RUN apt install -y \
  curl \
  zstd zip unzip bzip2 xz-utils \
  patch \
- perl \
- cmake \
  dos2unix
 RUN apt install -y \
+ cmake \
  autoconf libtool libtool-bin \
  gettext \
  pkg-config
 RUN apt install -y \
+ perl
+RUN apt install -y \
  openjdk-21-jdk
 EOF
+}
+
+if ! podman container exists $CONTAINER_NAME ; then
+	if ! podman image exists $IMAGE_NAME ; then
+		# Create builder image
+		image
 	fi
 
 	if test -z "$GRADLE_DIR" ; then
@@ -100,16 +102,12 @@ EOF
 	 --workdir /src/phiola \
 	 --name $CONTAINER_NAME \
 	 $IMAGE_NAME \
-	 bash ./build_android.sh
+	 sleep 3600
 fi
 
 if ! podman container top $CONTAINER_NAME ; then
-	cat >build_android.sh <<EOF
-sleep 600
-EOF
 	# Start container in background
 	podman start --attach $CONTAINER_NAME &
-	sleep .5
 	while ! podman container top $CONTAINER_NAME ; do
 		sleep .5
 	done
@@ -139,4 +137,4 @@ EOF
 
 # Build inside the container
 podman exec $CONTAINER_NAME \
- bash ./build_android.sh
+ bash build_android.sh

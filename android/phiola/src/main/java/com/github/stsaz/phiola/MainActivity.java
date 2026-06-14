@@ -522,7 +522,7 @@ public class MainActivity extends AppCompatActivity {
 
 		b.bplaylist.setOnClickListener((v) -> plist_click());
 		b.bplaylist.setOnLongClickListener((v) -> {
-				playlist_menu_show();
+				list_menu_show();
 				return true;
 			});
 		b.bplaylist.setChecked(true);
@@ -552,7 +552,7 @@ public class MainActivity extends AppCompatActivity {
 			}
 
 			public boolean onQueryTextChange(String newText) {
-				plist_filter(newText);
+				list_filter(newText);
 				return true;
 			}
 		});
@@ -597,7 +597,7 @@ public class MainActivity extends AppCompatActivity {
 
 	private void show_ui() {
 		if (gui.view == GUI.V_PLAYLIST) {
-			plist_show();
+			list_show();
 		} else {
 			if (gui.view == GUI.V_LIBRARY)
 				gui.view = GUI.V_EXPLORER;
@@ -645,6 +645,85 @@ public class MainActivity extends AppCompatActivity {
 		b.bplay.setImageTintList(csl);
 		b.bnext.setImageTintList(csl);
 		b.bprev.setImageTintList(csl);
+	}
+
+	// [Playing]
+	// [PLA,STP,REC|RPA,CON]
+	private String state_flags(int st) {
+		if ((st & (GUI.STATE_PLAYING | GUI.STATE_RECORDING | GUI.STATE_CONVERTING)) == 0)
+			return "";
+
+		String s = "[";
+
+		if ((st & GUI.STATE_PLAYING) != 0) {
+			if (st == GUI.STATE_PLAYING)
+				s += getString(R.string.main_st_playing);
+			else
+				s += "PLA";
+
+			if ((st & GUI.STATE_AUTO_STOP) != 0)
+				s += ",STP";
+		}
+
+		if ((st & GUI.STATE_RECORDING) != 0) {
+			if ((st & GUI.STATE_PLAYING) != 0)
+				s += ",";
+			if ((st & GUI.STATE_REC_PAUSED) != 0)
+				s += "RPA";
+			else
+				s += "REC";
+		}
+
+		if ((st & GUI.STATE_CONVERTING) != 0) {
+			if ((st & (GUI.STATE_PLAYING | GUI.STATE_RECORDING)) != 0)
+				s += ",";
+			s += "CON";
+		}
+
+		s += "]";
+		return s;
+	}
+
+	private void state(int mask, int val) { state_f(mask, val, false); }
+	private void state_f(int mask, int val, boolean force) {
+		int old = gui.state_update(mask, val);
+		int st = (old & ~mask) | val;
+		if (!force && st == old)
+			return;
+		state_set(st);
+	}
+
+	private void state_set(int st) {
+		String title = "φphiola";
+		getSupportActionBar().setTitle(String.format("%s %s", title, state_flags(st)));
+
+		if ((st & GUI.MASK_PLAYBACK) != (this.ui_state & GUI.MASK_PLAYBACK)) {
+			int play_icon = R.drawable.ic_play;
+			int play_description = R.string.bplay;
+			if ((st & GUI.STATE_PLAYING) != 0) {
+				play_icon = R.drawable.ic_pause;
+				play_description = R.string.bpause;
+			}
+			b.bplay.setImageResource(play_icon);
+			b.bplay.setContentDescription(getString(play_description));
+		}
+
+		this.ui_state = st;
+	}
+
+	// RECORDING
+
+	/** Start recording */
+	private void rec_start() {
+		if (!user_ask_record()) {
+			core.errlog(TAG, "No permissions for recording");
+			return;
+		}
+
+		if (core.rec_start((gui.rec_ext_app) ? Track.RECF_EXPORT : 0, this::rec_finished)) {
+			rec_state_set(true);
+			state_set(gui.state);
+		}
 	}
 
 	private void rec_state_set(boolean active) {
@@ -767,99 +846,7 @@ public class MainActivity extends AppCompatActivity {
 			, ri.cur_db, ri.max_db));
 	}
 
-	private void play_pause_click() {
-		if (track.state() == Track.STATE_PLAYING) {
-			trackctl.pause();
-		} else {
-			trackctl.unpause();
-		}
-	}
-
-	private void explorer_click() {
-		list_leave();
-
-		if (gui.view == GUI.V_PLAYLIST) {
-			if (!user_ask_storage()) {
-				core.errlog(TAG, "No permissions for accessing storage");
-				b.bexplorer.setChecked(false);
-				return;
-			}
-		}
-
-		b.bexplorer.setChecked(true);
-		b.bplaylist.setChecked(false);
-
-		String name = null;
-		if (gui.view == GUI.V_PLAYLIST) {
-			gui.view = view_prev;
-		} else if (gui.view == GUI.V_LIBRARY) {
-			gui.view = GUI.V_EXPLORER;
-			name = getString(R.string.bexplorer);
-		} else {
-			gui.view = GUI.V_LIBRARY;
-			name = getString(R.string.blibrary);
-		}
-
-		if (name != null) {
-			b.bexplorer.setText(name);
-			b.bexplorer.setTextOn(name);
-			b.bexplorer.setTextOff(name);
-		}
-
-		if (!gui.filter_hide)
-			b.tfilter.setQuery("", false);
-
-		if (gui.view == GUI.V_EXPLORER)
-			explorer.fill();
-		else
-			library.fill();
-
-		list_update();
-		if (gui.view == GUI.V_LIBRARY)
-			list_scroll(gui.mlib_scroll_pos);
-		else
-			list_scroll(gui.explorer_scroll_pos);
-	}
-
-	private void plist_click() {
-		b.bplaylist.setChecked(true);
-		if (gui.view == GUI.V_PLAYLIST) {
-			list_switch();
-			return;
-		}
-
-		list_leave();
-		b.bexplorer.setChecked(false);
-		view_prev = gui.view;
-		gui.view = GUI.V_PLAYLIST;
-		if (!gui.filter_hide) {
-			b.tfilter.setQuery(gui.list_filter, false);
-			queue.current_filter(gui.list_filter);
-		}
-
-		list_update();
-		plist_show();
-	}
-
-	private String list_name(int i) {
-		String s = gui.list_name(i);
-		if (s.isEmpty())
-			s = String.format(getString(R.string.main_playlist_n), i + 1);
-		return s;
-	}
-
-	private void playlist_menu_show() {
-		PopupMenu m = new PopupMenu(this, b.bplaylist);
-		m.setOnMenuItemClickListener((item) -> {
-				list_switch_i(item.getItemId());
-				return true;
-			});
-		int n = queue.number();
-		for (int i = 0;  i < n;  i++) {
-			m.getMenu().add(0, i, 0, list_name(i));
-		}
-		m.show();
-	}
+	// FILE ACTIONS
 
 	private void file_tags_show() { startActivity(new Intent(this, TagsActivity.class)); }
 	private void file_tags_show_sel(int pos) {
@@ -951,10 +938,52 @@ public class MainActivity extends AppCompatActivity {
 		gui.msg_show(this, getString(R.string.frename_done));
 	}
 
-	private void plist_open_new(String fn) {
-		list_new(Util.path_split3(fn)[1]);
-		queue.current_add(fn, Queue.ADD);
-		queue.current_play(0);
+	// EXPLORER
+
+	private void explorer_click() {
+		list_leave();
+
+		if (gui.view == GUI.V_PLAYLIST) {
+			if (!user_ask_storage()) {
+				core.errlog(TAG, "No permissions for accessing storage");
+				b.bexplorer.setChecked(false);
+				return;
+			}
+		}
+
+		b.bexplorer.setChecked(true);
+		b.bplaylist.setChecked(false);
+
+		String name = null;
+		if (gui.view == GUI.V_PLAYLIST) {
+			gui.view = view_prev;
+		} else if (gui.view == GUI.V_LIBRARY) {
+			gui.view = GUI.V_EXPLORER;
+			name = getString(R.string.bexplorer);
+		} else {
+			gui.view = GUI.V_LIBRARY;
+			name = getString(R.string.blibrary);
+		}
+
+		if (name != null) {
+			b.bexplorer.setText(name);
+			b.bexplorer.setTextOn(name);
+			b.bexplorer.setTextOff(name);
+		}
+
+		if (!gui.filter_hide)
+			b.tfilter.setQuery("", false);
+
+		if (gui.view == GUI.V_EXPLORER)
+			explorer.fill();
+		else
+			library.fill();
+
+		list_update();
+		if (gui.view == GUI.V_LIBRARY)
+			list_scroll(gui.mlib_scroll_pos);
+		else
+			list_scroll(gui.explorer_scroll_pos);
 	}
 
 	private static final int
@@ -993,7 +1022,7 @@ public class MainActivity extends AppCompatActivity {
 		case EC_ADD_PLAY:
 			flags = Queue.ADD;
 			if (is_playlist(Util.path_split3(fn)[2])) {
-				plist_open_new(fn);
+				list_open_new(fn);
 				return;
 			}
 			n = queue.current_items();
@@ -1034,6 +1063,48 @@ public class MainActivity extends AppCompatActivity {
 			b.list.scrollToPosition(pos);
 	}
 
+	// TRACKLIST
+
+	private void plist_click() {
+		b.bplaylist.setChecked(true);
+		if (gui.view == GUI.V_PLAYLIST) {
+			list_switch();
+			return;
+		}
+
+		list_leave();
+		b.bexplorer.setChecked(false);
+		view_prev = gui.view;
+		gui.view = GUI.V_PLAYLIST;
+		if (!gui.filter_hide) {
+			b.tfilter.setQuery(gui.list_filter, false);
+			queue.current_filter(gui.list_filter);
+		}
+
+		list_update();
+		list_show();
+	}
+
+	private String list_name(int i) {
+		String s = gui.list_name(i);
+		if (s.isEmpty())
+			s = String.format(getString(R.string.main_playlist_n), i + 1);
+		return s;
+	}
+
+	private void list_menu_show() {
+		PopupMenu m = new PopupMenu(this, b.bplaylist);
+		m.setOnMenuItemClickListener((item) -> {
+				list_switch_i(item.getItemId());
+				return true;
+			});
+		int n = queue.number();
+		for (int i = 0;  i < n;  i++) {
+			m.getMenu().add(0, i, 0, list_name(i));
+		}
+		m.show();
+	}
+
 	private void list_on_change(int how, int pos) {
 		if (how == QueueNotify.CONVERT_COMPLETE) {
 			convert_complete();
@@ -1048,12 +1119,12 @@ public class MainActivity extends AppCompatActivity {
 		pl_adapter.on_change(0, -1);
 	}
 
-	private void plist_show() {
+	private void list_show() {
 		list_scroll(gui.list_scroll_pos(queue.current_index()));
 	}
 
 	/** Called when we're leaving the current tab */
-	void list_leave() {
+	private void list_leave() {
 		LinearLayoutManager llm = (LinearLayoutManager)b.list.getLayoutManager();
 		int pos = llm.findFirstCompletelyVisibleItemPosition();
 
@@ -1069,14 +1140,14 @@ public class MainActivity extends AppCompatActivity {
 		}
 	}
 
-	private void plist_filter_clear() {
+	private void list_filter_clear() {
 		if (!b.tfilter.getQuery().toString().isEmpty()) {
 			b.tfilter.setQuery("", false);
-			plist_filter("");
+			list_filter("");
 		}
 	}
 
-	private void plist_filter(String filter) {
+	private void list_filter(String filter) {
 		core.dbglog(TAG, "list_filter: %s", filter);
 		if (gui.view == GUI.V_PLAYLIST)
 			queue.current_filter(filter);
@@ -1098,18 +1169,10 @@ public class MainActivity extends AppCompatActivity {
 		b.bplaylist.setTextOff(s);
 	}
 
-	/** Toggle playback auto-stop timer */
-	private void play_auto_stop() {
-		String s;
-		int value_min = queue.auto_stop_toggle();
-		if (value_min > 0) {
-			state(GUI.STATE_AUTO_STOP, GUI.STATE_AUTO_STOP);
-			s = String.format(getString(R.string.mplay_auto_stop_msg), value_min);
-		} else {
-			state(GUI.STATE_AUTO_STOP, 0);
-			s = "Disabled auto-stop timer";
-		}
-		gui.msg_show(this, s);
+	private void list_open_new(String fn) {
+		list_new(Util.path_split3(fn)[1]);
+		queue.current_add(fn, Queue.ADD);
+		queue.current_play(0);
 	}
 
 	private void list_new(String name) {
@@ -1176,7 +1239,7 @@ public class MainActivity extends AppCompatActivity {
 		if (pos < 0)
 			return;
 
-		plist_filter_clear();
+		list_filter_clear();
 		queue.active_remove(pos);
 		gui.msg_show(this, getString(R.string.mlist_trk_rm));
 	}
@@ -1249,6 +1312,8 @@ public class MainActivity extends AppCompatActivity {
 			s = "Some files were NOT moved";
 		gui.msg_show(this, s);
 	}
+
+	// CONVERSION
 
 	static String q_error(int e) {
 		switch (e) {
@@ -1346,16 +1411,13 @@ public class MainActivity extends AppCompatActivity {
 		gui.msg_show(this, "Conversion has been interrupted");
 	}
 
-	/** Start recording */
-	private void rec_start() {
-		if (!user_ask_record()) {
-			core.errlog(TAG, "No permissions for recording");
-			return;
-		}
+	// PLAYBACK
 
-		if (core.rec_start((gui.rec_ext_app) ? Track.RECF_EXPORT : 0, this::rec_finished)) {
-			rec_state_set(true);
-			state_set(gui.state);
+	private void play_pause_click() {
+		if (track.state() == Track.STATE_PLAYING) {
+			trackctl.pause();
+		} else {
+			trackctl.unpause();
 		}
 	}
 
@@ -1388,68 +1450,18 @@ public class MainActivity extends AppCompatActivity {
 		trackctl.seek((long)gui.playback_marker_pos_sec * 1000);
 	}
 
-	// [Playing]
-	// [PLA,STP,REC|RPA,CON]
-	private String state_flags(int st) {
-		if ((st & (GUI.STATE_PLAYING | GUI.STATE_RECORDING | GUI.STATE_CONVERTING)) == 0)
-			return "";
-
-		String s = "[";
-
-		if ((st & GUI.STATE_PLAYING) != 0) {
-			if (st == GUI.STATE_PLAYING)
-				s += getString(R.string.main_st_playing);
-			else
-				s += "PLA";
-
-			if ((st & GUI.STATE_AUTO_STOP) != 0)
-				s += ",STP";
+	/** Toggle playback auto-stop timer */
+	private void play_auto_stop() {
+		String s;
+		int value_min = queue.auto_stop_toggle();
+		if (value_min > 0) {
+			state(GUI.STATE_AUTO_STOP, GUI.STATE_AUTO_STOP);
+			s = String.format(getString(R.string.mplay_auto_stop_msg), value_min);
+		} else {
+			state(GUI.STATE_AUTO_STOP, 0);
+			s = "Disabled auto-stop timer";
 		}
-
-		if ((st & GUI.STATE_RECORDING) != 0) {
-			if ((st & GUI.STATE_PLAYING) != 0)
-				s += ",";
-			if ((st & GUI.STATE_REC_PAUSED) != 0)
-				s += "RPA";
-			else
-				s += "REC";
-		}
-
-		if ((st & GUI.STATE_CONVERTING) != 0) {
-			if ((st & (GUI.STATE_PLAYING | GUI.STATE_RECORDING)) != 0)
-				s += ",";
-			s += "CON";
-		}
-
-		s += "]";
-		return s;
-	}
-
-	private void state(int mask, int val) { state_f(mask, val, false); }
-	private void state_f(int mask, int val, boolean force) {
-		int old = gui.state_update(mask, val);
-		int st = (old & ~mask) | val;
-		if (!force && st == old)
-			return;
-		state_set(st);
-	}
-
-	private void state_set(int st) {
-		String title = "φphiola";
-		getSupportActionBar().setTitle(String.format("%s %s", title, state_flags(st)));
-
-		if ((st & GUI.MASK_PLAYBACK) != (this.ui_state & GUI.MASK_PLAYBACK)) {
-			int play_icon = R.drawable.ic_play;
-			int play_description = R.string.bplay;
-			if ((st & GUI.STATE_PLAYING) != 0) {
-				play_icon = R.drawable.ic_pause;
-				play_description = R.string.bpause;
-			}
-			b.bplay.setImageResource(play_icon);
-			b.bplay.setContentDescription(getString(play_description));
-		}
-
-		this.ui_state = st;
+		gui.msg_show(this, s);
 	}
 
 	/** Called by Track when a new track is initialized */

@@ -12,7 +12,7 @@ It is completely portable (all codecs are bundled), meaning you can run it direc
 phiola is free and open-source; use it as a standalone application or integrate it as a library into your own software.
 
 Screenshots of phiola GUI on Android, KDE/Linux and Windows 10:
-![phiola GUI on Android, KDE/Linux and Windows 10](../screenshots/phiola-gui-screenshot-android-kdelinux-windows.png)
+![phiola GUI on Android, KDE/Linux and Windows 10](../screenshots/screens/phiola-gui-screenshot-android-linux-windows.png)
 
 Contents:
 
@@ -318,7 +318,21 @@ Start phiola GUI:
 
 Then add some files to your playlist via drag-n-drop from your File Manager, or via `List->Add` menu command.
 
-**Bonus:** you can modify the appearance by editing the GUI source file: `phiola-2/mod/gui/ui.conf`.  You can also modify the text by editing language files, e.g. `phiola-2/mod/gui/lang_en.conf`.  On Windows you can modify the dark theme colors by editing `phiola-2/mod/gui/theme-dark-white.conf`.  Restart phiola GUI after you make changes to those files.
+### Customize
+
+You can customize the appearance and text:
+* **Appearance:** Modify the GUI source file `phiola-2/mod/gui/ui.conf`.
+* **Text:** Edit language files, e.g., `phiola-2/mod/gui/lang_en.conf`.
+* **Color Themes (Windows only):** Edit theme files, e.g., `phiola-2/mod/gui/theme-purple.conf`:
+	```
+	background 222222
+	text       cc99ff
+	text-alt   cc99ff
+	```
+
+	`background` is the background color; `text` is the main text color; `text-alt` is the text color for main menu bar, tabs, listview header, and status bar.
+
+Restart phiola GUI after making any changes to these files.
 
 ### 100% Portable Mode
 

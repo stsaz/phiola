@@ -43,7 +43,7 @@ typedef unsigned char u_char;
 
 #define _(id) id
 enum {
-	A_NONE,
+	A_NONE = 999,
 	INCLUDE_ACTIONS(_)
 };
 #undef _
@@ -103,7 +103,7 @@ struct installer {
 
 		for (uint i = 0;  i != FF_COUNT(action_str);  i++) {
 			if (ffstr_eqz(name, action_str[i]))
-				return i + 1;
+				return A_NONE+1 + i;
 		}
 		return 0;
 	}
@@ -223,9 +223,9 @@ struct installer {
 
 		if (!dark_theme_init(&theme, 0)
 			&& DARK_THEME_DARK == dark_theme_ctl(&theme, DARK_THEME_QUERY, 0)) {
-			dark_theme_colors(&theme, 0xbb88ff, 0x222222);
+			dark_theme_colors(&theme, 0x222222, 0xcc99ff);
 			dark_theme_ctl(&theme, DARK_THEME_APP, 0);
-			ldr.dark_theme = &theme;
+			ldr.dark_theme = 1;
 			ffui_theme = &theme;
 		}
 

@@ -599,6 +599,9 @@ static void wmain_action(ffui_window *wnd, int id)
 		m->wnd.close();  break;
 
 // Playback:
+#ifdef FF_WIN
+	case IDOK:
+#endif
 	case A_PLAY:
 		if (!gd->tab_conversion && (i = m->vlist.focused()) >= 0)
 			gui_core_task_uint(ctl_play, i);

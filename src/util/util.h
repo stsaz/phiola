@@ -262,11 +262,6 @@ static inline int trk_add_filters(const phi_core *core, phi_track *t, struct fil
 }
 
 
-/** Convert LE color value to RGB value.
-"BGR0" -> "0BGR" -> "RGB0" */
-#define color_rgb_le(c)  __builtin_bswap32((c) << 8)
-
-
 #include <ffsys/file.h>
 
 static inline int file_copydata(fffd src, ffuint64 offsrc, fffd dst, ffuint64 offdst, ffuint64 size)
