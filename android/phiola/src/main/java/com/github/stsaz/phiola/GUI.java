@@ -18,7 +18,6 @@ import java.util.Collections;
 class GUI {
 	private static final String TAG = "phiola.GUI";
 	private final Core core;
-	Context cur_activity;
 	boolean filter_hide;
 	static final int
 		RECMODE_MIC = 0,
@@ -205,9 +204,7 @@ class GUI {
 	}
 
 	void on_error(String fmt, Object... args) {
-		if (cur_activity == null)
-			return;
-		msg_show(cur_activity, fmt, args);
+		msg_show(core.context, fmt, args);
 	}
 
 	static void msg_show(Context ctx, String fmt, Object... args) {

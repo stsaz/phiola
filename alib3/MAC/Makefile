@@ -4,7 +4,7 @@ include ../config.mk
 
 VER := 433
 URL := https://github.com/stsaz/phiola/raw/alib3/alib3/MAC/MAC_SDK_433.zip
-MD5SUM := 16e4bac2aef12fdea9ec937632fc9270
+SHA256SUM := 987e9a344d94019d842f685cf5a61f191fa40f000be285055c87ca671263a344
 PKG := $(ALIB3)/MAC/$(notdir $(URL))
 DIR := mac
 LIB := libMAC-phi.$(SO)
@@ -18,7 +18,7 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
-	echo "$(MD5SUM) *$(PKG)" | md5sum -c -
+	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
 	$(UNZIP) $(PKG) -d $(DIR)
 	find $(DIR) -name '*.cpp' -print0 | xargs -0 dos2unix
 	find $(DIR) -name '*.h' -print0 | xargs -0 dos2unix

@@ -1,111 +1,12 @@
 /** phiola: GUI: Settings
 2023, Simon Zolin */
 
-struct eqlz_band {
-	uint type;
-	uint freq;
-	uint width;
-	int gain;
-
-	bool shelf() const { return !!(type & 1); }
-
-	void parse(xxstr s) {
-		xxstr k, v;
-		while (s.len) {
-			s.split_by(' ', &k, &s);
-			s.split_by(' ', &v, &s);
-
-			if (k.equals("f")) {
-				freq = v.uint32(0);
-
-			} else if (k.equals("w")) {
-				if (v.len && v.last_char() == 'q') {
-					v.len--; // cut last 'q'
-					width = v.float64(0) * 10;
-				}
-
-			} else if (k.equals("g")) {
-				gain = v.float64(0) * 10;
-			}
-		}
-	}
-
-	void freq_set(uint progress) {
-		freq = (20000 - 20) * pow((double)(progress + 1) / 100, 3) + 20;
-	}
-	uint freq_progress() const { return 0; }
-
-	void width_set(uint progress) { width = progress; }
-	uint width_progress() const { return width; }
-
-	void gain_set(uint progress) { gain = (progress * 5) - 120; }
-	uint gain_progress() const { return (gain + 120) / 5; }
-
-	void str(xxvec *v) const {
-		if (gain == 0)
-			return;
-
-		if (type & 1) {
-			v->add_f("t %s g %.01F"
-				, (type == 1) ? "bass" : "treble", (double)gain / 10);
-		} else {
-			v->add_f("f %u w %.01Fq g %.01F"
-				, freq, (double)width / 10, (double)gain / 10);
-		}
-	}
-};
-
-struct eqlz_set {
-	uint current;
-	struct eqlz_band bands[5];
-
-	void init(const char *sz) {
-		bands[0].type = 1;
-		bands[1].width = bands[2].width = bands[3].width = 10; // =1.0
-		bands[4].type = 3;
-
-		if (!sz)
-			return;
-
-		uint i = 0;
-		xxstr s(sz), pt;
-		while (s.len && i < FF_COUNT(bands)) {
-			s.split_by(',', &pt, &s);
-			bands[i++].parse(pt);
-		}
-	}
-
-	struct eqlz_band& select_band(uint i) {
-		current = i;
-		return bands[current];
-	}
-
-	xxvec str() const {
-		xxvec v;
-		for (uint i = 0;  i < FF_COUNT(bands);  i++) {
-			bands[i].str(&v);
-			v.add(",");
-		}
-		v.len--; // cut last ','
-		return v;
-	}
-};
-
 struct gui_wsettings {
 	ffui_windowxx	wnd;
-	ffui_label		ldev, lseek_by, lleap_by, lauto_skip, lauto_skip_tail;
+	ffui_label		ltheme, ldev, lseek_by, lleap_by, lauto_skip, lauto_skip_tail;
 	ffui_editxx		eseek_by, eleap_by, eauto_skip, eauto_skip_tail;
-	ffui_checkboxxx	cbdarktheme, cbrg_norm, cbauto_norm;
-	ffui_comboboxxx	cbdev;
-
-	ffui_checkboxxx		cbeqlz;
-	ffui_comboboxxx		cbeqlz_band;
-	ffui_labelxx		leqlz_freq, leqlz_width, leqlz_gain;
-	ffui_trackbarxx		tbeqlz_freq, tbeqlz_width, tbeqlz_gain;
-	ffui_editxx			eeqlz;
-	struct eqlz_set		eqlz;
-	struct eqlz_band*	eqlz_band;
-
+	ffui_checkboxxx	cbrg_norm, cbauto_norm, cbeqlz;
+	ffui_comboboxxx	cbdarktheme, cbdev;
 	char*	wnd_pos;
 	uint	conf_odev;
 	uint	initialized :1;
@@ -114,7 +15,7 @@ struct gui_wsettings {
 #define _(m)  FFUI_LDR_CTL(gui_wsettings, m)
 FF_EXTERN const ffui_ldr_ctl wsettings_ctls[] = {
 	_(wnd),
-	_(cbdarktheme),
+	_(ltheme),		_(cbdarktheme),
 	_(ldev),		_(cbdev),
 	_(lseek_by),	_(eseek_by),
 	_(lleap_by),	_(eleap_by),
@@ -122,14 +23,7 @@ FF_EXTERN const ffui_ldr_ctl wsettings_ctls[] = {
 	_(lauto_skip_tail),	_(eauto_skip_tail),
 	_(cbrg_norm),
 	_(cbauto_norm),
-
 	_(cbeqlz),
-	_(cbeqlz_band),
-	_(leqlz_freq),	_(tbeqlz_freq),
-	_(leqlz_width),	_(tbeqlz_width),
-	_(leqlz_gain),	_(tbeqlz_gain),
-	_(eeqlz),
-
 	FFUI_LDR_CTL_END
 };
 #undef _
@@ -140,6 +34,12 @@ const ffarg wsettings_args[] = {
 	{}
 };
 #undef O
+
+static const char* const themes[] = {
+	"default",
+	"dark-purple",
+	"dark-white",
+};
 
 static const char* auto_skip_write(xxstr_buf<100> &s, int val)
 {
@@ -163,8 +63,9 @@ static void wsettings_ui_to_conf()
 {
 	gui_wsettings *w = gg->wsettings;
 
-	if (w->cbdarktheme.h)
-		theme_switch(w->cbdarktheme.checked());
+#ifdef FF_WIN
+	theme_switch(themes[w->cbdarktheme.get()]);
+#endif
 
 	gd->conf.auto_norm = w->cbauto_norm.checked();
 	gd->conf.rg_norm = w->cbrg_norm.checked() && !gd->conf.auto_norm;
@@ -172,7 +73,8 @@ static void wsettings_ui_to_conf()
 
 	struct gui_conf *conf = ffmem_new(struct gui_conf);
 	conf->eqlz_on = w->cbeqlz.checked();
-	conf->eqlz = w->eeqlz.text().ptr;
+	conf->eqlz = (gg->eqlz) ? gg->eqlz : ffsz_dup(gd->conf.eqlz);
+	gg->eqlz = NULL;
 	gui_core_task_ptr(list_conf_set, conf);
 
 	gd->conf.seek_step_delta = xxvec(w->eseek_by.text()).str().uint32(10);
@@ -181,12 +83,25 @@ static void wsettings_ui_to_conf()
 	gd->conf.auto_skip_tail_sec_pct = auto_skip_read(xxvec(w->eauto_skip_tail.text()).str());
 }
 
+static void wsettings_theme(gui_wsettings *w)
+{
+#ifdef FF_WIN
+	for (uint i = 0;  i < FF_COUNT(themes);  i++) {
+		w->cbdarktheme.add(themes[i]);
+		if (gd->conf.theme
+			&& ffsz_eq(gd->conf.theme, themes[i]))
+			w->cbdarktheme.set(i);
+	}
+	if (!gd->conf.theme)
+		w->cbdarktheme.set(0);
+#endif
+}
+
 static void wsettings_ui_from_conf()
 {
 	gui_wsettings *w = gg->wsettings;
 
-	if (w->cbdarktheme.h)
-		w->cbdarktheme.check(!!gd->conf.theme);
+	wsettings_theme(w);
 
 	w->cbrg_norm.check(!!gd->conf.rg_norm);
 	w->cbauto_norm.check(!!gd->conf.auto_norm);
@@ -203,7 +118,6 @@ static void wsettings_ui_from_conf()
 	w->eauto_skip_tail.text(auto_skip_write(s, gd->conf.auto_skip_tail_sec_pct));
 
 	w->cbeqlz.check(gd->conf.eqlz_on);
-	w->eeqlz.text(gd->conf.eqlz);
 }
 
 void wsettings_userconf_write(ffconfw *cw)
@@ -219,28 +133,9 @@ static void wsettings_action(ffui_window *wnd, int id)
 {
 	gui_wsettings *w = gg->wsettings;
 	switch (id) {
-	case A_EQ_CHBAND:
-		w->eqlz_band = &w->eqlz.select_band(w->cbeqlz_band.get());
-		w->tbeqlz_freq.enable(!w->eqlz_band->shelf());
-		w->tbeqlz_width.enable(!w->eqlz_band->shelf());
-		w->tbeqlz_freq.set(w->eqlz_band->freq_progress());
-		w->tbeqlz_width.set(w->eqlz_band->width_progress());
-		w->tbeqlz_gain.set(w->eqlz_band->gain_progress());
-		break;
-
-	case A_EQ_FREQ:
-		w->eqlz_band->freq_set(w->tbeqlz_freq.get());
-		goto eq_apply;
-
-	case A_EQ_WIDTH:
-		w->eqlz_band->width_set(w->tbeqlz_width.get());
-		goto eq_apply;
-
-	case A_EQ_GAIN:
-		w->eqlz_band->gain_set(w->tbeqlz_gain.get());
-
-	eq_apply:
-		w->eeqlz.text(w->eqlz.str().strz());
+	case A_SETS_EQLZ:
+		if (w->cbeqlz.checked())
+			weqlz_show(1);
 		break;
 
 	case A_SETTINGS_APPLY:
@@ -265,20 +160,6 @@ void wsettings_show(uint show)
 		if (w->wnd_pos)
 			conf_wnd_pos_read(&w->wnd, FFSTR_Z(w->wnd_pos));
 		ffmem_free(w->wnd_pos);
-
-		w->eqlz.init(gd->conf.eqlz);
-		static const char eqlz_bands[][12] = {
-			"Low Shelf",
-			"Band #2",
-			"Band #3",
-			"Band #4",
-			"High Shelf",
-		};
-		for (uint i = 0;  i < FF_COUNT(eqlz_bands);  i++) {
-			w->cbeqlz_band.add(eqlz_bands[i]);
-		}
-		w->cbeqlz_band.set(0);
-		wsettings_action(&w->wnd, A_EQ_CHBAND);
 
 		wsettings_ui_from_conf();
 	}

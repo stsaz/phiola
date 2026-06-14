@@ -3,13 +3,6 @@
 
 #include <avpack/decl.h>
 
-enum {
-	CBREC_STARTED = 0,
-	CBREC_FINISHED = 1,
-	CBREC_NOTSUPPORTED = 2,
-	CBREC_ERR = 3,
-};
-
 static void tee_out_nfy(int code, const char *fn)
 {
 	JNIEnv *env;
@@ -20,7 +13,7 @@ static void tee_out_nfy(int code, const char *fn)
 	}
 
 	jstring js = (fn) ? jni_js_sz(fn) : NULL;
-	jni_call_void(x->Callbacks.obj, x->Callbacks.recording, code, js);
+	jni_call_void(x->Callbacks.obj, x->Callbacks.recording, 1, code, js);
 
 	jni_vm_detach(jvm);
 }

@@ -50,7 +50,7 @@
 
 		<activity
 			android:name=".SettingsActivity"
-			android:label="Settings"
+			android:label="@string/sett_activity_label"
 			android:parentActivityName=".MainActivity">
 			<meta-data
 				android:name="android.support.PARENT_ACTIVITY"
@@ -59,7 +59,7 @@
 
 		<activity
 			android:name=".TagsActivity"
-			android:label="File Tags"
+			android:label="@string/tags_activity_label"
 			android:parentActivityName=".MainActivity">
 			<meta-data
 				android:name="android.support.PARENT_ACTIVITY"
@@ -68,7 +68,7 @@
 
 		<activity
 			android:name=".ConvertActivity"
-			android:label="Convert Audio"
+			android:label="@string/conv_activity_label"
 			android:parentActivityName=".MainActivity">
 			<meta-data
 				android:name="android.support.PARENT_ACTIVITY"

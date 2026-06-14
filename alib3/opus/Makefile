@@ -4,7 +4,7 @@ include ../config.mk
 
 VER := 1.5.2
 URL := https://github.com/xiph/opus/archive/refs/tags/v$(VER).zip
-MD5SUM := 7173ac4cb6fb4177a2a7e6a6ab1b6e19
+SHA256SUM := c26f6200778c844cf5211f0d2dbaafadce3f20e9e8efe7495e01aaa9987c5b13
 PKG := $(ALIB3)/opus/opus-$(VER).zip
 DIR := opus-$(VER)
 LIB := libopus-phi.$(SO)
@@ -20,7 +20,7 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
-	echo "$(MD5SUM) *$(PKG)" | md5sum -c -
+	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
 	$(UNZIP) $(PKG)
 
 # config

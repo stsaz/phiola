@@ -166,7 +166,7 @@ struct phi_track {
 		uint64 seek; // Seek to offset and reset. -1:unset
 		fftime mtime; // Modification date/time
 		u_char format; // AVPKF_*
-		uint no_auto_seek :1;
+		uint no_auto_seek :1; // Disable automatic seek requests when reading metadata
 	} input;
 
 	phi_meta meta;
@@ -180,7 +180,7 @@ struct phi_track {
 	uint meta_reading :1;
 	uint playback :1;
 	uint q_notified :1;
-	uint tee_active :1;
+	uint tee_active :1; // Set by 'ui' to start/stop writing to file for tracks with `tee_dynamic=1`
 
 	struct {
 		struct phi_af format;
@@ -266,8 +266,8 @@ struct phi_track {
 	struct {
 		char *name;
 		uint64 seek; // Seek to offset and reset. -1:unset
-		uint cant_seek :1;
-		uint allow_async :1;
+		uint cant_seek :1; // Can't seek on output stream (e.g. stdout)
+		uint allow_async :1; // Allow asynchronous/non-blocking writing
 	} output;
 
 	u_char area[0];

@@ -3,6 +3,8 @@
 
 struct rec_ctx {
 	uint state;
+	uint64 apos;
+	double cur_db, max_db;
 };
 
 enum {
@@ -22,7 +24,7 @@ static void rectrk_close(void *ctx, phi_track *t)
 
 	const char *fn = (t->output.name) ? t->output.name : t->conf.ofile.name;
 	jstring joname = jni_js_sz(fn);
-	jni_call_void(x->Callbacks.obj, x->Callbacks.recording, t->error, joname);
+	jni_call_void(x->Callbacks.obj, x->Callbacks.recording, 0, t->error, joname);
 
 end:
 	ffmem_free(rx);
@@ -34,11 +36,17 @@ static int rectrk_process(void *ctx, phi_track *t)
 	return PHI_DONE;
 }
 
-static const phi_filter phi_android_guard = {
+static const phi_filter rec_guard = {
 	NULL, rectrk_close, rectrk_process,
 	"rec-guard"
 };
 
+static void* rec_ctl_open(phi_track *t)
+{
+	struct rec_ctx *rx = t->udata;
+	rx->cur_db = rx->max_db = -INFINITY;
+	return (void*)1;
+}
 
 static int rec_ctl_process(void *ctx, phi_track *t)
 {
@@ -50,12 +58,19 @@ static int rec_ctl_process(void *ctx, phi_track *t)
 			return PHI_ASYNC;
 		return PHI_MORE;
 	}
+
+	double db = t->audio.maxpeak_db;
+	rx->cur_db = db;
+	if (rx->max_db < db)
+		rx->max_db = db;
+
+	rx->apos = t->audio.pos;
 	t->data_out = t->data_in;
 	return PHI_DATA;
 }
 
-static const phi_filter phi_android_rec_ctl = {
-	NULL, NULL, rec_ctl_process,
+static const phi_filter rec_ctl = {
+	rec_ctl_open, NULL, rec_ctl_process,
 	"rec-ctl"
 };
 
@@ -94,6 +109,24 @@ static struct jni_cmap RecordParams_map[] = {
 };
 #undef _I
 #undef _S
+
+enum {
+	FMR_DAN = 5,
+};
+
+static struct filter_map FF_STRUCTALIGN(64) rec_f_map[] = {
+	{ "",					1, &rec_guard },
+	{ "core.auto-rec",		1, NULL },
+	{ "afilter.until",		1, NULL },
+	{ "afilter.rtpeak",		1, NULL },
+	{ "",					1, &rec_ctl },
+	{ "af-danorm.f",		0, NULL },
+	{ "afilter.gain",		1, NULL },
+	{ "afilter.auto-conv",	1, NULL },
+	{ "format.auto-write",	1, NULL },
+	{ "core.file-write",	1, NULL },
+	{ FM_END,				1, NULL }
+};
 
 JNIEXPORT jlong JNICALL
 Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring joname, jobject jconf)
@@ -166,16 +199,12 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 	const phi_track_if *track = x->core->track;
 	phi_track *t = track->create(&c);
 
-	if (!track->filter(t, &phi_android_guard, 0)
-		|| !track->filter(t, x->core->mod("core.auto-rec"), 0)
-		|| !track->filter(t, x->core->mod("afilter.until"), 0)
-		|| !track->filter(t, &phi_android_rec_ctl, 0)
-		|| ((rp.flags & RECF_DANORM)
-			&& !track->filter(t, x->core->mod("af-danorm.f"), 0))
-		|| !track->filter(t, x->core->mod("afilter.gain"), 0)
-		|| !track->filter(t, x->core->mod("afilter.auto-conv"), 0)
-		|| !track->filter(t, x->core->mod("format.auto-write"), 0)
-		|| !track->filter(t, x->core->mod("core.file-write"), 0))
+	struct filter_map map[FF_COUNT(rec_f_map)];
+	ffmem_copy(map, rec_f_map, sizeof(rec_f_map));
+
+	map[FMR_DAN].use = !!(rp.flags & RECF_DANORM);
+
+	if (trk_add_filters(x->core, t, map, rec_f_map))
 		goto end;
 
 	struct rec_ctx *rx = ffmem_new(struct rec_ctx);
@@ -232,4 +261,40 @@ Java_com_github_stsaz_phiola_Phiola_recCtrl(JNIEnv *env, jobject thiz, jlong trk
 
 	dbglog("%s: exit", __func__);
 	return e;
+}
+
+struct RecInfo {
+	int sec;
+	double cur_db, max_db;
+};
+
+#define _I(name)  { #name, 'i', FF_OFF(struct RecInfo, name), 0 }
+#define _D(name)  { #name, 'd', FF_OFF(struct RecInfo, name), 0 }
+static struct jni_cmap RecInfo_map[] = {
+	_I(sec),
+	_D(cur_db),
+	_D(max_db),
+	{}
+};
+#undef _I
+#undef _D
+
+JNIEXPORT jobject JNICALL
+Java_com_github_stsaz_phiola_Phiola_recInfo(JNIEnv *env, jobject thiz, jlong trk)
+{
+	dbglog("%s: enter", __func__);
+	if (trk == 0) return NULL;
+	phi_track *t = (void*)trk;
+	struct rec_ctx *rx = t->udata;
+
+	struct RecInfo ri = {
+		.sec = (t->audio.format.rate) ? rx->apos / t->audio.format.rate : 0,
+		.cur_db = rx->cur_db,
+		.max_db = rx->max_db,
+	};
+	jobject jri = jni_obj_new(x->rec.RecInfo.cls, x->rec.RecInfo.init);
+	jni_obj_write(env, jri, x->rec.RecInfo.cls, RecInfo_map, &ri);
+
+	dbglog("%s: exit", __func__);
+	return jri;
 }

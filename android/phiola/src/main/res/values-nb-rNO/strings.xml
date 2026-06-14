@@ -5,8 +5,8 @@
     <string name="bplay">Spill</string>
     <string name="bpause">Pause</string>
     <string name="bprev">Forrige</string>
-    <string name="brec">Opptak</string>
-    <string name="brec_stop">stopp opptak</string>
+    <string name="brec">Ta opp</string>
+    <string name="brec_stop">Stopp opptak</string>
     <string name="conv_input_file">Inndatafil:</string>
     <string name="conv_out_dir">Utdatamappe:</string>
     <string name="conv_out_fmt">Utdataformat:</string>

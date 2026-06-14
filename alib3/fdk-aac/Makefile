@@ -4,7 +4,7 @@ include ../config.mk
 
 VER := 2.0.3
 URL := https://github.com/mstorsjo/fdk-aac/archive/refs/tags/v$(VER).tar.gz
-MD5SUM := fbaf688a6fd6ddf63c68566909a178b4
+SHA256SUM := e25671cd96b10bad896aa42ab91a695a9e573395262baed4e4a2ff178d6a3a78
 PKG := $(ALIB3)/fdk-aac/$(notdir $(URL))
 DIR := fdk-aac-$(VER)
 LIB := libfdk-aac-phi.$(SO)
@@ -18,7 +18,7 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
-	echo "$(MD5SUM) *$(PKG)" | md5sum -c -
+	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
 	$(UNTAR_GZ) $(PKG)
 	cat $(ALIB3)/fdk-aac/*.patch | patch -d $(DIR) -p1
 

@@ -1,0 +1,13 @@
+Package: phiola
+Version: __PHIOLA_VERSION__
+Architecture: __ARCH__
+Section: audio
+Priority: optional
+Maintainer: Simon Zolin <stsaz@pm.me>
+Depends: libasound2, libpulse0
+Description: Fast audio player, recorder, converter, and streaming server.
+ phiola is a fast, low-overhead audio toolkit for playback, recording,
+ conversion, and streaming. Designed for a minimal CPU and memory footprint,
+ it is ideal for automation and resource-constrained environments.
+ It features bundled codecs and supports multiple control interfaces,
+ including CLI, TUI, and an optional GTK-based GUI.

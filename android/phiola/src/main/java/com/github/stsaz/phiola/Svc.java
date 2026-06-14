@@ -36,6 +36,7 @@ public class Svc extends MediaBrowserServiceCompat {
 	private PlaybackStateCompat.Builder pstate;
 	private NotificationCompat.Builder nfy;
 	private Runnable delayed_stop;
+	private PlaybackObserver play_obs;
 
 	public void onCreate() {
 		super.onCreate();
@@ -44,6 +45,7 @@ public class Svc extends MediaBrowserServiceCompat {
 
 	public void onDestroy() {
 		core.dbglog(TAG, "onDestroy");
+		track.observer_rm(play_obs);
 		sess.release();
 		core.close();
 		super.onDestroy();
@@ -71,11 +73,12 @@ public class Svc extends MediaBrowserServiceCompat {
 		queue = core.queue();
 		queue.nfy_add(this::sess_setqueue);
 		track = core.track;
-		track.observer_add(new PlaybackObserver() {
+		play_obs = new PlaybackObserver() {
 			public void opened(TrackHandle t) { new_track(t); }
 			public void close(TrackHandle t) { close_track(t); }
 			public void process(TrackHandle t) { update_track(t); }
-		});
+		};
+		track.observer_add(play_obs);
 
 		delayed_stop = this::stop_delayed;
 

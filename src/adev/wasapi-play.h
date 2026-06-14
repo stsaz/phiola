@@ -129,7 +129,7 @@ static int wasapi_write(void *ctx, phi_track *t)
 	switch (w->state) {
 	case ST_TRY:
 	case ST_OPEN:
-		w->try_open = (w->state == 0);
+		w->try_open = (w->state == ST_TRY);
 		r = wasapi_create(w, t);
 		if (r == PHI_ERR) {
 			return PHI_ERR;
@@ -164,6 +164,7 @@ static int wasapi_write(void *ctx, phi_track *t)
 			For exclusive mode we need to handle new format conversion properly which isn't that easy to do.
 			*/
 			w->state = ST_OPEN;
+			w->err_code = 0;
 			return wasapi_write(w, t);
 		}
 		return PHI_ERR;

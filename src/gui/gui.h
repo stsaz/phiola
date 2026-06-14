@@ -40,6 +40,10 @@ FF_EXTERN void wsettings_show(uint show);
 FF_EXTERN void wsettings_userconf_write(ffconfw *cw);
 FF_EXTERN const struct ffarg wsettings_args[];
 
+struct gui_weqlz;
+FF_EXTERN void weqlz_init();
+FF_EXTERN void weqlz_show(uint show);
+
 struct gui_wgoto;
 FF_EXTERN void wgoto_init();
 
@@ -80,7 +84,7 @@ struct gui {
 	ffui_menu
 #endif
 		mfile
-		, mlist
+		, mlist_sort, mlist
 		, mplay
 		, mrecord
 		, mconvert
@@ -93,6 +97,7 @@ struct gui {
 	struct gui_winfo*		winfo;
 	struct gui_wrename*		wrename;
 	struct gui_wsettings*	wsettings;
+	struct gui_weqlz*	weqlz;
 	struct gui_wgoto*		wgoto;
 	struct gui_wlistadd*	wlistadd;
 	struct gui_wlistfilter*	wlistfilter;
@@ -103,6 +108,12 @@ struct gui {
 
 	ffui_loader	ldr;
 	ffvec		ui_conf; // Contents of 'ui.conf' file
+#ifdef FF_WIN
+	struct dark_theme dkth;
+	uint theme_dark_default :1;
+#endif
+
+	char *eqlz;
 
 	struct memarea area;
 };
@@ -119,7 +130,7 @@ static inline void conf_wnd_pos_write(ffconfw *cw, const char *name, ffui_window
 	ffui_wnd_placement(w, &pos);
 	ffconfw_addf(cw, "%s \"%d %d %u %u\"", name, pos.x, pos.y, pos.cx, pos.cy);
 }
-FF_EXTERN void theme_switch(uint i);
+FF_EXTERN void theme_switch(const char *name);
 FF_EXTERN void gui_dragdrop(ffstr data);
 FF_EXTERN void gui_quit();
 FF_EXTERN int gui_dlg_load();

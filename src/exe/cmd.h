@@ -154,7 +154,8 @@ err:
 
 static int cmd_input(ffvec *input, ffstr s)
 {
-	if (s.len && s.ptr[0] == '-')
+	if (s.len && s.ptr[0] == '-'
+		&& !(x->cmd.flags & FFARG_F_DASHDASH))
 		return _ffargs_err(&x->cmd, 1, "unknown option '%S'. Use '-h' for usage info.", &s);
 
 	if (ffstr_eqz(&s, "@names"))
@@ -456,6 +457,8 @@ done:
 	return 0;
 }
 
+static int bash_completion();
+
 #define O(m)  (void*)FF_OFF(struct exe, m)
 static const struct ffarg cmd_root[] = {
 	{ "-Background",'1',		O(background) },
@@ -465,6 +468,7 @@ static const struct ffarg cmd_root[] = {
 
 	{ "-help",		0,			root_help },
 
+	{ "__bash_completion",0,	bash_completion },
 	{ "__bgchild",	'1',		O(background_child) },
 
 	{ "convert",	'{',		cmd_conv_init },
@@ -503,4 +507,78 @@ static int cmd(char **argv, uint argc, const char *cmd_line)
 		return 1;
 
 	return r;
+}
+
+/** Print the bash-completion script to stdout */
+static int bash_completion()
+{
+	static const char templ_s_s[] = "\
+_phiola_completions() {\n\
+    local cur=\"${COMP_WORDS[COMP_CWORD]}\"\n\
+    local prev=\"${COMP_WORDS[COMP_CWORD-1]}\"\n\
+    local cmd=\"${COMP_WORDS[1]}\"\n\
+    local opts=\"\"\n\
+\n\
+    if [[ ${COMP_CWORD} -eq 1 ]]; then\n\
+        opts=\"%s\"\n\
+\n\
+    else\n\
+        case \"$cmd\" in\n\
+%s\n\
+        esac\n\
+    fi\n\
+\n\
+    compopt -o filenames\n\
+    if [[ -n \"$opts\" ]]; then\n\
+        mapfile -t COMPREPLY < <(compgen -W \"$opts\" -- \"$cur\")\n\
+    else\n\
+        mapfile -t COMPREPLY < <(compgen -f -- \"$cur\")\n\
+    fi\n\
+}\n\
+\n\
+complete -F _phiola_completions phiola\n\
+";
+
+	static const char cmd_templ_s_s[] = "\
+\n\
+            %s)\n\
+                if [[ \"$cur\" == -* ]]; then\n\
+                    opts=\"%s\"\n\
+                fi\n\
+                ;;\n\
+";
+
+	ffvec buf = {}, cmds = {}, params = {};
+
+	for (const struct ffarg *a = cmd_root;  a->name[0];  a++) {
+		if (a->name[0] == '_')
+			continue;
+
+		ffvec_addfmt(&cmds, "%s ", a->name);
+
+		if (a->flags == '{') {
+			struct ffarg_ctx (*cmd_init)(void *obj) = a->value;
+			struct ffarg_ctx cx = cmd_init(NULL);
+
+			for (const struct ffarg *a = cx.scheme;  a->name[0];  a++) {
+				ffvec_addfmt(&buf, "%s ", a->name);
+			}
+			buf.len--;
+			((char*)buf.ptr)[buf.len] = '\0';
+
+			ffvec_addfmt(&params, cmd_templ_s_s, a->name, buf.ptr);
+			buf.len = 0;
+		}
+	}
+	cmds.len--;
+	((char*)cmds.ptr)[cmds.len] = '\0';
+
+	ffvec_addfmt(&buf, templ_s_s, cmds.ptr, params.ptr);
+	ffvec_free(&cmds);
+	ffvec_free(&params);
+
+	ffstdout_write(buf.ptr, buf.len);
+	ffvec_free(&buf);
+	x->exit_code = 0;
+	return 1;
 }

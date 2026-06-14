@@ -3,6 +3,7 @@
 -keep class com.github.stsaz.phiola.Phiola$ConvertParams {*;}
 -keep class com.github.stsaz.phiola.Phiola$Meta {*;}
 -keep class com.github.stsaz.phiola.Phiola$RecordParams {*;}
+-keep class com.github.stsaz.phiola.Phiola$RecInfo {*;}
 -keep interface com.github.stsaz.phiola.Phiola$Callbacks {*;}
 -keep interface com.github.stsaz.phiola.Phiola$PlayObserver {*;}
 -keep interface com.github.stsaz.phiola.Phiola$QueueCallback {*;}

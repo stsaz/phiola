@@ -136,6 +136,7 @@ static int aao_write(audio_out *a, phi_track *t)
 		// Note: this works only because the audio format doesn't change
 		aa_buf_close(NULL);
 		a->state = ST_OPEN;
+		a->err_code = 0;
 		return aao_write(a, t);
 	}
 	return r;

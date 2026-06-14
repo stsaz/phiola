@@ -2,8 +2,8 @@
 Name=phiola
 GenericName=Audio player/recorder/converter
 Comment=Audio player/recorder/converter
-Exec=/usr/bin/phiola gui %F
-Icon=phiola
+Exec=phiola gui %F
+Icon=~/bin/phiola-2/mod/gui/phiola.ico
 Type=Application
 Categories=AudioVideo;Audio
 MimeType=audio/x-wav;audio/opus;audio/ogg;audio/mpeg;audio/mp4;audio/flac;audio/x-wavpack;audio/x-ape;audio/musepack;audio/x-musepack;application/x-cue;audio/x-pls;audio/m3u;

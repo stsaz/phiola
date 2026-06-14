@@ -11,11 +11,8 @@
 # CPU=
 IMAGE_NAME=phiola-android-builder
 CONTAINER_NAME=phiola_android_build
+JOBS=${JOBS:-$(nproc)}
 ARGS=${@@Q}
-
-if test -z "$JOBS" ; then
-	JOBS=$(nproc)
-fi
 
 set -xe
 
@@ -126,18 +123,7 @@ cat >build_android.sh <<EOF
 set -xe
 
 export PATH=/Android/ndk/$ANDROID_NDK_VER/toolchains/llvm/prebuilt/linux-x86_64/bin:\$PATH
-
 export ANDROID_NDK_ROOT=/Android/ndk/$ANDROID_NDK_VER
-mkdir -p ../netmill/3pt/$ODIR
-make -j$JOBS openssl \
- -C ../netmill/3pt/$ODIR \
- -f ../Makefile \
- -I .. \
- SYS=android \
- COMPILER=clang \
- CPU=$CPU \
- NDK_DIR=/Android/ndk/$ANDROID_NDK_VER
-
 export ANDROID_HOME=/Android
 mkdir -p $ODIR
 make -j$JOBS \

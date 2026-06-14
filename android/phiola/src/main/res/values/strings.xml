@@ -7,15 +7,23 @@
 
 	<string name="brec">Record</string>
 	<string name="brec_stop">Stop Recording</string>
-	<string name="brec_marker">Set/Jump to Playback Marker</string>
-	<string name="brec_radio">Record Radio</string>
+	<string name="brec_mic">Record From Mic</string>
+	<string name="brec_radio">Record From Radio</string>
+	<string name="brec_bookmark">Set/Jump Bookmark</string>
+	<string name="brec_hide">Hide Button</string>
+	<string name="brec_start_longpress_hint">Long press to start recording</string>
+	<string name="brec_paused">Paused Recording</string>
+	<string name="brec_resumed">Resumed Recording</string>
 	<string name="main_rec_fin">Finished recording</string>
 	<string name="main_rec_err">Recording error: %s</string>
 	<string name="main_rec_started">Started recording</string>
+	<string name="mrec_info_show">Recording Status</string>
 	<string name="bplay">Play</string>
 	<string name="bpause">Pause</string>
 	<string name="bprev">Previous</string>
 	<string name="bnext">Next</string>
+	<string name="bbmark_set">Bookmark is set to %d:%02d</string>
+	<string name="bbmark_set_hint">Long-press the button to set bookmark</string>
 
 	<string name="explorer_up">&lt;UP&gt;</string>
 	<string name="explorer_stg_dirs">[Storage directories]</string>
@@ -71,6 +79,7 @@
 	<string name="mitem_file_rename">Rename File...</string>
 	<string name="mitem_file_show_info">Show Tags</string>
 
+	<string name="sett_activity_label">Settings</string>
 	<string name="sett_interface">Interface</string>
 	<string name="sett_dark">Dark Theme</string>
 	<string name="sett_color">Main Color...</string>
@@ -111,6 +120,9 @@
 	<string name="sett_rec_name">File Name Template:</string>
 	<string name="sett_rec_src">Audio Source:</string>
 	<string name="sett_rec_chan">Channels:</string>
+	<string name="sett_rec_chan_default">Default</string>
+	<string name="sett_rec_chan_mono">1 (Mono)</string>
+	<string name="sett_rec_chan_stereo">2 (Stereo)</string>
 	<string name="sett_rec_rate">Sample Rate (Hz):</string>
 	<string name="sett_rec_enc">Encoder:</string>
 	<string name="sett_rec_bitrate">Encoder Bitrate (kbit/sec):</string>
@@ -122,10 +134,31 @@
 	<string name="sett_rec_exclusive">Exclusive Mode</string>
 	<string name="sett_rec_list_add">Add Recorded File to Playlist</string>
 
+	<string name="btn_cancel">Cancel</string>
+	<string name="fdelete_title">File Delete</string>
+	<string name="fdelete_msg_trash">Move file to Trash: %s ?</string>
+	<string name="fdelete_btn_trash">Trash</string>
+	<string name="fdelete_msg_delete">Delete file from storage: %s ?</string>
+	<string name="fdelete_btn_delete">Delete</string>
+	<string name="fdelete_deleted">Deleted file</string>
+	<string name="fdelete_trash_moved">Moved file to Trash directory</string>
+
+	<string name="fmove_title">Move file</string>
+	<string name="fmove_msg">Move file to %s ?</string>
+	<string name="fmove_btn_confirm">Move File</string>
+	<string name="fmove_btn_cancel">Do nothing</string>
+	<string name="fmove_done">Moved file to %s</string>
+
+	<string name="frename_title">Rename file</string>
+	<string name="frename_msg">Specify new name</string>
+	<string name="frename_btn_confirm">Rename</string>
+	<string name="frename_done">Renamed file</string>
+
 	<string name="lssv_ldir">Output directory:</string>
 	<string name="lssv_lname">Playlist name:</string>
 	<string name="lssv_bsave">Save</string>
 
+	<string name="conv_activity_label">Convert Audio</string>
 	<string name="conv_in_out">Input &amp; Output</string>
 	<string name="conv_input_file">Input file:</string>
 	<string name="conv_out_dir">Output directory:</string>
@@ -157,6 +190,7 @@
 
 	<string name="conv_go">Begin Conversion</string>
 
+	<string name="tags_activity_label">File Tags</string>
 	<string name="menu_tags_write">Write Tags to File!</string>
 	<string name="menu_tags_clear">Remove All Tags</string>
 	<string name="menu_tag_add">Add Tag...</string>
@@ -168,4 +202,12 @@
 	<string name="about_log_saved">Saved logs to %s</string>
 
 	<string name="tag_edit_n_a">Editing tags for this file format is not supported</string>
+
+	<string name="err_phi_nosrc">Input file doesn\'t exist</string>
+	<string name="err_phi_dstexist">Output file already exists</string>
+	<string name="err_phi_unkifmt">Unknown input file format</string>
+	<string name="err_phi_audio_input">Input audio device problem</string>
+	<string name="err_phi_cancelled">Cancelled</string>
+	<string name="err_phi_aconv">Sample conversion</string>
+	<string name="err_phi_out_fmt">Output format is not supported</string>
 </resources>

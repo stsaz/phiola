@@ -14,7 +14,7 @@ SYS := $(OS)
 CFLAGS += -DFFBASE_MEM_ASSERT \
 	-MMD -MP \
 	-I$(FFBASE) \
-	-Wall -Wextra -Wno-unused-parameter -Wno-multichar \
+	-Wall -Wextra -Wno-typedef-redefinition -Wno-unused-parameter -Wno-multichar \
 	-fPIC -fvisibility=hidden \
 	-g
 ifeq "$(DEBUG)" "1"
@@ -126,6 +126,13 @@ endif
 
 PKG_VER := test
 PKG_ARCH := $(CPU)
+ifeq "$(OS)" "linux"
+ifeq "$(CPU)" "amd64"
+	PKG_ARCH := x86_64
+else
+	PKG_ARCH := aarch64
+endif
+endif
 PKG_PACKER := tar -c --owner=0 --group=0 --numeric-owner -v --zstd -f
 PKG_EXT := tar.zst
 ifeq "$(OS)" "windows"
@@ -142,9 +149,50 @@ $(PKG_DEBUG_NAME):
 	$(PKG_PACKER) $@ *.debug
 package-debug: $(PKG_DEBUG_NAME)
 
+INST_ROOT := install-root
+
+PKG_DEB := phiola_$(PKG_VER)_$(CPU).deb
+deb: $(PKG_DEB)
+$(PKG_DEB): $(INST_ROOT) $(PHIOLA)/installer/deb/control
+	mkdir -p $(INST_ROOT)/DEBIAN
+	sed -e "s/__PHIOLA_VERSION__/$(PKG_VER)/" \
+		-e "s/__ARCH__/$(CPU)/" \
+		$(PHIOLA)/installer/deb/control > $(INST_ROOT)/DEBIAN/control
+	dpkg-deb -v --build $(INST_ROOT) $@
+	rm -rf $(INST_ROOT)/DEBIAN
+
+rpm: $(INST_ROOT) $(PHIOLA)/installer/rpm/nfpm.yaml
+	sed -e "s/__PHIOLA_VERSION__/$(PKG_VER)/" \
+		-e "s/__ARCH__/$(PKG_ARCH)/" \
+		$(PHIOLA)/installer/rpm/nfpm.yaml > $(INST_ROOT)/nfpm.yaml
+	cd $(INST_ROOT) && nfpm pkg --config nfpm.yaml --packager rpm --target ..
+	rm $(INST_ROOT)/nfpm.yaml
+
+$(INST_ROOT): $(APP_DIR)
+	mkdir -p \
+		$@/opt \
+		$@/usr/bin \
+		$@/usr/share/applications \
+		$@/usr/share/bash-completion/completions \
+		$@/usr/share/icons/hicolor/scalable/apps
+	cp -arv $(APP_DIR) $@/opt/
+	ln -sf /opt/phiola-2/phiola $@/usr/bin/phiola
+	rm $@/opt/phiola-2/mod/gui/phiola.desktop
+	cp -av $(PHIOLA)/src/gui/res/phiola.desktop $@/usr/share/applications/
+	cp -av $(PHIOLA)/res/phiola.svg $@/usr/share/icons/hicolor/scalable/apps/
+ifeq "$(CPU)" "amd64"
+	./phiola __bash_completion > $@/usr/share/bash-completion/completions/phiola
+endif
+
+setup_exe:
+	$(MAKE) -f ../installer/exe/Makefile
+
 release: default
 	$(SUBMAKE) package
 	$(SUBMAKE) package-debug
-ifeq "$(WIN_INSTALLER)" "1"
-	$(MAKE) -f ../installer/Makefile
+ifeq "$(OS)" "linux"
+	$(SUBMAKE) deb
+	$(SUBMAKE) rpm
+else ifeq "$(WIN_INSTALLER)" "1"
+	$(SUBMAKE) setup_exe
 endif

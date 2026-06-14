@@ -2,13 +2,14 @@
 
 ![](res/phiola.svg)
 
-phiola - fast audio player, recorder, converter and streaming server for Windows, Linux & Android.
-It can play audio files from your device or remote server, record audio from your microphone or Internet radio stream, process and convert audio into another format, and more.
-Its low CPU consumption conserves the notebook/phone battery.
-You can issue commands to phiola via its CLI, TUI, GUI, system pipe and SDK interfaces.
-Its fast startup time allows using it from custom scripts on a "play-and-exit" or "record-and-exit" basis.
-It's completely portable (all codecs are bundled) - you can run it directly from a read-only flash drive.
-It's a free and open-source project, and you can use it as a standalone application or as a library for your own software.
+phiola is a fast audio player, recorder, converter, and streaming server for Windows, Linux, and Android.
+It can play audio files from your device or a remote server, record audio from your microphone or an internet radio stream, and convert audio into various formats.
+Its low CPU consumption helps extend the battery life of laptops and phones.
+You can control phiola via CLI, TUI, GUI, system pipe, or its API.
+Its fast startup time makes it ideal for custom scripts used on a "play-and-exit" or "record-and-exit" basis.
+
+It is completely portable (all codecs are bundled), meaning you can run it directly from a read-only flash drive.
+phiola is free and open-source; use it as a standalone application or integrate it as a library into your own software.
 
 Screenshots of phiola GUI on Android, KDE/Linux and Windows 10:
 ![phiola GUI on Android, KDE/Linux and Windows 10](../screenshots/phiola-gui-screenshot-android-kdelinux-windows.png)
@@ -20,7 +21,7 @@ Contents:
 * [How to Use CLI](#how-to-use-cli)
 * [How to Use GUI](#how-to-use-gui)
 * [How to Use on Android](#how-to-use-on-android)
-* [How to Use SDK](#how-to-use-sdk)
+* [How to Use API](#how-to-use-api)
 * [Configuration](#configuration)
 * [External Libraries](#external-libraries)
 * [Build](#build)
@@ -34,7 +35,7 @@ Contents:
 * Record audio: `.m4a`(AAC), `.aac`(AAC-LC), `.mp3`, `.ogg`(Vorbis), `.opus`; `.flac`, `.wav`
 * Convert audio
 * Broadcast audio over HTTP
-* List/search file meta tags; edit file tags, write ReplayGain tags (`.mp3`, `.ogg/.opus`, `.flac`)
+* List/search file metadata; edit file tags, write ReplayGain tags (`.mp3`, `.ogg/.opus`, `.flac`)
 * List available audio devices
 * Input: file, directory, ICY/HLS/HTTP/HTTPS URL, console (stdin), playlists: `.m3u`, `.pls`, `.cue`
 * Audio filters:
@@ -45,7 +46,7 @@ Contents:
 * Terminal/Console UI for interaction at runtime
 * GUI for Windows, Linux, Android: manage your playlists and audio files
 * Instant startup time: very short initial delay until the audio starts playing (e.g. Linux/PulseAudio: TUI: `~25ms`, GUI: `~50ms`)
-* Fast (small footprint, low overhead): keeps your CPU, memory & disk I/O at absolute minimum; spends 99% of time inside codec algorithms
+* Fast (small footprint, low overhead): keeps your CPU, memory & disk I/O at absolute minimum; spends 99% of its time inside codec algorithms
 
 **Bonus:** Convenient API with plugin support which allows using all the above features from any C/C++/Java app!
 
@@ -69,9 +70,9 @@ Features and notes by platform:
 
 Download the latest package for your OS and CPU from [phiola Releases](https://github.com/stsaz/phiola/releases)
 
-### Linux
+### Linux (Portable)
 
-For example, here's how you can install the latest release for AMD64 into `~/bin` directory:
+In case you've chosen the portable package (i.e. `phiola-....tar.zst`), here's how you can install it into the `~/bin` directory:
 
 ```sh
 wget https://github.com/stsaz/phiola/releases/download/v2.3.12/phiola-2.3.12-linux-amd64.tar.zst
@@ -87,7 +88,7 @@ If you choose another directory rather than `~/bin`, then you should also edit `
 
 The easiest way to install phiola on Windows is to execute `phiola-...-windows-x64-setup.exe` and specify the installation directory.
 
-Another option is to manually unpack `phiola-...-windows-x64.zip` and add phiola directory to your `PATH` environment.
+Another option is to manually unpack `phiola-...-windows-x64.zip` and add the phiola directory to your `PATH` environment.
 
 ### Android
 
@@ -100,12 +101,12 @@ Or install .apk manually:
 * To be able to install .apk you need to enable "Allow installation from unknown sources" option in your phone's settings (you can disable it again after installation)
 * Tap on .apk file to install it on your phone
 
-Or you can install .apk file from the PC connected to your phone with `adb install`.
+Or you can install an .apk file from the PC connected to your phone with `adb install`.
 
 
 ## How to Use CLI
 
-> Important: enclose in quotes the file names containing spaces or special characters, e.g.: `phiola play "My Music"`; `phiola play "My Recordings" -include "*.wav"`.
+> Important: enclose file names containing spaces or special characters in quotes, e.g.: `phiola play "My Music"`; `phiola play "My Recordings" -include "*.wav"`.
 
 Play:
 
@@ -115,17 +116,17 @@ phiola play file.mp3 *.flac "My Music" http://server/music.m3u
 # or just
 phiola file.mp3 *.flac "My Music" http://server/music.m3u
 
-# Play all files within directory in random order and auto-skip the first 20 seconds from each track
+# Play all files within a directory in random order and auto-skip the first 20 seconds from each track
 phiola "My Music" -random -seek 0:20
 
 # Play on Linux directly via ALSA (and not PulseAudio)
 phiola file.mp3 -audio alsa
 
-# Play Internet radio and save the tracks as local files.
-# These files will be named automatically using the meta data sent by server.
+# Play an internet radio and save the tracks as local files.
+# These files will be named automatically using the metadata sent by the server.
 phiola http://server/stream -tee "@artist - @title.mp3"
 
-# Play Internet radio with on-demand recording
+# Play an internet radio with on-demand recording
 phiola http://server/stream -recordable
 # Then at any time press Shift+R to start/stop recording
 
@@ -137,7 +138,7 @@ phiola http://server/music.mp3 -dup @stdout.wav | phiola convert @stdin -aac_q 6
 phiola file.mp3 -equalizer "t bass g 3, f 600 w 1.5q g -6, t treble g 3"
 ```
 
-While audio is playing, you can control phiola via keyboard.  The most commonly used commands are:
+While audio is playing, you can control phiola via the keyboard.  The most commonly used commands are:
 
 | Key | Action |
 | --- | --- |
@@ -246,7 +247,7 @@ Edit file tags:
 
 ```sh
 # Replace/add MP3 tags in-place
-# WARNING: please test first before actually using on real files (or at least make backups)!
+# WARNING: please test this first before using it on real files (or at least make backups)!
 phiola tag -m "artist=Great Artist" -m "title=Cool Song" file.mp3
 
 # Remove all existing tags; add new tags
@@ -315,9 +316,9 @@ Start phiola GUI:
 	phiola gui
 	```
 
-Then add some files to playlist via drag-n-drop from your File Manager, or via `List->Add` menu command.
+Then add some files to your playlist via drag-n-drop from your File Manager, or via `List->Add` menu command.
 
-**Bonus:** you can modify the appearance by editing the GUI source file: `phiola-2/mod/gui/ui.conf`.  You can also modify the text by editing language files, e.g. `phiola-2/mod/gui/lang_en.conf`.  Restart phiola GUI after you make changes to those files.
+**Bonus:** you can modify the appearance by editing the GUI source file: `phiola-2/mod/gui/ui.conf`.  You can also modify the text by editing language files, e.g. `phiola-2/mod/gui/lang_en.conf`.  On Windows you can modify the dark theme colors by editing `phiola-2/mod/gui/theme-dark-white.conf`.  Restart phiola GUI after you make changes to those files.
 
 ### 100% Portable Mode
 
@@ -326,26 +327,26 @@ By default, phiola GUI saves and restores its state (including your playlists) o
 * Windows: `%APPDATA%\phiola`
 * Linux: `$HOME/.config/phiola`
 
-But in case you don't want this, then just create an empty `[phiola directory]/mod/gui/user.conf` file.  As long as this file is present, phiola GUI will store its state there, and it won't touch anything inside your user directory.
+If you prefer not to save state, simply create an empty `[phiola directory]/mod/gui/user.conf` file.  As long as this file is present, phiola GUI will store its state there, and it won't touch anything inside your user directory.
 
 
 ## How to Use on Android
 
-First time start:
+Starting for the first time:
 
 * Run phiola app
 * Tap on `Explorer` tab
-* Android will ask you to grant/deny permissions to phiola.  Allow to read your storage files.
-* Tap on the music file you want to listen
+* Android will ask you to grant/deny permissions to phiola.  Allow phiola to read your storage files.
+* Tap on the music file you want to listen to
 * Or long-press on the directory with your music, it will be added to the playlist; tap `Play`
 * Tap on `Playlist` tab to switch the view to your playlist
 
 ### Recording From Radio on Android
 
 By default the `Record` button starts recording from microphone.
-Here's how you can reconfigure phiola for recording audio from Internet radio:
+Here's how you can reconfigure phiola for recording audio from the internet radio:
 
-1. Go to `Settings` and for the `First Control Button` setting choose `Record From Radio`;  return to main screen.
+1. Go to `Settings`, then under the `First Control Button` setting, choose `Record From Radio`;  return to main screen.
 1. Go to `List` -> `List: Add...` and paste the URL; tap `Add`.
 1. Tap on the URL in the playlist to start playback.
 1. Tap on `Record` button (bottom-left button) to start recording; tap again to stop recording.  Your recorded files are stored inside `Recording` directory.
@@ -353,25 +354,25 @@ Here's how you can reconfigure phiola for recording audio from Internet radio:
 > Note: phiola supports recording from AAC or MP3 radio streams.
 
 
-## How to Use SDK
+## How to Use API
 
-The best example how to use phiola software interface is to see the source code of phiola executor in `src/exe`, e.g. [src/exe/play.h](src/exe/play.h) contains the code that adds input files into a playlist and starts the playback.
+The best example of how to use the phiola software interface is to see the source code of phiola executor in `src/exe`, e.g. [src/exe/play.h](src/exe/play.h) contains the code that adds input files into a playlist and starts the playback.
 
 * [src/phiola.h](src/phiola.h) describes all interfaces implemented either by phiola Core or dynamic modules
 * [android/.../Phiola.java](android/phiola/src/main/java/com/github/stsaz/phiola/Phiola.java) is a Java interface
 * [src/track.h](src/track.h) contains internal declarations for a phiola track, and you'll need it only if you want to write your own filter
 
-A short description of how phiola works:
+Here's how phiola works:
 
-* User starts phiola app - the top-level module, which I call *Executor*, starts running.
-* Executor loads *Core* module that provides access to all phiola's functions.
-* Executor waits (if in graphical mode) and analyzes the user's command and decides what to do next.
-* Most commonly (i.e. for audio playback), Executor prepares the queue of tracks and starts the playback.
-* A *Track* represents a single job (a single file) and consists of several Filters linked together to form a conveyor.  While a track is running, Core consistently calls its Filters, going forth and back through the conveyor until all Filters complete their job.  Several Tracks can run in parallel.
-* A *Filter* is a piece of code located inside a Module, and it performs a single task on a particular Track.
-* A *Module* is a file (`.so/.dll`), it may contain one or several Filters, and it provides direct access for them to Executor, Core or other Modules.  All necessary Modules are loaded on-demand while the Tracks are running.
-* Before being started, each Track is assigned to a Worker.  A *Worker* is a system thread (a logical CPU core) that actually executes the Filters code.
-* When a Track is being started, stopped or updated, Executor's own Filters get called, so it can report the current status back to the user.
+* When the user launches the phiola app, the top-level module, the *Executor*, begins running.
+* The Executor loads the *Core* module, which provides access to all of phiola's functions.
+* In graphical mode, the Executor waits for and analyzes user commands to decide the next action.
+* For audio playback, the Executor prepares a queue of tracks and initiates playback.
+* A *Track* represents a single job (e.g., a single file being played) and consists of several Filters linked together to form a processing pipeline.  While a track is running, the Core calls these Filters in sequence until the entire pipeline is complete.  Multiple tracks can run in parallel.
+* A *Filter* is a piece of code located within a Module that performs a single, specific task on a Track.
+* A *Module* is a shared library that may contain one or more Filters.  It provides access for those Filters to the Executor, Core, or other Modules.  All necessary Modules are loaded on-demand while Tracks are running.
+* Before a Track begins, it is assigned to a *Worker* — a system thread that executes the Filter code.
+* When a Track starts, stops, or is updated, the Executor's internal Filters are called to relay status updates to the user interface.
 
 
 ## Configuration
@@ -399,7 +400,7 @@ libsox,
 [libzstd](https://github.com/facebook/zstd),
 [libDynamicAudioNormalizer](https://github.com/lordmulder/DynamicAudioNormalizer).
 And these unmodified libraries:
-[openssl](https://www.openssl.org).
+[openssl](https://github.com/openssl/openssl).
 Many thanks to their creators for the great work!!!
 Please consider their licenses before commercial use.
 See contents of `alib3/` for more info.
@@ -420,8 +421,8 @@ Additionally:
 
 ## Bug report
 
-If you encounter a bug, please report it via GitHub Issues.
-When filing a bug report try to provide enough information that can help the developers to understand and fix the problem.
+If you encounter a bug, please report it via [phiola GitHub Issues](https://github.com/stsaz/phiola/issues).
+When filing a bug report, please provide as much information as possible to help developers understand and fix the problem.
 
 When using CLI, additional debug messages may help sometimes - just add `-D` after `phiola` when executing a command, e.g.:
 
@@ -435,17 +436,17 @@ It will contain the necessary information about the last time phiola crashed, fo
 
 ## Why use phiola
 
-phiola is not (and most likely will never be) a competitor to large commercial projects such as Winamp, but there are a few points where phiola is better:
+phiola is not a competitor to large-scale commercial projects; instead, its focus is security and speed.  Its main advantages are:
 
-* phiola and all its dependencies are 100% open-source.  This means that you don't run some private and potentially insecure code on your electronic hardware, especially when a music player is running on your computer/phone for 8-14 hours a day.
+* **Open-Source**.  phiola and all its dependencies are completely open-source.  You aren't running private, potentially insecure code on your device — this is critical for software that runs for hours every day.
 
-* phiola is very flexible, it can easily accommodate hundreds of different functions, it can even be included as a module into another project.  If someone decides to make a coffee machine that should also be able to play music, I'm sure phiola would be the best choice for this job :)
+* **High Flexibility**.  phiola is highly adaptable and can easily accommodate a wide range of functions.  It is also designed to be embedded as a module in other projects.  For example, if you were building a smart coffee machine that needed to play music, phiola would be the perfect choice!
 
-* phiola uses the minimum possible resources, but at the same time it's powerful and user-friendly.  Please check your CPU, memory and storage device usage and compare with popular audio software to see whether it's true.  I hope phiola can play its small role in preserving our environment by decreasing power consumption.
+* **Minimal Resource Footprint**.  While powerful and user-friendly, phiola uses the absolute minimum amount of CPU and memory — often significantly less than many mainstream alternatives.  This efficiency extends device battery life and contributes to lower overall power consumption.
 
 
 ## License
 
 phiola is licensed under BSD-2.
-But consider licenses of the third party libraries before commercial use.
+Please review the licenses of all third-party libraries before any commercial use.
 Playback control icons by [Icons8](https://icons8.com).

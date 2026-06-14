@@ -52,6 +52,7 @@ Notes:
 #define JNI_TOBJ "Ljava/lang/Object;"
 #define JNI_TINT "I"
 #define JNI_TLONG "J"
+#define JNI_TDOUBLE "D"
 #define JNI_TBOOL "Z"
 #define JNI_TBYTE "B"
 #define JNI_TARR "["
@@ -303,6 +304,14 @@ static inline void jni_obj_jba_set(JNIEnv *env, jobject jo, jfieldID jf, ffstr d
 #define jni_obj_int_set(jobj, jfield, val) \
 	(*env)->SetIntField(env, jobj, jfield, val)
 
+/** double = obj.double */
+#define jni_obj_double(jobj, jfield) \
+	(*env)->GetDoubleField(env, jobj, jfield)
+
+/** obj.double = VAL */
+#define jni_obj_double_set(jobj, jfield, val) \
+	(*env)->SetDoubleField(env, jobj, jfield, val)
+
 /** bool = obj.bool */
 #define jni_obj_bool(jobj, jfield) \
 	(*env)->GetBooleanField(env, jobj, jfield)
@@ -349,12 +358,19 @@ struct jni_cmap {
 static inline void jni_obj_fields(JNIEnv *env, struct jni_cmap *map, jclass cls)
 {
 	for (struct jni_cmap *it = map;  *it->name;  it++) {
-		const char *t = (it->type == 'i') ? JNI_TINT
-			: (it->type == 'l') ? JNI_TLONG
-			: (it->type == 'z') ? JNI_TBOOL
-			: (it->type == 's') ? JNI_TSTR
-			: (it->type == 'S') ? JNI_TARR JNI_TSTR
-			: "";
+		const char *t = "";
+		switch(it->type) {
+		// case 'b': t = JNI_TBYTE;  break;
+		// case 'c': t = JNI_TCHAR;  break;
+		case 'd': t = JNI_TDOUBLE;  break;
+		// case 'f': t = JNI_TFLOAT;  break;
+		case 'i': t = JNI_TINT;  break;
+		case 'l': t = JNI_TLONG;  break;
+		case 's': t = JNI_TSTR;  break;
+		case 'z': t = JNI_TBOOL;  break;
+
+		case 'S': t = JNI_TARR JNI_TSTR;  break;
+		}
 		it->field_id = (*env)->GetFieldID(env, cls, it->name, t);
 	}
 }
@@ -367,14 +383,22 @@ static inline void jni_obj_read(JNIEnv *env, void *dst, struct jni_cmap *map, jo
 
 	for (const struct jni_cmap *it = map;  *it->name;  it++) {
 		void *ptr = (char*)dst + it->off;
-		if (it->type == 'i')
-			*(jint*)ptr = jni_obj_int(src, it->field_id);
-		else if (it->type == 'l')
-			*(jlong*)ptr = jni_obj_long(src, it->field_id);
-		else if (it->type == 'z')
-			*(jboolean*)ptr = jni_obj_bool(src, it->field_id);
-		else
+		switch (it->type) {
+		case 'i':
+			*(jint*)ptr = jni_obj_int(src, it->field_id);  break;
+
+		case 'l':
+			*(jlong*)ptr = jni_obj_long(src, it->field_id);  break;
+
+		case 'd':
+			*(jdouble*)ptr = jni_obj_double(src, it->field_id);  break;
+
+		case 'z':
+			*(jboolean*)ptr = jni_obj_bool(src, it->field_id);  break;
+
+		default:
 			*(jobject*)ptr = jni_obj_jo(src, it->field_id);
+		}
 	}
 }
 
@@ -388,6 +412,7 @@ static inline void jni_obj_write(JNIEnv *env, jobject dst, jclass cls, struct jn
 		void *ptr;
 		jint *i;
 		jlong *l;
+		jdouble *d;
 		jboolean *z;
 		jobject *o;
 	} u;
@@ -398,14 +423,22 @@ static inline void jni_obj_write(JNIEnv *env, jobject dst, jclass cls, struct jn
 			if (*u.i)
 				jni_obj_int_set(dst, it->field_id, *u.i);
 			break;
+
 		case 'l':
 			if (*u.l)
 				jni_obj_long_set(dst, it->field_id, *u.l);
 			break;
+
+		case 'd':
+			if (*u.d)
+				jni_obj_double_set(dst, it->field_id, *u.d);
+			break;
+
 		case 'z':
 			if (*u.z)
 				jni_obj_bool_set(dst, it->field_id, *u.z);
 			break;
+
 		default:
 			if (*u.o) {
 				jni_obj_jo_set(dst, it->field_id, *u.o);

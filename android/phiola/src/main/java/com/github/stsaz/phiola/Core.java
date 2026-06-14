@@ -151,9 +151,9 @@ class Core extends Util {
 
 				// Main -> Track -> phiola
 				// phiola -[Callbacks]-> Core -[TQ]-> Main
-				public void recording(int code, String filename) {
-					dbglog(TAG, "Callbacks.recording() code:%d", code);
-					tq.post(() -> { rec_finished(code, filename); });
+				public void recording(int mode, int code, String filename) {
+					dbglog(TAG, "Callbacks.recording() mode:%d code:%d", mode, code);
+					tq.post(() -> { rec_finished(mode, code, filename); });
 				}
 			});
 
@@ -193,7 +193,7 @@ class Core extends Util {
 		GUI.msg_show(context, context.getString(R.string.main_rec_started));
 	}
 
-	private void rec_finished(int code, String filename) {
+	private void rec_finished(int mode, int code, String filename) {
 		gui.state_update(GUI.STATE_RECORDING | GUI.STATE_REC_PAUSED, 0);
 		GUI.msg_show(context, (code == 0) ? context.getString(R.string.main_rec_fin)
 			: String.format(context.getString(R.string.main_rec_err), errstr(code)));
@@ -201,7 +201,7 @@ class Core extends Util {
 		if (code == 0 && rec.rec_list_add)
 			qu.current_add(filename, 0);
 
-		if (track.is_recording_mic()) {
+		if (mode == 0) {
 			track.record_stop(true);
 			context.stopService(new Intent(context, RecSvc.class));
 
@@ -334,22 +334,24 @@ class Core extends Util {
 	}
 
 	// enum PHI_E
-	private static final String[] errors = {
-		"",								// PHI_E_OK
-		"Input file doesn't exist",		// PHI_E_NOSRC
-		"Output file already exists",	// PHI_E_DSTEXIST
-		"Unknown input file format",	// PHI_E_UNKIFMT
-		"Input audio device problem", // PHI_E_AUDIO_INPUT
-		"Cancelled", // PHI_E_CANCELLED
-		"Sample conversion", // PHI_E_ACONV
-		"Output format is not supported", // PHI_E_OUT_FMT
+	private static final int[] phi_errors = {
+		0,								// PHI_E_OK
+		R.string.err_phi_nosrc,			// PHI_E_NOSRC
+		R.string.err_phi_dstexist,		// PHI_E_DSTEXIST
+		R.string.err_phi_unkifmt,		// PHI_E_UNKIFMT
+		R.string.err_phi_audio_input,	// PHI_E_AUDIO_INPUT
+		R.string.err_phi_cancelled,		// PHI_E_CANCELLED
+		R.string.err_phi_aconv,			// PHI_E_ACONV
+		R.string.err_phi_out_fmt,		// PHI_E_OUT_FMT
 	};
 
-	String errstr(int r) {
-		if ((r & 0x80000000) != 0) // PHI_E_SYS
+	String errstr(int e) {
+		if (e == 0)
+			return "";
+		if ((e & 0x80000000) != 0) // PHI_E_SYS
 			return "System";
-		if (r < errors.length)
-			return errors[r];
+		if (e < phi_errors.length)
+			return context.getString(phi_errors[e]);
 		return "Other";
 	}
 }
