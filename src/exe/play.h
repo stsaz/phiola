@@ -65,6 +65,7 @@ Options:\n\
                         Connection timeout (in seconds): 1..255\n\
   `-recv_timeout` NUMBER  Receive timeout (in seconds): 1..255\n\
   `-no_meta`              Disable ICY meta data\n\
+  `-tui2`                 Use TUIv2 (Experimental)\n\
 ");
 	x->exit_code = 0;
 	return 1;
@@ -90,6 +91,7 @@ struct cmd_play {
 	u_char	repeat_all;
 	u_char	rg_norm;
 	u_char	seek_type;
+	u_char	tui2;
 	u_char	until_type;
 	uint	buffer;
 	uint	connect_timeout;
@@ -217,7 +219,7 @@ static int play_action(struct cmd_play *p)
 	x->queue->on_change(q_on_change);
 	struct phi_queue_conf qc = {
 		.first_filter = &play_guard,
-		.ui_module = "tui.play",
+		.ui_module = (p->tui2) ? "tui2.play" : "tui.play",
 		.tconf = c,
 		.random = p->random,
 		.repeat_all = p->repeat_all,
@@ -288,6 +290,7 @@ static const struct ffarg cmd_play[] = {
 	{ "-seek",			'S',	play_seek },
 	{ "-tee",			's',	O(tee) },
 	{ "-tracks",		'S',	play_tracks },
+	{ "-tui2",			'1',	O(tui2) },
 	{ "-until",			'S',	play_until },
 	{ "-volume",		'u',	O(volume) },
 	{ "\0\1",			'S',	play_input },

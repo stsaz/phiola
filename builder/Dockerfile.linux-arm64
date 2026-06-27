@@ -28,4 +28,6 @@ RUN dpkg --add-architecture arm64 && \
   libasound2-dev:arm64 libpulse-dev:arm64 libjack-dev:arm64 \
   libdbus-1-dev:arm64
 RUN apt install -y \
+ libncurses-dev:arm64
+RUN apt install -y \
  libgtk-3-dev:arm64

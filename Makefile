@@ -84,6 +84,7 @@ remote.$(SO): remote-ctl.o
 	$(LINK) -shared $+ $(LINKFLAGS) -o $@
 
 include $(PHIOLA)/src/tui/Makefile
+include $(PHIOLA)/src/tui2/Makefile
 include $(PHIOLA)/src/gui/Makefile
 include $(PHIOLA)/src/net/Makefile
 include $(PHIOLA)/src/dfilter/Makefile

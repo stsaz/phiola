@@ -24,4 +24,6 @@ RUN apt install -y \
  libasound2-dev libpulse-dev libjack-dev \
  libdbus-1-dev
 RUN apt install -y \
+ libncurses-dev
+RUN apt install -y \
  libgtk-3-dev
