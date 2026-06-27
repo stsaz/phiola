@@ -3,7 +3,7 @@
 include ../config.mk
 
 VER := 4.75.0
-URL := http://www.wavpack.com/wavpack-$(VER).tar.bz2
+URL := https://github.com/stsaz/phiola/raw/alib3/alib3/wavpack/wavpack-$(VER).tar.bz2
 SHA256SUM := c63e5c2106749dc6b2fb4302f2260f4803a93dd6cadf337764920dc836e3af2e
 PKG := $(ALIB3)/wavpack/$(notdir $(URL))
 DIR := wavpack-$(VER)
