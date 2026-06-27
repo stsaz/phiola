@@ -58,7 +58,7 @@ Features and notes by platform:
 | File formats         | ✅ all supported | ✅ all supported | all supported except `.mpc`, `.ape`, `.wv` |
 | Record what you hear | ✅ (PulseAudio) | ✅ | ❌ |
 | Audio Streaming Server | ✅ (AAC,Opus) | ✅ (AAC,Opus) | ❌ |
-| Requirements         | glibc-2.36 | Windows 7 | Android 8 (ARM64), Android 6 (ARM) |
+| Requirements         | glibc-2.41 | Windows 7 | Android 8 (ARM64), Android 6 (ARM) |
 | HW Requirements      | AMD64, ARM64 | AMD64 | ARM64, ARM(incomplete) |
 
 > Although not officially supported, phiola should build fine for **macOS**, **FreeBSD** and **Windows XP** after tweaking the build script.

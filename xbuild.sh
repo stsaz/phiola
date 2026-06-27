@@ -19,110 +19,14 @@ elif [[ "$CPU" == "arm64" ]]; then
 	CONTAINER_NAME=phiola_arm64_build
 fi
 
-NFPM_VER=2.46.3
-NFPM_SHA256SUM=d6417f99d5fa32bba7a4e007084615d3897651498c2e443118c26b9ec3b698a8
-
 set -xe
 
 test -d "../phiola"
 
-image_linux_amd64() {
-	cat <<EOF | podman build -t $IMAGE_NAME -f - .
-FROM debian:trixie-slim
-RUN apt update && \
- apt install -y \
-  make
-RUN apt install -y \
- curl \
- zstd zip unzip bzip2 xz-utils \
- patch \
- dos2unix
-RUN apt install -y \
- cmake \
- autoconf libtool libtool-bin \
- gettext \
- pkg-config
-RUN apt install -y \
- perl
-RUN apt install -y \
- clang lld
-RUN curl -L -o nfpm_${NFPM_VER}_amd64.deb https://github.com/goreleaser/nfpm/releases/download/v${NFPM_VER}/nfpm_${NFPM_VER}_amd64.deb \
- && echo "${NFPM_SHA256SUM} *nfpm_${NFPM_VER}_amd64.deb" | sha256sum -c - \
- && dpkg -i nfpm_${NFPM_VER}_amd64.deb \
- && rm -f nfpm_${NFPM_VER}_amd64.deb
-RUN apt install -y \
- libasound2-dev libpulse-dev libjack-dev \
- libdbus-1-dev
-RUN apt install -y \
- libgtk-3-dev
-EOF
-}
-
-image_linux_arm64() {
-	cat <<EOF | podman build -t $IMAGE_NAME -f - .
-FROM debian:trixie-slim
-RUN apt update && \
- apt install -y \
-  make
-RUN apt install -y \
- curl \
- zstd zip unzip bzip2 xz-utils \
- patch \
- dos2unix
-RUN apt install -y \
- cmake \
- autoconf libtool libtool-bin \
- gettext \
- pkg-config
-RUN apt install -y \
- perl
-RUN apt install -y \
- clang lld
-RUN curl -L -o nfpm_${NFPM_VER}_amd64.deb https://github.com/goreleaser/nfpm/releases/download/v${NFPM_VER}/nfpm_${NFPM_VER}_amd64.deb \
- && echo "${NFPM_SHA256SUM} *nfpm_${NFPM_VER}_amd64.deb" | sha256sum -c - \
- && dpkg -i nfpm_${NFPM_VER}_amd64.deb \
- && rm -f nfpm_${NFPM_VER}_amd64.deb
-RUN apt install -y \
- gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-RUN dpkg --add-architecture arm64 && \
- apt update && \
- apt install -y \
-  libasound2-dev:arm64 libpulse-dev:arm64 libjack-dev:arm64 \
-  libdbus-1-dev:arm64
-RUN apt install -y \
- libgtk-3-dev:arm64
-EOF
-}
-
-image_windows_amd64() {
-	cat <<EOF | podman build -t $IMAGE_NAME -f - .
-FROM debian:trixie-slim
-RUN apt update && \
- apt install -y \
-  make
-RUN apt install -y \
- curl \
- zstd zip unzip bzip2 xz-utils \
- patch \
- dos2unix
-RUN apt install -y \
- cmake \
- autoconf libtool libtool-bin \
- gettext \
- pkg-config
-RUN apt install -y \
- perl
-RUN apt install -y \
- clang lld
-RUN apt install -y \
- gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64
-EOF
-}
-
 if ! podman container exists $CONTAINER_NAME ; then
 	if ! podman image exists $IMAGE_NAME ; then
 		# Create builder image
-		image_${OS}_$CPU
+		podman build -t $IMAGE_NAME -f builder/Dockerfile.$OS-$CPU .
 	fi
 
 	# Create builder container
@@ -173,9 +77,10 @@ make -j$JOBS \
  CFLAGS_USER=-fno-diagnostics-color \
  $ARGS_PHI \
  $ARGS
-
-# cp -au /usr/lib/x86_64-linux-gnu/libasan.so.8* /src/phiola/_linux-amd64/phiola-2/
 EOF
+
+# asan:
+# export LD_LIBRARY_PATH=/usr/lib/llvm-19/lib/clang/19/lib/linux
 
 # Build inside the container
 podman exec $CONTAINER_NAME \

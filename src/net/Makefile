@@ -21,6 +21,9 @@ AVPACK := $(ROOT_DIR)/avpack
 NETMILL := $(ROOT_DIR)/netmill
 NML_3PT := $(NETMILL)/3pt/_$(SYS)-$(CPU)
 NML_3PT_FLAGS := OS=$(OS) SYS=$(SYS) COMPILER=$(COMPILER) CPU=$(CPU)
+ifneq "$(SYS)" "android"
+	NML_3PT_FLAGS += LINKFLAGS_USER='-fuse-ld=lld'
+endif
 
 MODS += http.$(SO)
 

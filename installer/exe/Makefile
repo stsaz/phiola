@@ -10,6 +10,9 @@ FFBASE := $(ROOT)/ffbase
 include $(FFBASE)/conf.mk
 FFPACK_BIN := $(FFPACK)/_windows-$(CPU)
 FFPACK_FLAGS := OS=$(OS) SYS=$(SYS) COMPILER=$(COMPILER) CPU=$(CPU)
+ifneq "$(SYS)" "android"
+	FFPACK_FLAGS += LINKFLAGS_USER='-fuse-ld=lld'
+endif
 EXE := phiola-$(PHI_VERSION_STR)-windows-x64-setup.exe
 
 CFLAGS += -DFFBASE_MEM_ASSERT -DFFBASE_OPT_SIZE \

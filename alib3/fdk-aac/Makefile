@@ -42,8 +42,6 @@ CF += \
 CFLAGS += -Wno-narrowing
 # $(DIR)/libAACenc/src/aacEnc_rom.cpp:661:1: error: narrowing conversion of ‘2180108801u’ from ‘unsigned int’ to ‘FIXP_DBL {aka long int}’ inside { } [-Wnarrowing]
 
-LINKXXFLAGS += -static-libstdc++
-
 AACDEC_SRC := \
 	$(DIR)/libAACdec/src/FDK_delay.cpp \
 	$(DIR)/libAACdec/src/aac_ram.cpp \

@@ -61,33 +61,10 @@ if ! test -d "$ANDROID_HOME/platforms/android-$ANDROID_PF_VER" ; then
 	cd $PHI_DIR
 fi
 
-image() {
-	cat <<EOF | podman build -t $IMAGE_NAME -f - .
-FROM debian:trixie-slim
-RUN apt update && \
- apt install -y \
-  make
-RUN apt install -y \
- curl \
- zstd zip unzip bzip2 xz-utils \
- patch \
- dos2unix
-RUN apt install -y \
- cmake \
- autoconf libtool libtool-bin \
- gettext \
- pkg-config
-RUN apt install -y \
- perl
-RUN apt install -y \
- openjdk-21-jdk
-EOF
-}
-
 if ! podman container exists $CONTAINER_NAME ; then
 	if ! podman image exists $IMAGE_NAME ; then
 		# Create builder image
-		image
+		podman build -t $IMAGE_NAME -f builder/Dockerfile.android .
 	fi
 
 	if test -z "$GRADLE_DIR" ; then

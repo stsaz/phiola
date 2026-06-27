@@ -24,17 +24,18 @@ else
 endif
 ifeq "$(ASAN)" "1"
 	CFLAGS += -fsanitize=address
-	LINKFLAGS += -fsanitize=address
+	LINKFLAGS += -fsanitize=address -shared-libasan
 endif
 CFLAGS += $(CFLAGS_USER)
 CFLAGS_BASE := $(CFLAGS)
 CFLAGS += -I$(PHIOLA)/src -I$(FFSYS)
 CXXFLAGS := -std=c++11 $(CFLAGS) -fno-exceptions -fno-rtti
 CFLAGS := -std=c99 $(CFLAGS)
-LINKFLAGS += $(LINKFLAGS_USER)
+LINKFLAGS += -fuse-ld=lld $(LINKFLAGS_USER)
 ifeq "$(OS)" "windows"
 	LINKFLAGS += -lws2_32
 endif
+LINKXXFLAGS := $(LINKFLAGS)
 LINK_DL :=
 ifeq "$(OS)" "linux"
 	LINK_DL := -ldl

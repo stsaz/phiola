@@ -20,6 +20,9 @@
 FFPACK := $(ROOT_DIR)/ffpack
 FFPACK_BIN := $(FFPACK)/_$(SYS)-$(CPU)
 FFPACK_FLAGS := OS=$(OS) SYS=$(SYS) COMPILER=$(COMPILER) CPU=$(CPU)
+ifneq "$(SYS)" "android"
+	FFPACK_FLAGS += LINKFLAGS_USER='-fuse-ld=lld'
+endif
 
 MODS += zstd.$(SO)
 LIBS3 += $(FFPACK_BIN)/libzstd-ffpack.$(SO)

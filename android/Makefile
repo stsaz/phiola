@@ -20,8 +20,6 @@ CPU := amd64
 LIB_DIR_CPU := x86_64
 ifeq "$(CPU)" "arm64"
 	LIB_DIR_CPU := arm64-v8a
-else ifeq "$(CPU)" "arm"
-	LIB_DIR_CPU := armeabi-v7a
 endif
 APK_ID := com.github.stsaz.phiola
 APK := phiola/build/outputs/apk/release/phiola-release-unsigned.apk
@@ -112,7 +110,6 @@ SYS := android
 
 LIB_DIR_AMD64 := $(PHIOLA)/android/phiola/libs/x86_64
 LIB_DIR_ARM64 := $(PHIOLA)/android/phiola/libs/arm64-v8a
-LIB_DIR_ARM := $(PHIOLA)/android/phiola/libs/armeabi-v7a
 
 clean-lib:
 	$(RM) ../_android-arm64 ../_android-amd64 $(LIB_DIR_AMD64) $(LIB_DIR_ARM64)
@@ -173,11 +170,6 @@ strip-debug: $(addsuffix .debug,$(TARGETS))
 PKG_ARCH := $(CPU)
 PKG_PACKER := tar -c --owner=0 --group=0 --numeric-owner -v --zstd -f
 PKG_EXT := tar.zst
-ifeq "$(OS)" "windows"
-	PKG_PACKER := zip -r -v
-	PKG_EXT := zip
-endif
-
 PKG_DEBUG_NAME := phiola-$(APK_VER)-android-$(PKG_ARCH)-debug.$(PKG_EXT)
 $(PKG_DEBUG_NAME): $(wildcard $(PHIOLA)/android/phiola/libs/$(LIB_DIR_CPU)/*.debug)
 	$(PKG_PACKER) $@ ../android/phiola/libs/$(LIB_DIR_CPU)/*.debug

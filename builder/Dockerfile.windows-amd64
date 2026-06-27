@@ -1,0 +1,18 @@
+FROM debian:trixie-slim
+RUN apt update && \
+ apt install -y \
+  make
+RUN apt install -y \
+ curl \
+ zstd zip unzip bzip2 xz-utils \
+ patch \
+ dos2unix \
+ cmake \
+ autoconf libtool-bin \
+ gettext \
+ pkg-config \
+ perl
+RUN apt install -y \
+ clang lld
+RUN apt install -y \
+ gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64

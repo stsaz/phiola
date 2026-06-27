@@ -2,35 +2,27 @@
 
 include ../../ffbase/conf.mk
 
-CFLAGS := -fpic -fvisibility=hidden -g
+PHI_CF := -fpic -fvisibility=hidden -g
 ifneq "$(DEBUG)" "1"
-	CFLAGS += -O3
+	PHI_CF += -O3
 endif
-CXXFLAGS := $(CFLAGS)
+CFLAGS += $(PHI_CF)
+CXXFLAGS += $(PHI_CF)
 
-LINKFLAGS += -fpic $(LINK_INSTALLNAME_LOADERPATH) -lm
+PHI_LF := -fuse-ld=lld $(LINK_INSTALLNAME_LOADERPATH) -lm -static-libgcc
 ifneq "$(DEBUG)" "1"
-	LINKFLAGS += -s
+	PHI_LF += -s
 endif
-ifeq "$(COMPILER)" "gcc"
-	LINKFLAGS += -static-libgcc
-endif
-LINKXXFLAGS = $(LINKFLAGS)
-ifeq "$(COMPILER)" "gcc"
-	ifeq "$(OS)" "linux"
-		LINKXXFLAGS += -static-libstdc++
-	else
-		LINKXXFLAGS += -static
-	endif
-endif
+LINKFLAGS += $(PHI_LF)
+LINKXXFLAGS += $(PHI_LF) -static-libstdc++
 
-# Set compiler and append compiler & linker flags for Android
 SYS := $(OS)
 ifeq "$(SYS)" "android"
 	include ../android/andk.mk
-	CFLAGS += $(A_CFLAGS)
-	CXXFLAGS += $(A_CFLAGS)
-	LINKFLAGS += $(A_LINKFLAGS)
+	CFLAGS := $(PHI_CF) $(A_CFLAGS)
+	CXXFLAGS := $(PHI_CF) $(A_CFLAGS)
+	LINKFLAGS := $(PHI_LF) $(A_LINKFLAGS)
+	LINKXXFLAGS := $(PHI_LF) $(A_LINKFLAGS)
 endif
 
 CURL := curl -L
