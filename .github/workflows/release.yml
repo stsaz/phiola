@@ -1,0 +1,85 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+    steps:
+      - name: Checkout phiola
+        uses: actions/checkout@v7
+
+      - name: Get the dependencies
+        run: |
+          git clone --depth=1 https://github.com/stsaz/netmill ../netmill
+          git clone --depth=1 https://github.com/stsaz/avpack ../avpack
+          git clone --depth=1 https://github.com/stsaz/ffaudio ../ffaudio
+          git clone --depth=1 https://github.com/stsaz/ffpack ../ffpack
+          git clone --depth=1 https://github.com/stsaz/ffgui ../ffgui
+          git clone --depth=1 https://github.com/stsaz/ffsys ../ffsys
+          git clone --depth=1 https://github.com/stsaz/ffbase ../ffbase
+
+      - name: Create builder image
+        run: |
+          if [[ "${{ matrix.arch }}" == "amd64" ]]; then
+            podman build -t phiola-amd64-builder -f builder/Dockerfile.linux-amd64 .
+          else
+            podman build -t phiola-arm64-builder -f builder/Dockerfile.linux-arm64 .
+          fi
+
+      - name: Build for ${{ matrix.arch }}
+        run: |
+          podman run --rm \
+            -v $(pwd)/..:/src:Z \
+            -w /src/phiola \
+            phiola-${{ matrix.arch }}-builder \
+            bash builder/build.sh ${{ matrix.arch }} '${{ github.ref_name }}'
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: phiola-${{ matrix.arch }}
+          path: |
+            _linux-${{ matrix.arch }}/phiola_*.deb
+            _linux-${{ matrix.arch }}/phiola-*.rpm
+            _linux-${{ matrix.arch }}/phiola-*.tar.zst
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout phiola
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+
+      - name: Generate release notes
+        run: |
+          bash builder/release-notes.sh '${{ github.ref_name }}'
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            artifacts/phiola-amd64/*.deb
+            artifacts/phiola-amd64/*.rpm
+            artifacts/phiola-amd64/*.tar.zst
+            artifacts/phiola-arm64/*.deb
+            artifacts/phiola-arm64/*.rpm
+            artifacts/phiola-arm64/*.tar.zst
+          draft: true
+          body_path: release-notes.txt
