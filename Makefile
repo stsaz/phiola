@@ -129,11 +129,13 @@ endif
 PKG_VER := test
 PKG_ARCH := $(CPU)
 ifeq "$(OS)" "linux"
-ifeq "$(CPU)" "amd64"
-	PKG_ARCH := x86_64
-else
-	PKG_ARCH := aarch64
-endif
+	ifeq "$(CPU)" "amd64"
+		PKG_ARCH := x86_64
+	else
+		PKG_ARCH := aarch64
+	endif
+else ifeq "$(OS)" "windows"
+	PKG_ARCH := x64
 endif
 PKG_PACKER := tar -c --owner=0 --group=0 --numeric-owner -v --zstd -f
 PKG_EXT := tar.zst
@@ -195,6 +197,6 @@ release: default
 ifeq "$(OS)" "linux"
 	$(SUBMAKE) deb
 	$(SUBMAKE) rpm
-else ifeq "$(WIN_INSTALLER)" "1"
+else ifeq "$(OS)" "windows"
 	$(SUBMAKE) setup_exe
 endif

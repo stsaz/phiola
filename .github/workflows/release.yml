@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch: [amd64, arm64]
+        target: [linux-amd64, linux-arm64, windows-amd64]
     steps:
       - name: Checkout phiola
         uses: actions/checkout@v7
@@ -30,28 +30,34 @@ jobs:
 
       - name: Create builder image
         run: |
-          if [[ "${{ matrix.arch }}" == "amd64" ]]; then
-            podman build -t phiola-amd64-builder -f builder/Dockerfile.linux-amd64 .
-          else
-            podman build -t phiola-arm64-builder -f builder/Dockerfile.linux-arm64 .
-          fi
+          podman build -t phiola-builder -f builder/Dockerfile.${{ matrix.target }} .
 
-      - name: Build for ${{ matrix.arch }}
+      - name: Build for ${{ matrix.target }}
         run: |
           podman run --rm \
             -v $(pwd)/..:/src:Z \
             -w /src/phiola \
-            phiola-${{ matrix.arch }}-builder \
-            bash builder/build.sh ${{ matrix.arch }} '${{ github.ref_name }}'
+            phiola-builder \
+            bash builder/build.sh ${{ matrix.target }} '${{ github.ref_name }}'
 
-      - name: Upload artifacts
+      - name: Upload Linux artifacts
+        if: startsWith(matrix.target, 'linux')
         uses: actions/upload-artifact@v7
         with:
-          name: phiola-${{ matrix.arch }}
+          name: phiola-${{ matrix.target }}
           path: |
-            _linux-${{ matrix.arch }}/phiola_*.deb
-            _linux-${{ matrix.arch }}/phiola-*.rpm
-            _linux-${{ matrix.arch }}/phiola-*.tar.zst
+            _${{ matrix.target }}/phiola_*.deb
+            _${{ matrix.target }}/phiola-*.rpm
+            _${{ matrix.target }}/phiola-*.tar.zst
+
+      - name: Upload Windows artifacts
+        if: matrix.target == 'windows-amd64'
+        uses: actions/upload-artifact@v7
+        with:
+          name: phiola-${{ matrix.target }}
+          path: |
+            _${{ matrix.target }}/phiola-*.zip
+            _${{ matrix.target }}/phiola-*-setup.exe
 
   release:
     needs: build
@@ -75,11 +81,13 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           files: |
-            artifacts/phiola-amd64/*.deb
-            artifacts/phiola-amd64/*.rpm
-            artifacts/phiola-amd64/*.tar.zst
-            artifacts/phiola-arm64/*.deb
-            artifacts/phiola-arm64/*.rpm
-            artifacts/phiola-arm64/*.tar.zst
+            artifacts/phiola-linux-amd64/phiola_*.deb
+            artifacts/phiola-linux-amd64/phiola-*.rpm
+            artifacts/phiola-linux-amd64/phiola-*.tar.zst
+            artifacts/phiola-linux-arm64/phiola_*.deb
+            artifacts/phiola-linux-arm64/phiola-*.rpm
+            artifacts/phiola-linux-arm64/phiola-*.tar.zst
+            artifacts/phiola-windows-amd64/phiola-*.zip
+            artifacts/phiola-windows-amd64/phiola-*-setup.exe
           draft: true
           body_path: release-notes.txt
