@@ -8,7 +8,7 @@ FFSYS := $(ROOT)/ffsys
 FFBASE := $(ROOT)/ffbase
 
 include $(FFBASE)/conf.mk
-FFPACK_BIN := $(FFPACK)/_windows-$(CPU)
+FFPACK_BIN := ffpack
 FFPACK_FLAGS := OS=$(OS) SYS=$(SYS) COMPILER=$(COMPILER) CPU=$(CPU)
 ifneq "$(SYS)" "android"
 	FFPACK_FLAGS += LINKFLAGS_USER='-fuse-ld=lld'
@@ -27,7 +27,8 @@ OBJ += \
 	ffgui-winapi.o \
 	ffgui-winapi-loader.o \
 	str-format.o
-LINKFLAGS += -Wl,--gc-sections \
+LINKFLAGS += -fuse-ld=lld \
+	-Wl,--gc-sections \
 	-lshell32 -luxtheme -lcomctl32 -lcomdlg32 -lgdi32 -lole32 -luuid
 
 ifeq "$(DEBUG)" "1"

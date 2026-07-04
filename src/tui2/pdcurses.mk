@@ -11,6 +11,8 @@ CC := clang -target x86_64-w64-mingw32
 WINDRES := llvm-windres
 STRIP := llvm-strip
 
+default: $(LIB)
+
 $(PKG):
 	$(CURL) $@ $(URL)
 
@@ -22,5 +24,6 @@ $(LIB): $(DIR)
 	cd $(DIR)/wincon \
 		&& $(MAKE) DLL=Y WIDE=Y UTF8=Y \
 		CC="$(CC)" \
+		LIBFLAGS="-fuse-ld=lld -shared -o" \
 		WINDRES=$(WINDRES)
 	$(STRIP) $@

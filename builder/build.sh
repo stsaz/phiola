@@ -15,6 +15,7 @@ VER="${TAG#v}"
 
 case "$TARGET" in
 	linux-amd64)
+		ARGS=""
 		;;
 
 	linux-arm64)
@@ -35,8 +36,8 @@ export PATH="$PATH:/usr/lib/llvm-19/bin"
 mkdir -p _$TARGET
 make -j$(nproc) \
 	-C _$TARGET \
-	-f ../Makefile \
-	ROOT_DIR=../.. \
+	-f /src/phiola/Makefile \
+	ROOT_DIR=/src \
 	COMPILER=clang \
 	CFLAGS_USER=-fno-diagnostics-color \
 	PHI_VERSION_STR="$VER" \

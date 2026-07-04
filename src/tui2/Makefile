@@ -11,7 +11,7 @@ else ifeq "$(OS)" "windows"
 	LIBS3 += $(LIBCURSES)
 endif
 
-tui2.o: $(PHIOLA)/src/tui2/tui2.c
+tui2.o: $(PHIOLA)/src/tui2/tui2.c | $(LIBCURSES)
 	$(C) $(CFLAGS) $(CF_CURSES) $< -o $@
 
 tui2.$(SO): tui2.o $(LIBCURSES)

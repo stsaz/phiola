@@ -191,7 +191,7 @@ endif
 SETUP_EXE := phiola-$(PKG_VER)-windows-x64-setup.exe
 setup_exe: $(SETUP_EXE)
 $(SETUP_EXE): phiola-$(PKG_VER)-windows-x64.zip
-	$(MAKE) -f ../installer/exe/Makefile
+	$(MAKE) -f $(PHIOLA)/installer/exe/Makefile  ROOT=$(ROOT_DIR) COMPILER=$(COMPILER)
 
 release: default
 	$(SUBMAKE) package
