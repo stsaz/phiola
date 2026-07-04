@@ -263,6 +263,7 @@ static int cmd_opus_mode(const char *s)
 #include <exe/rename.h>
 #include <exe/server.h>
 #include <exe/tag.h>
+#include <exe/tui.h>
 
 static int root_help()
 {
@@ -289,6 +290,7 @@ Commands:\n\
   `rename`    Auto-rename files\n\
   `server`    Start audio streaming server\n\
   `tag`       Edit file tags\n\
+  `tui`       Start ncurses TUI\n\
 \n\
 'phiola COMMAND -help' will print information on a particular command.\n\
 ");
@@ -482,6 +484,7 @@ static const struct ffarg cmd_root[] = {
 	{ "rename",		'{',		cmd_rename_init },
 	{ "server",		'{',		cmd_server_init },
 	{ "tag",		'{',		cmd_tag_init },
+	{ "tui",		'{',		cmd_tui_init },
 	{ "\0\1",		'{',		cmd_play_init },
 	{ "",			0,			usage },
 };

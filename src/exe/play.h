@@ -65,7 +65,7 @@ Options:\n\
                         Connection timeout (in seconds): 1..255\n\
   `-recv_timeout` NUMBER  Receive timeout (in seconds): 1..255\n\
   `-no_meta`              Disable ICY meta data\n\
-  `-tui2`                 Use TUIv2 (Experimental)\n\
+  `-tui2`                 Use ncurses TUI (Experimental)\n\
 ");
 	x->exit_code = 0;
 	return 1;

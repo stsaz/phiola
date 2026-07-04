@@ -19,6 +19,7 @@ Contents:
 * [Features](#features)
 * [Install](#install)
 * [How to Use CLI](#how-to-use-cli)
+* [How to Use TUI](#how-to-use-tui)
 * [How to Use GUI](#how-to-use-gui)
 * [How to Use on Android](#how-to-use-on-android)
 * [How to Use API](#how-to-use-api)
@@ -136,6 +137,9 @@ phiola http://server/music.mp3 -dup @stdout.wav | phiola convert @stdin -aac_q 6
 # Play audio with 3-band Equalizer:
 #  (low-shelf +3 dB; 600Hz band, 1.5 Q-factor width, -6 dB gain; high-shelf +3 dB)
 phiola file.mp3 -equalizer "t bass g 3, f 600 w 1.5q g -6, t treble g 3"
+
+# Play audio with ncurses TUI interface
+phiola -tui2 "My Music"
 ```
 
 While audio is playing, you can control phiola via the keyboard.  The most commonly used commands are:
@@ -298,10 +302,43 @@ Currently supported commands:
 | [rename](src/exe/rename.h)   | Auto-rename files |
 | [server](src/exe/server.h)   | Start audio streaming server |
 | [tag](src/exe/tag.h)         | Edit file tags |
+| [tui](src/exe/tui.h)         | Start ncurses TUI |
 
 > For the details on each command you can click on the links above or execute `phiola COMMAND -h` on your PC.
 
 See also: [phiola Wiki](https://github.com/stsaz/phiola/wiki)
+
+
+## How to Use TUI
+
+![phiola TUI](../screenshots/screens/phiola-tui-screenshot.png)
+
+Start phiola in interactive Terminal/Console UI mode:
+
+```sh
+phiola tui [INPUT...]
+```
+
+Where INPUT can be file names, directories, or URLs.
+
+To add more files to the current playlist you can:
+* Press `Tab` to switch view to file explorer
+* Navigate to a target directory
+* Press `A` to add the selected directory to the current playlist
+
+### Controls
+
+| Key | Action |
+| --- | --- |
+| `Space` | Play/Pause |
+| `P` / `N` | Previous/Next track |
+| `Left/Right` | Seek backward/forward |
+| `Ctrl+Up/Down` | Volume down/up |
+| `.` | Stop |
+| `Tab` | Switch between Explorer and Playlist |
+| `Q` or `F10` | Quit |
+
+Press `F1` to see the full command list.
 
 
 ## How to Use GUI

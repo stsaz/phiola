@@ -1,4 +1,4 @@
-/** phiola: TUI-ncurses
+/** phiola: TUI-ncurses: playback
 2026, Simon Zolin */
 
 struct tui2_play_trk {
@@ -14,15 +14,16 @@ static void* tui2_play_open(phi_track *t)
 	struct tui2_play_trk *p = phi_track_allocT(t, struct tui2_play_trk);
 	p->trk = t;
 	p->pos_last_sec = ~0U;
-	mod->playing = p;
+	if (mod->volume_db)
+		t->oaudio.gain_db = mod->volume_db;
+	tui2_play_started(p, t);
 	return p;
 }
 
 static void tui2_play_close(void *f, phi_track *t)
 {
 	struct tui2_play_trk *p = f;
-	if (p == mod->playing)
-		mod->playing = NULL;
+	tui2_play_finished(p);
 	phi_track_free(t, p);
 }
 
@@ -30,23 +31,18 @@ static void play_title(struct tui2_play_trk *p)
 {
 	const struct phi_queue_entry *qe = p->trk->qent;
 
-	char buf[500];
-	uint w = ffmin(ffncurses_width(), sizeof(buf));
 	ffstr artist = {}, title = {};
 	core->metaif->find(&p->trk->meta, FFSTR_Z("artist"), &artist, 0);
 	core->metaif->find(&p->trk->meta, FFSTR_Z("title"), &title, 0);
-	int r;
+	uint n;
 	if (title.len) {
-		r = ffs_format(buf, sizeof(buf), "φ %S - %S", &artist, &title);
+		n = tui2_printf("φ %S - %S", &artist, &title);
 	} else {
 		ffpath_split3_str(FFSTR_Z(qe->url), NULL, &title, NULL); // Use file name as title
-		r = ffs_format(buf, sizeof(buf), "φ %S", &title);
+		n = tui2_printf("φ %S", &title);
 	}
-	if (r < 0)
-		r = -1;
-	uint n = text_clamp(buf, r, w);
 	ffncurses_line_clear(&mod->wmain, Y_TITLE);
-	ffncurses_printn_attr(&mod->wmain, Y_TITLE, 0, buf, n, 0, 1);
+	ffncurses_printn_attr(&mod->wmain, Y_TITLE, 0, mod->buf, n, 0, CLR_TITLE);
 }
 
 static int play_seek(struct tui2_play_trk *p)
@@ -73,7 +69,6 @@ static int play_seek(struct tui2_play_trk *p)
 static void play_progress(struct tui2_play_trk *p)
 {
 	phi_track *t = p->trk;
-	char buf[500];
 	uint play_time = (uint)(samples_to_msec(t->audio.pos, t->audio.format.rate) / 1000);
 	if (play_time == p->pos_last_sec)
 		return;
@@ -82,18 +77,17 @@ static void play_progress(struct tui2_play_trk *p)
 	if (!p->total_sec)
 		p->total_sec = (uint)(samples_to_msec(t->audio.total, t->audio.format.rate) / 1000);
 
-	uint w = ffmin(ffncurses_width(), sizeof(buf));
-	uint prog_cap = ffmax((int)w - FFS_LEN("[] xx:xx / xx:xx"), 0);
+	uint prog_cap = ffmax((int)ffncurses_width() - FFS_LEN("[] xx:xx / xx:xx"), 0);
 	uint prog_pos = play_time * prog_cap / p->total_sec;
-	ffsz_format(buf, sizeof(buf),
-		"[%*c%*c] %u:%02u / %u:%02u"
+	uint n = tui2_printf("[%*c%*c] %u:%02u / %u:%02u"
 		, (ffsize)prog_pos, '#'
 		, (ffsize)(prog_cap - prog_pos), '-'
 		, play_time / 60, play_time % 60
 		, p->total_sec / 60, p->total_sec % 60
 		);
 
-	ffncurses_println_attr(&mod->wmain, Y_PROGRESS, 0, buf, 0, 0);
+	ffncurses_line_clear(&mod->wmain, Y_PROGRESS);
+	ffncurses_printn_attr(&mod->wmain, Y_PROGRESS, 0, mod->buf, n, 0, 0);
 }
 
 static int tui2_play_process(void *f, phi_track *t)
@@ -128,6 +122,7 @@ end:
 
 static void tui2_play_pause(struct tui2_play_trk *p)
 {
+	if (!p) return;
 	uint unpause = p->paused;
 	uint adev_pause_handled = !p->trk->oaudio.pause;
 
@@ -142,32 +137,18 @@ static void tui2_play_pause(struct tui2_play_trk *p)
 			p->trk->oaudio.adev_stop(p->trk->oaudio.adev_ctx);
 	}
 
-	ffncurses_line_clear(&mod->wmain, mod->y_status);
-	if (!unpause)
-		ffncurses_print_attr(&mod->wmain, mod->y_status, 0, "Paused", 0, CLR_TITLE);
-	ffncurses_update(&mod->wmain);
+	tui2_status((unpause) ? "" : "Paused");
 }
-
-#define VOL_MAX  125
-#define VOL_LO  (-40)
-#define VOL_HI  6
 
 static void tui2_play_volume(struct tui2_play_trk *p)
 {
-	double db;
-	if (mod->volume <= 100)
-		db = vol2db(mod->volume, VOL_LO);
-	else
-		db = vol2db_inc(mod->volume - 100, VOL_MAX - 100, VOL_HI);
-	p->trk->oaudio.gain_db = db;
-
-	char buf[256];
-	ffsz_format(buf, sizeof(buf), "Volume: %.02FdB", db);
-	ffncurses_println_attr(&mod->wmain, mod->y_status, 0, buf, 0, 0);
+	if (!p) return;
+	p->trk->oaudio.gain_db = mod->volume_db;
 }
 
 static void tui2_play_seek(struct tui2_play_trk *p, int delta)
 {
+	if (!p) return;
 	p->seek_delta_sec += delta;
 
 	p->trk->audio.seek_req = 1;
@@ -175,6 +156,87 @@ static void tui2_play_seek(struct tui2_play_trk *p, int delta)
 	if (p->trk->oaudio.adev_ctx)
 		p->trk->oaudio.adev_stop(p->trk->oaudio.adev_ctx);
 	core->track->wake(p->trk);
+}
+
+#define INFO_N_FIXED  2
+
+static void play_info_display()
+{
+	struct tui2_play_trk *p = mod->playing;
+	if (!p) return;
+	const phi_track *t = p->trk;
+	const struct phi_queue_entry *qe = t->qent;
+	uint y = 1, n, i = mod->dlg.top, it = 0;
+	ffstr name, val;
+
+	// Skip scrolled rows
+	for (uint mi = 0;  INFO_N_FIXED + mi < i;  mi++) {
+		if (!core->metaif->list(&qe->meta, &it, &name, &val, 0))
+			break;
+	}
+
+	while (y <= mod->wpopup.ch) {
+		switch (i++) {
+		case 0:
+			n = tui2_printf("url : %s", qe->url);
+			break;
+
+		case 1:
+			n = tui2_printf("info : %u kbps, %s, %u Hz, %s, %s"
+				, (t->audio.bitrate + 500) / 1000
+				, t->audio.decoder
+				, t->audio.format.rate
+				, phi_af_name(t->audio.format.format)
+				, pcm_channelstr(t->audio.format.channels));
+			break;
+
+		default:
+			if (!core->metaif->list(&qe->meta, &it, &name, &val, 0))
+				goto end;
+			n = tui2_printf("%S : %S"
+				, &name, &val);
+		}
+
+		ffncurses_println_attr(&mod->wpopup, y++, 1, mod->buf, n, 0, 0);
+	}
+
+end:
+	while (y <= mod->wpopup.ch) {
+		ffncurses_line_clear(&mod->wpopup, y++);
+	}
+}
+
+/** Return 0 if handled */
+static int play_info_action(int k)
+{
+	switch (k & ~FFKEY_MODMASK) {
+	case FFKEY_UP:
+		if (mod->dlg.top > 0)
+			mod->dlg.top--;
+		break;
+
+	case FFKEY_DOWN: {
+		const struct phi_queue_entry *qe = (mod->playing) ? mod->playing->trk->qent : NULL;
+		if (qe && mod->dlg.top + mod->wpopup.ch < INFO_N_FIXED + (uint)META_LEN(&qe->meta))
+			mod->dlg.top++;
+		break;
+	}
+
+	default:
+		return 1;
+	}
+
+	play_info_display();
+	return 0;
+}
+
+static void play_info_show(struct tui2_play_trk *p)
+{
+	if (!p) return;
+
+	tui2_popup("Info", 66);
+	play_info_display();
+	mod->popup_type = POPUP_PLAYINFO;
 }
 
 static const phi_filter tui2_if_play = {

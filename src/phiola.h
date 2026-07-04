@@ -557,6 +557,12 @@ enum PHI_Q_RENAME {
 	PHI_QRN_ACQUIRE = 1,		// Transfer ownership of `new_url` to the 'queue' module
 };
 
+enum PHI_QSEL {
+	PHI_QSEL_CUR = 1<<31,		// Get the currently selected queue
+	PHI_QSEL_PREV,				// Select the previous queue
+	PHI_QSEL_NEXT,				// Select the next queue
+};
+
 typedef struct phi_queue* phi_queue_id;
 typedef struct phi_queue_if phi_queue_if;
 struct phi_queue_if {
@@ -579,8 +585,15 @@ struct phi_queue_if {
 	/** Destroy a queue. */
 	void (*destroy)(phi_queue_id q);
 
-	/** Select a queue by index. */
-	phi_queue_id (*select)(uint pos);
+	/** Total number of queues */
+	uint (*total)();
+
+	/** Get queue by index */
+	phi_queue_id (*get)(uint i);
+
+	/** Select a queue by index.
+	pos: Queue index or enum PHI_QSEL_* for special behavior */
+	phi_queue_id (*select)(int pos);
 
 	/** Get queue configuration. */
 	struct phi_queue_conf* (*conf)(phi_queue_id q);
@@ -591,7 +604,8 @@ struct phi_queue_if {
 	/** Move list to a new position. */
 	void (*move)(uint from, uint to);
 
-	/** Add an item. */
+	/** Add an item.
+	Return item index */
 	int (*add)(phi_queue_id q, struct phi_queue_entry *qe);
 
 	/** Get the number of rows. */
@@ -659,7 +673,8 @@ struct phi_queue_if {
 	/** Insert multiple items after the specified entry. */
 	void* (*insert_bulk)(void *e, struct phi_queue_entry *qe, uint n, struct phi_queue_entry **result);
 
-	/** Get the index of an item in its queue. */
+	/** Get the index of an item in its queue.
+	Return <0 on error */
 	int (*index)(void *e);
 
 	/** Remove item.

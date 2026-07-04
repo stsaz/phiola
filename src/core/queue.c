@@ -98,6 +98,8 @@ static void qm_rm(struct phi_queue *q)
 	FFSLICE_WALK(&qm->lists, it) {
 		if (*it == q) {
 			ffslice_rmT((ffslice*)&qm->lists, it - (struct phi_queue**)qm->lists.ptr, 1, void*);
+			if (qm->selected)
+				qm->selected--;
 			break;
 		}
 	}
@@ -108,10 +110,33 @@ static struct phi_queue* qm_default()
 	return *ffslice_itemT(&qm->lists, qm->selected, struct phi_queue*);
 }
 
-static phi_queue_id qm_select(uint pos)
+static uint qm_total()
 {
-	if (pos >= qm->lists.len) return NULL;
-	qm->selected = pos;
+	return qm->lists.len;
+}
+
+static phi_queue_id qm_get(uint i)
+{
+	return *ffslice_itemT(&qm->lists, i, struct phi_queue*);
+}
+
+static phi_queue_id qm_select(int pos)
+{
+	switch (pos) {
+	case PHI_QSEL_PREV:
+		qm->selected = ffmin(qm->selected - 1, qm->lists.len - 1);  break;
+
+	case PHI_QSEL_NEXT:
+		qm->selected = (qm->selected + 1) % qm->lists.len;  break;
+
+	case PHI_QSEL_CUR:
+		break;
+
+	default:
+		if ((uint)pos >= qm->lists.len) return NULL;
+		qm->selected = pos;
+	}
+
 	return qm_default();
 }
 
@@ -849,6 +874,8 @@ const phi_queue_if phi_queueif = {
 
 	q_create,
 	q_destroy,
+	qm_total,
+	qm_get,
 	qm_select,
 	q_conf,
 	qm_qselect,
