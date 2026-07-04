@@ -103,11 +103,11 @@ export ANDROID_HOME=/Android
 mkdir -p $ODIR
 make -j$JOBS \
  -C _android-$CPU \
- -f ../android/Makefile \
- -I ../android \
+ -f /src/phiola/android/Makefile \
+ -I /src/phiola/android \
+ ROOT_DIR=/src \
  COMPILER=clang \
  CPU=$CPU \
- ROOT_DIR=../.. \
  NDK_DIR=/Android/ndk/$ANDROID_NDK_VER \
  $ARGS
 EOF

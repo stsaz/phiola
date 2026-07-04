@@ -1,6 +1,6 @@
 # Base settings for Makefile-s
 
-include ../../ffbase/conf.mk
+include $(ALIB3)/../../ffbase/conf.mk
 
 PHI_CF := -fpic -fvisibility=hidden -g
 ifneq "$(DEBUG)" "1"

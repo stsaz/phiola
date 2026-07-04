@@ -74,7 +74,7 @@ installer.coff: $(PHIOLA)/installer/exe/exe.rc \
 	$(WINDRES) -I. -I$(PHIOLA)/res $< $@
 
 $(FFPACK_BIN)/libz.a: $(FFPACK)/zlib/Makefile | $(FFPACK_BIN)
-	$(MAKE)  -C $(FFPACK_BIN)  -f ../zlib/Makefile  -I ..  FFPACK=.. $(FFPACK_FLAGS)
+	$(MAKE)  -C $(FFPACK_BIN)  -f $(FFPACK)/zlib/Makefile  -I $(FFPACK)/zlib  FFPACK=$(FFPACK) $(FFPACK_FLAGS)
 
 $(FFPACK_BIN):
 	$(MKDIR) $@

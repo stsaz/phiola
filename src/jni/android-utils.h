@@ -179,12 +179,11 @@ Java_com_github_stsaz_phiola_UtilNative_dirList(JNIEnv *env, jobject thiz, jstri
 	unf.file_names = jni_joa(n, jcs);
 	unf.display_rows = jni_joa(n, jcs);
 
+	uint isdir;
 	const char *fn;
-	while ((fn = ffdirscanx_next(&dx))) {
-		uint off = *(uint*)((char*)dx.ds.names + dx.ds.cur - sizeof(uint));
-
+	while ((fn = ffdirscanx_next(&dx, &isdir))) {
 		if (flags & 1) {
-			if (off & 0x80000000)
+			if (isdir)
 				continue; // skip dirs
 			ffstr ext;
 			ffpath_split3_str(FFSTR_Z(fn), NULL, NULL, &ext);
@@ -198,7 +197,7 @@ Java_com_github_stsaz_phiola_UtilNative_dirList(JNIEnv *env, jobject thiz, jstri
 		jni_joa_i_set(unf.file_names, i, js);
 		jni_local_unref(js);
 
-		if (off & 0x80000000) {
+		if (isdir) {
 			js = jni_js_szf(env, "<DIR> %s", fn);
 			unf.n_directories++;
 		} else {

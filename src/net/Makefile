@@ -19,7 +19,7 @@
 
 AVPACK := $(ROOT_DIR)/avpack
 NETMILL := $(ROOT_DIR)/netmill
-NML_3PT := $(NETMILL)/3pt/_$(SYS)-$(CPU)
+NML_3PT := netmill-3pt
 NML_3PT_FLAGS := OS=$(OS) SYS=$(SYS) COMPILER=$(COMPILER) CPU=$(CPU)
 ifneq "$(SYS)" "android"
 	NML_3PT_FLAGS += LINKFLAGS_USER='-fuse-ld=lld'
@@ -57,27 +57,27 @@ else
 	ifeq "$(OS)" "windows"
 		LINKFLAGS_NETMILL += -lssl-3-x64 -lcrypto-3-x64
 		LIBS3 += \
-			$(NETMILL)/3pt/_$(OS)-$(CPU)/libssl-3-x64.$(SO) \
-			$(NETMILL)/3pt/_$(OS)-$(CPU)/libcrypto-3-x64.$(SO)
+			$(NML_3PT)/libssl-3-x64.$(SO) \
+			$(NML_3PT)/libcrypto-3-x64.$(SO)
 		OPENSSL_SO := $(NML_3PT)/libssl-3-x64.$(SO)
 
 	else ifeq "$(SYS)" "android"
 		LINKFLAGS_NETMILL += -lssl -lcrypto
 		LIBS3 += \
-			$(NETMILL)/3pt/_$(SYS)-$(CPU)/libssl.$(SO) \
-			$(NETMILL)/3pt/_$(SYS)-$(CPU)/libcrypto.$(SO)
+			$(NML_3PT)/libssl.$(SO) \
+			$(NML_3PT)/libcrypto.$(SO)
 		OPENSSL_SO := $(NML_3PT)/libssl.$(SO)
 
 	else
 		LINKFLAGS_NETMILL += -lssl -lcrypto
 		LIBS3 += \
-			$(NETMILL)/3pt/_$(OS)-$(CPU)/libssl.$(SO).3 \
-			$(NETMILL)/3pt/_$(OS)-$(CPU)/libcrypto.$(SO).3
+			$(NML_3PT)/libssl.$(SO).3 \
+			$(NML_3PT)/libcrypto.$(SO).3
 		OPENSSL_SO := $(NML_3PT)/libssl.$(SO).3
 	endif
 
 $(OPENSSL_SO): $(NETMILL)/3pt/openssl/Makefile | $(NML_3PT)
-	$(MAKE)  -C $(NML_3PT)  -f ../openssl/Makefile  -I ..  NML_3PT=.. $(NML_3PT_FLAGS)
+	$(MAKE)  -C $(NML_3PT)  -f $(NETMILL)/3pt/openssl/Makefile  -I $(NETMILL)/3pt/openssl  NML_3PT=$(NETMILL)/3pt $(NML_3PT_FLAGS)
 
 ffssl.o: $(NETMILL)/src/util/ffssl.c | $(OPENSSL_SO)
 	$(C) $(CFLAGS_NETMILL) -I$(FFSYS) $< -o $@

@@ -18,7 +18,7 @@
 # MODS
 
 FFPACK := $(ROOT_DIR)/ffpack
-FFPACK_BIN := $(FFPACK)/_$(SYS)-$(CPU)
+FFPACK_BIN := ffpack
 FFPACK_FLAGS := OS=$(OS) SYS=$(SYS) COMPILER=$(COMPILER) CPU=$(CPU)
 ifneq "$(SYS)" "android"
 	FFPACK_FLAGS += LINKFLAGS_USER='-fuse-ld=lld'
@@ -28,7 +28,7 @@ MODS += zstd.$(SO)
 LIBS3 += $(FFPACK_BIN)/libzstd-ffpack.$(SO)
 
 $(FFPACK_BIN)/libzstd-ffpack.$(SO): $(FFPACK)/zstd/Makefile | $(FFPACK_BIN)
-	$(MAKE)  -C $(FFPACK_BIN)  -f ../zstd/Makefile  -I ..  FFPACK=.. $(FFPACK_FLAGS)
+	$(MAKE)  -C $(FFPACK_BIN)  -f $(FFPACK)/zstd/Makefile  -I $(FFPACK)/zstd  FFPACK=$(FFPACK) $(FFPACK_FLAGS)
 
 %.o: $(PHIOLA)/src/dfilter/%.c
 	$(C) $(CFLAGS) -I$(FFPACK) $< -o $@

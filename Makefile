@@ -188,7 +188,9 @@ ifeq "$(CPU)" "amd64"
 	./phiola __bash_completion > $@/usr/share/bash-completion/completions/phiola
 endif
 
-setup_exe:
+SETUP_EXE := phiola-$(PKG_VER)-windows-x64-setup.exe
+setup_exe: $(SETUP_EXE)
+$(SETUP_EXE): phiola-$(PKG_VER)-windows-x64.zip
 	$(MAKE) -f ../installer/exe/Makefile
 
 release: default
@@ -200,3 +202,7 @@ ifeq "$(OS)" "linux"
 else ifeq "$(OS)" "windows"
 	$(SUBMAKE) setup_exe
 endif
+
+clean:
+	rm -f *.o *.d *.so *.dll *.exe
+	rm -rf phiola-2

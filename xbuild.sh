@@ -9,11 +9,9 @@ ARGS=${@@Q}
 
 IMAGE_NAME=phiola-debtx-builder
 CONTAINER_NAME=phiola_debtx_build
-BUILD_TARGET=linux
 if [[ "$OS" == "windows" ]]; then
 	IMAGE_NAME=phiola-win64-builder
 	CONTAINER_NAME=phiola_win64_build
-	BUILD_TARGET=mingw64
 elif [[ "$CPU" == "arm64" ]]; then
 	IMAGE_NAME=phiola-arm64-builder
 	CONTAINER_NAME=phiola_arm64_build
@@ -21,7 +19,7 @@ fi
 
 set -xe
 
-test -d "../phiola"
+PHIOLA_DIR="$(dirname "$0")"
 
 if ! podman container exists $CONTAINER_NAME ; then
 	if ! podman image exists $IMAGE_NAME ; then
@@ -31,8 +29,9 @@ if ! podman container exists $CONTAINER_NAME ; then
 
 	# Create builder container
 	podman create --attach --tty \
-	 -v $(pwd)/..:/src \
-	 --workdir /src/phiola \
+	 -v "$(pwd)":/build \
+	 -v "$PHIOLA_DIR/..":/src \
+	 --workdir /build \
 	 --name $CONTAINER_NAME \
 	 $IMAGE_NAME \
 	 sleep 3600
@@ -49,7 +48,7 @@ fi
 
 # Prepare build script
 
-ODIR=${ODIR:-_$OS-$CPU}
+ODIR=${ODIR:-/build/_$OS-$CPU}
 ARGS_OS=""
 ARGS_PHI=""
 ENV_CPU=""
@@ -62,16 +61,16 @@ elif [[ "$OS" == "windows" ]]; then
 	ARGS_OS="OS=windows"
 fi
 
-cat >build_$BUILD_TARGET.sh <<EOF
+cat >build.sh <<EOF
 set -xe
 
-export PATH=$PATH:/usr/lib/llvm-19/bin
+export PATH=\$PATH:/usr/lib/llvm-19/bin
 $ENV_CPU
 mkdir -p $ODIR
 make -j$JOBS \
  -C $ODIR \
- -f ../Makefile \
- ROOT_DIR=../.. \
+ -f /src/phiola/Makefile \
+ ROOT_DIR=/src \
  COMPILER=clang \
  $ARGS_OS \
  CFLAGS_USER=-fno-diagnostics-color \
@@ -84,4 +83,4 @@ EOF
 
 # Build inside the container
 podman exec $CONTAINER_NAME \
- bash build_$BUILD_TARGET.sh
+ bash build.sh
