@@ -100,6 +100,7 @@ set -xe
 export PATH=/Android/ndk/$ANDROID_NDK_VER/toolchains/llvm/prebuilt/linux-x86_64/bin:\$PATH
 export ANDROID_NDK_ROOT=/Android/ndk/$ANDROID_NDK_VER
 export ANDROID_HOME=/Android
+export APK_KEY_PASS=$APK_KEY_PASS
 mkdir -p $ODIR
 make -j$JOBS \
  -C _android-$CPU \

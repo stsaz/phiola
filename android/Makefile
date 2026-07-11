@@ -55,7 +55,6 @@ apk-list:
 # Sign .apk
 
 APK_KEY_STORE :=
-APK_KEY_PASS :=
 APK_VER := test
 APK_SIGNED := phiola-$(APK_VER)-android-$(CPU).apk
 
@@ -63,7 +62,7 @@ sign:
 	cd $(PHIOLA)/android && $(ANDROID_HOME)/build-tools/$(SDK_API)/zipalign -v -f 4 $(APK) $(APK_SIGNED)
 	cd $(PHIOLA)/android && $(ANDROID_HOME)/build-tools/$(SDK_API)/apksigner sign \
 		--ks $(APK_KEY_STORE) \
-		--ks-pass pass:$(APK_KEY_PASS) \
+		--ks-pass env:APK_KEY_PASS \
 		$(APK_SIGNED)
 	cd $(PHIOLA)/android && $(ANDROID_HOME)/build-tools/$(SDK_API)/apksigner verify $(APK_SIGNED)
 
@@ -154,7 +153,7 @@ libs: $(TARGETS)
 	$(SUBMAKE) strip-debug
 	cp -u $(LIBS3) *.so *.debug \
 		$(LIB_DIR)
-	bash ../android/build-rename-libs.sh $(LIB_DIR) $(MODS)
+	@for M in $(MODS); do mv "$(LIB_DIR)/$$M" "$(LIB_DIR)/lib$$M"; done
 
 	$(MKDIR) $(PHIOLA)/android/phiola/src/main/assets
 	$(CP) $(PHIOLA)/src/net/client.pem $(PHIOLA)/android/phiola/src/main/assets/http-client.pem
