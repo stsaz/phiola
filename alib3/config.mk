@@ -13,8 +13,9 @@ PHI_LF := -fuse-ld=lld $(LINK_INSTALLNAME_LOADERPATH) -lm -static-libgcc
 ifneq "$(DEBUG)" "1"
 	PHI_LF += -s
 endif
+PHI_LFXX := $(PHI_LF) -static-libstdc++
 LINKFLAGS += $(PHI_LF)
-LINKXXFLAGS += $(PHI_LF) -static-libstdc++
+LINKXXFLAGS += $(PHI_LFXX)
 
 SYS := $(OS)
 ifeq "$(SYS)" "android"
@@ -22,7 +23,7 @@ ifeq "$(SYS)" "android"
 	CFLAGS := $(PHI_CF) $(A_CFLAGS)
 	CXXFLAGS := $(PHI_CF) $(A_CFLAGS)
 	LINKFLAGS := $(PHI_LF) $(A_LINKFLAGS)
-	LINKXXFLAGS := $(PHI_LF) $(A_LINKFLAGS)
+	LINKXXFLAGS := $(PHI_LFXX) $(A_LINKFLAGS)
 endif
 
 CURL := curl -L
