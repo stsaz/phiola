@@ -286,6 +286,14 @@ end:
 	ffmem_free(d);
 }
 
+static void play_stop(struct core_data *d)
+{
+	phi_track *t = x->play.trk;
+	if (t)
+		x->core->track->stop(t);
+	ffmem_free(d);
+}
+
 static void play_auto_stop_timer(void *param)
 {
 	x->play.auto_stop_timer_expired = 1;
@@ -328,27 +336,28 @@ JNIEXPORT void JNICALL
 Java_com_github_stsaz_phiola_Phiola_playCmd(JNIEnv *env, jobject thiz, jint cmd, jlong val)
 {
 	dbglog("%s: enter %d %d", __func__, cmd, val);
-	struct core_data *d;
+	struct core_data *d = ffmem_new(struct core_data);
 	switch (cmd) {
 	case PC_PAUSE_TOGGLE:
-		d = ffmem_new(struct core_data);
 		core_task(d, play_pause_resume);
 		break;
 
 	case PC_STOP:
-		x->core->track->stop(x->play.trk);  break;
+		core_task(d, play_stop);  break;
 
 	case PC_SEEK:
-		d = ffmem_new(struct core_data);
 		d->param_int = val;
 		core_task(d, play_seek);
 		break;
 
 	case PC_AUTO_STOP:
-		d = ffmem_new(struct core_data);
 		d->param_int = val;
 		core_task(d, play_auto_stop);
 		break;
+
+	default:
+		FF_ASSERT(0);
+		ffmem_free(d);
 	}
 	dbglog("%s: exit", __func__);
 }
