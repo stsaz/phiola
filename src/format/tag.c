@@ -671,73 +671,6 @@ end:
 	return rc;
 }
 
-static int tag_flac_process(struct tag_edit *t, vorbistagwrite *vtw, ffstr vtags)
-{
-	int rc = -1, r;
-	uint i;
-	ffstr *kv, k, v;
-	vorbistagread vtr = {};
-	uint tags_added = 0;
-
-	// Copy "Vendor" field
-	int tag = vorbistagread_process(&vtr, &vtags, &k, &v);
-	if (tag != MMTAG_VENDOR) {
-		errlog("parsing Vorbis tag");
-		goto end;
-	}
-	if (vorbistagwrite_add(vtw, MMTAG_VENDOR, v))
-		goto end;
-	dbglog("vorbistag: written vendor = %S", &v);
-
-	if (!t->conf.clear) {
-		// Replace tags, copy existing tags preserving the original order
-
-		if (t->conf.meta.len > 32) {
-			errlog("Writing more than 32 tags is not supported");
-			goto end;
-		}
-
-		for (;;) {
-			tag = vorbistagread_process(&vtr, &vtags, &k, &v);
-			if (tag == VORBISTAGREAD_DONE) {
-				break;
-			} else if (tag == VORBISTAGREAD_ERROR) {
-				errlog("parsing Vorbis tags");
-				goto end;
-			}
-
-			if ((r = user_meta_find(&t->conf.meta, k, &v)) >= 0) {
-				// Write user tag
-				ffbit_set32(&tags_added, r);
-			}
-
-			if (vorbistagwrite_add_name(vtw, k, v))
-				goto end;
-			dbglog("vorbistag: written %S = %S", &k, &v);
-		}
-	}
-
-	// Add new tags
-	i = 0;
-	FFSLICE_WALK(&t->conf.meta, kv) {
-		i++;
-		tag = user_meta_split(*kv, &k, &v);
-		if (tag < 0)
-			goto end;
-		if (i - 1 < 32 && ffbit_test32(&tags_added, i - 1))
-			continue; // Tag is already added
-
-		if (vorbistagwrite_add_name(vtw, k, v))
-			goto end;
-		dbglog("vorbistag: written %S = %S", &k, &v);
-	}
-
-	rc = 0;
-
-end:
-	return rc;
-}
-
 static int tag_flac(struct tag_edit *t)
 {
 	int rc = PHI_E_OTHER, r;
@@ -778,7 +711,7 @@ static int tag_flac(struct tag_edit *t)
 			case FLAC_TTAGS:
 				vtags_len = output.len;
 				tags_hdr_off = flacread_meta_offset(&fr);
-				if (tag_flac_process(t, &vtw, output))
+				if (tag_ogg_process(t, &vtw, output, 'f'))
 					goto end;
 				break;
 

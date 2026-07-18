@@ -29,7 +29,7 @@ endif
 CFLAGS += $(CFLAGS_USER)
 CFLAGS_BASE := $(CFLAGS)
 CFLAGS += -I$(PHIOLA)/src -I$(FFSYS)
-CXXFLAGS := -std=c++11 $(CFLAGS) -fno-exceptions -fno-rtti
+CXXFLAGS := -std=gnu++98 $(CFLAGS) -fno-exceptions -fno-rtti
 CFLAGS := -std=c99 $(CFLAGS)
 LINKFLAGS += -fuse-ld=lld $(LINKFLAGS_USER)
 ifeq "$(OS)" "windows"
