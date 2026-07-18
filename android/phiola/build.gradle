@@ -18,7 +18,7 @@ android {
 	}
 
 	sourceSets.main {
-		jniLibs.srcDir 'libs'
+		jniLibs.srcDir project.hasProperty('jniLibsDir') ? project.jniLibsDir : ['libs']
 	}
 
 	buildTypes {
