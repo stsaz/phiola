@@ -26,7 +26,7 @@ static int explorer_scan(const char *dir)
 	struct tui2_explorer *e = &mod->ex;
 	ffdirscanx dx = {};
 	if (ffdirscanx_open(&dx, dir, FFDIRSCANX_SORT_DIRS)) {
-		syswarnlog(NULL, "dir open: %s", dir);
+		syswarnlog("dir open: %s", dir);
 		return 1;
 	}
 
@@ -84,15 +84,32 @@ end:
 	}
 }
 
-static int explorer_navigate(const char *dir)
+static int explorer_navigate(char *dir, uint len)
 {
 	struct tui2_explorer *e = &mod->ex;
-	if (explorer_scan(dir))
-		return 1;
+	int r;
+	char *p;
+	if (!ffpath_abs(dir, len)) {
+		p = path_join(e->dir, dir, len);
+		len = ffsz_len(p);
+	} else {
+		p = ffsz_dup(dir);
+	}
+
+	r = ffpath_norm(p, len, p, len, 0);
+	if (r <= 0)
+		goto err;
+	p[r] = '\0';
+	if (explorer_scan(p))
+		goto err;
 	ffmem_free(e->dir);
-	e->dir = ffsz_dup(dir);
+	e->dir = p;
 	explorer_display();
 	return 0;
+
+err:
+	ffmem_free(p);
+	return 1;
 }
 
 static void explorer_scroll_abs(uint cur)
@@ -125,18 +142,13 @@ static void explorer_exec(uint add)
 
 	} else if (e->cur == 1) {
 		// Action on "<UP>"
-		ffstr parent;
-		ffpath_splitpath_str(FFSTR_Z(e->dir), &parent, NULL);
-		if (!parent.len)
-			ffstr_setz(&parent, "/");
+		ffstr parent = path_parent(FFSTR_Z(e->dir));
 		filepath = ffsz_allocfmt("%S", &parent);
 
 	} else {
 		uint cur = e->cur - 2;
 		const char *fn = ffdirscanx_at(&e->dx, cur, NULL);
-
-		filepath = ffsz_allocfmt("%s%s%s"
-			, e->dir, (e->dir[1]) ? "/" : "", fn);
+		filepath = path_join(e->dir, fn, ffsz_len(fn));
 
 		if (add || cur >= e->dirs_n) {
 
@@ -168,13 +180,8 @@ static int explorer_jump_action(int k)
 	int r = tui2_dialog_edit_action(k);
 	if (r == FFKEY_ENTER) {
 		uint len = mod->dlg.len - 1;
-		if (!len)
-			return r;
-
-		mod->dlg.buf[len] = '\0';
-		if (explorer_navigate(mod->dlg.buf)) {
-			mod->dlg.buf[len] = '_';
-		}
+		if (len)
+			explorer_navigate(mod->dlg.buf, len);
 	}
 
 	return r;
@@ -186,8 +193,8 @@ static int explorer_action(int k, int key)
 	// struct tui2_explorer *e = &mod->ex;
 	switch (key) {
 	case '/':
-		tui2_dialog_edit_show("Enter directory path:", 40, 0);
-		mod->popup_type = POPUP_EXPLORERJUMP;
+		tui2_dialog_edit_showz("Enter directory path:", 40, 0, NULL);
+		mod->popup_type = POPUP_EXPLORER_JUMP;
 		break;
 
 	case 'A':

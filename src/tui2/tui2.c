@@ -1,6 +1,11 @@
 /** phiola: TUI-ncurses
 2026, Simon Zolin */
 
+#ifdef _WIN32
+#include <util/windows-shell.h>
+#else
+#include <util/unix-shell.h>
+#endif
 #include <track.h>
 #include <util/util.h>
 #include <util/aformat.h>
@@ -55,7 +60,6 @@ struct tui2_explorer {
 struct tui2_play_trk;
 struct tui2_mod {
 	double volume_db;
-	ushort list_cap;
 	u_char volume;
 	u_char popup_type; // enum POPUP
 	uint view_explorer :1;
@@ -75,13 +79,18 @@ struct tui2_mod {
 	struct phi_woeh_task task_read;
 
 	// const:
-	uint y_status;
+	ushort list_cap;
+	ushort y_status;
+	uint play_info_title :1;
+	u_char colors[2];
 	char *user_conf_dir;
 	const phi_queue_if *queue;
 	phi_task task_init;
 };
 static struct tui2_mod *mod;
 static const phi_core *core;
+
+#define X_TITLE 2
 
 enum Y {
 	Y_TITLE,
@@ -99,10 +108,13 @@ enum CLR {
 };
 
 enum POPUP {
-	POPUP_HELP,
 	POPUP_PLAYINFO,
-	POPUP_LISTJUMP,
-	POPUP_EXPLORERJUMP,
+	POPUP_LIST_JUMP,
+	POPUP_LIST_SAVE,
+	POPUP_LIST_FRENAME,
+	POPUP_LIST_ADDURL,
+	POPUP_EXPLORER_JUMP,
+	POPUP_HELP,
 };
 
 #define SEEK_STEP 5
@@ -112,10 +124,10 @@ enum POPUP {
 #define VOL_LO  (-40)
 #define VOL_HI  6
 
-static int explorer_navigate(const char *dir);
 static void list_view_title();
 static void tui2_exit();
 
+/** Copy text into the global buffer. */
 static uint tui2_printf(const char *fmt, ...)
 {
 	va_list va;
@@ -127,11 +139,27 @@ static uint tui2_printf(const char *fmt, ...)
 	return r;
 }
 
+/** Append a formatted string to the global buffer at offset. */
+static uint tui2_appendf(uint off, const char *fmt, ...)
+{
+	va_list va;
+	va_start(va, fmt);
+	int r = ffs_formatv(mod->buf + off, sizeof(mod->buf) - off, fmt, va);
+	va_end(va);
+	if (r < 0)
+		r = sizeof(mod->buf) - 1;
+	else
+		r += off;
+	return r;
+}
+
+/** Print a line inside main window. */
 static void tui2_println(struct ffncurses_wnd *w, int y, int x, const char *text, unsigned attr, unsigned color_id)
 {
 	ffncurses_println_attr(w, y, x, mod->buf, tui2_printf("%s", text), attr, color_id);
 }
 
+/** Create a centered popup window with a title. */
 static void tui2_popup(const char *title, uint scale_pct)
 {
 	struct ffncurses_rect pos = ffncurses_auto_center(scale_pct);
@@ -139,12 +167,14 @@ static void tui2_popup(const char *title, uint scale_pct)
 	mod->dlg.top = 0;
 }
 
+/** Print a line inside the dialog. */
 static void tui2_popup_println(uint y, char *text, uint len, unsigned attr, unsigned color_id)
 {
 	ffncurses_line_clear(&mod->wpopup, y);
 	ffncurses_printn_attr(&mod->wpopup, y, 1, text, len, attr, color_id);
 }
 
+/** Print text on the status bar. */
 static void tui2_status(const char *fmt, ...)
 {
 	va_list va;
@@ -157,6 +187,7 @@ static void tui2_status(const char *fmt, ...)
 	ffncurses_update(&mod->wmain);
 }
 
+/** Store the currently playing track and its parent playlist. */
 static void tui2_play_started(struct tui2_play_trk *p, phi_track *t)
 {
 	mod->playing = p;
@@ -165,27 +196,46 @@ static void tui2_play_started(struct tui2_play_trk *p, phi_track *t)
 	mod->list.active_track = mod->queue->index(qe);
 }
 
+/** Reset the window title. */
+static void title_default()
+{
+	ffstd_title("φ phiola", 9);
+}
+
+/** Clear playback info when a track finishes. */
 static void tui2_play_finished(const struct tui2_play_trk *p)
 {
 	if (p != mod->playing) return;
 
 	mod->playing = NULL;
-	tui2_println(&mod->wmain, Y_TITLE, 0, "φ", 0, CLR_TITLE);
+	ffncurses_line_clear_x(&mod->wmain, Y_TITLE, X_TITLE);
 	ffncurses_line_clear(&mod->wmain, Y_PROGRESS);
 	ffncurses_line_clear(&mod->wmain, mod->y_status);
 	ffncurses_update(&mod->wmain);
+	title_default();
 }
 
-static void tui2_dialog_edit_show(const char *title, uint scale, uint numeric)
+/** Show an edit dialog in a popup window with initial text. */
+static void tui2_dialog_edit_show(const char *title, uint scale, uint numeric, ffstr text)
 {
 	struct dialog *d = &mod->dlg;
 	d->numeric = numeric;
 	tui2_popup(title, scale);
 	d->len = 0;
+	if (text.len)
+		d->len = ffmem_ncopy(d->buf, sizeof(d->buf), text.ptr, text.len);
 	d->buf[d->len++] = '_';
 	tui2_popup_println(1, d->buf, d->len, 0, 0);
 }
 
+/** Show an edit dialog with a null-terminated string. */
+static void tui2_dialog_edit_showz(const char *title, uint scale, uint numeric, const char *text)
+{
+	tui2_dialog_edit_show(title, scale, numeric, (text) ? FFSTR_Z(text) : FFSTR_Z(""));
+}
+
+/** Handle input for the active edit dialog.
+Return key code or 0. */
 static int tui2_dialog_edit_action(int k)
 {
 	struct dialog *d = &mod->dlg;
@@ -224,8 +274,21 @@ static int tui2_dialog_edit_action(int k)
 #include <tui2/help.h>
 #include <tui2/conf.h>
 
+typedef int (*popup_action_t)(int);
+static const popup_action_t popup_actions[] = {
+	play_info_action,
+	list_jump_action,
+	list_save_action,
+	list_frename_action,
+	list_addurl_action,
+	explorer_jump_action,
+	help_action,
+};
+
+/** Toggle between Explorer and Playlist views. */
 static void list_view_switch();
 
+/** Update volume and display the level. */
 static void tui2_vol()
 {
 	if (mod->volume_mute)
@@ -378,27 +441,8 @@ static void tui2_cmd_read(void *param)
 			key &= ~0x20; // 'a' -> 'A'
 
 		if (mod->wpopup.wnd) {
-			switch (mod->popup_type) {
-			case POPUP_PLAYINFO:
-				if (!play_info_action(k))
-					continue;
-				break;
-
-			case POPUP_LISTJUMP:
-				if (!list_jump_action(k))
-					continue;
-				break;
-
-			case POPUP_EXPLORERJUMP:
-				if (!explorer_jump_action(k))
-					continue;
-				break;
-
-			case POPUP_HELP:
-				if (!help_action(k))
-					continue;
-				break;
-			}
+			if (!popup_actions[mod->popup_type](k))
+				continue;
 
 			mod->popup_type = 0;
 			ffncurses_popup_del(&mod->wpopup);
@@ -432,6 +476,8 @@ static void tui2_cmd_read(void *param)
 static void tui2_init()
 {
 	mod->volume = 100;
+	mod->play_info_title = 1;
+	mod->colors[0] = COLOR_MAGENTA;
 	mod->queue = core->mod("core.queue");
 	mod->queue->on_change(q_on_change);
 	mod->user_conf_dir = core->conf.env_expand(USER_CONF_DIR);
@@ -442,8 +488,8 @@ static void tui2_init()
 
 	// Init ncurses
 	struct ffncurses_conf c;
-	ffncurses_color(&c, CLR_TITLE, COLOR_MAGENTA, -1);
-	ffncurses_color(&c, CLR_LIST_SEL, -1, COLOR_MAGENTA);
+	ffncurses_color(&c, CLR_TITLE, mod->colors[0], -1);
+	ffncurses_color(&c, CLR_LIST_SEL, -1, mod->colors[0]);
 	ffncurses_color(&c, CLR_N, -1, -1);
 
 	ffncurses_init(&mod->wmain, &c);
@@ -456,6 +502,8 @@ static void tui2_init()
 	list_view_title();
 	list_display();
 	ffncurses_update(&mod->wmain);
+
+	title_default();
 
 	if (mod->master)
 		lists_load();

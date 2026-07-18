@@ -25,15 +25,19 @@ static void list_display()
 		if (!qe)
 			break;
 
-		ffstr artist = {}, title = {};
-		core->metaif->find(&qe->meta, FFSTR_Z("artist"), &artist, 0);
-		core->metaif->find(&qe->meta, FFSTR_Z("title"), &title, 0);
+		if (url_checkz(qe->url)) {
+			n = tui2_printf("%u. %s", i + 1, qe->url);
 
-		if (title.len) {
-			n = tui2_printf("%u. %S - %S", i + 1, &artist, &title);
 		} else {
-			ffpath_split3_str(FFSTR_Z(qe->url), NULL, &title, NULL); // Use file name as title
-			n = tui2_printf("%u. %S", i + 1, &title);
+			ffstr artist = {}, title = {};
+			core->metaif->find(&qe->meta, FFSTR_Z("artist"), &artist, 0);
+			core->metaif->find(&qe->meta, FFSTR_Z("title"), &title, 0);
+			if (title.len) {
+				n = tui2_printf("%u. %S - %S", i + 1, &artist, &title);
+			} else {
+				ffpath_split3_str(FFSTR_Z(qe->url), NULL, &title, NULL); // Use file name as title
+				n = tui2_printf("%u. %S", i + 1, &title);
+			}
 		}
 
 		ffncurses_line_clear(&mod->wmain, y);
@@ -126,6 +130,63 @@ static int list_jump_action(int k)
 	return r;
 }
 
+/** Return 0 if handled */
+static int list_save_action(int k)
+{
+	int r = tui2_dialog_edit_action(k);
+	if (r == FFKEY_ENTER) {
+		uint len = mod->dlg.len - 1;
+		if (len) {
+			char *fn = mod->dlg.buf;
+			fn[len] = '\0';
+			if (fffile_exists(fn)) {
+				errlog("file exists: %s", fn);
+				return r;
+			}
+			mod->queue->save(NULL, fn, NULL, NULL);
+		}
+	}
+	return r;
+}
+
+/** Return 0 if handled */
+static int list_frename_action(int k)
+{
+	struct tui2_list *l = &mod->list;
+	int r = tui2_dialog_edit_action(k);
+	if (r == FFKEY_ENTER) {
+		uint len = mod->dlg.len - 1;
+		if (len) {
+			char *name = mod->dlg.buf;
+			name[len] = '\0';
+			struct phi_queue_entry *qe = mod->queue->at(NULL, l->cur);
+			ffstr path, ext;
+			ffpath_split3_str(FFSTR_Z(qe->url), &path, NULL, &ext);
+			char *fn = ffsz_allocfmt("%S%s%s.%S"
+				, &path, PATH_SLASH, name, &ext);
+			mod->queue->rename(qe, fn, PHI_QRN_ACQUIRE);
+		}
+	}
+	return r;
+}
+
+/** Return 0 if handled */
+static int list_addurl_action(int k)
+{
+	int r = tui2_dialog_edit_action(k);
+	if (r == FFKEY_ENTER) {
+		uint len = mod->dlg.len - 1;
+		if (len) {
+			mod->dlg.buf[len] = '\0';
+			struct phi_queue_entry qe = {
+				.url = mod->dlg.buf,
+			};
+			mod->queue->add(NULL, &qe);
+		}
+	}
+	return r;
+}
+
 static phi_queue_id list_create()
 {
 	struct tui2_list *l = &mod->list;
@@ -137,12 +198,41 @@ static phi_queue_id list_create()
 	return mod->queue->create(&qc); // -> on_change('n')
 }
 
+static int file_trash(uint i)
+{
+	struct phi_queue_entry *qe = mod->queue->at(NULL, i);
+	int r;
+	const char *e;
+
+#ifdef FF_WIN
+	r = ffui_file_del((const char *const *)&qe->url, 1, FFUI_FILE_TRASH);
+	e = fferr_strptr(fferr_last());
+#else
+	r = ffui_glib_trash(qe->url, &e);
+#endif
+
+	if (r) {
+		errlog("moving file to trash: %s: %s"
+			, qe->url, e);
+	}
+	return r;
+}
+
 /** Return 0 if handled */
 static int list_action(int k, int key)
 {
 	struct tui2_list *l = &mod->list;
 
 	switch (key) {
+
+	case FFKEY_F6: {
+		const struct phi_queue_entry *qe = mod->queue->at(NULL, l->cur);
+		ffstr name;
+		ffpath_split3_str(FFSTR_Z(qe->url), NULL, &name, NULL);
+		tui2_dialog_edit_show("Enter new file name:", 33, 0, name);
+		mod->popup_type = POPUP_LIST_FRENAME;
+		break;
+	}
 
 	case '+':
 		list_create();  break;
@@ -162,8 +252,18 @@ static int list_action(int k, int key)
 		break;
 
 	case '#':
-		tui2_dialog_edit_show("Enter track number:", 20, 1);
-		mod->popup_type = POPUP_LISTJUMP;
+		tui2_dialog_edit_showz("Enter track number:", 20, 1, NULL);
+		mod->popup_type = POPUP_LIST_JUMP;
+		break;
+
+	case 'A':
+		tui2_dialog_edit_showz("Add URL:", 33, 0, "");
+		mod->popup_type = POPUP_LIST_ADDURL;
+		break;
+
+	case 'S':
+		tui2_dialog_edit_showz("Save playlist to file:", 33, 0, NULL);
+		mod->popup_type = POPUP_LIST_SAVE;
 		break;
 
 	case 'R': {
@@ -187,7 +287,12 @@ static int list_action(int k, int key)
 	}
 
 	case FFKEY_DEL:
-		mod->queue->remove_at(NULL, l->cur, 1);  break;
+		if ((k & FFKEY_MODMASK) == FFKEY_SHIFT) {
+			if (file_trash(l->cur))
+				break;
+		}
+		mod->queue->remove_at(NULL, l->cur, 1);
+		break;
 
 	case FFKEY_HOME:
 	case FFKEY_END:

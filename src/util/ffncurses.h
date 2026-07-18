@@ -94,12 +94,15 @@ static inline void ffncurses_end()
 
 /** Clear a single line.
 y: Row */
-static inline void ffncurses_line_clear(struct ffncurses_wnd *w, unsigned y)
+static inline void ffncurses_line_clear_x(struct ffncurses_wnd *w, unsigned y, unsigned x)
 {
-	unsigned x = (w->popup) ? 1 : 0;
+	x += (w->popup) ? 1 : 0;
 	mvwhline(w->wnd, y, x, ' ', getmaxx(w->wnd) - x*2);
 	w->modified = 1;
 }
+
+#define ffncurses_line_clear(w, y) \
+	ffncurses_line_clear_x(w, y, 0)
 
 /** Print formatted text.
 y, x: Row and column coordinates

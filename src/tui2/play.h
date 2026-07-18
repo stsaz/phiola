@@ -29,20 +29,35 @@ static void tui2_play_close(void *f, phi_track *t)
 
 static void play_title(struct tui2_play_trk *p)
 {
-	const struct phi_queue_entry *qe = p->trk->qent;
+	const phi_track *t = p->trk;
+	const struct phi_queue_entry *qe = t->qent;
 
 	ffstr artist = {}, title = {};
 	core->metaif->find(&p->trk->meta, FFSTR_Z("artist"), &artist, 0);
 	core->metaif->find(&p->trk->meta, FFSTR_Z("title"), &title, 0);
 	uint n;
 	if (title.len) {
-		n = tui2_printf("φ %S - %S", &artist, &title);
+		n = tui2_printf("%S - %S", &artist, &title);
 	} else {
 		ffpath_split3_str(FFSTR_Z(qe->url), NULL, &title, NULL); // Use file name as title
-		n = tui2_printf("φ %S", &title);
+		n = tui2_printf("%S", &title);
 	}
-	ffncurses_line_clear(&mod->wmain, Y_TITLE);
-	ffncurses_printn_attr(&mod->wmain, Y_TITLE, 0, mod->buf, n, 0, CLR_TITLE);
+
+	uint nbase = n;
+	if (mod->play_info_title) {
+		n = tui2_appendf(n, " [%u kbps, %s, %u Hz, %s, %s]"
+			, (t->audio.bitrate + 500) / 1000
+			, t->audio.decoder
+			, t->audio.format.rate
+			, phi_af_name(t->audio.format.format)
+			, pcm_channelstr(t->audio.format.channels));
+	}
+
+	ffncurses_line_clear_x(&mod->wmain, Y_TITLE, X_TITLE);
+	ffncurses_printn_attr(&mod->wmain, Y_TITLE, X_TITLE, mod->buf, n, 0, CLR_TITLE);
+
+	n = tui2_appendf(nbase, " - phiola");
+	ffstd_title(mod->buf, n);
 }
 
 static int play_seek(struct tui2_play_trk *p)
@@ -74,17 +89,22 @@ static void play_progress(struct tui2_play_trk *p)
 		return;
 	p->pos_last_sec = play_time;
 
-	if (!p->total_sec)
+	if (!p->total_sec && t->audio.total != ~0ULL)
 		p->total_sec = (uint)(samples_to_msec(t->audio.total, t->audio.format.rate) / 1000);
 
 	uint prog_cap = ffmax((int)ffncurses_width() - FFS_LEN("[] xx:xx / xx:xx"), 0);
 	uint prog_pos = play_time * prog_cap / p->total_sec;
-	uint n = tui2_printf("[%*c%*c] %u:%02u / %u:%02u"
+	uint n = tui2_printf("[%*c%*c] %u:%02u / "
 		, (ffsize)prog_pos, '#'
 		, (ffsize)(prog_cap - prog_pos), '-'
 		, play_time / 60, play_time % 60
-		, p->total_sec / 60, p->total_sec % 60
 		);
+	if (t->audio.total != ~0ULL) {
+		n = tui2_appendf(n, "%u:%02u"
+			, p->total_sec / 60, p->total_sec % 60);
+	} else {
+		n = tui2_appendf(n, "--");
+	}
 
 	ffncurses_line_clear(&mod->wmain, Y_PROGRESS);
 	ffncurses_printn_attr(&mod->wmain, Y_PROGRESS, 0, mod->buf, n, 0, 0);
