@@ -129,7 +129,7 @@ static void rec_silence_track(struct cmd_rec *r)
 	t->oaudio.format = af;
 
 	if (!track->filter(t, x->core->mod("afilter.silence-gen"), 0)
-		|| !track->filter(t, x->core->mod("wasapi.play"), 0)) {
+		|| !track->filter(t, x->core->mod("ad-wasapi.play"), 0)) {
 		track->close(t);
 		return;
 	}
