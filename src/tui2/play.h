@@ -5,7 +5,7 @@ struct tui2_play_trk {
 	phi_track *trk;
 	uint pos_last_sec, total_sec;
 	int seek_delta_sec;
-	uint hdr :1;
+	uint meta_change_seen :1;
 	uint paused :1;
 };
 
@@ -84,7 +84,7 @@ static int play_seek(struct tui2_play_trk *p)
 static void play_progress(struct tui2_play_trk *p)
 {
 	phi_track *t = p->trk;
-	uint play_time = (uint)(samples_to_msec(t->audio.pos, t->audio.format.rate) / 1000);
+	uint play_time = (t->audio.pos != ~0ULL) ? (uint)(samples_to_msec(t->audio.pos, t->audio.format.rate) / 1000) : 0;
 	if (play_time == p->pos_last_sec)
 		return;
 	p->pos_last_sec = play_time;
@@ -93,7 +93,8 @@ static void play_progress(struct tui2_play_trk *p)
 		p->total_sec = (uint)(samples_to_msec(t->audio.total, t->audio.format.rate) / 1000);
 
 	uint prog_cap = ffmax((int)ffncurses_width() - FFS_LEN("[] xx:xx / xx:xx"), 0);
-	uint prog_pos = play_time * prog_cap / p->total_sec;
+	uint prog_pos = FFINT_DIVSAFE(play_time * prog_cap, p->total_sec);
+	prog_pos = ffmin(prog_pos, prog_cap);
 	uint n = tui2_printf("[%*c%*c] %u:%02u / "
 		, (ffsize)prog_pos, '#'
 		, (ffsize)(prog_cap - prog_pos), '-'
@@ -117,15 +118,13 @@ static int tui2_play_process(void *f, phi_track *t)
 	if (t->chain_flags & PHI_FSTOP)
 		return PHI_FIN;
 
-	if (!t->audio.format.rate) {
-		// Meta hasn't been read yet
-		if (!(t->chain_flags & PHI_FFWD))
-			return PHI_MORE;
-		goto end;
-	}
-
-	if (!p->hdr) {
-		p->hdr = 1;
+	uint new_meta = (t->meta_changed && !p->meta_change_seen);
+	p->meta_change_seen = t->meta_changed;
+	if (new_meta) {
+		if (!t->audio.format.rate) {
+			errlog("audio sample rate is not set");
+			return PHI_ERR;
+		}
 		play_title(p);
 	}
 
@@ -135,7 +134,6 @@ static int tui2_play_process(void *f, phi_track *t)
 	if (play_seek(p))
 		return PHI_MORE;
 
-end:
 	t->data_out = t->data_in;
 	return !(t->chain_flags & PHI_FFIRST) ? PHI_DATA : PHI_DONE;
 }
