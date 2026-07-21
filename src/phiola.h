@@ -523,6 +523,8 @@ struct phi_queue_entry {
 	phi_meta meta;
 	uint	length_sec :24;
 	uint	meta_priority :1; // Supplied `meta` has higher priority than meta from input file (e.g. for .cue track)
+	uint	error :1;
+	uint	meta_display_stale :1;
 	uint	lock; // For synchronizing access to `meta`
 	uint	seek_cdframes, until_cdframes;
 };

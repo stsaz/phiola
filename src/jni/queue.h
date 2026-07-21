@@ -546,6 +546,10 @@ static void display_name_prepare(ffstr *val, ffsize cap, struct phi_queue_entry 
 		ffstr_addfmt(val, cap, " [%u:%02u]"
 			, min, sec);
 	}
+
+	if (qe->error) {
+		ffstr_addz(val, cap, " [ERROR]");
+	}
 }
 
 JNIEXPORT jobjectArray JNICALL
@@ -565,13 +569,17 @@ Java_com_github_stsaz_phiola_Phiola_quDisplayLine(JNIEnv *env, jobject thiz, jlo
 		qe = qev[ijsa];
 		ffstr val = {};
 		fflock_lock((fflock*)&qe->lock); // core thread may read or write `conf.meta` at this moment
-		if (x->metaif.find(&qe->meta, FFSTR_Z("_phi_display"), &val, PHI_META_PRIVATE)) {
+		if (x->metaif.find(&qe->meta, FFSTR_Z("_phi_display"), &val, PHI_META_PRIVATE)
+			|| qe->meta_display_stale) {
 			val.ptr = buf;
+			val.len = 0;
 			if (flags < 0)
 				flags = x->queue.conf(q)->conversion;
 			display_name_prepare(&val, sizeof(buf) - 1, qe, i, flags);
-			x->metaif.set(&qe->meta, FFSTR_Z("_phi_display"), val, PHI_META_CACHE);
+			uint msf = (qe->meta_display_stale) ? PHI_META_REPLACE : 0;
+			x->metaif.set(&qe->meta, FFSTR_Z("_phi_display"), val, PHI_META_CACHE | msf);
 			val.ptr[val.len] = '\0';
+			qe->meta_display_stale = 0;
 		}
 		jstring js = jni_js_sz(val.ptr);
 		fflock_unlock((fflock*)&qe->lock);

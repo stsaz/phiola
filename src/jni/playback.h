@@ -4,8 +4,13 @@
 #include <util/aformat.h>
 #include <jni/pl-rec.h>
 
+static void qu_on_change(phi_queue_id q, uint flags, uint pos);
+
 static void* play_grd_open(phi_track *t)
 {
+	struct phi_queue_entry *qe = (struct phi_queue_entry*)t->qent;
+	qe->meta_display_stale = qe->error;
+	qe->error = 0;
 	x->play.trk = t;
 	x->play.seek_msec = -1;
 	x->play.paused = 0;
@@ -27,11 +32,22 @@ static void play_grd_close(void *f, phi_track *t)
 	if (t == x->play.trk)
 		x->play.trk = NULL;
 
-	if (t->chain_flags & PHI_FFINISHED) {
+	if ((t->chain_flags & PHI_FFINISHED)
+		&& t->error) {
+		uint removed = 0;
 		if (t->error == PHI_E_NOSRC
 			|| t->error == PHI_E_UNKIFMT) {
-			if (x->play.remove_on_error)
+			if (x->play.remove_on_error) {
 				x->queue.remove(t->qent);
+				removed = 1;
+			}
+		}
+
+		if (!removed) {
+			struct phi_queue_entry *qe = (struct phi_queue_entry*)t->qent;
+			qe->error = 1;
+			qe->meta_display_stale = 1;
+			qu_on_change(x->queue.queue(qe), 'm', x->queue.index(qe));
 		}
 	}
 
