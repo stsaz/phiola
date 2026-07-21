@@ -323,6 +323,8 @@ LoudnessG  LM   Gain
 
 ## GUI Playlist Synchronization
 
+Per-module view:
+
 ```C
 dir-read         queue                  Core       GUI                GTK
 ================================================================================
@@ -338,6 +340,52 @@ dir-read         queue                  Core       GUI                GTK
                                                                    <- ...
 ```
 
+Rapid changes, per-thread view:
+
+```
+Core                    GUI
+===========================================
+Real data: [row0]
+q_on_change(add)
+CMD=add,POS=0
+VER++ -> 1
+-> [timer]
+
+list_update_delayed
+       -> [GUI task] -> .
+
+Real data: [row0 row1]
+q_on_change(add)
+VER!=0 -> CMD=(update),N=2
+VER++ -> 2
+-> [timer]
+
+                        ffui_view_setdata()
+                        for ...
+                          -> list_display
+                             ...
+                          -> list_display(DONE)
+                             VER-- -> 1
+                        Painted: [row0]
+
+Real data: [row1]
+q_on_change(rm)
+VER!=0 -> CMD=(update),N=1
+VER == 1
+-> [timer]
+
+list_update_delayed
+       -> [GUI task] -> .
+
+                        ffui_view_clear()
+                        ffui_view_setdata()
+                          -> list_display
+                          <- text
+                             ...
+                          -> list_display(DONE)
+                             VER-- -> 0
+                        Painted: [row1]
+```
 
 ## Build
 

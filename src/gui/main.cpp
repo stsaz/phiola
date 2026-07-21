@@ -24,8 +24,11 @@ struct gui_wmain {
 
 	ffui_icon ico_play, ico_pause;
 
-	phi_timer tmr_redraw;
-	uint redraw_n, redraw_offset, redraw_cmd;
+	struct {
+		phi_timer timer;
+		uint cmd, n, pos;
+		uint ver;
+	} redraw;
 
 	char *vlist_col;
 	char *wnd_pos;
@@ -261,6 +264,13 @@ static void list_display(ffui_viewxx_disp *disp)
 #ifdef FF_WIN
 	if (!(disp->mask & LVIF_TEXT))
 		return;
+
+#else
+	gui_wmain *m = gg->wmain;
+	if (!disp) {
+		ffint_fetch_add(&m->redraw.ver, -1);
+		return;
+	}
 #endif
 
 	uint i = disp->index(), sub = disp->subindex();
@@ -367,18 +377,21 @@ static void list_update(uint cmd, uint n, uint pos)
 
 	case 'u':
 		wmain_list_draw(n, 1);  break;
+
+	case 'c':
+		m->vlist.clear();  break;
 	}
 }
 
 static void list_update_delayed(void *param)
 {
 	gui_wmain *m = gg->wmain;
-	list_update(m->redraw_cmd, m->redraw_n, m->redraw_offset);
-	m->redraw_cmd = 0;
+	list_update(m->redraw.cmd, m->redraw.n, m->redraw.pos);
+	m->redraw.cmd = 0;
 }
 
 /** A queue is created/deleted/modified.
-Thread: worker */
+Thread: core */
 static void q_on_change(phi_queue_id q, uint flags, uint pos)
 {
 	gui_wmain *m = gg->wmain;
@@ -389,33 +402,28 @@ static void q_on_change(phi_queue_id q, uint flags, uint pos)
 	uint cmd = (flags & 0xff);
 
 	switch (cmd) {
+	case 'm':
 	case 'a':
 	case 'r':
-	case 'm':
-		if (q != gd->q_selected)
-			break; // an inactive list is changed
-		if (m->redraw_cmd) {
-			// Multiple changes within short time period: redraw the whole list
-			m->redraw_cmd = 'u';
-		} else {
-			m->redraw_cmd = cmd;
-			m->redraw_offset = pos;
-		}
-		m->redraw_n = gd->queue->count(q);
-		core->timer(0, &m->tmr_redraw, -50, list_update_delayed, NULL);
-		break;
-
 	case 'u':
+	case 'c': {
 		if (q != gd->q_selected)
 			break; // an inactive list is changed
-		wmain_list_draw(gd->queue->count(q), 1);
+		uint update = 0;
+#ifdef FF_LINUX
+		update = (0 != ffint_fetch_add(&m->redraw.ver, 1));
+#endif
+		if (m->redraw.cmd || update) {
+			// Multiple changes within short time period: redraw the whole list
+			m->redraw.cmd = 'u';
+		} else {
+			m->redraw.cmd = cmd;
+			m->redraw.pos = pos;
+		}
+		m->redraw.n = gd->queue->count(q);
+		core->timer(0, &m->redraw.timer, -50, list_update_delayed, NULL);
 		break;
-
-	case 'c':
-		if (q != gd->q_selected)
-			break; // an inactive list is changed
-		m->vlist.clear();
-		break;
+	}
 
 	case 'n':
 		if (gd->filtering)
@@ -717,6 +725,8 @@ void wmain_init()
 #ifdef FF_WIN
 	m->wnd.top = 1;
 	m->wnd.manual_close = 1;
+#else
+	m->vlist.draw_end_notify = 1;
 #endif
 	m->wnd.on_action = wmain_action;
 	m->wnd.onclose_id = A_CLOSE;
@@ -757,5 +767,5 @@ void wmain_show()
 void wmain_fin()
 {
 	gui_wmain *m = gg->wmain;
-	core->timer(0, &m->tmr_redraw, 0, NULL, NULL);
+	core->timer(0, &m->redraw.timer, 0, NULL, NULL);
 }
