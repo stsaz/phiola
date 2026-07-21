@@ -78,8 +78,10 @@ static void q_on_change(phi_queue_id q, uint flags, uint pos)
 		list_redraw_delayed(NULL);
 		break;
 
+	case 'm':
 	case 'a':
 	case 'r':
+	case 'u':
 	case 'c':
 		if (q != mod->queue->select(PHI_QSEL_CUR))
 			break; // An inactive list has been modified
