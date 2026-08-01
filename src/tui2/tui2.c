@@ -32,7 +32,7 @@
 
 struct dialog {
 	// scroll:
-	ushort top;
+	ushort top, cur;
 
 	// edit:
 	u_char len;
@@ -113,6 +113,7 @@ enum POPUP {
 	POPUP_LIST_SAVE,
 	POPUP_LIST_FRENAME,
 	POPUP_LIST_ADDURL,
+	POPUP_LIST_SORT,
 	POPUP_EXPLORER_JUMP,
 	POPUP_HELP,
 };
@@ -164,7 +165,7 @@ static void tui2_popup(const char *title, uint scale_pct)
 {
 	struct ffncurses_rect pos = ffncurses_auto_center(scale_pct);
 	ffncurses_popup(&mod->wpopup, pos.h, pos.w, pos.y, pos.x, mod->buf, tui2_printf("%s", title), CLR_TITLE);
-	mod->dlg.top = 0;
+	mod->dlg.top = mod->dlg.cur = 0;
 }
 
 /** Print a line inside the dialog. */
@@ -281,6 +282,7 @@ static const popup_action_t popup_actions[] = {
 	list_save_action,
 	list_frename_action,
 	list_addurl_action,
+	list_sort_action,
 	explorer_jump_action,
 	help_action,
 };

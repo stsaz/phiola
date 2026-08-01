@@ -220,6 +220,62 @@ static int file_trash(uint i)
 	return r;
 }
 
+static const char sort_options[][24] = {
+	"Sort by File Name",
+	"Sort by File Size",
+	"Sort by File Date",
+	"Sort by Tag Artist",
+	"Sort by Tag Date",
+	"Shuffle",
+};
+
+static const u_char sort_q_cmd[] = {
+	PHI_Q_SORT_FILENAME,
+	PHI_Q_SORT_FILESIZE,
+	PHI_Q_SORT_FILEDATE,
+	PHI_Q_SORT_TAG_ARTIST,
+	PHI_Q_SORT_TAG_DATE,
+	PHI_Q_SORT_RANDOM,
+};
+
+static void list_sort_display()
+{
+	uint visible = mod->wpopup.ch;
+	uint n = ffmin(mod->dlg.top + visible, FF_COUNT(sort_options));
+	uint y = 1;
+	for (uint i = mod->dlg.top;  i < n;  i++) {
+		int mark = (i == mod->dlg.cur) ? '>' : ' ';
+		uint r = tui2_printf("%c %s", mark, sort_options[i]);
+		tui2_popup_println(y++, mod->buf, r, 0, 0);
+	}
+}
+
+/** Return 0 if handled */
+static int list_sort_action(int k)
+{
+	switch (k & ~FFKEY_MODMASK) {
+	case FFKEY_UP:
+		if (mod->dlg.cur > 0)
+			mod->dlg.cur--;
+		break;
+
+	case FFKEY_DOWN:
+		if (mod->dlg.cur < FF_COUNT(sort_options) - 1)
+			mod->dlg.cur++;
+		break;
+
+	case FFKEY_ENTER:
+		mod->queue->sort(NULL, sort_q_cmd[mod->dlg.cur]);
+		return 1;
+
+	default:
+		return 1;
+	}
+
+	list_sort_display();
+	return 0;
+}
+
 /** Return 0 if handled */
 static int list_action(int k, int key)
 {
@@ -261,6 +317,12 @@ static int list_action(int k, int key)
 	case 'A':
 		tui2_dialog_edit_showz("Add URL:", 33, 0, "");
 		mod->popup_type = POPUP_LIST_ADDURL;
+		break;
+
+	case 'O':
+		tui2_popup("Sort Playlist", 40);
+		mod->popup_type = POPUP_LIST_SORT;
+		list_sort_display();
 		break;
 
 	case 'S':

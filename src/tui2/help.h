@@ -23,6 +23,7 @@ static const struct {
 	{ "S",          "Save" },
 	{ "[ / ]",      "Prev/Next" },
 	{ "A",          "Add URL" },
+	{ "O",          "Sort Tracks" },
 	{ "#",          "Jump to Track" },
 	{ "Del",        "Remove Track" },
 	{ "Shift+Del",  "Delete File" },
