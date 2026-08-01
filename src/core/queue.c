@@ -230,6 +230,7 @@ static void* q_insert(struct phi_queue *q, uint pos, struct phi_queue_entry *qe)
 	struct q_entry *e = qe_new(qe);
 	e->q = q;
 	e->index = pos;
+	ffint_fetch_add(&q->conf.version, 1);
 	fflock_lock(&q->lock);
 	ffvec_pushT(&q->index, void*);
 	if (pos+1 == q->index.len)
@@ -258,6 +259,7 @@ static void* q_insert_bulk(struct phi_queue *q, uint pos, struct phi_queue_entry
 			*result++ = &e->pub;
 	}
 
+	ffint_fetch_add(&q->conf.version, 1);
 	fflock_lock(&q->lock);
 	ffvec_insert(&q->index, pos, ents, n, sizeof(void*));
 	fflock_unlock(&q->lock);
@@ -285,6 +287,7 @@ static int q_clear(struct phi_queue *q)
 {
 	if (!q) q = qm_default();
 
+	ffint_fetch_add(&q->conf.version, 1);
 	fflock_lock(&q->lock);
 	ffvec a = q->index;
 	ffvec_null(&q->index);
@@ -444,6 +447,7 @@ static void q_trk_closed(void *param)
 		if (!e)
 			return;
 		uint i = qe_index(e);
+		ffint_fetch_add(&e->q->conf.version, 1);
 		qm->on_change(q, 'm', i);
 		if (!(e = q_get(q, i + 1)))
 			return;
@@ -629,6 +633,7 @@ static int q_remove_at(struct phi_queue *q, uint pos, uint n)
 		return -1;
 	e->index = ~0;
 	dbglog("removed '%s' @%u", e->pub.url, pos);
+	ffint_fetch_add(&q->conf.version, 1);
 	fflock_lock(&q->lock); // after q_ref() has read the item @pos, but before 'used++', the item must not be destroyed
 
 	if (q->cursor_index > 0
@@ -731,6 +736,7 @@ meta_cmp: {
 static void q_sort(phi_queue_id q, uint flags)
 {
 	if (!q) q = qm_default();
+	ffint_fetch_add(&q->conf.version, 1);
 
 	if (flags == PHI_Q_SORT_RANDOM) {
 		sort_random(q);
@@ -859,6 +865,7 @@ static void q_remove_multi(phi_queue_id q, uint flags)
 		return;
 	}
 
+	ffint_fetch_add(&q->conf.version, 1);
 	fflock_lock(&q->lock);
 	ffvec old = q->index;
 	q->index = new_index;

@@ -12,7 +12,7 @@
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20811
+#define PHI_VERSION_CORE  20812
 
 typedef long long int64;
 typedef unsigned long long uint64;
@@ -510,6 +510,7 @@ struct phi_queue_conf {
 	};
 	struct phi_track_conf tconf;
 	fftime last_mod_time;
+	uint version;
 	uint conversion :1;
 	uint analyze :1;
 	uint random :1;

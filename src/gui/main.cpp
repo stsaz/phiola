@@ -27,7 +27,9 @@ struct gui_wmain {
 	struct {
 		phi_timer timer;
 		uint cmd, n, pos;
-		uint ver;
+		uint gui_ver, cur_ver;
+		uint n_total, n_actual;
+		uint timer_set :1;
 	} redraw;
 
 	char *vlist_col;
@@ -267,8 +269,11 @@ static void list_display(ffui_viewxx_disp *disp)
 
 #else
 	gui_wmain *m = gg->wmain;
-	if (!disp) {
-		ffint_fetch_add(&m->redraw.ver, -1);
+	if (disp->paint_begin) {
+		m->redraw.cur_ver = list_vis_version();
+		return;
+	} else if (disp->paint_end) {
+		FFINT_WRITEONCE(m->redraw.gui_ver, m->redraw.cur_ver);
 		return;
 	}
 #endif
@@ -377,17 +382,15 @@ static void list_update(uint cmd, uint n, uint pos)
 
 	case 'u':
 		wmain_list_draw(n, 1);  break;
-
-	case 'c':
-		m->vlist.clear();  break;
 	}
 }
 
 static void list_update_delayed(void *param)
 {
 	gui_wmain *m = gg->wmain;
+	m->redraw.n_actual++;
 	list_update(m->redraw.cmd, m->redraw.n, m->redraw.pos);
-	m->redraw.cmd = 0;
+	m->redraw.timer_set = 0;
 }
 
 /** A queue is created/deleted/modified.
@@ -405,25 +408,43 @@ static void q_on_change(phi_queue_id q, uint flags, uint pos)
 	case 'm':
 	case 'a':
 	case 'r':
-	case 'u':
-	case 'c': {
+	case 'u': {
 		if (q != gd->q_selected)
 			break; // an inactive list is changed
-		uint update = 0;
-#ifdef FF_LINUX
-		update = (0 != ffint_fetch_add(&m->redraw.ver, 1));
+		m->redraw.n_total++;
+		uint n = gd->queue->count(q);
+		uint update = m->redraw.timer_set;
+
+#ifdef FF_WIN
+		m->redraw.cmd = cmd;
+		m->redraw.pos = pos;
+		// Note: currently there's no way to determine if the list-view painting is complete
+
+#else
+		uint q_ver = gd->queue->conf(q)->version;
+		update |= (q_ver - 1 != FFINT_READONCE(m->redraw.gui_ver));
+		if (!update) {
+			m->redraw.n_actual++;
+			list_update(cmd, n, pos);
+			break;
+		}
 #endif
-		if (m->redraw.cmd || update) {
+
+		if (update) {
 			// Multiple changes within short time period: redraw the whole list
 			m->redraw.cmd = 'u';
-		} else {
-			m->redraw.cmd = cmd;
-			m->redraw.pos = pos;
+			m->redraw.pos = 0;
 		}
-		m->redraw.n = gd->queue->count(q);
-		core->timer(0, &m->redraw.timer, -50, list_update_delayed, NULL);
+		m->redraw.n = n;
+		if (!m->redraw.timer_set) {
+			m->redraw.timer_set = 1;
+			core->timer(0, &m->redraw.timer, -50, list_update_delayed, NULL);
+		}
 		break;
 	}
+
+	case 'c':
+		m->vlist.clear();  break;
 
 	case 'n':
 		if (gd->filtering)
@@ -726,7 +747,7 @@ void wmain_init()
 	m->wnd.top = 1;
 	m->wnd.manual_close = 1;
 #else
-	m->vlist.draw_end_notify = 1;
+	m->vlist.paint_notify = 1;
 #endif
 	m->wnd.on_action = wmain_action;
 	m->wnd.onclose_id = A_CLOSE;
@@ -768,4 +789,6 @@ void wmain_fin()
 {
 	gui_wmain *m = gg->wmain;
 	core->timer(0, &m->redraw.timer, 0, NULL, NULL);
+	dbglog("%s  paint-events: %u/%u"
+		, __func__, m->redraw.n_actual, m->redraw.n_total);
 }

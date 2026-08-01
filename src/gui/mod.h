@@ -48,6 +48,7 @@ FF_EXTERN void list_deleted(phi_queue_id q);
 FF_EXTERN void list_select(uint i);
 FF_EXTERN void list_filter(ffstr filter);
 FF_EXTERN struct phi_queue_entry* list_vis_qe_ref(uint i);
+FF_EXTERN uint list_vis_version();
 FF_EXTERN void list_conf_set(void *new_conf);
 
 FF_EXTERN void ctl_play(uint i);

@@ -323,69 +323,127 @@ LoudnessG  LM   Gain
 
 ## GUI Playlist Synchronization
 
+Goals:
+	* Coalesce many 'add/remove' events into a single delayed full redraw.
+	* Ensure the UI is consistent after any possible list changes.
+Use-cases:
+	* add+[add/rm/mod]
+	* rm+[add/rm/mod]
+	* update+[add/rm]
+
+Currently, mod+mod and update+update events are coalesced too, but note:
+	* update+update coalesce is not required (not realistic use-case)
+	* mod+mod events are tricky on GTK3: if 2 out of 1000 rows are to be modified, we'd want to modify 2 rows via 2 separate events;
+		if all rows are modified (e.g., after `List: Read Meta` command), we should redraw with a single slow operation.
+
+The key difference between GTK3 tree-view and Win32 GUI list-view controls is that GTK3 doesn't provide the means for on-demand drawing of the rows that need to be displayed when the control is being displayed or scrolled.
+On the other hand, Win32 list-view sends `LVN_GETDISPINFO` notification for each cell that it paints (`LVS_OWNERDATA` style must be set for that to work).
+ffgui tries to emulate this behavior on GTK3 via `ffui_view_setdata()`, but the API limitation (lack of on-demand drawing events) is still intact: when coalescing several row-drawing events, the entire tree-view must be refilled, otherwise we'd need to track all changes for each row manually.
+Therefore, for data-consistent coalescing:
+	* for GTK3 we need full refresh
+	* for Win32 it is enough to reset the total number of rows and refresh just the displayed area
+
+Below are the problem examples on GTK3 and the solution.
+
+Issue 1, mixed add+rm events can lead to empty rows (out-of-bounds index).
+
+```C
+Core                    GUI
+===========================================
+Data: [row0 row1]       Painted: [row0 row1]
+...
+Data: [row0 row1 row2]
+* -> [add=2] ->         .
+
+Data: [row1 row2]
+* -> [rm=0] ->          .
+                        [add] Painted: [row0 row1 empty]
+                        [rm]  Painted: [row1 empty]
+```
+
+Issue 2, coalesced redraw events are unreliable if used without synchronization.
+
+```C
+Core                    GUI
+===========================================
+Data: [row0]            Painted: [row0]
+...
+Data: [row0 row1]
+* -> [add=1] ->         .
+
+Data: [row0 row1 row2]
+* -> timer[redraw=3] -> .
+                        [add]    Painted: [row0 row1]
+
+Data: [row1 row2]
+                        [redraw] Painted: [row1 row2 empty]
+// Core doesn't know that GUI has painted the partially-updated data
+// it sends 'rm' event instead of 'redraw'
+* -> rm=0 ->            .
+                        [rm]     Painted: [row2 empty]
+```
+
+Solution: coalesced redraw events with data versioning.
+Key notes:
+* 'queue' module must increase playlist version `VER` *before* the data is changed.
+* 'view-display' callback handler running in GUI thread reads `VER` at beginning and sets `VER_GUI` at finish.
+	It is necessary for Core thread to see if the painted text is inconsistent.
+* 'q-on-change' callback handler passes through the event to GUI if `VER` is ahead of `VER_GUI` by 1;
+	sends a delayed full-redraw task otherwise.
+
+```C
+Core                    GUI
+===========================================
+VER=0                   VER_GUI=0
+Data: [row0]            Painted: [row0]
+...
+VER=1
+Data: [row0 row1]
+VER-1==VER_GUI
+* -> [add=1] ->         .
+
+VER=2
+Data: [row0 row1 row2]
+VER-1!=VER_GUI
+* -> timer[redraw=3] -> .
+                        CUR=VER
+                        Painted: [row0 row1]
+                        VER_GUI=CUR -> 2
+VER=3
+Data: [row1 row2]
+                        CUR=VER
+                        Painted: [row1 row2 empty]
+                        VER_GUI=CUR -> 3
+VER-1!=VER_GUI
+* -> timer[redraw=2] -> .
+                        CUR=VER
+                        Painted: [row1 row2]
+                        VER_GUI=CUR -> 3
+VER=4
+Data: [row2]
+VER-1==VER_GUI
+* -> [rm=0] ->          .
+```
+
 Per-module view:
 
 ```C
-dir-read         queue                  Core       GUI                GTK
+dir-read         queue                  Core       GUI                ffgui  GTK
 ================================================================================
 [Main Thread]
-* (8 entries) -> * -> onchange('a') ->             *
-                                        * timer <- * cmd=ADD
-                      onchange('a') ->             * cmd=UPD
-                      ...           ->             .
+* (8 entries) -> onchange('a') ->                  [view.setdata] ->  *   -> .
+                 onchange('a') ->                  cmd=UPD
+                                        [timer] <- *
+                 ...           ->                  *
+                 onchange('r') ->                  *
 ...
-                                        * ->       * view.length() -> *
+                                        * ->       [view.setdata] ->  *   -> .
 [GUI Thread]
-                 . ref()                        <- * display()     <- *
+                 ref()                          <- display() <- view.setdata <- *
+                                                   [text]          -> *      -> .
                                                                    <- ...
 ```
 
-Rapid changes, per-thread view:
-
-```
-Core                    GUI
-===========================================
-Real data: [row0]
-q_on_change(add)
-CMD=add,POS=0
-VER++ -> 1
--> [timer]
-
-list_update_delayed
-       -> [GUI task] -> .
-
-Real data: [row0 row1]
-q_on_change(add)
-VER!=0 -> CMD=(update),N=2
-VER++ -> 2
--> [timer]
-
-                        ffui_view_setdata()
-                        for ...
-                          -> list_display
-                             ...
-                          -> list_display(DONE)
-                             VER-- -> 1
-                        Painted: [row0]
-
-Real data: [row1]
-q_on_change(rm)
-VER!=0 -> CMD=(update),N=1
-VER == 1
--> [timer]
-
-list_update_delayed
-       -> [GUI task] -> .
-
-                        ffui_view_clear()
-                        ffui_view_setdata()
-                          -> list_display
-                          <- text
-                             ...
-                          -> list_display(DONE)
-                             VER-- -> 0
-                        Painted: [row1]
-```
 
 ## Build
 

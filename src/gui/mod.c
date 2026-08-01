@@ -304,6 +304,17 @@ static phi_queue_id list_id_visible()
 	return (gd->q_filtered) ? gd->q_filtered : gd->q_selected;
 }
 
+/** Get data version of the currently visible list.
+Thread: GUI */
+uint list_vis_version()
+{
+	fflock_lock(&gd->lock);
+	phi_queue_id q = list_id_visible();
+	uint r = gd->queue->conf(q)->version;
+	fflock_unlock(&gd->lock);
+	return r;
+}
+
 /** Get reference to an item in the currently visible list.
 Thread: GUI */
 struct phi_queue_entry* list_vis_qe_ref(uint i)
