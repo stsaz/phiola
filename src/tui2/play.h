@@ -5,6 +5,7 @@ struct tui2_play_trk {
 	phi_track *trk;
 	uint pos_last_sec, total_sec;
 	int seek_delta_sec;
+	uint seek_abs_sec;
 	uint meta_change_seen :1;
 	uint paused :1;
 };
@@ -63,7 +64,12 @@ static void play_title(struct tui2_play_trk *p)
 static int play_seek(struct tui2_play_trk *p)
 {
 	phi_track *t = p->trk;
-	if (p->seek_delta_sec) {
+	if (p->seek_abs_sec != ~0U) {
+		t->audio.seek = p->seek_abs_sec * 1000;
+		p->seek_abs_sec = ~0U;
+		return PHI_MORE; // new seek request
+
+	} else if (p->seek_delta_sec) {
 		t->audio.seek = samples_to_msec(t->audio.pos, t->audio.format.rate) + p->seek_delta_sec * 1000;
 		p->seek_delta_sec = 0;
 		return PHI_MORE; // new seek request
@@ -164,10 +170,13 @@ static void tui2_play_volume(struct tui2_play_trk *p)
 	p->trk->oaudio.gain_db = mod->volume_db;
 }
 
-static void tui2_play_seek(struct tui2_play_trk *p, int delta)
+static void tui2_play_seek(struct tui2_play_trk *p, uint abs, int delta)
 {
 	if (!p) return;
-	p->seek_delta_sec += delta;
+	if (abs != ~0U)
+		p->seek_abs_sec = abs;
+	else
+		p->seek_delta_sec += delta;
 
 	p->trk->audio.seek_req = 1;
 	p->trk->oaudio.clear = 1;

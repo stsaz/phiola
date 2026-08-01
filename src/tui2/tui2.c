@@ -62,6 +62,7 @@ struct tui2_mod {
 	double volume_db;
 	u_char volume;
 	u_char popup_type; // enum POPUP
+	uint bookmark_sec;
 	uint view_explorer :1;
 	uint volume_mute :1;
 	uint master :1;
@@ -313,6 +314,18 @@ static int play_action(int k, int key)
 			mod->queue->play(NULL, mod->queue->at(NULL, mod->list.active_track));
 		break;
 
+	case FFKEY_ALT | 'G':
+		if (mod->playing) {
+			mod->bookmark_sec = mod->playing->pos_last_sec;
+			tui2_status("Bookmark: %u:%02u", mod->bookmark_sec / 60, mod->bookmark_sec % 60);
+		}
+		break;
+
+	case 'G':
+		if (mod->bookmark_sec != ~0U)
+			tui2_play_seek(mod->playing, mod->bookmark_sec, 0);
+		break;
+
 	case 'N':
 	case 'P':
 		mod->queue->play(mod->q_active, (key == 'N') ? PHI_Q_PLAY_NEXT : PHI_Q_PLAY_PREVIOUS);  break;
@@ -346,7 +359,7 @@ static int play_action(int k, int key)
 		int by = ((k & FFKEY_MODMASK) == FFKEY_CTRL) ? SEEK_LEAP : SEEK_STEP;
 		if (key == FFKEY_LEFT)
 			by = -by;
-		tui2_play_seek(mod->playing, by);
+		tui2_play_seek(mod->playing, ~0U, by);
 		break;
 	}
 
@@ -478,6 +491,7 @@ static void tui2_cmd_read(void *param)
 static void tui2_init()
 {
 	mod->volume = 100;
+	mod->bookmark_sec = ~0U;
 	mod->play_info_title = 1;
 	mod->colors[0] = COLOR_MAGENTA;
 	mod->queue = core->mod("core.queue");

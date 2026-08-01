@@ -3,12 +3,13 @@
 
 static const struct {
 	char key[16];
-	char descr[16];
+	char descr[20];
 } help_keys[] = {
 	{ "Space",      "Pause/Resume" },
 	{ "P/N",        "Previous/Next" },
 	{ ".",          "Stop" },
 	{ "Left/Right", "Seek" },
+	{ "G/Alt+G",    "Bookmark Set/Jump" },
 	{ "Ctrl+Up/Down", "Volume" },
 	{ "M",          "Mute" },
 	{ "I",          "Track Info" },
