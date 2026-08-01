@@ -71,6 +71,7 @@ static int play_seek(struct tui2_play_trk *p)
 
 	} else if (p->seek_delta_sec) {
 		t->audio.seek = samples_to_msec(t->audio.pos, t->audio.format.rate) + p->seek_delta_sec * 1000;
+		t->audio.seek = ffmax(t->audio.seek, 0);
 		p->seek_delta_sec = 0;
 		return PHI_MORE; // new seek request
 
@@ -236,7 +237,7 @@ end:
 /** Return 0 if handled */
 static int play_info_action(int k)
 {
-	switch (k & ~FFKEY_MODMASK) {
+	switch (k) {
 	case FFKEY_UP:
 		if (mod->dlg.top > 0)
 			mod->dlg.top--;

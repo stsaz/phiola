@@ -6,7 +6,7 @@
 #include <ffbase/string.h>
 #include <ffbase/time.h>
 
-#define PHI_VERSION  20811
+#define PHI_VERSION  20812
 
 /** Inter-module compatibility version.
 It must be updated when incompatible changes are made to this file,

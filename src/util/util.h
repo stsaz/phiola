@@ -222,8 +222,12 @@ static inline ffstr path_parent(ffstr path)
 Return newly allocated string; free with ffmem_free(). */
 static inline char* path_join(const char *pathz, const char *add, size_t add_len)
 {
-	return ffsz_allocfmt("%s%s%*s"
-		, pathz, (ffpath_isroot(pathz, ffsz_len(pathz))) ? "" : PATH_SLASH, add_len, add);
+	ffssize n = ffsz_len(pathz) + 1 + add_len + 2; // 2 more bytes for last slash and null
+	char *s = (char*)ffmem_alloc(n);
+	const char *slash = (ffpath_isroot(pathz, ffsz_len(pathz))) ? "" : PATH_SLASH;
+	ffs_format(s, n, "%s%s%*s%Z"
+		, pathz, slash, add_len, add);
+	return s;
 }
 
 

@@ -2,6 +2,8 @@
 2026, Simon Zolin */
 
 #include <ffbase/conf.h>
+#include <util/conf-obj.h>
+#include <util/conf-write.h>
 
 static char* conf_filename()
 {
@@ -26,6 +28,12 @@ static const char ckeys[][16] = {
 static void conf_save()
 {
 	char *fn = conf_filename();
+	ffsize n = ffsz_len(mod->ex.dir);
+	ffsize cap = ffconf_escape(NULL, 0, mod->ex.dir, n);
+	char *ex_dir_esc = ffmem_alloc(cap + 1);
+	n = ffconf_escape(ex_dir_esc, cap, mod->ex.dir, n);
+	ex_dir_esc[n] = '\0';
+
 	ffvec d = {};
 	ffvec_addfmt(&d,
 "volume %u\n\
@@ -37,7 +45,7 @@ color %u\n\
 		, mod->volume
 		, mod->play_info_title
 		, mod->list.active_track
-		, mod->ex.dir
+		, ex_dir_esc
 		, mod->colors[0]
 		);
 
@@ -46,11 +54,13 @@ color %u\n\
 
 	ffvec_free(&d);
 	ffmem_free(fn);
+	ffmem_free(ex_dir_esc);
 }
 
 static void conf_load()
 {
 	int rc = 1;
+	struct ffconf_obj co = {};
 	char *fn = conf_filename();
 	ffvec buf = {};
 	if (fffile_readwhole(fn, &buf, 16*1024)) {
@@ -61,10 +71,9 @@ static void conf_load()
 	}
 	ffstr data = *(ffstr*)&buf;
 
-	struct ffconf c = {};
 	ffstr s, key = {};
 	while (data.len) {
-		int r = ffconf_read(&c, &data, &s);
+		int r = ffconf_obj_read(&co, &data, &s);
 		switch (r) {
 		case FFCONF_KEY:
 			key = s;  break;
@@ -110,6 +119,7 @@ static void conf_load()
 	rc = 0;
 
 end:
+	ffconf_obj_fin(&co);
 	if (rc)
 		errlog("reading config %s", fn);
 	ffvec_free(&buf);

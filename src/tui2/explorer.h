@@ -90,13 +90,13 @@ static int explorer_navigate(char *dir, uint len)
 	int r;
 	char *p;
 	if (!ffpath_abs(dir, len)) {
-		p = path_join(e->dir, dir, len);
+		dir = p = path_join(e->dir, dir, len);
 		len = ffsz_len(p);
 	} else {
-		p = ffsz_dup(dir);
+		p = ffmem_alloc(len);
 	}
 
-	r = ffpath_norm(p, len, p, len, 0);
+	r = ffpath_norm(p, len + 1, dir, len, 0);
 	if (r <= 0)
 		goto err;
 	p[r] = '\0';

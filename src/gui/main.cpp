@@ -195,8 +195,9 @@ void wmain_track_close(void *param)
 	gui_wmain *m = gg->wmain;
 	struct gui_track_info *ti = (struct gui_track_info*)param;
 
-	if (ti->index_new != ~0U) {
-		m->vlist.update(ti->index_new, 0);
+	if (ti->q == gd->q_selected && !gd->q_filtered
+		&& ti->index_old != ~0U) {
+		m->vlist.update(ti->index_old, 0);
 	}
 
 	m->wnd.title("phiola");

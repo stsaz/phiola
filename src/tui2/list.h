@@ -253,7 +253,7 @@ static void list_sort_display()
 /** Return 0 if handled */
 static int list_sort_action(int k)
 {
-	switch (k & ~FFKEY_MODMASK) {
+	switch (k) {
 	case FFKEY_UP:
 		if (mod->dlg.cur > 0)
 			mod->dlg.cur--;
@@ -350,13 +350,13 @@ static int list_action(int k, int key)
 		break;
 	}
 
+	case FFKEY_SHIFT | FFKEY_DEL:
+		if (file_trash(l->cur))
+			break;
+		// fallthrough
+
 	case FFKEY_DEL:
-		if ((k & FFKEY_MODMASK) == FFKEY_SHIFT) {
-			if (file_trash(l->cur))
-				break;
-		}
-		mod->queue->remove_at(NULL, l->cur, 1);
-		break;
+		mod->queue->remove_at(NULL, l->cur, 1);  break;
 
 	case FFKEY_HOME:
 	case FFKEY_END:

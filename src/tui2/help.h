@@ -60,7 +60,7 @@ static void help_display()
 /** Return 0 if handled */
 static int help_action(int k)
 {
-	switch (k & ~FFKEY_MODMASK) {
+	switch (k) {
 	case FFKEY_UP:
 		if (mod->dlg.top > 0)
 			mod->dlg.top--;

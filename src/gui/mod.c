@@ -962,6 +962,7 @@ static void gui_start(void *param)
 	gd->conf.seek_leap_delta = 60;
 	gd->marker_sec = ~0;
 	gd->conf.volume = 100;
+	gd->playback_track_info.index_old = ~0U;
 	gd->queue = core->mod("core.queue");
 
 	char *user_conf_fn = ffsz_allocfmt("%Smod/gui/%s", &core->conf.root, USER_CONF_NAME_ALT);

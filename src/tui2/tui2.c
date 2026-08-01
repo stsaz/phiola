@@ -275,7 +275,6 @@ Return key code or 0. */
 static int tui2_dialog_edit_action(int k)
 {
 	struct dialog *d = &mod->dlg;
-	int key = (k & ~FFKEY_MODMASK);
 	uint y = 1;
 
 	switch (k) {
@@ -350,10 +349,9 @@ static const popup_action_t popup_actions[] = {
 	help_action,
 };
 
-/** Toggle between Explorer and Playlist views. */
 static void list_view_switch();
 
-/** Update volume and display the level. */
+/** Update audio volume. */
 static void tui2_vol()
 {
 	if (mod->volume_mute)
@@ -368,6 +366,8 @@ static void tui2_vol()
 /** Return 0 if handled */
 static int play_action(int k, int key)
 {
+	int r;
+
 	switch (key) {
 	case ' ':
 		if (mod->playing)
@@ -404,26 +404,27 @@ static int play_action(int k, int key)
 		tui2_play_volume(mod->playing);
 		break;
 
-	case FFKEY_UP:
-	case FFKEY_DOWN:
-		if ((k & FFKEY_MODMASK) == FFKEY_CTRL) {
-			mod->volume += (key == FFKEY_UP) ? VOL_STEP : -VOL_STEP;
-			mod->volume = ffmin(mod->volume, VOL_MAX);
-			tui2_vol();
-			tui2_play_volume(mod->playing);
-		} else {
-			return 1;
-		}
+	case FFKEY_CTRL | FFKEY_UP:
+	case FFKEY_CTRL | FFKEY_DOWN:
+		r = mod->volume + (((key & ~FFKEY_MODMASK) == FFKEY_UP) ? VOL_STEP : -VOL_STEP);
+		mod->volume = ffmax(r, 0);
+		mod->volume = ffmin(mod->volume, VOL_MAX);
+		tui2_vol();
+		tui2_play_volume(mod->playing);
 		break;
 
+	case FFKEY_CTRL | FFKEY_RIGHT:
+	case FFKEY_CTRL | FFKEY_LEFT:
+		r = SEEK_LEAP;
+		goto seek;
 	case FFKEY_RIGHT:
-	case FFKEY_LEFT: {
-		int by = ((k & FFKEY_MODMASK) == FFKEY_CTRL) ? SEEK_LEAP : SEEK_STEP;
-		if (key == FFKEY_LEFT)
-			by = -by;
-		tui2_play_seek(mod->playing, ~0U, by);
+	case FFKEY_LEFT:
+		r = SEEK_STEP;
+	seek:
+		if ((key & ~FFKEY_MODMASK) == FFKEY_LEFT)
+			r = -r;
+		tui2_play_seek(mod->playing, ~0U, r);
 		break;
-	}
 
 	default:
 		return 1;
@@ -478,6 +479,7 @@ static void list_view_title()
 	ffncurses_println_attr(&mod->wmain, Y_LIST_TITLE, 0, mod->buf, len, A_BOLD, CLR_TITLE);
 }
 
+/** Toggle between Explorer and Playlist views. */
 static void list_view_switch()
 {
 	mod->view_explorer = !mod->view_explorer;
@@ -498,7 +500,7 @@ static void list_view_switch()
 static void tui2_cmd_read(void *param)
 {
 	struct rwbuf *b = &mod->input;
-	int r, k;
+	int r, k, key;
 	uint n;
 	enum { I_READ, I_PARSE, I_PASTED, I_PASTED_SKIP };
 
@@ -593,8 +595,8 @@ static void tui2_cmd_read(void *param)
 		}
 		}
 
-		int key = k & ~FFKEY_MODMASK;
-		if (key >= 'a' && key <= 'z')
+		key = k;
+		if ((k & ~FFKEY_MODMASK) >= 'a' && (k & ~FFKEY_MODMASK) <= 'z')
 			key &= ~0x20; // 'a' -> 'A'
 
 		if (mod->wpopup.wnd) {
@@ -617,11 +619,10 @@ static void tui2_cmd_read(void *param)
 		if (!global_action(k, key))
 			continue;
 
-		if (mod->view_explorer
-			&& !explorer_action(k, key))
-			continue;
-
-		list_action(k, key);
+		if (mod->view_explorer)
+			explorer_action(k, key);
+		else
+			list_action(k, key);
 	}
 
 end:

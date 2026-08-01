@@ -84,14 +84,13 @@ static void* gtrk_open(phi_track *t)
 static void gtrk_close(void *ctx, phi_track *t)
 {
 	struct gtrk *gt = ctx;
+	struct gui_track_info *ti = &gd->playback_track_info;
+	ti->index_old = gd->queue->index(t->qent);
 	if (gd->playing_track == gt) {
 		gd->qe_active = NULL;
 		gd->playing_track = NULL;
-		if (wmain_ready()) {
-			struct gui_track_info *ti = &gd->playback_track_info;
-			ti->index_new = gd->queue->index(t->qent);
+		if (wmain_ready())
 			gui_task_ptr(wmain_track_close, ti);
-		}
 	}
 	phi_track_free(t, gt);
 }
@@ -138,6 +137,7 @@ static int gtrk_process(void *ctx, phi_track *t)
 	if ((!gt->opened || t->meta_changed) && wmain_ready()) {
 
 		struct phi_queue_entry *qe = (struct phi_queue_entry*)t->qent;
+		gd->qe_active = qe;
 		char buf[1000];
 		ffsz_format(buf, sizeof(buf), "%u kbps, %s, %u Hz, %s, %s"
 			, (t->audio.bitrate + 500) / 1000
@@ -147,22 +147,13 @@ static int gtrk_process(void *ctx, phi_track *t)
 			, pcm_channelstr(t->audio.format.channels));
 		core->metaif->set(&qe->meta, FFSTR_Z("_phi_info"), FFSTR_Z(buf), 0);
 
-		void *qe_prev_active = gd->qe_active;
-		gd->qe_active = qe;
-
 		struct gui_track_info *ti = &gd->playback_track_info;
 		ti->q = gd->queue->queue(qe);
 		ti->duration_sec = gt->duration_sec;
 		ti->pos_sec = 0;
-		ti->index_old = ~0U;
 		ti->index_new = ~0U;
 
 		int i;
-		if (qe_prev_active
-			&& -1 != (i = gd->queue->index(qe_prev_active))
-			&& !gd->q_filtered)
-			ti->index_old = i;
-
 		if (-1 != (i = gd->queue->index(qe))) {
 			if (!gd->q_filtered) // 'i' is the position within the original list, not filtered list
 				ti->index_new = i;
