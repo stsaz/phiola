@@ -20,6 +20,7 @@
 #define errlog(...)  phi_errlog(core, "tui2", NULL, __VA_ARGS__)
 #define syswarnlog(...)  phi_syswarnlog(core, "tui2", NULL, __VA_ARGS__)
 #define infolog(...)  phi_infolog(core, "tui2", NULL, __VA_ARGS__)
+#define dbglog(...)  phi_dbglog(core, "tui2", NULL, __VA_ARGS__)
 
 #define AUTO_LIST_FN  "list%u.m3uz"
 #ifdef FF_WIN
@@ -29,6 +30,34 @@
 	#define USER_HOME  "$HOME"
 	#define USER_CONF_DIR  "$HOME/.config/phiola/"
 #endif
+
+struct rwbuf {
+	uint state;
+	uint len;
+	char *ptr;
+	uint w, skipped;
+	char chunk[8];
+	char buf[512];
+};
+
+#define rwbuf_init(b)  (b)->ptr = (b)->buf
+
+static inline void rwbuf_shift(struct rwbuf *b, uint n) {
+	b->ptr += n;
+	b->len -= n;
+}
+
+static inline void rwbuf_reset(struct rwbuf *b) {
+	b->ptr = b->buf;
+	b->len = b->w = 0;
+}
+
+static inline void rwbuf_norm(struct rwbuf *b) {
+	memmove(b->buf, b->ptr, b->len);
+	b->ptr = b->buf;
+	b->w = b->len;
+}
+
 
 struct dialog {
 	// scroll:
@@ -66,15 +95,18 @@ struct tui2_mod {
 	uint view_explorer :1;
 	uint volume_mute :1;
 	uint master :1;
+	uint term_mode_paste :1;
 	phi_queue_id q_active; // Playlist ID of the currently playing track
+	ffstr pasted_text;
 
 	struct tui2_play_trk *playing;
 	struct tui2_explorer ex;
 	struct tui2_list list;
 	struct dialog dlg;
-
 	struct ffncurses_wnd wmain, wpopup;
-	char buf[512];
+
+	struct rwbuf input FF_STRUCTALIGN(64);
+	char buf[512] FF_STRUCTALIGN(64);
 
 	phi_kevent *kev;
 	struct phi_woeh_task task_read;
@@ -228,6 +260,8 @@ static void tui2_dialog_edit_show(const char *title, uint scale, uint numeric, f
 		d->len = ffmem_ncopy(d->buf, sizeof(d->buf), text.ptr, text.len);
 	d->buf[d->len++] = '_';
 	tui2_popup_println(1, d->buf, d->len, 0, 0);
+	ffstd_paste_ctl(1);
+	mod->term_mode_paste = 1;
 }
 
 /** Show an edit dialog with a null-terminated string. */
@@ -256,14 +290,42 @@ static int tui2_dialog_edit_action(int k)
 		d->buf[d->len - 1] = '_';
 		break;
 
-	default:
-		if (d->len >= sizeof(d->buf)
-			|| (d->numeric && !(key >= '0' && key <= '9'))
-			|| (!d->numeric && !(key >= ' ' && key < 0x7f)))
+	case FFKEY_TEXT_PASTED:
+		if (d->len >= sizeof(d->buf))
+			return 0;
+		d->len--;
+		d->len += ffmem_ncopy(d->buf + d->len, sizeof(d->buf) - d->len - 1, mod->pasted_text.ptr, mod->pasted_text.len);
+		d->buf[d->len++] = '_';
+		break;
+
+	default: {
+		if (d->numeric && !(k >= '0' && k <= '9'))
 			return 0;
 
-		d->buf[d->len - 1] = key;
+		uint n = ffutf8_len((char*)&k, sizeof(k));
+		FF_ASSERT(n);
+		if (d->len + n > sizeof(d->buf))
+			return 0;
+		if (n == 1 && !d->numeric && !(k >= ' ' && k < 0x7f))
+			return 0; // non-printable ASCII
+		d->len--;
+		switch (n) {
+		case 4:
+		case 3: // cast to `int*` is safe
+			*(int*)(d->buf + d->len) = k;  break;
+
+		case 2:
+			*(short*)(d->buf + d->len) = k;  break;
+
+		case 1:
+			d->buf[d->len] = k;  break;
+
+		default:
+			FF_ASSERT(0);
+		}
+		d->len += n;
 		d->buf[d->len++] = '_';
+	}
 	}
 
 	tui2_popup_println(y, d->buf, d->len, 0, 0);
@@ -435,22 +497,102 @@ static void list_view_switch()
 
 static void tui2_cmd_read(void *param)
 {
-	ffstd_ev ev = {};
-	ffstr d = {};
+	struct rwbuf *b = &mod->input;
+	int r, k;
+	uint n;
+	enum { I_READ, I_PARSE, I_PASTED, I_PASTED_SKIP };
 
 	for (;;) {
-		if (!d.len) {
-			int r = ffstd_keyread(ffstdin, &ev, &d);
-			if (r <= 0)
-				break;
-		}
-		// infolog("key sequence: %*xb", d.len, d.ptr);
+		switch (b->state) {
+		case I_READ:
+			FF_ASSERT(b->w < sizeof(b->buf));
+			if (0 >= (r = ffstd_key_read(ffstdin, b->buf + b->w, sizeof(b->buf) - b->w)))
+				goto end;
+			b->w += r;
+			b->len += r;
+			b->state = I_PARSE;
+			// tui2_status("key sequence: %*xb", b->len, b->ptr);
+			// fallthrough
 
-		int k = ffstd_keyparse(&d);
-		if (k == -1) {
-			d.len = 0;
-			continue;
+		case I_PARSE:
+			if (b->len == 1 && b->ptr[0] == '\x1b') {
+				rwbuf_shift(b, 1);
+				k = FFKEY_ESCAPE;
+				break;
+			}
+
+			k = ffstd_key_parse(b->ptr, b->len, &n);
+			if (k == 0) {
+				rwbuf_norm(b);
+				b->state = I_READ;
+				continue;
+
+			} else if (k == -1) {
+				if (n) {
+					rwbuf_shift(b, n);
+					continue;
+				}
+				rwbuf_reset(b);
+				b->state = I_READ;
+				continue;
+
+			} else if (k == FFKEY_TEXT_PASTED) {
+				b->state = I_PASTED;
+				continue;
+			}
+
+			rwbuf_shift(b, n);
+			if (k == FFKEY_VIRT)
+				continue;
+			break;
+
+		case I_PASTED:
+			// Extract the text between paste markers
+			if (!(n = ffstd_paste_read(b->ptr, b->len, &mod->pasted_text))) {
+				if (b->w == sizeof(b->buf)) {
+					// Note: 'pasted_text' may contain partial paste-end marker
+					dbglog("trimmed pasted text");
+					ffmem_copy(b->chunk, b->ptr + b->len - 5, 5); // Preserve tail
+					rwbuf_reset(b);
+					b->state = I_PASTED_SKIP;
+					b->skipped = 0;
+					continue;
+				}
+				rwbuf_norm(b);
+				b->state = I_READ;
+				continue;
+			}
+
+			rwbuf_shift(b, n);
+			break;
+
+		case I_PASTED_SKIP: {
+			// Too large input: skip until paste-end marker is found
+			char tmp[512];
+			for (;;) {
+				if (b->skipped >= 2*1024*1024) {
+					errlog("too large input data");
+					return;
+				}
+				ffmem_copy(tmp, b->chunk, 5);
+				if (0 >= (r = ffstd_key_read(ffstdin, tmp + 5, sizeof(tmp) - 5)))
+					goto end;
+				b->skipped += r;
+				n = r + 5;
+				if ((r = ffs_findstr(tmp, n, "\e[201~", 6)) >= 0) {
+					r += 6;
+					break;
+				}
+				ffmem_copy(b->chunk, tmp + n - 5, 5);
+			}
+			// Copy unprocessed data to main buffer
+			b->len = b->w = n - r;
+			ffmem_copy(b->buf, tmp + r, b->w);
+			b->state = I_PARSE;
+			break;
 		}
+		}
+
 		int key = k & ~FFKEY_MODMASK;
 		if (key >= 'a' && key <= 'z')
 			key &= ~0x20; // 'a' -> 'A'
@@ -459,6 +601,10 @@ static void tui2_cmd_read(void *param)
 			if (!popup_actions[mod->popup_type](k))
 				continue;
 
+			if (mod->term_mode_paste) {
+				mod->term_mode_paste = 0;
+				ffstd_paste_ctl(0);
+			}
 			mod->popup_type = 0;
 			ffncurses_popup_del(&mod->wpopup);
 			mod->wmain.modified = 1;
@@ -478,6 +624,7 @@ static void tui2_cmd_read(void *param)
 		list_action(k, key);
 	}
 
+end:
 	ffncurses_update(&mod->wpopup);
 	ffncurses_update(&mod->wmain);
 
@@ -536,6 +683,7 @@ static void tui2_init()
 		syswarnlog("ffpipe_nonblock()");
 #endif
 
+	rwbuf_init(&mod->input);
 	tui2_cmd_read(NULL);
 }
 
