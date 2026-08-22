@@ -28,13 +28,19 @@ jobs:
           git clone --depth=1 https://github.com/stsaz/ffsys ../ffsys
           git clone --depth=1 https://github.com/stsaz/ffbase ../ffbase
 
-      - name: Create builder image
-        run: |
-          podman build -t phiola-builder -f builder/Dockerfile.${{ matrix.target }} .
+      - name: Create and cache builder image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: builder/Dockerfile.${{ matrix.target }}
+          tags: phiola-builder
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Build for ${{ matrix.target }}
         run: |
-          podman run --rm \
+          docker run --rm \
             -v $(pwd)/..:/src:Z \
             -w /src/phiola \
             phiola-builder \

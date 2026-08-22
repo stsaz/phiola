@@ -378,7 +378,17 @@ By default, phiola GUI saves and restores its state (including your playlists) o
 * Windows: `%APPDATA%\phiola`
 * Linux: `$HOME/.config/phiola`
 
-If you prefer not to save state, simply create an empty `[phiola directory]/mod/gui/user.conf` file.  As long as this file is present, phiola GUI will store its state there, and it won't touch anything inside your user directory.
+To run phiola entirely self-contained (e.g., from USB drives), enable portable mode by creating an empty file `phiola-2/mod/gui/user.conf`, e.g.:
+* Windows (Command Prompt):
+	```
+	> phiola-2\mod\gui\user.conf
+	```
+* UNIX:
+	```bash
+	> phiola-2/mod/gui/user.conf
+	```
+
+As long as this file is present, phiola GUI will store its state within the application directory, not the system user directory.
 
 
 ## How to Use on Android

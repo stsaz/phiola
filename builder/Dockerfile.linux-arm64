@@ -16,10 +16,10 @@ RUN apt install -y \
  perl
 RUN apt install -y \
  clang lld
-RUN curl -L -o nfpm_${NFPM_VER}_amd64.deb https://github.com/goreleaser/nfpm/releases/download/v${NFPM_VER}/nfpm_${NFPM_VER}_amd64.deb \
- && echo "${NFPM_SHA256SUM} *nfpm_${NFPM_VER}_amd64.deb" | sha256sum -c - \
- && dpkg -i nfpm_${NFPM_VER}_amd64.deb \
- && rm -f nfpm_${NFPM_VER}_amd64.deb
+RUN curl -L -o nfpm.deb https://github.com/goreleaser/nfpm/releases/download/v${NFPM_VER}/nfpm_${NFPM_VER}_amd64.deb \
+ && echo "${NFPM_SHA256SUM} *nfpm.deb" | sha256sum -c - \
+ && dpkg -i nfpm.deb \
+ && rm -f nfpm.deb
 RUN apt install -y \
  gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 RUN dpkg --add-architecture arm64 && \

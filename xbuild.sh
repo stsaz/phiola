@@ -24,7 +24,7 @@ PHIOLA_DIR="$(dirname "$0")"
 if ! podman container exists $CONTAINER_NAME ; then
 	if ! podman image exists $IMAGE_NAME ; then
 		# Create builder image
-		podman build -t $IMAGE_NAME -f builder/Dockerfile.$OS-$CPU .
+		podman build -t $IMAGE_NAME -f "$PHIOLA_DIR/builder/Dockerfile.$OS-$CPU" .
 	fi
 
 	# Create builder container
