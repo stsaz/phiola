@@ -252,6 +252,11 @@ static int cmd_opus_mode(const char *s)
 	cx; \
 })
 
+enum {
+	ARG_R_DONE = 1,
+	ARG_R_ACTION,
+};
+
 #include <exe/convert.h>
 #include <exe/device.h>
 #include <exe/gui.h>
@@ -291,6 +296,7 @@ Commands:\n\
   `server`    Start audio streaming server\n\
   `tag`       Edit file tags\n\
   `tui`       Start ncurses TUI\n\
+  `version`   Display phiola version\n\
 \n\
 'phiola COMMAND -help' will print information on a particular command.\n\
 ");
@@ -461,6 +467,24 @@ done:
 
 static int bash_completion();
 
+static int cmd_version(void *c)
+{
+	char buf[64];
+	size_t r = version_str(buf, sizeof(buf));
+	ffstdout_fmt("%*s"
+		"Developed by Simon Zolin and contributors\n"
+		"https://github.com/stsaz/phiola\n"
+		, r, buf);
+	x->exit_code = 0;
+	return 1;
+}
+
+static int cmd_version_init()
+{
+	x->subcmd.action = cmd_version;
+	return ARG_R_ACTION;
+}
+
 #define O(m)  (void*)FF_OFF(struct exe, m)
 static const struct ffarg cmd_root[] = {
 	{ "-Background",'1',		O(background) },
@@ -485,6 +509,7 @@ static const struct ffarg cmd_root[] = {
 	{ "server",		'{',		cmd_server_init },
 	{ "tag",		'{',		cmd_tag_init },
 	{ "tui",		'{',		cmd_tui_init },
+	{ "version",	0,			cmd_version_init },
 	{ "\0\1",		'{',		cmd_play_init },
 	{ "",			0,			usage },
 };
@@ -503,6 +528,8 @@ static int cmd(char **argv, uint argc, const char *cmd_line)
 
 	if (r < 0)
 		errlog("%s", x->cmd.error);
+	else if (r == ARG_R_ACTION)
+		return 0;
 
 	if (r == 0
 		&& x->background

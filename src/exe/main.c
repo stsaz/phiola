@@ -68,6 +68,8 @@ struct exe {
 };
 static struct exe *x;
 
+static int cmd_version(void *c);
+
 #include <exe/log.h>
 
 #if defined FF_WIN
@@ -90,10 +92,19 @@ static struct exe *x;
 	#define CPU_STR  "arm"
 #endif
 
+static uint version_str(char *buf, size_t cap)
+{
+	return ffs_format_r0(buf, cap, "φphiola v%s (" OS_STR "-" CPU_STR ")\n"
+		, x->core->version_str);
+}
+
 static void version_print()
 {
-	ffstderr_fmt("φphiola v%s (" OS_STR "-" CPU_STR ")\n"
-		, x->core->version_str);
+	if (x->subcmd.action == cmd_version)
+		return;
+	char buf[64];
+	uint r = version_str(buf, sizeof(buf));
+	ffstderr_write(buf, r);
 }
 
 static void q_on_change(phi_queue_id q, uint flags, uint pos)
