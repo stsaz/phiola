@@ -414,6 +414,20 @@ Here's how you can reconfigure phiola for recording audio from the internet radi
 
 > Note: phiola supports recording from AAC or MP3 radio streams.
 
+### Starting/Stopping Recording via Intent Actions
+
+phiola can be controlled externally using Android intent actions — this is useful for automation, accessibility tools, or mapping hardware buttons:
+
+* **Start Recording**: `android.provider.MediaStore.RECORD_SOUND`
+* **Stop Recording**: `com.github.stsaz.phiola.RECORD_STOP`
+
+Package: `com.github.stsaz.phiola`.
+
+**CLI examples:**
+```bash
+adb shell am start -a android.provider.MediaStore.RECORD_SOUND -n com.github.stsaz.phiola/.MainActivity
+adb shell am start -a com.github.stsaz.phiola.RECORD_STOP -n com.github.stsaz.phiola/.MainActivity
+```
 
 ## How to Use API
 

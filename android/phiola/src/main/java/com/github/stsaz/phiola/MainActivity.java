@@ -67,31 +67,7 @@ public class MainActivity extends AppCompatActivity {
 		if (gui.cur_path.isEmpty())
 			gui.cur_path = core.storage_path;
 
-		String ia = getIntent().getAction();
-
-		if (ia != null && ia.equals(Intent.ACTION_VIEW)) {
-			// Add file to the playlist and start playback if executed from an external file manager app
-			String fn = getIntent().getData().getPath();
-			core.dbglog(TAG, "Intent.ACTION_VIEW: %s", fn);
-			fn = Util.path_real(fn, core.storage_paths);
-			if (fn != null)
-				explorer_event(fn, EC_ADD_PLAY);
-		}
-
-		if (ia != null && ia.equals(MediaStore.Audio.Media.RECORD_SOUND_ACTION)) {
-			// Start recording by another app's request
-			core.dbglog(TAG, "MediaStore.Audio.Media.RECORD_SOUND_ACTION");
-			if (gui.record_mode != GUI.RECMODE_MIC) {
-				core.errlog(TAG, "Can not record in this UI configuration.  Please set `Record from Mic` control button.");
-
-			} else if (gui.state_test(GUI.STATE_RECORDING)) {
-				core.errlog(TAG, "Can not start new recording.  Please stop previous recording.");
-
-			} else {
-				gui.rec_ext_app = true;
-				rec_start();
-			}
-		}
+		intent_process();
 	}
 
 	protected void onStart() {
@@ -127,6 +103,13 @@ public class MainActivity extends AppCompatActivity {
 		trackctl.close();
 		core.close();
 		super.onDestroy();
+	}
+
+	protected void onNewIntent(Intent intent) {
+		core.dbglog(TAG, "onNewIntent()");
+		super.onNewIntent(intent);
+		setIntent(intent);
+		intent_process();
 	}
 
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -419,6 +402,41 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void init_system() {
+	}
+
+	private void intent_process() {
+		String ia = getIntent().getAction();
+		if (ia == null)
+			return;
+
+		if (ia.equals(Intent.ACTION_VIEW)) {
+			// Add file to the playlist and start playback if executed from an external file manager app
+			String fn = getIntent().getData().getPath();
+			core.dbglog(TAG, "Intent.ACTION_VIEW: %s", fn);
+			fn = Util.path_real(fn, core.storage_paths);
+			if (fn != null)
+				explorer_event(fn, EC_ADD_PLAY);
+
+		} else if (ia.equals(MediaStore.Audio.Media.RECORD_SOUND_ACTION)) {
+			// Start recording by another app's request
+			core.dbglog(TAG, "MediaStore.Audio.Media.RECORD_SOUND_ACTION");
+			if (gui.record_mode != GUI.RECMODE_MIC) {
+				core.errlog(TAG, "Can not record in this UI configuration.  Please set `Record from Mic` control button.");
+
+			} else if (gui.state_test(GUI.STATE_RECORDING)) {
+				core.errlog(TAG, "Can not start new recording.  Please stop previous recording.");
+
+			} else {
+				gui.rec_ext_app = true;
+				rec_start();
+			}
+
+		} else if (ia.equals("com.github.stsaz.phiola.RECORD_STOP")) {
+			// Stop recording by another app's request
+			core.dbglog(TAG, "RECORD_STOP");
+			if (gui.state_test(GUI.STATE_RECORDING))
+				track.record_stop(false);
+		}
 	}
 
 	private boolean user_ask_storage() {
