@@ -48,7 +48,7 @@ fi
 
 # Prepare build script
 
-ODIR=${ODIR:-/build/_$OS-$CPU}
+ODIR=${ODIR:-_$OS-$CPU}
 ARGS_OS=""
 ARGS_PHI=""
 ENV_CPU=""
@@ -71,7 +71,6 @@ make -j$JOBS \
  -C $ODIR \
  -f /src/phiola/Makefile \
  ROOT_DIR=/src \
- COMPILER=clang \
  $ARGS_OS \
  CFLAGS_USER=-fno-diagnostics-color \
  $ARGS_PHI \

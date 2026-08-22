@@ -2,48 +2,36 @@
 
 # phiola: cross-build on Linux for Android
 
-# ANDROID_HOME=
-# ANDROID_CLT_URL=
-# ANDROID_BT_VER=
-# ANDROID_PF_VER=
-# ANDROID_NDK_VER=
-# GRADLE_DIR=
+ANDROID_HOME="${ANDROID_HOME:-$HOME/Android}"
+ANDROID_CLT_VER="${ANDROID_CLT_VER:-14742923}"
+ANDROID_BT_VER="${ANDROID_BT_VER:-35.0.0}"
+ANDROID_PF_VER="${ANDROID_PF_VER:-33}"
+ANDROID_NDK_VER="${ANDROID_NDK_VER:-29.0.14206865}"
+GRADLE_DIR="${GRADLE_DIR:-$HOME/.gradle}"
+CPU="${CPU:-arm64}"
 # APK_KEY_PASS=
-# CPU=
-IMAGE_NAME=phiola-android-builder
-CONTAINER_NAME=phiola_android_build
 JOBS=${JOBS:-$(nproc)}
 ARGS=${@@Q}
+
+IMAGE_NAME=phiola-android-builder
+CONTAINER_NAME=phiola_android_build
 
 set -xe
 
 PHIOLA_DIR="$(dirname "$0")"
 
-if [[ -z "$ANDROID_HOME" ]]; then
-	exit 1
-elif [[ ! -d "$ANDROID_HOME/cmdline-tools" ]]; then
-	# Download and unpack Android tools
-	if [[ -z "$ANDROID_CLT_URL" ]]; then
-		exit 1
-	fi
-	mkdir -p /tmp/android-dl
-	(
-		cd /tmp/android-dl
-		wget "$ANDROID_CLT_URL"
-
-		cd "$ANDROID_HOME"
-		mkdir cmdline-tools
-		cd cmdline-tools
-		unzip /tmp/android-dl/$(basename "$ANDROID_CLT_URL")
-		mv cmdline-tools latest
-	)
+if [[ ! -d "$ANDROID_HOME/cmdline-tools" ]]; then
+	# Download and unpack Android command-line tools
+	mkdir -p $ANDROID_HOME/cmdline-tools
+	curl -fsSL -o /tmp/clt.zip \
+		"https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_CLT_VER}_latest.zip"
+	unzip -q /tmp/clt.zip -d $ANDROID_HOME/cmdline-tools
+	mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
+	rm /tmp/clt.zip
 fi
 
 if [[ ! -d "$ANDROID_HOME/platforms/android-$ANDROID_PF_VER" ]]; then
 	# Download and install Android SDK
-	if [[ -z "$ANDROID_PF_VER" || -z "$ANDROID_BT_VER" || -z "$ANDROID_NDK_VER" ]]; then
-		exit 1
-	fi
 	# $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --list
 	$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
 	 "platform-tools" \
@@ -55,11 +43,7 @@ fi
 if ! podman container exists $CONTAINER_NAME ; then
 	if ! podman image exists $IMAGE_NAME ; then
 		# Create builder image
-		podman build -t $IMAGE_NAME -f builder/Dockerfile.android .
-	fi
-
-	if [[ -z "$GRADLE_DIR" ]]; then
-		exit 1
+		podman build -t $IMAGE_NAME -f builder/Dockerfile.android-local .
 	fi
 
 	# Create builder container
@@ -68,6 +52,9 @@ if ! podman container exists $CONTAINER_NAME ; then
 	 -v "$PHIOLA_DIR/..":/src \
 	 -v $ANDROID_HOME:/Android \
 	 -v $GRADLE_DIR:/root/.gradle \
+	 -e ANDROID_HOME=/Android \
+	 -e ANDROID_BT_VER=$ANDROID_BT_VER \
+	 -e ANDROID_NDK_ROOT=/Android/ndk/$ANDROID_NDK_VER \
 	 --workdir /build \
 	 --name $CONTAINER_NAME \
 	 $IMAGE_NAME \
@@ -84,23 +71,17 @@ fi
 
 # Prepare build script
 
-ODIR=_android-$CPU
-
 cat >build.sh <<EOF
 set -xe
 
-export PATH=/Android/ndk/$ANDROID_NDK_VER/toolchains/llvm/prebuilt/linux-x86_64/bin:\$PATH
-export ANDROID_NDK_ROOT=/Android/ndk/$ANDROID_NDK_VER
-export ANDROID_HOME=/Android
-mkdir -p $ODIR
+export PATH=\$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin:\$PATH
+mkdir -p _android-$CPU
 make -j$JOBS \
  -C _android-$CPU \
  -f /src/phiola/android/Makefile \
  -I /src/phiola/android \
  ROOT_DIR=/src \
- COMPILER=clang \
  CPU=$CPU \
- NDK_DIR=/Android/ndk/$ANDROID_NDK_VER \
  $ARGS
 EOF
 

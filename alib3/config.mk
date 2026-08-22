@@ -27,8 +27,5 @@ ifeq "$(SYS)" "android"
 endif
 
 CURL := curl -L
-UNTAR_BZ2 := tar -x --no-same-owner -f
-UNTAR_GZ := tar -x --no-same-owner -f
-UNTAR_XZ := tar -x --no-same-owner -f
-UNTAR_ZST := tar -x --zstd --no-same-owner -f
+UNTAR := tar --no-same-owner -xf
 UNZIP := unzip

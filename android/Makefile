@@ -11,9 +11,8 @@ CP := cp -au
 LS := ls -l
 
 ANDROID_HOME ?= /Android
-SDK_API := 35.0.0
-NDK_VER := 29.0.14206865
-NDK_DIR := $(ANDROID_HOME)/ndk/$(NDK_VER)
+# ANDROID_BT_VER :=
+# ANDROID_NDK_ROOT :=
 # ADB_FLAGS := -d
 
 CPU := amd64
@@ -61,12 +60,12 @@ APK_VER := test
 APK_SIGNED := phiola-$(APK_VER)-android-$(CPU).apk
 
 sign:
-	$(ANDROID_HOME)/build-tools/$(SDK_API)/zipalign -v -f 4 $(APK) $(APK_SIGNED)
-	$(ANDROID_HOME)/build-tools/$(SDK_API)/apksigner sign \
+	$(ANDROID_HOME)/build-tools/$(ANDROID_BT_VER)/zipalign -v -f 4 $(APK) $(APK_SIGNED)
+	$(ANDROID_HOME)/build-tools/$(ANDROID_BT_VER)/apksigner sign \
 		--ks $(APK_KEY_STORE) \
 		--ks-pass env:APK_KEY_PASS \
 		$(APK_SIGNED)
-	$(ANDROID_HOME)/build-tools/$(SDK_API)/apksigner verify $(APK_SIGNED)
+	$(ANDROID_HOME)/build-tools/$(ANDROID_BT_VER)/apksigner verify $(APK_SIGNED)
 
 install-signed:
 	$(ANDROID_HOME)/platform-tools/adb $(ADB_FLAGS) install -r $(APK_SIGNED)
@@ -96,7 +95,7 @@ log-clear:
 	$(ANDROID_HOME)/platform-tools/adb $(ADB_FLAGS) logcat -c
 
 log-bt:
-	$(ANDROID_HOME)/platform-tools/adb $(ADB_FLAGS) logcat -v time | $(NDK_DIR)/ndk-stack -sym $(LIB_DIR)
+	$(ANDROID_HOME)/platform-tools/adb $(ADB_FLAGS) logcat -v time | $(ANDROID_NDK_ROOT)/ndk-stack -sym $(LIB_DIR)
 
 
 # Directories
@@ -105,6 +104,7 @@ PHIOLA := $(ROOT_DIR)/phiola
 FFBASE := $(ROOT_DIR)/ffbase
 FFSYS := $(ROOT_DIR)/ffsys
 
+COMPILER := clang
 include $(FFBASE)/conf.mk
 include andk.mk
 SYS := android

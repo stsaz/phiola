@@ -18,7 +18,7 @@ $(PKG):
 # unpack
 $(DIR): $(PKG)
 	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
-	$(UNTAR_XZ) $(PKG)
+	$(UNTAR) $(PKG)
 	cat $(ALIB3)/vorbis/*.patch | patch -d $(DIR) -p1
 
 # build

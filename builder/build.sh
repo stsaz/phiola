@@ -14,6 +14,22 @@ TAG="$2"
 VER="${TAG#v}"
 
 case "$TARGET" in
+	android-arm64)
+		mkdir -p _$TARGET
+		# APK_KEY_STORE=
+		# APK_KEY_PASS=
+		make -j$(nproc) \
+			-C _$TARGET \
+			-f /src/phiola/android/Makefile \
+			-I /src/phiola/android \
+			ROOT_DIR=/src \
+			CPU=arm64 \
+			PHI_VERSION_STR="$VER" \
+			APK_VER="$VER" \
+			release
+		exit 0
+		;;
+
 	linux-amd64)
 		ARGS=""
 		;;
@@ -38,7 +54,6 @@ make -j$(nproc) \
 	-C _$TARGET \
 	-f /src/phiola/Makefile \
 	ROOT_DIR=/src \
-	COMPILER=clang \
 	CFLAGS_USER=-fno-diagnostics-color \
 	PHI_VERSION_STR="$VER" \
 	PKG_VER="$VER" \

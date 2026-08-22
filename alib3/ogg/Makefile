@@ -20,7 +20,7 @@ $(PKG):
 # unpack
 $(DIR): $(PKG)
 	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
-	$(UNTAR_XZ) $(PKG)
+	$(UNTAR) $(PKG)
 
 # build
 CFLAGS += -I$(DIR)/include \

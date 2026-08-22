@@ -11,7 +11,7 @@
 #include <ffgui/gui.hpp>
 #endif
 #include <ffgui/loader.h>
-#include <util/conf-write.h>
+#include <util/conf-args.h>
 #include <util/util.h>
 #include <ffbase/args.h>
 
@@ -124,11 +124,11 @@ FF_EXTERN void* gui_alloc(uint n);
 static inline void gui_free(void *ptr) { memarea_free(&gg->area, ptr); }
 
 FF_EXTERN void conf_wnd_pos_read(ffui_window *w, ffstr val);
-static inline void conf_wnd_pos_write(ffconfw *cw, const char *name, ffui_window *w)
+static inline char* wnd_pos_sz(ffui_window *w)
 {
 	ffui_pos pos;
 	ffui_wnd_placement(w, &pos);
-	ffconfw_addf(cw, "%s \"%d %d %u %u\"", name, pos.x, pos.y, pos.cx, pos.cy);
+	return ffsz_allocfmt("%d %d %u %u", pos.x, pos.y, pos.cx, pos.cy);
 }
 FF_EXTERN void theme_switch(const char *name);
 FF_EXTERN void gui_dragdrop(ffstr data);

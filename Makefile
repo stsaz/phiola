@@ -6,6 +6,7 @@ FFSYS := $(ROOT_DIR)/ffsys
 FFBASE := $(ROOT_DIR)/ffbase
 APP_DIR := phiola-2
 
+COMPILER := clang
 include $(FFBASE)/conf.mk
 SYS := $(OS)
 
@@ -83,11 +84,14 @@ MODS += remote.$(SO)
 remote.$(SO): remote-ctl.o
 	$(LINK) -shared $+ $(LINKFLAGS) -o $@
 
-include $(PHIOLA)/src/tui/Makefile
-include $(PHIOLA)/src/tui2/Makefile
-include $(PHIOLA)/src/gui/Makefile
 include $(PHIOLA)/src/net/Makefile
 include $(PHIOLA)/src/dfilter/Makefile
+include $(PHIOLA)/src/tui/Makefile
+include $(PHIOLA)/src/tui2/Makefile
+
+ifneq "$(PHI_GUI)" "0"
+include $(PHIOLA)/src/gui/Makefile
+endif
 
 ifeq "$(TARGETS)" ""
 override TARGETS := libphiola.$(SO) $(EXES) $(MODS)
@@ -119,7 +123,9 @@ endif
 	chmod 644 $(APP_DIR)/mod/*.$(SO)
 
 	$(CP) $(PHIOLA)/src/net/client.pem $(APP_DIR)/mod/http-client.pem
+ifneq "$(PHI_GUI)" "0"
 	$(SUBMAKE) app-gui
+endif
 
 ifeq "$(OS)" "windows"
 	mv $(APP_DIR)/README.md $(APP_DIR)/README.txt

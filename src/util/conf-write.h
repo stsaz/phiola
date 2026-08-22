@@ -278,6 +278,22 @@ static inline int ffconfw_add_keyz(ffconfw *c, const char *sz)
 	return ffconfw_add(c, 'K', &s);
 }
 
+/** Add unsigned integer */
+static inline int ffconfw_add_uintf(ffconfw *c, ffuint64 val, ffuint int_flags)
+{
+	char buf[64];
+	int r = ffs_fromint(val, buf, sizeof(buf), int_flags);
+	ffstr s;
+	ffstr_set(&s, buf, r);
+	return ffconfw_add(c, 'S', &s);
+}
+
+/** Add unsigned integer */
+static inline int ffconfw_add_uint(ffconfw *c, ffuint64 val)
+{
+	return ffconfw_add_uintf(c, val, 0);
+}
+
 /** Add integer */
 static inline int ffconfw_add_intf(ffconfw *c, ffint64 val, ffuint int_flags)
 {

@@ -2,9 +2,11 @@
 2023, Simon Zolin */
 
 #include <util/conf-obj.h>
+#include <util/conf-write.h>
 #include <ffbase/args.h>
 
 /** Process conf data.
+options: enum FFARGS_OPT
 Return 0 on success;
   <0: enum FFARGS_E;
   >0: error code from a user function */
@@ -16,7 +18,7 @@ static inline int ffargs_process_conf(struct ffargs *as, const struct ffarg *sch
 	as->options = options;
 
 	struct ffconf_obj c = {};
-
+	int (*on_done)(void*);
 	const struct ffarg *a = NULL;
 	int expecting_value = 0;
 	ffstr arg, key = {};
@@ -79,7 +81,7 @@ static inline int ffargs_process_conf(struct ffargs *as, const struct ffarg *sch
 		goto end;
 	}
 
-	int (*on_done)(void*) = (int(*)(void*))_ffarg_ctx_done(&as->ax, 0)->value;
+	on_done = (int(*)(void*))_ffarg_ctx_done(&as->ax, 0)->value;
 	r = (on_done) ? on_done(as->ax.obj) : 0;
 
 end:
@@ -92,5 +94,50 @@ end:
 	}
 
 	ffconf_obj_fin(&c);
+	return r;
+}
+
+/** Write conf data (single level only).
+Skip the fields whose types are not supported.
+Return 0 on success */
+static inline int ffarg_write_conf(ffconfw *cw, const struct ffarg *ctx, const void *obj)
+{
+	int r = 0;
+	for (const struct ffarg *a = ctx;  a->name[0];  a++) {
+		ffuint off = (ffsize)a->value;
+		if (off >= _FFARG_MAX_OFF)
+			continue;
+		ffuint buf_len_prev = cw->buf.len;
+		r |= (0 > ffconfw_add_keyz(cw, a->name));
+		const void *ptr = FF_PTR(obj, off);
+		switch (_FFARG_TYPE(a)) {
+		case 'b':
+			r |= (0 > ffconfw_add_uint(cw, *(ffbyte*)ptr));  break;
+
+		case 'u':
+			r |= (0 > ffconfw_add_uint(cw, *(ffuint*)ptr));  break;
+
+		case 'U':
+			r |= (0 > ffconfw_add_uint(cw, *(ffuint64*)ptr));  break;
+
+		case 'd':
+			r |= (0 > ffconfw_add_int(cw, *(int*)ptr));  break;
+
+		case 'D':
+			r |= (0 > ffconfw_add_int(cw, *(ffint64*)ptr));  break;
+
+		case 'F':
+			r |= (0 > ffconfw_add_float(cw, *(double*)ptr, 6));  break;
+
+		case 's':
+			r |= (0 > ffconfw_add_strz(cw, *(char**)ptr));  break;
+
+		case 'S':
+			r |= (0 > ffconfw_add_str(cw, *(ffstr*)ptr));  break;
+
+		default:
+			cw->buf.len = buf_len_prev; // Remove the previously written key
+		}
+	}
 	return r;
 }

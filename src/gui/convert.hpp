@@ -87,24 +87,12 @@ static void wconvert_ui_to_conf()
 void wconvert_userconf_write(ffconfw *cw)
 {
 	gui_wconvert *c = gg->wconvert;
-	if (c->initialized)
+	if (c->initialized) {
 		wconvert_ui_to_conf();
-	ffconfw_add2s(cw, "dir", c->conf_dir);
-	ffconfw_add2s(cw, "name", c->conf_name);
-	ffconfw_add2s(cw, "ext", c->conf_ext);
-	const ffarg *it;
-	FF_FOREACH(wconvert_args, it) {
-		const void *p = (char*)c + (size_t)it->value;
-		if (it->flags == 'b')
-			ffconfw_add2u(cw, it->name, *(u_char*)p);
-		else if (it->flags == 'u')
-			ffconfw_add2u(cw, it->name, *(uint*)p);
+		c->wnd_pos = wnd_pos_sz(&c->wnd);
 	}
-
-	if (c->initialized)
-		conf_wnd_pos_write(cw, "wconvert.pos", &c->wnd);
-	else if (c->wnd_pos)
-		ffconfw_add2z(cw, "wconvert.pos", c->wnd_pos);
+	ffarg_write_conf(cw, wconvert_args, c);
+	ffmem_free(c->wnd_pos);
 }
 
 /** Get file extension index by value */
@@ -307,6 +295,7 @@ void wconvert_show(uint show, ffslice items)
 		if (c->wnd_pos)
 			conf_wnd_pos_read(&c->wnd, FFSTR_Z(c->wnd_pos));
 		ffmem_free(c->wnd_pos);
+		c->wnd_pos = NULL;
 
 		wconvert_ui_from_conf();
 	}

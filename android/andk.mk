@@ -1,7 +1,7 @@
 # Android NDK environment for 'make'
 
 # Set compiler
-C_DIR := $(NDK_DIR)/toolchains/llvm/prebuilt/linux-x86_64/bin
+C_DIR := $(ANDROID_NDK_ROOT)/toolchains/llvm/prebuilt/linux-x86_64/bin
 C := $(C_DIR)/clang -c
 CXX := $(C_DIR)/clang++ -c
 LINK := $(C_DIR)/clang
@@ -24,7 +24,7 @@ endif
 A_CFLAGS += \
 	-fPIC -fdata-sections -ffunction-sections -fstack-protector-strong -funwind-tables \
 	-no-canonical-prefixes \
-	--sysroot $(NDK_DIR)/toolchains/llvm/prebuilt/linux-x86_64/sysroot \
+	--sysroot $(ANDROID_NDK_ROOT)/toolchains/llvm/prebuilt/linux-x86_64/sysroot \
 	-D_FORTIFY_SOURCE=2 -DANDROID -DNDEBUG
 
 A_LINKFLAGS += -no-canonical-prefixes \

@@ -14,3 +14,29 @@ RUN apt install -y \
  perl
 RUN apt install -y \
  openjdk-21-jdk
+
+ARG ANDROID_CLT_VER=14742923
+ARG ANDROID_PF_VER=33
+ARG ANDROID_BT_VER=35.0.0
+ARG ANDROID_NDK_VER=29.0.14206865
+ENV ANDROID_HOME=/Android
+ENV ANDROID_NDK_ROOT=/Android/ndk/${ANDROID_NDK_VER}
+
+# Download and unpack Android command-line tools
+RUN mkdir -p $ANDROID_HOME/cmdline-tools \
+ && curl -fsSL -o /tmp/clt.zip \
+  "https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_CLT_VER}_latest.zip" \
+ && unzip -q /tmp/clt.zip -d $ANDROID_HOME/cmdline-tools \
+ && mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest \
+ && rm /tmp/clt.zip
+
+# Install Android SDK components
+RUN yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses \
+ && $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+  "platform-tools" \
+  "platforms;android-${ANDROID_PF_VER}" \
+  "build-tools;${ANDROID_BT_VER}"
+
+# Install NDK
+RUN $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+ "ndk;${ANDROID_NDK_VER}"

@@ -59,19 +59,22 @@ cd phiola
 		bash xbuild.sh
 	```
 
-* Cross-Build on Linux for Android/ARM64:
+* Cross-Build on Linux for Android/ARM64 (Android SDK and Gradle cache directories are passed through):
 
 	```sh
-	ANDROID_CLT_URL=https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip \
-	ANDROID_HOME=/home/USER/Android \
-	ANDROID_BT_VER=33.0.0 \
-	ANDROID_PF_VER=33 \
-	ANDROID_NDK_VER=25.1.8937393 \
-	GRADLE_DIR=/home/USER/.gradle \
-	CPU=arm64 \
+	ANDROID_HOME=$HOME/Android \
+	GRADLE_DIR=$HOME/.gradle \
 		bash xbuild-android.sh
 	```
 
+	Specify these env vars if needed:
+
+		```sh
+		ANDROID_CLT_VER=...
+		ANDROID_PF_VER=...
+		ANDROID_BT_VER=...
+		ANDROID_NDK_VER=...
+		```
 
 ## Step 2, Option 2. Native Build
 
@@ -134,7 +137,7 @@ cd phiola
 * Build on FreeBSD & macOS:
 
 	```sh
-	gmake -j8 PHI_HTTP_SSL=0
+	gmake -j8 PHI_HTTP_SSL=0 PHI_GUI=0
 	```
 
 
@@ -146,6 +149,7 @@ cd phiola
 | `ASAN=1`          | Enable ASAN |
 | `CFLAGS_USER=...` | Additional C/C++ compiler flags |
 | `PHI_CODECS=0`    | Disable all codecs |
+| `PHI_GUI=0`       | Disable GUI |
 | `PHI_HTTP_SSL=0`  | Disable SSL |
 | `PHI_HTTP_SRV=0`  | Disable ICY server |
 

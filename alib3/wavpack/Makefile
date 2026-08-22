@@ -19,7 +19,7 @@ $(PKG):
 # unpack
 $(DIR): $(PKG)
 	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
-	$(UNTAR_BZ2) $(PKG)
+	$(UNTAR) $(PKG)
 	cat $(ALIB3)/wavpack/0*.patch | patch -d $(DIR) -p1
 ifeq "$(OS)" "linux"
 	cat $(ALIB3)/wavpack/nonexec-stack.patch | patch -d $(DIR) -p1

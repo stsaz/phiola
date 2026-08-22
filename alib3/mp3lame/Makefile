@@ -20,7 +20,7 @@ $(PKG):
 # unpack
 $(DIR): $(PKG)
 	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
-	$(UNTAR_GZ) $(PKG)
+	$(UNTAR) $(PKG)
 	touch $@
 
 CONFIGURE_FLAGS := --host=x86_64

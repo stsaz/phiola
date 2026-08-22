@@ -113,9 +113,13 @@ void wmain_userconf_write(ffconfw *cw)
 	for (uint i = 0;  i != _H_LAST;  i++) {
 		v.add_f("%u ", m->vlist.column(i, &vc).width());
 	}
-	ffconfw_add2s(cw, "vlist.col", v.str());
+	m->vlist_col = v.strz();
+	v.reset();
 
-	conf_wnd_pos_write(cw, "wmain.pos", &m->wnd);
+	m->wnd_pos = wnd_pos_sz(&m->wnd);
+	ffarg_write_conf(cw, wconvert_args, m);
+	ffmem_free(m->wnd_pos);
+	ffmem_free(m->vlist_col);
 }
 
 /** Set status bar text */
@@ -762,10 +766,12 @@ void wmain_show()
 	if (m->vlist_col)
 		conf_vlist_col(m->vlist, m->vlist_col);
 	ffmem_free(m->vlist_col);
+	m->vlist_col = NULL;
 
 	if (m->wnd_pos)
 		conf_wnd_pos_read(&m->wnd, FFSTR_Z(m->wnd_pos));
 	ffmem_free(m->wnd_pos);
+	m->wnd_pos = NULL;
 
 	m->tvol.set(gd->conf.volume);
 	m->tabs.add("Playlist 1");

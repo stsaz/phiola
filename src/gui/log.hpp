@@ -28,10 +28,11 @@ const ffarg wlog_args[] = {
 void wlog_userconf_write(ffconfw *cw)
 {
 	gui_wlog *w = gg->wlog;
-	if (w->initialized)
-		conf_wnd_pos_write(cw, "wlog.pos", &w->wnd);
-	else if (w->wnd_pos)
-		ffconfw_add2z(cw, "wlog.pos", w->wnd_pos);
+	if (w->initialized) {
+		w->wnd_pos = wnd_pos_sz(&w->wnd);
+	}
+	ffarg_write_conf(cw, wlog_args, w);
+	ffmem_free(w->wnd_pos);
 }
 
 static void wlog_add()
@@ -55,6 +56,7 @@ static void wlog_add()
 		if (w->wnd_pos)
 			conf_wnd_pos_read(&w->wnd, FFSTR_Z(w->wnd_pos));
 		ffmem_free(w->wnd_pos);
+		w->wnd_pos = NULL;
 	}
 
 	w->wnd.show(1);

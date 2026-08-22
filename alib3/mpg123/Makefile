@@ -19,7 +19,7 @@ $(PKG):
 # unpack
 $(DIR): $(PKG)
 	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
-	$(UNTAR_BZ2) $(PKG)
+	$(UNTAR) $(PKG)
 
 _:=
 ifeq "$(CPU)" "amd64"

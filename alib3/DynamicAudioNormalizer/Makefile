@@ -19,7 +19,7 @@ $(PKG):
 # unpack
 $(DIR): $(PKG)
 	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
-	$(UNTAR_GZ) $(PKG)
+	$(UNTAR) $(PKG)
 
 # build
 CXXFLAGS += -std=gnu++11 \

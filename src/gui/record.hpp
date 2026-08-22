@@ -169,24 +169,12 @@ static void wrecord_ui_to_conf()
 void wrecord_userconf_write(ffconfw *cw)
 {
 	gui_wrecord *w = gg->wrecord;
-	if (w->initialized)
+	if (w->initialized) {
 		wrecord_ui_to_conf();
-	ffconfw_add2s(cw, "dir", w->conf_dir);
-	ffconfw_add2s(cw, "name", w->conf_name);
-	ffconfw_add2s(cw, "ext", w->conf_ext);
-	const ffarg *it;
-	FF_FOREACH(wrecord_args, it) {
-		const void *p = (char*)w + (size_t)it->value;
-		if (it->flags == 'b')
-			ffconfw_add2u(cw, it->name, *(u_char*)p);
-		else if (it->flags == 'u')
-			ffconfw_add2u(cw, it->name, *(uint*)p);
+		w->wnd_pos = wnd_pos_sz(&w->wnd);
 	}
-
-	if (w->initialized)
-		conf_wnd_pos_write(cw, "wrecord.pos", &w->wnd);
-	else if (w->wnd_pos)
-		ffconfw_add2z(cw, "wrecord.pos", w->wnd_pos);
+	ffarg_write_conf(cw, wconvert_args, w);
+	ffmem_free(w->wnd_pos);
 }
 
 uint adevices_fill(uint flags, ffui_comboboxxx &cb, uint index)
@@ -380,6 +368,7 @@ void wrecord_show(uint show)
 		if (w->wnd_pos)
 			conf_wnd_pos_read(&w->wnd, FFSTR_Z(w->wnd_pos));
 		ffmem_free(w->wnd_pos);
+		w->wnd_pos = NULL;
 
 		wrecord_ui_from_conf();
 

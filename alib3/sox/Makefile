@@ -19,7 +19,7 @@ $(PKG):
 # unpack
 $(DIR): $(PKG)
 	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
-	$(UNTAR_GZ) $(PKG)
+	$(UNTAR) $(PKG)
 
 CONFIGURE_FLAGS := --without-libltdl
 ifeq "$(OS)" "windows"

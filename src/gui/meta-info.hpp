@@ -38,10 +38,11 @@ const ffarg winfo_args[] = {
 void winfo_userconf_write(ffconfw *cw)
 {
 	gui_winfo *w = gg->winfo;
-	if (w->initialized)
-		conf_wnd_pos_write(cw, "winfo.pos", &w->wnd);
-	else if (w->wnd_pos)
-		ffconfw_add2z(cw, "winfo.pos", w->wnd_pos);
+	if (w->initialized) {
+		w->wnd_pos = wnd_pos_sz(&w->wnd);
+	}
+	ffarg_write_conf(cw, wconvert_args, w);
+	ffmem_free(w->wnd_pos);
 }
 
 static void winfo_addpair(xxstr name, xxstr val)
@@ -120,6 +121,7 @@ void winfo_show(uint show, uint idx)
 		if (w->wnd_pos)
 			conf_wnd_pos_read(&w->wnd, FFSTR_Z(w->wnd_pos));
 		ffmem_free(w->wnd_pos);
+		w->wnd_pos = NULL;
 
 		if (gd->conf.tags_keep_date)
 			gg->mminfo_file.check(A_INFO_KEEPDATE, 1);

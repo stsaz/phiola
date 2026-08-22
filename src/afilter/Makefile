@@ -20,7 +20,7 @@
 FFAUDIO := $(ROOT_DIR)/ffaudio
 ALIB3 := $(PHIOLA)/alib3
 ALIB3_BIN := alib3
-ALIB3_FLAGS := OS=$(OS) SYS=$(SYS) COMPILER=$(COMPILER) CPU=$(CPU)
+ALIB3_FLAGS := ALIB3=$(ALIB3) OS=$(OS) SYS=$(SYS) COMPILER=$(COMPILER) CPU=$(CPU)
 AFPFX := af-
 
 MODS += afilter.$(SO)
@@ -44,7 +44,7 @@ MODS += $(AFPFX)soxr.$(SO)
 LIBS3 += $(ALIB3_BIN)/libsoxr-phi.$(SO)
 
 $(ALIB3_BIN)/libsoxr-phi.$(SO): $(ALIB3)/soxr/Makefile | $(ALIB3_BIN)
-	$(MAKE)  -C $(ALIB3_BIN)  -f $(ALIB3)/soxr/Makefile  -I $(ALIB3)/soxr  ALIB3=$(ALIB3) $(ALIB3_FLAGS)
+	$(MAKE)  -C $(ALIB3_BIN)  -f $(ALIB3)/soxr/Makefile  -I $(ALIB3)/soxr  $(ALIB3_FLAGS)
 
 soxr-conv.o: $(PHIOLA)/src/afilter/soxr-conv.c
 	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
@@ -57,7 +57,7 @@ MODS += $(AFPFX)sox.$(SO)
 LIBS3 += $(ALIB3_BIN)/libsox-phi.$(SO)
 
 $(ALIB3_BIN)/libsox-phi.$(SO): $(ALIB3)/sox/Makefile | $(ALIB3_BIN)
-	$(MAKE)  -C $(ALIB3_BIN)  -f $(ALIB3)/sox/Makefile  -I $(ALIB3)/sox  ALIB3=$(ALIB3) $(ALIB3_FLAGS)
+	$(MAKE)  -C $(ALIB3_BIN)  -f $(ALIB3)/sox/Makefile  -I $(ALIB3)/sox  $(ALIB3_FLAGS)
 
 sox.o: $(PHIOLA)/src/afilter/sox.c
 	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
@@ -70,7 +70,7 @@ MODS += $(AFPFX)danorm.$(SO)
 LIBS3 += $(ALIB3_BIN)/libDynamicAudioNormalizer-phi.$(SO)
 
 $(ALIB3_BIN)/libDynamicAudioNormalizer-phi.$(SO): $(ALIB3)/DynamicAudioNormalizer/Makefile | $(ALIB3_BIN)
-	$(MAKE)  -C $(ALIB3_BIN)  -f $(ALIB3)/DynamicAudioNormalizer/Makefile  -I $(ALIB3)/DynamicAudioNormalizer  ALIB3=$(ALIB3) $(ALIB3_FLAGS)
+	$(MAKE)  -C $(ALIB3_BIN)  -f $(ALIB3)/DynamicAudioNormalizer/Makefile  -I $(ALIB3)/DynamicAudioNormalizer  $(ALIB3_FLAGS)
 
 dynanorm.o: $(PHIOLA)/src/afilter/dynanorm.c
 	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
@@ -83,7 +83,7 @@ MODS += $(AFPFX)loudness.$(SO)
 LIBS3 += $(ALIB3_BIN)/libebur128-phi.$(SO)
 
 $(ALIB3_BIN)/libebur128-phi.$(SO): $(ALIB3)/EBUR128/Makefile | $(ALIB3_BIN)
-	$(MAKE)  -C $(ALIB3_BIN)  -f $(ALIB3)/EBUR128/Makefile  -I $(ALIB3)/EBUR128  ALIB3=$(ALIB3) $(ALIB3_FLAGS)
+	$(MAKE)  -C $(ALIB3_BIN)  -f $(ALIB3)/EBUR128/Makefile  -I $(ALIB3)/EBUR128  $(ALIB3_FLAGS)
 
 loudness.o: $(PHIOLA)/src/afilter/loudness.c
 	$(C) $(CFLAGS) -I$(ALIB3) $< -o $@
