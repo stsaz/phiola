@@ -208,8 +208,13 @@ static char* env_expand(const char *s)
 
 static char* mod_loading(ffstr name)
 {
-	if (ffstr_eqz(&name, "ac-alac"))
+	if (ffstr_eqz(&name, "ac-alac")) {
+		if (!x->conf.deprecated_mods) {
+			errlog("ALAC module is disabled by default.  Enable it with 'DeprecatedMods' in phiola.conf.");
+			return NULL;
+		}
 		warnlog("ALAC module is deprecated.  Decoding the files from untrusted sources is NOT RECOMMENDED.");
+	}
 
 	return ffsz_allocfmt("%Smod%c%S.%s"
 		, &x->root_dir, FFPATH_SLASH, &name, FFDL_EXT);

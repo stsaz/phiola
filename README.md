@@ -64,7 +64,7 @@ Features and notes by platform:
 | Requirements         | glibc-2.41 | macOS 14 | Windows 7 | Android 8 (ARM64), Android 6 (ARM) |
 | HW Requirements      | AMD64, ARM64 | ARM64 | AMD64 | ARM64, ARM(incomplete) |
 
-> Important: ALAC decoder is disabled by default in phiola/Android because of potential security issues (see https://github.com/macosforge/alac).
+> Important: the ALAC decoder is disabled by default because of potential security issues (see https://github.com/macosforge/alac).  You can still enable it on Android via `Settings -> Enable Deprecated Modules (ALAC)`; on desktop — by adding `DeprecatedMods` to `phiola.conf`.
 
 
 ## Install
@@ -477,6 +477,12 @@ Here's how phiola works:
 
 Global settings can be specified in `phiola-2/phiola.conf` file.
 See the contents of `phiola-2/phiola-example.conf` for more info.
+
+Available options:
+
+* `AllowHibernate` — don't prevent the system from hibernating while playing or recording.
+* `Codepage` — code page for non-Unicode text (`win1251`, `win1252`, `win866`).
+* `DeprecatedMods` — enable the deprecated ALAC decoder (disabled by default due to unpatched security issues in the upstream library).
 
 
 ## External Libraries
