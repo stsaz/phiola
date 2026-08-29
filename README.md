@@ -5,7 +5,7 @@
 phiola is a fast audio player, recorder, converter, and streaming server for Windows, Linux, and Android.
 It can play audio files from your device or a remote server, record audio from your microphone or an internet radio stream, and convert audio into various formats.
 Its low CPU consumption helps extend the battery life of laptops and phones.
-You can control phiola via CLI, TUI, GUI, system pipe, or its API.
+You can control phiola via CLI, TUI, GUI, IPC socket (UNIX socket / named pipe), or its API (C / Java).
 Its fast startup time makes it ideal for custom scripts used on a "play-and-exit" or "record-and-exit" basis.
 
 It is completely portable (all codecs are bundled), meaning you can run it directly from a read-only flash drive.
@@ -43,6 +43,7 @@ Contents:
 	* DynamicAudioNormalizer, auto loudness and ReplayGain normalizer
 	* multi-band equalizer
 	* noise gate
+* Remote control: ability to start a background process and stop it from another terminal
 * Command Line Interface for Desktop OS
 * Terminal/Console UI for interaction at runtime
 * GUI for Windows, Linux, Android: manage your playlists and audio files
@@ -71,14 +72,26 @@ Features and notes by platform:
 
 Download the latest package for your OS and CPU from [phiola Releases](https://github.com/stsaz/phiola/releases)
 
-### Linux (Portable)
+### Linux
 
-In case you've chosen the portable package (i.e. `phiola-....tar.zst`), here's how you can install it into the `~/bin` directory:
+Debian/Ubuntu:
 
 ```sh
-wget https://github.com/stsaz/phiola/releases/download/v2.3.12/phiola-2.3.12-linux-amd64.tar.zst
+sudo dpkg -i phiola_....deb
+```
+
+Fedora/RHEL:
+
+```sh
+sudo dnf install phiola-....rpm
+```
+
+Or if you want the portable version (`tar.zst`):
+
+```sh
+VER=...
 mkdir -p ~/bin
-tar xf phiola-2.3.12-linux-amd64.tar.zst -C ~/bin
+curl -L "https://github.com/stsaz/phiola/releases/download/v$VER/phiola-$VER-linux-amd64.tar.zst" | tar -x --zstd -f - -C ~/bin
 ln -s ~/bin/phiola-2/phiola ~/bin/phiola
 cp ~/bin/phiola-2/mod/gui/phiola.desktop ~/.local/share/applications
 ```
@@ -178,10 +191,10 @@ phiola record -loopback -o audio.flac
 # * PulseAudio:
 phiola record -dev $(phiola dev list -f Monitor -n) -o audio.flac
 
-# Start recording in background, then stop recording from another process:
-#   Step 1: record while listening for system-wide commands
+# Start recording in background, controllable from another terminal:
+#   Step 1: start background recording with remote control enabled
 phiola -Background record -o audio.flac -remote
-#   Step 2: send 'stop' signal to the phiola instance that is recording audio
+#   Step 2: stop it from another terminal
 phiola remote stop
 
 # Record and split the output files by 1 hour
@@ -197,6 +210,8 @@ phiola record -o @stdout.wav | your_program
 > Note: the output audio format is chosen automatically by the file extension you specify.
 
 > Note: it's not required to always type the whole name of a command or an option - you may type just its prefix (enough for phiola to recognize it), e.g. instead of `phiola record -aformat int16` you may type `phiola rec -af int16`.
+
+> For more advanced recording workflows (background recording, remote stop), see the [Recording Tutorial](doc/recording-audio/tutorial.md#recording-in-background).
 
 Convert:
 
@@ -470,7 +485,7 @@ libmpc,
 [libopus](https://github.com/xiph/opus),
 [libvorbis](https://github.com/xiph/vorbis),
 libwavpack,
-libsox,
+[libsox](https://github.com/chirlu/sox),
 [libsoxr](https://github.com/dofuuz/soxr),
 [libzstd](https://github.com/facebook/zstd),
 [libDynamicAudioNormalizer](https://github.com/lordmulder/DynamicAudioNormalizer).

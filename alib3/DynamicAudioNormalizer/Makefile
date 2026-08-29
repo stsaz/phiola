@@ -4,7 +4,7 @@ include ../config.mk
 
 VER := 2.10
 URL := https://github.com/lordmulder/DynamicAudioNormalizer/archive/refs/tags/$(VER).tar.gz
-SHA256SUM := 9c8fb29b978b935cba8c3d1fbfab31de23ce0fb842210e2846fd6af6f806e627
+PKG_SHA256 := 9c8fb29b978b935cba8c3d1fbfab31de23ce0fb842210e2846fd6af6f806e627
 PKG := $(ALIB3)/DynamicAudioNormalizer/$(notdir $(URL))
 DIR := DynamicAudioNormalizer-$(VER)
 LIB := libDynamicAudioNormalizer-phi.$(SO)
@@ -18,7 +18,7 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
-	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
+	echo "$(PKG_SHA256) *$(PKG)" | $(SHA256SUM) -c -
 	$(UNTAR) $(PKG)
 
 # build

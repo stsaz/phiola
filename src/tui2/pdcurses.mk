@@ -2,7 +2,7 @@
 
 URL := https://github.com/wmcbrine/PDCurses/archive/refs/tags/3.9.zip
 PKG := PDCurses-3.9.zip
-SHA256SUM := 5c2ccab1d8fbf7e2c82eac954444a6760eb949d47d6dc57e09f339d34a50ba79
+PKG_SHA256 := 5c2ccab1d8fbf7e2c82eac954444a6760eb949d47d6dc57e09f339d34a50ba79
 DIR := PDCurses-3.9
 LIB := $(DIR)/wincon/pdcurses.dll
 
@@ -17,7 +17,7 @@ $(PKG):
 	$(CURL) $@ $(URL)
 
 $(DIR): $(PKG)
-	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
+	echo "$(PKG_SHA256) *$(PKG)" | $(SHA256SUM) -c -
 	unzip $(PKG)
 
 $(LIB): $(DIR)

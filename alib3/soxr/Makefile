@@ -4,7 +4,7 @@ include ../config.mk
 
 VER := edbdb4081db14eb21729b57c4f2c813514ad0259
 URL := https://github.com/stsaz/phiola/raw/alib3/alib3/soxr/soxr-$(VER).zip
-SHA256SUM := 9ba7b105e219452d7116e09b0af011ab097c6a2285723611a504bb0d2ef610a8
+PKG_SHA256 := 9ba7b105e219452d7116e09b0af011ab097c6a2285723611a504bb0d2ef610a8
 PKG := $(ALIB3)/soxr/soxr-$(VER).zip
 DIR := soxr-$(VER)
 LIB := libsoxr-phi.$(SO)
@@ -18,7 +18,7 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
-	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
+	echo "$(PKG_SHA256) *$(PKG)" | $(SHA256SUM) -c -
 	$(UNZIP) $(PKG)
 
 $(DIR)/soxr-config.h: | $(DIR)

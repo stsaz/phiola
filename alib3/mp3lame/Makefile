@@ -5,7 +5,7 @@ include ../config.mk
 VER := 3.100
 # https://sourceforge.net/projects/lame/files/lame/3.100/lame-3.100.tar.gz/download
 URL := https://github.com/stsaz/phiola/raw/alib3/alib3/mp3lame/lame-$(VER).tar.gz
-SHA256SUM := ddfe36cab873794038ae2c1210557ad34857a4b6bdc515785d1da9e175b1da1e
+PKG_SHA256 := ddfe36cab873794038ae2c1210557ad34857a4b6bdc515785d1da9e175b1da1e
 PKG := $(ALIB3)/mp3lame/$(notdir $(URL))
 DIR := lame-$(VER)
 LIB := libmp3lame-phi.$(SO)
@@ -19,7 +19,7 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
-	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
+	echo "$(PKG_SHA256) *$(PKG)" | $(SHA256SUM) -c -
 	$(UNTAR) $(PKG)
 	touch $@
 

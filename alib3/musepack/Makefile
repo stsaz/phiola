@@ -4,7 +4,7 @@ include ../config.mk
 
 VER := r475
 URL := https://files.musepack.net/source/musepack_src_$(VER).tar.gz
-SHA256SUM := a4b1742f997f83e1056142d556a8c20845ba764b70365ff9ccf2e3f81c427b2b
+PKG_SHA256 := a4b1742f997f83e1056142d556a8c20845ba764b70365ff9ccf2e3f81c427b2b
 PKG := $(ALIB3)/musepack/$(notdir $(URL))
 DIR := musepack_src_$(VER)
 LIB := libmusepack-phi.$(SO)
@@ -18,7 +18,7 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
-	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
+	echo "$(PKG_SHA256) *$(PKG)" | $(SHA256SUM) -c -
 	$(UNTAR) $(PKG)
 	cat $(ALIB3)/musepack/*.patch | patch -d $(DIR) -p1
 

@@ -4,7 +4,7 @@ include ../config.mk
 
 VER := 1.32.10
 URL := http://mpg123.de/download/mpg123-$(VER).tar.bz2
-SHA256SUM := 87b2c17fe0c979d3ef38eeceff6362b35b28ac8589fbf1854b5be75c9ab6557c
+PKG_SHA256 := 87b2c17fe0c979d3ef38eeceff6362b35b28ac8589fbf1854b5be75c9ab6557c
 PKG := $(ALIB3)/mpg123/$(notdir $(URL))
 DIR := mpg123-$(VER)
 LIB := libmpg123-phi.$(SO)
@@ -18,7 +18,7 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
-	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
+	echo "$(PKG_SHA256) *$(PKG)" | $(SHA256SUM) -c -
 	$(UNTAR) $(PKG)
 
 _:=

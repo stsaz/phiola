@@ -4,7 +4,7 @@ include ../config.mk
 
 VER := 4.75.0
 URL := https://github.com/stsaz/phiola/raw/alib3/alib3/wavpack/wavpack-$(VER).tar.bz2
-SHA256SUM := c63e5c2106749dc6b2fb4302f2260f4803a93dd6cadf337764920dc836e3af2e
+PKG_SHA256 := c63e5c2106749dc6b2fb4302f2260f4803a93dd6cadf337764920dc836e3af2e
 PKG := $(ALIB3)/wavpack/$(notdir $(URL))
 DIR := wavpack-$(VER)
 LIB := libwavpack-phi.$(SO)
@@ -18,7 +18,7 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
-	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
+	echo "$(PKG_SHA256) *$(PKG)" | $(SHA256SUM) -c -
 	$(UNTAR) $(PKG)
 	cat $(ALIB3)/wavpack/0*.patch | patch -d $(DIR) -p1
 ifeq "$(OS)" "linux"
