@@ -140,15 +140,17 @@ static void lh_create_table(struct list_heal *lh)
 			ffmem_zero_obj(&ds);
 
 			uint dsflags = 0;
-#ifdef FF_LINUX
+#ifdef FF_UNIX
 			dsflags = FFDIRSCAN_USEFD;
 			ds.fd = f;
 			f = FFFILE_NULL;
 #endif
 
-			dbglog("scanning %s", path.ptr);
-			if (ffdirscan_open(&ds, path.ptr, dsflags))
+			if (ffdirscan_open(&ds, fpath, dsflags)) {
+				syswarnlog("ffdirscan_open: %s", fpath);
 				continue;
+			}
+			dbglog("scanned %s", fpath);
 
 			ffstr_setz(&path, fpath);
 			if (!(blk = fntree_from_dirscan(path, &ds, 0)))

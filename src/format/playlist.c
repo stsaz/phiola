@@ -6,6 +6,7 @@
 extern const struct phi_core *core;
 #define syserrlog(...)  phi_syserrlog(core, NULL, NULL, __VA_ARGS__)
 #define errlog(...)  phi_errlog(core, NULL, NULL, __VA_ARGS__)
+#define syswarnlog(...)  phi_syswarnlog(core, NULL, NULL, __VA_ARGS__)
 #define warnlog(...)  phi_warnlog(core, NULL, NULL, __VA_ARGS__)
 #define infolog(...)  phi_infolog(core, NULL, NULL, __VA_ARGS__)
 #define dbglog(...)  phi_dbglog(core, NULL, NULL, __VA_ARGS__)
