@@ -49,6 +49,11 @@ static int m3uw_process(void *ctx, phi_track *t)
 		};
 
 		if (!url_checkz(qe->url)) {
+			// "dir/list.m3u" + "dir/../title.mp3" => "../title.mp3"
+			if (path_isparent(m->odir, m3e.url)) {
+				ffstr_shift(&m3e.url, m->odir.len + 1);
+			}
+
 			ffvec_realloc(&m->fn, m3e.url.len, 1);
 			m->fn.len = ffpath_normalize(m->fn.ptr, m->fn.cap, m3e.url.ptr, m3e.url.len, 0);
 			m3e.url = *(ffstr*)&m->fn;

@@ -12,7 +12,7 @@
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20812
+#define PHI_VERSION_CORE  20814
 
 typedef long long int64;
 typedef unsigned long long uint64;
@@ -757,4 +757,22 @@ struct phi_ui_if {
 struct phi_asv_conf {
 	uint max_clients;
 	ushort port;
+};
+
+
+/** Playlist functions */
+
+typedef void (*phi_playlist_cb)(void*, int);
+struct phi_playlist_conf {
+	ffslice include_str, exclude_str;
+
+	phi_playlist_cb on_complete;
+	void *udata;
+};
+
+typedef struct phi_playlist_if phi_playlist_if;
+struct phi_playlist_if {
+	void (*create)(const char *fn, ffslice input_sz, uint flags, const struct phi_playlist_conf *c);
+	void (*sort)(const char *fn, uint flags, const struct phi_playlist_conf *c);
+	void (*heal)(const char *fn, uint flags, const struct phi_playlist_conf *c);
 };
