@@ -31,7 +31,7 @@ EOF
 }
 
 test_list_heal() {
-	mkdir -p phi_test phi_test/listheal
+	mkdir -p phi_test/listheal/dir3
 
 	cat >phi_test/list.m3u <<EOF
 #EXTM3U
@@ -73,15 +73,14 @@ listheal/dir3/file-cd.mp3
 listheal/dir3/file-cde.ogg
 EOF
 
-	touch phi_test/listheal/file-eq.mp3
-	touch phi_test/listheal/file-abs.mp3
-	touch phi_test/listheal/file.ogg
-	mkdir -p phi_test/listheal/dir3
-	touch phi_test/listheal/dir3/file-cd.mp3
-	touch phi_test/listheal/dir3/file-cde.ogg
+	touch phi_test/listheal/file-eq.mp3 \
+		phi_test/listheal/file-abs.mp3 \
+		phi_test/listheal/file.ogg \
+		phi_test/listheal/dir3/file-cd.mp3 \
+		phi_test/listheal/dir3/file-cde.ogg
 
 	./phiola list heal "phi_test/list.m3u"
-	diff -Z phi_test/list.m3u phi_test/list2.m3u
+	diff --strip-trailing-cr phi_test/list.m3u phi_test/list2.m3u
 
 	echo '#EXTM3U
 #EXTINF:1,ARTIST - unchanged
@@ -90,7 +89,7 @@ listheal/file.ogg' >phi_test/list.m3u
 #EXTINF:1,ARTIST - unchanged
 listheal/file.ogg' >phi_test/list2.m3u
 	./phiola list heal "phi_test/list.m3u"
-	diff -Z phi_test/list.m3u phi_test/list2.m3u
+	diff --strip-trailing-cr phi_test/list.m3u phi_test/list2.m3u
 
 	rm -rf phi_test/listheal phi_test/list*.m3u
 	rmdir phi_test

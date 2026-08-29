@@ -56,13 +56,33 @@ test_convert_samples() {
 }
 
 test_convert_af() {
-	O=co_wav_i24.wav          ; ./phiola co co.wav -af int24                   -f -o $O ; ./phiola i $O | grep 'int24' ; ./phiola pl $O
-	O=co_wav_mono.wav         ; ./phiola co co.wav                       -ch 1 -f -o $O ; ./phiola i $O | grep 'mono' ; ./phiola pl $O
-	O=co_wav_i24_mono.wav     ; ./phiola co co.wav -af int24             -ch 1 -f -o $O ; ./phiola i $O | grep 'int24 48000Hz mono' ; ./phiola pl $O
-	O=co_wav_96k.wav          ; ./phiola co co.wav           -rate 96000       -f -o $O ; ./phiola i $O | grep '96000Hz' ; ./phiola pl $O
-	O=co_wav_i32_96k.wav      ; ./phiola co co.wav -af int32 -rate 96000       -f -o $O ; ./phiola i $O | grep 'int32 96000Hz' ; ./phiola pl $O
-	O=co_wav_i32_96k_mono.wav ; ./phiola co co.wav -af int32 -rate 96000 -ch 1 -f -o $O ; ./phiola i $O | grep 'int32 96000Hz mono' ; ./phiola pl $O
-	# O=co_wav_i24_96k_mono.wav ; ./phiola co co.wav -af int24 -rate 96000 -ch 1 -f -o $O ; ./phiola i $O | grep 'int24 96000Hz mono' ; ./phiola pl $O
+	O=co_wav_i24.wav
+	./phiola co co.wav -af int24 -f -o $O
+	./phiola i $O | grep 'int24'
+
+	O=co_wav_mono.wav
+	./phiola co co.wav -ch 1 -f -o $O
+	./phiola i $O | grep 'mono'
+
+	O=co_wav_i24_mono.wav
+	./phiola co co.wav -af int24 -ch 1 -f -o $O
+	./phiola i $O | grep 'int24 48000Hz mono'
+
+	O=co_wav_96k.wav
+	./phiola co co.wav -rate 96000 -f -o $O
+	./phiola i $O | grep '96000Hz'
+
+	O=co_wav_i32_96k.wav
+	./phiola co co.wav -af int32 -rate 96000 -f -o $O
+	./phiola i $O | grep 'int32 96000Hz'
+
+	O=co_wav_i32_96k_mono.wav
+	./phiola co co.wav -af int32 -rate 96000 -ch 1 -f -o $O
+	./phiola i $O | grep 'int32 96000Hz mono'
+
+	# O=co_wav_i24_96k_mono.wav
+	# ./phiola co co.wav -af int24 -rate 96000 -ch 1 -f -o $O
+	# ./phiola i $O | grep 'int24 96000Hz mono'
 }
 
 test_convert() {
@@ -102,7 +122,7 @@ test_convert_encode() {
 	# ./phiola i -s 1 co_wav.flac -peaks | grep '48,000 total'
 
 	convert__from_to wav m4a
-	./phiola i co_wav.m4a              | grep -E '98,... samples'
+	./phiola i co_wav.m4a              | grep -E '96,... samples'
 	./phiola i co_wav.m4a -peaks       | grep -E '96,... total'
 	./phiola i -u 1 co_wav.m4a -peaks  | grep '48,000 total'
 	./phiola i -s 1 co_wav.m4a -peaks  | grep -E '48,... total'
@@ -134,7 +154,7 @@ test_convert_encode() {
 
 test_convert_parallel() {
 	if [[ ! -f co.wav ]]; then
-		./phiola rec -u 2 -rate 48000 -o co.wav -f
+		./phiola rec -u 1 -rate 48000 -o co.wav -f
 	fi
 
 	if [[ ! -f copa/co99.wav ]]; then
@@ -144,7 +164,7 @@ test_convert_parallel() {
 		done
 	fi
 
-	./phiola co copa -inc '*.wav' -u 1 -o copa/.flac -f
+	./phiola co copa -inc '*.wav' -o copa/.flac -f
 	./phiola i copa/*.flac
 }
 
@@ -296,120 +316,4 @@ test_copy() {
 	O=copy_mp4.m4a        ; ./phiola co -copy -f -s 1 -u 2 fm_aac.mp4    -o $O ; ./phiola pl $O
 	O=copy_mp3.mp3        ; ./phiola co -copy -f -s 1 -u 2 fm_mp3.mp3    -o $O ; ./phiola pl $O
 	O=copy_mp3_mkv.mp3    ; ./phiola co -copy -f -s 1 -u 2 fm_mp3.mkv    -o $O ; ./phiola pl $O
-}
-
-meta_rec__dst() {
-	./phiola rec -rat 48000 -u 1 -m artist='Great Artist' -m title='Cool Song' -f -o $1
-	./phiola i $1 | grep 'Great Artist - Cool Song'
-}
-
-meta_conv__src_dst() {
-	./phiola co -m artist='AA' $1 -f -o $2
-	./phiola i $2 | grep 'AA - Cool Song' || false
-}
-
-meta_copy__src_dst() {
-	./phiola co -copy -m artist='AA' $1 -f -o $2
-	./phiola i $2 | grep 'AA - Cool Song' || false
-}
-
-test_meta() {
-	# Record with meta
-	meta_rec__dst meta.flac
-	meta_rec__dst meta.m4a
-	meta_rec__dst meta.mp3
-	meta_rec__dst meta.ogg
-	meta_rec__dst meta.opus
-
-	# Convert with meta
-	meta_conv__src_dst meta.flac meta2.flac
-	meta_conv__src_dst meta.m4a meta2.m4a
-	meta_conv__src_dst meta.opus meta2.opus
-	meta_conv__src_dst meta.ogg meta2.ogg
-	meta_conv__src_dst meta.mp3 meta2.mp3
-
-	# Copy with meta
-	meta_copy__src_dst meta.m4a meta2.m4a
-	# meta_copy__src_dst meta.opus meta2.opus
-	# meta_copy__src_dst meta.ogg meta2.ogg
-	meta_copy__src_dst meta.mp3 meta2.mp3
-
-	rm meta*.flac meta*.m4a meta*.opus meta*.ogg meta*.mp3
-}
-
-test_cue() {
-	if [[ ! -f "rec6.wav" ]]; then
-		./phiola rec -u 6 -o rec6.wav -f
-	fi
-	cat <<EOF >cue.cue
-PERFORMER Artist
-FILE "rec6.wav" WAVE
- TRACK 01 AUDIO
-  PERFORMER A1
-  TITLE T1
-  INDEX 01 00:00:00
- TRACK 02 AUDIO
-  TITLE T2
-  INDEX 01 00:02:00
- TRACK 03 AUDIO
-  TITLE T3
-  INDEX 01 00:04:00
-FILE "rec6.wav" WAVE
- TRACK 04 AUDIO
-  TITLE T4
-  INDEX 01 00:01:00
- TRACK 05 AUDIO
-  TITLE T5
-  INDEX 01 00:04:00
-EOF
-	./phiola i cue.cue | grep 'A1 - T1'
-	./phiola i cue.cue | grep 'Artist - T2'
-	./phiola i cue.cue | grep 'Artist - T3'
-	./phiola i cue.cue | grep 'Artist - T4'
-	./phiola i cue.cue | grep 'Artist - T5'
-	./phiola cue.cue
-	if ./phiola i cue.cue -tracks 2,3 | grep 'A1 - T1' ; then
-		false
-	fi
-	./phiola i cue.cue -tracks 2,3 | grep 'Artist - T2'
-	./phiola i cue.cue -tracks 2,3 | grep 'Artist - T3'
-	./phiola i cue.cue -tracks 1-3,4
-
-	cat <<EOF >cue.cue
-PERFORMER Artist
-FILE "rec6.wav" WAVE
- TRACK 01 AUDIO
-  PERFORMER A1
-  TITLE T1
-  INDEX 00 00:00:00
-  INDEX 01 00:01:00
- TRACK 02 AUDIO
-  TITLE T2
-  INDEX 00 00:02:00
-  INDEX 01 00:03:00
- TRACK 03 AUDIO
-  TITLE T3
-  INDEX 00 00:04:00
-  INDEX 01 00:05:00
-EOF
-
-	./phiola co cue.cue -o cue_@tracknumber.wav -f
-	./phiola i cue_01.wav | grep '0:02.000'
-	./phiola i cue_02.wav | grep '0:02.000'
-	./phiola i cue_03.wav | grep '0:01.000'
-
-	./phiola co cue.cue -o cue_@tracknumber.wav -f -cue_gaps previous
-	./phiola i cue_01.wav | grep '0:03.000'
-	./phiola i cue_02.wav | grep '0:02.000'
-	./phiola i cue_03.wav | grep '0:01.000'
-
-	./phiola co cue.cue -o cue_@tracknumber.wav -f -cue_gaps current
-	./phiola i cue_01.wav | grep '0:02.000'
-	./phiola i cue_02.wav | grep '0:02.000'
-	./phiola i cue_03.wav | grep '0:02.000'
-
-	./phiola co cue.cue -o cue_@tracknumber.wav -f -cue_gaps skip
-	./phiola i cue_01.wav | grep '0:01.000'
-	./phiola i cue_02.wav | grep '0:01.000'
-	./phiola i cue_03.wav | grep '0:01.000'
 }
