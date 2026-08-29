@@ -40,5 +40,6 @@ URL="https://github.com/stsaz/phiola/releases/download/$TAG"
 	echo "| --- | --- |"
 	echo "| Linux (x86_64) | [AMD64 deb]($URL/phiola_${VERSION}_amd64.deb) / [x86_64 rpm]($URL/phiola-$RPM_VER-1.x86_64.rpm) / [x86_64 Package]($URL/phiola-$VERSION-linux-x86_64.tar.zst) |"
 	echo "| Linux (aarch64/RPi) | [ARM64 deb]($URL/phiola_${VERSION}_arm64.deb) / [Aarch64 rpm]($URL/phiola-$RPM_VER-1.aarch64.rpm) / [Aarch64 Package]($URL/phiola-$VERSION-linux-aarch64.tar.zst) |"
+	echo "| macOS (ARM64) | [ARM64 Package]($URL/phiola-$VERSION-macos-arm64.tar.gz) |"
 	echo "| Windows (x64) | [x64 Installer]($URL/phiola-$VERSION-windows-x64-setup.exe) / [x64 ZIP]($URL/phiola-$VERSION-windows-x64.zip) |"
 } > release-notes.txt

@@ -3,6 +3,9 @@
 ifeq "$(OS)" "linux"
 	MODS += tui2.$(SO)
 	LF_CURSES := -lncursesw
+else ifeq "$(OS)" "apple"
+	MODS += tui2.$(SO)
+	LF_CURSES := -lncurses
 else ifeq "$(OS)" "windows"
 	MODS += tui2.$(SO)
 	CF_CURSES := -IPDCurses-3.9

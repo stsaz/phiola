@@ -2,7 +2,7 @@
 
 ![](res/phiola.svg)
 
-phiola is a fast audio player, recorder, converter, and streaming server for Windows, Linux, and Android.
+phiola is a fast audio player, recorder, converter, and streaming server for Linux, macOS, Windows, and Android.
 It can play audio files from your device or a remote server, record audio from your microphone or an internet radio stream, and convert audio into various formats.
 Its low CPU consumption helps extend the battery life of laptops and phones.
 You can control phiola via CLI, TUI, GUI, IPC socket (UNIX socket / named pipe), or its API (C / Java).
@@ -54,16 +54,15 @@ Contents:
 
 Features and notes by platform:
 
-| Feature              | Linux | Windows | Android |
-| --- | --- | --- | --- |
-| Dark themed GUI      | ✅ (GTK default) | incomplete | ✅ |
-| File formats         | ✅ all supported | ✅ all supported | all supported except `.mpc`, `.ape`, `.wv` |
-| Record what you hear | ✅ (PulseAudio) | ✅ | ❌ |
-| Audio Streaming Server | ✅ (AAC,Opus) | ✅ (AAC,Opus) | ❌ |
-| Requirements         | glibc-2.41 | Windows 7 | Android 8 (ARM64), Android 6 (ARM) |
-| HW Requirements      | AMD64, ARM64 | AMD64 | ARM64, ARM(incomplete) |
-
-> Although not officially supported, phiola should build fine for **macOS**, **FreeBSD** and **Windows XP** after tweaking the build script.
+| Feature              | Linux | macOS | Windows | Android |
+| --- | --- | --- | --- | --- |
+| Dark themed GUI      | ✅ (GTK default) | ❌ | incomplete | ✅ |
+| File formats         | ✅ all supported | ✅ | ✅ | except `.mpc`, `.ape`, `.wv` |
+| Record what you hear | ✅ (PulseAudio) | ❌ | ✅ | ❌ |
+| Audio Streaming Server | ✅ (AAC,Opus) | ✅ (AAC,Opus) | ✅ (AAC,Opus) | ❌ |
+| HTTPS Support        | AMD64-only | ❌ | ✅ | ✅ |
+| Requirements         | glibc-2.41 | macOS 14 | Windows 7 | Android 8 (ARM64), Android 6 (ARM) |
+| HW Requirements      | AMD64, ARM64 | ARM64 | AMD64 | ARM64, ARM(incomplete) |
 
 > Important: ALAC decoder is disabled by default in phiola/Android because of potential security issues (see https://github.com/macosforge/alac).
 
@@ -97,6 +96,15 @@ cp ~/bin/phiola-2/mod/gui/phiola.desktop ~/.local/share/applications
 ```
 
 If you choose another directory rather than `~/bin`, then you should also edit `Icon=` value in `~/.local/share/applications/phiola.desktop`.
+
+### macOS
+
+```sh
+VER=...
+mkdir -p ~/bin
+curl -L "https://github.com/stsaz/phiola/releases/download/v$VER/phiola-$VER-macos-arm64.tar.gz" | tar -x -f - -C ~/bin
+ln -s ~/bin/phiola-2/phiola ~/bin/phiola
+```
 
 ### Windows
 

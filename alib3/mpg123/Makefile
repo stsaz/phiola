@@ -22,7 +22,8 @@ $(DIR): $(PKG)
 	$(UNTAR) $(PKG)
 
 _:=
-ifeq "$(CPU)" "amd64"
+ifeq "$(OS)" "apple"
+else ifeq "$(CPU)" "amd64"
 	ifeq "$(SYS)" "android"
 		CONFIGURE_FLAGS := --host=x86_64
 	else ifeq "$(OS)" "windows"

@@ -1,23 +1,12 @@
-# phiola Build Instructions
-
-* Step 1. Download code
-* Step 2, Option 1. Cross-Build on Linux
-* Step 2, Option 2. Native Build
-	* Install dependencies
-	* Build
-* Build Parameters
-* Use
-
+# phiola Build Instructions in 3 Steps
 
 Supported targets:
-
-* Cross-Build on Linux for AMD64 & ARM64, Windows/AMD64, Android/ARM64
-* Native build on Linux
+* Cross-build on Linux for AMD64 & ARM64, Windows/AMD64, Android/ARM64
+* Native build on macOS
 
 Targets that should work after minor tweaking:
-
-* Build on Windows
-* Build on FreeBSD & macOS
+* Native build on Windows
+* Native build on FreeBSD
 
 
 ## Step 1. Download code
@@ -39,27 +28,27 @@ cd phiola
 
 ## Step 2, Option 1. Cross-Build on Linux
 
-* Cross-Build on Linux:
+* for Linux/AMD64:
 
 	```sh
 	bash xbuild.sh
 	```
 
-* Cross-Build on Linux for ARM64:
+* for Linux/ARM64:
 
 	```sh
 	CPU=arm64 \
 		bash xbuild.sh
 	```
 
-* Cross-Build on Linux for Windows/AMD64:
+* for Windows/AMD64:
 
 	```sh
 	OS=windows \
 		bash xbuild.sh
 	```
 
-* Cross-Build on Linux for Android/ARM64 (Android SDK and Gradle cache directories are passed through):
+* for Android/ARM64 (Android SDK and Gradle cache directories are passed through):
 
 	```sh
 	ANDROID_HOME=$HOME/Android \
@@ -76,72 +65,40 @@ cd phiola
 		ANDROID_NDK_VER=...
 		```
 
-## Step 2, Option 2. Native Build
+## Step 2, Option 2. Native Build on macOS
 
-### Install dependencies
+```sh
+brew install \
+	make \
+	cmake \
+	dos2unix \
+	automake libtool \
+	ncurses
+gmake -j8 PHI_HTTP_SSL=0 PHI_GUI=0
+```
 
-* Debian/Ubuntu
+## Step 2, Option 3. Native Build on Windows
 
-	```sh
-	sudo apt install \
-		make gcc g++ \
-		libasound2-dev libpulse-dev libjack-dev \
-		libdbus-1-dev \
-		libgtk-3-dev \
-		zstd unzip cmake patch dos2unix curl
-	```
+Install msys2 packages: `mingw-w64-clang-x86_64-clang`
 
-* Fedora
+Set environment:
 
-	```sh
-	sudo dnf install \
-		make gcc gcc-c++ \
-		alsa-lib-devel pulseaudio-libs-devel pipewire-jack-audio-connection-kit-devel \
-		dbus-devel \
-		gtk3-devel \
-		zstd unzip cmake patch dos2unix curl
-	```
+```
+set PATH=c:\clang64\bin;%PATH%
+````
 
-* Windows
+Build:
 
-	* msys2 packages: `mingw-w64-clang-x86_64-clang`
+```sh
+mingw32-make -j8
+```
 
-	Environment:
+## Step 3. Use
 
-	```
-	set PATH=c:\clang64\bin;%PATH%
-	````
-
-* macOS
-
-	```sh
-	brew install \
-		make llvm \
-		cmake dos2unix
-	```
-
-### Build
-
-* Build on Linux:
-
-	```sh
-	make -j8
-	```
-
-* Build on Windows:
-
-	```sh
-	mingw32-make -j8
-	```
-
-* Build on FreeBSD & macOS:
-
-	```sh
-	gmake -j8 PHI_HTTP_SSL=0 PHI_GUI=0
-	```
+Directory `phiola-2` is the application directory.  Copy it anywhere you want.
 
 
-## Build Parameters
+## Supported Parameters for `make`
 
 | Parameter | Description |
 | --- | --- |
@@ -152,8 +109,3 @@ cd phiola
 | `PHI_GUI=0`       | Disable GUI |
 | `PHI_HTTP_SSL=0`  | Disable SSL |
 | `PHI_HTTP_SRV=0`  | Disable ICY server |
-
-
-## Use
-
-Directory `phiola-2` is the application directory.  Copy it anywhere you want.

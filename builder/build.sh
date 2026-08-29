@@ -30,6 +30,21 @@ case "$TARGET" in
 		exit 0
 		;;
 
+	macos-arm64)
+		mkdir -p _$TARGET
+		ROOT="$(pwd)/.."
+		gmake -j8 \
+			-C _$TARGET \
+			-f "$ROOT/phiola/Makefile" \
+			ROOT_DIR="$ROOT" \
+			CPU=arm64 \
+			PHI_HTTP_SSL=0 \
+			PHI_GUI=0 \
+			PHI_VERSION_STR="$VER" \
+			release
+		exit 0
+		;;
+
 	linux-amd64)
 		ARGS=""
 		;;

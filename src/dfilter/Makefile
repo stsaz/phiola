@@ -20,7 +20,9 @@
 FFPACK := $(ROOT_DIR)/ffpack
 FFPACK_BIN := ffpack
 FFPACK_FLAGS := OS=$(OS) SYS=$(SYS) COMPILER=$(COMPILER) CPU=$(CPU)
-ifneq "$(SYS)" "android"
+ifeq "$(SYS)" "android"
+else ifeq "$(OS)" "apple"
+else
 	FFPACK_FLAGS += LINKFLAGS_USER='-fuse-ld=lld'
 endif
 

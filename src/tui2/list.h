@@ -206,11 +206,14 @@ static int file_trash(uint i)
 	int r;
 	const char *e;
 
-#ifdef FF_WIN
+#if defined FF_WIN
 	r = ffui_file_del((const char *const *)&qe->url, 1, FFUI_FILE_TRASH);
 	e = fferr_strptr(fferr_last());
-#else
+#elif defined FF_LINUX
 	r = ffui_glib_trash(qe->url, &e);
+#else
+	r = -1;
+	e = "function not implemented";
 #endif
 
 	if (r) {

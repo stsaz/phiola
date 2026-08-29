@@ -21,7 +21,9 @@ AVPACK := $(ROOT_DIR)/avpack
 NETMILL := $(ROOT_DIR)/netmill
 NML_3PT := netmill-3pt
 NML_3PT_FLAGS := OS=$(OS) SYS=$(SYS) COMPILER=$(COMPILER) CPU=$(CPU)
-ifneq "$(SYS)" "android"
+ifeq "$(SYS)" "android"
+else ifeq "$(OS)" "apple"
+else
 	NML_3PT_FLAGS += LINKFLAGS_USER='-fuse-ld=lld'
 endif
 

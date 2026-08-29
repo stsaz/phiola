@@ -21,12 +21,12 @@ $(PKG):
 # unpack
 $(DIR): $(PKG)
 	echo "$(PKG_SHA256) *$(PKG)" | $(SHA256SUM) -c -
-	$(UNZIP) $(PKG)
+	$(UNZIP) $(PKG) || true
 	touch $@
 
 # config
-CONFIGURE_FLAGS := --host=x86_64
-ifeq "$(OS)" "windows"
+ifeq "$(OS)" "apple"
+else ifeq "$(OS)" "windows"
 	CONFIGURE_FLAGS := --host=x86_64-w64-mingw32
 else ifeq "$(CPU)" "arm64"
 	ifeq "$(SYS)" "android"
@@ -36,6 +36,8 @@ else ifeq "$(CPU)" "arm64"
 	endif
 else ifeq "$(CPU)" "arm"
 	CONFIGURE_FLAGS := --host=armv7
+else
+	CONFIGURE_FLAGS := --host=x86_64
 endif
 ifeq "$(SYS)" "android"
 	CONFIGURE_ENV := CC="$(C_DIR)/clang" CFLAGS="$(A_CFLAGS)"

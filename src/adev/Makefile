@@ -48,3 +48,5 @@ $(ADPFX)pulse.$(SO): LINKFLAGS += -lpulse
 $(ADPFX)jack.$(SO): LINKFLAGS += -L/usr/lib64/pipewire-0.3/jack -ljack
 
 $(ADPFX)aaudio.$(SO): LINKFLAGS += -laaudio
+
+$(ADPFX)coreaudio.$(SO): LINKFLAGS += -framework CoreFoundation -framework CoreAudio

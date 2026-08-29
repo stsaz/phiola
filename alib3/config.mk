@@ -9,13 +9,21 @@ endif
 CFLAGS += $(PHI_CF)
 CXXFLAGS += $(PHI_CF)
 
-PHI_LF := -fuse-ld=lld $(LINK_INSTALLNAME_LOADERPATH) -lm -static-libgcc
+PHI_LF =
+PHI_LFXX =
+ifneq "$(OS)" "apple"
+	PHI_LF += -fuse-ld=lld -static-libgcc
+	PHI_LFXX += -static-libstdc++
+endif
+PHI_LF += $(LINK_INSTALLNAME_LOADERPATH) -lm
 ifneq "$(DEBUG)" "1"
 	PHI_LF += -s
 endif
-PHI_LFXX := $(PHI_LF) -static-libstdc++
-LINKFLAGS += $(PHI_LF)
-LINKXXFLAGS += $(PHI_LFXX)
+PHI_LFXX += $(PHI_LF)
+PHI_LF_TMP := $(LINKFLAGS)
+PHI_LFXX_TMP := $(LINKXXFLAGS)
+LINKFLAGS = $(PHI_LF_TMP) $(PHI_LF)
+LINKXXFLAGS = $(PHI_LFXX_TMP) $(PHI_LFXX)
 
 SYS := $(OS)
 ifeq "$(SYS)" "android"

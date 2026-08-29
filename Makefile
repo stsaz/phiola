@@ -32,7 +32,10 @@ CFLAGS_BASE := $(CFLAGS)
 CFLAGS += -I$(PHIOLA)/src -I$(FFSYS)
 CXXFLAGS := -std=gnu++98 $(CFLAGS) -fno-exceptions -fno-rtti
 CFLAGS := -std=c99 $(CFLAGS)
-LINKFLAGS += -fuse-ld=lld $(LINKFLAGS_USER)
+ifneq "$(OS)" "apple"
+	LINKFLAGS += -fuse-ld=lld
+endif
+LINKFLAGS += $(LINKFLAGS_USER)
 ifeq "$(OS)" "windows"
 	LINKFLAGS += -lws2_32
 endif
@@ -98,12 +101,22 @@ override TARGETS := libphiola.$(SO) $(EXES) $(MODS)
 endif
 build: $(TARGETS)
 
+ifeq "$(OS)" "apple"
+DSYMUTIL := dsymutil
+strip-debug: $(addsuffix .dSYM,$(TARGETS))
+%.dSYM: %
+	$(DSYMUTIL) $< -o $@
+	$(STRIP) -S $<
+	touch $@
+
+else
 strip-debug: $(addsuffix .debug,$(TARGETS))
 %.debug: %
 	$(OBJCOPY) --only-keep-debug $< $@
 	$(STRIP) $<
 	$(OBJCOPY) --add-gnu-debuglink=$@ $<
 	touch $@
+endif
 
 app:
 	$(MKDIR) $(APP_DIR) $(APP_DIR)/mod
@@ -145,18 +158,29 @@ else ifeq "$(OS)" "windows"
 endif
 PKG_PACKER := tar -c --owner=0 --group=0 --numeric-owner -v --zstd -f
 PKG_EXT := tar.zst
-ifeq "$(OS)" "windows"
+ifeq "$(OS)" "apple"
+	PKG_PACKER := tar -c --uid=0 --gid=0 --numeric-owner -v -z -f
+	PKG_EXT := tar.gz
+else ifeq "$(OS)" "windows"
 	PKG_PACKER := zip -r -v
 	PKG_EXT := zip
 endif
-PKG_NAME := phiola-$(PKG_VER)-$(OS)-$(PKG_ARCH).$(PKG_EXT)
+PKG_OS := $(OS)
+ifeq "$(OS)" "apple"
+	PKG_OS := macos
+endif
+PKG_NAME := phiola-$(PKG_VER)-$(PKG_OS)-$(PKG_ARCH).$(PKG_EXT)
 package: $(PKG_NAME)
 $(PKG_NAME): $(APP_DIR)
 	$(PKG_PACKER) $@ $<
 
-PKG_DEBUG_NAME := phiola-$(PKG_VER)-$(OS)-$(PKG_ARCH)-debug.$(PKG_EXT)
+PKG_DEBUG_NAME := phiola-$(PKG_VER)-$(PKG_OS)-$(PKG_ARCH)-debug.$(PKG_EXT)
 $(PKG_DEBUG_NAME):
+ifeq "$(OS)" "apple"
+	$(PKG_PACKER) $@ *.dSYM
+else
 	$(PKG_PACKER) $@ *.debug
+endif
 package-debug: $(PKG_DEBUG_NAME)
 
 INST_ROOT := install-root

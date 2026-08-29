@@ -672,8 +672,17 @@ static void tui2_init()
 	if (mod->master)
 		lists_load();
 
+	if (core->conf.stdin_busy)
+		return;
+
+	struct ffstd_info i;
+	if (ffstd_info(ffstdin, &i)) {
+		dbglog(NULL, "TUI commands won't work because stdin is not a terminal");
+		return;
+	}
+
 	// Begin reading user commands
-#ifdef FF_LINUX
+#ifndef FF_WIN
 	mod->kev = core->kev_alloc(0);
 	mod->kev->rhandler = tui2_cmd_read;
 	mod->kev->obj = mod;

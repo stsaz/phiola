@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  build-linux:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -20,13 +20,14 @@ jobs:
 
       - name: Get the dependencies
         run: |
-          git clone --depth=1 https://github.com/stsaz/netmill ../netmill
-          git clone --depth=1 https://github.com/stsaz/avpack ../avpack
-          git clone --depth=1 https://github.com/stsaz/ffaudio ../ffaudio
-          git clone --depth=1 https://github.com/stsaz/ffpack ../ffpack
-          git clone --depth=1 https://github.com/stsaz/ffgui ../ffgui
-          git clone --depth=1 https://github.com/stsaz/ffsys ../ffsys
-          git clone --depth=1 https://github.com/stsaz/ffbase ../ffbase
+          cd ..
+          git clone --depth=1 https://github.com/stsaz/netmill
+          git clone --depth=1 https://github.com/stsaz/avpack
+          git clone --depth=1 https://github.com/stsaz/ffaudio
+          git clone --depth=1 https://github.com/stsaz/ffpack
+          git clone --depth=1 https://github.com/stsaz/ffgui
+          git clone --depth=1 https://github.com/stsaz/ffsys
+          git clone --depth=1 https://github.com/stsaz/ffbase
 
       - name: Create and cache builder image
         uses: docker/build-push-action@v5
@@ -65,8 +66,50 @@ jobs:
             _${{ matrix.target }}/phiola-*.zip
             _${{ matrix.target }}/phiola-*-setup.exe
 
+  build-macos:
+    runs-on: macos-14
+    steps:
+      - name: Checkout phiola
+        uses: actions/checkout@v7
+
+      - name: Get the dependencies
+        run: |
+          cd ..
+          git clone --depth=1 https://github.com/stsaz/netmill
+          git clone --depth=1 https://github.com/stsaz/avpack
+          git clone --depth=1 https://github.com/stsaz/ffaudio
+          git clone --depth=1 https://github.com/stsaz/ffpack
+          git clone --depth=1 https://github.com/stsaz/ffgui
+          git clone --depth=1 https://github.com/stsaz/ffsys
+          git clone --depth=1 https://github.com/stsaz/ffbase
+
+      - name: Install dependencies
+        run: |
+          brew install \
+            make \
+            cmake \
+            dos2unix \
+            automake libtool \
+            ncurses
+
+      - name: Build for macOS
+        run: |
+          bash builder/build.sh macos-arm64 '${{ github.ref_name }}'
+
+      - name: Run tests (macos-arm64)
+        run: |
+          cd _macos-arm64/phiola-2
+          bash ../../test/test.sh
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: phiola-macos-arm64
+          path: |
+            _macos-arm64/phiola-*.tar.gz
+
   release:
-    needs: build
+    needs: [build-linux, build-macos]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout phiola
@@ -93,6 +136,7 @@ jobs:
             artifacts/phiola-linux-arm64/phiola_*.deb
             artifacts/phiola-linux-arm64/phiola-*.rpm
             artifacts/phiola-linux-arm64/phiola-*.tar.zst
+            artifacts/phiola-macos-arm64/phiola-*.tar.gz
             artifacts/phiola-windows-amd64/phiola-*.zip
             artifacts/phiola-windows-amd64/phiola-*-setup.exe
           draft: true

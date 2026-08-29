@@ -346,16 +346,15 @@ static void tui_stdin_prepare(void *param)
 {
 	if (core->conf.stdin_busy) return;
 
-	uint kq_attach = 1;
-
-#ifdef FF_WIN
-	DWORD mode;
-	if (!GetConsoleMode(ffstdin, &mode)) {
-		infolog(NULL, "TUI commands won't work because stdin is not a console");
-		return; // Asynchronous reading from a pipe is not supported
+	struct ffstd_info i;
+	if (ffstd_info(ffstdin, &i)) {
+		dbglog(NULL, "TUI commands won't work because stdin is not a terminal");
+		return;
 	}
-	kq_attach = 0;
 
+	uint kq_attach = 1;
+#ifdef FF_WIN
+	kq_attach = 0;
 #else
 	uint attr = FFSTD_LINEINPUT;
 	ffstd_attr(ffstdin, attr, 0);

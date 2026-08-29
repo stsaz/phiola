@@ -23,10 +23,12 @@ $(DIR): $(PKG)
 	$(UNTAR) $(PKG)
 	touch $@
 
-CONFIGURE_FLAGS := --host=x86_64
-ifeq "$(CPU)" "arm64"
-	CONFIGURE_FLAGS := --host=aarch64-linux-gnu
+_=
+ifeq "$(OS)" "apple"
 else ifeq "$(CPU)" "arm64"
+	CONFIGURE_FLAGS := --host=aarch64-linux-gnu
+else
+	CONFIGURE_FLAGS := --host=x86_64
 endif
 ifeq "$(SYS)" "android"
 	CONFIGURE_ENV := CC="$(C_DIR)/clang" CFLAGS="$(A_CFLAGS)"
