@@ -66,6 +66,14 @@ jobs:
             phiola-builder \
             bash builder/build.sh ${{ matrix.target }} '${{ github.ref_name }}'
 
+      # TODO: need libpulse
+      - name: Run tests (linux-amd64)
+        if: matrix.target == 'linux-amd64'
+        run: |
+          sudo chown -R $(whoami) _linux-amd64/phiola-2
+          cd _linux-amd64/phiola-2
+          bash ../../test/test.sh
+
       - name: Upload Linux artifacts
         if: startsWith(matrix.target, 'linux')
         uses: actions/upload-artifact@v7
