@@ -72,13 +72,15 @@ static inline void zzkcq_destroy(struct zzkcq *k)
 static int FFTHREAD_PROCCALL _zzkcq_worker(void *param)
 {
 	struct zzkcq *k = param;
-	// dbglog("entering kcall loop");
+	dbglog("kcall: entering loop");
 	while (!FFINT_READONCE(k->stop)) {
-		ffkcallq_process_sq(k->sq);
+		ffuint r = ffkcallq_process_sq(k->sq);
+		if (r)
+			dbglog("kcall: processed %u operations", r);
 		if (!k->polling_mode)
 			ffsem_wait(k->sem, -1);
 	}
-	// dbglog("left kcall loop");
+	dbglog("kcall: exited loop");
 	return 0;
 }
 

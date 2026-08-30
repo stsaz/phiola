@@ -7,18 +7,19 @@
 
 struct zzkq_tq {
 	fftaskqueue *tq;
+	ffkq kq;
 	ffkq_postevent kqpost;
 	struct zzkevent kev;
 };
 
 static inline void zzkq_tq_detach(struct zzkq_tq *kt, ffkq kq)
 {
-	ffkq_post_detach(kt->kqpost, kq);  kt->kqpost = FFKQ_NULL;
+	ffkq_post_detach(kq, kt->kqpost);  kt->kqpost = FFKQ_NULL;
 }
 
 static void zzkq_tq_process(struct zzkq_tq *kt)
 {
-	ffkq_post_consume(kt->kqpost);
+	ffkq_post_consume(kt->kq, kt->kqpost);
 	fftaskqueue_run(kt->tq);
 }
 
@@ -30,6 +31,7 @@ static inline int zzkq_tq_attach(struct zzkq_tq *kt, ffkq kq, fftaskqueue *tq)
 	kt->kev.rtask.active = 1;
 	if (FFKQ_NULL == (kt->kqpost = ffkq_post_attach(kq, &kt->kev)))
 		return -1;
+	kt->kq = kq;
 	kt->tq = tq;
 	return 0;
 }
@@ -38,6 +40,6 @@ static inline int zzkq_tq_attach(struct zzkq_tq *kt, ffkq kq, fftaskqueue *tq)
 static inline int zzkq_tq_post(struct zzkq_tq *kt, fftask *tsk)
 {
 	if (1 == fftaskqueue_post(kt->tq, tsk))
-		return ffkq_post(kt->kqpost, &kt->kev);
+		return ffkq_post(kt->kq, kt->kqpost, &kt->kev);
 	return 0;
 }

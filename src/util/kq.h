@@ -121,7 +121,7 @@ err:
 
 static inline void zzkq_destroy(struct zzkq *k)
 {
-	ffkq_post_detach(k->kqpost, k->kq);  k->kqpost = FFKQ_NULL;
+	ffkq_post_detach(k->kq, k->kqpost);  k->kqpost = FFKQ_NULL;
 	ffkq_close(k->kq);  k->kq = FFKQ_NULL;
 	ffmem_free(k->events);  k->events = NULL;
 	ffmem_free(k->kevs);  k->kevs = NULL;
@@ -174,7 +174,7 @@ static inline void zzkq_stop(struct zzkq *k)
 
 	zzkq_dbglog(k, "stopping kq worker");
 	FFINT_WRITEONCE(k->stop, 1);
-	ffkq_post(k->kqpost, &k->post_kev);
+	ffkq_post(k->kq, k->kqpost, &k->post_kev);
 }
 
 #define _zzkq_kev_data_attach(kev)  (void*)((ffsize)kev | kev->side)
