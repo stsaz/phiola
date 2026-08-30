@@ -43,6 +43,7 @@ static void conf_save()
 	ffconfw cw = {};
 	ffconfw_init(&cw, f);
 	ffarg_write_conf(&cw, tui2_args, &c);
+	ffconfw_fin(&cw);
 
 	char *fn = conf_filename();
 	if (fffile_writewhole(fn, cw.buf.ptr, cw.buf.len, 0))

@@ -25,6 +25,7 @@ $(DIR): $(PKG)
 	touch $@
 
 # config
+_=
 ifeq "$(OS)" "apple"
 else ifeq "$(OS)" "windows"
 	CONFIGURE_FLAGS := --host=x86_64-w64-mingw32

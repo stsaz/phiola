@@ -41,7 +41,7 @@ void winfo_userconf_write(ffconfw *cw)
 	if (w->initialized) {
 		w->wnd_pos = wnd_pos_sz(&w->wnd);
 	}
-	ffarg_write_conf(cw, wconvert_args, w);
+	ffarg_write_conf(cw, winfo_args, w);
 	ffmem_free(w->wnd_pos);
 }
 

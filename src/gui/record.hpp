@@ -173,7 +173,7 @@ void wrecord_userconf_write(ffconfw *cw)
 		wrecord_ui_to_conf();
 		w->wnd_pos = wnd_pos_sz(&w->wnd);
 	}
-	ffarg_write_conf(cw, wconvert_args, w);
+	ffarg_write_conf(cw, wrecord_args, w);
 	ffmem_free(w->wnd_pos);
 }
 

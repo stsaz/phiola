@@ -41,6 +41,7 @@ case "$TARGET" in
 			PHI_HTTP_SSL=0 \
 			PHI_GUI=0 \
 			PHI_VERSION_STR="$VER" \
+			PKG_VER="$VER" \
 			release
 		exit 0
 		;;

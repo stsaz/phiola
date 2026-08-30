@@ -260,8 +260,7 @@ static inline int ffconfw_add_str(ffconfw *c, ffstr s)
 /** Add NULL-terminated string */
 static inline int ffconfw_add_strz(ffconfw *c, const char *sz)
 {
-	ffstr s;
-	ffstr_setz(&s, sz);
+	ffstr s = (sz) ? FFSTR_Z(sz) : FFSTR_Z("");
 	return ffconfw_add(c, 'S', &s);
 }
 
@@ -347,7 +346,7 @@ static inline int ffconfw_add2s(ffconfw *c, const char *key, ffstr val)
 /** Add key and value as NULL-terminated string */
 static inline int ffconfw_add2z(ffconfw *c, const char *key, const char *val)
 {
-	return ffconfw_add2(c, FFSTR_Z(key), FFSTR_Z(val));
+	return ffconfw_add2(c, FFSTR_Z(key), (val) ? FFSTR_Z(val) : FFSTR_Z(""));
 }
 
 static inline int ffconfw_add2u(ffconfw *c, const char *key, ffuint64 val)

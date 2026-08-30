@@ -117,7 +117,7 @@ void wmain_userconf_write(ffconfw *cw)
 	v.reset();
 
 	m->wnd_pos = wnd_pos_sz(&m->wnd);
-	ffarg_write_conf(cw, wconvert_args, m);
+	ffarg_write_conf(cw, wmain_args, m);
 	ffmem_free(m->wnd_pos);
 	ffmem_free(m->vlist_col);
 }
