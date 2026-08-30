@@ -10,6 +10,7 @@ CURL := curl -L -o
 CC := clang -target x86_64-w64-mingw32
 WINDRES := llvm-windres
 STRIP := llvm-strip
+SHA256SUM := sha256sum
 
 default: $(LIB)
 

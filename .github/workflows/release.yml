@@ -24,6 +24,7 @@ jobs:
           APK_KEY_STORE_B64: ${{ secrets.APK_KEY_STORE_B64 }}
         run: |
           echo "$APK_KEY_STORE_B64" | base64 --decode > android-key.jks
+
       - name: Get the dependencies
         run: |
           cd ..
@@ -35,13 +36,21 @@ jobs:
           git clone --depth=1 https://github.com/stsaz/ffsys
           git clone --depth=1 https://github.com/stsaz/ffbase
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          name: phiola-buildx
+          driver: docker-container
+          driver-opts: network=host
+
       - name: Create and cache builder image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: builder/Dockerfile.${{ matrix.target }}
           tags: phiola-builder
           load: true
+          builder: phiola-buildx
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

@@ -160,7 +160,7 @@ test_convert_parallel() {
 	if [[ ! -f copa/co99.wav ]]; then
 		mkdir -p copa
 		for i in $(seq 1 99) ; do
-			cp -u co.wav copa/co$i.wav
+			cp co.wav copa/co$i.wav
 		done
 	fi
 

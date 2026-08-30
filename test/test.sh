@@ -121,19 +121,19 @@ test_wasapi_loopback() {
 }
 
 test_info() {
-	if [[ ! -f pl.wav ]]; then
-		./phiola rec -rate 48000 -o pl.wav -f -u 1
+	if [[ ! -f 48_2.wav ]]; then
+		./phiola rec -rate 48000 -o 48_2.wav -f -u 1
 	fi
 
-	./phiola i pl.wav
-	./phiola i pl.wav -tags
+	./phiola i 48_2.wav
+	./phiola i 48_2.wav -tags
 
-	./phiola i pl.wav -peaks
-	./phiola i pl.wav -loudness
+	./phiola i 48_2.wav -peaks
+	./phiola i 48_2.wav -loudness
 
 	if [[ $HAVE_FFMPEG -eq 1 ]]; then
 		if [[ ! -f fm_wv.wv ]]; then
-			ffmpeg_encode pl.wav
+			ffmpeg_encode 48_2.wav
 		fi
 		./phiola i fm_* -peaks
 	fi
@@ -380,6 +380,9 @@ elif [[ $OS == windows ]]; then
 	)
 fi
 TESTS+=(clean)
+
+# Enable ALAC
+echo DeprecatedMods >> phiola.conf
 
 if [[ "$#" -gt 0 ]]; then
 	TESTS=("$@")
