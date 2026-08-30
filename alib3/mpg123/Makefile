@@ -40,7 +40,7 @@ else ifeq "$(CPU)" "arm"
 	CONFIGURE_FLAGS := --host=armv7 --with-cpu=neon
 endif
 ifeq "$(SYS)" "android"
-	CONFIGURE_ENV := CC="$(C_DIR)/clang" CFLAGS="$(A_CFLAGS)"
+	CONFIGURE_ENV := CC=clang CFLAGS="$(A_CFLAGS)"
 endif
 CONFIGURE_FLAGS += \
 	--disable-modules    \
@@ -186,7 +186,7 @@ OBJ := mpg123-phi.o \
 $(LIB): $(OBJ)
 	$(LINK) -shared $+ $(LINKFLAGS) -o $@
 ifeq "$(SYS)" "android"
-	$(C_DIR)/llvm-objdump -T $@
+	llvm-objdump -T $@
 else ifeq "$(CPU)" "amd64"
 ifeq "$(OS)" "linux"
 	ldd $@

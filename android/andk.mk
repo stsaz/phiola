@@ -1,11 +1,10 @@
 # Android NDK environment for 'make'
 
 # Set compiler
-C_DIR := $(ANDROID_NDK_ROOT)/toolchains/llvm/prebuilt/linux-x86_64/bin
-C := $(C_DIR)/clang -c
-CXX := $(C_DIR)/clang++ -c
-LINK := $(C_DIR)/clang
-LINKXX := $(C_DIR)/clang++
+C := clang -c
+CXX := clang++ -c
+LINK := clang
+LINKXX := clang++
 
 # Set target
 A_API := 26
