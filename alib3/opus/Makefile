@@ -40,7 +40,7 @@ else ifeq "$(CPU)" "arm"
 	CONFIGURE_FLAGS := --host=armv7
 endif
 ifeq "$(SYS)" "android"
-	CONFIGURE_ENV := CC="$(C_DIR)/clang" CFLAGS="$(A_CFLAGS)"
+	CONFIGURE_ENV := CC=clang CFLAGS="$(A_CFLAGS)"
 endif
 $(DIR)/config.h: | $(DIR)
 	cd $(DIR) && autoreconf -isf

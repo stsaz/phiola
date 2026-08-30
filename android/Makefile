@@ -55,7 +55,6 @@ apk-list:
 
 # Sign .apk
 
-APK_KEY_STORE :=
 APK_VER := test
 APK_SIGNED := phiola-$(APK_VER)-android-$(CPU).apk
 

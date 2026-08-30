@@ -21,6 +21,7 @@ ARG ANDROID_BT_VER=35.0.0
 ARG ANDROID_NDK_VER=29.0.14206865
 ENV ANDROID_HOME=/Android
 ENV ANDROID_NDK_ROOT=/Android/ndk/${ANDROID_NDK_VER}
+ENV PATH=/Android/ndk/${ANDROID_NDK_VER}/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
 
 # Download and unpack Android command-line tools
 RUN mkdir -p $ANDROID_HOME/cmdline-tools \

@@ -40,7 +40,7 @@ else
 	CONFIGURE_FLAGS := --host=x86_64
 endif
 ifeq "$(SYS)" "android"
-	CONFIGURE_ENV := CC="$(C_DIR)/clang" CFLAGS="$(A_CFLAGS)"
+	CONFIGURE_ENV := CC=clang CFLAGS="$(A_CFLAGS)"
 endif
 $(DIR)/config.h: | $(DIR)
 	cd $(DIR) && bash autogen.sh
@@ -103,7 +103,7 @@ OBJ := FLAC-phi.o $(addprefix $(DIR)/src/libFLAC/,$(SRC:.c=.o))
 $(LIB): $(OBJ)
 	$(LINK) -shared $+ $(LINKFLAGS) -o $@
 ifeq "$(SYS)" "android"
-	$(C_DIR)/llvm-objdump -T $@
+	llvm-objdump -T $@
 endif
 
 clean:

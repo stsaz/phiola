@@ -2,7 +2,7 @@
 # phiola release builder
 
 if [[ $# -ne 2 ]]; then
-	echo "Usage: build.sh OS-CPU TAG"
+	echo "Usage: build.sh OS-CPU|TARGET TAG"
 	exit 1
 fi
 
@@ -14,7 +14,7 @@ TAG="$2"
 VER="${TAG#v}"
 
 case "$TARGET" in
-	android-arm64)
+	android)
 		mkdir -p _$TARGET
 		# APK_KEY_STORE=
 		# APK_KEY_PASS=
