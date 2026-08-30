@@ -176,6 +176,8 @@ static int split_process(void *ctx, phi_track *t)
 	if (!input.len) {
 		input = t->data_in;
 		t->data_in.len = 0;
+		if (t->audio.pos != ~0ULL)
+			c->total = t->audio.pos * c->sample_size;
 	}
 
 	if (c->brg && split_brg_busy(c->brg))
@@ -187,10 +189,6 @@ static int split_process(void *ctx, phi_track *t)
 		return PHI_MORE;
 	}
 
-	uint64 pos = t->audio.pos;
-	if (t->audio.pos == ~0ULL)
-		pos = c->total / c->sample_size;
-
 	if (c->split_next) {
 		c->split_next = 0;
 		c->next_split += c->split_by;
@@ -199,6 +197,7 @@ static int split_process(void *ctx, phi_track *t)
 
 	t->data_out = input;
 
+	uint64 pos = c->total / c->sample_size;
 	if (t->conf.stream_copy) {
 		if (pos >= c->next_split) {
 			dbglog(t, "reached block with sample #%U", c->next_split);
