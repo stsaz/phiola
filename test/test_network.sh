@@ -73,3 +73,7 @@ EOF
 
 	kill $nml_pid
 }
+
+test_https() {
+	./phiola pl https://example.org
+}

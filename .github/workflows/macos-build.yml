@@ -1,0 +1,41 @@
+name: macOS Build
+
+on:
+  push:
+    branches: [ macos-build ]
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Checkout phiola
+        uses: actions/checkout@v7
+
+      - name: Get dependencies
+        run: |
+          cd ..
+          git clone --depth=1 https://github.com/stsaz/netmill
+          git clone --depth=1 https://github.com/stsaz/avpack
+          git clone --depth=1 https://github.com/stsaz/ffaudio
+          git clone --depth=1 https://github.com/stsaz/ffpack
+          git clone --depth=1 https://github.com/stsaz/ffgui
+          git clone --depth=1 https://github.com/stsaz/ffsys
+          git clone --depth=1 https://github.com/stsaz/ffbase
+
+      - name: Install dependencies
+        run: |
+          brew install \
+            make \
+            cmake \
+            dos2unix \
+            automake libtool \
+            ncurses
+
+      - name: Build for macOS
+        run: |
+          bash builder/build.sh macos-arm64 '${{ github.ref_name }}'
+
+      - name: Run tests
+        run: |
+          cd _macos-arm64/phiola-2
+          bash ../../test/test.sh https

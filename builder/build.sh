@@ -38,7 +38,6 @@ case "$TARGET" in
 			-f "$ROOT/phiola/Makefile" \
 			ROOT_DIR="$ROOT" \
 			CPU=arm64 \
-			PHI_HTTP_SSL=0 \
 			PHI_GUI=0 \
 			PHI_VERSION_STR="$VER" \
 			PKG_VER="$VER" \
