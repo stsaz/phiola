@@ -56,7 +56,6 @@ ENV_CPU=""
 if [[ "$CPU" == "arm64" ]]; then
 	ARGS_OS="CPU=arm64"
 	ENV_CPU="export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig"
-	ARGS_PHI="PHI_HTTP_SSL=0"
 elif [[ "$OS" == "windows" ]]; then
 	ARGS_OS="OS=windows"
 fi

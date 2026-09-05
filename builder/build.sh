@@ -38,7 +38,6 @@ case "$TARGET" in
 			-f "$ROOT/phiola/Makefile" \
 			ROOT_DIR="$ROOT" \
 			CPU=arm64 \
-			PHI_HTTP_SSL=0 \
 			PHI_GUI=0 \
 			PHI_VERSION_STR="$VER" \
 			PKG_VER="$VER" \
@@ -52,7 +51,7 @@ case "$TARGET" in
 
 	linux-arm64)
 		export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
-		ARGS="CPU=arm64 PHI_HTTP_SSL=0"
+		ARGS="CPU=arm64"
 		;;
 
 	windows-amd64)

@@ -70,6 +70,13 @@ else
 			$(NML_3PT)/libcrypto.$(SO)
 		OPENSSL_SO := $(NML_3PT)/libssl.$(SO)
 
+	else ifeq "$(SYS)" "apple"
+		LINKFLAGS_NETMILL += -lssl -lcrypto
+		LIBS3 += \
+			$(NML_3PT)/libssl.$(SO) \
+			$(NML_3PT)/libcrypto.$(SO)
+		OPENSSL_SO := $(NML_3PT)/libssl.$(SO)
+
 	else
 		LINKFLAGS_NETMILL += -lssl -lcrypto
 		LIBS3 += \

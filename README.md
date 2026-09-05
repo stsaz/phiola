@@ -60,7 +60,6 @@ Features and notes by platform:
 | File formats         | ✅ all supported | ✅ | ✅ | except `.mpc`, `.ape`, `.wv` |
 | Record what you hear | ✅ (PulseAudio) | ❌ | ✅ | ❌ |
 | Audio Streaming Server | ✅ (AAC,Opus) | ✅ (AAC,Opus) | ✅ (AAC,Opus) | ❌ |
-| HTTPS Support        | AMD64-only | ❌ | ✅ | ✅ |
 | Requirements         | glibc-2.41 | macOS 14 | Windows 7 | Android 8 (ARM64), Android 6 (ARM) |
 | HW Requirements      | AMD64, ARM64 | ARM64 | AMD64 | ARM64, ARM(incomplete) |
 
