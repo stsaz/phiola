@@ -21,7 +21,7 @@ $(PKG):
 # unpack
 $(DIR): $(PKG)
 	echo "$(PKG_SHA256) *$(PKG)" | $(SHA256SUM) -c -
-	$(UNZIP) -x '*.flac' $(PKG)
+	$(UNZIP) $(PKG) -x '*.flac'
 	test -d $(DIR)/test/pictures
 	touch $@
 
