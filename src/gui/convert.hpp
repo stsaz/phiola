@@ -231,7 +231,7 @@ static void wconvert_browse()
 		, &xxvec(c->cbext.text()).str());
 
 	char *fn;
-	if (!(fn = ffui_dlg_save(&gg->dlg, &c->wnd, (char*)v.ptr, v.len)))
+	if (!(fn = gui_dlg_save(&c->wnd, (char*)v.ptr, v.len)))
 		return;
 
 	ffstr path, name, ext;

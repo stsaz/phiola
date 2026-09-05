@@ -21,7 +21,8 @@ $(PKG):
 # unpack
 $(DIR): $(PKG)
 	echo "$(PKG_SHA256) *$(PKG)" | $(SHA256SUM) -c -
-	$(UNZIP) $(PKG) || true
+	$(UNZIP) $(PKG) -x '*.flac'
+	test -d $(DIR)/test/pictures
 	touch $@
 
 # config
