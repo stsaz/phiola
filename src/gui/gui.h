@@ -130,6 +130,15 @@ static inline char* wnd_pos_sz(ffui_window *w)
 	ffui_wnd_placement(w, &pos);
 	return ffsz_allocfmt("%d %d %u %u", pos.x, pos.y, pos.cx, pos.cy);
 }
+
+static inline char* gui_dlg_save(ffui_window *wnd, char *fn, size_t fn_len)
+{
+	int r = ffpath_norm(fn, fn_len, fn, fn_len, 0);
+	if (r < 0)
+		return NULL;
+	return ffui_dlg_save(&gg->dlg, wnd, fn, r);
+}
+
 FF_EXTERN void theme_switch(const char *name);
 FF_EXTERN void gui_dragdrop(ffstr data);
 FF_EXTERN void gui_quit();

@@ -222,7 +222,7 @@ struct installer {
 		ldr.hmod_resource = GetModuleHandleW(NULL);
 
 		if (!dark_theme_init(&theme, 0)
-			&& DARK_THEME_DARK == dark_theme_ctl(&theme, DARK_THEME_QUERY, 0)) {
+			&& DARK_THEME_DARK == dark_theme_query()) {
 			dark_theme_colors(&theme, 0x222222, 0xcc99ff);
 			dark_theme_ctl(&theme, DARK_THEME_APP, 0);
 			ldr.dark_theme = 1;

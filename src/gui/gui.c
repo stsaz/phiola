@@ -12,7 +12,7 @@ static int theme_load(struct dark_theme *t, const char *theme);
 static int theme_dark()
 {
 	gg->theme_dark_default = (!gd->conf.theme
-		&& DARK_THEME_DARK == dark_theme_ctl(&gg->dkth, DARK_THEME_QUERY, 0));
+		&& DARK_THEME_DARK == dark_theme_query());
 	return (gg->theme_dark_default
 		|| (gd->conf.theme
 			&& ffsz_matchz(gd->conf.theme, "dark")));
@@ -345,6 +345,7 @@ static int theme_load(struct dark_theme *t, const char *theme)
 	}
 
 	dark_theme_colors(t, dtc.background, dtc.text);
+	t->trackbar_thumb = dark_theme_rgb2cr(0xaa55ff);
 	if (dtc.text_alt != ~0U)
 		t->text_alt = t->listview_header = dark_theme_rgb2cr(dtc.text_alt);
 	t->window_bg_br = CreateSolidBrush(t->background);

@@ -129,7 +129,7 @@ static void wrec_browse()
 		, &xxvec(w->cbext.text()).str());
 
 	char *fn;
-	if (!(fn = ffui_dlg_save(&gg->dlg, &w->wnd, (char*)v.ptr, v.len)))
+	if (!(fn = gui_dlg_save(&w->wnd, (char*)v.ptr, v.len)))
 		return;
 
 	ffstr path, name, ext = {};

@@ -56,7 +56,7 @@ Features and notes by platform:
 
 | Feature              | Linux | macOS | Windows | Android |
 | --- | --- | --- | --- | --- |
-| Dark themed GUI      | ✅ (GTK default) | ❌ | incomplete | ✅ |
+| Dark themed GUI      | ✅ (GTK default) | ❌ | ✅ | ✅ |
 | File formats         | ✅ all supported | ✅ | ✅ | except `.mpc`, `.ape`, `.wv` |
 | Record what you hear | ✅ (PulseAudio) | ❌ | ✅ | ❌ |
 | Audio Streaming Server | ✅ (AAC,Opus) | ✅ (AAC,Opus) | ✅ (AAC,Opus) | ❌ |
