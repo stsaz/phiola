@@ -312,6 +312,7 @@ static int theme_load(struct dark_theme *t, const char *theme)
 
 	struct dark_theme dtc = {
 		.text_alt = ~0U,
+		.edit_frame_focus = ~0U,
 	};
 	struct ffconf c = {};
 	ffstr s, key = {};
@@ -334,6 +335,8 @@ static int theme_load(struct dark_theme *t, const char *theme)
 				dtc.text = color;
 			else if (ffstr_eqz(&key, "text-alt"))
 				dtc.text_alt = color;
+			else if (ffstr_eqz(&key, "focus"))
+				dtc.edit_frame_focus = color;
 			else
 				goto end;
 			break;
@@ -346,6 +349,8 @@ static int theme_load(struct dark_theme *t, const char *theme)
 
 	dark_theme_colors(t, dtc.background, dtc.text);
 	t->trackbar_thumb = dark_theme_rgb2cr(0xaa55ff);
+	if (dtc.edit_frame_focus != ~0U)
+		t->edit_frame_focus = dark_theme_rgb2cr(dtc.edit_frame_focus);
 	if (dtc.text_alt != ~0U)
 		t->text_alt = t->listview_header = dark_theme_rgb2cr(dtc.text_alt);
 	t->window_bg_br = CreateSolidBrush(t->background);

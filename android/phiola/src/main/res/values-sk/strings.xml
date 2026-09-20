@@ -66,8 +66,6 @@
 	<string name="mlist_files_move">Playlist: Rýchlo presunúť všetky súbory</string>
 	<string name="mlist_read_meta">Playlist: Načítať značky</string>
 
-	<string name="menu_about">O aplikácii</string>
-
 	<string name="mexplorer_add_list_cur">Pridať do aktuálneho playlistu</string>
 	<string name="mexplorer_add_list_new">Pridať do nového playlistu</string>
 
@@ -196,9 +194,11 @@
 	<string name="menu_tag_add_artist">Pridať značku: Umelec</string>
 	<string name="menu_tag_add_title">Pridať značku: Názov</string>
 
+	<string name="menu_about">O aplikácii</string>
 	<string name="about_enable_debug_log">Povoliť zaznamenávanie ladiacich informácií</string>
 	<string name="about_save_logs">Uložiť systémové záznamy do súboru</string>
 	<string name="about_log_saved">Záznamy uložené do súboru %s</string>
+	<string name="about_close">Zatvoriť</string>
 
 	<string name="tag_edit_n_a">Upravovanie značiek pre tento formát súboru nie je podporované</string>
 
