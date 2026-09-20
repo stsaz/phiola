@@ -775,6 +775,7 @@ void wmain_show()
 
 	m->tvol.set(gd->conf.volume);
 	m->tabs.add("Playlist 1");
+	m->wnd.tab_auto_switch(&m->tabs);
 	m->wnd.show(1);
 	wmain_list_draw(gd->queue->count(gd->q_selected), 0);
 	drag_drop_init();
