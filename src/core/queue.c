@@ -650,13 +650,19 @@ static int q_remove_at(struct phi_queue *q, uint pos, uint n)
 	return 0;
 }
 
+static void qconf_copy(struct phi_queue_conf *dst, const struct phi_queue_conf *src)
+{
+	*dst = *src;
+	dst->tconf.afilter.equalizer = ffsz_dup_safe(src->tconf.afilter.equalizer);
+}
+
 static phi_queue_id q_filter(phi_queue_id q, ffstr filter, uint flags)
 {
 	if (!flags) flags = 3;
 	if (!q) q = qm_default();
 
 	struct phi_queue *qf = ffmem_new(struct phi_queue);
-	qf->conf = q->conf;
+	qconf_copy(&qf->conf, &q->conf);
 	qf->conf.name = ffsz_dup("Filter");
 	qm_add(qf);
 
