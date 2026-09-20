@@ -119,6 +119,16 @@ static int handle_seek(struct gtrk *gt, phi_track *t)
 	return 0;
 }
 
+static void auto_skip(struct gtrk *gt, phi_track *t)
+{
+	int as = gd->conf.auto_skip_sec_percent;
+	if (!as || t->audio.total == ~0ULL)
+		return;
+	gt->seek_msec = (as > 0) ? as * 1000
+		: gt->duration_sec * -as / 100 * 1000;
+	t->audio.seek_req = 1;
+}
+
 static int gtrk_process(void *ctx, phi_track *t)
 {
 	struct gtrk *gt = ctx;
@@ -182,10 +192,7 @@ static int gtrk_process(void *ctx, phi_track *t)
 		gt->opened = 1;
 		t->meta_changed = 0;
 
-		if (gd->conf.auto_skip_sec_percent > 0)
-			gt->seek_msec = gd->conf.auto_skip_sec_percent * 1000;
-		else if (gd->conf.auto_skip_sec_percent < 0)
-			gt->seek_msec = gt->duration_sec * -gd->conf.auto_skip_sec_percent / 100 * 1000;
+		auto_skip(gt, t);
 	}
 
 	if (handle_seek(gt, t))
