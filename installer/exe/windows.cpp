@@ -6,6 +6,7 @@ Simon Zolin, 2024 */
 #define HOMEPAGE_URL  "https://github.com/stsaz/phiola"
 #define RES_UI  MAKEINTRESOURCEA(1)
 #define RES_PKG  MAKEINTRESOURCEA(2)
+#define RES_UNINST  MAKEINTRESOURCEA(3)
 #include <conf.h>
 
 #define MSG_TITLE  "phiola setup"
@@ -56,9 +57,13 @@ struct installer {
 	ffstr	pkg;
 	uint	done;
 
+	HGLOBAL	hres_uninst_exe;
+	ffstr	uninst_exe;
+
 	~installer()
 	{
 		ffui_res_close(hpkg);
+		ffui_res_close(hres_uninst_exe);
 	}
 
 	static void* gui_ctl_find(void *udata, const ffstr *name)
@@ -109,6 +114,27 @@ struct installer {
 		char *fn = dlg.save(&wmain.wnd, DIR_NAME);
 		if (fn)
 			wmain.edir.text(fn);
+	}
+
+	char* uninstaller_create(xxstr dir)
+	{
+		if (!this->hres_uninst_exe
+			&& !(this->hres_uninst_exe = ffui_res_load(GetModuleHandleW(NULL), RES_UNINST, RT_RCDATA, &this->uninst_exe)))
+			return ffsz_dup(E_CORRUPT);
+
+		xxvec buf;
+		buf.alloc<char>(dir.len + FFS_LEN(UNINSTALL_EXE) + 2);
+		buf.cat_f("%S\\shell", &dir);
+
+		if (ffdir_make(buf.sz())
+			&& !fferr_exist(fferr_last()))
+			return ffsz_allocfmt_syserr("directory make: %s", buf.sz());
+
+		buf.len = dir.len;
+		buf.cat_f("\\%s", UNINSTALL_EXE);
+		if (fffile_writewhole(buf.sz(), this->uninst_exe.ptr, this->uninst_exe.len, FFFILE_CREATENEW))
+			return ffsz_allocfmt_syserr("file write: %s", buf.sz());
+		return NULL;
 	}
 
 	void install()
@@ -163,6 +189,11 @@ struct installer {
 			fffd f = fffile_open(xxvec().add_f("%S\\%s%Z", &dir, CONF_PORTABLE).sz(), FFFILE_CREATENEW | FFFILE_WRITEONLY);
 			fffile_close(f);
 			goto done;
+		}
+
+		if ((s = uninstaller_create(dir.str()))) {
+			e.acquire(s);
+			goto err;
 		}
 
 		exe.add_f("%S\\%s%Z", &dir, EXE_NAME);

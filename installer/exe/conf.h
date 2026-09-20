@@ -4,6 +4,7 @@
 #define EXE_NAME  "phiola-gui.exe"
 #define LINK_NAME  "%USERPROFILE%\\Desktop\\phiola.lnk"
 #define CONF_PORTABLE  "mod\\gui\\user.conf"
+#define UNINSTALL_EXE  "shell\\uninstall.exe"
 static const char phi_exts[][5] = {
 	"aac",
 	"ape",

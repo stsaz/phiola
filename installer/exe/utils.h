@@ -24,6 +24,14 @@ typedef unsigned char u_char;
 #define ffsz_allocfmt_syserr(fmt, ...) \
 	ffsz_allocfmt(fmt ": (%u) %s", __VA_ARGS__, fferr_last(), fferr_strptr(fferr_last()))
 
+static xxvec vlog;
+static int job(int r, const char *path)
+{
+	vlog.add_f("%s %s\r\n"
+		, (!r) ? "OK " : "ERR", path);
+	return r;
+}
+
 /** Unpack zip archive to the specified directory.
 Return error message;
 	(char*)-1 if zip data is corrupted. */
@@ -182,6 +190,61 @@ end:
 	return rc;
 }
 
+/** Remove path from the user's PATH environment variable.
+Return 0 on success. */
+static inline int env_path_remove(ffstr path)
+{
+	ffwinreg k;
+	ffwinreg_val val = {};
+	ffssize i;
+	ffsize start, end;
+	xxstr s;
+	int rc = -1;
+
+	if (FFWINREG_NULL == (k = ffwinreg_open(HKEY_CURRENT_USER, "Environment", FFWINREG_READWRITE)))
+		goto done;
+
+	if (1 != ffwinreg_read(k, "PATH", &val)
+		|| !ffwinreg_isstr(val.type))
+		goto done; // no PATH or not a string
+
+	s.set(val.data, val.datalen);
+	if ((i = s.find_str_i(path)) < 0)
+		goto done; // 'path' is not in PATH
+
+	start = i;
+	if (i == 0)
+		; // [phiola;]...
+	else if (i > 1 && s.ptr[i - 1] == ';')
+		start--; // ...[;phiola]
+	else
+		goto fin; // ?phiola
+
+	end = i + path.len;
+	if (end == s.len) {
+		; // ...[;phiola]
+	} else if (s.ptr[end] == ';') {
+		if (i == 0)
+			end++; // [phiola;]...
+		else
+			; // ...[;phiola];...
+	} else {
+		goto fin; // phiola?
+	}
+	ffmem_move(s.ptr + start, s.ptr + end, s.len - end);
+	s.len -= end - start;
+	val.datalen = s.len;
+	rc = job(ffwinreg_write(k, "PATH", &val), xxvec().add_f("Environment\\PATH=%S", &s).strz());
+	goto fin;
+
+done:
+	rc = 0;
+fin:
+	ffwinreg_close(k);
+	ffmem_free(val.data);
+	return rc;
+}
+
 static inline int ffwinreg_open_writestr(HKEY hk, const char *path, const char *name, const char *val, ffsize len)
 {
 	ffwinreg k;
@@ -194,6 +257,16 @@ static inline int ffwinreg_open_writestr(HKEY hk, const char *path, const char *
 
 static inline int ffwinreg_open_writez(HKEY hk, const char *path, const char *name, const char *valz) {
 	return ffwinreg_open_writestr(hk, path, name, valz, ffsz_len(valz));
+}
+
+static inline int ffwinreg_open_del(HKEY hk, const char *path, const char *key, const char *val)
+{
+	ffwinreg k;
+	if (FFWINREG_NULL == (k = ffwinreg_open(hk, path, FFWINREG_WRITEONLY)))
+		return -1;
+	int r = ffwinreg_del(k, key, val);
+	ffwinreg_close(k);
+	return r;
 }
 
 /** Register phiola for the specified file extensions, for the current user only.
@@ -276,5 +349,31 @@ static inline int shell_ext_reg(const char *exe
 	}
 
 	ffwinreg_close(k);
+	return r;
+}
+
+/** Delete phiola registry keys */
+static int shell_ext_unreg(const char *exe
+	, const char *exts, uint ext_sz, uint exts_n)
+{
+	int r = 0;
+	r |= job(ffwinreg_open_del(HKEY_CURRENT_USER, "Software\\RegisteredApplications", "", "phiola"), "Software\\RegisteredApplications\\phiola");
+	r |= job(ffwinreg_deltree(HKEY_CURRENT_USER, "Software\\phiola"), "Software\\phiola\\");
+
+	xxvec buf;
+	buf.alloc<char>(FFS_LEN("Software\\Classes\\Applications\\") + ffsz_len(exe) + FFS_LEN("phiola.") + ext_sz);
+
+	buf.cat_f("Software\\Classes\\Applications\\%s", exe);
+	int rc = ffwinreg_deltree(HKEY_CURRENT_USER, buf.sz());
+	r |= job(rc, buf.cat_f("\\").sz());
+
+	for (uint i = 0;  i < exts_n;  i++) {
+		const char *ext = exts + i * ext_sz;
+		buf.len = 0;
+		buf.cat_f("Software\\Classes\\phiola.%s", ext);
+		rc = ffwinreg_deltree(HKEY_CURRENT_USER, buf.sz());
+		r |= job(rc, buf.cat_f("\\").sz());
+	}
+
 	return r;
 }

@@ -391,7 +391,7 @@ static inline ffps ffps_fork_bg(const char *arg)
 
 	ffps_execinfo info = {};
 	info.in = info.out = info.err = INVALID_HANDLE_VALUE;
-	ffps ps = _ffps_exec_cmdln(fn, args, &info);
+	ffps ps = _ffps_exec_cmdln(fn, args, NULL, &info);
 
 	ffmem_free(args);
 	return ps;

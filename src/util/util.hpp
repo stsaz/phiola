@@ -7,6 +7,13 @@
 #include <ffsys/path.h>
 #include <new>
 
+struct xxptr {
+	char *ptr;
+	xxptr() { ptr = NULL; }
+	xxptr(char *p) { ptr = p; }
+	~xxptr() { ffmem_free(ptr); }
+};
+
 struct xxstr : ffstr {
 	xxstr() { ptr = NULL;  len = 0; }
 	xxstr(ffstr s) { ptr = s.ptr;  len = s.len; }
@@ -177,17 +184,17 @@ struct xxpath {
 	xxstr data;
 	xxpath(const char *sz) : data(sz) {}
 	xxpath(ffstr s) : data(s) {}
-	ffstr	path() const {
+	xxstr	path() const {
 		ffstr path;
 		ffpath_splitpath(data.ptr, data.len, &path, NULL);
 		return path;
 	}
-	ffstr	name() const {
+	xxstr	name() const {
 		ffstr name;
 		ffpath_splitpath(data.ptr, data.len, NULL, &name);
 		return name;
 	}
-	ffstr	name_no_ext() const {
+	xxstr	name_no_ext() const {
 		ffstr name;
 		ffpath_splitpath(data.ptr, data.len, NULL, &name);
 		ffpath_splitname(name.ptr, name.len, &name, NULL);

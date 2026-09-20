@@ -12,6 +12,7 @@ FFPACK_BIN := ffpack
 FFPACK_FLAGS := OS=$(OS) SYS=$(SYS) COMPILER=$(COMPILER) CPU=$(CPU) \
 	LINKFLAGS_USER='-fuse-ld=lld'
 EXE := phiola-$(PHI_VERSION_STR)-windows-x64-setup.exe
+UNINST_EXE := uninstall.exe
 
 CFLAGS += -DFFBASE_MEM_ASSERT -DFFBASE_OPT_SIZE \
 	-MMD -MP \
@@ -69,7 +70,8 @@ installer.coff: $(PHIOLA)/installer/exe/exe.rc \
 		$(PHIOLA)/installer/exe/windows.ui \
 		$(PHIOLA)/res/exe.manifest \
 		$(PHIOLA)/res/phiola.ico \
-		phiola-$(PHI_VERSION_STR)-windows-x64.zip
+		phiola-$(PHI_VERSION_STR)-windows-x64.zip \
+		$(UNINST_EXE)
 	$(WINDRES) -I. -I$(PHIOLA)/res $< $@
 
 $(FFPACK_BIN)/libz.a: $(FFPACK)/zlib/Makefile | $(FFPACK_BIN)
@@ -80,6 +82,17 @@ $(FFPACK_BIN):
 
 $(EXE): $(OBJ) installer.coff | $(FFPACK_BIN)/libz.a
 	$(LINKXX) $+ $(LINKXXFLAGS) $(FFPACK_BIN)/libz.a -o $@
+
+uninstall.coff: $(PHIOLA)/installer/exe/uninstall.rc \
+		$(PHIOLA)/res/exe.manifest
+	$(WINDRES) -I. -I$(PHIOLA)/res $< $@
+
+$(UNINST_EXE): uninstall.o \
+		str-format.o \
+		sort.o \
+		uninstall.coff
+	$(LINKXX) $+ $(LINKXXFLAGS) -o $@
+	$(SUBMAKE) $@.debug
 
 strip-debug: $(addsuffix .debug,$(EXE))
 %.debug: %
