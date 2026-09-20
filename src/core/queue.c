@@ -17,7 +17,7 @@ extern const phi_track_if phi_track_iface;
 typedef void (*on_change_t)(phi_queue_id, uint, uint);
 struct queue_mgr {
 	ffvec lists; // struct phi_queue*[]
-	uint selected;
+	uint default_idx;
 	uint errors;
 	uint random_ready :1;
 	on_change_t on_change;
@@ -95,19 +95,21 @@ static void qm_add(struct phi_queue *q)
 static void qm_rm(struct phi_queue *q)
 {
 	struct phi_queue **it;
+	uint i = 0;
 	FFSLICE_WALK(&qm->lists, it) {
 		if (*it == q) {
 			ffslice_rmT((ffslice*)&qm->lists, it - (struct phi_queue**)qm->lists.ptr, 1, void*);
-			if (qm->selected)
-				qm->selected--;
+			if (i && i <= qm->default_idx)
+				qm->default_idx--;
 			break;
 		}
+		i++;
 	}
 }
 
 static struct phi_queue* qm_default()
 {
-	return *ffslice_itemT(&qm->lists, qm->selected, struct phi_queue*);
+	return *ffslice_itemT(&qm->lists, qm->default_idx, struct phi_queue*);
 }
 
 static uint qm_total()
@@ -124,17 +126,17 @@ static phi_queue_id qm_select(int pos)
 {
 	switch (pos) {
 	case PHI_QSEL_PREV:
-		qm->selected = ffmin(qm->selected - 1, qm->lists.len - 1);  break;
+		qm->default_idx = ffmin(qm->default_idx - 1, qm->lists.len - 1);  break;
 
 	case PHI_QSEL_NEXT:
-		qm->selected = (qm->selected + 1) % qm->lists.len;  break;
+		qm->default_idx = (qm->default_idx + 1) % qm->lists.len;  break;
 
 	case PHI_QSEL_CUR:
 		break;
 
 	default:
 		if ((uint)pos >= qm->lists.len) return NULL;
-		qm->selected = pos;
+		qm->default_idx = pos;
 	}
 
 	return qm_default();
@@ -146,7 +148,7 @@ static void qm_qselect(phi_queue_id q)
 	struct phi_queue **it;
 	FFSLICE_WALK(&qm->lists, it) {
 		if (*it == q) {
-			qm->selected = i;
+			qm->default_idx = i;
 			return;
 		}
 		i++;
@@ -166,10 +168,10 @@ static void qm_move(uint from, uint to)
 
 	struct phi_queue **l = qm->lists.ptr;
 	l[to] = FF_SWAP(&l[from], l[to]);
-	if (qm->selected == from)
-		qm->selected = to;
-	else if (qm->selected == to)
-		qm->selected = from;
+	if (qm->default_idx == from)
+		qm->default_idx = to;
+	else if (qm->default_idx == to)
+		qm->default_idx = from;
 	dbglog("move: %u -> %u", from, to);
 }
 
