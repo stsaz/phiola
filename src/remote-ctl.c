@@ -23,6 +23,16 @@ struct remote_ctl {
 };
 static struct remote_ctl *g;
 
+static int cmd_add(void *o, ffstr s)
+{
+	struct phi_queue_entry qe = {
+		.url = ffsz_dupstr(&s),
+	};
+	g->queue->add(NULL, &qe);
+	ffmem_free(qe.url);
+	return 0;
+}
+
 static int cmd_start(void *o, ffstr s)
 {
 	struct phi_queue_entry qe = {
@@ -90,6 +100,7 @@ static int cmd_volume(void *o, uint64 n) {
 }
 
 static const struct ffarg args[] = {
+	{ "add",		'S',	cmd_add },
 	{ "clear",		'1',	cmd_clear },
 	{ "next",		'1',	cmd_next },
 	{ "play",		'1',	cmd_play },
@@ -244,7 +255,10 @@ static int rctl_play(const char *name, ffslice names, uint flags)
 		return -1;
 
 	ffvec cmd = {};
-	ffvec_addsz(&cmd, "start ");
+	if (flags & PHI_RCLF_ADD)
+		ffvec_addsz(&cmd, "add ");
+	else
+		ffvec_addsz(&cmd, "start ");
 	const char **it;
 	FFSLICE_WALK(&names, it) {
 		ffvec_addfmt(&cmd, "\"%s\" ", *it);

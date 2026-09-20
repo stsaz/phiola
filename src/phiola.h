@@ -698,7 +698,8 @@ struct phi_remote_sv_if {
 };
 
 enum PHI_RCLF {
-	PHI_RCLF_NOLOG = 1,
+	PHI_RCLF_NOLOG = 1, // Don't print error log messages
+	PHI_RCLF_ADD = 2, // Add, but don't start playing
 };
 
 typedef struct phi_remote_cl_if phi_remote_cl_if;

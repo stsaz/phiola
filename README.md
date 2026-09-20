@@ -108,6 +108,7 @@ ln -s ~/bin/phiola-2/phiola ~/bin/phiola
 ### Windows
 
 The easiest way to install phiola on Windows is to execute `phiola-...-windows-x64-setup.exe` and specify the installation directory.
+It is also the only way to register file associations (so you can open or enqueue audio files from Windows Explorer).
 
 Another option is to manually unpack `phiola-...-windows-x64.zip` and add the phiola directory to your `PATH` environment.
 

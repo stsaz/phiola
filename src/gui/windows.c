@@ -14,7 +14,7 @@
 #include <ffbase/vector.h>
 #include <ffbase/args.h>
 
-struct ctx {
+struct wgui_ctx {
 	const phi_core *core;
 	const phi_queue_if *queue;
 	const phi_ui_if	*uif;
@@ -29,15 +29,16 @@ struct ctx {
 	struct ffargs cmd;
 	struct conf conf;
 	ffvec input; // char*[]
+	u_char add;
 };
-static struct ctx *x;
+static struct wgui_ctx *x;
 
 static __thread uint64 thread_id;
 
 static void exe_logv(void *log_obj, uint flags, const char *module, phi_track *t, const char *fmt, va_list va)
 {
 	const char *id = (t) ? t->id : NULL;
-	const char *ctx = (module || !t) ? module : (char*)x->core->track->cmd(t, PHI_TRACK_CUR_FILTER_NAME);
+	const char *wgui_ctx = (module || !t) ? module : (char*)x->core->track->cmd(t, PHI_TRACK_CUR_FILTER_NAME);
 
 	if (x->core) {
 		ffdatetime dt;
@@ -54,7 +55,7 @@ static void exe_logv(void *log_obj, uint flags, const char *module, phi_track *t
 		thread_id = tid;
 	}
 
-	zzlog_printv(log_obj, flags, x->log_date, tid, ctx, id, fmt, va);
+	zzlog_printv(log_obj, flags, x->log_date, tid, wgui_ctx, id, fmt, va);
 }
 
 static void exe_log(void *log_obj, uint flags, const char *module, phi_track *t, const char *fmt, ...)
@@ -68,7 +69,7 @@ static void exe_log(void *log_obj, uint flags, const char *module, phi_track *t,
 #define errlog(...)  exe_log(&x->log, PHI_LOG_ERR, NULL, NULL, __VA_ARGS__)
 #define warnlog(...)  exe_log(&x->log, PHI_LOG_WARN, NULL, NULL, __VA_ARGS__)
 
-static int conf(struct ctx *x)
+static int conf(struct wgui_ctx *x)
 {
 	x->fn = ffmem_alloc(4*1024);
 	const char *p;
@@ -183,7 +184,7 @@ static void logs()
 	x->uif->conf(&uc);
 }
 
-static int input(struct ctx *x, char *s)
+static int input(struct wgui_ctx *x, char *s)
 {
 	*ffvec_pushT(&x->input, char*) = s;
 	return 0;
@@ -209,7 +210,8 @@ static const phi_filter phi_guard_gui = {
 static int action()
 {
 	const phi_remote_cl_if *rcl = x->core->mod("remote.client");
-	if (!rcl->play("gui", *(ffslice*)&x->input, PHI_RCLF_NOLOG)) {
+	uint f = (x->add) ? PHI_RCLF_ADD : 0;
+	if (!rcl->play("gui", *(ffslice*)&x->input, PHI_RCLF_NOLOG | f)) {
 		x->core->sig(PHI_CORE_STOP);
 		return 0;
 	}
@@ -228,7 +230,8 @@ static int action()
 		struct phi_queue_entry qe = {
 			.url = *it,
 		};
-		if (0 == x->queue->add(NULL, &qe))
+		if (0 == x->queue->add(NULL, &qe)
+			&& !x->add)
 			x->queue->play(NULL, x->queue->at(NULL, 0));
 	}
 	ffvec_free(&x->input);
@@ -237,10 +240,13 @@ static int action()
 	return 0;
 }
 
+#define O(m)  (void*)FF_OFF(struct wgui_ctx, m)
 static const struct ffarg cmd_args[] = {
+	{ "-add",		'1',	O(add) },
 	{ "\0\1",		's',	input },
 	{ "",			0,		action },
 };
+#undef O
 
 static int cmd()
 {
@@ -264,7 +270,7 @@ static void cleanup()
 
 int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-	x = ffmem_new(struct ctx);
+	x = ffmem_new(struct wgui_ctx);
 	if (conf(x)) goto end;
 	if (core()) goto end;
 	logs();
