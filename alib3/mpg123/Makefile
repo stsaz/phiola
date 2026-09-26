@@ -4,7 +4,7 @@ include ../config.mk
 
 VER := 1.32.10
 URL := http://mpg123.de/download/mpg123-$(VER).tar.bz2
-SHA256SUM := 87b2c17fe0c979d3ef38eeceff6362b35b28ac8589fbf1854b5be75c9ab6557c
+PKG_SHA256 := 87b2c17fe0c979d3ef38eeceff6362b35b28ac8589fbf1854b5be75c9ab6557c
 PKG := $(ALIB3)/mpg123/$(notdir $(URL))
 DIR := mpg123-$(VER)
 LIB := libmpg123-phi.$(SO)
@@ -18,11 +18,12 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
-	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
-	$(UNTAR_BZ2) $(PKG)
+	echo "$(PKG_SHA256) *$(PKG)" | $(SHA256SUM) -c -
+	$(UNTAR) $(PKG)
 
 _:=
-ifeq "$(CPU)" "amd64"
+ifeq "$(OS)" "apple"
+else ifeq "$(CPU)" "amd64"
 	ifeq "$(SYS)" "android"
 		CONFIGURE_FLAGS := --host=x86_64
 	else ifeq "$(OS)" "windows"
@@ -39,7 +40,7 @@ else ifeq "$(CPU)" "arm"
 	CONFIGURE_FLAGS := --host=armv7 --with-cpu=neon
 endif
 ifeq "$(SYS)" "android"
-	CONFIGURE_ENV := CC="$(C_DIR)/clang" CFLAGS="$(A_CFLAGS)"
+	CONFIGURE_ENV := CC=clang CFLAGS="$(A_CFLAGS)"
 endif
 CONFIGURE_FLAGS += \
 	--disable-modules    \
@@ -185,7 +186,7 @@ OBJ := mpg123-phi.o \
 $(LIB): $(OBJ)
 	$(LINK) -shared $+ $(LINKFLAGS) -o $@
 ifeq "$(SYS)" "android"
-	$(C_DIR)/llvm-objdump -T $@
+	llvm-objdump -T $@
 else ifeq "$(CPU)" "amd64"
 ifeq "$(OS)" "linux"
 	ldd $@

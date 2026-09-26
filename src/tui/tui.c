@@ -346,16 +346,15 @@ static void tui_stdin_prepare(void *param)
 {
 	if (core->conf.stdin_busy) return;
 
-	uint kq_attach = 1;
-
-#ifdef FF_WIN
-	DWORD mode;
-	if (!GetConsoleMode(ffstdin, &mode)) {
-		infolog(NULL, "TUI commands won't work because stdin is not a console");
-		return; // Asynchronous reading from a pipe is not supported
+	struct ffstd_info i;
+	if (ffstd_info(ffstdin, &i)) {
+		dbglog(NULL, "TUI commands won't work because stdin is not a terminal");
+		return;
 	}
-	kq_attach = 0;
 
+	uint kq_attach = 1;
+#ifdef FF_WIN
+	kq_attach = 0;
 #else
 	uint attr = FFSTD_LINEINPUT;
 	ffstd_attr(ffstdin, attr, 0);
@@ -393,24 +392,29 @@ static int act_trk_key_process(uint k)
 
 static void tui_cmd_read(void *param)
 {
-	ffstd_ev ev = {};
+	char buf[1024];
 	ffstr data = {};
+	uint n;
 
 	for (;;) {
 		if (data.len == 0) {
-			int r = ffstd_keyread(ffstdin, &ev, &data);
+			int r = ffstd_key_read(ffstdin, buf, sizeof(buf));
 			if (r == 0)
 				break;
 			else if (r < 0)
 				break;
+			ffstr_set(&data, buf, r);
 		}
 
 		ffstr keydata = data;
-		uint key = ffstd_keyparse(&data);
-		if (key == (uint)-1) {
+		uint key = ffstd_key_parse(data.ptr, data.len, &n);
+		if (key == 0 || key == ~0U) {
 			data.len = 0;
 			continue;
 		}
+		ffstr_shift(&data, n);
+		if (key == FFKEY_VIRT)
+			continue;
 
 		const struct key *k = key2cmd(key);
 		if (k == NULL) {

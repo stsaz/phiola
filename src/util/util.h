@@ -174,6 +174,62 @@ static inline int path_isparent(ffstr parent, ffstr file)
 		&& ffstr_match2(&file, &parent));
 }
 
+#ifdef FF_WIN
+
+#define PATH_SLASH  "\\"
+
+/*
+"c:\dir1\dir2" -> "c:\dir1"
+"c:\dir" -> "c:\"
+*/
+static inline ffstr path_parent(ffstr path)
+{
+	FF_ASSERT(path.len);
+	ffstr parent;
+	ffpath_splitpath_str(path, &parent, NULL);
+
+	int letter = path.ptr[0] | 0x20;
+	if (parent.len == 2
+		&& letter >= 'a' && letter <= 'z'
+		&& path.ptr[1] == ':')
+		parent.len++; /* "c:" -> "c:\" */
+
+	return parent;
+}
+
+#else
+
+#define PATH_SLASH  "/"
+
+/** Get parent directory.
+e.g.:
+	/dir1/dir2 -> /dir1
+	/dir -> /
+*/
+static inline ffstr path_parent(ffstr path)
+{
+	FF_ASSERT(path.len);
+	ffstr parent;
+	ffpath_splitpath_str(path, &parent, NULL);
+	if (!parent.len)
+		ffstr_setz(&parent, "/");
+	return parent;
+}
+
+#endif
+
+/** Join two path components.
+Return newly allocated string; free with ffmem_free(). */
+static inline char* path_join(const char *pathz, const char *add, size_t add_len)
+{
+	ffssize n = ffsz_len(pathz) + 1 + add_len + 2; // 2 more bytes for last slash and null
+	char *s = (char*)ffmem_alloc(n);
+	const char *slash = (ffpath_isroot(pathz, ffsz_len(pathz))) ? "" : PATH_SLASH;
+	ffs_format(s, n, "%s%s%*s%Z"
+		, pathz, slash, add_len, add);
+	return s;
+}
+
 
 /** Return bits/sec. */
 #define bitrate_compute(bytes, samples, rate) \
@@ -260,11 +316,6 @@ static inline int trk_add_filters(const phi_core *core, phi_track *t, struct fil
 	}
 	return 0;
 }
-
-
-/** Convert LE color value to RGB value.
-"BGR0" -> "0BGR" -> "RGB0" */
-#define color_rgb_le(c)  __builtin_bswap32((c) << 8)
 
 
 #include <ffsys/file.h>

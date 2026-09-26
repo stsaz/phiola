@@ -21,6 +21,7 @@
 		<activity
 			android:name=".MainActivity"
 			android:exported="true"
+			android:launchMode="singleTop"
 			android:theme="@style/AppTheme.NoActionBar">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
@@ -44,6 +45,11 @@
 
 			<intent-filter>
 				<action android:name="android.provider.MediaStore.RECORD_SOUND" />
+				<category android:name="android.intent.category.DEFAULT" />
+			</intent-filter>
+
+			<intent-filter>
+				<action android:name="com.github.stsaz.phiola.RECORD_STOP" />
 				<category android:name="android.intent.category.DEFAULT" />
 			</intent-filter>
 		</activity>

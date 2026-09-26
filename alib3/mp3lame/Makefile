@@ -5,7 +5,7 @@ include ../config.mk
 VER := 3.100
 # https://sourceforge.net/projects/lame/files/lame/3.100/lame-3.100.tar.gz/download
 URL := https://github.com/stsaz/phiola/raw/alib3/alib3/mp3lame/lame-$(VER).tar.gz
-SHA256SUM := ddfe36cab873794038ae2c1210557ad34857a4b6bdc515785d1da9e175b1da1e
+PKG_SHA256 := ddfe36cab873794038ae2c1210557ad34857a4b6bdc515785d1da9e175b1da1e
 PKG := $(ALIB3)/mp3lame/$(notdir $(URL))
 DIR := lame-$(VER)
 LIB := libmp3lame-phi.$(SO)
@@ -19,17 +19,19 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
-	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
-	$(UNTAR_GZ) $(PKG)
+	echo "$(PKG_SHA256) *$(PKG)" | $(SHA256SUM) -c -
+	$(UNTAR) $(PKG)
 	touch $@
 
-CONFIGURE_FLAGS := --host=x86_64
-ifeq "$(CPU)" "arm64"
-	CONFIGURE_FLAGS := --host=aarch64-linux-gnu
+_=
+ifeq "$(OS)" "apple"
 else ifeq "$(CPU)" "arm64"
+	CONFIGURE_FLAGS := --host=aarch64-linux-gnu
+else
+	CONFIGURE_FLAGS := --host=x86_64
 endif
 ifeq "$(SYS)" "android"
-	CONFIGURE_ENV := CC="$(C_DIR)/clang" CFLAGS="$(A_CFLAGS)"
+	CONFIGURE_ENV := CC=clang CFLAGS="$(A_CFLAGS)"
 endif
 $(DIR)/config.h: | $(DIR)
 	cd $(DIR) && $(CONFIGURE_ENV) ./configure --disable-decoder $(CONFIGURE_FLAGS)

@@ -129,7 +129,7 @@ static void rec_silence_track(struct cmd_rec *r)
 	t->oaudio.format = af;
 
 	if (!track->filter(t, x->core->mod("afilter.silence-gen"), 0)
-		|| !track->filter(t, x->core->mod("wasapi.play"), 0)) {
+		|| !track->filter(t, x->core->mod("ad-wasapi.play"), 0)) {
 		track->close(t);
 		return;
 	}
@@ -243,8 +243,8 @@ static int rec_action(struct cmd_rec *r)
 		r->audio_module = ffsz_allocfmt("ad-%s.rec%Z", r->audio);
 	ffsz_copyz(map[FMR_INPUT].name, sizeof(map[0].name), (r->audio_module) ? r->audio_module : "core.auto-rec");
 
-	map[FMR_NG].use = r->noise_gate;
-	map[FMR_DAN].use = r->danorm;
+	map[FMR_NG].use = !!r->noise_gate;
+	map[FMR_DAN].use = !!r->danorm;
 	map[FMR_GAIN].use = r->gain;
 	map[FMR_SPLIT].use = r->split;
 	map[FMR_WRITE].use = !r->split;

@@ -17,7 +17,7 @@ extern const phi_track_if phi_track_iface;
 typedef void (*on_change_t)(phi_queue_id, uint, uint);
 struct queue_mgr {
 	ffvec lists; // struct phi_queue*[]
-	uint selected;
+	uint default_idx;
 	uint errors;
 	uint random_ready :1;
 	on_change_t on_change;
@@ -95,23 +95,50 @@ static void qm_add(struct phi_queue *q)
 static void qm_rm(struct phi_queue *q)
 {
 	struct phi_queue **it;
+	uint i = 0;
 	FFSLICE_WALK(&qm->lists, it) {
 		if (*it == q) {
 			ffslice_rmT((ffslice*)&qm->lists, it - (struct phi_queue**)qm->lists.ptr, 1, void*);
+			if (i && i <= qm->default_idx)
+				qm->default_idx--;
 			break;
 		}
+		i++;
 	}
 }
 
 static struct phi_queue* qm_default()
 {
-	return *ffslice_itemT(&qm->lists, qm->selected, struct phi_queue*);
+	return *ffslice_itemT(&qm->lists, qm->default_idx, struct phi_queue*);
 }
 
-static phi_queue_id qm_select(uint pos)
+static uint qm_total()
 {
-	if (pos >= qm->lists.len) return NULL;
-	qm->selected = pos;
+	return qm->lists.len;
+}
+
+static phi_queue_id qm_get(uint i)
+{
+	return *ffslice_itemT(&qm->lists, i, struct phi_queue*);
+}
+
+static phi_queue_id qm_select(int pos)
+{
+	switch (pos) {
+	case PHI_QSEL_PREV:
+		qm->default_idx = ffmin(qm->default_idx - 1, qm->lists.len - 1);  break;
+
+	case PHI_QSEL_NEXT:
+		qm->default_idx = (qm->default_idx + 1) % qm->lists.len;  break;
+
+	case PHI_QSEL_CUR:
+		break;
+
+	default:
+		if ((uint)pos >= qm->lists.len) return NULL;
+		qm->default_idx = pos;
+	}
+
 	return qm_default();
 }
 
@@ -121,7 +148,7 @@ static void qm_qselect(phi_queue_id q)
 	struct phi_queue **it;
 	FFSLICE_WALK(&qm->lists, it) {
 		if (*it == q) {
-			qm->selected = i;
+			qm->default_idx = i;
 			return;
 		}
 		i++;
@@ -141,10 +168,10 @@ static void qm_move(uint from, uint to)
 
 	struct phi_queue **l = qm->lists.ptr;
 	l[to] = FF_SWAP(&l[from], l[to]);
-	if (qm->selected == from)
-		qm->selected = to;
-	else if (qm->selected == to)
-		qm->selected = from;
+	if (qm->default_idx == from)
+		qm->default_idx = to;
+	else if (qm->default_idx == to)
+		qm->default_idx = from;
 	dbglog("move: %u -> %u", from, to);
 }
 
@@ -205,6 +232,7 @@ static void* q_insert(struct phi_queue *q, uint pos, struct phi_queue_entry *qe)
 	struct q_entry *e = qe_new(qe);
 	e->q = q;
 	e->index = pos;
+	ffint_fetch_add(&q->conf.version, 1);
 	fflock_lock(&q->lock);
 	ffvec_pushT(&q->index, void*);
 	if (pos+1 == q->index.len)
@@ -233,6 +261,7 @@ static void* q_insert_bulk(struct phi_queue *q, uint pos, struct phi_queue_entry
 			*result++ = &e->pub;
 	}
 
+	ffint_fetch_add(&q->conf.version, 1);
 	fflock_lock(&q->lock);
 	ffvec_insert(&q->index, pos, ents, n, sizeof(void*));
 	fflock_unlock(&q->lock);
@@ -260,6 +289,7 @@ static int q_clear(struct phi_queue *q)
 {
 	if (!q) q = qm_default();
 
+	ffint_fetch_add(&q->conf.version, 1);
 	fflock_lock(&q->lock);
 	ffvec a = q->index;
 	ffvec_null(&q->index);
@@ -419,6 +449,7 @@ static void q_trk_closed(void *param)
 		if (!e)
 			return;
 		uint i = qe_index(e);
+		ffint_fetch_add(&e->q->conf.version, 1);
 		qm->on_change(q, 'm', i);
 		if (!(e = q_get(q, i + 1)))
 			return;
@@ -604,6 +635,7 @@ static int q_remove_at(struct phi_queue *q, uint pos, uint n)
 		return -1;
 	e->index = ~0;
 	dbglog("removed '%s' @%u", e->pub.url, pos);
+	ffint_fetch_add(&q->conf.version, 1);
 	fflock_lock(&q->lock); // after q_ref() has read the item @pos, but before 'used++', the item must not be destroyed
 
 	if (q->cursor_index > 0
@@ -620,13 +652,19 @@ static int q_remove_at(struct phi_queue *q, uint pos, uint n)
 	return 0;
 }
 
+static void qconf_copy(struct phi_queue_conf *dst, const struct phi_queue_conf *src)
+{
+	*dst = *src;
+	dst->tconf.afilter.equalizer = ffsz_dup_safe(src->tconf.afilter.equalizer);
+}
+
 static phi_queue_id q_filter(phi_queue_id q, ffstr filter, uint flags)
 {
 	if (!flags) flags = 3;
 	if (!q) q = qm_default();
 
 	struct phi_queue *qf = ffmem_new(struct phi_queue);
-	qf->conf = q->conf;
+	qconf_copy(&qf->conf, &q->conf);
 	qf->conf.name = ffsz_dup("Filter");
 	qm_add(qf);
 
@@ -706,6 +744,7 @@ meta_cmp: {
 static void q_sort(phi_queue_id q, uint flags)
 {
 	if (!q) q = qm_default();
+	ffint_fetch_add(&q->conf.version, 1);
 
 	if (flags == PHI_Q_SORT_RANDOM) {
 		sort_random(q);
@@ -834,6 +873,7 @@ static void q_remove_multi(phi_queue_id q, uint flags)
 		return;
 	}
 
+	ffint_fetch_add(&q->conf.version, 1);
 	fflock_lock(&q->lock);
 	ffvec old = q->index;
 	q->index = new_index;
@@ -849,6 +889,8 @@ const phi_queue_if phi_queueif = {
 
 	q_create,
 	q_destroy,
+	qm_total,
+	qm_get,
 	qm_select,
 	q_conf,
 	qm_qselect,

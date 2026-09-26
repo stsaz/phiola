@@ -131,6 +131,7 @@ public class Svc extends MediaBrowserServiceCompat {
 			public void onStop() {
 				core.dbglog(TAG, "MediaSessionCompat.onStop");
 				track.stop();
+				track.record_stop(false);
 			}
 
 			public void onSkipToNext() {

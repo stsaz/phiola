@@ -5,19 +5,13 @@
 #include <ffsys/globals.h>
 
 static const phi_core *core;
-#define errlog(t, ...)  phi_errlog(t, "coreaudio", NULL, __VA_ARGS__)
-#define warnlog(t, ...)  phi_warnlog(t, "coreaudio", NULL, __VA_ARGS__)
-#define dbglog(t, ...)  phi_dbglog(t, "coreaudio", NULL, __VA_ARGS__)
+#define errlog(t, ...)  phi_errlog(core, "coreaudio", t, __VA_ARGS__)
+#define warnlog(t, ...)  phi_warnlog(core, "coreaudio", t, __VA_ARGS__)
+#define dbglog(t, ...)  phi_dbglog(core, "coreaudio", t, __VA_ARGS__)
 
 #include <adev/audio-dev.h>
 #include <adev/audio-play.h>
 #include <adev/audio-rec.h>
-#include <adev/coreaudio-rec.h>
-#include <adev/coreaudio-play.h>
-
-static void coraud_destroy(void)
-{
-}
 
 static int mod_init(phi_track *t)
 {
@@ -36,7 +30,10 @@ static int mod_init(phi_track *t)
 	return 0;
 }
 
-static int coraud_adev_list(struct phi_adev_ent **ents, uint flags)
+#include <adev/coreaudio-rec.h>
+#include <adev/coreaudio-play.h>
+
+static int coreaudio_adev_list(struct phi_adev_ent **ents, uint flags)
 {
 	if (0 != mod_init(NULL))
 		return -1;
@@ -47,32 +44,35 @@ static int coraud_adev_list(struct phi_adev_ent **ents, uint flags)
 	return r;
 }
 
-static const phi_adev_if phi_coraud_adev = {
-	.list = &coraud_adev_list,
-	.listfree = &audio_dev_listfree,
+static const phi_adev_if phi_coreaudio_adev = {
+	.list = &coreaudio_adev_list,
+	.list_free = &audio_dev_listfree,
 };
 
 
-static const void* coraud_iface(const char *name)
+static const void* coreaudio_iface(const char *name)
 {
-	if (!ffsz_cmp(name, "out")) {
-		return &phi_coreaudio_play;
-	} else if (!ffsz_cmp(name, "in")) {
-		return &phi_coreaudio_rec;
-	} else if (!ffsz_cmp(name, "adev")) {
-		return &phi_coraud_adev;
-	}
-	return NULL;
+	static const struct map_sz_vptr m[] = {
+		{ "dev",	&phi_coreaudio_adev },
+		{ "play",	&phi_coreaudio_play },
+		{ "rec",	&phi_coreaudio_rec },
+		{}
+	};
+	return map_sz_vptr_find(m, name);
 }
 
-static const phi_mod phi_coraud_mod = {
+static void coreaudio_destroy()
+{
+}
+
+static const phi_mod phi_coreaudio_mod = {
 	.ver = PHI_VERSION, .ver_core = PHI_VERSION_CORE,
-	.iface = &coraud_iface,
-	.destroy = &coraud_destroy,
+	.iface = coreaudio_iface,
+	.close = coreaudio_destroy,
 };
 
 FF_EXPORT const phi_mod* phi_mod_init(const phi_core *_core)
 {
 	core = _core;
-	return &phi_coraud_mod;
+	return &phi_coreaudio_mod;
 }

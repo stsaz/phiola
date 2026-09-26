@@ -260,8 +260,7 @@ static inline int ffconfw_add_str(ffconfw *c, ffstr s)
 /** Add NULL-terminated string */
 static inline int ffconfw_add_strz(ffconfw *c, const char *sz)
 {
-	ffstr s;
-	ffstr_setz(&s, sz);
+	ffstr s = (sz) ? FFSTR_Z(sz) : FFSTR_Z("");
 	return ffconfw_add(c, 'S', &s);
 }
 
@@ -276,6 +275,22 @@ static inline int ffconfw_add_keyz(ffconfw *c, const char *sz)
 {
 	ffstr s = FFSTR_INITZ(sz);
 	return ffconfw_add(c, 'K', &s);
+}
+
+/** Add unsigned integer */
+static inline int ffconfw_add_uintf(ffconfw *c, ffuint64 val, ffuint int_flags)
+{
+	char buf[64];
+	int r = ffs_fromint(val, buf, sizeof(buf), int_flags);
+	ffstr s;
+	ffstr_set(&s, buf, r);
+	return ffconfw_add(c, 'S', &s);
+}
+
+/** Add unsigned integer */
+static inline int ffconfw_add_uint(ffconfw *c, ffuint64 val)
+{
+	return ffconfw_add_uintf(c, val, 0);
 }
 
 /** Add integer */
@@ -331,7 +346,7 @@ static inline int ffconfw_add2s(ffconfw *c, const char *key, ffstr val)
 /** Add key and value as NULL-terminated string */
 static inline int ffconfw_add2z(ffconfw *c, const char *key, const char *val)
 {
-	return ffconfw_add2(c, FFSTR_Z(key), FFSTR_Z(val));
+	return ffconfw_add2(c, FFSTR_Z(key), (val) ? FFSTR_Z(val) : FFSTR_Z(""));
 }
 
 static inline int ffconfw_add2u(ffconfw *c, const char *key, ffuint64 val)

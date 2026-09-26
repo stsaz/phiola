@@ -4,7 +4,7 @@ include ../config.mk
 
 VER := 2.0.3
 URL := https://github.com/mstorsjo/fdk-aac/archive/refs/tags/v$(VER).tar.gz
-SHA256SUM := e25671cd96b10bad896aa42ab91a695a9e573395262baed4e4a2ff178d6a3a78
+PKG_SHA256 := e25671cd96b10bad896aa42ab91a695a9e573395262baed4e4a2ff178d6a3a78
 PKG := $(ALIB3)/fdk-aac/$(notdir $(URL))
 DIR := fdk-aac-$(VER)
 LIB := libfdk-aac-phi.$(SO)
@@ -18,8 +18,8 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
-	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
-	$(UNTAR_GZ) $(PKG)
+	echo "$(PKG_SHA256) *$(PKG)" | $(SHA256SUM) -c -
+	$(UNTAR) $(PKG)
 	cat $(ALIB3)/fdk-aac/*.patch | patch -d $(DIR) -p1
 
 # build
@@ -41,8 +41,6 @@ CF += \
 
 CFLAGS += -Wno-narrowing
 # $(DIR)/libAACenc/src/aacEnc_rom.cpp:661:1: error: narrowing conversion of ‘2180108801u’ from ‘unsigned int’ to ‘FIXP_DBL {aka long int}’ inside { } [-Wnarrowing]
-
-LINKXXFLAGS += -static-libstdc++
 
 AACDEC_SRC := \
 	$(DIR)/libAACdec/src/FDK_delay.cpp \

@@ -17,19 +17,28 @@ window wmain {
 		action	A_BROWSE
 	}
 
-	checkbox cbshortcut {
+	checkbox cb_portable {
+		text	"Portable mode"
+		action	A_CB_PORTABLE
+	}
+
+	checkbox cb_shortcut {
 		text	"Create Desktop shortcut"
 		style	checked
 	}
 
-	checkbox cbenviron {
+	checkbox cb_environ {
 		text	"Add phiola directory to PATH environment"
 		style	checked
 	}
 
-	checkbox cbstart {
+	checkbox cb_start {
 		text	"Start phiola GUI"
 		style	checked
+	}
+
+	checkbox cb_defaultapp {
+		text	"Set phiola as default player (via 'Default apps' screen)"
 	}
 
 	button binstall {

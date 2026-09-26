@@ -4,7 +4,7 @@ include ../config.mk
 
 VER := 1.5.0
 URL := https://github.com/xiph/flac/archive/refs/tags/$(VER).zip
-SHA256SUM := dc14b44202860c4eea88ee96dcbab17f31d25d906aab9f40784a00fcd40501cf
+PKG_SHA256 := dc14b44202860c4eea88ee96dcbab17f31d25d906aab9f40784a00fcd40501cf
 PKG := $(ALIB3)/FLAC/$(notdir $(URL))
 DIR := flac-$(VER)
 LIB := libFLAC-phi.$(SO)
@@ -20,13 +20,15 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
-	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
-	$(UNZIP) $(PKG)
+	echo "$(PKG_SHA256) *$(PKG)" | $(SHA256SUM) -c -
+	$(UNZIP) $(PKG) -x '*.flac'
+	test -d $(DIR)/test/pictures
 	touch $@
 
 # config
-CONFIGURE_FLAGS := --host=x86_64
-ifeq "$(OS)" "windows"
+_=
+ifeq "$(OS)" "apple"
+else ifeq "$(OS)" "windows"
 	CONFIGURE_FLAGS := --host=x86_64-w64-mingw32
 else ifeq "$(CPU)" "arm64"
 	ifeq "$(SYS)" "android"
@@ -36,9 +38,11 @@ else ifeq "$(CPU)" "arm64"
 	endif
 else ifeq "$(CPU)" "arm"
 	CONFIGURE_FLAGS := --host=armv7
+else
+	CONFIGURE_FLAGS := --host=x86_64
 endif
 ifeq "$(SYS)" "android"
-	CONFIGURE_ENV := CC="$(C_DIR)/clang" CFLAGS="$(A_CFLAGS)"
+	CONFIGURE_ENV := CC=clang CFLAGS="$(A_CFLAGS)"
 endif
 $(DIR)/config.h: | $(DIR)
 	cd $(DIR) && bash autogen.sh
@@ -101,7 +105,7 @@ OBJ := FLAC-phi.o $(addprefix $(DIR)/src/libFLAC/,$(SRC:.c=.o))
 $(LIB): $(OBJ)
 	$(LINK) -shared $+ $(LINKFLAGS) -o $@
 ifeq "$(SYS)" "android"
-	$(C_DIR)/llvm-objdump -T $@
+	llvm-objdump -T $@
 endif
 
 clean:

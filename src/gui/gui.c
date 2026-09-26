@@ -2,7 +2,6 @@
 2023, Simon Zolin */
 
 #include <gui/gui.h>
-#include <util/conf-args.h>
 #include <ffsys/file.h>
 #include <ffsys/perf.h>
 
@@ -13,7 +12,7 @@ static int theme_load(struct dark_theme *t, const char *theme);
 static int theme_dark()
 {
 	gg->theme_dark_default = (!gd->conf.theme
-		&& DARK_THEME_DARK == dark_theme_ctl(&gg->dkth, DARK_THEME_QUERY, 0));
+		&& DARK_THEME_DARK == dark_theme_query());
 	return (gg->theme_dark_default
 		|| (gd->conf.theme
 			&& ffsz_matchz(gd->conf.theme, "dark")));
@@ -54,12 +53,9 @@ void gui_dragdrop(ffstr data)
 
 void conf_wnd_pos_read(ffui_window *w, ffstr val)
 {
-	ffui_pos cur, pos;
+	ffui_pos pos;
 	if (ffstr_matchfmt(&val, "%d %d %u %u", &pos.x, &pos.y, &pos.cx, &pos.cy))
 		return;
-	ffui_wnd_pos(w, &cur);
-	pos.cx = ffmax(pos.cx, cur.cx);
-	pos.cy = ffmax(pos.cy, cur.cy);
 	ffui_post_wnd_place(w, SW_SHOWNORMAL, &pos);
 }
 
@@ -228,7 +224,7 @@ static int gui_getcmd(void *udata, const ffstr *name)
 
 	for (uint i = 0;  i != FF_COUNT(action_str);  i++) {
 		if (ffstr_eqz(name, action_str[i]))
-			return i + 1;
+			return A_NONE+1 + i;
 	}
 	return 0;
 }
@@ -241,8 +237,8 @@ static int load_ui()
 	ffmem_copy(gg->ldr.language, core->conf.language, sizeof(gg->ldr.language));
 #ifdef FF_WIN
 	gg->ldr.hmod_resource = GetModuleHandleW(L"gui.dll");
-	if (!theme_load(&gg->dkth, (!gg->theme_dark_default) ? gd->conf.theme : "dark-white")) {
-		gg->ldr.dark_theme = &gg->dkth;
+	if (!theme_load(&gg->dkth, (!gg->theme_dark_default) ? gd->conf.theme : "dark-classic")) {
+		gg->ldr.dark_theme = 1;
 		gg->ldr.dark_theme_wnd_manual = 1;
 		ffui_theme = &gg->dkth;
 	}
@@ -314,6 +310,10 @@ static int theme_load(struct dark_theme *t, const char *theme)
 
 	rc = 1;
 
+	struct dark_theme dtc = {
+		.text_alt = ~0U,
+		.edit_frame_focus = ~0U,
+	};
 	struct ffconf c = {};
 	ffstr s, key = {};
 	while (data.len) {
@@ -325,24 +325,20 @@ static int theme_load(struct dark_theme *t, const char *theme)
 			key = s;  break;
 
 		case FFCONF_VAL: {
-			uint color, rgb;
+			uint color;
 			if (!ffstr_toint(&s, &color, FFS_INTHEX | FFS_INT32))
 				goto end;
-			rgb = color_rgb_le(color);
 
-			if (ffstr_eqz(&key, "background")) {
-				t->background = rgb;
-				t->listview_bg = rgb;
-				t->menu_bg_light = color_rgb_le(color + 0x222222);
-
-			} else if (ffstr_eqz(&key, "text")) {
-				t->text = rgb;
-				t->listview_header = rgb;
-				t->listview_text = rgb;
-
-			} else {
+			if (ffstr_eqz(&key, "background"))
+				dtc.background = color;
+			else if (ffstr_eqz(&key, "text"))
+				dtc.text = color;
+			else if (ffstr_eqz(&key, "text-alt"))
+				dtc.text_alt = color;
+			else if (ffstr_eqz(&key, "focus"))
+				dtc.edit_frame_focus = color;
+			else
 				goto end;
-			}
 			break;
 		}
 
@@ -351,7 +347,13 @@ static int theme_load(struct dark_theme *t, const char *theme)
 		}
 	}
 
-	t->wbr = CreateSolidBrush(t->background);
+	dark_theme_colors(t, dtc.background, dtc.text);
+	t->trackbar_thumb = dark_theme_rgb2cr(0xaa55ff);
+	if (dtc.edit_frame_focus != ~0U)
+		t->edit_frame_focus = dark_theme_rgb2cr(dtc.edit_frame_focus);
+	if (dtc.text_alt != ~0U)
+		t->text_alt = t->listview_header = dark_theme_rgb2cr(dtc.text_alt);
+	t->window_bg_br = CreateSolidBrush(t->background);
 	rc = 0;
 
 end:

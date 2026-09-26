@@ -67,8 +67,6 @@
 	<string name="mlist_files_move">List: Quick Move All Files</string>
 	<string name="mlist_read_meta">List: Read Tags</string>
 
-	<string name="menu_about">About</string>
-
 	<string name="mexplorer_add_list_cur">Add To Current List</string>
 	<string name="mexplorer_add_list_new">Add To New List</string>
 
@@ -197,9 +195,11 @@
 	<string name="menu_tag_add_artist">Add Tag: Artist</string>
 	<string name="menu_tag_add_title">Add Tag: Title</string>
 
+	<string name="menu_about">About</string>
 	<string name="about_enable_debug_log">Enable debug logging</string>
 	<string name="about_save_logs">Save system logs to file</string>
 	<string name="about_log_saved">Saved logs to %s</string>
+	<string name="about_close">Close</string>
 
 	<string name="tag_edit_n_a">Editing tags for this file format is not supported</string>
 

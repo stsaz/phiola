@@ -11,23 +11,20 @@ CP := cp -au
 LS := ls -l
 
 ANDROID_HOME ?= /Android
-SDK_API := 35.0.0
-NDK_VER := 29.0.14206865
-NDK_DIR := $(ANDROID_HOME)/ndk/$(NDK_VER)
+# ANDROID_BT_VER :=
+# ANDROID_NDK_ROOT :=
 # ADB_FLAGS := -d
 
 CPU := amd64
-LIB_DIR_CPU := x86_64
+LIB_DIR := libs/x86_64
 ifeq "$(CPU)" "arm64"
-	LIB_DIR_CPU := arm64-v8a
-else ifeq "$(CPU)" "arm"
-	LIB_DIR_CPU := armeabi-v7a
+	LIB_DIR := libs/arm64-v8a
 endif
 APK_ID := com.github.stsaz.phiola
-APK := phiola/build/outputs/apk/release/phiola-release-unsigned.apk
+APK := gradle/outputs/apk/release/phiola-release-unsigned.apk
 ifeq "$(DEBUG)" "1"
 	APK_ID := com.github.stsaz.phiola.debug
-	APK := phiola/build/outputs/apk/debug/phiola-debug.apk
+	APK := gradle/outputs/apk/debug/phiola-debug.apk
 endif
 
 default: libs
@@ -45,7 +42,9 @@ endif
 apk:
 #	cd $(PHIOLA)/android && $(GRADLE) wrapper --gradle-version 7.5.1 \
 #		--gradle-distribution-sha256-sum f6b8596b10cce501591e92f229816aa4046424f3b24d771751b06779d58c8ec4
-	cd $(PHIOLA)/android && $(GRADLE) $(GRADLE_BUILD)
+	cd $(PHIOLA)/android && $(GRADLE) $(GRADLE_BUILD) \
+		-PbuildDir=$(CURDIR)/gradle \
+		-PjniLibsDir=$(CURDIR)/libs
 
 clean-java:
 	cd $(PHIOLA)/android && $(GRADLE) clean
@@ -56,18 +55,16 @@ apk-list:
 
 # Sign .apk
 
-APK_KEY_STORE :=
-APK_KEY_PASS :=
 APK_VER := test
 APK_SIGNED := phiola-$(APK_VER)-android-$(CPU).apk
 
 sign:
-	cd $(PHIOLA)/android && $(ANDROID_HOME)/build-tools/$(SDK_API)/zipalign -v -f 4 $(APK) $(APK_SIGNED)
-	cd $(PHIOLA)/android && $(ANDROID_HOME)/build-tools/$(SDK_API)/apksigner sign \
+	$(ANDROID_HOME)/build-tools/$(ANDROID_BT_VER)/zipalign -v -f 4 $(APK) $(APK_SIGNED)
+	$(ANDROID_HOME)/build-tools/$(ANDROID_BT_VER)/apksigner sign \
 		--ks $(APK_KEY_STORE) \
-		--ks-pass pass:$(APK_KEY_PASS) \
+		--ks-pass env:APK_KEY_PASS \
 		$(APK_SIGNED)
-	cd $(PHIOLA)/android && $(ANDROID_HOME)/build-tools/$(SDK_API)/apksigner verify $(APK_SIGNED)
+	$(ANDROID_HOME)/build-tools/$(ANDROID_BT_VER)/apksigner verify $(APK_SIGNED)
 
 install-signed:
 	$(ANDROID_HOME)/platform-tools/adb $(ADB_FLAGS) install -r $(APK_SIGNED)
@@ -97,7 +94,7 @@ log-clear:
 	$(ANDROID_HOME)/platform-tools/adb $(ADB_FLAGS) logcat -c
 
 log-bt:
-	$(ANDROID_HOME)/platform-tools/adb $(ADB_FLAGS) logcat -v time | $(NDK_DIR)/ndk-stack -sym phiola/libs/$(LIB_DIR_CPU)
+	$(ANDROID_HOME)/platform-tools/adb $(ADB_FLAGS) logcat -v time | $(ANDROID_NDK_ROOT)/ndk-stack -sym $(LIB_DIR)
 
 
 # Directories
@@ -106,17 +103,10 @@ PHIOLA := $(ROOT_DIR)/phiola
 FFBASE := $(ROOT_DIR)/ffbase
 FFSYS := $(ROOT_DIR)/ffsys
 
+COMPILER := clang
 include $(FFBASE)/conf.mk
 include andk.mk
 SYS := android
-
-LIB_DIR_AMD64 := $(PHIOLA)/android/phiola/libs/x86_64
-LIB_DIR_ARM64 := $(PHIOLA)/android/phiola/libs/arm64-v8a
-LIB_DIR_ARM := $(PHIOLA)/android/phiola/libs/armeabi-v7a
-
-clean-lib:
-	$(RM) ../_android-arm64 ../_android-amd64 $(LIB_DIR_AMD64) $(LIB_DIR_ARM64)
-
 
 CFLAGS := $(A_CFLAGS)
 CFLAGS += -DFFBASE_MEM_ASSERT
@@ -148,7 +138,6 @@ include $(PHIOLA)/src/acodec/Makefile
 include $(PHIOLA)/src/net/Makefile
 include $(PHIOLA)/src/dfilter/Makefile
 
-LIB_DIR := $(PHIOLA)/android/phiola/libs/$(LIB_DIR_CPU)
 ifeq "$(TARGETS)" ""
 override TARGETS := libphiola.so $(MODS)
 endif
@@ -157,7 +146,7 @@ libs: $(TARGETS)
 	$(SUBMAKE) strip-debug
 	cp -u $(LIBS3) *.so *.debug \
 		$(LIB_DIR)
-	bash ../android/build-rename-libs.sh $(LIB_DIR) $(MODS)
+	@for M in $(MODS); do mv "$(LIB_DIR)/$$M" "$(LIB_DIR)/lib$$M"; done
 
 	$(MKDIR) $(PHIOLA)/android/phiola/src/main/assets
 	$(CP) $(PHIOLA)/src/net/client.pem $(PHIOLA)/android/phiola/src/main/assets/http-client.pem
@@ -173,14 +162,9 @@ strip-debug: $(addsuffix .debug,$(TARGETS))
 PKG_ARCH := $(CPU)
 PKG_PACKER := tar -c --owner=0 --group=0 --numeric-owner -v --zstd -f
 PKG_EXT := tar.zst
-ifeq "$(OS)" "windows"
-	PKG_PACKER := zip -r -v
-	PKG_EXT := zip
-endif
-
 PKG_DEBUG_NAME := phiola-$(APK_VER)-android-$(PKG_ARCH)-debug.$(PKG_EXT)
-$(PKG_DEBUG_NAME): $(wildcard $(PHIOLA)/android/phiola/libs/$(LIB_DIR_CPU)/*.debug)
-	$(PKG_PACKER) $@ ../android/phiola/libs/$(LIB_DIR_CPU)/*.debug
+$(PKG_DEBUG_NAME): $(wildcard $(LIB_DIR)/*.debug)
+	$(PKG_PACKER) $@ $+
 package-debug: $(PKG_DEBUG_NAME)
 
 release: default

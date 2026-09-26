@@ -1,0 +1,43 @@
+From 9bde5c152e2351e83ee0bd5d8e73024efedb0a69 Mon Sep 17 00:00:00 2001
+From: Simon Zolin <4729655+stsaz@users.noreply.github.com>
+Date: Tue, 4 Mar 2025 11:52:03 +0300
+Subject: [PATCH] Android: remove dependency on logger
+
+---
+ libSBRdec/src/lpp_tran.cpp | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/libSBRdec/src/lpp_tran.cpp b/libSBRdec/src/lpp_tran.cpp
+index 68a25bf..d85e122 100644
+--- a/libSBRdec/src/lpp_tran.cpp
++++ b/libSBRdec/src/lpp_tran.cpp
+@@ -118,7 +118,7 @@ amm-info@iis.fraunhofer.de
+   \sa lppTransposer(), main_audio.cpp, sbr_scale.h, \ref documentationOverview
+ */
+ 
+-#ifdef __ANDROID__
++#ifdef __ANDROID__NO
+ #include "log/log.h"
+ #endif
+ 
+@@ -334,7 +334,7 @@ void lppTransposer(
+       }
+     }
+   }
+-#ifdef __ANDROID__
++#ifdef __ANDROID__NO
+   else {
+     // Safetynet logging
+     android_errorWriteLog(0x534e4554, "112160868");
+@@ -930,7 +930,7 @@ void lppTransposerHBE(
+       FDKmemclear(&qmfBufferImag[i][targetStopBand], memSize);
+     }
+   }
+-#ifdef __ANDROID__
++#ifdef __ANDROID__NO
+   else {
+     // Safetynet logging
+     android_errorWriteLog(0x534e4554, "112160868");
+-- 
+2.44.0
+

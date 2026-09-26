@@ -37,8 +37,8 @@ const ffarg wsettings_args[] = {
 
 static const char* const themes[] = {
 	"default",
+	"dark-classic",
 	"dark-purple",
-	"dark-white",
 };
 
 static const char* auto_skip_write(xxstr_buf<100> &s, int val)
@@ -124,9 +124,9 @@ void wsettings_userconf_write(ffconfw *cw)
 {
 	gui_wsettings *w = gg->wsettings;
 	if (w->initialized)
-		conf_wnd_pos_write(cw, "wsettings.pos", &w->wnd);
-	else if (w->wnd_pos)
-		ffconfw_add2z(cw, "wsettings.pos", w->wnd_pos);
+		w->wnd_pos = wnd_pos_sz(&w->wnd);
+	ffarg_write_conf(cw, wsettings_args, w);
+	ffmem_free(w->wnd_pos);
 }
 
 static void wsettings_action(ffui_window *wnd, int id)
@@ -160,6 +160,7 @@ void wsettings_show(uint show)
 		if (w->wnd_pos)
 			conf_wnd_pos_read(&w->wnd, FFSTR_Z(w->wnd_pos));
 		ffmem_free(w->wnd_pos);
+		w->wnd_pos = NULL;
 
 		wsettings_ui_from_conf();
 	}

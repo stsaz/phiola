@@ -24,8 +24,13 @@ struct gui_wmain {
 
 	ffui_icon ico_play, ico_pause;
 
-	phi_timer tmr_redraw;
-	uint redraw_n, redraw_offset, redraw_cmd;
+	struct {
+		phi_timer timer;
+		uint cmd, n, pos;
+		uint gui_ver, cur_ver;
+		uint n_total, n_actual;
+		uint timer_set :1;
+	} redraw;
 
 	char *vlist_col;
 	char *wnd_pos;
@@ -108,9 +113,13 @@ void wmain_userconf_write(ffconfw *cw)
 	for (uint i = 0;  i != _H_LAST;  i++) {
 		v.add_f("%u ", m->vlist.column(i, &vc).width());
 	}
-	ffconfw_add2s(cw, "vlist.col", v.str());
+	m->vlist_col = v.strz();
+	v.reset();
 
-	conf_wnd_pos_write(cw, "wmain.pos", &m->wnd);
+	m->wnd_pos = wnd_pos_sz(&m->wnd);
+	ffarg_write_conf(cw, wmain_args, m);
+	ffmem_free(m->wnd_pos);
+	ffmem_free(m->vlist_col);
 }
 
 /** Set status bar text */
@@ -190,8 +199,9 @@ void wmain_track_close(void *param)
 	gui_wmain *m = gg->wmain;
 	struct gui_track_info *ti = (struct gui_track_info*)param;
 
-	if (ti->index_new != ~0U) {
-		m->vlist.update(ti->index_new, 0);
+	if (ti->q == gd->q_selected && !gd->q_filtered
+		&& ti->index_old != ~0U) {
+		m->vlist.update(ti->index_old, 0);
 	}
 
 	m->wnd.title("phiola");
@@ -261,6 +271,16 @@ static void list_display(ffui_viewxx_disp *disp)
 #ifdef FF_WIN
 	if (!(disp->mask & LVIF_TEXT))
 		return;
+
+#else
+	gui_wmain *m = gg->wmain;
+	if (disp->paint_begin) {
+		m->redraw.cur_ver = list_vis_version();
+		return;
+	} else if (disp->paint_end) {
+		FFINT_WRITEONCE(m->redraw.gui_ver, m->redraw.cur_ver);
+		return;
+	}
 #endif
 
 	uint i = disp->index(), sub = disp->subindex();
@@ -373,12 +393,13 @@ static void list_update(uint cmd, uint n, uint pos)
 static void list_update_delayed(void *param)
 {
 	gui_wmain *m = gg->wmain;
-	list_update(m->redraw_cmd, m->redraw_n, m->redraw_offset);
-	m->redraw_cmd = 0;
+	m->redraw.n_actual++;
+	list_update(m->redraw.cmd, m->redraw.n, m->redraw.pos);
+	m->redraw.timer_set = 0;
 }
 
 /** A queue is created/deleted/modified.
-Thread: worker */
+Thread: core */
 static void q_on_change(phi_queue_id q, uint flags, uint pos)
 {
 	gui_wmain *m = gg->wmain;
@@ -389,33 +410,46 @@ static void q_on_change(phi_queue_id q, uint flags, uint pos)
 	uint cmd = (flags & 0xff);
 
 	switch (cmd) {
+	case 'm':
 	case 'a':
 	case 'r':
-	case 'm':
+	case 'u': {
 		if (q != gd->q_selected)
 			break; // an inactive list is changed
-		if (m->redraw_cmd) {
-			// Multiple changes within short time period: redraw the whole list
-			m->redraw_cmd = 'u';
-		} else {
-			m->redraw_cmd = cmd;
-			m->redraw_offset = pos;
-		}
-		m->redraw_n = gd->queue->count(q);
-		core->timer(0, &m->tmr_redraw, -50, list_update_delayed, NULL);
-		break;
+		m->redraw.n_total++;
+		uint n = gd->queue->count(q);
+		uint update = m->redraw.timer_set;
 
-	case 'u':
-		if (q != gd->q_selected)
-			break; // an inactive list is changed
-		wmain_list_draw(gd->queue->count(q), 1);
+#ifdef FF_WIN
+		m->redraw.cmd = cmd;
+		m->redraw.pos = pos;
+		// Note: currently there's no way to determine if the list-view painting is complete
+
+#else
+		uint q_ver = gd->queue->conf(q)->version;
+		update |= (q_ver - 1 != FFINT_READONCE(m->redraw.gui_ver));
+		if (!update) {
+			m->redraw.n_actual++;
+			list_update(cmd, n, pos);
+			break;
+		}
+#endif
+
+		if (update) {
+			// Multiple changes within short time period: redraw the whole list
+			m->redraw.cmd = 'u';
+			m->redraw.pos = 0;
+		}
+		m->redraw.n = n;
+		if (!m->redraw.timer_set) {
+			m->redraw.timer_set = 1;
+			core->timer(0, &m->redraw.timer, -50, list_update_delayed, NULL);
+		}
 		break;
+	}
 
 	case 'c':
-		if (q != gd->q_selected)
-			break; // an inactive list is changed
-		m->vlist.clear();
-		break;
+		m->vlist.clear();  break;
 
 	case 'n':
 		if (gd->filtering)
@@ -599,6 +633,9 @@ static void wmain_action(ffui_window *wnd, int id)
 		m->wnd.close();  break;
 
 // Playback:
+#ifdef FF_WIN
+	case IDOK:
+#endif
 	case A_PLAY:
 		if (!gd->tab_conversion && (i = m->vlist.focused()) >= 0)
 			gui_core_task_uint(ctl_play, i);
@@ -714,6 +751,8 @@ void wmain_init()
 #ifdef FF_WIN
 	m->wnd.top = 1;
 	m->wnd.manual_close = 1;
+#else
+	m->vlist.paint_notify = 1;
 #endif
 	m->wnd.on_action = wmain_action;
 	m->wnd.onclose_id = A_CLOSE;
@@ -727,13 +766,16 @@ void wmain_show()
 	if (m->vlist_col)
 		conf_vlist_col(m->vlist, m->vlist_col);
 	ffmem_free(m->vlist_col);
+	m->vlist_col = NULL;
 
 	if (m->wnd_pos)
 		conf_wnd_pos_read(&m->wnd, FFSTR_Z(m->wnd_pos));
 	ffmem_free(m->wnd_pos);
+	m->wnd_pos = NULL;
 
 	m->tvol.set(gd->conf.volume);
 	m->tabs.add("Playlist 1");
+	m->wnd.tab_auto_switch(&m->tabs);
 	m->wnd.show(1);
 	wmain_list_draw(gd->queue->count(gd->q_selected), 0);
 	drag_drop_init();
@@ -754,5 +796,7 @@ void wmain_show()
 void wmain_fin()
 {
 	gui_wmain *m = gg->wmain;
-	core->timer(0, &m->tmr_redraw, 0, NULL, NULL);
+	core->timer(0, &m->redraw.timer, 0, NULL, NULL);
+	dbglog("%s  paint-events: %u/%u"
+		, __func__, m->redraw.n_actual, m->redraw.n_total);
 }

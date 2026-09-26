@@ -112,11 +112,6 @@ class GUI {
 	}
 
 	void on_activity_show(AppCompatActivity aca) {
-		if (main_color >= 0) {
-			int argb = 0xff000000 | main_color;
-			aca.getSupportActionBar().setBackgroundDrawable(new ColorDrawable(argb));
-			aca.getWindow().setStatusBarColor(argb);
-		}
 	}
 
 	boolean state_test(int mask) { return (state & mask) != 0; }

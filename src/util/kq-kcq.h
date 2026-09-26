@@ -33,16 +33,18 @@ static inline void zzkqkcq_init(struct zzkq_kcq *kk)
 
 static inline void zzkqkcq_disconnect(struct zzkq_kcq *kk, ffkq kq)
 {
-	ffkq_post_detach(kk->kcq.kqpost, kq);  kk->kcq.kqpost = FFKQ_NULL;
+	ffkq_post_detach(kq, kk->kcq.kqpost);  kk->kcq.kqpost = FFKQ_NULL;
 	ffrq_free(kk->kcq.cq);  kk->kcq.cq = NULL;
 }
 
 static void _zzkqkcq_onsignal(struct zzkq_kcq *kk)
 {
-	ffkq_post_consume(kk->kcq.kqpost);
-	ffkcallq_process_cq(kk->kcq.cq);
+	ffkq_post_consume(kk->kcq.kq, kk->kcq.kqpost);
+	ffuint r = ffkcallq_process_cq(kk->kcq.cq);
+	if (r)
+		dbglog("kcall: processed %u completion events", r);
 	if (kk->polling_mode)
-		ffkq_post(kk->kcq.kqpost, &kk->kev);
+		ffkq_post(kk->kcq.kq, kk->kcq.kqpost, &kk->kev);
 }
 
 static inline int zzkqkcq_connect(struct zzkq_kcq *kk, ffkq kq, ffuint max_cq_jobs, ffringqueue *sq, ffsem sq_sem)
@@ -61,6 +63,7 @@ static inline int zzkqkcq_connect(struct zzkq_kcq *kk, ffkq kq, ffuint max_cq_jo
 	if (FFKQ_NULL == (kk->kcq.kqpost = ffkq_post_attach(kq, &kk->kev))) {
 		goto err;
 	}
+	kk->kcq.kq = kq;
 	kk->kcq.kqpost_data = &kk->kev;
 	return 0;
 

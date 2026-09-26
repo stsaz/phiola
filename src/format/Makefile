@@ -29,6 +29,7 @@ format.$(SO): mod-fmt.o \
 		ts-read.o \
 		\
 		tag.o \
+		playlist.o \
 		\
 		cue-read.o \
 		m3u.o \

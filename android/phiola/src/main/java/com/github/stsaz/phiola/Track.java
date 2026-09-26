@@ -145,6 +145,8 @@ class Track {
 	boolean is_recording_mic() { return trec != null; }
 
 	void record_stop(boolean fin) {
+		if (trec == null) return;
+
 		if (trec.phi_trk != 0) {
 			core.phiola.recCtrl(trec.phi_trk, Phiola.RECL_STOP);
 			trec.phi_trk = 0;

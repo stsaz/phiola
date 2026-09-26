@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Locale;
 
 abstract class Util {
 	private static final String TAG = "phiola.Util";
@@ -21,7 +22,7 @@ abstract class Util {
 	}
 
 	static String float_to_str(float v) {
-		return String.format("%.02f", v);
+		return String.format(Locale.US, "%.02f", v);
 	}
 
 	static float str_to_float(String s, float def) {

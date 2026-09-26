@@ -6,13 +6,13 @@
 #include <ffbase/string.h>
 #include <ffbase/time.h>
 
-#define PHI_VERSION  20804
+#define PHI_VERSION  20902
 
 /** Inter-module compatibility version.
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20800
+#define PHI_VERSION_CORE  20902
 
 typedef long long int64;
 typedef unsigned long long uint64;
@@ -510,6 +510,7 @@ struct phi_queue_conf {
 	};
 	struct phi_track_conf tconf;
 	fftime last_mod_time;
+	uint version;
 	uint conversion :1;
 	uint analyze :1;
 	uint random :1;
@@ -523,6 +524,8 @@ struct phi_queue_entry {
 	phi_meta meta;
 	uint	length_sec :24;
 	uint	meta_priority :1; // Supplied `meta` has higher priority than meta from input file (e.g. for .cue track)
+	uint	error :1;
+	uint	meta_display_stale :1;
 	uint	lock; // For synchronizing access to `meta`
 	uint	seek_cdframes, until_cdframes;
 };
@@ -557,6 +560,12 @@ enum PHI_Q_RENAME {
 	PHI_QRN_ACQUIRE = 1,		// Transfer ownership of `new_url` to the 'queue' module
 };
 
+enum PHI_QSEL {
+	PHI_QSEL_CUR = 1<<31,		// Get the currently selected queue
+	PHI_QSEL_PREV,				// Select the previous queue
+	PHI_QSEL_NEXT,				// Select the next queue
+};
+
 typedef struct phi_queue* phi_queue_id;
 typedef struct phi_queue_if phi_queue_if;
 struct phi_queue_if {
@@ -579,8 +588,15 @@ struct phi_queue_if {
 	/** Destroy a queue. */
 	void (*destroy)(phi_queue_id q);
 
-	/** Select a queue by index. */
-	phi_queue_id (*select)(uint pos);
+	/** Total number of queues */
+	uint (*total)();
+
+	/** Get queue by index */
+	phi_queue_id (*get)(uint i);
+
+	/** Select a queue by index.
+	pos: Queue index or enum PHI_QSEL_* for special behavior */
+	phi_queue_id (*select)(int pos);
 
 	/** Get queue configuration. */
 	struct phi_queue_conf* (*conf)(phi_queue_id q);
@@ -591,7 +607,8 @@ struct phi_queue_if {
 	/** Move list to a new position. */
 	void (*move)(uint from, uint to);
 
-	/** Add an item. */
+	/** Add an item.
+	Return item index */
 	int (*add)(phi_queue_id q, struct phi_queue_entry *qe);
 
 	/** Get the number of rows. */
@@ -659,7 +676,8 @@ struct phi_queue_if {
 	/** Insert multiple items after the specified entry. */
 	void* (*insert_bulk)(void *e, struct phi_queue_entry *qe, uint n, struct phi_queue_entry **result);
 
-	/** Get the index of an item in its queue. */
+	/** Get the index of an item in its queue.
+	Return <0 on error */
 	int (*index)(void *e);
 
 	/** Remove item.
@@ -680,7 +698,8 @@ struct phi_remote_sv_if {
 };
 
 enum PHI_RCLF {
-	PHI_RCLF_NOLOG = 1,
+	PHI_RCLF_NOLOG = 1, // Don't print error log messages
+	PHI_RCLF_ADD = 2, // Add, but don't start playing
 };
 
 typedef struct phi_remote_cl_if phi_remote_cl_if;
@@ -739,4 +758,22 @@ struct phi_ui_if {
 struct phi_asv_conf {
 	uint max_clients;
 	ushort port;
+};
+
+
+/** Playlist functions */
+
+typedef void (*phi_playlist_cb)(void*, int);
+struct phi_playlist_conf {
+	ffslice include_str, exclude_str;
+
+	phi_playlist_cb on_complete;
+	void *udata;
+};
+
+typedef struct phi_playlist_if phi_playlist_if;
+struct phi_playlist_if {
+	void (*create)(const char *fn, ffslice input_sz, uint flags, const struct phi_playlist_conf *c);
+	void (*sort)(const char *fn, uint flags, const struct phi_playlist_conf *c);
+	void (*heal)(const char *fn, uint flags, const struct phi_playlist_conf *c);
 };

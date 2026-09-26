@@ -6,6 +6,7 @@ FFSYS := $(ROOT_DIR)/ffsys
 FFBASE := $(ROOT_DIR)/ffbase
 APP_DIR := phiola-2
 
+COMPILER := clang
 include $(FFBASE)/conf.mk
 SYS := $(OS)
 
@@ -24,17 +25,21 @@ else
 endif
 ifeq "$(ASAN)" "1"
 	CFLAGS += -fsanitize=address
-	LINKFLAGS += -fsanitize=address
+	LINKFLAGS += -fsanitize=address -shared-libasan
 endif
 CFLAGS += $(CFLAGS_USER)
 CFLAGS_BASE := $(CFLAGS)
 CFLAGS += -I$(PHIOLA)/src -I$(FFSYS)
-CXXFLAGS := -std=c++11 $(CFLAGS) -fno-exceptions -fno-rtti
+CXXFLAGS := -std=gnu++98 $(CFLAGS) -fno-exceptions -fno-rtti
 CFLAGS := -std=c99 $(CFLAGS)
+ifneq "$(OS)" "apple"
+	LINKFLAGS += -fuse-ld=lld
+endif
 LINKFLAGS += $(LINKFLAGS_USER)
 ifeq "$(OS)" "windows"
 	LINKFLAGS += -lws2_32
 endif
+LINKXXFLAGS := $(LINKFLAGS)
 LINK_DL :=
 ifeq "$(OS)" "linux"
 	LINK_DL := -ldl
@@ -82,22 +87,36 @@ MODS += remote.$(SO)
 remote.$(SO): remote-ctl.o
 	$(LINK) -shared $+ $(LINKFLAGS) -o $@
 
-include $(PHIOLA)/src/tui/Makefile
-include $(PHIOLA)/src/gui/Makefile
 include $(PHIOLA)/src/net/Makefile
 include $(PHIOLA)/src/dfilter/Makefile
+include $(PHIOLA)/src/tui/Makefile
+include $(PHIOLA)/src/tui2/Makefile
+
+ifneq "$(PHI_GUI)" "0"
+include $(PHIOLA)/src/gui/Makefile
+endif
 
 ifeq "$(TARGETS)" ""
 override TARGETS := libphiola.$(SO) $(EXES) $(MODS)
 endif
 build: $(TARGETS)
 
+ifeq "$(OS)" "apple"
+DSYMUTIL := dsymutil
+strip-debug: $(addsuffix .dSYM,$(TARGETS))
+%.dSYM: %
+	$(DSYMUTIL) $< -o $@
+	$(STRIP) -S $<
+	touch $@
+
+else
 strip-debug: $(addsuffix .debug,$(TARGETS))
 %.debug: %
 	$(OBJCOPY) --only-keep-debug $< $@
 	$(STRIP) $<
 	$(OBJCOPY) --add-gnu-debuglink=$@ $<
 	touch $@
+endif
 
 app:
 	$(MKDIR) $(APP_DIR) $(APP_DIR)/mod
@@ -117,7 +136,9 @@ endif
 	chmod 644 $(APP_DIR)/mod/*.$(SO)
 
 	$(CP) $(PHIOLA)/src/net/client.pem $(APP_DIR)/mod/http-client.pem
+ifneq "$(PHI_GUI)" "0"
 	$(SUBMAKE) app-gui
+endif
 
 ifeq "$(OS)" "windows"
 	mv $(APP_DIR)/README.md $(APP_DIR)/README.txt
@@ -127,26 +148,39 @@ endif
 PKG_VER := test
 PKG_ARCH := $(CPU)
 ifeq "$(OS)" "linux"
-ifeq "$(CPU)" "amd64"
-	PKG_ARCH := x86_64
-else
-	PKG_ARCH := aarch64
-endif
+	ifeq "$(CPU)" "amd64"
+		PKG_ARCH := x86_64
+	else
+		PKG_ARCH := aarch64
+	endif
+else ifeq "$(OS)" "windows"
+	PKG_ARCH := x64
 endif
 PKG_PACKER := tar -c --owner=0 --group=0 --numeric-owner -v --zstd -f
 PKG_EXT := tar.zst
-ifeq "$(OS)" "windows"
+ifeq "$(OS)" "apple"
+	PKG_PACKER := tar -c --uid=0 --gid=0 --numeric-owner -v -z -f
+	PKG_EXT := tar.gz
+else ifeq "$(OS)" "windows"
 	PKG_PACKER := zip -r -v
 	PKG_EXT := zip
 endif
-PKG_NAME := phiola-$(PKG_VER)-$(OS)-$(PKG_ARCH).$(PKG_EXT)
+PKG_OS := $(OS)
+ifeq "$(OS)" "apple"
+	PKG_OS := macos
+endif
+PKG_NAME := phiola-$(PKG_VER)-$(PKG_OS)-$(PKG_ARCH).$(PKG_EXT)
 package: $(PKG_NAME)
 $(PKG_NAME): $(APP_DIR)
 	$(PKG_PACKER) $@ $<
 
-PKG_DEBUG_NAME := phiola-$(PKG_VER)-$(OS)-$(PKG_ARCH)-debug.$(PKG_EXT)
+PKG_DEBUG_NAME := phiola-$(PKG_VER)-$(PKG_OS)-$(PKG_ARCH)-debug.$(PKG_EXT)
 $(PKG_DEBUG_NAME):
+ifeq "$(OS)" "apple"
+	$(PKG_PACKER) $@ *.dSYM
+else
 	$(PKG_PACKER) $@ *.debug
+endif
 package-debug: $(PKG_DEBUG_NAME)
 
 INST_ROOT := install-root
@@ -184,8 +218,10 @@ ifeq "$(CPU)" "amd64"
 	./phiola __bash_completion > $@/usr/share/bash-completion/completions/phiola
 endif
 
-setup_exe:
-	$(MAKE) -f ../installer/exe/Makefile
+SETUP_EXE := phiola-$(PKG_VER)-windows-x64-setup.exe
+setup_exe: $(SETUP_EXE)
+$(SETUP_EXE): $(PKG_NAME)
+	$(MAKE) -f $(PHIOLA)/installer/exe/Makefile  ROOT=$(ROOT_DIR) COMPILER=$(COMPILER)
 
 release: default
 	$(SUBMAKE) package
@@ -193,6 +229,10 @@ release: default
 ifeq "$(OS)" "linux"
 	$(SUBMAKE) deb
 	$(SUBMAKE) rpm
-else ifeq "$(WIN_INSTALLER)" "1"
+else ifeq "$(OS)" "windows"
 	$(SUBMAKE) setup_exe
 endif
+
+clean:
+	rm -f *.o *.d *.so *.dll *.exe
+	rm -rf phiola-2

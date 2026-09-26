@@ -180,7 +180,7 @@ Some modules also have the dependencies - load them too. */
 static char* mod_loading(ffstr name)
 {
 	int e = -1, r, attached = 0;
-	char* znames[2] = {};
+	char* znames[3] = {};
 	JNIEnv *env;
 
 	static const struct {
@@ -199,6 +199,7 @@ static char* mod_loading(ffstr name)
 		{ "af-loudness","ebur128-phi",	0 },
 		{ "af-sox",		"sox-phi",		0 },
 		{ "af-soxr",	"soxr-phi",		0 },
+		{ "http",		"ssl\0crypto",	0 },
 		{ "zstd",		"zstd-ffpack",	0 },
 	};
 	int i = ffcharr_find_sorted_padding(mods, FF_COUNT(mods), sizeof(mods[0].module), sizeof(mods[0]) - sizeof(mods[0].module), name.ptr, name.len);
@@ -211,7 +212,10 @@ static char* mod_loading(ffstr name)
 			goto end;
 		}
 
-		znames[1] = ffsz_dup(mods[i].dependency);
+		znames[1] = (void*)mods[i].dependency;
+		znames[2] = (void*)mods[i].dependency + ffsz_len(mods[i].dependency) + 1;
+		if (znames[2][0] == '\0')
+			znames[2] = NULL;
 	}
 
 	if ((r = jni_vm_attach_once(jvm, &env, &attached, JNI_VERSION_1_6))) {
@@ -235,7 +239,6 @@ end:
 		jni_vm_detach(jvm);
 
 	ffmem_free(znames[0]);
-	ffmem_free(znames[1]);
 	if (e)
 		return NULL;
 	return ffsz_allocfmt("lib%S.so", &name);

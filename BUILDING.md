@@ -1,23 +1,12 @@
-# phiola Build Instructions
-
-* Step 1. Download code
-* Step 2, Option 1. Cross-Build on Linux
-* Step 2, Option 2. Native Build
-	* Install dependencies
-	* Build
-* Build Parameters
-* Use
-
+# phiola Build Instructions in 3 Steps
 
 Supported targets:
-
-* Cross-Build on Linux for AMD64 & ARM64, Windows/AMD64, Android/ARM64
-* Native build on Linux
+* Cross-build on Linux for AMD64 & ARM64, Windows/AMD64, Android/ARM64
+* Native build on macOS
 
 Targets that should work after minor tweaking:
-
-* Build on Windows
-* Build on FreeBSD & macOS
+* Native build on Windows
+* Native build on FreeBSD
 
 
 ## Step 1. Download code
@@ -39,106 +28,77 @@ cd phiola
 
 ## Step 2, Option 1. Cross-Build on Linux
 
-* Cross-Build on Linux:
+* for Linux/AMD64:
 
 	```sh
 	bash xbuild.sh
 	```
 
-* Cross-Build on Linux for ARM64:
+* for Linux/ARM64:
 
 	```sh
 	CPU=arm64 \
 		bash xbuild.sh
 	```
 
-* Cross-Build on Linux for Windows/AMD64:
+* for Windows/AMD64:
 
 	```sh
 	OS=windows \
 		bash xbuild.sh
 	```
 
-* Cross-Build on Linux for Android/ARM64:
+* for Android/ARM64 (Android SDK and Gradle cache directories are passed through):
 
 	```sh
-	ANDROID_CLT_URL=https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip \
-	ANDROID_HOME=/home/USER/Android \
-	ANDROID_BT_VER=33.0.0 \
-	ANDROID_PF_VER=33 \
-	ANDROID_NDK_VER=25.1.8937393 \
-	GRADLE_DIR=/home/USER/.gradle \
-	CPU=arm64 \
+	ANDROID_HOME=$HOME/Android \
+	GRADLE_DIR=$HOME/.gradle \
 		bash xbuild-android.sh
 	```
 
+	Specify these env vars if needed:
 
-## Step 2, Option 2. Native Build
+		```sh
+		ANDROID_CLT_VER=...
+		ANDROID_PF_VER=...
+		ANDROID_BT_VER=...
+		ANDROID_NDK_VER=...
+		```
 
-### Install dependencies
+## Step 2, Option 2. Native Build on macOS
 
-* Debian/Ubuntu
+```sh
+brew install \
+	make \
+	cmake \
+	dos2unix \
+	automake libtool \
+	ncurses
+gmake -j8 PHI_HTTP_SSL=0 PHI_GUI=0
+```
 
-	```sh
-	sudo apt install \
-		make gcc g++ \
-		libasound2-dev libpulse-dev libjack-dev \
-		libdbus-1-dev \
-		libgtk-3-dev \
-		zstd unzip cmake patch dos2unix curl
-	```
+## Step 2, Option 3. Native Build on Windows
 
-* Fedora
+Install msys2 packages: `mingw-w64-clang-x86_64-clang`
 
-	```sh
-	sudo dnf install \
-		make gcc gcc-c++ \
-		alsa-lib-devel pulseaudio-libs-devel pipewire-jack-audio-connection-kit-devel \
-		dbus-devel \
-		gtk3-devel \
-		zstd unzip cmake patch dos2unix curl
-	```
+Set environment:
 
-* Windows
+```
+set PATH=c:\clang64\bin;%PATH%
+````
 
-	* msys2 packages: `mingw-w64-clang-x86_64-clang`
+Build:
 
-	Environment:
+```sh
+mingw32-make -j8
+```
 
-	```
-	set PATH=c:\clang64\bin;%PATH%
-	````
+## Step 3. Use
 
-* macOS
-
-	```sh
-	brew install \
-		make llvm \
-		cmake dos2unix
-	```
-
-### Build
-
-* Build on Linux:
-
-	```sh
-	make -j8
-	```
-
-* Build on Windows:
-
-	```sh
-	mingw32-make -j8
-	```
-
-* Build on FreeBSD & macOS:
-
-	```sh
-	gmake -j8 PHI_HTTP_SSL=0
-	```
+Directory `phiola-2` is the application directory.  Copy it anywhere you want.
 
 
-## Build Parameters
+## Supported Parameters for `make`
 
 | Parameter | Description |
 | --- | --- |
@@ -146,10 +106,6 @@ cd phiola
 | `ASAN=1`          | Enable ASAN |
 | `CFLAGS_USER=...` | Additional C/C++ compiler flags |
 | `PHI_CODECS=0`    | Disable all codecs |
+| `PHI_GUI=0`       | Disable GUI |
 | `PHI_HTTP_SSL=0`  | Disable SSL |
 | `PHI_HTTP_SRV=0`  | Disable ICY server |
-
-
-## Use
-
-Directory `phiola-2` is the application directory.  Copy it anywhere you want.

@@ -3,8 +3,8 @@
 include ../config.mk
 
 VER := 1.3.7
-URL := http://downloads.xiph.org/releases/vorbis/libvorbis-$(VER).tar.xz
-SHA256SUM := b33cc4934322bcbf6efcbacf49e3ca01aadbea4114ec9589d1b1e9d20f72954b
+URL := https://github.com/xiph/vorbis/releases/download/v$(VER)/libvorbis-$(VER).tar.xz
+PKG_SHA256 := b33cc4934322bcbf6efcbacf49e3ca01aadbea4114ec9589d1b1e9d20f72954b
 PKG := $(ALIB3)/vorbis/$(notdir $(URL))
 DIR := libvorbis-$(VER)
 
@@ -17,8 +17,8 @@ $(PKG):
 
 # unpack
 $(DIR): $(PKG)
-	echo "$(SHA256SUM) *$(PKG)" | sha256sum -c -
-	$(UNTAR_XZ) $(PKG)
+	echo "$(PKG_SHA256) *$(PKG)" | $(SHA256SUM) -c -
+	$(UNTAR) $(PKG)
 	cat $(ALIB3)/vorbis/*.patch | patch -d $(DIR) -p1
 
 # build

@@ -2,23 +2,24 @@
 
 ![](res/phiola.svg)
 
-phiola is a fast audio player, recorder, converter, and streaming server for Windows, Linux, and Android.
+phiola is a fast audio player, recorder, converter, and streaming server for Linux, macOS, Windows, and Android.
 It can play audio files from your device or a remote server, record audio from your microphone or an internet radio stream, and convert audio into various formats.
 Its low CPU consumption helps extend the battery life of laptops and phones.
-You can control phiola via CLI, TUI, GUI, system pipe, or its API.
+You can control phiola via CLI, TUI, GUI, IPC socket (UNIX socket / named pipe), or its API (C / Java).
 Its fast startup time makes it ideal for custom scripts used on a "play-and-exit" or "record-and-exit" basis.
 
 It is completely portable (all codecs are bundled), meaning you can run it directly from a read-only flash drive.
 phiola is free and open-source; use it as a standalone application or integrate it as a library into your own software.
 
 Screenshots of phiola GUI on Android, KDE/Linux and Windows 10:
-![phiola GUI on Android, KDE/Linux and Windows 10](../screenshots/phiola-gui-screenshot-android-kdelinux-windows.png)
+![phiola GUI on Android, KDE/Linux and Windows 10](../screenshots/screens/phiola-gui-screenshot-android-linux-windows.png)
 
 Contents:
 
 * [Features](#features)
 * [Install](#install)
 * [How to Use CLI](#how-to-use-cli)
+* [How to Use TUI](#how-to-use-tui)
 * [How to Use GUI](#how-to-use-gui)
 * [How to Use on Android](#how-to-use-on-android)
 * [How to Use API](#how-to-use-api)
@@ -42,6 +43,7 @@ Contents:
 	* DynamicAudioNormalizer, auto loudness and ReplayGain normalizer
 	* multi-band equalizer
 	* noise gate
+* Remote control: ability to start a background process and stop it from another terminal
 * Command Line Interface for Desktop OS
 * Terminal/Console UI for interaction at runtime
 * GUI for Windows, Linux, Android: manage your playlists and audio files
@@ -52,41 +54,61 @@ Contents:
 
 Features and notes by platform:
 
-| Feature              | Linux | Windows | Android |
-| --- | --- | --- | --- |
-| Dark themed GUI      | ✅ (GTK default) | incomplete | ✅ |
-| File formats         | ✅ all supported | ✅ all supported | all supported except `.mpc`, `.ape`, `.wv` |
-| Record what you hear | ✅ (PulseAudio) | ✅ | ❌ |
-| Audio Streaming Server | ✅ (AAC,Opus) | ✅ (AAC,Opus) | ❌ |
-| Requirements         | glibc-2.36 | Windows 7 | Android 8 (ARM64), Android 6 (ARM) |
-| HW Requirements      | AMD64, ARM64 | AMD64 | ARM64, ARM(incomplete) |
+| Feature              | Linux | macOS | Windows | Android |
+| --- | --- | --- | --- | --- |
+| Dark themed GUI      | ✅ (GTK default) | ❌ | ✅ | ✅ |
+| File formats         | ✅ all supported | ✅ | ✅ | except `.mpc`, `.ape`, `.wv` |
+| Record what you hear | ✅ (PulseAudio) | ❌ | ✅ | ❌ |
+| Audio Streaming Server | ✅ (AAC,Opus) | ✅ (AAC,Opus) | ✅ (AAC,Opus) | ❌ |
+| Requirements         | glibc-2.41 | macOS 14 | Windows 7 | Android 8 (ARM64), Android 6 (ARM) |
+| HW Requirements      | AMD64, ARM64 | ARM64 | AMD64 | ARM64, ARM(incomplete) |
 
-> Although not officially supported, phiola should build fine for **macOS**, **FreeBSD** and **Windows XP** after tweaking the build script.
-
-> Important: ALAC decoder is disabled by default in phiola/Android because of potential security issues (see https://github.com/macosforge/alac).
+> Important: the ALAC decoder is disabled by default because of potential security issues (see https://github.com/macosforge/alac).  You can still enable it on Android via `Settings -> Enable Deprecated Modules (ALAC)`; on desktop — by adding `DeprecatedMods` to `phiola.conf`.
 
 
 ## Install
 
 Download the latest package for your OS and CPU from [phiola Releases](https://github.com/stsaz/phiola/releases)
 
-### Linux (Portable)
+### Linux
 
-In case you've chosen the portable package (i.e. `phiola-....tar.zst`), here's how you can install it into the `~/bin` directory:
+Debian/Ubuntu:
 
 ```sh
-wget https://github.com/stsaz/phiola/releases/download/v2.3.12/phiola-2.3.12-linux-amd64.tar.zst
+sudo dpkg -i phiola_....deb
+```
+
+Fedora/RHEL:
+
+```sh
+sudo dnf install phiola-....rpm
+```
+
+Or if you want the portable version (`tar.zst`):
+
+```sh
+VER=...
 mkdir -p ~/bin
-tar xf phiola-2.3.12-linux-amd64.tar.zst -C ~/bin
+curl -L "https://github.com/stsaz/phiola/releases/download/v$VER/phiola-$VER-linux-amd64.tar.zst" | tar -x --zstd -f - -C ~/bin
 ln -s ~/bin/phiola-2/phiola ~/bin/phiola
 cp ~/bin/phiola-2/mod/gui/phiola.desktop ~/.local/share/applications
 ```
 
 If you choose another directory rather than `~/bin`, then you should also edit `Icon=` value in `~/.local/share/applications/phiola.desktop`.
 
+### macOS
+
+```sh
+VER=...
+mkdir -p ~/bin
+curl -L "https://github.com/stsaz/phiola/releases/download/v$VER/phiola-$VER-macos-arm64.tar.gz" | tar -x -f - -C ~/bin
+ln -s ~/bin/phiola-2/phiola ~/bin/phiola
+```
+
 ### Windows
 
 The easiest way to install phiola on Windows is to execute `phiola-...-windows-x64-setup.exe` and specify the installation directory.
+It is also the only way to register file associations (so you can open or enqueue audio files from Windows Explorer).
 
 Another option is to manually unpack `phiola-...-windows-x64.zip` and add the phiola directory to your `PATH` environment.
 
@@ -136,6 +158,9 @@ phiola http://server/music.mp3 -dup @stdout.wav | phiola convert @stdin -aac_q 6
 # Play audio with 3-band Equalizer:
 #  (low-shelf +3 dB; 600Hz band, 1.5 Q-factor width, -6 dB gain; high-shelf +3 dB)
 phiola file.mp3 -equalizer "t bass g 3, f 600 w 1.5q g -6, t treble g 3"
+
+# Play audio with ncurses TUI interface
+phiola -tui2 "My Music"
 ```
 
 While audio is playing, you can control phiola via the keyboard.  The most commonly used commands are:
@@ -174,10 +199,10 @@ phiola record -loopback -o audio.flac
 # * PulseAudio:
 phiola record -dev $(phiola dev list -f Monitor -n) -o audio.flac
 
-# Start recording in background, then stop recording from another process:
-#   Step 1: record while listening for system-wide commands
+# Start recording in background, controllable from another terminal:
+#   Step 1: start background recording with remote control enabled
 phiola -Background record -o audio.flac -remote
-#   Step 2: send 'stop' signal to the phiola instance that is recording audio
+#   Step 2: stop it from another terminal
 phiola remote stop
 
 # Record and split the output files by 1 hour
@@ -193,6 +218,8 @@ phiola record -o @stdout.wav | your_program
 > Note: the output audio format is chosen automatically by the file extension you specify.
 
 > Note: it's not required to always type the whole name of a command or an option - you may type just its prefix (enough for phiola to recognize it), e.g. instead of `phiola record -aformat int16` you may type `phiola rec -af int16`.
+
+> For more advanced recording workflows (background recording, remote stop), see the [Recording Tutorial](doc/recording-audio/tutorial.md#recording-in-background).
 
 Convert:
 
@@ -298,10 +325,43 @@ Currently supported commands:
 | [rename](src/exe/rename.h)   | Auto-rename files |
 | [server](src/exe/server.h)   | Start audio streaming server |
 | [tag](src/exe/tag.h)         | Edit file tags |
+| [tui](src/exe/tui.h)         | Start ncurses TUI |
 
 > For the details on each command you can click on the links above or execute `phiola COMMAND -h` on your PC.
 
 See also: [phiola Wiki](https://github.com/stsaz/phiola/wiki)
+
+
+## How to Use TUI
+
+![phiola TUI](../screenshots/screens/phiola-tui-screenshot.png)
+
+Start phiola in interactive Terminal/Console UI mode:
+
+```sh
+phiola tui [INPUT...]
+```
+
+Where INPUT can be file names, directories, or URLs.
+
+To add more files to the current playlist you can:
+* Press `Tab` to switch view to file explorer
+* Navigate to a target directory
+* Press `A` to add the selected directory to the current playlist
+
+### Controls
+
+| Key | Action |
+| --- | --- |
+| `Space` | Play/Pause |
+| `P` / `N` | Previous/Next track |
+| `Left/Right` | Seek backward/forward |
+| `Ctrl+Up/Down` | Volume down/up |
+| `.` | Stop |
+| `Tab` | Switch between Explorer and Playlist |
+| `Q` or `F10` | Quit |
+
+Press `F1` to see the full command list.
 
 
 ## How to Use GUI
@@ -318,7 +378,21 @@ Start phiola GUI:
 
 Then add some files to your playlist via drag-n-drop from your File Manager, or via `List->Add` menu command.
 
-**Bonus:** you can modify the appearance by editing the GUI source file: `phiola-2/mod/gui/ui.conf`.  You can also modify the text by editing language files, e.g. `phiola-2/mod/gui/lang_en.conf`.  On Windows you can modify the dark theme colors by editing `phiola-2/mod/gui/theme-dark-white.conf`.  Restart phiola GUI after you make changes to those files.
+### Customize
+
+You can customize the appearance and text:
+* **Appearance:** Modify the GUI source file `phiola-2/mod/gui/ui.conf`.
+* **Text:** Edit language files, e.g., `phiola-2/mod/gui/lang_en.conf`.
+* **Color Themes (Windows only):** Edit theme files, e.g., `phiola-2/mod/gui/theme-purple.conf`:
+	```
+	background 222222
+	text       cc99ff
+	text-alt   cc99ff
+	```
+
+	`background` is the background color; `text` is the main text color; `text-alt` is the text color for main menu bar, tabs, listview header, and status bar.
+
+Restart phiola GUI after making any changes to these files.
 
 ### 100% Portable Mode
 
@@ -327,7 +401,17 @@ By default, phiola GUI saves and restores its state (including your playlists) o
 * Windows: `%APPDATA%\phiola`
 * Linux: `$HOME/.config/phiola`
 
-If you prefer not to save state, simply create an empty `[phiola directory]/mod/gui/user.conf` file.  As long as this file is present, phiola GUI will store its state there, and it won't touch anything inside your user directory.
+To run phiola entirely self-contained (e.g., from USB drives), enable portable mode by creating an empty file `phiola-2/mod/gui/user.conf`, e.g.:
+* Windows (Command Prompt):
+	```
+	> phiola-2\mod\gui\user.conf
+	```
+* UNIX:
+	```bash
+	> phiola-2/mod/gui/user.conf
+	```
+
+As long as this file is present, phiola GUI will store its state within the application directory, not the system user directory.
 
 
 ## How to Use on Android
@@ -353,6 +437,20 @@ Here's how you can reconfigure phiola for recording audio from the internet radi
 
 > Note: phiola supports recording from AAC or MP3 radio streams.
 
+### Starting/Stopping Recording via Intent Actions
+
+phiola can be controlled externally using Android intent actions — this is useful for automation, accessibility tools, or mapping hardware buttons:
+
+* **Start Recording**: `android.provider.MediaStore.RECORD_SOUND`
+* **Stop Recording**: `com.github.stsaz.phiola.RECORD_STOP`
+
+Package: `com.github.stsaz.phiola`.
+
+**CLI examples:**
+```bash
+adb shell am start -a android.provider.MediaStore.RECORD_SOUND -n com.github.stsaz.phiola/.MainActivity
+adb shell am start -a com.github.stsaz.phiola.RECORD_STOP -n com.github.stsaz.phiola/.MainActivity
+```
 
 ## How to Use API
 
@@ -380,6 +478,12 @@ Here's how phiola works:
 Global settings can be specified in `phiola-2/phiola.conf` file.
 See the contents of `phiola-2/phiola-example.conf` for more info.
 
+Available options:
+
+* `AllowHibernate` — don't prevent the system from hibernating while playing or recording.
+* `Codepage` — code page for non-Unicode text (`win1251`, `win1252`, `win866`).
+* `DeprecatedMods` — enable the deprecated ALAC decoder (disabled by default due to unpatched security issues in the upstream library).
+
 
 ## External Libraries
 
@@ -395,7 +499,7 @@ libmpc,
 [libopus](https://github.com/xiph/opus),
 [libvorbis](https://github.com/xiph/vorbis),
 libwavpack,
-libsox,
+[libsox](https://github.com/chirlu/sox),
 [libsoxr](https://github.com/dofuuz/soxr),
 [libzstd](https://github.com/facebook/zstd),
 [libDynamicAudioNormalizer](https://github.com/lordmulder/DynamicAudioNormalizer).

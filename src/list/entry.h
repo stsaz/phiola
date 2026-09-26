@@ -30,7 +30,7 @@ static inline uint ffuri_scheme(ffstr name)
 	return scheme.len;
 }
 
-/** Get absolute filename. */
+/** Construct the complete file name. */
 static inline int plist_fullname(phi_track *t, ffstr name, ffstr *dst)
 {
 	const char *fn;

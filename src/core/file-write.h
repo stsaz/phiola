@@ -5,7 +5,7 @@
 #include <util/util.h>
 #include <ffsys/file.h>
 
-#define ALIGN (4*1024)
+#define BUF_ALIGN (4*1024)
 
 struct file_w {
 	phi_track*	trk;
@@ -237,7 +237,7 @@ static void* fw_open(phi_track *t)
 	f->fd = FFFILE_NULL;
 	f->name = fw_name(&f->namebuf, t->conf.ofile.name, t);
 	f->buf_cap = (t->conf.ofile.buf_size) ? t->conf.ofile.buf_size : 64*1024;
-	if (fcache_init(&f->bufs, 2, f->buf_cap, ALIGN))
+	if (fcache_init(&f->bufs, 2, f->buf_cap, BUF_ALIGN))
 		goto end;
 
 	const char *fn = f->name;
@@ -442,4 +442,4 @@ const phi_filter phi_file_w = {
 	"file-write"
 };
 
-#undef ALIGN
+#undef BUF_ALIGN

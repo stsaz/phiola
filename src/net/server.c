@@ -382,6 +382,7 @@ static const nml_http_sv_component* sv_chain[] = {
 	&nml_http_sv_response,
 	&nml_http_sv_send,
 	&nml_http_sv_accesslog,
+	NULL,
 };
 
 

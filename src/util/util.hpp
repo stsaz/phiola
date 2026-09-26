@@ -1,10 +1,18 @@
 /** C++ utility functions
 2023, Simon Zolin */
 
+#pragma once
 #include <ffbase/string.h>
 #include <ffbase/vector.h>
 #include <ffsys/path.h>
 #include <new>
+
+struct xxptr {
+	char *ptr;
+	xxptr() { ptr = NULL; }
+	xxptr(char *p) { ptr = p; }
+	~xxptr() { ffmem_free(ptr); }
+};
 
 struct xxstr : ffstr {
 	xxstr() { ptr = NULL;  len = 0; }
@@ -137,16 +145,37 @@ struct xxvec : ffvec {
 		va_end(va);
 		return *this;
 	}
+	xxvec& cat(xxstr s) {
+		FF_ASSERT(len + s.len <= cap);
+		len += ffmem_ncopy((char*)ptr + len, cap - len, s.ptr, s.len);
+		return *this;
+	}
+	xxvec& cat_f(const char *fmt, ...) {
+		va_list va;
+		va_start(va, fmt);
+		ffssize n = ffs_formatv((char*)ptr + len, cap - len, fmt, va);
+		va_end(va);
+		FF_ASSERT(n >= 0);
+		len += n;
+		return *this;
+	}
 	template<class T> T* at(ffsize i) { FF_ASSERT(i < len); return ffslice_itemT(this, i, T); }
 	template<class T> T* alloc(ffsize n) { return ffvec_allocT(this, n, T); }
 	template<class T> T* push() { return ffvec_pushT(this, T); }
 	template<class T> T* push_z() { return ffvec_zpushT(this, T); }
 	const xxstr& str() const { return *(xxstr*)this; }
 	const ffslice& slice() const { return *(ffslice*)this; }
-	char* sz() { return (char*)ptr; }
+	char* sz() {
+		if (len < cap && ((char*)ptr)[len] != '\0') {
+			((char*)ptr)[len] = '\0';
+		}
+		return (char*)ptr;
+	}
 	char* strz() {
-		if (len && ((char*)ptr)[len-1] != '\0')
-			ffvec_addchar(this, '\0');
+		if (len == cap || ((char*)ptr)[len] != '\0') {
+			ffvec_grow(this, 1, 1);
+			((char*)ptr)[len] = '\0';
+		}
 		return (char*)ptr;
 	}
 };
@@ -155,17 +184,17 @@ struct xxpath {
 	xxstr data;
 	xxpath(const char *sz) : data(sz) {}
 	xxpath(ffstr s) : data(s) {}
-	ffstr	path() const {
+	xxstr	path() const {
 		ffstr path;
 		ffpath_splitpath(data.ptr, data.len, &path, NULL);
 		return path;
 	}
-	ffstr	name() const {
+	xxstr	name() const {
 		ffstr name;
 		ffpath_splitpath(data.ptr, data.len, NULL, &name);
 		return name;
 	}
-	ffstr	name_no_ext() const {
+	xxstr	name_no_ext() const {
 		ffstr name;
 		ffpath_splitpath(data.ptr, data.len, NULL, &name);
 		ffpath_splitname(name.ptr, name.len, &name, NULL);

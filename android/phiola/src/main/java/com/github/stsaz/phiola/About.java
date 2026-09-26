@@ -32,10 +32,10 @@ public class About {
 		bSaveLogs.setOnClickListener((view) -> logs_save_file());
 
 		return new AlertDialog.Builder(ctx)
-				.setTitle("About")
-				.setView(v)
-				.setNegativeButton("Close", null)
-				.create();
+			.setTitle(ctx.getString(R.string.menu_about))
+			.setView(v)
+			.setNegativeButton(ctx.getString(R.string.about_close), null)
+			.create();
 	}
 
 	private void load() {

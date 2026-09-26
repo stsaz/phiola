@@ -25,3 +25,4 @@ END
 
 1 RCDATA "windows.ui"
 2 RCDATA __PACKAGE__
+3 RCDATA uninstall.exe

@@ -193,6 +193,7 @@ static int qagt_process(void *f, phi_track *t)
 				e->pub.length_sec = samples_to_msec(t->audio.total, t->audio.format.rate) / 1000;
 
 			if (META_LEN(&e->pub.meta) || META_LEN(&t->meta)) { // empty meta == not modified
+				ffint_fetch_add(&e->q->conf.version, 1);
 				fflock_lock((fflock*)&e->pub.lock); // UI thread may read or write `meta` at this moment
 				core->metaif->destroy(&e->pub.meta);
 				core->metaif->copy(&e->pub.meta, &t->meta, 0); // Remember the tags we read from file

@@ -1,0 +1,173 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [linux-amd64, linux-arm64, windows-amd64, android]
+    steps:
+      - name: Checkout phiola
+        uses: actions/checkout@v7
+
+      - name: Decode APK keystore
+        if: matrix.target == 'android'
+        env:
+          APK_KEY_STORE_B64: ${{ secrets.APK_KEY_STORE_B64 }}
+        run: |
+          echo "$APK_KEY_STORE_B64" | base64 --decode > android-key.jks
+
+      - name: Get the dependencies
+        run: |
+          cd ..
+          git clone --depth=1 https://github.com/stsaz/netmill
+          git clone --depth=1 https://github.com/stsaz/avpack
+          git clone --depth=1 https://github.com/stsaz/ffaudio
+          git clone --depth=1 https://github.com/stsaz/ffpack
+          git clone --depth=1 https://github.com/stsaz/ffgui
+          git clone --depth=1 https://github.com/stsaz/ffsys
+          git clone --depth=1 https://github.com/stsaz/ffbase
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          name: phiola-buildx
+          driver: docker-container
+          driver-opts: network=host
+
+      - name: Create and cache builder image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: builder/Dockerfile.${{ matrix.target }}
+          tags: phiola-builder
+          load: true
+          builder: phiola-buildx
+          cache-from: type=gha,scope=phiola-${{ matrix.target }}
+          cache-to: type=gha,mode=max,scope=phiola-${{ matrix.target }}
+
+      - name: Build for ${{ matrix.target }}
+        env:
+          APK_KEY_PASS: ${{ secrets.APK_KEY_PASS }}
+        run: |
+          docker run --rm \
+            -v $(pwd)/..:/src:Z \
+            -w /src/phiola \
+            -e APK_KEY_PASS="$APK_KEY_PASS" \
+            -e APK_KEY_STORE=/src/phiola/android-key.jks \
+            phiola-builder \
+            bash builder/build.sh ${{ matrix.target }} '${{ github.ref_name }}'
+
+      - name: Upload Linux artifacts
+        if: startsWith(matrix.target, 'linux')
+        uses: actions/upload-artifact@v7
+        with:
+          name: phiola-${{ matrix.target }}
+          path: |
+            _${{ matrix.target }}/phiola_*.deb
+            _${{ matrix.target }}/phiola-*.rpm
+            _${{ matrix.target }}/phiola-*.tar.zst
+
+      - name: Upload Windows artifacts
+        if: matrix.target == 'windows-amd64'
+        uses: actions/upload-artifact@v7
+        with:
+          name: phiola-${{ matrix.target }}
+          path: |
+            _${{ matrix.target }}/phiola-*.zip
+            _${{ matrix.target }}/phiola-*-setup.exe
+
+      - name: Upload Android artifacts
+        if: matrix.target == 'android'
+        uses: actions/upload-artifact@v7
+        with:
+          name: phiola-${{ matrix.target }}
+          path: |
+            _${{ matrix.target }}/phiola-*-android-*.apk
+            _${{ matrix.target }}/phiola-*-android-*-debug.tar.zst
+
+  build-macos:
+    runs-on: macos-14
+    steps:
+      - name: Checkout phiola
+        uses: actions/checkout@v7
+
+      - name: Get the dependencies
+        run: |
+          cd ..
+          git clone --depth=1 https://github.com/stsaz/netmill
+          git clone --depth=1 https://github.com/stsaz/avpack
+          git clone --depth=1 https://github.com/stsaz/ffaudio
+          git clone --depth=1 https://github.com/stsaz/ffpack
+          git clone --depth=1 https://github.com/stsaz/ffgui
+          git clone --depth=1 https://github.com/stsaz/ffsys
+          git clone --depth=1 https://github.com/stsaz/ffbase
+
+      - name: Install dependencies
+        run: |
+          brew install \
+            make \
+            cmake \
+            dos2unix \
+            automake libtool \
+            ncurses
+
+      - name: Build for macOS
+        run: |
+          bash builder/build.sh macos-arm64 '${{ github.ref_name }}'
+
+      - name: Run tests (macos-arm64)
+        run: |
+          cd _macos-arm64/phiola-2
+          bash ../../test/test.sh
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: phiola-macos-arm64
+          path: |
+            _macos-arm64/phiola-*.tar.gz
+
+  release:
+    needs: [build-linux, build-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout phiola
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+
+      - name: Generate release notes
+        run: |
+          bash builder/release-notes.sh '${{ github.ref_name }}'
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            artifacts/phiola-linux-amd64/phiola_*.deb
+            artifacts/phiola-linux-amd64/phiola-*.rpm
+            artifacts/phiola-linux-amd64/phiola-*.tar.zst
+            artifacts/phiola-linux-arm64/phiola_*.deb
+            artifacts/phiola-linux-arm64/phiola-*.rpm
+            artifacts/phiola-linux-arm64/phiola-*.tar.zst
+            artifacts/phiola-macos-arm64/phiola-*.tar.gz
+            artifacts/phiola-windows-amd64/phiola-*.zip
+            artifacts/phiola-windows-amd64/phiola-*-setup.exe
+            artifacts/phiola-android/phiola-*-android-*.apk
+            artifacts/phiola-android/phiola-*-android-*-debug.tar.zst
+          draft: true
+          body_path: release-notes.txt

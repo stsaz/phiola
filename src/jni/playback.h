@@ -4,8 +4,13 @@
 #include <util/aformat.h>
 #include <jni/pl-rec.h>
 
+static void qu_on_change(phi_queue_id q, uint flags, uint pos);
+
 static void* play_grd_open(phi_track *t)
 {
+	struct phi_queue_entry *qe = (struct phi_queue_entry*)t->qent;
+	qe->meta_display_stale = qe->error;
+	qe->error = 0;
 	x->play.trk = t;
 	x->play.seek_msec = -1;
 	x->play.paused = 0;
@@ -27,11 +32,22 @@ static void play_grd_close(void *f, phi_track *t)
 	if (t == x->play.trk)
 		x->play.trk = NULL;
 
-	if (t->chain_flags & PHI_FFINISHED) {
+	if ((t->chain_flags & PHI_FFINISHED)
+		&& t->error) {
+		uint removed = 0;
 		if (t->error == PHI_E_NOSRC
 			|| t->error == PHI_E_UNKIFMT) {
-			if (x->play.remove_on_error)
+			if (x->play.remove_on_error) {
 				x->queue.remove(t->qent);
+				removed = 1;
+			}
+		}
+
+		if (!removed) {
+			struct phi_queue_entry *qe = (struct phi_queue_entry*)t->qent;
+			qe->error = 1;
+			qe->meta_display_stale = 1;
+			qu_on_change(x->queue.queue(qe), 'm', x->queue.index(qe));
 		}
 	}
 
@@ -286,6 +302,14 @@ end:
 	ffmem_free(d);
 }
 
+static void play_stop(struct core_data *d)
+{
+	phi_track *t = x->play.trk;
+	if (t)
+		x->core->track->stop(t);
+	ffmem_free(d);
+}
+
 static void play_auto_stop_timer(void *param)
 {
 	x->play.auto_stop_timer_expired = 1;
@@ -328,27 +352,28 @@ JNIEXPORT void JNICALL
 Java_com_github_stsaz_phiola_Phiola_playCmd(JNIEnv *env, jobject thiz, jint cmd, jlong val)
 {
 	dbglog("%s: enter %d %d", __func__, cmd, val);
-	struct core_data *d;
+	struct core_data *d = ffmem_new(struct core_data);
 	switch (cmd) {
 	case PC_PAUSE_TOGGLE:
-		d = ffmem_new(struct core_data);
 		core_task(d, play_pause_resume);
 		break;
 
 	case PC_STOP:
-		x->core->track->stop(x->play.trk);  break;
+		core_task(d, play_stop);  break;
 
 	case PC_SEEK:
-		d = ffmem_new(struct core_data);
 		d->param_int = val;
 		core_task(d, play_seek);
 		break;
 
 	case PC_AUTO_STOP:
-		d = ffmem_new(struct core_data);
 		d->param_int = val;
 		core_task(d, play_auto_stop);
 		break;
+
+	default:
+		FF_ASSERT(0);
+		ffmem_free(d);
 	}
 	dbglog("%s: exit", __func__);
 }

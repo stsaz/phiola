@@ -26,6 +26,7 @@ extern const phi_filter
 	phi_m3u_read, phi_m3u_write,
 	phi_pls_read;
 extern const phi_tag_if phi_tag;
+extern const phi_playlist_if pl_if;
 
 static void* phi_autow_open(phi_track *t) { return (void*)1; }
 
@@ -112,6 +113,7 @@ static const void* fmt_mod_iface(const char *name)
 		{ "mp4",		&fmt_read },
 		{ "mpc",		&fmt_read },
 		{ "ogg",		&fmt_read },
+		{ "playlist",	&pl_if },
 		{ "pls",		&phi_pls_read },
 		{ "tag",		&phi_tag },
 		{ "ts",			&phi_ts_read },

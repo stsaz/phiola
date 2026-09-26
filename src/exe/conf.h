@@ -6,6 +6,7 @@
 struct conf {
 	uint	codepage_id;
 	u_char	allow_hibernate;
+	u_char	deprecated_mods;
 };
 
 static int ffu_coding(ffstr s)
@@ -39,6 +40,7 @@ static int conf_codepage(struct conf *c, ffstr s)
 static const struct ffarg conf_args[] = {
 	{ "AllowHibernate",	'1',	O(allow_hibernate) },
 	{ "Codepage",		'S',	conf_codepage },
+	{ "DeprecatedMods",	'1',	O(deprecated_mods) },
 	{}
 };
 #undef O

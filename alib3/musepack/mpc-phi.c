@@ -98,7 +98,7 @@ int mpc_decode(mpc_ctx *c, float *pcm)
 	if (c->buflen < MAX_FRAME_SIZE) {
 		memcpy(c->buffer, c->bufptr, c->buflen);
 		memset(c->buffer + c->buflen, 0, sizeof(c->buffer) - c->buflen);
-		c->br.buff = c->buffer;
+		c->br.buff = (void*)c->buffer;
 	} else
 		c->br.buff = (void*)c->bufptr;
 
