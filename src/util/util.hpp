@@ -105,15 +105,16 @@ struct xxvec : ffvec {
 	xxvec(ffstr s) {
 		ptr = s.ptr, len = s.len, cap = !(s.len == 0 && s.ptr != NULL) ? s.len : 1;
 	}
-	xxvec(const char *sz) {
-		ptr = (char*)sz, len = (ptr != NULL) ? ffsz_len(sz) : 0, cap = (ptr != NULL) ? len + 1 : 0;
-	}
 	xxvec(ffslice s) {
 		ptr = s.ptr, len = s.len, cap = !(s.len == 0 && s.ptr != NULL) ? s.len : 1;
 	}
 	~xxvec() { ffvec_free(this); }
 	void free() { ffvec_free(this); }
 	void reset() { ffvec_null(this); }
+	xxvec& clear() {
+		len = 0;
+		return *this;
+	}
 	xxvec& set(const char *sz) {
 		ffvec_free(this);
 		ptr = (void*)sz, len = ffsz_len(sz);
@@ -124,9 +125,9 @@ struct xxvec : ffvec {
 		ptr = s.ptr, len = s.len, cap = !(s.len == 0 && s.ptr != NULL) ? s.len : 1;
 		return *this;
 	}
-	xxvec& acquire(const char *sz) {
+	xxvec& acquire(char *sz) {
 		ffvec_free(this);
-		ptr = (char*)sz, len = (ptr) ? ffsz_len(sz) : 0, cap = (ptr) ? len + 1 : 0;
+		ptr = sz, len = (ptr) ? ffsz_len(sz) : 0, cap = (ptr) ? len + 1 : 0;
 		return *this;
 	}
 	xxvec& copy(ffstr s) {
@@ -146,7 +147,6 @@ struct xxvec : ffvec {
 		return *this;
 	}
 	xxvec& cat(xxstr s) {
-		FF_ASSERT(len + s.len <= cap);
 		len += ffmem_ncopy((char*)ptr + len, cap - len, s.ptr, s.len);
 		return *this;
 	}
@@ -155,12 +155,13 @@ struct xxvec : ffvec {
 		va_start(va, fmt);
 		ffssize n = ffs_formatv((char*)ptr + len, cap - len, fmt, va);
 		va_end(va);
-		FF_ASSERT(n >= 0);
-		len += n;
+		if (n > 0)
+			len += n;
 		return *this;
 	}
 	template<class T> T* at(ffsize i) { FF_ASSERT(i < len); return ffslice_itemT(this, i, T); }
 	template<class T> T* alloc(ffsize n) { return ffvec_allocT(this, n, T); }
+	template<class T> T* realloc(ffsize n) { return ffvec_reallocT(this, n, T); }
 	template<class T> T* push() { return ffvec_pushT(this, T); }
 	template<class T> T* push_z() { return ffvec_zpushT(this, T); }
 	const xxstr& str() const { return *(xxstr*)this; }
