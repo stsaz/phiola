@@ -293,7 +293,9 @@ static inline int ckv_list(const struct ckv *c, unsigned *cursor, ffstr *key, ff
 		len = _INT4_READ(p);
 		i = sizeof(c->cache) + p + size - c->ptr;
 
-		if (flags & CKV_F_UNIQUE) {
+		if (len == 0) {
+			// skip hole after Case R2/CR3
+		} else if (flags & CKV_F_UNIQUE) {
 			if (!_ckv_find(c->ptr + 4, p - 8, FFSTR_Z(p)))
 				break;
 			// skip current row because same key is found before
