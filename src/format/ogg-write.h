@@ -2,7 +2,7 @@
 2015,2021, Simon Zolin */
 
 #include <avpack/ogg-write.h>
-#include <ffsys/random.h>
+
 
 struct ogg_w {
 	oggwrite og;
@@ -18,15 +18,6 @@ struct ogg_w {
 static void* ogg_w_open(phi_track *t)
 {
 	struct ogg_w *o = phi_track_allocT(t, struct ogg_w);
-
-	static ffbyte seed;
-	if (!seed) {
-		seed = 1;
-		fftime t;
-		fftime_now(&t);
-		ffrand_seed(fftime_sec(&t) + fftime_nsec(&t));
-	}
-
 	return o;
 }
 
@@ -106,7 +97,7 @@ static int ogg_w_encode(void *ctx, phi_track *t)
 				o->state = I_PKT;
 			}
 
-			oggwrite_create(&o->og, ffrand_get(), max_page_samples);
+			oggwrite_create(&o->og, core->rand(), max_page_samples);
 			continue;
 		}
 

@@ -136,6 +136,9 @@ struct phi_core {
 	flags: enum PHI_CORE_TIME */
 	fftime (*time)(ffdatetime *dt, uint flags);
 
+	/** Get random number. */
+	uint (*rand)();
+
 	/** Get interface from a module.
 	Load module at first use.
 	name: "module.interface" */

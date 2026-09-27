@@ -4,7 +4,6 @@
 #include <track.h>
 #include <util/util.h>
 #include <ffbase/lock.h>
-#include <ffsys/random.h>
 
 extern const phi_core *core;
 extern const phi_track_if phi_track_iface;
@@ -314,25 +313,13 @@ static int q_count(struct phi_queue *q)
 	return q->index.len;
 }
 
-/** Initialize random number generator */
-static void qm_rand_init()
-{
-	if (qm->random_ready) return;
-
-	qm->random_ready = 1;
-	fftime t;
-	fftime_now(&t);
-	ffrand_seed(t.sec);
-}
-
 /** Get random index */
 static uint q_random(struct phi_queue *q)
 {
 	ffsize n = q->index.len;
 	if (n <= 1)
 		return 0;
-	qm_rand_init();
-	ffsize i = ffrand_get();
+	ffsize i = core->rand();
 
 	if (!q->random_init) {
 		q->random_init = 1;
@@ -681,10 +668,9 @@ static phi_queue_id q_filter(phi_queue_id q, ffstr filter, uint flags)
 /** Sort the index randomly */
 static void sort_random(phi_queue_id q)
 {
-	qm_rand_init();
 	struct q_entry **it, **e = (struct q_entry**)q->index.ptr;
 	FFSLICE_WALK(&q->index, it) {
-		ffsize n = ffrand_get() % q->index.len;
+		ffsize n = core->rand() % q->index.len;
 		void *tmp = *it;
 		*it = e[n];
 		e[n] = tmp;

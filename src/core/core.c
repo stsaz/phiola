@@ -11,6 +11,7 @@
 #include <ffsys/dylib.h>
 #include <ffsys/path.h>
 #include <ffsys/process.h>
+#include <ffsys/random.h>
 #include <ffsys/globals.h>
 #include <ffbase/vector.h>
 
@@ -66,6 +67,7 @@ struct core_ctx {
 
 	struct zzkcq kcq;
 	uint kcq_lazy_start :1;
+	uint random_init;
 
 	fflock mods_lock;
 	ffvec mods; // struct core_mod[]
@@ -321,6 +323,19 @@ static fftime core_time(ffdatetime *dt, uint flags)
 	}
 
 	return t;
+}
+
+static uint core_rand()
+{
+	if (!cc->random_init) {
+		fftime t;
+		fftime_now(&t);
+		ffrand_seed(fftime_sec(&t) + fftime_nsec(&t));
+		ffcpu_fence_release(); // seeding is complete before setting the flag
+		cc->random_init = 1;
+	}
+
+	return ffrand_get();
 }
 
 static void core_timer(uint worker, phi_timer *t, int interval_msec, phi_task_func func, void *param)
@@ -609,6 +624,7 @@ static phi_core _core = {
 	.track = &phi_track_iface,
 	.metaif = &phi_metaif,
 	.time = core_time,
+	.rand = core_rand,
 	.sig = core_sig,
 	.mod = core_mod,
 	.kev_alloc = core_kev_alloc,
