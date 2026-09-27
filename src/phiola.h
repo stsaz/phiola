@@ -361,10 +361,6 @@ struct phi_track_conf {
 	};
 
 	struct {
-		u_char	max_page_length_msec;
-	} ogg;
-
-	struct {
 		struct phi_af format;
 		uint	device_index; // 0:default
 		uint	buf_time; // msec

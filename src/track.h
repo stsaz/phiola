@@ -245,8 +245,11 @@ struct phi_track {
 			const char *flac_vendor;
 			uint flac_frame_samples;
 
+			// stream_copy=0: granule-position value from encoder
+			// stream_copy=1: granule-position value from source
+			uint64 ogg_granule_pos;
+
 			// (ogg|mkv).read -> ogg.write
-			uint64 ogg_granule_pos; // stream_copy=1: granule-position value from source
 			uint ogg_gen_opus_tag :1; // ogg.write must generate Opus-tag packet
 			uint ogg_copy :1; // copying ogg -> ogg
 

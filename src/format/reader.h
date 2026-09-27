@@ -150,12 +150,6 @@ static const char* fmtr_hdr(struct fmt_rd *f, phi_track *t, struct avpk_info *hd
 
 	switch (f->rd.ifa.format) {
 	case AVPKF_MKV:
-		if (t->conf.stream_copy) {
-			t->data_type =
-				(hdr->codec == AVPKC_OPUS) ? PHI_AC_OPUS
-				: (hdr->codec == AVPKC_VORBIS) ? PHI_AC_VORBIS
-				: 0;
-		}
 		if (hdr->codec == AVPKC_OPUS && t->conf.stream_copy)
 			t->oaudio.ogg_gen_opus_tag = 1; // .mkv has no Opus Tags packet
 		break;
@@ -186,6 +180,16 @@ static const char* fmtr_hdr(struct fmt_rd *f, phi_track *t, struct avpk_info *hd
 	case AVPKC_MP3:
 		if (t->conf.stream_copy)
 			t->data_type = PHI_AC_MP3;
+		break;
+
+	case AVPKC_OPUS:
+		if (t->conf.stream_copy)
+			t->data_type = PHI_AC_OPUS;
+		break;
+
+	case AVPKC_VORBIS:
+		if (t->conf.stream_copy)
+			t->data_type = PHI_AC_VORBIS;
 		break;
 
 	case AVPKC_PCM:
@@ -323,7 +327,8 @@ data:
 		break;
 
 	case AVPKF_OGG:
-		t->oaudio.ogg_granule_pos = ((oggread*)f->rd.ctx)->page_endpos;
+		if (t->oaudio.ogg_copy)
+			t->oaudio.ogg_granule_pos = ((oggread*)f->rd.ctx)->page_endpos;
 		break;
 	}
 

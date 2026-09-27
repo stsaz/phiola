@@ -5,12 +5,16 @@
 #include <avpack/flac-write.h>
 #include <avpack/mp3-write.h>
 #include <avpack/mp4-write.h>
+#include <avpack/ogg-write.h>
 #include <avpack/wav-write.h>
+
+extern const phi_filter phi_ogg_copy;
 
 static const struct avpkw_if *const avpkw_formats[] = {
 	&avpkw_flac,
 	&avpkw_mp3,
 	&avpkw_mp4,
+	&avpkw_ogg,
 	&avpkw_wav,
 };
 
@@ -31,6 +35,17 @@ static void fmtw_close(struct fmt_wr *w, phi_track *t)
 {
 	avpk_writer_close(&w->wr);
 	phi_track_free(t, w);
+}
+
+/** Get encoder filter name by file extension. */
+static const char* ogg_enc_mod(const char *fn)
+{
+	ffstr name, ext;
+	ffpath_splitpath(fn, ffsz_len(fn), NULL, &name);
+	ffstr_rsplitby(&name, '.', NULL, &ext);
+	if (ffstr_eqcz(&ext, "opus"))
+		return "ac-opus.encode";
+	return "ac-vorbis.encode";
 }
 
 static int fmtw_init(struct fmt_wr *w, phi_track *t)
@@ -72,6 +87,23 @@ static int fmtw_init(struct fmt_wr *w, phi_track *t)
 		}
 		break;
 
+	case AVPKF_OGG:
+		if (t->data_type == PHI_AC_PCM) {
+			const char *enc = ogg_enc_mod(t->conf.ofile.name);
+			if (!core->track->filter(t, core->mod(enc), PHI_TF_PREV))
+				return PHI_ERR;
+			return PHI_MORE;
+
+		} else if (t->data_type == PHI_AC_VORBIS
+			|| t->data_type == PHI_AC_OPUS) {
+			FF_ASSERT(t->conf.stream_copy);
+			if (!core->track->filter(t, &phi_ogg_copy, 0))
+				return PHI_ERR;
+			t->data_out = t->data_in;
+			return PHI_DONE;
+		}
+		goto err;
+
 	case AVPKF_WAV:
 		if (t->data_type != PHI_AC_PCM
 			|| t->oaudio.format.format == PHI_PCM_8) {
@@ -112,6 +144,10 @@ static int fmtw_create(struct fmt_wr *w, phi_track *t)
 		if (t->audio.total != ~0ULL && t->audio.total != 0 && !t->output.cant_seek)
 			ac.info.duration = (t->audio.total - t->audio.pos) * t->oaudio.format.rate / t->audio.format.rate;
 		ac.info.opaque = t->data_in;
+
+	} else if (w->wif->format == AVPKF_OGG) {
+		ac.info.ogg_serial = core->rand();
+		ac.info.ogg_max_page_samples = (t->oaudio.format.rate) ? t->oaudio.format.rate : 48000;
 	}
 
 	int r = avpk_create(&w->wr, w->wif, &ac);
@@ -137,6 +173,8 @@ static void fmtw_meta(struct fmt_wr *w, phi_track *t)
 	if (w->wif->format == AVPKF_FLAC
 		&& t->oaudio.flac_vendor != NULL)
 		avpk_tag(&w->wr, MMTAG_VENDOR, FFSTR_Z("vendor"), FFSTR_Z(t->oaudio.flac_vendor));
+	else if (w->wif->format == AVPKF_OGG)
+		return; // Tags are inside codec header packets
 
 	uint i = 0;
 	ffstr name, val;
@@ -187,8 +225,13 @@ static int fmtw_process(struct fmt_wr *w, phi_track *t)
 			.ptr = w->input.ptr,
 		};
 
-		if (w->wif->format == AVPKF_FLAC)
+		if (w->wif->format == AVPKF_FLAC) {
 			in.duration = t->oaudio.flac_frame_samples;
+		} else if (w->wif->format == AVPKF_OGG) {
+			in.end_pos = t->oaudio.ogg_granule_pos;
+			if (t->oaudio.ogg_granule_pos == 0)
+				flags |= AVPKW_F_OGG_FLUSH; // Vorbis/Opus header packets are in separate OGG pages
+		}
 
 		r = avpk_write(&w->wr, &in, flags, &res);
 		w->input = *(ffstr*)&in;
@@ -209,7 +252,14 @@ static int fmtw_process(struct fmt_wr *w, phi_track *t)
 			return PHI_MORE;
 
 		case AVPK_FIN:
-			verblog(t, "frames: %u", w->nframe);
+			if (w->wif->format == AVPKF_OGG) {
+				const struct oggwrite_stat *s = &((oggwrite*)w->wr.ctx)->stat;
+				verblog(t, "OGG: packets:%U, pages:%U, overhead:%.2F%%"
+					, (int64)s->npkts, (int64)s->npages
+					, (double)s->total_ogg * 100 / (s->total_payload + s->total_ogg));
+			} else {
+				verblog(t, "frames: %u", w->nframe);
+			}
 			return PHI_DONE;
 
 		case AVPK_ERROR:

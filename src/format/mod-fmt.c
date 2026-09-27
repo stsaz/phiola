@@ -18,8 +18,6 @@ static const void* fmt_mod_iface_input(const char *name);
 
 extern const phi_filter
 	phi_aac_adts_write,
-	phi_ogg_write;
-extern const phi_filter
 	phi_ts_read,
 	phi_cue_read, phi_cue_hook,
 	phi_m3u_read, phi_m3u_write,
@@ -44,8 +42,8 @@ static int phi_autow_process(void *obj, phi_track *t)
 		{ "m4a",	&fmt_write },
 		{ "mp3",	&fmt_write },
 		{ "mp4",	&fmt_write },
-		{ "ogg",	&phi_ogg_write },
-		{ "opus",	&phi_ogg_write },
+		{ "ogg",	&fmt_write },
+		{ "opus",	&fmt_write },
 		{ "wav",	&fmt_write },
 	};
 	const void *f;

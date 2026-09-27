@@ -13,7 +13,6 @@ struct ogg_w {
 	uint64 last_pos;
 	uint64 total;
 	uint pos_start_set :1;
-	uint copy :1;
 };
 
 static void* ogg_w_open(phi_track *t)
@@ -37,16 +36,6 @@ static void ogg_w_close(void *ctx, phi_track *t)
 	oggwrite_close(&o->og);
 	ffvec_free(&o->pktbuf);
 	phi_track_free(t, o);
-}
-
-static const char* ogg_enc_mod(const char *fn)
-{
-	ffstr name, ext;
-	ffpath_splitpath(fn, ffsz_len(fn), NULL, &name);
-	ffstr_rsplitby(&name, '.', NULL, &ext);
-	if (ffstr_eqcz(&ext, "opus"))
-		return "ac-opus.encode";
-	return "ac-vorbis.encode";
 }
 
 static int pkt_write(struct ogg_w *o, phi_track *t, ffstr *in, ffstr *out, uint64 endpos, uint flags)
@@ -92,7 +81,7 @@ OGG->OGG copying doesn't require temp. buffer.
 */
 static int ogg_w_encode(void *ctx, phi_track *t)
 {
-	enum { I_ENC, I_CONF, I_PKT, I_OPUS_TAGS, I_PAGE_EXACT };
+	enum { I_INIT, I_PKT, I_OPUS_TAGS, I_PAGE_EXACT };
 	struct ogg_w *o = ctx;
 	int r;
 	uint flags = 0;
@@ -105,29 +94,16 @@ static int ogg_w_encode(void *ctx, phi_track *t)
 	for (;;) {
 		switch (o->state) {
 
-		case I_ENC:
-			if (t->data_type == PHI_AC_PCM) {
-				const char *enc = ogg_enc_mod(t->conf.ofile.name);
-				if (!core->track->filter(t, core->mod(enc), PHI_TF_PREV))
-					return PHI_ERR;
-				o->state = I_CONF;
-				return PHI_MORE;
-			}
-			o->copy = 1;
-			// fallthrough
-
-		case I_CONF: {
-			uint max_page_samples = (t->oaudio.format.rate) ? t->oaudio.format.rate : 48000;
-			if (t->conf.ogg.max_page_length_msec)
-				max_page_samples = max_page_samples * t->conf.ogg.max_page_length_msec / 1000;
-
-			o->state = I_PKT;
+		case I_INIT: {
+			uint max_page_samples;
 			if (t->oaudio.ogg_copy) {
 				max_page_samples = 0; // ogg->ogg copy must replicate the pages exactly
 				o->state = I_PAGE_EXACT;
 			} else {
+				max_page_samples = (t->oaudio.format.rate) ? t->oaudio.format.rate : 48000;
 				o->pkt = o->in;
 				o->in.len = 0;
+				o->state = I_PKT;
 			}
 
 			oggwrite_create(&o->og, ffrand_get(), max_page_samples);
@@ -135,7 +111,7 @@ static int ogg_w_encode(void *ctx, phi_track *t)
 		}
 
 		case I_PKT:
-			if (o->copy && !o->pos_start_set && t->audio.pos) {
+			if (!o->pos_start_set && t->audio.pos) {
 				o->pos_start_set = 1;
 				o->pos_start = t->audio.pos;
 			}
@@ -201,7 +177,7 @@ static int ogg_w_encode(void *ctx, phi_track *t)
 	}
 }
 
-const phi_filter phi_ogg_write = {
+const phi_filter phi_ogg_copy = {
 	ogg_w_open, ogg_w_close, ogg_w_encode,
-	"ogg-write"
+	"ogg-copy"
 };

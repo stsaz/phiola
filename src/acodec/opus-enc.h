@@ -175,6 +175,7 @@ static int opus_enc_encode(void *ctx, phi_track *t)
 
 	t->audio.pos = o->endpos;
 	o->endpos += samples;
+	t->oaudio.ogg_granule_pos = o->endpos;
 	dbglog(t, "encoded %L samples into %L bytes @%U [%U]"
 		, (in_len - o->in.len) / phi_af_size(&o->fmt), t->data_out.len
 		, t->audio.pos, o->endpos);
