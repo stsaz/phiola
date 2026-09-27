@@ -10,5 +10,3 @@ extern const phi_core *core;
 #define errlog(t, ...)  phi_errlog(core, NULL, t, __VA_ARGS__)
 #define warnlog(t, ...)  phi_warnlog(core, NULL, t, __VA_ARGS__)
 #define dbglog(t, ...)  phi_dbglog(core, NULL, t, __VA_ARGS__)
-
-#include <format/flac-write.h>

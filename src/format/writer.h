@@ -2,11 +2,13 @@
 2025, Simon Zolin */
 
 #include <avpack/writer.h>
+#include <avpack/flac-write.h>
 #include <avpack/mp3-write.h>
 #include <avpack/mp4-write.h>
 #include <avpack/wav-write.h>
 
 static const struct avpkw_if *const avpkw_formats[] = {
+	&avpkw_flac,
 	&avpkw_mp3,
 	&avpkw_mp4,
 	&avpkw_wav,
@@ -41,6 +43,13 @@ static int fmtw_init(struct fmt_wr *w, phi_track *t)
 	}
 
 	switch (w->wif->format) {
+	case AVPKF_FLAC:
+		if (t->data_type != PHI_AC_PCM)
+			goto err;
+		if (!core->track->filter(t, core->mod("ac-flac.encode"), PHI_TF_PREV))
+			return PHI_ERR;
+		return PHI_MORE;
+
 	case AVPKF_MP3:
 		if (t->data_type == PHI_AC_PCM) {
 			if (!core->track->filter(t, core->mod("ac-mp3lame.encode"), PHI_TF_PREV))
@@ -99,6 +108,12 @@ static int fmtw_create(struct fmt_wr *w, phi_track *t)
 		},
 	};
 
+	if (w->wif->format == AVPKF_FLAC) {
+		if (t->audio.total != ~0ULL && t->audio.total != 0 && !t->output.cant_seek)
+			ac.info.duration = (t->audio.total - t->audio.pos) * t->oaudio.format.rate / t->audio.format.rate;
+		ac.info.opaque = t->data_in;
+	}
+
 	int r = avpk_create(&w->wr, w->wif, &ac);
 	if (r) {
 		t->error = PHI_E_OUT_FMT;
@@ -119,11 +134,15 @@ static int fmtw_create(struct fmt_wr *w, phi_track *t)
 
 static void fmtw_meta(struct fmt_wr *w, phi_track *t)
 {
+	if (w->wif->format == AVPKF_FLAC
+		&& t->oaudio.flac_vendor != NULL)
+		avpk_tag(&w->wr, MMTAG_VENDOR, FFSTR_Z("vendor"), FFSTR_Z(t->oaudio.flac_vendor));
+
 	uint i = 0;
 	ffstr name, val;
 	while (core->metaif->list(&t->meta, &i, &name, &val, PHI_META_UNIQUE)) {
 		int id = ffszarr_find(ffmmtag_str, FF_COUNT(ffmmtag_str), name.ptr, name.len);
-		if (avpk_tag(&w->wr, id, name, val)) {
+		if (avpk_tag(&w->wr, (id > 0) ? id : 0, name, val)) {
 			warnlog(t, "can't add tag: %S", &name);
 		}
 	}
@@ -151,8 +170,11 @@ static int fmtw_process(struct fmt_wr *w, phi_track *t)
 		w->input = t->data_in;
 
 	uint flags = 0;
-	if (t->chain_flags & PHI_FFIRST)
+	if (t->chain_flags & PHI_FFIRST) {
 		flags |= AVPKW_F_LAST;
+		if (w->wif->format == AVPKF_FLAC)
+			flags |= AVPKW_F_FLAC_INFO;
+	}
 
 	if (t->audio.mp3_lametag)
 		flags |= AVPKW_F_MP3_LAME;
@@ -164,6 +186,10 @@ static int fmtw_process(struct fmt_wr *w, phi_track *t)
 			.len = w->input.len,
 			.ptr = w->input.ptr,
 		};
+
+		if (w->wif->format == AVPKF_FLAC)
+			in.duration = t->oaudio.flac_frame_samples;
+
 		r = avpk_write(&w->wr, &in, flags, &res);
 		w->input = *(ffstr*)&in;
 		switch (r) {

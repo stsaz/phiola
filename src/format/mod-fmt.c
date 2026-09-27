@@ -18,7 +18,6 @@ static const void* fmt_mod_iface_input(const char *name);
 
 extern const phi_filter
 	phi_aac_adts_write,
-	phi_flac_write,
 	phi_ogg_write;
 extern const phi_filter
 	phi_ts_read,
@@ -41,7 +40,7 @@ static int phi_autow_process(void *obj, phi_track *t)
 
 	static const struct map_sz_vptr mods[] = {
 		{ "aac",	&phi_aac_adts_write },
-		{ "flac",	&phi_flac_write },
+		{ "flac",	&fmt_write },
 		{ "m4a",	&fmt_write },
 		{ "mp3",	&fmt_write },
 		{ "mp4",	&fmt_write },
