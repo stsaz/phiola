@@ -21,9 +21,7 @@ static void alsa_close(audio_out *a, phi_track *t)
 			mod->usedby = NULL;
 
 	} else if (mod->usedby == a) {
-		dbglog(NULL, "stop");
-		if (0 != ffalsa.stop(mod->out))
-			errlog(t, "stop(): %s", ffalsa.error(mod->out));
+		audio_out_finish(a);
 		core->timer(t->worker, &mod->tmr, -ABUF_CLOSE_WAIT, alsa_buf_close, NULL);
 		mod->usedby = NULL;
 	}
