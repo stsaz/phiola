@@ -10,6 +10,9 @@ window wmain {
 		text	"Install phiola here:"
 	}
 	editbox edir {
+		onchange	A_DIR_CHANGED
+	}
+	label lstatus {
 	}
 
 	button bbrowse {
@@ -23,7 +26,7 @@ window wmain {
 	}
 
 	checkbox cb_shortcut {
-		text	"Create Desktop shortcut"
+		text	"Create Desktop and Start Menu shortcuts"
 		style	checked
 	}
 

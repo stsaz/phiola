@@ -25,7 +25,8 @@ OBJ := windows.o crc32.o
 OBJ += \
 	ffgui-winapi.o \
 	ffgui-winapi-loader.o \
-	str-format.o
+	str-format.o \
+	sort.o
 LINKFLAGS += -fuse-ld=lld \
 	-Wl,--gc-sections \
 	-lshell32 -luxtheme -lcomctl32 -lcomdlg32 -lgdi32 -lole32 -luuid

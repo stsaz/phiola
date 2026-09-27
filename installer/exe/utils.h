@@ -28,6 +28,58 @@ typedef unsigned char u_char;
 #define ffsz_allocfmt_syserr(fmt, ...) \
 	ffsz_allocfmt(fmt ": (%u) %s", __VA_ARGS__, fferr_last(), fferr_strptr(fferr_last()))
 
+/** Show system dialog for choosing a file/directory.
+path: [optional] initial path
+flags: [optional] FOS_* values
+Return selected path, free with ffmem_free();  NULL on error. */
+static char* ffui_filedlg_show(HWND parent, const char *path, ffuint flags)
+{
+	char *r = NULL;
+	IShellItem *si = NULL;
+	IFileOpenDialog *fod = NULL;
+	wchar_t *w = NULL;
+	HRESULT hr;
+
+	if ((hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER, _FFCOM_ID(IID_IFileOpenDialog), (void**)&fod)) < 0)
+		goto end;
+
+	DWORD options;
+	if ((hr = IFileOpenDialog_GetOptions(fod, &options)) >= 0) {
+		if (!flags)
+			flags = FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST;
+		options |= flags;
+		IFileOpenDialog_SetOptions(fod, options);
+	}
+
+	if (path) {
+		w = ffsz_alloc_utow(path);
+		if ((hr = SHCreateItemFromParsingName(w, NULL, _FFCOM_ID(IID_IShellItem), (void**)&si)) >= 0) {
+			IFileOpenDialog_SetFolder(fod, si);
+			IShellItem_Release(si);
+		}
+		ffmem_free(w);
+		w = NULL;
+		si = NULL;
+	}
+
+	if ((hr = IFileOpenDialog_Show(fod, parent)) < 0)
+		goto end;
+
+	if ((hr = IFileOpenDialog_GetResult(fod, &si)) < 0)
+		goto end;
+	if ((hr = IShellItem_GetDisplayName(si, SIGDN_FILESYSPATH, &w)) < 0)
+		goto end;
+	r = ffsz_alloc_wtou(w);
+	CoTaskMemFree(w);
+
+end:
+	if (si)
+		IShellItem_Release(si);
+	if (fod)
+		IFileOpenDialog_Release(fod);
+	return r;
+}
+
 
 typedef HANDLE ffmtx;
 #define FFMTX_NULL  NULL
@@ -427,6 +479,27 @@ static inline int ffwinreg_open_writestr(HKEY hk, const char *path, const char *
 
 static inline int ffwinreg_open_writez(HKEY hk, const char *path, const char *name, const char *valz) {
 	return ffwinreg_open_writestr(hk, path, name, valz, ffsz_len(valz));
+}
+
+/** Read string value from registry.
+val: output string.  Free with ffmem_free().
+Return 0 on success */
+static inline int ffwinreg_open_readstr(HKEY hk, const char *subkey, const char *name, ffstr *val)
+{
+	int r = -1;
+	ffwinreg k;
+	ffwinreg_val v = {};
+	if (FFWINREG_NULL == (k = ffwinreg_open(hk, subkey, FFWINREG_READONLY)))
+		goto end;
+	if (1 != ffwinreg_read(k, name, &v)
+		|| !ffwinreg_isstr(v.type))
+		goto end;
+	r = 0;
+
+end:
+	ffwinreg_close(k);
+	ffstr_set(val, v.data, v.datalen);
+	return r;
 }
 
 static inline int ffwinreg_open_del(HKEY hk, const char *path, const char *key, const char *val)

@@ -12,7 +12,7 @@ Simon Zolin, 2024 */
 #define MSG_TITLE  "phiola setup"
 #define E_EXISTS  "The specified directory already exists"
 #define E_NO_PATH  "The specified path does not exist"
-#define E_ABS_PATH  "The install path must be absolute"
+#define E_ABS_PATH  "The install path must be a full path"
 #define E_DIR_NAME  "The directory name must be \"phiola-2\", but you specified"
 #define E_CORRUPT  "The installer file is corrupted.  Please redownload it."
 
@@ -21,9 +21,11 @@ Simon Zolin, 2024 */
 #include <ffsys/std.h>
 #endif
 #include <utils.h>
+#include <phiola.h>
 #include <ffgui/winapi/loader.h>
 #include <ffgui/loader.h>
 #include <ffgui/gui.hpp>
+#include <ffsys/dylib.h>
 #include <ffsys/environ.h>
 #include <ffsys/globals.h>
 
@@ -32,7 +34,8 @@ Simon Zolin, 2024 */
 	_(A_BROWSE), \
 	_(A_HOMEPAGE), \
 	_(A_CLOSE), \
-	_(A_CB_PORTABLE),
+	_(A_CB_PORTABLE), \
+	_(A_DIR_CHANGED),
 
 #define _(id) id
 enum {
@@ -44,7 +47,7 @@ enum {
 struct installer {
 	struct wmain {
 		ffui_windowxx	wnd;
-		ffui_labelxx	ldir, lurl;
+		ffui_labelxx	ldir, lurl, lstatus;
 		ffui_editxx		edir;
 		ffui_checkboxxx	cb_portable, cb_shortcut, cb_environ, cb_start, cb_defaultapp;
 		ffui_buttonxx	bbrowse, binstall;
@@ -71,7 +74,7 @@ struct installer {
 		#define _(m) FFUI_LDR_CTL(struct wmain, m)
 		static const ffui_ldr_ctl wmain_ctls[] = {
 			_(wnd),
-			_(ldir), _(edir), _(bbrowse),
+			_(ldir), _(edir), _(lstatus), _(bbrowse),
 			_(cb_portable),
 			_(cb_shortcut),
 			_(cb_environ),
@@ -107,25 +110,122 @@ struct installer {
 		return 0;
 	}
 
-	void browse()
-	{
-		ffui_dialogxx dlg;
-		dlg.title(MSG_TITLE);
-		char *fn = dlg.save(&wmain.wnd, DIR_NAME);
-		if (fn)
-			wmain.edir.text(fn);
+	enum INST_T {
+		INST_NONE, // target dir doesn't exist
+		INST_EXISTS, // target dir exists, not a phiola installation
+		INST_PORTABLE, // phiola portable installation
+		INST_UPGRADE, // phiola installation, different version
+		INST_UPGRADE_SAME, // phiola installation, same version
+	};
+	xxvec upgrade_path_backup;
+
+	/** Get status of the target app dir.
+	Return enum INST_T. */
+	int upgrade_check(xxvec &buf, xxstr dir, xxvec *version) {
+		int rc = INST_NONE;
+		ffdl phi_dll = FFDL_NULL;
+		struct phi_core_conf conf = {};
+		phi_core *core = NULL;
+		typedef phi_core* (*phi_core_create_t)(struct phi_core_conf *);
+		phi_core_create_t phi_core_create = NULL;
+		void (*phi_core_destroy)() = NULL;
+
+		buf.clear().realloc<char>(dir.len + 1 + 255 + 1);
+		buf.cat(dir);
+		if (!fffile_exists(buf.sz())) {
+			rc = INST_NONE;
+			goto end;
+		}
+
+		buf.cat_f("\\%s", EXE_NAME);
+		if (!fffile_exists(buf.sz())) {
+			rc = INST_EXISTS;
+			goto end;
+		}
+
+		buf.len = dir.len;
+		buf.cat("\\libphiola.dll");
+		if (FFDL_NULL == (phi_dll = ffdl_open(buf.sz(), 0))) {
+			rc = INST_EXISTS;
+			goto end;
+		}
+
+		phi_core_create = (phi_core_create_t)ffdl_addr(phi_dll, "phi_core_create");
+		phi_core_destroy = (void (*)())ffdl_addr(phi_dll, "phi_core_destroy");
+		if (!phi_core_create || !phi_core_destroy) {
+			rc = INST_EXISTS;
+			goto end;
+		}
+
+		core = phi_core_create(&conf);
+		if (!core || !core->version_str
+			|| ffsz_len(core->version_str) > FFS_LEN("0.00-beta00")) {
+			rc = INST_EXISTS;
+			goto end;
+		}
+
+		buf.len = dir.len;
+		buf.cat_f("\\%s", CONF_PORTABLE);
+		if (fffile_exists(buf.sz())) {
+			rc = INST_PORTABLE;
+			goto end;
+		}
+
+		rc = INST_UPGRADE;
+		if (version)
+			version->add(core->version_str);
+		if (ffsz_eq(core->version_str, PHI_VERSION_STR))
+			rc = INST_UPGRADE_SAME;
+
+	end:
+		if (core)
+			phi_core_destroy();
+		if (phi_dll != FFDL_NULL)
+			ffdl_close(phi_dll);
+		return rc;
 	}
 
-	char* uninstaller_create(xxstr dir)
+	/** Backup the existing app dir. */
+	char* upgrade_prepare(const char *phi_dir) {
+		this->upgrade_path_backup.clear().add_f("%s.old%Z", phi_dir);
+
+		if (fffile_exists(this->upgrade_path_backup.sz())) {
+			return ffsz_allocfmt(
+				"A leftover directory from a previously interrupted upgrade was found.\n"
+				"Please delete it manually: %s"
+				, this->upgrade_path_backup.sz());
+		}
+		// Note: race-condition here (MOVEFILE_REPLACE_EXISTING)
+		if (fffile_rename(phi_dir, this->upgrade_path_backup.sz())) {
+			return ffsz_allocfmt(
+				"Cannot rename the existing installation: %s.\n"
+				"Make sure phiola is not running."
+				, phi_dir);
+		}
+
+		return NULL;
+	}
+
+	static int job(int r, const char *path) { return r; }
+
+	/** Delete the backup dir. */
+	int upgrade_fin() {
+		return dir_remove_r(this->upgrade_path_backup.sz(), DEL_MAX_FILES, job);
+	}
+
+	/** Restore from the backup dir. */
+	int upgrade_err(const char *dir) {
+		return fffile_rename(this->upgrade_path_backup.sz(), dir);
+	}
+
+	char* uninstaller_create(xxvec &buf, xxstr dir)
 	{
 		if (!this->hres_uninst_exe
 			&& !(this->hres_uninst_exe = ffui_res_load(GetModuleHandleW(NULL), RES_UNINST, RT_RCDATA, &this->uninst_exe)))
 			return ffsz_dup(E_CORRUPT);
 
-		xxvec buf;
-		buf.alloc<char>(dir.len + FFS_LEN(UNINSTALL_EXE) + 2);
+		buf.clear().realloc<char>(dir.len + 1 + 255 + 1);
 		buf.cat_f("%S\\shell", &dir);
-
 		if (ffdir_make(buf.sz())
 			&& !fferr_exist(fferr_last()))
 			return ffsz_allocfmt_syserr("directory make: %s", buf.sz());
@@ -141,108 +241,210 @@ struct installer {
 	{
 		if (this->done) return;
 
-		xxvec e, dir, path, exe;
-		xxstr spath, sname;
+		xxvec e, dir, exe, buf;
+		xxstr dir_path, dir_name;
+		bool upgrading = 0, dirty = 0, success_msg = 1;
+		buf.alloc<char>(4096);
+		dir.acquire(wmain.edir.text()); // ffui_textstr() writes NULL-terminated string
+		exe.add_f("%S\\%s%Z", &dir, EXE_NAME).len--;
+		const char *exez = (char*)exe.ptr, *dirz = (char*)dir.ptr;
+		ffpath_splitpath_str(dir.str(), &dir_path, &dir_name);
+		/*
+		exe = path/phiola-2/phiola-gui.exe
+		dir = path/phiola-2
+		dir_path = path
+		*/
 
-		dir.acquire(wmain.edir.text());
-		ffvec_grow(&dir, 1, 1);
-		((char*)dir.ptr)[dir.len] = '\0';
-		ffpath_splitpath_str(dir.str(), &spath, &sname);
-
-		if (!sname.equals(DIR_NAME)) {
-			e.add_f("%s: \"%S\"%Z", E_DIR_NAME, &sname);
+		if (!dir_name.equals(DIR_NAME)) {
+			e.add_f("%s: \"%S\"", E_DIR_NAME, &dir_name);
+			goto err;
+		}
+		if (!ffpath_abs(dir_path.ptr, dir_path.len)) {
+			e.add_f("%s", E_ABS_PATH);
+			goto err;
+		}
+		if (!fffile_exists(buf.add(dir_path).sz())) {
+			e.add_f("%s: \"%s\"", E_NO_PATH, buf.sz());
 			goto err;
 		}
 
-		if (!ffpath_abs(dir.sz(), dir.len)) {
-			e.add_f("%s: \"%s\"%Z", E_ABS_PATH, dir.sz());
-			goto err;
+		switch (upgrade_check(buf, dir.str(), NULL)) {
+		case INST_NONE:
+			break;
+
+		case INST_UPGRADE:
+		case INST_UPGRADE_SAME: {
+			if (wmain.cb_portable.checked()) {
+				// The situation has changed since the last UI update
+				ui_update();
+				return;
+			}
+			char *s = upgrade_prepare(dirz);
+			if (s) {
+				e.acquire(s);
+				goto err;
+			}
+			upgrading = 1;
+			break;
 		}
 
-		if (fffile_exists(dir.sz())) {
-			e.add_f("%s: \"%s\"%Z", E_EXISTS, dir.sz());
-			goto err;
-		}
-
-		path.add_f("%S%Z", &spath);
-		if (!fffile_exists(path.sz())) {
-			e.add_f("%s: \"%s\"%Z", E_NO_PATH, path.sz());
-			goto err;
+		default:
+			// The situation has changed since the last UI update
+			ui_update();
+			return;
 		}
 
 		if (!this->hpkg
 			&& !(this->hpkg = ffui_res_load(GetModuleHandleW(NULL), RES_PKG, RT_RCDATA, &this->pkg))) {
-			e.set(E_CORRUPT);
+			e.add(E_CORRUPT);
 			goto err;
 		}
 
+		dirty = 1;
 		char *s;
-		if ((s = zip_unpack(this->pkg, spath))) {
+		if ((s = zip_unpack(this->pkg, dir_path))) {
 			if (s != (char*)-1)
 				e.acquire(s);
 			else
-				e.set(E_CORRUPT);
+				e.add(E_CORRUPT);
 			goto err;
 		}
 
 		if (wmain.cb_portable.checked()) {
-			fffd f = fffile_open(xxvec().add_f("%S\\%s%Z", &dir, CONF_PORTABLE).sz(), FFFILE_CREATENEW | FFFILE_WRITEONLY);
+			buf.clear().add_f("%S\\%s%Z", &dir, CONF_PORTABLE);
+			fffd f = fffile_open(buf.sz(), FFFILE_CREATENEW | FFFILE_WRITEONLY);
+			if (f == FFFILE_NULL)
+				e.add_f("Could not create file: %s. ", buf.sz());
 			fffile_close(f);
 			goto done;
 		}
 
-		if ((s = uninstaller_create(dir.str()))) {
+		if ((s = uninstaller_create(buf, dir.str()))) {
 			e.acquire(s);
 			goto err;
 		}
 
-		exe.add_f("%S\\%s%Z", &dir, EXE_NAME);
-
-		{
-		unsigned f_shortcut = wmain.cb_shortcut.checked(),
-			f_env = wmain.cb_environ.checked();
-		if (f_shortcut || f_env)
-			CoInitializeEx(NULL, 0);
-
-		if (f_env) {
-			if (!env_path_add(dir.str()))
+		if (wmain.cb_environ.checked()) {
+			if (env_path_add(dir.str()))
+				e.add("Could not add phiola into PATH. ");
+			else
 				ffenv_update();
 		}
 
-		if (f_shortcut) {
-			xxvec desktop(ffenv_expand(NULL, NULL, 0, LINK_NAME));
-			ffui_createlink(exe.sz(), desktop.sz());
-		}
+		if (wmain.cb_shortcut.checked()) {
+			if (ffenv_expand(NULL, (char*)buf.ptr, buf.cap, LINK_NAME))
+				ffui_createlink(exez, (char*)buf.ptr);
+			if (ffenv_expand(NULL, (char*)buf.ptr, buf.cap, START_MENU_LINK))
+				ffui_createlink(exez, (char*)buf.ptr);
 		}
 
-		shell_ext_reg(EXE_NAME
+		// Write phiola path to Registry to allow the user to upgrade without browsing for the path next time
+		if (ffwinreg_open_writestr(HKEY_CURRENT_USER, "Software\\phiola", "", dirz, dir.len))
+			e.add("Registry write error. ");
+
+		if (shell_ext_reg("phiola", EXE_NAME
 			, "Open with phiola"
-			, xxvec().add_f("\"%s\" \"%%1\"%Z", exe.sz()).sz()
-			, "Enqueue in phiola"
-			, xxvec().add_f("\"%s\" -add \"%%1\"%Z", exe.sz()).sz()
-			, (char*)phi_exts, sizeof(phi_exts[0]), FF_COUNT(phi_exts));
+			, buf.clear().add_f("\"%S\" \"%%1\"%Z", &exe).sz()
+			, "enqueue", "Enqueue in phiola"
+			, xxvec().add_f("\"%S\" -add \"%%1\"%Z", &exe).sz()
+			, (char*)phi_exts, sizeof(phi_exts[0]), FF_COUNT(phi_exts)))
+			e.add("Error registering file associations. ");
 
-		if (wmain.cb_start.checked())
-			ffui_exec(exe.sz());
+		if (wmain.cb_start.checked()) {
+			ffui_exec(exez);
+			success_msg = 0;
+		}
 
 		if (wmain.cb_defaultapp.checked())
 			ffui_exec("ms-settings:defaultapps");
 
 	done:
+		if (upgrading && upgrade_fin())
+			e.add("Old phiola installation directory could not be removed. ");
+
+		if (e.len)
+			ffui_msgdlg_showz(MSG_TITLE, xxvec().add_f("Installation completed with errors: %S%Z", &e).sz(), FFUI_MSGDLG_WARN);
+		else if (success_msg)
+			ffui_msgdlg_showz(MSG_TITLE, (!upgrading) ? "Installation successful!" : "Upgrade successful!", FFUI_MSGDLG_INFO);
+
 		ffui_post_quitloop();
 		this->done = 1;
 		return;
 
 	err:
-		ffui_msgdlg_showz(MSG_TITLE, e.sz(), FFUI_MSGDLG_ERR);
+		if (dirty
+			&& fffile_exists(dirz)
+			&& dir_remove_r(dirz, DEL_MAX_FILES, job))
+			e.add_f("%s was not deleted. ", dirz);
+		if (upgrading && upgrade_err(dirz))
+			ffui_msgdlg_showz(MSG_TITLE, "Previous phiola installation directory could not be restored.", FFUI_MSGDLG_ERR);
+		ffui_msgdlg_showz(MSG_TITLE, e.strz(), FFUI_MSGDLG_ERR);
+	}
+
+	void browse() {
+		xxvec buf(wmain.edir.text());
+		xxstr dir = xxpath(buf.str()).path();
+		if (dir.len)
+			dir.ptr[dir.len] = '\0';
+		xxptr path(ffui_filedlg_show(wmain.wnd.h, (dir.len) ? dir.ptr : NULL, 0));
+		if (!path.ptr)
+			return;
+
+		wmain.edir.text(xxvec().add_f("%s\\%s%Z", path.ptr, DIR_NAME).sz());
+		ui_update();
+	}
+
+	void ui_update() {
+		xxvec buf, version;
+		int r = upgrade_check(buf, xxvec(wmain.edir.text()).str(), &version);
+		bool ok = 1;
+		const char *action = "Install", *status = "The directory will be created";
+		switch (r) {
+		case INST_NONE:
+			break;
+
+		case INST_UPGRADE:
+			action = "Upgrade";
+			status = buf.clear().add_f("phiola v%S will be upgraded%Z", &version).sz();
+			break;
+
+		case INST_UPGRADE_SAME:
+			action = "Reinstall";
+			status = buf.clear().add_f("phiola v%S is already installed%Z", &version).sz();
+			break;
+
+		case INST_EXISTS:
+			status = E_EXISTS;
+			ok = 0;
+			break;
+
+		case INST_PORTABLE:
+			status = "Portable installation detected. Upgrade is not supported.";
+			action = "Upgrade";
+			ok = 0;
+			break;
+		}
+
+		if ((r == INST_UPGRADE || r == INST_UPGRADE_SAME)
+			&& wmain.cb_portable.checked()) {
+			status = "Cannot convert an existing installation to portable. Uninstall it first, then install portable.";
+			ok = 0;
+		}
+
+		wmain.lstatus.text(status);
+		wmain.binstall.text(action);
+		wmain.binstall.enable(ok);
 	}
 
 	static void main_on_action(ffui_window *wnd, int id)
 	{
-		struct wmain *wmain = FF_STRUCTPTR(struct wmain, wnd, wnd);
-		installer *g = FF_STRUCTPTR(installer, wmain, wmain);
+		struct wmain *wmain = FF_CONTAINER(struct wmain, wnd, wnd);
+		installer *g = FF_CONTAINER(installer, wmain, wmain);
 
 		switch (id) {
+		case A_DIR_CHANGED:
+			g->ui_update();  break;
+
 		case A_BROWSE:
 			g->browse();  break;
 
@@ -256,7 +458,7 @@ struct installer {
 			ffui_post_quitloop();  break;
 
 		case A_CB_PORTABLE: {
-			uint portable = g->wmain.cb_portable.checked();
+			bool portable = g->wmain.cb_portable.checked();
 			g->wmain.cb_shortcut.enable(!portable);
 			g->wmain.cb_environ.enable(!portable);
 			g->wmain.cb_start.enable(!portable);
@@ -267,6 +469,7 @@ struct installer {
 				g->wmain.cb_start.check(0);
 				g->wmain.cb_defaultapp.check(0);
 			}
+			g->ui_update();
 			break;
 		}
 		}
@@ -309,10 +512,18 @@ struct installer {
 	static void show(void *param)
 	{
 		installer *g = (installer*)param;
-		g->wmain.edir.text(xxvec(ffenv_expand(NULL, NULL, 0, DEFAULT_INSTALL_PATH)).str());
+		xxvec buf;
+		xxstr s;
+		if (!ffwinreg_open_readstr(HKEY_CURRENT_USER, "Software\\phiola", "", &s))
+			buf.acquire(s);
+		else
+			s = buf.acquire(ffenv_expand(NULL, NULL, 0, DEFAULT_INSTALL_PATH)).str();
+		g->wmain.edir.text(s);
+
 		g->wmain.lurl.text(HOMEPAGE_URL);
 		g->wmain.wnd.title(TITLE);
 		g->wmain.wnd.show(1);
+		g->ui_update();
 	}
 };
 
@@ -322,6 +533,7 @@ int main()
 int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 #endif
 {
+	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 	installer *g = ffmem_new(installer);
 	ffui_init();
 	if (g->load()) return 1;
