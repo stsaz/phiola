@@ -754,6 +754,22 @@ void wmain_init()
 #else
 	m->vlist.paint_notify = 1;
 #endif
+
+	static const struct ffui_wnd_keymap kmap[] = {
+	#ifdef FF_WIN
+		{ APPCOMMAND_MEDIA_PLAY_PAUSE,    A_PLAYPAUSE },
+		{ APPCOMMAND_MEDIA_STOP,          A_STOP },
+		{ APPCOMMAND_MEDIA_NEXTTRACK,     A_NEXT },
+		{ APPCOMMAND_MEDIA_PREVIOUSTRACK, A_PREV },
+	#else
+		{ GDK_KEY_AudioPlay,	A_PLAYPAUSE },
+		{ GDK_KEY_AudioStop,	A_STOP },
+		{ GDK_KEY_AudioNext,	A_NEXT },
+		{ GDK_KEY_AudioPrev,	A_PREV },
+	#endif
+	};
+	ffui_wnd_keymap(&m->wnd, kmap, FF_COUNT(kmap));
+
 	m->wnd.on_action = wmain_action;
 	m->wnd.onclose_id = A_CLOSE;
 	m->vlist.dispinfo_id = A_LIST_DISPLAY;
