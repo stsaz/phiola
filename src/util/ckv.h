@@ -146,16 +146,16 @@ static inline int ckv_set(struct ckv *c, ffstr key, ffstr val, unsigned flags)
 				p += key.len + 1;
 				r = CKV_E_OK_CACHED;
 				goto set_val;
-
-			} else {
-				// Case CR2b: remove the row from cache; add new row to data region
-				// Note: only 1 row is stored in cache!
-				// unsigned cache_len = *p;
-				// ffmem_move(p, p + cache_len, sizeof(c->cache) - cache_len); // r1 r2 -> r2
-				_INT1_WRITE(p, 0);
-				r = CKV_E_OK_REPLACED;
-				goto add;
 			}
+
+			// Case CR2b: remove the row from cache; add new row to data region
+			// Note: only 1 row is stored in cache!
+			// unsigned cache_len = *p;
+			// ffmem_move(p, p + cache_len, sizeof(c->cache) - cache_len); // r1 r2 -> r2
+			_INT1_WRITE(p, 0);
+			r = CKV_E_OK_REPLACED;
+			c->n--;
+			goto add;
 		}
 
 		cap_cur = (c->ptr) ? *(unsigned*)c->ptr : 4;
@@ -171,6 +171,7 @@ static inline int ckv_set(struct ckv *c, ffstr key, ffstr val, unsigned flags)
 				// Note: holes are not reused!
 				_INT4_WRITE(p, 0);
 				*p = '\0';
+				c->n--;
 
 			} else {
 				if (size <= size_cur) {
@@ -184,6 +185,7 @@ static inline int ckv_set(struct ckv *c, ffstr key, ffstr val, unsigned flags)
 				// Note: holes are not reused!
 				_INT4_WRITE(p, 0);
 				*p = '\0';
+				c->n--;
 				goto add;
 			}
 		}
