@@ -10,16 +10,20 @@
 # LINKFLAGS
 # OS
 # PHIOLA
+# ROOT_DIR
 # SO
 # WINDRES
 
 # Modify:
 # EXES
 
+AVPACK := $(ROOT_DIR)/avpack
+
 EXES += phiola$(DOTEXE)
 
+CFLAGS_EXE := $(CFLAGS) -I$(AVPACK)
 %.o: $(PHIOLA)/src/exe/%.c
-	$(C) $(CFLAGS) $< -o $@
+	$(C) $(CFLAGS_EXE) $< -o $@
 
 _:=
 ifeq "$(OS)" "windows"

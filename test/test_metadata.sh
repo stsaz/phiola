@@ -42,6 +42,19 @@ test_meta_inject() {
 	meta_conv__src_dst meta.ogg meta2.ogg
 	meta_conv__src_dst meta.mp3 meta2.mp3
 
+	# Meta from file
+	[[ ! -f meta_pic.jpg ]] && echo testimage >meta_pic.jpg
+	./phiola co -m picture=@file:meta_pic.jpg meta.flac -f -o meta_pic.flac
+	./phiola i -tags meta_pic.flac | grep picture
+	./phiola co -m picture=@file:meta_pic.jpg meta.flac -f -o meta_pic.mp3
+	./phiola i -tags meta_pic.mp3 | grep picture
+
+	# 'picture' pass-through
+	./phiola co meta_pic.flac -f -o meta_pic2.flac
+	./phiola i -tags meta_pic2.flac | grep picture
+	./phiola co meta_pic.mp3 -f -o meta_pic2.mp3
+	./phiola i -tags meta_pic2.mp3 | grep picture
+
 	# Copy with meta
 	meta_copy__src_dst meta.m4a meta2.m4a
 	# meta_copy__src_dst meta.opus meta2.opus

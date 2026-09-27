@@ -3,6 +3,7 @@
 
 #include <util/aformat.h>
 #include <util/util.h>
+#include <avpack/mmtag.h>
 #include <ffsys/std.h>
 #include <ffsys/path.h>
 #include <ffsys/dirscan.h>
@@ -68,13 +69,64 @@ err:
 	return _ffargs_err(&x->cmd, 1, "incorrect track number '%S'", &it);
 }
 
+static const char* img_mime(ffstr ext)
+{
+	return (ffstr_ieqz(&ext, "png"))
+		? "image/png"
+		: (ffstr_ieqz(&ext, "jpg") || ffstr_ieqz(&ext, "jpeg"))
+		? "image/jpeg"
+		: "";
+}
+
+/** Add tag from file.
+Special handling of 'picture' tag.
+Return 0 on success */
+static int cmd_meta_file(ffstr tag, ffstr fn, ffstr *out)
+{
+	int r = -1;
+	ffvec buf = {};
+
+	if (ffstr_eqz(&tag, "picture")) {
+		ffstr ext = {};
+		ffpath_split3_str(fn, NULL, NULL, &ext);
+		struct avpk_pic pm = {
+			.mime = img_mime(ext),
+			.desc = "",
+		};
+		uint n = avpk_pic_write(NULL, &pm, FFSTR_Z(""));
+		ffvec_alloc(&buf, n, 1);
+		buf.len = avpk_pic_write(buf.ptr, &pm, FFSTR_Z(""));
+	}
+
+	char *fnz = ffsz_dupstr(&fn);
+	if (fffile_readwhole_add(fnz, &buf, 16*1024*1024)) {
+		syswarnlog("file read: %s", fnz);
+		goto end;
+	}
+	*out = ffvec_str(&buf);
+	ffvec_null(&buf);
+	r = 0;
+
+end:
+	ffmem_free(fnz);
+	ffvec_free(&buf);
+	return r;
+}
+
 static void cmd_meta_set(phi_meta *dst, const ffvec *src)
 {
 	ffstr *it;
 	FFSLICE_WALK(src, it) {
-		ffstr name, val;
+		ffstr name, val, data = {};
 		ffstr_splitby(it, '=', &name, &val);
+		if (ffstr_matchz(&val, "@file:")) {
+			ffstr_shift(&val, FFS_LEN("@file:"));
+			if (cmd_meta_file(name, val, &data))
+				continue;
+			val = data;
+		}
 		x->core->metaif->set(dst, name, val, 0);
+		ffstr_free(&data);
 	}
 }
 

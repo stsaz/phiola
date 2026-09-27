@@ -67,6 +67,8 @@ Options:\n\
 \n\
   `-meta` NAME=VALUE      Meta data\n\
                           .mp4 supports: album, albumartist, artist, comment, composer, copyright, date, discnumber, genre, lyrics, title, tracknumber.\n\
+                        Supports data from file, e.g. album cover:\n\
+                          \"-meta picture=@file:cover.jpg\"\n\
 \n\
   `-out` FILE             Output file name.\n\
                           `@stdout`    Write to standard output\n\

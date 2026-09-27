@@ -3,73 +3,12 @@
 
 #include <track.h>
 #include <avpack/flac-write.h>
-#include <avpack/png-read.h>
-#include <avpack/jpg-read.h>
 
 typedef struct flac_w {
 	flacwrite fl;
 	ffstr in;
 	uint state;
 } flac_w;
-
-static int pic_meta_png(struct flac_picinfo *info, const ffstr *data)
-{
-	pngread png = {};
-	int rc = -1, r;
-	pngread_open(&png);
-
-	ffstr in = *data, out;
-	r = pngread_process(&png, &in, &out);
-	if (r != PNGREAD_HEADER)
-		goto err;
-
-	info->mime = "image/png";
-
-	const struct png_info *i = pngread_info(&png);
-	info->width = i->width;
-	info->height = i->height;
-	info->bpp = i->bpp;
-
-	rc = 0;
-
-err:
-	pngread_close(&png);
-	return rc;
-}
-
-static int pic_meta_jpeg(struct flac_picinfo *info, const ffstr *data)
-{
-	jpgread jpeg = {};
-	int rc = -1, r;
-	jpgread_open(&jpeg);
-
-	ffstr in = *data, out;
-	r = jpgread_process(&jpeg, &in, &out);
-	if (r != JPGREAD_HEADER)
-		goto err;
-
-	info->mime = "image/jpeg";
-
-	const struct jpg_info *i = jpgread_info(&jpeg);
-	info->width = i->width;
-	info->height = i->height;
-	info->bpp = i->bpp;
-
-	rc = 0;
-
-err:
-	jpgread_close(&jpeg);
-	return rc;
-}
-
-static void pic_meta(struct flac_picinfo *info, const ffstr *data, void *trk)
-{
-	if (0 == pic_meta_png(info, data))
-		return;
-	if (0 == pic_meta_jpeg(info, data))
-		return;
-	warnlog(trk, "picture write: can't detect MIME; writing without MIME and image dimensions");
-}
 
 static int flac_out_addmeta(flac_w *f, phi_track *t)
 {
@@ -89,8 +28,15 @@ static int flac_out_addmeta(flac_w *f, phi_track *t)
 			continue;
 
 		if (ffstr_eqcz(&name, "picture")) {
-			struct flac_picinfo info = {};
-			pic_meta(&info, &val, t);
+			struct avpk_pic pm = {
+				.mime = "",
+				.desc = "",
+			};
+			avpk_pic_read(val, &pm, &val);
+			struct flac_picinfo info = {
+				.mime = pm.mime,
+				.desc = pm.desc,
+			};
 			flacwrite_pic(&f->fl, &info, &val);
 			continue;
 		}
