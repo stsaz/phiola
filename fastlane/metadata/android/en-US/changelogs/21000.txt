@@ -1,0 +1,6 @@
+Changes since v2.9.2:
+
++ convert to .mp3: support writing 'picture' tags
+- converting .cue tracks might result in a crash in some cases
+- playback: manual track switching could result in a sound glitch
+- .cue playback crashed or misbehaved with `Auto Skip Ending` enabled
