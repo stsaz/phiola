@@ -21,4 +21,5 @@ make -j$(nproc) \
 	ROOT_DIR="$ROOT_DIR" \
 	PHIOLA="$PHIOLA" \
 	CPU=arm64 \
+	PHI_HTTP_SSL=0 \
 	PHI_VERSION_STR="$VER"
