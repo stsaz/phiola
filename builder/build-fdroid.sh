@@ -10,6 +10,7 @@ fi
 VER="$1"
 
 # Build libs, APK (unsigned)
+# Using system-wide gradle (not local one).
 export PATH="$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH"
 mkdir -p _android
 ROOT_DIR="$(cd .. && pwd)"
@@ -22,4 +23,5 @@ make -j$(nproc) \
 	PHIOLA="$PHIOLA" \
 	CPU=arm64 \
 	PHI_HTTP_SSL=0 \
+	GRADLE=gradle \
 	PHI_VERSION_STR="$VER"
