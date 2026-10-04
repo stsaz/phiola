@@ -1,22 +1,27 @@
 /** phiola: GUI: convert files
 2023, Simon Zolin */
 
+#include <gui/ac.hpp>
 #include <util/util.h>
 
 struct gui_wconvert {
 	ffui_windowxx		wnd;
-	ffui_labelxx		ldir, lname, lext, lfrom, luntil, ltags, laacq, lvorbisq, lopusq, lmp3q;
-	ffui_editxx			edir, ename, efrom, euntil, etags, eaacq, evorbisq, eopusq, emp3q;
+	ffui_labelxx		ldir, lname, lext, lfrom, luntil, ltags;
+	ffui_editxx			edir, ename, efrom, euntil, etags;
 	ffui_comboboxxx		cbext;
 	ffui_checkboxxx		cbcopy, cbkeepdate, cboverwrite;
 	ffui_buttonxx		bbrowse, bstart;
 
+	struct gui_ac ac;
+
 	xxstr conf_dir, conf_name, conf_ext;
 	char *wnd_pos;
-	uint conf_aacq, conf_vorbisq, conf_opusq, conf_mp3q;
 	u_char conf_copy;
 	uint initialized :1;
 };
+
+#define _ac(ctl) \
+	{ #ctl, (uint)FF_OFF(gui_wconvert, ac.ctl), NULL }
 
 #define _(m)  FFUI_LDR_CTL(gui_wconvert, m)
 FF_EXTERN const ffui_ldr_ctl wconvert_ctls[] = {
@@ -29,42 +34,31 @@ FF_EXTERN const ffui_ldr_ctl wconvert_ctls[] = {
 	_(luntil),	_(euntil),
 	_(ltags),	_(etags),
 	_(cbcopy),
-	_(laacq),	_(eaacq),
-	_(lvorbisq),_(evorbisq),
-	_(lopusq),	_(eopusq),
-	_(lmp3q),	_(emp3q),
+	_ac(laacq),		_ac(eaacq),		_ac(tbaacq),
+	_ac(lvorbisq),	_ac(evorbisq),	_ac(tbvorbisq),
+	_ac(lopusq),	_ac(eopusq),	_ac(tbopusq),
+	_ac(lmp3q),		_ac(emp3q),		_ac(tbmp3q),
 	_(cbkeepdate), _(cboverwrite),
 	_(bstart),
 	FFUI_LDR_CTL_END
 };
 #undef _
+#undef _ac
 
 #define O(m)  (void*)FF_OFF(gui_wconvert, m)
 const ffarg wconvert_args[] = {
-	{ "aacq",	'u',	O(conf_aacq) },
+	{ "aacq",	'u',	O(ac.conf_aacq) },
 	{ "copy",	'b',	O(conf_copy) },
 	{ "dir",	'=S',	O(conf_dir) },
 	{ "ext",	'=S',	O(conf_ext) },
-	{ "mp3q",	'u',	O(conf_mp3q) },
+	{ "mp3q",	'u',	O(ac.conf_mp3q) },
 	{ "name",	'=S',	O(conf_name) },
-	{ "opusq",	'u',	O(conf_opusq) },
-	{ "vorbisq",'u',	O(conf_vorbisq) },
+	{ "opusq",	'u',	O(ac.conf_opusq) },
+	{ "vorbisq",'u',	O(ac.conf_vorbisq) },
 	{ "wconvert.pos",	'=s',	O(wnd_pos) },
 	{}
 };
 #undef O
-
-static uint vorbisq_conf(xxstr s)
-{
-	int n = s.int16(255);
-	if (n == 255) {
-		errlog("incorrect Vorbis quality '%S'", &s);
-		return 0;
-	}
-	return (n + 1) * 10;
-}
-
-static int vorbisq_user(uint n) { return (int)n / 10 - 1; }
 
 static void wconvert_ui_to_conf()
 {
@@ -78,10 +72,7 @@ static void wconvert_ui_to_conf()
 
 	c->conf_copy = c->cbcopy.checked();
 
-	c->conf_aacq = xxvec(c->eaacq.text()).str().uint32(0);
-	c->conf_vorbisq = vorbisq_conf(xxvec(c->evorbisq.text()).str());
-	c->conf_opusq = xxvec(c->eopusq.text()).str().uint32(0);
-	c->conf_mp3q = xxvec(c->emp3q.text()).str().uint32(~0U);
+	c->ac.ui_to_conf();
 }
 
 void wconvert_userconf_write(ffconfw *cw)
@@ -110,11 +101,8 @@ static void wconvert_ext_chg(uint i)
 	gui_wconvert *c = gg->wconvert;
 	i = out_fmt[i].fmt;
 	bool copy = c->cbcopy.checked();
+	c->ac.enable_controls(i, copy);
 	c->cbcopy.enable(copy || i != 0);
-	c->eaacq.enable(!copy && i == PHI_AC_AAC);
-	c->evorbisq.enable(!copy && i == PHI_AC_VORBIS);
-	c->eopusq.enable(!copy && i == PHI_AC_OPUS);
-	c->emp3q.enable(!copy && i == PHI_AC_MP3);
 }
 
 static void wconvert_ui_from_conf()
@@ -137,11 +125,7 @@ static void wconvert_ui_from_conf()
 
 	c->cbcopy.check(!!c->conf_copy);
 
-	xxstr_buf<100> s;
-	c->eaacq.text(s.zfmt("%u", (c->conf_aacq) ? c->conf_aacq : 5));
-	c->evorbisq.text(s.zfmt("%d", (c->conf_vorbisq) ? vorbisq_user(c->conf_vorbisq) : 7));
-	c->eopusq.text(s.zfmt("%u", (c->conf_opusq) ? c->conf_opusq : 192));
-	c->emp3q.text(s.zfmt("%u", (c->conf_mp3q != ~0U) ? c->conf_mp3q : 2));
+	c->ac.init_from_conf();
 }
 
 void wconvert_set(int id, uint pos)
@@ -202,13 +186,13 @@ static struct phi_track_conf* conv_conf_create()
 	int i = out_file_ext_index(c->conf_ext);
 	switch (out_fmt[i].fmt) {
 	case PHI_AC_AAC:
-		tc->aac.quality = c->conf_aacq;  break;
+		tc->aac.quality = c->ac.conf_aacq;  break;
 	case PHI_AC_OPUS:
-		tc->opus.bitrate = c->conf_opusq;  break;
+		tc->opus.bitrate = c->ac.conf_opusq;  break;
 	case PHI_AC_VORBIS:
-		tc->vorbis.quality = c->conf_vorbisq;  break;
+		tc->vorbis.quality = (c->ac.conf_vorbisq != ~0U) ? (c->ac.conf_vorbisq + 1) * 10 : 0;  break;
 	case PHI_AC_MP3:
-		tc->mp3.quality = (c->conf_mp3q != ~0U) ? c->conf_mp3q + 1 : 0;  break;
+		tc->mp3.quality = (c->ac.conf_mp3q != ~0U) ? c->ac.conf_mp3q + 1 : 0;  break;
 	}
 
 	tc->ifile.preserve_date = c->cbkeepdate.checked();
@@ -257,6 +241,12 @@ static void wconvert_action(ffui_window *wnd, int id)
 	case A_CO_COPY:
 		wconvert_ext_chg(c->cbext.get());  break;
 
+	case A_CO_AACQ:
+	case A_CO_VORBISQ:
+	case A_CO_OPUSQ:
+	case A_CO_MP3Q:
+		c->ac.on_trackbar(id);  break;
+
 	case A_CONVERT_START: {
 		c->bstart.enable(0);
 		struct phi_track_conf *conf = conv_conf_create();
@@ -274,7 +264,8 @@ void wconvert_init()
 	gui_wconvert *c = gui_allocT(gui_wconvert);
 	c->wnd.hide_on_close = 1;
 	c->wnd.on_action = wconvert_action;
-	c->conf_mp3q = ~0U;
+	c->ac.conf_mp3q = ~0U;
+	c->ac.conf_vorbisq = ~0U;
 	gg->wconvert = c;
 }
 

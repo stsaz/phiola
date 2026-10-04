@@ -5,6 +5,7 @@ struct gui_wsettings {
 	ffui_windowxx	wnd;
 	ffui_label		ltheme, ldev, lseek_by, lleap_by, lauto_skip, lauto_skip_tail;
 	ffui_editxx		eseek_by, eleap_by, eauto_skip, eauto_skip_tail;
+	ffui_trackbarxx	tbauto_skip, tbauto_skip_tail;
 	ffui_checkboxxx	cbrg_norm, cbauto_norm, cbeqlz;
 	ffui_comboboxxx	cbdarktheme, cbdev;
 	char*	wnd_pos;
@@ -19,8 +20,8 @@ FF_EXTERN const ffui_ldr_ctl wsettings_ctls[] = {
 	_(ldev),		_(cbdev),
 	_(lseek_by),	_(eseek_by),
 	_(lleap_by),	_(eleap_by),
-	_(lauto_skip),	_(eauto_skip),
-	_(lauto_skip_tail),	_(eauto_skip_tail),
+	_(lauto_skip),	_(eauto_skip),	_(tbauto_skip),
+	_(lauto_skip_tail),	_(eauto_skip_tail),	_(tbauto_skip_tail),
 	_(cbrg_norm),
 	_(cbauto_norm),
 	_(cbeqlz),
@@ -57,6 +58,21 @@ static int auto_skip_read(xxstr s)
 		return -(int)s.uint32(0);
 	}
 	return s.uint32(0);
+}
+
+// 20%..1%; 0; 10sec..200sec by 10
+static int auto_skip_value(int progress) {
+	progress -= 20;
+	if (progress <= 0)
+		return progress;
+	return progress * 10;
+}
+static int auto_skip_progress(int n) {
+	if (n < 0)
+		return 20 - -n;
+	if (n <= 200)
+		return 20 + n / 10;
+	return 20;
 }
 
 static void wsettings_ui_to_conf()
@@ -116,6 +132,8 @@ static void wsettings_ui_from_conf()
 	w->eleap_by.text(s.zfmt("%u", gd->conf.seek_leap_delta));
 	w->eauto_skip.text(auto_skip_write(s, gd->conf.auto_skip_sec_percent));
 	w->eauto_skip_tail.text(auto_skip_write(s, gd->conf.auto_skip_tail_sec_pct));
+	w->tbauto_skip.set(auto_skip_progress(gd->conf.auto_skip_sec_percent));
+	w->tbauto_skip_tail.set(auto_skip_progress(gd->conf.auto_skip_tail_sec_pct));
 
 	w->cbeqlz.check(gd->conf.eqlz_on);
 }
@@ -132,6 +150,8 @@ void wsettings_userconf_write(ffconfw *cw)
 static void wsettings_action(ffui_window *wnd, int id)
 {
 	gui_wsettings *w = gg->wsettings;
+	xxstr_buf<100> s;
+
 	switch (id) {
 	case A_SETS_EQLZ:
 		if (w->cbeqlz.checked())
@@ -140,6 +160,12 @@ static void wsettings_action(ffui_window *wnd, int id)
 
 	case A_SETTINGS_APPLY:
 		wsettings_ui_to_conf();  break;
+
+	case A_SETS_AUTO_SKIP:
+		w->eauto_skip.text(auto_skip_write(s, auto_skip_value(w->tbauto_skip.get())));  break;
+
+	case A_SETS_AUTO_SKIP_TAIL:
+		w->eauto_skip_tail.text(auto_skip_write(s, auto_skip_value(w->tbauto_skip_tail.get())));  break;
 	}
 }
 
