@@ -515,6 +515,7 @@ Additionally:
 * [avpack](https://github.com/stsaz/avpack) library provides multimedia file read/write capabilities
 * [ffaudio](https://github.com/stsaz/ffaudio) interface provides cross-platform audio I/O capabilities
 * [ffgui](https://github.com/stsaz/ffgui) - cross-platform GUI
+* [winapi-dark-theme](https://github.com/stsaz/winapi-dark-theme) - dark theme for Windows GUI
 * [netmill](https://github.com/stsaz/netmill) provides network capabilities
 
 

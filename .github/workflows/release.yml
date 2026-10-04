@@ -33,6 +33,7 @@ jobs:
           git clone --depth=1 https://github.com/stsaz/ffaudio
           git clone --depth=1 https://github.com/stsaz/ffpack
           git clone --depth=1 https://github.com/stsaz/ffgui
+          git clone --depth=1 https://github.com/stsaz/winapi-dark-theme
           git clone --depth=1 https://github.com/stsaz/ffsys
           git clone --depth=1 https://github.com/stsaz/ffbase
 
@@ -107,7 +108,6 @@ jobs:
           git clone --depth=1 https://github.com/stsaz/avpack
           git clone --depth=1 https://github.com/stsaz/ffaudio
           git clone --depth=1 https://github.com/stsaz/ffpack
-          git clone --depth=1 https://github.com/stsaz/ffgui
           git clone --depth=1 https://github.com/stsaz/ffsys
           git clone --depth=1 https://github.com/stsaz/ffbase
 

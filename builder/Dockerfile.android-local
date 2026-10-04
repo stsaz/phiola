@@ -8,7 +8,7 @@ RUN apt install -y \
  patch \
  dos2unix \
  cmake \
- autoconf libtool-bin \
+ autoconf automake libtool-bin \
  gettext \
  pkg-config \
  perl

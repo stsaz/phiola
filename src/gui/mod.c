@@ -217,6 +217,12 @@ void file_dir_show(ffslice indices)
 	ffslice_free(&indices);
 }
 
+static void list_attach_default(phi_queue_id q)
+{
+	struct list_info *li = ffvec_zpushT(&gd->lists, struct list_info);
+	li->q = q;
+}
+
 /** Create a new queue */
 static phi_queue_id list_new(char *fn)
 {
@@ -1032,11 +1038,12 @@ static void gui_start(void *param)
 	if (fffile_exists(user_conf_fn)) {
 		gd->user_conf_dir = ffsz_allocfmt("%Smod/gui/", &core->conf.root);
 		gd->user_conf_name = user_conf_fn;
+		user_conf_fn = NULL;
 	} else {
-		ffmem_free(user_conf_fn);
 		gd->user_conf_dir = core->conf.env_expand(USER_CONF_DIR);
 		gd->user_conf_name = ffsz_allocfmt("%s%s", gd->user_conf_dir, USER_CONF_NAME);
 	}
+	ffmem_free(user_conf_fn);
 
 	gui_init();
 	gui_userconf_load();
@@ -1052,8 +1059,7 @@ static void gui_start(void *param)
 	qc->name = ffsz_dup("Playlist 1");
 	qc_apply();
 
-	struct list_info *li = ffvec_zpushT(&gd->lists, struct list_info);
-	li->q = q;
+	list_attach_default(q);
 	gd->q_selected = q;
 	gd->playlist_counter = 1;
 	if (gd->queue->count(q))

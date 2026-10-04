@@ -59,6 +59,7 @@ gui.$(SO): gui-mod.o \
 		gui-gui.o \
 		gui-main.o \
 		gui-dialogs.o \
+		gui-dialogs2.o \
 		$(GUI_RES) \
 		$(FFGUI_OBJ) \
 		\

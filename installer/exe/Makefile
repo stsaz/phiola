@@ -4,6 +4,7 @@ ROOT := ../..
 PHIOLA := $(ROOT)/phiola
 FFPACK := $(ROOT)/ffpack
 FFGUI := $(ROOT)/ffgui
+WDT := $(ROOT)/winapi-dark-theme
 FFSYS := $(ROOT)/ffsys
 FFBASE := $(ROOT)/ffbase
 
@@ -16,7 +17,7 @@ UNINST_EXE := uninstall.exe
 
 CFLAGS += -DFFBASE_MEM_ASSERT -DFFBASE_OPT_SIZE \
 	-MMD -MP \
-	-I$(FFGUI) -I$(FFSYS) -I$(FFBASE) \
+	-I$(FFGUI) -I$(WDT) -I$(FFSYS) -I$(FFBASE) \
 	-fdata-sections -ffunction-sections \
 	-g
 
