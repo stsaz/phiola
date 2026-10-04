@@ -104,6 +104,7 @@ struct gtrk;
 struct list_info {
 	phi_queue_id q;
 	uint scroll_vpos;
+	char *fn;
 };
 
 struct gui_track_info {
@@ -181,6 +182,9 @@ FF_EXTERN struct gui_data *gd;
 
 #define errlog(...) \
 	core->conf.log(core->conf.log_obj, PHI_LOG_ERR, "gui", NULL, __VA_ARGS__)
+
+#define syswarnlog(...) \
+	core->conf.log(core->conf.log_obj, PHI_LOG_WARN | PHI_LOG_SYS, "gui", NULL, __VA_ARGS__)
 
 #define warnlog(...) \
 	core->conf.log(core->conf.log_obj, PHI_LOG_WARN, "gui", NULL, __VA_ARGS__)

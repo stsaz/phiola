@@ -544,22 +544,10 @@ static int q_save(struct phi_queue *q, const char *filename, void (*on_complete)
 	int r = ffpath_normalize(c.ofile.name, -1, c.ofile.name, ffsz_len(c.ofile.name), 0);
 	c.ofile.name[r] = '\0';
 
-	int skip = 0;
-	fffileinfo fi;
-	if (!q->conf.modified && !fffile_info_path(filename, &fi)) {
-		fftime mt = fffileinfo_mtime(&fi);
-		mt.sec += FFTIME_1970_SECONDS;
-		if (!fftime_cmp_val(mt, q->conf.last_mod_time)) {
-			skip = 1;
-			dbglog("q_save: '%s': skip (mtime)", filename);
-		}
-	}
-
 	phi_track *t = core->track->create(&c);
 	t->udata = q;
 	core->track->filter(t, &phi_qsave_guard, 0);
-	if (!skip
-		&& (!core->track->filter(t, core->mod("format.m3u-write"), 0)
+	if ((!core->track->filter(t, core->mod("format.m3u-write"), 0)
 			|| (compress
 				&& !core->track->filter(t, core->mod("zstd.compress"), 0))
 			|| !core->track->filter(t, core->mod("core.file-write"), 0))) {

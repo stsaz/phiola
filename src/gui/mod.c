@@ -214,7 +214,7 @@ void file_dir_show(ffslice indices)
 }
 
 /** Create a new queue */
-static phi_queue_id list_new()
+static phi_queue_id list_new(char *fn)
 {
 	list_filter_close();
 	struct phi_queue_conf qc = {
@@ -223,27 +223,38 @@ static phi_queue_id list_new()
 		.ui_module = "gui.track",
 	};
 	gd->tab_conversion = 0;
+	struct list_info *li = ffvec_zpushT(&gd->lists, struct list_info);
 	phi_queue_id q = gd->queue->create(&qc);
+	li->q = q;
+	li->fn = fn;
 	return q;
+}
+
+static struct list_info* list_get(phi_queue_id q)
+{
+	struct list_info *li;
+	FFSLICE_WALK(&gd->lists, li) {
+		if (li->q == q)
+			return li;
+	}
+	return NULL;
+}
+
+static uint list_get_i(phi_queue_id q)
+{
+	struct list_info *li = list_get(q);
+	return li - (struct list_info*)gd->lists.ptr;
 }
 
 /** Remember the current vertical scroll position */
 static void list_scroll_store(phi_queue_id q, uint vpos)
 {
-	struct list_info *li;
-	FFSLICE_WALK(&gd->lists, li) {
-		if (li->q == q) {
-			li->scroll_vpos = vpos;
-			break;
-		}
-	}
+	list_get(q)->scroll_vpos = vpos;
 }
 
 /** A queue is created */
 void list_created(phi_queue_id q)
 {
-	struct list_info *li = ffvec_zpushT(&gd->lists, struct list_info);
-	li->q = q;
 	phi_queue_id old = FF_SWAP(&gd->q_selected, q);
 
 	uint scroll_vpos = wmain_list_add(gd->queue->conf(q)->name, gd->lists.len - 1);
@@ -270,20 +281,31 @@ static void list_close()
 /** A queue is deleted */
 void list_deleted(phi_queue_id q)
 {
-	uint i = 0;
-	struct list_info *li;
-	FFSLICE_WALK(&gd->lists, li) {
-		if (li->q == q)
-			break;
-		i++;
-	}
+	struct list_info *li = list_get(q);
+	ffmem_free(li->fn);
+	uint i = li - (struct list_info*)gd->lists.ptr;
 	ffslice_rmT((ffslice*)&gd->lists, i, 1, struct list_info);
-
+	uint new_index = (!i) ? 0 : i - 1;
+	gd->current_scroll_vpos = ~0U;
+	list_select(new_index);
 	wmain_list_delete(i);
 
 	fflock_lock(&gd->lock);
 	// GUI thread inside list_vis_qe_ref() has definitely finished reading this list
 	fflock_unlock(&gd->lock);
+}
+
+static void list_load_once(uint i)
+{
+	struct list_info *li = ffslice_itemT(&gd->lists, i, struct list_info);
+	if (!li->fn) return;
+
+	dbglog("list: loading %s", li->fn);
+	struct phi_queue_entry qe = {
+		.url = li->fn,
+	};
+	li->fn = NULL;
+	gd->queue->add(li->q, &qe);
 }
 
 /** Change current list */
@@ -293,10 +315,12 @@ void list_select(uint i)
 	gd->conf.list_selected = i;
 	struct list_info *li = ffslice_itemT(&gd->lists, i, struct list_info);
 	gd->tab_conversion = (gd->q_convert == li->q);
+	list_load_once(i);
 	phi_queue_id old = FF_SWAP(&gd->q_selected, li->q);
 	uint n = gd->queue->count(gd->q_selected);
 
-	list_scroll_store(old, gd->current_scroll_vpos);
+	if (gd->current_scroll_vpos != ~0U)
+		list_scroll_store(old, gd->current_scroll_vpos);
 	wmain_list_select(n, li->scroll_vpos);
 }
 
@@ -463,7 +487,7 @@ void ctl_action(uint cmd)
 	switch (cmd) {
 
 	case A_LIST_NEW:
-		list_new();  break;
+		list_new(NULL);  break;
 
 	case A_LIST_CLOSE:
 		list_close();  break;
@@ -585,13 +609,18 @@ static void list_save_complete(void *param, phi_track *t)
 		gui_finish();
 }
 
+static char* list_name(uint i)
+{
+	return ffsz_allocfmt("%s" AUTO_LIST_FN, gd->user_conf_dir, i);
+}
+
 /** Save playlists to disk */
 static void lists_save()
 {
 	if (!gd->lists_load_done)
 		return;
 
-	if (!!ffdir_make(gd->user_conf_dir) && !fferr_exist(fferr_last()))
+	if (ffdir_make(gd->user_conf_dir) && !fferr_exist(fferr_last()))
 		syserrlog("dir make: %s", gd->user_conf_dir);
 
 	char *fn = NULL;
@@ -602,13 +631,30 @@ static void lists_save()
 			continue;
 
 		ffmem_free(fn);
-		fn = ffsz_allocfmt("%s" AUTO_LIST_FN, gd->user_conf_dir, i++);
-		if (!gd->queue->save(li->q, fn, list_save_complete, NULL))
+		fn = list_name(i++);
+
+		if (li->fn) {
+			/* Safe to overwrite after delete.
+			Example:
+				list1 list2
+				^del  ^this
+			becomes:
+				list1
+				^this
+			*/
+			if (!ffsz_eq(li->fn, fn)
+				&& fffile_rename(li->fn, fn))
+				syswarnlog("file rename: %s", li->fn);
+			continue;
+		}
+
+		if (gd->queue->conf(li->q)->modified
+			&& !gd->queue->save(li->q, fn, list_save_complete, NULL))
 			gd->list_save_pending++;
 	}
 
 	ffmem_free(fn);
-	fn = ffsz_allocfmt("%s" AUTO_LIST_FN, gd->user_conf_dir, i);
+	fn = list_name(i);
 	fffile_remove(fn);
 
 	ffmem_free(fn);
@@ -621,34 +667,26 @@ void lists_load()
 	uint i;
 	for (i = 1;;  i++) {
 
-		fn = ffsz_allocfmt("%s" AUTO_LIST_FN, gd->user_conf_dir, i);
-		fffileinfo fi;
-		if (fffile_info_path(fn, &fi))
+		fn = list_name(i);
+		if (!fffile_exists(fn))
 			break;
 
-		uint mt_set = 1;
-		phi_queue_id q = NULL;
+		phi_queue_id q;
 		if (i == 1) {
-			// Don't set `last_mod_time` if there are tracks added from command line.
-			// This prevents `m3u-read` from setting `modified=0` on the queue.
-			mt_set = (gd->queue->count(q) == 0);
+			struct list_info *li = gd->lists.ptr;
+			li->fn = fn;
+			q = NULL;
 		} else {
-			q = list_new(); // wmain ignores q-on-change here
-			struct list_info *li = ffvec_zpushT(&gd->lists, struct list_info);
-			li->q = q;
+			q = list_new(fn); // wmain ignores q-on-change here
 		}
-
-		if (mt_set) {
-			fftime mt = fffileinfo_mtime(&fi);
-			mt.sec += FFTIME_1970_SECONDS;
-			gd->queue->conf(q)->last_mod_time = mt;
-		}
-
-		struct phi_queue_entry qe = {
-			.url = fn,
-		};
 		fn = NULL;
-		gd->queue->add(q, &qe);
+		gd->queue->conf(q)->no_auto_modified = 1;
+	}
+
+	if (gd->queue->count(NULL)) {
+		// There are tracks added from command line
+		gd->queue->conf(NULL)->no_auto_modified = 0;
+		gd->conf.list_selected = 0;
 	}
 
 	ffmem_free(fn);
@@ -657,6 +695,7 @@ void lists_load()
 	uint n = i - 1;
 	i = gd->conf.list_selected = ffmin(gd->conf.list_selected, n - 1);
 	gd->q_selected = gd->queue->select(i);
+	list_load_once(i);
 
 	struct lists_load_data *lld = ffmem_new(struct lists_load_data);
 	lld->n = n;
@@ -699,20 +738,13 @@ void list_add_multi(ffslice names)
 }
 
 /** Get next playback list (skip conversion list) */
-static phi_queue_id list_next_playback()
+static phi_queue_id list_next_playback(uint *idx)
 {
-	uint i = 0;
-	struct list_info *li;
-	FFSLICE_WALK(&gd->lists, li) {
-		if (li->q == gd->q_selected)
-			break;
-		i++;
-	}
-
+	uint i = list_get_i(gd->q_selected);
 	i++;
 	if (i == gd->lists.len)
 		return NULL;
-	li = ffslice_itemT(&gd->lists, i, struct list_info);
+	struct list_info *li = ffslice_itemT(&gd->lists, i, struct list_info);
 
 	if (li->q == gd->q_convert) {
 		i++;
@@ -721,15 +753,19 @@ static phi_queue_id list_next_playback()
 		li = ffslice_itemT(&gd->lists, i, struct list_info);
 	}
 
+	*idx = li - (struct list_info*)gd->lists.ptr;
 	return li->q;
 }
 
 /** Add selected tracks to the next playback list */
 void list_add_to_next(ffslice indices)
 {
-	phi_queue_id q_target = list_next_playback();
+	uint i;
+	phi_queue_id q_target = list_next_playback(&i);
 	if (!q_target)
 		goto end;
+	gd->queue->conf(q_target)->no_auto_modified = 0;
+	list_load_once(i);
 
 	phi_queue_id q_src = list_id_visible();
 	uint *it;
@@ -836,7 +872,9 @@ void convert_add(ffslice indices)
 			.conversion = 1,
 		};
 		gd->tab_conversion = 1;
+		struct list_info *li = ffvec_zpushT(&gd->lists, struct list_info);
 		gd->q_convert = gd->queue->create(&qc); // q_on_change('n') adds a tab
+		li->q = gd->q_convert;
 	}
 
 	uint *it;
@@ -1035,6 +1073,10 @@ static void gui_destroy()
 		ffthread_join(gd->th, -1, NULL);
 	conf_destroy();
 	ffmem_free(gd->user_conf_dir);
+	struct list_info *li;
+	FFSLICE_WALK(&gd->lists, li) {
+		ffmem_free(li->fn);
+	}
 	ffvec_free(&gd->lists);
 	ffmem_free(gd);
 }

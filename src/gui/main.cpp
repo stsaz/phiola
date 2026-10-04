@@ -357,8 +357,6 @@ void wmain_list_delete(uint i)
 {
 	gui_wmain *m = gg->wmain;
 	uint new_index = (!i) ? 0 : i-1;
-	gd->current_scroll_vpos = m->vlist.scroll_vert();
-	list_select(new_index);
 	m->tabs.del(i);
 	m->tabs.select(new_index);
 }

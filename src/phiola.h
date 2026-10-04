@@ -508,13 +508,13 @@ struct phi_queue_conf {
 		const phi_filter *ui_module_if;
 	};
 	struct phi_track_conf tconf;
-	fftime last_mod_time;
 	uint version;
 	uint conversion :1;
 	uint analyze :1;
 	uint random :1;
 	uint repeat_all :1;
 	uint modified :1;
+	uint no_auto_modified :1;
 	uint ui_module_if_set :1;
 };
 

@@ -153,6 +153,11 @@ static void qe_close(void *f, phi_track *t)
 		flags |= (!t->q_notified) ? Q_TKCL_NEXT : 0;
 		flags |= (t->meta_reading) ? Q_TKCL_META_READ : 0;
 		q_ent_closed(e->q, flags);
+
+		if (e->expand && e->q->conf.no_auto_modified) {
+			e->q->conf.no_auto_modified = 0;
+			e->q->conf.modified = 0;
+		}
 	}
 	qe_unref(e);
 }
