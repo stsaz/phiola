@@ -70,12 +70,14 @@ struct dialog {
 };
 
 struct tui2_list {
+	ffvec lists; // struct list_info[]
 	ushort top, cur;
 	uint redrawing :1;
 	phi_timer tmr_list_redraw;
 	uint counter;
 	uint active_track;
 	uint save_pending;
+	uint selected;
 	const phi_filter *q_guard;
 };
 
@@ -466,7 +468,7 @@ static void list_view_title()
 		, brackets[mod->view_explorer][0], brackets[mod->view_explorer][1]);
 	len += r;
 
-	phi_queue_id sel = (mod->view_explorer) ? NULL : mod->queue->select(PHI_QSEL_CUR);
+	phi_queue_id sel = (mod->view_explorer) ? NULL : ffslice_itemT(&mod->list.lists, mod->list.selected, struct list_info)->q;
 	for (uint i = 0;  i < n;  i++) {
 		phi_queue_id q = mod->queue->get(i);
 		r = ffs_format(mod->buf + len, sizeof(mod->buf) - len, " | %s%s%s"

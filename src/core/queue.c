@@ -124,12 +124,6 @@ static phi_queue_id qm_get(uint i)
 static phi_queue_id qm_select(int pos)
 {
 	switch (pos) {
-	case PHI_QSEL_PREV:
-		qm->default_idx = ffmin(qm->default_idx - 1, qm->lists.len - 1);  break;
-
-	case PHI_QSEL_NEXT:
-		qm->default_idx = (qm->default_idx + 1) % qm->lists.len;  break;
-
 	case PHI_QSEL_CUR:
 		break;
 

@@ -561,8 +561,6 @@ enum PHI_Q_RENAME {
 
 enum PHI_QSEL {
 	PHI_QSEL_CUR = 1<<31,		// Get the currently selected queue
-	PHI_QSEL_PREV,				// Select the previous queue
-	PHI_QSEL_NEXT,				// Select the next queue
 };
 
 typedef struct phi_queue* phi_queue_id;

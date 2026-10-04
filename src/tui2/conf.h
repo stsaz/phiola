@@ -11,6 +11,7 @@ static char* conf_filename()
 struct conf {
 	uint active;
 	uint color;
+	uint list_selected;
 	uint play_info_title;
 	uint volume;
 	char* explorer_dir;
@@ -21,6 +22,7 @@ static const struct ffarg tui2_args[] = {
 	{ "active",			'u',	O(active) },
 	{ "color",			'u',	O(color) },
 	{ "explorer_dir",	'=s',	O(explorer_dir) },
+	{ "list_selected",	'u',	O(list_selected) },
 	{ "play_info_title",'u',	O(play_info_title) },
 	{ "volume",			'u',	O(volume) },
 	{}
@@ -32,6 +34,7 @@ static void conf_save()
 	struct conf c = {
 		.active = mod->list.active_track,
 		.color = mod->colors[0],
+		.list_selected = mod->list.selected,
 		.play_info_title = mod->play_info_title,
 		.volume = mod->volume,
 		.explorer_dir = mod->ex.dir,
@@ -73,6 +76,7 @@ static void conf_load()
 
 	mod->colors[0] = c.color;
 	mod->list.active_track = c.active;
+	mod->list.selected = c.list_selected;
 	mod->ex.dir = c.explorer_dir;
 	c.explorer_dir = NULL;
 	mod->play_info_title = c.play_info_title;
