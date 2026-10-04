@@ -88,6 +88,10 @@ FF_EXTERN uint wmain_list_add(const char *name, uint i);
 FF_EXTERN void wmain_list_delete(uint i);
 FF_EXTERN void wmain_list_select(uint n, uint scroll_vpos);
 FF_EXTERN void wmain_list_draw(uint n, uint flags);
+struct lists_load_data {
+	uint n, sel;
+};
+FF_EXTERN void wmain_lists_load(struct lists_load_data *d);
 
 FF_EXTERN void wgoto_show(uint pos);
 
@@ -115,6 +119,7 @@ struct gui_conf {
 	int		auto_skip_sec_percent, auto_skip_tail_sec_pct; // >0: sec; <0: percent
 	uint	seek_leap_delta, seek_step_delta;
 	uint	odev;
+	uint	list_selected;
 	uint	volume;
 	u_char	eqlz_on;
 	u_char	random;

@@ -33,6 +33,7 @@ static void gui_finish();
 #define O(m)  (void*)FF_OFF(struct gui_data, m)
 const struct ffarg guimod_args[] = {
 	{ "list.auto_sel",	'b',	O(conf.auto_select) },
+	{ "list.index",		'u',	O(conf.list_selected) },
 	{ "play.auto_norm",	'b',	O(conf.auto_norm) },
 	{ "play.auto_skip",	'd',	O(conf.auto_skip_sec_percent) },
 	{ "play.auto_skip_tail",	'd',	O(conf.auto_skip_tail_sec_pct) },
@@ -289,6 +290,7 @@ void list_deleted(phi_queue_id q)
 void list_select(uint i)
 {
 	list_filter_close();
+	gd->conf.list_selected = i;
 	struct list_info *li = ffslice_itemT(&gd->lists, i, struct list_info);
 	gd->tab_conversion = (gd->q_convert == li->q);
 	phi_queue_id old = FF_SWAP(&gd->q_selected, li->q);
@@ -616,7 +618,8 @@ static void lists_save()
 void lists_load()
 {
 	char *fn = NULL;
-	for (uint i = 1;;  i++) {
+	uint i;
+	for (i = 1;;  i++) {
 
 		fn = ffsz_allocfmt("%s" AUTO_LIST_FN, gd->user_conf_dir, i);
 		fffileinfo fi;
@@ -630,7 +633,9 @@ void lists_load()
 			// This prevents `m3u-read` from setting `modified=0` on the queue.
 			mt_set = (gd->queue->count(q) == 0);
 		} else {
-			q = list_new();
+			q = list_new(); // wmain ignores q-on-change here
+			struct list_info *li = ffvec_zpushT(&gd->lists, struct list_info);
+			li->q = q;
 		}
 
 		if (mt_set) {
@@ -648,6 +653,15 @@ void lists_load()
 
 	ffmem_free(fn);
 	gd->lists_load_done = 1;
+
+	uint n = i - 1;
+	i = gd->conf.list_selected = ffmin(gd->conf.list_selected, n - 1);
+	gd->q_selected = gd->queue->select(i);
+
+	struct lists_load_data *lld = ffmem_new(struct lists_load_data);
+	lld->n = n;
+	lld->sel = i;
+	gui_task_ptr((void(*)(void*))wmain_lists_load, lld);
 }
 
 void list_add(ffstr fn)

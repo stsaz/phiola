@@ -404,7 +404,8 @@ static void q_on_change(phi_queue_id q, uint flags, uint pos)
 {
 	gui_wmain *m = gg->wmain;
 
-	if (q == gd->q_filtered)
+	if (q == gd->q_filtered
+		|| !gd->lists_load_done)
 		return;
 
 	uint cmd = (flags & 0xff);
@@ -555,6 +556,17 @@ void wmain_list_select(uint n, uint scroll_vpos)
 {
 	wmain_list_draw(n, 1);
 	gui_task_uint(list_scroll, scroll_vpos);
+}
+
+void wmain_lists_load(struct lists_load_data *d)
+{
+	struct gui_wmain *m = gg->wmain;
+	xxvec buf;
+	for (uint i = 1;  i < d->n;  i++) {
+		m->tabs.add(buf.clear().add_f("Playlist %u%Z", i + 1).sz());
+	}
+	m->tabs.select(d->sel);
+	ffmem_free(d);
 }
 
 /** Add the files chosen by user */
