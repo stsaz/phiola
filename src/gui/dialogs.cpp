@@ -17,3 +17,4 @@
 #include <gui/settings.hpp>
 #include <gui/equalizer.hpp>
 #include <gui/log.hpp>
+#include <gui/mlib.hpp>

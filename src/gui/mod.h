@@ -65,6 +65,8 @@ FF_EXTERN int record_stop();
 FF_EXTERN void convert_add(ffslice indices);
 FF_EXTERN void convert_begin(void *param);
 
+FF_EXTERN void mlib_play(char *path);
+
 FF_EXTERN const phi_adev_if* adev_find_mod();
 
 FF_EXTERN void wmain_status(const char *fmt, ...);
@@ -117,6 +119,7 @@ struct gui_track_info {
 struct gui_conf {
 	char*	eqlz;
 	char*	theme;
+	char*	mlib_dirs;
 	int		auto_skip_sec_percent, auto_skip_tail_sec_pct; // >0: sec; <0: percent
 	uint	seek_leap_delta, seek_step_delta;
 	uint	odev;

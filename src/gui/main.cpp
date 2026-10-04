@@ -734,6 +734,9 @@ static void wmain_action(ffui_window *wnd, int id)
 	case A_ABOUT_SHOW:
 		wabout_show(1);  break;
 
+	case A_MLIB_SHOW:
+		wmlib_show(1);  break;
+
 	case A_CLOSE:
 		gui_quit();
 

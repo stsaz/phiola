@@ -3,8 +3,8 @@
 
 struct gui_wsettings {
 	ffui_windowxx	wnd;
-	ffui_label		ltheme, ldev, lseek_by, lleap_by, lauto_skip, lauto_skip_tail;
-	ffui_editxx		eseek_by, eleap_by, eauto_skip, eauto_skip_tail;
+	ffui_label		ltheme, ldev, lseek_by, lleap_by, lauto_skip, lauto_skip_tail, llibrary_dir;
+	ffui_editxx		eseek_by, eleap_by, eauto_skip, eauto_skip_tail, elibrary_dir;
 	ffui_trackbarxx	tbauto_skip, tbauto_skip_tail;
 	ffui_checkboxxx	cbrg_norm, cbauto_norm, cbeqlz;
 	ffui_comboboxxx	cbdarktheme, cbdev;
@@ -22,6 +22,7 @@ FF_EXTERN const ffui_ldr_ctl wsettings_ctls[] = {
 	_(lleap_by),	_(eleap_by),
 	_(lauto_skip),	_(eauto_skip),	_(tbauto_skip),
 	_(lauto_skip_tail),	_(eauto_skip_tail),	_(tbauto_skip_tail),
+	_(llibrary_dir),	_(elibrary_dir),
 	_(cbrg_norm),
 	_(cbauto_norm),
 	_(cbeqlz),
@@ -97,6 +98,9 @@ static void wsettings_ui_to_conf()
 	gd->conf.seek_leap_delta = xxvec(w->eleap_by.text()).str().uint32(60);
 	gd->conf.auto_skip_sec_percent = auto_skip_read(xxvec(w->eauto_skip.text()).str());
 	gd->conf.auto_skip_tail_sec_pct = auto_skip_read(xxvec(w->eauto_skip_tail.text()).str());
+
+	ffmem_free(gd->conf.mlib_dirs);
+	gd->conf.mlib_dirs = w->elibrary_dir.text().ptr;
 }
 
 static void wsettings_theme(gui_wsettings *w)
@@ -112,6 +116,8 @@ static void wsettings_theme(gui_wsettings *w)
 		w->cbdarktheme.set(0);
 #endif
 }
+
+extern uint adevices_fill(uint flags, ffui_comboboxxx &cb, uint index);
 
 static void wsettings_ui_from_conf()
 {
@@ -136,6 +142,9 @@ static void wsettings_ui_from_conf()
 	w->tbauto_skip_tail.set(auto_skip_progress(gd->conf.auto_skip_tail_sec_pct));
 
 	w->cbeqlz.check(gd->conf.eqlz_on);
+
+	if (gd->conf.mlib_dirs)
+		w->elibrary_dir.text(gd->conf.mlib_dirs);
 }
 
 void wsettings_userconf_write(ffconfw *cw)

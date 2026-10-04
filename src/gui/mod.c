@@ -34,6 +34,7 @@ static void gui_finish();
 const struct ffarg guimod_args[] = {
 	{ "list.auto_sel",	'b',	O(conf.auto_select) },
 	{ "list.index",		'u',	O(conf.list_selected) },
+	{ "mlib.dirs",		'=s',	O(conf.mlib_dirs) },
 	{ "play.auto_norm",	'b',	O(conf.auto_norm) },
 	{ "play.auto_skip",	'd',	O(conf.auto_skip_sec_percent) },
 	{ "play.auto_skip_tail",	'd',	O(conf.auto_skip_tail_sec_pct) },
@@ -68,6 +69,8 @@ void mod_userconf_write(ffconfw *cw)
 	ffconfw_add2z(cw, "play.eqlz", gd->conf.eqlz);
 	if (gd->conf.theme)
 		ffconfw_add2z(cw, "theme", gd->conf.theme);
+	if (gd->conf.mlib_dirs)
+		ffconfw_add2z(cw, "mlib.dirs", gd->conf.mlib_dirs);
 }
 
 static void conf_norm()
@@ -81,6 +84,7 @@ static void conf_destroy()
 {
 	ffmem_free(gd->conf.eqlz);
 	ffmem_free(gd->conf.theme);
+	ffmem_free(gd->conf.mlib_dirs);
 }
 
 
@@ -735,6 +739,13 @@ void list_add_multi(ffslice names)
 		list_add_sz(*it);
 	}
 	ffslice_free(&names);
+}
+
+void mlib_play(char *path)
+{
+	list_new(NULL);
+	list_add_sz(path);
+	ctl_play(0);
 }
 
 /** Get next playback list (skip conversion list) */

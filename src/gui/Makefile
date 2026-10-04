@@ -62,6 +62,7 @@ gui.$(SO): gui-mod.o \
 		$(GUI_RES) \
 		$(FFGUI_OBJ) \
 		\
+		sort.o \
 		str-format.o
 	$(LINKXX) -shared $+ $(LINKFLAGS_GUI) $(LINK_DL) -o $@
 

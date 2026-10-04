@@ -76,6 +76,11 @@ static struct ffarg_ctx wconvert_args_f() {
 	return ax;
 }
 
+static struct ffarg_ctx wmlib_args_f() {
+	struct ffarg_ctx ax = { wmlib_args, gg->wmlib };
+	return ax;
+}
+
 static struct ffarg_ctx wsettings_args_f() {
 	struct ffarg_ctx ax = { wsettings_args, gg->wsettings };
 	return ax;
@@ -101,6 +106,7 @@ static const struct ffarg args[] = {
 	{ "info",		'{',	winfo_args_f },
 	{ "log",		'{',	wlog_args_f },
 	{ "main",		'{',	wmain_args_f },
+	{ "mlib",		'{',	wmlib_args_f },
 	{ "mod",		'{',	guimod_args_f },
 	{ "record",		'{',	wrecord_args_f },
 	{ "settings",	'{',	wsettings_args_f },
@@ -152,6 +158,10 @@ static void gui_userconf_save()
 		winfo_userconf_write(&cw);
 	ffconfw_add_obj(&cw, '}');
 
+	ffconfw_add2obj(&cw, "mlib", '{');
+		wmlib_userconf_write(&cw);
+	ffconfw_add_obj(&cw, '}');
+
 	ffconfw_add2obj(&cw, "settings", '{');
 		wsettings_userconf_write(&cw);
 	ffconfw_add_obj(&cw, '}');
@@ -176,6 +186,7 @@ extern const ffui_ldr_ctl
 	wlistfilter_ctls[],
 	wrecord_ctls[],
 	wconvert_ctls[],
+	wmlib_ctls[],
 	wabout_ctls[],
 	wlog_ctls[];
 
@@ -203,6 +214,7 @@ static void* gui_getctl(void *udata, const ffstr *name)
 		_w(wlistadd, wlistadd_ctls),
 		_w(wrecord, wrecord_ctls),
 		_w(wconvert, wconvert_ctls),
+		_w(wmlib, wmlib_ctls),
 		_w(wabout, wabout_ctls),
 		_w(wlog, wlog_ctls),
 		FFUI_LDR_CTL_END
@@ -396,6 +408,7 @@ void gui_init()
 	wconvert_init();
 	wabout_init();
 	wlog_init();
+	wmlib_init();
 }
 
 void* gui_alloc(uint n)
@@ -444,6 +457,7 @@ void gui_quit()
 	gui_userconf_save();
 	winfo_fin();
 	wrename_fin();
+	wmlib_fin();
 	wmain_fin();
 	ffui_post_quitloop();
 }

@@ -160,6 +160,7 @@ struct xxvec : ffvec {
 		return *this;
 	}
 	template<class T> T* at(ffsize i) { FF_ASSERT(i < len); return ffslice_itemT(this, i, T); }
+	template<class T> const T* at(ffsize i) const { FF_ASSERT(i < len); return ffslice_itemT(this, i, T); }
 	template<class T> T* alloc(ffsize n) { return ffvec_allocT(this, n, T); }
 	template<class T> T* realloc(ffsize n) { return ffvec_reallocT(this, n, T); }
 	template<class T> T* push() { return ffvec_pushT(this, T); }

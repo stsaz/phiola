@@ -77,6 +77,13 @@ FF_EXTERN void wlog_init();
 FF_EXTERN void wlog_userconf_write(ffconfw *cw);
 FF_EXTERN const struct ffarg wlog_args[];
 
+struct gui_mlib;
+FF_EXTERN void wmlib_init();
+FF_EXTERN void wmlib_fin();
+FF_EXTERN void wmlib_show(uint show);
+FF_EXTERN void wmlib_userconf_write(ffconfw *cw);
+FF_EXTERN const struct ffarg wmlib_args[];
+
 struct gui {
 #ifdef __cplusplus
 	ffui_menuxx
@@ -105,6 +112,7 @@ struct gui {
 	struct gui_wconvert*	wconvert;
 	struct gui_wabout*		wabout;
 	struct gui_wlog*		wlog;
+	struct gui_mlib*		wmlib;
 
 	ffui_loader	ldr;
 	ffvec		ui_conf; // Contents of 'ui.conf' file
