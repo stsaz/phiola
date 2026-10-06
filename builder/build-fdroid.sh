@@ -3,11 +3,8 @@
 
 set -xeu
 
-if [[ $# -ne 1 ]]; then
-	echo "Usage: build-fdroid.sh VERSION"
-	exit 1
-fi
-VER="$1"
+VER="$(sed -n "s/.*versionName '\(.*\)'.*/\1/p" android/phiola/build.gradle)"
+[[ -n "$VER" ]]
 
 # Build libs, APK (unsigned)
 # Using system-wide gradle (not local one).
