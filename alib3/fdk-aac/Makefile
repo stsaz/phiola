@@ -24,6 +24,7 @@ $(DIR): $(PKG)
 
 # build
 CF += -fno-exceptions -fno-rtti \
+	-DSUPPRESS_BUILD_DATE_INFO \
 	-I$(DIR)/libAACdec/include \
 	-I$(DIR)/libMpegTPDec/include \
 	-I$(DIR)/libSBRdec/include \
@@ -38,9 +39,6 @@ CF += \
 	-I$(DIR)/libMpegTPEnc/include \
 	-I$(DIR)/libSBRenc/include \
 	-I$(DIR)/libSACenc/include
-
-CFLAGS += -Wno-narrowing
-# $(DIR)/libAACenc/src/aacEnc_rom.cpp:661:1: error: narrowing conversion of ‘2180108801u’ from ‘unsigned int’ to ‘FIXP_DBL {aka long int}’ inside { } [-Wnarrowing]
 
 AACDEC_SRC := \
 	$(DIR)/libAACdec/src/FDK_delay.cpp \
