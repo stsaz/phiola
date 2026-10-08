@@ -156,7 +156,6 @@ strip-debug: $(addsuffix .debug,$(TARGETS))
 %.debug: %
 	$(OBJCOPY) --only-keep-debug $< $@
 	$(STRIP) $<
-	$(OBJCOPY) --add-gnu-debuglink=$@ $<
 	touch $@
 
 PKG_ARCH := $(CPU)
