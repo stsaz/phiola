@@ -32,6 +32,7 @@ FF_EXTERN const struct ffarg winfo_args[];
 struct gui_wrename;
 FF_EXTERN void wrename_init();
 FF_EXTERN void wrename_show(uint show, uint idx);
+FF_EXTERN void wrename_show_list(uint show);
 FF_EXTERN void wrename_fin();
 
 struct gui_wsettings;

@@ -30,10 +30,17 @@ static void list_filter_close();
 static phi_queue_id list_id_visible();
 static void gui_finish();
 
+static int gui_arg_list_names(void *obj, ffstr s)
+{
+	*ffvec_pushT(&gd->conf.list_names, char*) = ffsz_dupstr(&s);
+	return 0;
+}
+
 #define O(m)  (void*)FF_OFF(struct gui_data, m)
 const struct ffarg guimod_args[] = {
 	{ "list.auto_sel",	'b',	O(conf.auto_select) },
 	{ "list.index",		'u',	O(conf.list_selected) },
+	{ "list.names",		'+S',	gui_arg_list_names },
 	{ "mlib.dirs",		'=s',	O(conf.mlib_dirs) },
 	{ "play.auto_norm",	'b',	O(conf.auto_norm) },
 	{ "play.auto_skip",	'd',	O(conf.auto_skip_sec_percent) },
@@ -71,6 +78,13 @@ void mod_userconf_write(ffconfw *cw)
 		ffconfw_add2z(cw, "theme", gd->conf.theme);
 	if (gd->conf.mlib_dirs)
 		ffconfw_add2z(cw, "mlib.dirs", gd->conf.mlib_dirs);
+
+	struct list_info *li;
+	ffconfw_add_keyz(cw, "list.names");
+	FFSLICE_WALK(&gd->lists, li) {
+		if (li->q != gd->q_convert)
+			ffconfw_add_strz(cw, gd->queue->conf(li->q)->name);
+	}
 }
 
 static void conf_norm()
@@ -85,6 +99,11 @@ static void conf_destroy()
 	ffmem_free(gd->conf.eqlz);
 	ffmem_free(gd->conf.theme);
 	ffmem_free(gd->conf.mlib_dirs);
+	char **ps;
+	FFSLICE_WALK(&gd->conf.list_names, ps) {
+		ffmem_free(*ps);
+	}
+	ffvec_free(&gd->conf.list_names);
 }
 
 
@@ -224,11 +243,11 @@ static void list_attach_default(phi_queue_id q)
 }
 
 /** Create a new queue */
-static phi_queue_id list_new(char *fn)
+static phi_queue_id list_new(char *name, char *fn)
 {
 	list_filter_close();
 	struct phi_queue_conf qc = {
-		.name = ffsz_allocfmt("Playlist %u", ++gd->playlist_counter),
+		.name = (name) ? name : ffsz_allocfmt("Playlist %u", ++gd->playlist_counter),
 		.first_filter = &gui_guard,
 		.ui_module = "gui.track",
 	};
@@ -282,6 +301,10 @@ static void list_close()
 		gd->q_convert = NULL;
 	} else if (play_lists_n == 1) {
 		gd->queue->clear(gd->q_selected);
+		struct phi_queue_conf *qc = gd->queue->conf(gd->q_selected);
+		ffmem_free(qc->name);
+		qc->name = ffsz_dup("Playlist 1");
+		wmain_list_rename(0, "Playlist 1");
 		return;
 	}
 
@@ -332,6 +355,31 @@ void list_select(uint i)
 	if (gd->current_scroll_vpos != ~0U)
 		list_scroll_store(old, gd->current_scroll_vpos);
 	wmain_list_select(n, li->scroll_vpos);
+}
+
+/** Get playlist name
+The data is safe because a list can be renamed only from GUI thread.
+*/
+const char* list_name_i(uint i)
+{
+	phi_queue_id q;
+	q = (i == ~0U) ? gd->q_selected : ffslice_itemT(&gd->lists, i, struct list_info)->q;
+	return gd->queue->conf(q)->name;
+}
+
+/** Rename the currently selected list.
+Thread: core */
+void list_rename(void *sz)
+{
+	char *name = sz;
+	uint i = list_get_i(gd->q_selected);
+	struct list_info *li = ffslice_itemT(&gd->lists, i, struct list_info);
+
+	struct phi_queue_conf *qc = gd->queue->conf(li->q);
+	ffmem_free(qc->name);
+	qc->name = name;
+
+	wmain_list_rename(i, name);
 }
 
 /** Get currently visible (filtered) queue */
@@ -497,7 +545,7 @@ void ctl_action(uint cmd)
 	switch (cmd) {
 
 	case A_LIST_NEW:
-		list_new(NULL);  break;
+		list_new(NULL, NULL);  break;
 
 	case A_LIST_CLOSE:
 		list_close();  break;
@@ -670,6 +718,27 @@ static void lists_save()
 	ffmem_free(fn);
 }
 
+static void list_names_set(ffslice *names)
+{
+	uint i = 0;
+	char **ps;
+	FFSLICE_WALK(names, ps) {
+		if (i >= gd->lists.len) {
+			ffmem_free(*ps);
+			goto next;
+		}
+
+		struct list_info *li = ffslice_itemT(&gd->lists, i, struct list_info);
+		struct phi_queue_conf *qc = gd->queue->conf(li->q);
+		ffmem_free(qc->name);
+		qc->name = *ps;
+
+	next:
+		*ps = NULL;
+		i++;
+	}
+}
+
 /** Load playlists from disk */
 void lists_load()
 {
@@ -687,7 +756,7 @@ void lists_load()
 			li->fn = fn;
 			q = NULL;
 		} else {
-			q = list_new(fn); // wmain ignores q-on-change here
+			q = list_new(NULL, fn); // wmain ignores q-on-change here
 		}
 		fn = NULL;
 		gd->queue->conf(q)->no_auto_modified = 1;
@@ -706,6 +775,11 @@ void lists_load()
 	i = gd->conf.list_selected = ffmin(gd->conf.list_selected, n - 1);
 	gd->q_selected = gd->queue->select(i);
 	list_load_once(i);
+
+	if (gd->conf.list_names.len) {
+		list_names_set((ffslice*)&gd->conf.list_names);
+		ffvec_free(&gd->conf.list_names);
+	}
 
 	struct lists_load_data *lld = ffmem_new(struct lists_load_data);
 	lld->n = n;
@@ -749,7 +823,9 @@ void list_add_multi(ffslice names)
 
 void mlib_play(char *path)
 {
-	list_new(NULL);
+	ffstr name;
+	ffpath_split3_str(FFSTR_Z(path), NULL, &name, NULL);
+	list_new(ffsz_dupstr(&name), NULL);
 	list_add_sz(path);
 	ctl_play(0);
 }

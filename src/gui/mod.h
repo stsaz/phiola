@@ -50,6 +50,9 @@ FF_EXTERN void list_filter(ffstr filter);
 FF_EXTERN struct phi_queue_entry* list_vis_qe_ref(uint i);
 FF_EXTERN uint list_vis_version();
 FF_EXTERN void list_conf_set(void *new_conf);
+FF_EXTERN const char* list_name_i(uint i);
+#define list_cur_name()  list_name_i(~0U)
+FF_EXTERN void list_rename(void *sz);
 
 FF_EXTERN void ctl_play(uint i);
 FF_EXTERN void volume_set(uint vol);
@@ -90,6 +93,7 @@ FF_EXTERN uint wmain_list_add(const char *name, uint i);
 FF_EXTERN void wmain_list_delete(uint i);
 FF_EXTERN void wmain_list_select(uint n, uint scroll_vpos);
 FF_EXTERN void wmain_list_draw(uint n, uint flags);
+FF_EXTERN void wmain_list_rename(uint i, const char *name);
 struct lists_load_data {
 	uint n, sel;
 };
@@ -131,6 +135,7 @@ struct gui_conf {
 	u_char	tags_keep_date;
 	u_char	repeat;
 	u_char	auto_select;
+	ffvec	list_names; // char*[]
 };
 
 struct gui_data {

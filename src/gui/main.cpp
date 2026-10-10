@@ -556,12 +556,19 @@ void wmain_list_select(uint n, uint scroll_vpos)
 	gui_task_uint(list_scroll, scroll_vpos);
 }
 
+/** Rename list at position 'i'.
+Thread: core */
+void wmain_list_rename(uint i, const char *name)
+{
+	gui_wmain *m = gg->wmain;
+	m->tabs.text(i, name);
+}
+
 void wmain_lists_load(struct lists_load_data *d)
 {
 	struct gui_wmain *m = gg->wmain;
-	xxvec buf;
-	for (uint i = 1;  i < d->n;  i++) {
-		m->tabs.add(buf.clear().add_f("Playlist %u%Z", i + 1).sz());
+	for (uint i = 0;  i < d->n;  i++) {
+		m->tabs.add(list_name_i(i));
 	}
 	m->tabs.select(d->sel);
 	ffmem_free(d);
@@ -590,8 +597,9 @@ static void list_save_choose_filename()
 {
 	gui_wmain *m = gg->wmain;
 	char *fn;
-	ffstr name = FFSTR_INITZ("Playlist.m3u8");
-	if (!(fn = ffui_dlg_save(&gg->dlg, &m->wnd, name.ptr, name.len)))
+	xxvec name;
+	name.add_f("%s.m3u8%Z", list_cur_name()).len--;
+	if (!(fn = ffui_dlg_save(&gg->dlg, &m->wnd, name.sz(), name.len)))
 		return;
 
 	char *fn2 = ffsz_dup(fn);
@@ -674,6 +682,9 @@ static void wmain_action(ffui_window *wnd, int id)
 // List:
 	case A_LIST_CHANGE:
 		list_changed(m->tabs.changed());  break;
+
+	case A_LIST_RENAME:
+		wrename_show_list(1);  break;
 
 	case A_LIST_ADD_FILE:
 		list_add_choose();  break;
@@ -803,7 +814,6 @@ void wmain_show()
 	m->wnd_pos = NULL;
 
 	m->tvol.set(gd->conf.volume);
-	m->tabs.add("Playlist 1");
 	m->wnd.tab_auto_switch(&m->tabs);
 	m->wnd.show(1);
 	wmain_list_draw(gd->queue->count(gd->q_selected), 0);
