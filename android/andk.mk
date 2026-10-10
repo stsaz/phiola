@@ -27,4 +27,4 @@ A_CFLAGS += \
 	-D_FORTIFY_SOURCE=2 -DANDROID -DNDEBUG
 
 A_LINKFLAGS += -no-canonical-prefixes \
-	-Wl,-no-undefined -Wl,--gc-sections -Wl,--build-id=sha1 -Wl,--no-rosegment
+	-Wl,-no-undefined -Wl,--gc-sections -Wl,--build-id=none -Wl,--no-rosegment
