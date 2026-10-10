@@ -117,7 +117,6 @@ struct installer {
 		INST_UPGRADE, // phiola installation, different version
 		INST_UPGRADE_SAME, // phiola installation, same version
 	};
-	xxvec upgrade_path_backup;
 
 	/** Get status of the target app dir.
 	Return enum INST_T. */
@@ -164,18 +163,16 @@ struct installer {
 			goto end;
 		}
 
-		buf.len = dir.len;
-		buf.cat_f("\\%s", CONF_PORTABLE);
-		if (fffile_exists(buf.sz())) {
-			rc = INST_PORTABLE;
-			goto end;
-		}
-
 		rc = INST_UPGRADE;
 		if (version)
 			version->add(core->version_str);
 		if (ffsz_eq(core->version_str, PHI_VERSION_STR))
 			rc = INST_UPGRADE_SAME;
+
+		buf.len = dir.len;
+		buf.cat_f("\\%s", CONF_PORTABLE);
+		if (fffile_exists(buf.sz()))
+			rc = INST_PORTABLE;
 
 	end:
 		if (core)
@@ -185,37 +182,22 @@ struct installer {
 		return rc;
 	}
 
-	/** Backup the existing app dir. */
-	char* upgrade_prepare(const char *phi_dir) {
-		this->upgrade_path_backup.clear().add_f("%s.old%Z", phi_dir);
-
-		if (fffile_exists(this->upgrade_path_backup.sz())) {
-			return ffsz_allocfmt(
-				"A leftover directory from a previously interrupted upgrade was found.\n"
-				"Please delete it manually: %s"
-				, this->upgrade_path_backup.sz());
-		}
-		// Note: race-condition here (MOVEFILE_REPLACE_EXISTING)
-		if (fffile_rename(phi_dir, this->upgrade_path_backup.sz())) {
-			return ffsz_allocfmt(
-				"Cannot rename the existing installation: %s.\n"
-				"Make sure phiola is not running."
-				, phi_dir);
-		}
-
-		return NULL;
-	}
-
 	static int job(int r, const char *path) { return r; }
 
-	/** Delete the backup dir. */
-	int upgrade_fin() {
-		return dir_remove_r(this->upgrade_path_backup.sz(), DEL_MAX_FILES, job);
-	}
-
-	/** Restore from the backup dir. */
-	int upgrade_err(const char *dir) {
-		return fffile_rename(this->upgrade_path_backup.sz(), dir);
+	/** Delete or restore the backup files. */
+	int upgrade_fin(xxvec &buf, xxstr backup_files, bool success) {
+		int r = 0;
+		const char *s = backup_files.ptr;
+		while (s < ffstr_end(&backup_files)) {
+			if (success) {
+				r |= fffile_remove(s);
+			} else {
+				buf.clear().add(s).len -= FFS_LEN(".old");
+				r |= fffile_rename(s, buf.sz());
+			}
+			s += ffsz_len(s) + 1;
+		}
+		return r;
 	}
 
 	char* uninstaller_create(xxvec &buf, xxstr dir)
@@ -232,7 +214,7 @@ struct installer {
 
 		buf.len = dir.len;
 		buf.cat_f("\\%s", UNINSTALL_EXE);
-		if (fffile_writewhole(buf.sz(), this->uninst_exe.ptr, this->uninst_exe.len, FFFILE_CREATENEW))
+		if (fffile_writewhole(buf.sz(), this->uninst_exe.ptr, this->uninst_exe.len, 0))
 			return ffsz_allocfmt_syserr("file write: %s", buf.sz());
 		return NULL;
 	}
@@ -241,9 +223,9 @@ struct installer {
 	{
 		if (this->done) return;
 
-		xxvec e, dir, exe, buf;
+		xxvec e, dir, exe, buf, backup_files;
 		xxstr dir_path, dir_name;
-		bool upgrading = 0, dirty = 0, success_msg = 1;
+		bool upgrading = 0, dirty = 0, success_msg = 1, was_portable = 0;
 		buf.alloc<char>(4096);
 		dir.acquire(wmain.edir.text()); // ffui_textstr() writes NULL-terminated string
 		exe.add_f("%S\\%s%Z", &dir, EXE_NAME).len--;
@@ -273,20 +255,24 @@ struct installer {
 			break;
 
 		case INST_UPGRADE:
-		case INST_UPGRADE_SAME: {
+		case INST_UPGRADE_SAME:
 			if (wmain.cb_portable.checked()) {
 				// The situation has changed since the last UI update
 				ui_update();
 				return;
 			}
-			char *s = upgrade_prepare(dirz);
-			if (s) {
-				e.acquire(s);
-				goto err;
-			}
 			upgrading = 1;
 			break;
-		}
+
+		case INST_PORTABLE:
+			if (!wmain.cb_portable.checked()) {
+				// The situation has changed since the last UI update
+				ui_update();
+				return;
+			}
+			upgrading = 1;
+			was_portable = 1;
+			break;
 
 		default:
 			// The situation has changed since the last UI update
@@ -302,7 +288,7 @@ struct installer {
 
 		dirty = 1;
 		char *s;
-		if ((s = zip_unpack(this->pkg, dir_path))) {
+		if ((s = zip_unpack(this->pkg, dir_path, upgrading, &backup_files))) {
 			if (s != (char*)-1)
 				e.acquire(s);
 			else
@@ -311,15 +297,18 @@ struct installer {
 		}
 
 		if (wmain.cb_portable.checked()) {
-			buf.clear().add_f("%S\\%s%Z", &dir, CONF_PORTABLE);
-			fffd f = fffile_open(buf.sz(), FFFILE_CREATENEW | FFFILE_WRITEONLY);
-			if (f == FFFILE_NULL)
-				e.add_f("Could not create file: %s. ", buf.sz());
-			fffile_close(f);
+			if (!was_portable) {
+				buf.clear().add_f("%S\\%s%Z", &dir, CONF_PORTABLE);
+				fffd f = fffile_open(buf.sz(), FFFILE_CREATENEW | FFFILE_WRITEONLY);
+				if (f == FFFILE_NULL)
+					e.add_f("Could not create file: %s. ", buf.sz());
+				fffile_close(f);
+			}
 			goto done;
 		}
 
 		if ((s = uninstaller_create(buf, dir.str()))) {
+			// Note: uninstaller may be left corrupted
 			e.acquire(s);
 			goto err;
 		}
@@ -359,8 +348,8 @@ struct installer {
 			ffui_exec("ms-settings:defaultapps");
 
 	done:
-		if (upgrading && upgrade_fin())
-			e.add("Old phiola installation directory could not be removed. ");
+		if (upgrading && upgrade_fin(buf, backup_files.str(), 1))
+			e.add("Some files from the previous installation could not be removed. ");
 
 		if (e.len)
 			ffui_msgdlg_showz(MSG_TITLE, xxvec().add_f("Installation completed with errors: %S%Z", &e).sz(), FFUI_MSGDLG_WARN);
@@ -373,11 +362,12 @@ struct installer {
 
 	err:
 		if (dirty
+			&& !upgrading
 			&& fffile_exists(dirz)
 			&& dir_remove_r(dirz, DEL_MAX_FILES, job))
 			e.add_f("%s was not deleted. ", dirz);
-		if (upgrading && upgrade_err(dirz))
-			ffui_msgdlg_showz(MSG_TITLE, "Previous phiola installation directory could not be restored.", FFUI_MSGDLG_ERR);
+		if (upgrading && upgrade_fin(buf, backup_files.str(), 0))
+			ffui_msgdlg_showz(MSG_TITLE, "Some files from the previous installation could not be restored.", FFUI_MSGDLG_ERR);
 		ffui_msgdlg_showz(MSG_TITLE, e.strz(), FFUI_MSGDLG_ERR);
 	}
 
@@ -419,15 +409,19 @@ struct installer {
 			break;
 
 		case INST_PORTABLE:
-			status = "Portable installation detected. Upgrade is not supported.";
 			action = "Upgrade";
-			ok = 0;
+			if (wmain.cb_portable.checked()) {
+				status = buf.clear().add_f("phiola v%S (portable) will be upgraded%Z", &version).sz();
+			} else {
+				status = "Cannot convert a portable installation to a regular one";
+				ok = 0;
+			}
 			break;
 		}
 
 		if ((r == INST_UPGRADE || r == INST_UPGRADE_SAME)
 			&& wmain.cb_portable.checked()) {
-			status = "Cannot convert an existing installation to portable. Uninstall it first, then install portable.";
+			status = "Cannot convert an existing installation to portable. Uninstall it first.";
 			ok = 0;
 		}
 

@@ -235,9 +235,11 @@ end:
 }
 
 /** Unpack zip archive to the specified directory.
+backup_files: eg "dir/name1.old\0dir/name2.old\0"
+	These are NOT reverted automatically in case of error.
 Return error message;
 	(char*)-1 if zip data is corrupted. */
-static inline char* zip_unpack(ffstr pkg, ffstr dir)
+static inline char* zip_unpack(ffstr pkg, ffstr dir, uint upgrade, ffvec *backup_files)
 {
 	char *e = (char*)-1;
 
@@ -254,10 +256,15 @@ static inline char* zip_unpack(ffstr pkg, ffstr dir)
 	uint cur = 0;
 	fffd f = FFFILE_NULL;
 
-	ffvec fn = {};
+	ffvec fn = {}, fn_old = {};
 	ffvec_alloc(&fn, dir.len + 1 + 255 + 1, 1);
 	ffvec_catstr(&fn, &dir);
 	ffvec_catchar(&fn, '\\');
+	if (upgrade) {
+		ffvec_alloc(&fn_old, dir.len + 1 + 255 + 1, 1);
+		ffvec_catstr(&fn_old, &dir);
+		ffvec_catchar(&fn_old, '\\');
+	}
 
 	for (;;) {
 
@@ -315,7 +322,8 @@ static inline char* zip_unpack(ffstr pkg, ffstr dir)
 
 			if (name[fn.len - 1] == '/') {
 				name[fn.len - 1] = '\0';
-				if (ffdir_make(name)) {
+				if (ffdir_make(name)
+					&& !(upgrade && fferr_exist(fferr_last()))) {
 					e = ffsz_allocfmt_syserr("directory make: %s", name);
 					goto end;
 				}
@@ -323,8 +331,22 @@ static inline char* zip_unpack(ffstr pkg, ffstr dir)
 			}
 
 			if (FFFILE_NULL == (f = fffile_open(name, FFFILE_CREATENEW | FFFILE_WRITEONLY))) {
-				e = ffsz_allocfmt_syserr("file create: %s", name);
-				goto end;
+				if (fferr_exist(fferr_last()) && upgrade) {
+					fn_old.len = dir.len + 1;
+					if (!ffvec_catf(&fn_old, "%S.old%Z", &zi->name))
+						goto end;
+					const char *name_old = (char*)fn_old.ptr;
+					ffvec_addT(backup_files, name_old, ffsz_len(name_old) + 1, char);
+					if (fffile_rename(name, name_old)) {
+						e = ffsz_allocfmt_syserr("file rename: %s", name);
+						goto end;
+					}
+					f = fffile_open(name, FFFILE_CREATENEW | FFFILE_WRITEONLY);
+				}
+				if (f == FFFILE_NULL) {
+					e = ffsz_allocfmt_syserr("file create: %s", name);
+					goto end;
+				}
 			}
 			break;
 		}
@@ -349,6 +371,7 @@ end:
 		e = ffsz_allocfmt_syserr("file write: %s", fn.ptr);
 	}
 	ffvec_free(&fn);
+	ffvec_free(&fn_old);
 	return e;
 }
 
