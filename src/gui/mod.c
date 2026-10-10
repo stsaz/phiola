@@ -29,6 +29,7 @@ struct gui_data *gd;
 static void list_filter_close();
 static phi_queue_id list_id_visible();
 static void gui_finish();
+static void list_info_destroy(struct list_info *li);
 
 static int gui_arg_list_names(void *obj, ffstr s)
 {
@@ -243,19 +244,21 @@ static void list_attach_default(phi_queue_id q)
 }
 
 /** Create a new queue */
-static phi_queue_id list_new(char *name, char *fn)
+static phi_queue_id list_new(char *name, char *fn, char *path)
 {
 	list_filter_close();
 	struct phi_queue_conf qc = {
 		.name = (name) ? name : ffsz_allocfmt("Playlist %u", ++gd->playlist_counter),
 		.first_filter = &gui_guard,
 		.ui_module = "gui.track",
+		.modified = 1,
 	};
 	gd->tab_conversion = 0;
 	struct list_info *li = ffvec_zpushT(&gd->lists, struct list_info);
 	phi_queue_id q = gd->queue->create(&qc);
 	li->q = q;
 	li->fn = fn;
+	li->path = path;
 	return q;
 }
 
@@ -315,7 +318,7 @@ static void list_close()
 void list_deleted(phi_queue_id q)
 {
 	struct list_info *li = list_get(q);
-	ffmem_free(li->fn);
+	list_info_destroy(li);
 	uint i = li - (struct list_info*)gd->lists.ptr;
 	ffslice_rmT((ffslice*)&gd->lists, i, 1, struct list_info);
 	uint new_index = (!i) ? 0 : i - 1;
@@ -380,6 +383,14 @@ void list_rename(void *sz)
 	qc->name = name;
 
 	wmain_list_rename(i, name);
+}
+
+char* list_cur_path()
+{
+	struct list_info *li = list_get(gd->q_selected);
+	if (li->path)
+		return ffsz_dup(li->path);
+	return ffsz_allocfmt("%s.m3u8", gd->queue->conf(li->q)->name);
 }
 
 /** Get currently visible (filtered) queue */
@@ -545,7 +556,7 @@ void ctl_action(uint cmd)
 	switch (cmd) {
 
 	case A_LIST_NEW:
-		list_new(NULL, NULL);  break;
+		list_new(NULL, NULL, NULL);  break;
 
 	case A_LIST_CLOSE:
 		list_close();  break;
@@ -658,6 +669,7 @@ void list_save(void *sz)
 {
 	char *fn = sz;
 	gd->queue->save(gd->q_selected, fn, NULL, NULL);
+	// Note: 'li->path' is not updated
 	ffmem_free(fn);
 }
 
@@ -756,7 +768,7 @@ void lists_load()
 			li->fn = fn;
 			q = NULL;
 		} else {
-			q = list_new(NULL, fn); // wmain ignores q-on-change here
+			q = list_new(NULL, fn, NULL); // wmain ignores q-on-change here
 		}
 		fn = NULL;
 		gd->queue->conf(q)->no_auto_modified = 1;
@@ -825,8 +837,11 @@ void mlib_play(char *path)
 {
 	ffstr name;
 	ffpath_split3_str(FFSTR_Z(path), NULL, &name, NULL);
-	list_new(ffsz_dupstr(&name), NULL);
-	list_add_sz(path);
+	list_new(ffsz_dupstr(&name), NULL, path);
+	struct phi_queue_entry qe = {
+		.url = path,
+	};
+	gd->queue->add(gd->q_selected, &qe);
 	ctl_play(0);
 }
 
@@ -1160,6 +1175,12 @@ static void gui_finish()
 	core->sig(PHI_CORE_STOP);
 }
 
+static void list_info_destroy(struct list_info *li)
+{
+	ffmem_free(li->fn);
+	ffmem_free(li->path);
+}
+
 static void gui_destroy()
 {
 	if (!gd->ui_thread_busy)
@@ -1168,7 +1189,7 @@ static void gui_destroy()
 	ffmem_free(gd->user_conf_dir);
 	struct list_info *li;
 	FFSLICE_WALK(&gd->lists, li) {
-		ffmem_free(li->fn);
+		list_info_destroy(li);
 	}
 	ffvec_free(&gd->lists);
 	ffmem_free(gd);

@@ -28,58 +28,6 @@ typedef unsigned char u_char;
 #define ffsz_allocfmt_syserr(fmt, ...) \
 	ffsz_allocfmt(fmt ": (%u) %s", __VA_ARGS__, fferr_last(), fferr_strptr(fferr_last()))
 
-/** Show system dialog for choosing a file/directory.
-path: [optional] initial path
-flags: [optional] FOS_* values
-Return selected path, free with ffmem_free();  NULL on error. */
-static char* ffui_filedlg_show(HWND parent, const char *path, ffuint flags)
-{
-	char *r = NULL;
-	IShellItem *si = NULL;
-	IFileOpenDialog *fod = NULL;
-	wchar_t *w = NULL;
-	HRESULT hr;
-
-	if ((hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER, _FFCOM_ID(IID_IFileOpenDialog), (void**)&fod)) < 0)
-		goto end;
-
-	DWORD options;
-	if ((hr = IFileOpenDialog_GetOptions(fod, &options)) >= 0) {
-		if (!flags)
-			flags = FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST;
-		options |= flags;
-		IFileOpenDialog_SetOptions(fod, options);
-	}
-
-	if (path) {
-		w = ffsz_alloc_utow(path);
-		if ((hr = SHCreateItemFromParsingName(w, NULL, _FFCOM_ID(IID_IShellItem), (void**)&si)) >= 0) {
-			IFileOpenDialog_SetFolder(fod, si);
-			IShellItem_Release(si);
-		}
-		ffmem_free(w);
-		w = NULL;
-		si = NULL;
-	}
-
-	if ((hr = IFileOpenDialog_Show(fod, parent)) < 0)
-		goto end;
-
-	if ((hr = IFileOpenDialog_GetResult(fod, &si)) < 0)
-		goto end;
-	if ((hr = IShellItem_GetDisplayName(si, SIGDN_FILESYSPATH, &w)) < 0)
-		goto end;
-	r = ffsz_alloc_wtou(w);
-	CoTaskMemFree(w);
-
-end:
-	if (si)
-		IShellItem_Release(si);
-	if (fod)
-		IFileOpenDialog_Release(fod);
-	return r;
-}
-
 
 typedef HANDLE ffmtx;
 #define FFMTX_NULL  NULL
@@ -413,25 +361,20 @@ err:
 static inline int env_path_add(ffstr path)
 {
 	ffwinreg k = FFWINREG_NULL;
-	ffwinreg_val val = {};
+	ffstr val = {};
 	ffvec d = {};
 	int r = -1;
 
 	if (FFWINREG_NULL == (k = ffwinreg_open(HKEY_CURRENT_USER, "Environment", FFWINREG_READWRITE)))
 		goto end;
 
-	if (1 == ffwinreg_read(k, "PATH", &val)) {
-		if (!ffwinreg_isstr(val.type))
-			goto end; // PATH must be of STRING type
-
-		ffvec_set3(&d, val.data, val.datalen, val.datalen);
-		if (env_path_find(ffvec_str(&d), path).len) {
+	if (!ffwinreg_readstr(k, "PATH", &val)) {
+		if (env_path_find(val, path).len) {
 			r = 0;
 			goto end; // Path already exists
 		}
-
-	} else {
-		val.type = REG_SZ;
+		ffvec_set3(&d, val.ptr, val.len, val.len);
+		ffstr_null(&val);
 	}
 
 	ffvec_grow(&d, path.len + 1, 1);
@@ -439,9 +382,7 @@ static inline int env_path_add(ffstr path)
 		ffvec_catchar(&d, ';');
 	ffvec_catstr(&d, &path);
 
-	val.data = (char*)d.ptr;
-	val.datalen = d.len;
-	if (ffwinreg_write(k, "PATH", &val))
+	if (ffwinreg_writestr(k, "PATH", (char*)d.ptr, d.len))
 		goto end;
 
 	r = 0;
@@ -449,6 +390,7 @@ static inline int env_path_add(ffstr path)
 end:
 	ffwinreg_close(k);
 	ffvec_free(&d);
+	ffmem_free(val.ptr);
 	return r;
 }
 
@@ -457,35 +399,31 @@ Return 0 on success. */
 static inline int env_path_remove(ffstr path, job_t job)
 {
 	ffwinreg k;
-	ffwinreg_val val = {};
-	ffstr s, sel;
+	ffstr s = {}, sel;
 	int rc = -1;
 	ffvec buf = {};
 
 	if (FFWINREG_NULL == (k = ffwinreg_open(HKEY_CURRENT_USER, "Environment", FFWINREG_READWRITE)))
 		goto done;
 
-	if (1 != ffwinreg_read(k, "PATH", &val)
-		|| !ffwinreg_isstr(val.type))
+	if (ffwinreg_readstr(k, "PATH", &s))
 		goto done; // no PATH or not a string
 
-	ffstr_set(&s, val.data, val.datalen);
 	sel = env_path_find(s, path);
 	if (!sel.len)
 		goto done; // 'path' is not in PATH
 
 	ffmem_move(sel.ptr, sel.ptr + sel.len, s.ptr + s.len - (sel.ptr + sel.len));
 	s.len -= sel.len;
-	val.datalen = s.len;
 	ffvec_addfmt(&buf, "Environment\\PATH=%S%Z", &s);
-	rc = job(ffwinreg_write(k, "PATH", &val), (char*)buf.ptr);
+	rc = job(ffwinreg_writestr(k, "PATH", (char*)s.ptr, s.len), (char*)buf.ptr);
 	goto fin;
 
 done:
 	rc = 0;
 fin:
 	ffwinreg_close(k);
-	ffmem_free(val.data);
+	ffmem_free(s.ptr);
 	ffvec_free(&buf);
 	return rc;
 }

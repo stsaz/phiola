@@ -4,6 +4,7 @@
 /*
 ffui_file_del
 ffui_openfolder ffui_openfolder1
+ffui_filedlg_show
 ffui_createlink
 ffui_shellexec ffui_exec
 ffui_clipbd_set ffui_clipbd_setfile
@@ -274,6 +275,58 @@ done:
 static inline int ffui_openfolder1(const char *path)
 {
 	return ffui_openfolder(&path, 0);
+}
+
+/** Show system dialog for choosing a directory.
+path: [optional] initial path
+flags: [optional] FOS_* values
+Return selected path, free with ffmem_free();  NULL on error. */
+static inline char* ffui_filedlg_show(HWND parent, const char *path, ffuint flags)
+{
+	char *r = NULL;
+	IShellItem *si = NULL;
+	IFileOpenDialog *fod = NULL;
+	wchar_t *w = NULL;
+	HRESULT hr;
+
+	if ((hr = CoCreateInstance(_FFCOM_ID(CLSID_FileOpenDialog), NULL, CLSCTX_INPROC_SERVER, _FFCOM_ID(IID_IFileOpenDialog), (void**)&fod)) < 0)
+		goto end;
+
+	DWORD options;
+	if ((hr = IFileOpenDialog_GetOptions(fod, &options)) >= 0) {
+		if (!flags)
+			flags = FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST;
+		options |= flags;
+		IFileOpenDialog_SetOptions(fod, options);
+	}
+
+	if (path) {
+		w = ffsz_alloc_utow(path);
+		if ((hr = SHCreateItemFromParsingName(w, NULL, _FFCOM_ID(IID_IShellItem), (void**)&si)) >= 0) {
+			IFileOpenDialog_SetFolder(fod, si);
+			IShellItem_Release(si);
+		}
+		ffmem_free(w);
+		w = NULL;
+		si = NULL;
+	}
+
+	if ((hr = IFileOpenDialog_Show(fod, parent)) < 0)
+		goto end;
+
+	if ((hr = IFileOpenDialog_GetResult(fod, &si)) < 0)
+		goto end;
+	if ((hr = IShellItem_GetDisplayName(si, SIGDN_FILESYSPATH, &w)) < 0)
+		goto end;
+	r = ffsz_alloc_wtou(w);
+	CoTaskMemFree(w);
+
+end:
+	if (si)
+		IShellItem_Release(si);
+	if (fod)
+		IFileOpenDialog_Release(fod);
+	return r;
 }
 
 

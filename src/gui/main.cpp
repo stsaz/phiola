@@ -598,7 +598,7 @@ static void list_save_choose_filename()
 	gui_wmain *m = gg->wmain;
 	char *fn;
 	xxvec name;
-	name.add_f("%s.m3u8%Z", list_cur_name()).len--;
+	name.acquire(list_cur_path());
 	if (!(fn = ffui_dlg_save(&gg->dlg, &m->wnd, name.sz(), name.len)))
 		return;
 
@@ -780,17 +780,17 @@ void wmain_init()
 #endif
 
 	static const struct ffui_wnd_keymap kmap[] = {
-	#ifdef FF_WIN
+#ifdef FF_WIN
 		{ APPCOMMAND_MEDIA_PLAY_PAUSE,    A_PLAYPAUSE },
 		{ APPCOMMAND_MEDIA_STOP,          A_STOP },
 		{ APPCOMMAND_MEDIA_NEXTTRACK,     A_NEXT },
 		{ APPCOMMAND_MEDIA_PREVIOUSTRACK, A_PREV },
-	#else
+#else
 		{ GDK_KEY_AudioPlay,	A_PLAYPAUSE },
 		{ GDK_KEY_AudioStop,	A_STOP },
 		{ GDK_KEY_AudioNext,	A_NEXT },
 		{ GDK_KEY_AudioPrev,	A_PREV },
-	#endif
+#endif
 	};
 	ffui_wnd_keymap(&m->wnd, kmap, FF_COUNT(kmap));
 

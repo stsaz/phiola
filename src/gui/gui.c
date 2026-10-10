@@ -247,6 +247,7 @@ static int load_ui()
 	char *fn = ffsz_allocfmt("%Smod/gui/ui.conf", &core->conf.root);
 	ffui_ldr_init(&gg->ldr, gui_getctl, gui_getcmd, gg);
 	ffmem_copy(gg->ldr.language, core->conf.language, sizeof(gg->ldr.language));
+	gg->ldr.activates_default = 1;
 #ifdef FF_WIN
 	gg->ldr.hmod_resource = GetModuleHandleW(L"gui.dll");
 	if (!theme_load(&gg->dkth, (!gg->theme_dark_default) ? gd->conf.theme : "dark-classic")) {

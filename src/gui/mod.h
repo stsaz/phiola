@@ -52,6 +52,7 @@ FF_EXTERN uint list_vis_version();
 FF_EXTERN void list_conf_set(void *new_conf);
 FF_EXTERN const char* list_name_i(uint i);
 #define list_cur_name()  list_name_i(~0U)
+FF_EXTERN char* list_cur_path();
 FF_EXTERN void list_rename(void *sz);
 
 FF_EXTERN void ctl_play(uint i);
@@ -110,7 +111,7 @@ struct gtrk;
 struct list_info {
 	phi_queue_id q;
 	uint scroll_vpos;
-	char *fn;
+	char *fn, *path;
 };
 
 struct gui_track_info {
