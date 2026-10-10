@@ -259,7 +259,7 @@ static phi_queue_id list_create(char *fn)
 	struct phi_queue_conf qc = {
 		.name = ffsz_allocfmt("Playlist %u", ++l->counter),
 		.first_filter = l->q_guard,
-		.ui_module = "tui.play",
+		.ui_module = "tui2.play",
 	};
 	struct list_info *li = ffvec_zpushT(&mod->list.lists, struct list_info);
 	phi_queue_id q = mod->queue->create(&qc); // -> on_change('n')
