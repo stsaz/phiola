@@ -61,6 +61,7 @@ APK_SIGNED := phiola-$(APK_VER)-android-$(CPU).apk
 sign:
 	$(ANDROID_HOME)/build-tools/$(ANDROID_BT_VER)/zipalign -v -f 4 $(APK) $(APK_SIGNED)
 	$(ANDROID_HOME)/build-tools/$(ANDROID_BT_VER)/apksigner sign \
+		--alignment-preserved true \
 		--ks $(APK_KEY_STORE) \
 		--ks-pass env:APK_KEY_PASS \
 		$(APK_SIGNED)
