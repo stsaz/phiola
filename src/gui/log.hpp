@@ -80,10 +80,23 @@ static void wlog_action(ffui_window *wnd, int id)
 {
 }
 
-void wlog_init()
+static void wlog_init()
 {
 	gui_wlog *w = gui_allocT(gui_wlog);
 	w->wnd.on_action = wlog_action;
 	w->wnd.hide_on_close = 1;
 	gg->wlog = w;
+}
+
+void wlog_cmd(uint cmd)
+{
+	gui_wlog *w = gg->wlog;
+	switch (cmd) {
+	case GUI_CMD_INIT:
+		wlog_init();  break;
+	case GUI_CMD_HIDE:
+		if (w->initialized)
+			w->wnd.show(0);
+		break;
+	}
 }

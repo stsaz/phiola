@@ -196,16 +196,9 @@ static void wmlib_action(ffui_window *wnd, int id)
 	}
 }
 
-void wmlib_show(uint show)
+void wmlib_show()
 {
 	gui_mlib *w = gg->wmlib;
-	if (gui_dlg_load())
-		return;
-
-	if (!show) {
-		w->wnd.show(0);
-		return;
-	}
 
 	if (!w->initialized) {
 		w->initialized = 1;
@@ -223,7 +216,7 @@ void wmlib_show(uint show)
 	w->wnd.present();
 }
 
-void wmlib_init()
+static void wmlib_init()
 {
 	gui_mlib *w = gui_allocT(gui_mlib);
 	w->wnd.hide_on_close = 1;
@@ -231,7 +224,7 @@ void wmlib_init()
 	gg->wmlib = w;
 }
 
-void wmlib_fin()
+static void wmlib_fin()
 {
 	gui_mlib *w = gg->wmlib;
 	struct mlib_row *it;
@@ -242,4 +235,19 @@ void wmlib_fin()
 	}
 	ffmem_free(w->dirs_cached);
 	w->~gui_mlib();
+}
+
+void wmlib_cmd(uint cmd)
+{
+	gui_mlib *w = gg->wmlib;
+	switch (cmd) {
+	case GUI_CMD_INIT:
+		wmlib_init();  break;
+	case GUI_CMD_FIN:
+		wmlib_fin();  break;
+	case GUI_CMD_HIDE:
+		if (w->initialized)
+			w->wnd.show(0);
+		break;
+	}
 }

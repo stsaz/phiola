@@ -38,6 +38,8 @@ struct gui_wmain {
 	uint ready;
 };
 
+static ffui_icon& res_icon_load(ffui_icon *ico, const char *name, uint resource_id);
+
 #define _(m) FFUI_LDR_CTL(gui_wmain, m)
 FF_EXTERN const ffui_ldr_ctl wmain_ctls[] = {
 	_(wnd),
@@ -192,6 +194,19 @@ void wmain_event(uint event)
 {
 	gui_wmain *m = gg->wmain;
 	switch (event) {
+	case GUI_EV_PLAY_STOPPED:
+	case GUI_EV_PLAY_PAUSED:
+	case GUI_EV_PLAY_PLAYING: {
+		ffui_icon *ico;
+		if (event == GUI_EV_PLAY_PLAYING)
+			ico = &res_icon_load(&m->ico_pause, "pause", 7);
+		else
+			ico = &res_icon_load(&m->ico_play, "play", 3);
+		m->bpause.icon(*ico);
+		m->stbar.text(0, (event == GUI_EV_PLAY_PAUSED) ? "Paused" : "");
+		break;
+	}
+
 	case GUI_EV_REC_STARTED:
 	case GUI_EV_REC_DONE: {
 		const char *s[][2] = {
@@ -219,23 +234,6 @@ static ffui_icon& res_icon_load(ffui_icon *ico, const char *name, uint resource_
 	return *ico;
 }
 
-void wmain_status_id(uint id)
-{
-	gui_wmain *m = gg->wmain;
-	ffui_icon *ico = NULL;
-	switch (id) {
-	case ST_STOPPED:
-	case ST_PAUSED:
-		ico = &res_icon_load(&m->ico_play, "play", 3);  break;
-
-	case ST_UNPAUSED:
-		ico = &res_icon_load(&m->ico_pause, "pause", 7);  break;
-	}
-
-	m->bpause.icon(*ico);
-	wmain_status((id == ST_PAUSED) ? "Paused" : "");
-}
-
 int wmain_ready()
 {
 	gui_wmain *m = gg->wmain;
@@ -260,7 +258,7 @@ void wmain_track_new(void *param)
 		}
 	}
 
-	wmain_status_id(ST_UNPAUSED);
+	wmain_event(GUI_EV_PLAY_PLAYING);
 	m->tpos.range((ti->duration_sec != ~0U) ? ti->duration_sec : 0);
 
 	m->wnd.title(ti->buf);
@@ -279,7 +277,7 @@ void wmain_track_close(void *param)
 	m->wnd.title("phiola");
 	m->lpos.text("");
 	m->tpos.range(0);
-	wmain_status_id(ST_STOPPED);
+	wmain_event(GUI_EV_PLAY_STOPPED);
 }
 
 void wmain_track_update(void *param)
@@ -533,7 +531,7 @@ static void q_on_change(phi_queue_id q, uint flags, uint pos)
 
 	case '.':
 		if (q == gd->q_convert)
-			wconvert_done();
+			gui_event(GUI_EV_CONV_DONE);
 		break;
 	}
 }
@@ -678,13 +676,6 @@ static void list_save_choose_filename()
 	gui_core_task_ptr(list_save, fn2);
 }
 
-static void tray_show(uint tray)
-{
-	gui_wmain *m = gg->wmain;
-	m->wnd.show(!tray);
-	m->tray.show(tray);
-}
-
 static void wmain_action(ffui_window *wnd, int id)
 {
 	gui_wmain *m = gg->wmain;
@@ -693,16 +684,6 @@ static void wmain_action(ffui_window *wnd, int id)
 
 	switch (id) {
 // File:
-	case A_FILE_INFO:
-		if ((i = m->vlist.selected_first()) >= 0)
-			winfo_show(1, i);
-		break;
-
-	case A_FILE_RENAME:
-		if ((i = m->vlist.selected_first()) >= 0)
-			wrename_show(1, i);
-		break;
-
 	case A_FILE_SHOWDIR:
 		gui_core_task_slice(file_dir_show, m->vlist.selected());  break;
 
@@ -711,13 +692,15 @@ static void wmain_action(ffui_window *wnd, int id)
 			gui_core_task_slice(file_del, m->vlist.selected());
 		break;
 
-	case A_SETTINGS_SHOW:
-		wsettings_show(1);  break;
-
 	case A_TRAY_MIN:
-		tray_show(1);  break;
-	case A_TRAY_CLICK:
-		tray_show(0);  break;
+	case A_TRAY_CLICK: {
+		bool tray = (id == A_TRAY_MIN);
+		m->tray.show(tray);
+		m->wnd.show(!tray);
+		if (tray)
+			gui_cmd(GUI_CMD_HIDE);
+		break;
+	}
 
 	case A_QUIT:
 		m->wnd.close();  break;
@@ -755,20 +738,11 @@ static void wmain_action(ffui_window *wnd, int id)
 	case A_LIST_CHANGE:
 		list_changed(m->tabs.changed());  break;
 
-	case A_LIST_RENAME:
-		wrename_show_list(1);  break;
-
 	case A_LIST_ADD_FILE:
 		list_add_choose();  break;
 
-	case A_LIST_ADD:
-		wlistadd_show(1);  break;
-
 	case A_LIST_ADDTONEXT:
 		gui_core_task_slice(list_add_to_next, m->vlist.selected());  break;
-
-	case A_LIST_FILTER:
-		wlistfilter_show(1);  break;
 
 	case A_LIST_SAVE:
 		list_save_choose_filename();  break;
@@ -794,32 +768,15 @@ static void wmain_action(ffui_window *wnd, int id)
 		list_display((ffui_viewxx_disp*)m->vlist.dispinfo_item);  break;
 
 // Record:
-	case A_RECORD_SHOW:
-		wrecord_show(1);  break;
-
 	case A_RECORD_START_STOP:
 		wrecord_start_stop();  break;
 
 // Convert:
-	case A_CONVERT_SHOW: {
-		ffslice items = {};
-		if (!gd->tab_conversion)
-			items = m->vlist.selected();
-		wconvert_show(1, items);
-		break;
-	}
-
 	case A_CONVERT_POS_START:
 	case A_CONVERT_POS_END:
 		wconvert_set(id, ffmax((int)m->tpos.get() - 1, 0));  break;
 
 // Misc:
-	case A_ABOUT_SHOW:
-		wabout_show(1);  break;
-
-	case A_MLIB_SHOW:
-		wmlib_show(1);  break;
-
 	case A_CLOSE:
 		gui_quit();
 
@@ -835,12 +792,55 @@ static void wmain_action(ffui_window *wnd, int id)
 	case A_FILE_DRAGDROP:
 		on_drop_files();  break;
 
+	case A_FILE_INFO:
+	case A_FILE_RENAME:
+	case A_MLIB_SHOW:
+	case A_SETTINGS_SHOW:
+	case A_LIST_RENAME:
+	case A_LIST_ADD:
+	case A_LIST_FILTER:
+	case A_RECORD_SHOW:
+	case A_CONVERT_SHOW:
+	case A_ABOUT_SHOW:
+		if (gui_dlg_load())
+			return;
+
+		switch (id) {
+		case A_FILE_INFO:
+			if ((i = m->vlist.selected_first()) >= 0)
+				winfo_show(i);
+			break;
+		case A_FILE_RENAME:
+			if ((i = m->vlist.selected_first()) >= 0)
+				wrename_show(i);
+			break;
+		case A_MLIB_SHOW: wmlib_show();  break;
+		case A_SETTINGS_SHOW: wsettings_show();  break;
+
+		case A_LIST_RENAME: wrename_show_list();  break;
+		case A_LIST_ADD: wlistadd_show();  break;
+		case A_LIST_FILTER: wlistfilter_show();  break;
+
+		case A_RECORD_SHOW: wrecord_show();  break;
+
+		case A_CONVERT_SHOW: {
+			ffslice items = {};
+			if (!gd->tab_conversion)
+				items = m->vlist.selected();
+			wconvert_show(items);
+			break;
+		}
+
+		case A_ABOUT_SHOW: wabout_show();  break;
+		}
+		break;
+
 	default:
 		gui_core_task_uint(ctl_action, id);
 	}
 }
 
-void wmain_init()
+static void wmain_init()
 {
 	gui_wmain *m = gui_allocT(gui_wmain);
 	gg->wmain = m;
@@ -902,10 +902,20 @@ void wmain_show()
 	m->ready = 1;
 }
 
-void wmain_fin()
+static void wmain_fin()
 {
 	gui_wmain *m = gg->wmain;
 	core->timer(0, &m->redraw.timer, 0, NULL, NULL);
 	dbglog("%s  paint-events: %u/%u"
 		, __func__, m->redraw.n_actual, m->redraw.n_total);
+}
+
+void wmain_cmd(uint cmd)
+{
+	switch (cmd) {
+	case GUI_CMD_INIT:
+		wmain_init();  break;
+	case GUI_CMD_FIN:
+		wmain_fin();  break;
+	}
 }

@@ -76,16 +76,9 @@ static void wcolumns_action(ffui_window *wnd, int id)
 	}
 }
 
-void wcolumns_show(uint show)
+void wcolumns_show()
 {
 	gui_columns *w = gg->wcolumns;
-	if (gui_dlg_load())
-		return;
-
-	if (!show) {
-		w->wnd.show(0);
-		return;
-	}
 
 	if (!w->initialized) {
 		w->initialized = 1;
@@ -101,7 +94,7 @@ void wcolumns_show(uint show)
 	w->wnd.present();
 }
 
-void wcolumns_init()
+static void wcolumns_init()
 {
 	gui_columns *w = gui_allocT(gui_columns);
 	w->wnd.hide_on_close = 1;
@@ -110,8 +103,24 @@ void wcolumns_init()
 	gg->wcolumns = w;
 }
 
-void wcolumns_fin()
+static void wcolumns_fin()
 {
 	gui_columns *w = gg->wcolumns;
 	w->~gui_columns();
+}
+
+void wcolumns_cmd(uint cmd)
+{
+	gui_columns *w = gg->wcolumns;
+	switch (cmd) {
+	case GUI_CMD_INIT:
+		wcolumns_init();  break;
+	case GUI_CMD_FIN:
+		wcolumns_fin();
+		break;
+	case GUI_CMD_HIDE:
+		if (w->initialized)
+			w->wnd.show(0);
+		break;
+	}
 }

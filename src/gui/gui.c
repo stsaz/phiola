@@ -409,20 +409,7 @@ void gui_init()
 	ffmem_zero(gg, n);
 	memarea_init(&gg->area, n - sizeof(struct gui));
 
-	wmain_init();
-	winfo_init();
-	wrename_init();
-	wsettings_init();
-	wcolumns_init();
-	weqlz_init();
-	wgoto_init();
-	wlistadd_init();
-	wlistfilter_init();
-	wrecord_init();
-	wconvert_init();
-	wabout_init();
-	wlog_init();
-	wmlib_init();
+	gui_cmd(GUI_CMD_INIT);
 }
 
 void* gui_alloc(uint n)
@@ -469,15 +456,31 @@ end:
 void gui_quit()
 {
 	gui_userconf_save();
-	wcolumns_fin();
-	winfo_fin();
-	wrename_fin();
-	wmlib_fin();
-	wmain_fin();
+	gui_cmd(GUI_CMD_FIN);
 	ffui_post_quitloop();
+}
+
+void gui_cmd(uint cmd)
+{
+	wmain_cmd(cmd);
+	winfo_cmd(cmd);
+	wrename_cmd(cmd);
+	wsettings_cmd(cmd);
+	wcolumns_cmd(cmd);
+	weqlz_cmd(cmd);
+	wgoto_cmd(cmd);
+	wlistadd_cmd(cmd);
+	wlistfilter_cmd(cmd);
+	wrecord_cmd(cmd);
+	wconvert_cmd(cmd);
+	wabout_cmd(cmd);
+	wlog_cmd(cmd);
+	wmlib_cmd(cmd);
 }
 
 void gui_event(uint event)
 {
 	wmain_event(event);
+	wrecord_event(event);
+	wconvert_event(event);
 }

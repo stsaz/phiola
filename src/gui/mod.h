@@ -15,8 +15,12 @@ FF_EXTERN int FFTHREAD_PROCCALL gui_worker(void *param);
 
 
 enum GUI_EV {
+	GUI_EV_PLAY_STOPPED,
+	GUI_EV_PLAY_PAUSED,
+	GUI_EV_PLAY_PLAYING,
 	GUI_EV_REC_STARTED,
 	GUI_EV_REC_DONE,
+	GUI_EV_CONV_DONE,
 };
 
 /** Broadcast an event.
@@ -86,14 +90,6 @@ FF_EXTERN void mlib_play(char *path);
 FF_EXTERN const phi_adev_if* adev_find_mod();
 
 FF_EXTERN void wmain_status(const char *fmt, ...);
-enum STATUS_ID {
-	ST_STOPPED,
-	ST_PAUSED,
-	ST_UNPAUSED,
-};
-/**
-id: enum STATUS_ID */
-FF_EXTERN void wmain_status_id(uint id);
 FF_EXTERN int wmain_ready();
 FF_EXTERN void wmain_track_new(void *param);
 FF_EXTERN void wmain_track_close(void *param);
@@ -113,10 +109,6 @@ struct lists_load_data {
 FF_EXTERN void wmain_lists_load(struct lists_load_data *d);
 
 FF_EXTERN void wgoto_show(uint pos);
-
-FF_EXTERN void wrecord_done();
-
-FF_EXTERN void wconvert_done();
 
 struct gtrk;
 

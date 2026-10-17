@@ -15,6 +15,18 @@
 #include <util/util.h>
 #include <ffbase/args.h>
 
+
+enum GUI_CMD {
+	GUI_CMD_INIT,
+	GUI_CMD_FIN,
+	GUI_CMD_HIDE,
+};
+
+/** Broadcast a command.
+cmd: enum GUI_CMD */
+FF_EXTERN void gui_cmd(uint cmd);
+
+
 enum LIST_HDR {
 	H_INDEX,
 	H_ARTIST,
@@ -27,71 +39,68 @@ enum LIST_HDR {
 	_H_LAST,
 };
 
-FF_EXTERN void wmain_init();
+FF_EXTERN void wmain_cmd(uint cmd);
 FF_EXTERN void wmain_show();
 FF_EXTERN void wmain_userconf_write(ffconfw *cw);
 FF_EXTERN const struct ffarg wmain_args[];
-FF_EXTERN void wmain_fin();
 /** Get bitmask of the visible columns */
 FF_EXTERN uint wmain_cols_visible();
 FF_EXTERN void wmain_cols_visible_set(uint mask);
 FF_EXTERN void wmain_event(uint event);
 
-FF_EXTERN void winfo_init();
-FF_EXTERN void winfo_fin();
-FF_EXTERN void winfo_show(uint show, uint idx);
+FF_EXTERN void winfo_cmd(uint cmd);
+FF_EXTERN void winfo_show(uint idx);
 FF_EXTERN void winfo_userconf_write(ffconfw *cw);
 FF_EXTERN const struct ffarg winfo_args[];
 
-FF_EXTERN void wrename_init();
-FF_EXTERN void wrename_show(uint show, uint idx);
-FF_EXTERN void wrename_show_list(uint show);
-FF_EXTERN void wrename_fin();
+FF_EXTERN void wrename_cmd(uint cmd);
+FF_EXTERN void wrename_show(uint idx);
+FF_EXTERN void wrename_show_list();
 
-FF_EXTERN void wsettings_init();
-FF_EXTERN void wsettings_show(uint show);
+FF_EXTERN void wsettings_cmd(uint cmd);
+FF_EXTERN void wsettings_show();
 FF_EXTERN void wsettings_userconf_write(ffconfw *cw);
 FF_EXTERN const struct ffarg wsettings_args[];
 
-FF_EXTERN void weqlz_init();
-FF_EXTERN void weqlz_show(uint show);
+FF_EXTERN void weqlz_cmd(uint cmd);
+FF_EXTERN void weqlz_show();
 
-FF_EXTERN void wgoto_init();
+FF_EXTERN void wgoto_cmd(uint cmd);
 
-FF_EXTERN void wlistadd_init();
-FF_EXTERN void wlistadd_show(uint show);
+FF_EXTERN void wlistadd_cmd(uint cmd);
+FF_EXTERN void wlistadd_show();
 
-FF_EXTERN void wlistfilter_init();
-FF_EXTERN void wlistfilter_show(uint show);
+FF_EXTERN void wlistfilter_cmd(uint cmd);
+FF_EXTERN void wlistfilter_show();
 
-FF_EXTERN void wrecord_init();
-FF_EXTERN void wrecord_show(uint show);
+FF_EXTERN void wrecord_cmd(uint cmd);
+FF_EXTERN void wrecord_show();
 FF_EXTERN void wrecord_start_stop();
 FF_EXTERN void wrecord_userconf_write(ffconfw *cw);
 FF_EXTERN const struct ffarg wrecord_args[];
+FF_EXTERN void wrecord_event(uint event);
 
-FF_EXTERN void wconvert_init();
-FF_EXTERN void wconvert_show(uint show, ffslice items);
+FF_EXTERN void wconvert_cmd(uint cmd);
+FF_EXTERN void wconvert_show(ffslice items);
 FF_EXTERN void wconvert_set(int id, uint pos);
 FF_EXTERN void wconvert_userconf_write(ffconfw *cw);
 FF_EXTERN const struct ffarg wconvert_args[];
+FF_EXTERN void wconvert_event(uint event);
 
-FF_EXTERN void wabout_init();
-FF_EXTERN void wabout_show(uint show);
+FF_EXTERN void wabout_cmd(uint cmd);
+FF_EXTERN void wabout_show();
 
-FF_EXTERN void wlog_init();
+FF_EXTERN void wlog_cmd(uint cmd);
 FF_EXTERN void wlog_userconf_write(ffconfw *cw);
 FF_EXTERN const struct ffarg wlog_args[];
 
-FF_EXTERN void wmlib_init();
-FF_EXTERN void wmlib_fin();
-FF_EXTERN void wmlib_show(uint show);
+FF_EXTERN void wmlib_cmd(uint cmd);
+FF_EXTERN void wmlib_show();
 FF_EXTERN void wmlib_userconf_write(ffconfw *cw);
 FF_EXTERN const struct ffarg wmlib_args[];
 
-FF_EXTERN void wcolumns_init();
-FF_EXTERN void wcolumns_fin();
-FF_EXTERN void wcolumns_show(uint show);
+FF_EXTERN void wcolumns_cmd(uint cmd);
+FF_EXTERN void wcolumns_show();
 FF_EXTERN void wcolumns_userconf_write(ffconfw *cw);
 FF_EXTERN const struct ffarg wcolumns_args[];
 

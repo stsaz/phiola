@@ -914,7 +914,6 @@ static void grd_rec_close(void *f, phi_track *t)
 		gui_finish();
 		return;
 	}
-	gui_task(wrecord_done);
 	gui_event(GUI_EV_REC_DONE);
 }
 static int grd_rec_process(void *f, phi_track *t) { return PHI_DONE; }
@@ -1019,7 +1018,7 @@ void convert_begin(void *param)
 
 end:
 	if (!qe) {
-		wconvert_done();
+		gui_event(GUI_EV_CONV_DONE);
 		ffmem_free(c->ofile.name);
 		core->metaif->destroy(&c->meta);
 	}

@@ -8,6 +8,7 @@ struct gui_wrename {
 
 	struct phi_queue_entry *qe;
 	uint mode_list :1;
+	uint initialized :1;
 };
 
 FF_EXTERN const ffui_ldr_ctl wrename_ctls[] = {
@@ -40,11 +41,10 @@ static void wrename_action(ffui_window *wnd, int id)
 	}
 }
 
-void wrename_show(uint show, uint idx)
+void wrename_show(uint idx)
 {
 	gui_wrename *w = gg->wrename;
-	if (gui_dlg_load())
-		return;
+	w->initialized = 1;
 
 	if (w->qe)
 		gd->queue->unref(w->qe);
@@ -64,12 +64,10 @@ void wrename_show(uint show, uint idx)
 	w->turl.select(off, off + name.len);
 }
 
-void wrename_show_list(uint show)
+void wrename_show_list()
 {
 	gui_wrename *w = gg->wrename;
-	if (gui_dlg_load())
-		return;
-
+	w->initialized = 1;
 	// Release the playlist row that was locked for file-rename operation
 	if (w->qe) {
 		gd->queue->unref(w->qe);
@@ -87,7 +85,7 @@ void wrename_show_list(uint show)
 	w->turl.select(0, ffsz_len(name));
 }
 
-void wrename_init()
+static void wrename_init()
 {
 	gui_wrename *w = gui_allocT(gui_wrename);
 	w->wnd.hide_on_close = 1;
@@ -95,9 +93,24 @@ void wrename_init()
 	gg->wrename = w;
 }
 
-void wrename_fin()
+static void wrename_fin()
 {
 	gui_wrename *w = gg->wrename;
 	if (w->qe)
 		gd->queue->unref(w->qe);
+}
+
+void wrename_cmd(uint cmd)
+{
+	gui_wrename *w = gg->wrename;
+	switch (cmd) {
+	case GUI_CMD_INIT:
+		wrename_init();  break;
+	case GUI_CMD_FIN:
+		wrename_fin();  break;
+	case GUI_CMD_HIDE:
+		if (w->initialized)
+			w->wnd.show(0);
+		break;
+	}
 }

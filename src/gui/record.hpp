@@ -283,13 +283,6 @@ void wrecord_start_stop()
 	gui_core_task_ptr(record_begin, record_conf_create());
 }
 
-void wrecord_done()
-{
-	gui_wrecord *w = gg->wrecord;
-	if (w->initialized)
-		w->bstart.enable(1);
-}
-
 static void wrecord_action(ffui_window *wnd, int id)
 {
 	gui_wrecord *w = gg->wrecord;
@@ -319,7 +312,7 @@ static void wrecord_action(ffui_window *wnd, int id)
 	}
 }
 
-void wrecord_init()
+static void wrecord_init()
 {
 	gui_wrecord *w = gui_allocT(gui_wrecord);
 	w->wnd.hide_on_close = 1;
@@ -329,16 +322,9 @@ void wrecord_init()
 	gg->wrecord = w;
 }
 
-void wrecord_show(uint show)
+void wrecord_show()
 {
 	gui_wrecord *w = gg->wrecord;
-	if (gui_dlg_load())
-		return;
-
-	if (!show) {
-		w->wnd.show(0);
-		return;
-	}
 
 	if (!w->initialized) {
 		w->initialized = 1;
@@ -356,4 +342,30 @@ void wrecord_show(uint show)
 
 	w->wnd.show(1);
 	w->wnd.present();
+}
+
+/** Handle event.
+Thread: any */
+void wrecord_event(uint event)
+{
+	gui_wrecord *w = gg->wrecord;
+	switch (event) {
+	case GUI_EV_REC_DONE:
+		if (w->initialized)
+			w->bstart.enable(1);
+		break;
+	}
+}
+
+void wrecord_cmd(uint cmd)
+{
+	gui_wrecord *w = gg->wrecord;
+	switch (cmd) {
+	case GUI_CMD_INIT:
+		wrecord_init();  break;
+	case GUI_CMD_HIDE:
+		if (w->initialized)
+			w->wnd.show(0);
+		break;
+	}
 }

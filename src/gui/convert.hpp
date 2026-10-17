@@ -146,12 +146,6 @@ void wconvert_set(int id, uint pos)
 	}
 }
 
-void wconvert_done()
-{
-	gui_wconvert *c = gg->wconvert;
-	c->bstart.enable(1);
-}
-
 static int time_value(ffstr s)
 {
 	ffdatetime dt = {};
@@ -253,13 +247,13 @@ static void wconvert_action(ffui_window *wnd, int id)
 		if (conf)
 			gui_core_task_ptr(convert_begin, conf);
 		else
-			wconvert_done();
+			gui_event(GUI_EV_CONV_DONE);
 		break;
 	}
 	}
 }
 
-void wconvert_init()
+static void wconvert_init()
 {
 	gui_wconvert *c = gui_allocT(gui_wconvert);
 	c->wnd.hide_on_close = 1;
@@ -269,16 +263,9 @@ void wconvert_init()
 	gg->wconvert = c;
 }
 
-void wconvert_show(uint show, ffslice items)
+void wconvert_show(ffslice items)
 {
 	gui_wconvert *c = gg->wconvert;
-	if (gui_dlg_load())
-		return;
-
-	if (!show) {
-		c->wnd.show(0);
-		return;
-	}
 
 	if (!c->initialized) {
 		c->initialized = 1;
@@ -294,4 +281,30 @@ void wconvert_show(uint show, ffslice items)
 	gui_core_task_slice(convert_add, items);
 	c->wnd.show(1);
 	c->wnd.present();
+}
+
+/** Handle event.
+Thread: any */
+void wconvert_event(uint event)
+{
+	gui_wconvert *c = gg->wconvert;
+	switch (event) {
+	case GUI_EV_CONV_DONE:
+		if (c->initialized)
+			c->bstart.enable(1);
+		break;
+	}
+}
+
+void wconvert_cmd(uint cmd)
+{
+	gui_wconvert *w = gg->wconvert;
+	switch (cmd) {
+	case GUI_CMD_INIT:
+		wconvert_init();  break;
+	case GUI_CMD_HIDE:
+		if (w->initialized)
+			w->wnd.show(0);
+		break;
+	}
 }

@@ -165,11 +165,11 @@ static void wsettings_action(ffui_window *wnd, int id)
 
 	switch (id) {
 	case A_COLUMNS_SHOW:
-		wcolumns_show(1);  break;
+		wcolumns_show();  break;
 
 	case A_SETS_EQLZ:
 		if (w->cbeqlz.checked())
-			weqlz_show(1);
+			weqlz_show();
 		break;
 
 	case A_SETS_AUTO_SKIP:
@@ -183,16 +183,9 @@ static void wsettings_action(ffui_window *wnd, int id)
 	}
 }
 
-void wsettings_show(uint show)
+void wsettings_show()
 {
 	gui_wsettings *w = gg->wsettings;
-	if (gui_dlg_load())
-		return;
-
-	if (!show) {
-		w->wnd.show(0);
-		return;
-	}
 
 	if (!w->initialized) {
 		w->initialized = 1;
@@ -209,11 +202,24 @@ void wsettings_show(uint show)
 	w->wnd.present();
 }
 
-void wsettings_init()
+static void wsettings_init()
 {
 	gui_wsettings *w = gui_allocT(gui_wsettings);
 	w->wnd.hide_on_close = 1;
 	w->wnd.on_action = wsettings_action;
 	w->wnd.onclose_id = A_SETTINGS_APPLY;
 	gg->wsettings = w;
+}
+
+void wsettings_cmd(uint cmd)
+{
+	gui_wsettings *w = gg->wsettings;
+	switch (cmd) {
+	case GUI_CMD_INIT:
+		wsettings_init();  break;
+	case GUI_CMD_HIDE:
+		if (w->initialized)
+			w->wnd.show(0);
+		break;
+	}
 }

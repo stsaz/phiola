@@ -6,6 +6,7 @@ struct gui_wlistadd {
 	ffui_label		lname;
 	ffui_editxx		turi;
 	ffui_buttonxx	badd;
+	uint initialized :1;
 };
 
 FF_EXTERN const ffui_ldr_ctl wlistadd_ctls[] = {
@@ -33,22 +34,32 @@ static void wlistadd_action(ffui_window *wnd, int id)
 	}
 }
 
-void wlistadd_show(uint show)
+void wlistadd_show()
 {
 	gui_wlistadd *w = gg->wlistadd;
-	if (gui_dlg_load())
-		return;
-	if (show)
-		w->turi.focus();
-	w->wnd.show(show);
-	if (show)
-		w->wnd.present();
+	w->initialized = 1;
+	w->turi.focus();
+	w->wnd.show(1);
+	w->wnd.present();
 }
 
-void wlistadd_init()
+static void wlistadd_init()
 {
 	gui_wlistadd *w = gui_allocT(gui_wlistadd);
 	w->wnd.hide_on_close = 1;
 	w->wnd.on_action = wlistadd_action;
 	gg->wlistadd = w;
+}
+
+void wlistadd_cmd(uint cmd)
+{
+	gui_wlistadd *w = gg->wlistadd;
+	switch (cmd) {
+	case GUI_CMD_INIT:
+		wlistadd_init();  break;
+	case GUI_CMD_HIDE:
+		if (w->initialized)
+			w->wnd.show(0);
+		break;
+	}
 }
