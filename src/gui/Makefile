@@ -1,29 +1,5 @@
 # phiola GUI
 
-# Inherit:
-# APP_DIR
-# C
-# CFLAGS
-# CP
-# CXX
-# CXXFLAGS
-# DEBUG_GUI
-# LINK_DL
-# LINK_PTHREAD
-# LINK_RPATH_ORIGIN
-# LINKFLAGS
-# LINKXX
-# MKDIR
-# OS
-# PHIOLA
-# ROOT_DIR
-# SO
-# WINDRES
-
-# Modify:
-# EXES
-# MODS
-
 FFGUI := $(ROOT_DIR)/ffgui
 AVPACK := $(ROOT_DIR)/avpack
 

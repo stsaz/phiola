@@ -61,8 +61,8 @@ Features and notes by platform:
 | File formats         | ✅ all supported | ✅ | ✅ | except `.mpc`, `.ape`, `.wv` |
 | Record what you hear | ✅ (PulseAudio) | ❌ | ✅ | ❌ |
 | Audio Streaming Server | ✅ (AAC,Opus) | ✅ (AAC,Opus) | ✅ (AAC,Opus) | ❌ |
-| Requirements         | glibc-2.41 | macOS 14 | Windows 7 | Android 8 (ARM64), Android 6 (ARM) |
-| HW Requirements      | AMD64, ARM64 | ARM64 | AMD64 | ARM64, ARM(incomplete) |
+| Requirements         | glibc-2.41 | macOS 14 | Windows 7 | Android 8 (ARM64) |
+| HW Requirements      | AMD64, ARM64 | ARM64 | AMD64 | ARM64 |
 
 > Important: the ALAC decoder is disabled by default because of potential security issues (see https://github.com/macosforge/alac).  You can still enable it on Android via `Settings -> Enable Deprecated Modules (ALAC)`; on desktop — by adding `DeprecatedMods` to `phiola.conf`.
 
@@ -70,6 +70,8 @@ Features and notes by platform:
 ## Install
 
 Download the latest package for your OS and CPU from [phiola Releases](https://github.com/stsaz/phiola/releases)
+
+> Note: phiola is no longer built for Android 6 (ARM) or Windows XP (x86).  If you need one, look for an older release.
 
 ### Linux
 
@@ -544,7 +546,7 @@ Additionally:
 
 ## Build
 
-[Build Instructions](BUILDING.md)
+[Build Instructions](doc/BUILDING.md)
 
 
 ## Bug report

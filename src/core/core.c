@@ -247,12 +247,12 @@ static const phi_mod* core_mod_provide(ffstr file)
 			int e = mod_load(&lm, file);
 
 			fflock_lock(&cc->mods_lock);
+			m = ffslice_itemT(&cc->mods, index, struct core_mod);
 			if (ff_unlikely(e)) {
 				m->dl = FFDL_NULL;
 				fflock_unlock(&cc->mods_lock);
 				return NULL;
 			}
-			m = ffslice_itemT(&cc->mods, index, struct core_mod);
 			m->dl = lm.dl;
 			m->mod = lm.mod;
 			fflock_unlock(&cc->mods_lock);

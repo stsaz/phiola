@@ -1,22 +1,5 @@
 # phiola executor
 
-# Inherit:
-# C
-# CFLAGS
-# DOTEXE
-# LINK
-# LINK_DL
-# LINK_RPATH_ORIGIN
-# LINKFLAGS
-# OS
-# PHIOLA
-# ROOT_DIR
-# SO
-# WINDRES
-
-# Modify:
-# EXES
-
 AVPACK := $(ROOT_DIR)/avpack
 
 EXES += phiola$(DOTEXE)

@@ -144,7 +144,7 @@ struct gui_mlib {
 	/** Start playing the playlist */
 	void play(uint row) {
 		const xxvec *v = (rows_filtered.len) ? &rows_filtered : &rows;
-		if (row > v->len) return;
+		if (row == 0 || row > v->len) return;
 
 		const struct mlib_row *it = v->at<struct mlib_row>(row);
 		if (mlib_row_dirname(it))
@@ -183,6 +183,8 @@ static void wmlib_action(ffui_window *wnd, int id)
 	gui_mlib *w = gg->wmlib;
 	switch (id) {
 	case A_MLIB_FILTER:
+		if (!w->rows.len)
+			break;
 		w->filter(xxvec(w->tfilter.text()).str());
 		w->refill();
 		break;

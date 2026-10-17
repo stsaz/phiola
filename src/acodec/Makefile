@@ -1,22 +1,5 @@
 # phiola audio codecs
 
-# Inherit:
-# C
-# CFLAGS
-# CPU
-# LINK
-# LINK_RPATH_ORIGIN
-# LINKFLAGS
-# OS
-# PHIOLA
-# ROOT_DIR
-# SO
-# SYS
-
-# Modify:
-# MODS
-# LIBS3
-
 AVPACK := $(ROOT_DIR)/avpack
 ALIB3 := $(PHIOLA)/alib3
 ALIB3_BIN := alib3

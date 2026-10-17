@@ -24,7 +24,7 @@ Options:\n\
                           `@counter`   Sequentially incremented number\n\
                           `@STRING`    Expands to file meta data,\n\
                                        e.g. `-tee \"@artist - @title.mp3\"`\n\
-  `-recordable`           Enable on-demand stream recording by Ctrl+R\n\
+  `-recordable`           Enable on-demand stream recording by Shift+R\n\
   `-dup` FILE.wav         Copy output data to a file.\n\
                           `@stdout`    Write to standard output\n\
                         Supports runtime variable expansion (see `-tee`)\n\

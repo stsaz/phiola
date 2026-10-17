@@ -1,22 +1,5 @@
 # phiola network module
 
-# Inherit:
-# C
-# CFLAGS
-# CFLAGS_BASE
-# DEBUG
-# FFSYS
-# LINK
-# LINK_PTHREAD
-# LINKFLAGS
-# PHIOLA
-# ROOT_DIR
-# SO
-
-# Modify:
-# LIBS3
-# MODS
-
 AVPACK := $(ROOT_DIR)/avpack
 NETMILL := $(ROOT_DIR)/netmill
 NML_3PT := netmill-3pt

@@ -1,22 +1,5 @@
 # phiola audio filters
 
-# Inherit:
-# C
-# CFLAGS
-# CPU
-# LINK
-# LINK_RPATH_ORIGIN
-# LINKFLAGS
-# OS
-# PHIOLA
-# ROOT_DIR
-# SO
-# SYS
-
-# Modify:
-# LIBS3
-# MODS
-
 FFAUDIO := $(ROOT_DIR)/ffaudio
 ALIB3 := $(PHIOLA)/alib3
 ALIB3_BIN := alib3
