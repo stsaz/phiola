@@ -59,30 +59,45 @@ static void list_close()
 static void list_display()
 {
 	struct tui2_list *l = &mod->list;
-	uint y = Y_LIST, n;
+	uint x, y = Y_LIST, n;
+	const void *playing_qe = (mod->playing) ? playing_trk_qe(mod->playing) : NULL;
 	for (uint i = l->top;  i < l->top + mod->list_cap;  i++) {
 		const struct phi_queue_entry *qe = mod->queue->at(NULL, i);
 		if (!qe)
 			break;
 
+		mod->buf[0] = (qe == playing_qe) ? '>' : ' '; // Highlight currently playing track
+		mod->buf[1] = ' ';
+		n = 2;
+
 		if (url_checkz(qe->url)) {
-			n = tui2_printf("%u. %s", i + 1, qe->url);
+			n = tui2_appendf(n, "%u. %s", i + 1, qe->url);
 
 		} else {
 			ffstr artist = {}, title = {};
 			core->metaif->find(&qe->meta, FFSTR_Z("artist"), &artist, 0);
 			core->metaif->find(&qe->meta, FFSTR_Z("title"), &title, 0);
 			if (title.len) {
-				n = tui2_printf("%u. %S - %S", i + 1, &artist, &title);
+				n = tui2_appendf(n, "%u. %S - %S", i + 1, &artist, &title);
 			} else {
 				ffpath_split3_str(FFSTR_Z(qe->url), NULL, &title, NULL); // Use file name as title
-				n = tui2_printf("%u. %S", i + 1, &title);
+				n = tui2_appendf(n, "%u. %S", i + 1, &title);
 			}
 		}
 
 		ffncurses_line_clear(&mod->wmain, y);
 		uint clr = (i == l->cur) ? CLR_LIST_SEL : 0;
-		ffncurses_printn_attr(&mod->wmain, y++, 0, mod->buf, n, 0, clr);
+		ffncurses_printn_attr(&mod->wmain, y, 0, mod->buf, n, 0, clr);
+
+		if (qe->length_sec) {
+			char dur[16];
+			n = ffs_format_r0(dur, sizeof(dur), "%u:%02u", qe->length_sec / 60, qe->length_sec % 60);
+			x = ffncurses_width() - n; // right-align
+			if ((int)x >= 4)
+				ffncurses_printn_attr(&mod->wmain, y, x, dur, n, 0, clr);
+		}
+
+		y++;
 	}
 
 	while (y < Y_LIST + mod->list_cap) {

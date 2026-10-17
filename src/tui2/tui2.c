@@ -162,6 +162,7 @@ enum POPUP {
 
 static void list_view_title();
 static void tui2_exit();
+void* playing_trk_qe(struct tui2_play_trk *p);
 
 /** Copy text into the global buffer. */
 static uint tui2_printf(const char *fmt, ...)
@@ -246,6 +247,16 @@ static void tui2_play_finished(const struct tui2_play_trk *p)
 	mod->playing = NULL;
 	ffncurses_line_clear_x(&mod->wmain, Y_TITLE, X_TITLE);
 	ffncurses_line_clear(&mod->wmain, Y_PROGRESS);
+
+	uint i = mod->list.active_track;
+	if (i >= mod->list.top && i < mod->list.top + mod->list_cap) {
+		// Clear '>' mark
+		uint y = Y_LIST + i - mod->list.top;
+		mod->buf[0] = ' ';
+		uint clr = (i == mod->list.cur) ? CLR_LIST_SEL : 0;
+		ffncurses_printn_attr(&mod->wmain, y, 0, mod->buf, 1, 0, clr);
+	}
+
 	ffncurses_line_clear(&mod->wmain, mod->y_status);
 	ffncurses_update(&mod->wmain);
 	title_default();
