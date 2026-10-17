@@ -22,6 +22,19 @@ static int tui_input(struct cmd_tui *t, ffstr s)
 	return cmd_input(&t->input, s);
 }
 
+/** Prepare logging pass-through to TUI module */
+void tui2_prepare()
+{
+	x->log.use_color = (x->log.use_color && x->debug);
+	x->uif = x->core->mod("tui2.if");
+	if (x->uif) {
+		struct phi_ui_conf uc = {
+			.log_ctl = exe_log_ctl,
+		};
+		x->uif->conf(&uc);
+	}
+}
+
 static int tui_action(struct cmd_tui *t)
 {
 	struct phi_queue_conf qc = {
@@ -39,6 +52,7 @@ static int tui_action(struct cmd_tui *t)
 	}
 	ffvec_free(&t->input);
 
+	tui2_prepare();
 	x->core->mod("tui2.master");
 	x->exit_code = 0;
 	return 0;

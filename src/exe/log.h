@@ -89,3 +89,12 @@ static void logs(struct zzlog *l)
 	l->use_color = !r;
 	l->fd_file = (r < 0);
 }
+
+/** Enable/disable logging pass-through */
+void exe_log_ctl(uint flags)
+{
+	if (flags)
+		x->log.func = x->uif->log; // UI is ready to display logs
+	else
+		x->log.func = NULL;
+}

@@ -234,6 +234,9 @@ static int play_action(struct cmd_play *p)
 	}
 	ffvec_free(&p->input);
 
+	if (p->tui2)
+		tui2_prepare();
+
 	x->queue->play(NULL, NULL);
 
 	if (p->remote || p->remote_id) {

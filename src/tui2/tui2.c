@@ -121,6 +121,7 @@ struct tui2_mod {
 	char *user_conf_dir;
 	const phi_queue_if *queue;
 	phi_task task_init;
+	phi_log_ctl log_ctl;
 };
 static struct tui2_mod *mod;
 static const phi_core *core;
@@ -231,6 +232,7 @@ static void tui2_play_started(struct tui2_play_trk *p, phi_track *t)
 	struct phi_queue_entry *qe = (struct phi_queue_entry*)t->qent;
 	mod->q_active = mod->queue->queue(qe);
 	mod->list.active_track = mod->queue->index(qe);
+	tui2_status("");
 }
 
 /** Reset the window title. */
@@ -674,6 +676,9 @@ static void tui2_init()
 	mod->list_cap = ffncurses_height() - (Y_LIST+1);
 	((phi_core*)core)->conf.stdout_busy = 1;
 
+	if (mod->log_ctl)
+		mod->log_ctl(1);
+
 	// Draw UI
 	tui2_println(&mod->wmain, Y_TITLE, 0, "φ", 0, CLR_TITLE);
 	list_view_title();
@@ -719,6 +724,8 @@ static void tui2_exit()
 
 static void tui2_destroy()
 {
+	if (mod->log_ctl)
+		mod->log_ctl(0);
 	ffncurses_end();
 	list_close();
 	explorer_close();
@@ -726,14 +733,31 @@ static void tui2_destroy()
 	ffmem_alignfree(mod);
 }
 
+static void tui2_ui_conf(struct phi_ui_conf *c)
+{
+	mod->log_ctl = c->log_ctl;
+}
+
+static void tui2_log(void *udata, ffstr s)
+{
+	tui2_status("%S", &s);
+}
+
+static const struct phi_ui_if tui2_if = {
+	.conf = tui2_ui_conf,
+	.log = tui2_log,
+};
+
 static const void* tui2_iface(const char *name)
 {
-	if (ffsz_eq(name, "play"))
-		return &tui2_if_play;
-	else if (ffsz_eq(name, "master")) {
+	if (ffsz_eq(name, "master")) {
 		mod->master = 1;
 		return (void*)-1;
 	}
+	if (ffsz_eq(name, "play"))
+		return &tui2_if_play;
+	else if (ffsz_eq(name, "if"))
+		return &tui2_if;
 	return NULL;
 }
 

@@ -8,6 +8,8 @@
 #include <ffsys/path.h>
 #include <ffsys/dirscan.h>
 
+void tui2_prepare();
+
 static void help_info_write(const char *sz)
 {
 	ffstr s = FFSTR_INITZ(sz), l, k;
