@@ -222,6 +222,10 @@ static int action()
 	struct phi_queue_conf qc = {
 		.first_filter = &phi_guard_gui,
 		.ui_module = "gui.track",
+		.tconf = {
+			.tee = "",
+			.tee_dynamic = 1,
+		},
 	};
 	x->queue->create(&qc);
 

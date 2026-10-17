@@ -221,3 +221,25 @@ const phi_filter phi_gui_track = {
 	gtrk_open, gtrk_close, gtrk_process,
 	"gui"
 };
+
+
+static void* tee_out_open(phi_track *t)
+{
+	return (void*)1;
+}
+
+static void tee_out_close(void *f, phi_track *t)
+{
+	gui_event((t->error) ? GUI_EV_REC_ERR : GUI_EV_REC_DONE);
+	gd->rec_radio = 0;
+}
+
+static int tee_out_process(void *f, phi_track *t)
+{
+	return PHI_DONE;
+}
+
+const phi_filter gui_tee_out_guard = {
+	tee_out_open, tee_out_close, tee_out_process,
+	"gui-tee-out",
+};

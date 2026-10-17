@@ -80,6 +80,7 @@
 
 // Record
 	X(A_RECORD_SHOW),
+		X(A_REC_MODE),
 		X(A_REC_LOOPBACK),
 		X(A_REC_BROWSE),
 		X(A_REC_EXT_CHG),

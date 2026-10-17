@@ -8,7 +8,7 @@ struct gui_wrecord {
 	ffui_labelxx		ldir, lname, lext, ldev, lchan, l_rate, luntil;
 	ffui_editxx			edir, ename, e_rate, euntil;
 	ffui_comboboxxx		cbext, cbdev, cbchan;
-	ffui_checkboxxx		cbloopback, cbexcl;
+	ffui_checkboxxx		cbloopback, cbexcl, cb_radio;
 	ffui_buttonxx		bbrowse, bstart;
 
 	struct gui_ac ac;
@@ -20,9 +20,24 @@ struct gui_wrecord {
 	uint conf_channels;
 	u_char conf_exclusive;
 	u_char conf_loopback;
+	u_char conf_radio;
 	char *wnd_pos;
 
 	uint initialized;
+
+	/** Enable/disable mic-specific controls based on record-radio mode */
+	void mic_ctls_adapt(bool mic) {
+		cbdev.enable(mic);
+		if (cbloopback.h) {
+			cbloopback.enable(mic);
+			cbexcl.enable(mic);
+		}
+		cbext.enable(mic);
+		cbchan.enable(mic);
+		e_rate.enable(mic);
+		euntil.enable(mic);
+		ac.enable_controls((mic) ? out_fmt[cbext.get()].fmt : 0);
+	}
 };
 
 #define _ac(ctl) \
@@ -35,6 +50,7 @@ FF_EXTERN const ffui_ldr_ctl wrecord_ctls[] = {
 	_(ldir),	_(edir),
 	_(lname),	_(ename),
 	_(lext),	_(cbext),
+	_(cb_radio),
 	_(ldev),	_(cbdev),
 	_(cbloopback),
 	_(cbexcl),
@@ -64,6 +80,7 @@ const ffarg wrecord_args[] = {
 	{ "mp3q",		'u',	O(ac.conf_mp3q) },
 	{ "name",		'=S',	O(conf_name) },
 	{ "opusq",		'u',	O(ac.conf_opusq) },
+	{ "radio",		'b',	O(conf_radio) },
 	{ "rate",		'u',	O(conf_rate) },
 	{ "vorbisq",	'u',	O(ac.conf_vorbisq) },
 	{ "wrecord.pos",	'=s',	O(wnd_pos) },
@@ -140,6 +157,7 @@ static void wrecord_ui_to_conf()
 	c->conf_channels = c->cbchan.get();
 	c->conf_rate = xxvec(c->e_rate.text()).str().uint32(0);
 	c->conf_until = wrec_time_value(xxvec(c->euntil.text()).str());
+	c->conf_radio = checked_safe(c->cb_radio);
 
 	c->ac.ui_to_conf();
 }
@@ -226,6 +244,7 @@ static void wrecord_ui_from_conf()
 	w->conf_dir.free();
 	w->conf_name.free();
 
+	check_safe(w->cb_radio, w->conf_radio);
 	check_safe(w->cbloopback, w->conf_loopback);
 	w->conf_idev = adevices_fill((w->conf_loopback) ? PHI_ADEV_PLAYBACK : PHI_ADEV_CAPTURE, w->cbdev, w->conf_idev);
 	check_safe(w->cbexcl, w->conf_exclusive);
@@ -242,6 +261,7 @@ static void wrecord_ui_from_conf()
 	w->e_rate.text(s.zfmt("%u", w->conf_rate));
 
 	w->ac.init_from_conf();
+	w->mic_ctls_adapt(!w->conf_radio);
 }
 
 static struct phi_track_conf* record_conf_create()
@@ -275,18 +295,31 @@ void wrecord_start_stop()
 		gui_core_task((void(*)())record_stop);
 		return;
 	}
+	if (gd->rec_radio) {
+		gui_core_task(rec_radio_stop);
+		return;
+	}
 
 	if (w->initialized) {
 		w->bstart.enable(0);
 		wrecord_ui_to_conf();
 	}
-	gui_core_task_ptr(record_begin, record_conf_create());
+
+	if (w->conf_radio) {
+		char *fn = ffsz_allocfmt("%S/%S", &w->conf_dir, &w->conf_name);
+		gui_core_task_ptr(rec_radio_start, fn);
+	} else {
+		gui_core_task_ptr(record_begin, record_conf_create());
+	}
 }
 
 static void wrecord_action(ffui_window *wnd, int id)
 {
 	gui_wrecord *w = gg->wrecord;
 	switch (id) {
+	case A_REC_MODE:
+		w->mic_ctls_adapt(!w->cb_radio.checked());  break;
+
 	case A_REC_LOOPBACK:
 		w->conf_loopback = checked_safe(w->cbloopback);
 		if (w->cbexcl.h)
@@ -336,7 +369,7 @@ void wrecord_show()
 
 		wrecord_ui_from_conf();
 
-		if (gd->recording_track)
+		if (gd->recording_track || gd->rec_radio)
 			w->bstart.enable(0);
 	}
 
@@ -351,6 +384,7 @@ void wrecord_event(uint event)
 	gui_wrecord *w = gg->wrecord;
 	switch (event) {
 	case GUI_EV_REC_DONE:
+	case GUI_EV_REC_ERR:
 		if (w->initialized)
 			w->bstart.enable(1);
 		break;

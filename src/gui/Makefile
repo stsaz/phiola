@@ -25,6 +25,7 @@
 # MODS
 
 FFGUI := $(ROOT_DIR)/ffgui
+AVPACK := $(ROOT_DIR)/avpack
 
 MODS += gui.$(SO)
 include $(FFGUI)/conf.mk
@@ -37,7 +38,7 @@ CFLAGS_GUI := $(CFLAGS) $(CFLAGS_GUI)
 LINKFLAGS_GUI := $(LINKXXFLAGS) $(LINKFLAGS_GUI)
 
 gui-mod.o: $(PHIOLA)/src/gui/mod.c
-	$(C) $(CFLAGS) $< -o $@
+	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
 gui-%.o: $(PHIOLA)/src/gui/%.c
 	$(C) $(CFLAGS_GUI) $< -o $@
 gui-%.o: $(PHIOLA)/src/gui/%.cpp

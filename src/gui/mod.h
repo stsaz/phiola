@@ -20,6 +20,7 @@ enum GUI_EV {
 	GUI_EV_PLAY_PLAYING,
 	GUI_EV_REC_STARTED,
 	GUI_EV_REC_DONE,
+	GUI_EV_REC_ERR,
 	GUI_EV_CONV_DONE,
 };
 
@@ -81,6 +82,8 @@ FF_EXTERN void gui_stop(uint flags);
 
 FF_EXTERN void record_begin(void *param);
 FF_EXTERN int record_stop();
+FF_EXTERN void rec_radio_start(void *param);
+FF_EXTERN void rec_radio_stop();
 
 FF_EXTERN void convert_add(ffslice indices);
 FF_EXTERN void convert_begin(void *param);
@@ -161,6 +164,7 @@ struct gui_data {
 	uint marker_sec;
 
 	phi_track *recording_track;
+	char *tee_filename;
 
 	double gain_db;
 
@@ -185,6 +189,7 @@ struct gui_data {
 	uint quit :1;
 	uint ui_thread_busy :1;
 	uint lists_load_done :1;
+	uint rec_radio :1;
 
 	struct gui_conf conf;
 };

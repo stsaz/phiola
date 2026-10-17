@@ -10,6 +10,7 @@
 #include <gui/track-playback.h>
 #include <gui/track-convert.h>
 #include <afilter/pcm.h>
+#include <avpack/decl.h>
 #include <ffsys/dir.h>
 #include <ffsys/globals.h>
 #include <ffbase/args.h>
@@ -252,6 +253,10 @@ static phi_queue_id list_new(char *name, char *fn, char *path)
 		.first_filter = &gui_guard,
 		.ui_module = "gui.track",
 		.modified = 1,
+		.tconf = {
+			.tee = "",
+			.tee_dynamic = 1,
+		},
 	};
 	gd->tab_conversion = 0;
 	struct list_info *li = ffvec_zpushT(&gd->lists, struct list_info);
@@ -957,6 +962,53 @@ int record_stop()
 	return 0;
 }
 
+static const char* rec_ext(uint fmt)
+{
+	switch (fmt) {
+	case AVPKF_MP3: return "mp3";
+	case AVPKF_AAC: return "aac";
+	}
+	return NULL;
+}
+
+/** Start recording from radio using 'tee' module.
+param: "dir/name" (without extension)
+Thread: core */
+void rec_radio_start(void *param)
+{
+	char *base_name = param;
+	int e = 1;
+	struct gtrk *gt = gd->playing_track;
+	if (!gt)
+		goto end; // no active playback
+	phi_track *t = gt->t;
+	const char *ext = rec_ext(t->input.format);
+	if (!ext)
+		goto end; // format not supported
+
+	ffmem_free(gd->tee_filename);
+	gd->tee_filename = ffsz_allocfmt("%s.%s", base_name, ext);
+	t->conf.tee = gd->tee_filename;
+	t->tee_active = 1;
+	gd->rec_radio = 1;
+	gui_event(GUI_EV_REC_STARTED);
+	e = 0;
+
+end:
+	ffmem_free(base_name);
+	if (e)
+		gui_event(GUI_EV_REC_ERR);
+}
+
+/** Stop recording from radio.
+Thread: core */
+void rec_radio_stop()
+{
+	struct gtrk *gt = gd->playing_track;
+	if (gt)
+		gt->t->tee_active = 0;
+}
+
 
 static void grd_conv_close(void *f, phi_track *t)
 {
@@ -1119,6 +1171,8 @@ void gui_core_task_data(void (*func)(ffstr), ffstr d)
 
 static void gui_start(void *param)
 {
+	((struct phi_core_conf*)&core->conf)->tee_out_first = &gui_tee_out_guard; // Enable on-demand recording from radio
+
 	gd->conf.seek_step_delta = 10;
 	gd->conf.seek_leap_delta = 60;
 	gd->marker_sec = ~0;
@@ -1193,6 +1247,7 @@ static void gui_destroy()
 		list_info_destroy(li);
 	}
 	ffvec_free(&gd->lists);
+	ffmem_free(gd->tee_filename);
 	ffmem_free(gd);
 }
 

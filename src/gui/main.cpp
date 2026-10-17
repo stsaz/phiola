@@ -208,12 +208,16 @@ void wmain_event(uint event)
 	}
 
 	case GUI_EV_REC_STARTED:
-	case GUI_EV_REC_DONE: {
+	case GUI_EV_REC_DONE:
+	case GUI_EV_REC_ERR: {
 		const char *s[][2] = {
 			{ "Recording...", "[REC]" },
 			{ "Recording complete", "" },
+			{ "Recording error", "" },
 		};
-		uint i = (event == GUI_EV_REC_DONE);
+		uint i = (event == GUI_EV_REC_STARTED) ? 0
+			: (event == GUI_EV_REC_DONE) ? 1
+			: 2;
 		m->stbar.text(0, s[i][0]);
 		m->stbar.text(1, s[i][1]);
 		break;
