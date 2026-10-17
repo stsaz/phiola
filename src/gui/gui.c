@@ -476,3 +476,8 @@ void gui_quit()
 	wmain_fin();
 	ffui_post_quitloop();
 }
+
+void gui_event(uint event)
+{
+	wmain_event(event);
+}

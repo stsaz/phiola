@@ -280,7 +280,6 @@ void wrecord_start_stop()
 		w->bstart.enable(0);
 		wrecord_ui_to_conf();
 	}
-	wmain_status("Recording...");
 	gui_core_task_ptr(record_begin, record_conf_create());
 }
 
@@ -289,7 +288,6 @@ void wrecord_done()
 	gui_wrecord *w = gg->wrecord;
 	if (w->initialized)
 		w->bstart.enable(1);
-	wmain_status("Recording complete");
 }
 
 static void wrecord_action(ffui_window *wnd, int id)

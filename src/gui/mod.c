@@ -915,6 +915,7 @@ static void grd_rec_close(void *f, phi_track *t)
 		return;
 	}
 	gui_task(wrecord_done);
+	gui_event(GUI_EV_REC_DONE);
 }
 static int grd_rec_process(void *f, phi_track *t) { return PHI_DONE; }
 static const phi_filter phi_gui_record_guard = {
@@ -939,6 +940,7 @@ void record_begin(void *param)
 
 	gd->recording_track = t;
 	core->track->start(t);
+	gui_event(GUI_EV_REC_STARTED);
 	e = 0;
 
 end:

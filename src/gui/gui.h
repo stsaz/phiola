@@ -35,6 +35,7 @@ FF_EXTERN void wmain_fin();
 /** Get bitmask of the visible columns */
 FF_EXTERN uint wmain_cols_visible();
 FF_EXTERN void wmain_cols_visible_set(uint mask);
+FF_EXTERN void wmain_event(uint event);
 
 FF_EXTERN void winfo_init();
 FF_EXTERN void winfo_fin();

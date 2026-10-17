@@ -173,7 +173,8 @@ void wmain_userconf_write(ffconfw *cw)
 	ffmem_free(m->vlist_col);
 }
 
-/** Set status bar text */
+/** Set status bar text.
+Thread: any */
 void wmain_status(const char *fmt, ...)
 {
 	gui_wmain *m = gg->wmain;
@@ -181,8 +182,28 @@ void wmain_status(const char *fmt, ...)
 	va_start(va, fmt);
 	char buf[1000];
 	ffsz_formatv(buf, sizeof(buf), fmt, va);
-	m->stbar.text(buf);
+	m->stbar.text(0, buf);
 	va_end(va);
+}
+
+/** Handle event.
+Thread: any */
+void wmain_event(uint event)
+{
+	gui_wmain *m = gg->wmain;
+	switch (event) {
+	case GUI_EV_REC_STARTED:
+	case GUI_EV_REC_DONE: {
+		const char *s[][2] = {
+			{ "Recording...", "[REC]" },
+			{ "Recording complete", "" },
+		};
+		uint i = (event == GUI_EV_REC_DONE);
+		m->stbar.text(0, s[i][0]);
+		m->stbar.text(1, s[i][1]);
+		break;
+	}
+	}
 }
 
 static ffui_icon& res_icon_load(ffui_icon *ico, const char *name, uint resource_id)

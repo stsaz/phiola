@@ -13,6 +13,18 @@ FF_EXTERN void gui_init();
 FF_EXTERN void gui_userconf_load();
 FF_EXTERN int FFTHREAD_PROCCALL gui_worker(void *param);
 
+
+enum GUI_EV {
+	GUI_EV_REC_STARTED,
+	GUI_EV_REC_DONE,
+};
+
+/** Broadcast an event.
+event: enum GUI_EV
+Thread: any */
+FF_EXTERN void gui_event(uint event);
+
+
 /** Execute commands within Core thread */
 FF_EXTERN void gui_core_task(void (*func)());
 FF_EXTERN void gui_core_task_uint(void (*func)(uint), uint i);
