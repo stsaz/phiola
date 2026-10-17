@@ -86,6 +86,11 @@ static struct ffarg_ctx wsettings_args_f() {
 	return ax;
 }
 
+static struct ffarg_ctx wcolumns_args_f() {
+	struct ffarg_ctx ax = { wcolumns_args, gg->wcolumns };
+	return ax;
+}
+
 static struct ffarg_ctx wmain_args_f() {
 	struct ffarg_ctx ax = { wmain_args, gg->wmain };
 	return ax;
@@ -102,6 +107,7 @@ static struct ffarg_ctx wlog_args_f() {
 }
 
 static const struct ffarg args[] = {
+	{ "columns",	'{',	wcolumns_args_f },
 	{ "convert",	'{',	wconvert_args_f },
 	{ "info",		'{',	winfo_args_f },
 	{ "log",		'{',	wlog_args_f },
@@ -166,6 +172,10 @@ static void gui_userconf_save()
 		wsettings_userconf_write(&cw);
 	ffconfw_add_obj(&cw, '}');
 
+	ffconfw_add2obj(&cw, "columns", '{');
+		wcolumns_userconf_write(&cw);
+	ffconfw_add_obj(&cw, '}');
+
 	ffconfw_add2obj(&cw, "log", '{');
 		wlog_userconf_write(&cw);
 	ffconfw_add_obj(&cw, '}');
@@ -180,6 +190,7 @@ extern const ffui_ldr_ctl
 	winfo_ctls[],
 	wrename_ctls[],
 	wsettings_ctls[],
+	wcolumns_ctls[],
 	weqlz_ctls[],
 	wgoto_ctls[],
 	wlistadd_ctls[],
@@ -208,6 +219,7 @@ static void* gui_getctl(void *udata, const ffstr *name)
 		_w(winfo, winfo_ctls),
 		_w(wrename, wrename_ctls),
 		_w(wsettings, wsettings_ctls),
+		_w(wcolumns, wcolumns_ctls),
 		_w(weqlz, weqlz_ctls),
 		_w(wgoto, wgoto_ctls),
 		_w(wlistfilter, wlistfilter_ctls),
@@ -401,6 +413,7 @@ void gui_init()
 	winfo_init();
 	wrename_init();
 	wsettings_init();
+	wcolumns_init();
 	weqlz_init();
 	wgoto_init();
 	wlistadd_init();
@@ -456,6 +469,7 @@ end:
 void gui_quit()
 {
 	gui_userconf_save();
+	wcolumns_fin();
 	winfo_fin();
 	wrename_fin();
 	wmlib_fin();

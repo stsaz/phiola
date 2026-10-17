@@ -34,6 +34,7 @@ struct gui_wmain {
 
 	char *vlist_col;
 	char *wnd_pos;
+	uint columns_hidden; // hidden columns bitarray
 	uint ready;
 };
 
@@ -56,18 +57,6 @@ FF_EXTERN const ffui_ldr_ctl wmain_ctls[] = {
 };
 #undef _
 
-enum LIST_HDR {
-	H_INDEX,
-	H_ARTIST,
-	H_TITLE,
-	H_DUR,
-	H_INFO,
-	H_DATE,
-	H_ALBUM,
-	H_FN,
-	_H_LAST,
-};
-
 static const char list_colname[][10] = {
 	"", // H_INDEX
 	"artist", // H_ARTIST
@@ -79,24 +68,92 @@ static const char list_colname[][10] = {
 	"", // H_FN
 };
 
-static void conf_vlist_col(ffui_viewxx &v, xxstr val)
-{
-	ffui_viewcolxx vc = {};
+static void vlist_col_from_conf(uint *width) {
+	gui_wmain *m = gg->wmain;
+	xxstr w(m->vlist_col);
 	uint i = 0;
-	while (val.len) {
+	while (w.len) {
 		xxstr s;
-		val.split_by(' ', &s, &val);
-		uint width;
-		if (!s.match_f("%u", &width)) {
-			vc.width(width);
-			v.column(i, vc);
-		}
+		w.split_by(' ', &s, &w);
+		uint n = s.uint16(0);
+		if (n)
+			width[i] = n;
 		i++;
 	}
 }
 
+/** Write column widths to string */
+static char* vlist_col_write() {
+	gui_wmain *m = gg->wmain;
+	xxvec v;
+	ffui_viewcolxx vc = {};
+	vc.width(0);
+	for (uint i = 0;  i != _H_LAST;  i++) {
+		uint w = m->vlist.column(i, &vc).width();
+		v.add_f("%u ", w);
+	}
+	char *r = v.strz();
+	v.reset();
+	return r;
+}
+
+/** Set columns width from a string value list */
+static void conf_vlist_col() {
+	gui_wmain *m = gg->wmain;
+	if (!m->vlist_col) return;
+
+	uint width[_H_LAST] = {};
+	vlist_col_from_conf(width);
+
+	ffui_viewcolxx vc = {};
+	for (uint i = 0;  i < _H_LAST;  i++) {
+		if (width[i]) {
+			vc.width(width[i]);
+			m->vlist.column(i, vc);
+		}
+	}
+
+	ffmem_free(m->vlist_col);
+	m->vlist_col = NULL;
+}
+
+/** Set column visibility */
+static void vlist_cols_showhide(uint flags) {
+	gui_wmain *m = gg->wmain;
+	if (flags && !m->columns_hidden) return; // All columns shown
+
+	ffui_viewcolxx vc = {};
+	for (uint i = 0;  i < _H_LAST;  i++) {
+		bool show = !(m->columns_hidden & (1U << i));
+		if (show && flags)
+			continue;
+
+#ifdef FF_WIN
+		vc.width(0);
+		uint w = m->vlist.column(i, &vc).width();
+		if (w && show)
+			continue; // Preserve the current width
+		ffui_viewcol_setwidth(&vc.vc, (show) ? 100 : 0);
+#else
+		ffui_viewcol_show(&vc.vc, show);
+#endif
+
+		m->vlist.column(i, vc);
+	}
+}
+
+// Note: 'struct gui{ columns_hidden }' is more logical, but currently there's no conf context for global gui settings
+uint wmain_cols_visible() { return ~gg->wmain->columns_hidden & ((1U << _H_LAST) - 1); }
+void wmain_cols_visible_set(uint mask) {
+	gg->wmain->columns_hidden = (mask)
+		? ~mask & ((1U << _H_LAST) - 1)
+		: 0; // Prevent showing empty view
+	vlist_cols_showhide(0);
+}
+
 #define O(m)  (void*)FF_OFF(struct gui_wmain, m)
 const ffarg wmain_args[] = {
+	{ "cols_hidden",'u',	O(columns_hidden) },
 	{ "vlist.col",	'=s',	O(vlist_col) },
 	{ "wmain.pos",	'=s',	O(wnd_pos) },
 	{}
@@ -107,14 +164,8 @@ void wmain_userconf_write(ffconfw *cw)
 {
 	gui_wmain *m = gg->wmain;
 
-	xxvec v;
-	ffui_viewcolxx vc = {};
-	vc.width(0);
-	for (uint i = 0;  i != _H_LAST;  i++) {
-		v.add_f("%u ", m->vlist.column(i, &vc).width());
-	}
-	m->vlist_col = v.strz();
-	v.reset();
+	ffmem_free(m->vlist_col);
+	m->vlist_col = vlist_col_write(); // Note: win32: original width values for hidden columns are lost
 
 	m->wnd_pos = wnd_pos_sz(&m->wnd);
 	ffarg_write_conf(cw, wmain_args, m);
@@ -803,10 +854,8 @@ void wmain_show()
 {
 	gui_wmain *m = gg->wmain;
 
-	if (m->vlist_col)
-		conf_vlist_col(m->vlist, m->vlist_col);
-	ffmem_free(m->vlist_col);
-	m->vlist_col = NULL;
+	conf_vlist_col();
+	vlist_cols_showhide(1);
 
 	if (m->wnd_pos)
 		conf_wnd_pos_read(&m->wnd, FFSTR_Z(m->wnd_pos));

@@ -8,6 +8,7 @@ struct gui_wsettings {
 	ffui_trackbarxx	tbauto_skip, tbauto_skip_tail;
 	ffui_checkboxxx	cbrg_norm, cbauto_norm, cbeqlz;
 	ffui_comboboxxx	cbdarktheme, cbdev;
+	ffui_buttonxx	bcolumns;
 	char*	wnd_pos;
 	uint	conf_odev;
 	uint	initialized :1;
@@ -18,6 +19,7 @@ FF_EXTERN const ffui_ldr_ctl wsettings_ctls[] = {
 	_(wnd),
 	_(ltheme),		_(cbdarktheme),
 	_(ldev),		_(cbdev),
+	_(bcolumns),
 	_(lseek_by),	_(eseek_by),
 	_(lleap_by),	_(eleap_by),
 	_(lauto_skip),	_(eauto_skip),	_(tbauto_skip),
@@ -162,19 +164,22 @@ static void wsettings_action(ffui_window *wnd, int id)
 	xxstr_buf<100> s;
 
 	switch (id) {
+	case A_COLUMNS_SHOW:
+		wcolumns_show(1);  break;
+
 	case A_SETS_EQLZ:
 		if (w->cbeqlz.checked())
 			weqlz_show(1);
 		break;
-
-	case A_SETTINGS_APPLY:
-		wsettings_ui_to_conf();  break;
 
 	case A_SETS_AUTO_SKIP:
 		w->eauto_skip.text(auto_skip_write(s, auto_skip_value(w->tbauto_skip.get())));  break;
 
 	case A_SETS_AUTO_SKIP_TAIL:
 		w->eauto_skip_tail.text(auto_skip_write(s, auto_skip_value(w->tbauto_skip_tail.get())));  break;
+
+	case A_SETTINGS_APPLY:
+		wsettings_ui_to_conf();  break;
 	}
 }
 

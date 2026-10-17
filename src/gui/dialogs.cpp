@@ -13,6 +13,7 @@
 #include <gui/list-filter.hpp>
 #include <gui/about.hpp>
 #include <gui/settings.hpp>
+#include <gui/columns.hpp>
 #include <gui/equalizer.hpp>
 #include <gui/log.hpp>
 #include <gui/mlib.hpp>
