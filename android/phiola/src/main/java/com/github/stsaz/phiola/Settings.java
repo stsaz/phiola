@@ -208,7 +208,8 @@ class RecSettings {
 		"FLAC (24 bit)",
 		"MP3",
 		"Opus",
-		"Opus-VOIP"
+		"Opus-VOIP",
+		"WAV"
 	};
 	static final int[] rec_encoders = {
 		Phiola.AF_AAC_LC,
@@ -219,6 +220,7 @@ class RecSettings {
 		Phiola.AF_MP3,
 		Phiola.AF_OPUS,
 		Phiola.AF_OPUS_VOICE,
+		Phiola.AF_WAV,
 	};
 	static final String[] rec_extensions = {
 		"m4a",
@@ -229,6 +231,7 @@ class RecSettings {
 		"mp3",
 		"opus",
 		"opus",
+		"wav",
 	};
 	static final String[] rec_src_presets = {
 		"default",

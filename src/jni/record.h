@@ -185,6 +185,10 @@ Java_com_github_stsaz_phiola_Phiola_recStart(JNIEnv *env, jobject thiz, jstring 
 		c.mp3.quality = (uint)rp.quality + 1;
 		break;
 
+	case AF_WAV:
+		c.iaudio.format.format = PHI_PCM_16;
+		break;
+
 	case AF_OPUS:
 	case AF_OPUS_VOICE:
 		c.iaudio.format.format = PHI_PCM_FLOAT32;
