@@ -6,6 +6,7 @@ package com.github.stsaz.phiola;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
@@ -28,10 +29,14 @@ public class RecSvc extends Service {
 	}
 
 	private Notification notification_create() {
+		int flags = PendingIntent.FLAG_UPDATE_CURRENT
+			| PendingIntent.FLAG_IMMUTABLE;
 		NotificationCompat.Builder nfy = new NotificationCompat.Builder(this
-				, notification_channel_create("phiola.chan-work", "chanworkname"))
+				, notification_channel_create("worker", "Recording/converting"))
+			.setSmallIcon(R.drawable.ic_phiola)
 			.setContentTitle("phiola")
 			.setContentText("Recording/converting audio")
+			.setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), flags)) // Launch UI by clicking the notification
 			;
 		return nfy.build();
 	}

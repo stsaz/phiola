@@ -454,6 +454,14 @@ public class MainActivity extends AppCompatActivity {
 		String[] perms = new String[]{
 			Manifest.permission.RECORD_AUDIO,
 		};
+
+		if (Build.VERSION.SDK_INT >= 33) {
+			perms = new String[]{
+				Manifest.permission.RECORD_AUDIO,
+				Manifest.permission.POST_NOTIFICATIONS,
+			};
+		}
+
 		if (Build.VERSION.SDK_INT < 30) {
 			perms = new String[]{
 				Manifest.permission.RECORD_AUDIO,
@@ -734,7 +742,7 @@ public class MainActivity extends AppCompatActivity {
 	/** Start recording */
 	private void rec_start() {
 		if (!user_ask_record()) {
-			core.errlog(TAG, "No permissions for recording");
+			core.errlog(TAG, "No permissions for recording or notifications");
 			return;
 		}
 

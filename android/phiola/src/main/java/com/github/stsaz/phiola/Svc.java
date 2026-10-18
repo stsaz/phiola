@@ -209,7 +209,7 @@ public class Svc extends MediaBrowserServiceCompat {
 	 * Prepare notification
 	 */
 	void fg_prep() {
-		nfy = new NotificationCompat.Builder(this, notification_channel_create("phiola.svc.chan", "channame"));
+		nfy = new NotificationCompat.Builder(this, notification_channel_create("playback", "Playback"));
 		if (core.setts.svc_notification_disable)
 			return;
 		nfy.setSmallIcon(R.drawable.ic_phiola);
