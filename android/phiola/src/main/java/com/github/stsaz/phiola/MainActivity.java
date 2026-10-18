@@ -632,12 +632,13 @@ public class MainActivity extends AppCompatActivity {
 			explorer_click();
 		}
 
+		b.brec.setVisibility((gui.record_mode == GUI.RECMODE_HIDE) ? View.INVISIBLE : View.VISIBLE);
 		if (gui.playback_marker_show)
 			b.brec.setImageResource(R.drawable.ic_replay);
-		else if (gui.record_mode == GUI.RECMODE_HIDE)
-			b.brec.setVisibility(View.INVISIBLE);
 		else if (gui.record_mode == GUI.RECMODE_RADIO)
 			b.brec.setImageResource(R.drawable.outline_arrow_circle_down);
+		else
+			b.brec.setImageResource(R.drawable.ic_rec);
 
 		if (gui.filter_hide)
 			b.tfilter.setVisibility(View.INVISIBLE);
