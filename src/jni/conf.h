@@ -33,6 +33,7 @@ static const char setting_names[][20] = {
 	"play_auto_stop",
 	"play_eqlz_enabled",
 	"play_equalizer",
+	"play_min_system",
 	"play_rg_norm",
 	"rec_bitrate",
 	"rec_buf_len",
@@ -60,7 +61,6 @@ static const char setting_names[][20] = {
 	"ui_play_marker",
 	"ui_play_marker_pos",
 	"ui_record_mode",
-	"ui_svc_notfn_disable",
 	"ui_theme",
 	"ui_view",
 };

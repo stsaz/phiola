@@ -84,7 +84,6 @@
 	<string name="sett_show_filter">Hide \'Search\' Edit Box</string>
 	<string name="sett_rec_btn">First Control Button:</string>
 	<string name="sett_ui_info_in_title">Show Audio Info in Title</string>
-	<string name="sett_svc_notif_disable">Disable System Notification (requires restart)</string>
 
 	<string name="sett_playlist">Playlist</string>
 	<string name="sett_random">Random</string>
@@ -95,6 +94,7 @@
 	<string name="sett_auto_stop">Auto-Stop Timer (min):</string>
 
 	<string name="sett_playback">Playback</string>
+	<string name="sett_play_min_system">Minimal System Integration for Max Performance: static notification, no HW media buttons (requires restart)</string>
 	<string name="sett_codepage">Codepage for Non-Unicode Tags</string>
 	<string name="sett_auto_skip">Auto-Skip the Beginning of Each Track (% or sec):</string>
 	<string name="sett_auto_skip_tail">Auto-Skip the Ending of Each Track (% or sec):</string>

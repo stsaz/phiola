@@ -83,7 +83,6 @@
 	<string name="sett_show_filter">Skryť vyhľadávacie pole</string>
 	<string name="sett_rec_btn">Funkcia prvého tlačidla:</string>
 	<string name="sett_ui_info_in_title">Zahrnúť informácie o súbore v názve okna</string>
-	<string name="sett_svc_notif_disable">Zakázať systémové upozornenie (vyžaduje reštart)</string>
 
 	<string name="sett_playlist">Playlist</string>
 	<string name="sett_random">Náhodné prehrávanie</string>

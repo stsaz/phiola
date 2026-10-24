@@ -46,7 +46,6 @@ class CoreSettings {
 	private Core core;
 
 	boolean	debug_logs;
-	boolean	svc_notification_disable;
 	String	trash_dir;
 	boolean	file_del, deprecated_mods;
 	String	codepage;
@@ -72,8 +71,7 @@ class CoreSettings {
 
 	String conf_write() {
 		return String.format(
-			"ui_svc_notfn_disable %d\n"
-			+ "codepage %s\n"
+			"codepage %s\n"
 			+ "op_file_delete %d\n"
 			+ "op_data_dir %s\n"
 			+ "op_mlib_dir %s\n"
@@ -81,7 +79,6 @@ class CoreSettings {
 			+ "op_trash_dir_rel %s\n"
 			+ "op_deprecated_mods %d\n"
 
-			, core.bool_to_int(svc_notification_disable)
 			, codepage
 			, core.bool_to_int(file_del)
 			, pub_data_dir
@@ -118,7 +115,6 @@ class CoreSettings {
 	}
 
 	void conf_load(Conf c) {
-		svc_notification_disable = c.enabled(Conf.UI_SVC_NOTFN_DISABLE);
 		file_del = c.enabled(Conf.OP_FILE_DELETE);
 		pub_data_dir = c.value(Conf.OP_DATA_DIR);
 		library_dir = c.value(Conf.OP_MLIB_DIR);
@@ -144,6 +140,7 @@ class PlaySettings {
 	String equalizer;
 
 	int play_seek_fwd_percent, play_seek_back_percent;
+	boolean	play_min_system;
 
 	PlaySettings(Core core) {
 		this.core = core;
@@ -158,6 +155,7 @@ class PlaySettings {
 		auto_skip_tail_set(c.value(Conf.PLAY_AUTO_SKIP_TAIL));
 		equalizer_enabled = c.enabled(Conf.PLAY_EQLZ_ENABLED);
 		equalizer = c.value(Conf.PLAY_EQUALIZER);
+		play_min_system = c.enabled(Conf.PLAY_MIN_SYSTEM);
 	}
 
 	void normalize() {
@@ -173,11 +171,13 @@ class PlaySettings {
 			+ "play_auto_skip_tail %s\n"
 			+ "play_eqlz_enabled %d\n"
 			+ "play_equalizer %s\n"
+			+ "play_min_system %d\n"
 
 			, auto_skip_head.str()
 			, auto_skip_tail.str()
 			, core.bool_to_int(equalizer_enabled)
 			, equalizer
+			, core.bool_to_int(play_min_system)
 			);
 	}
 }

@@ -99,6 +99,10 @@
 			</intent-filter>
 		</receiver>
 
+		<service android:name=".PlaySvc"
+			android:enabled="true">
+		</service>
+
 		<service android:name=".RecSvc"
 			android:enabled="true">
 		</service>

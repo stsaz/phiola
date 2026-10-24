@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
 	private QueueNotify quenfy;
 	private Track track;
 	private PlaybackObserver trk_nfy;
-	private TrackCtl trackctl;
+	private TrackCtlIf trackctl;
 	private long total_dur_msec;
 	private int view_prev = GUI.V_EXPLORER;
 
@@ -490,8 +490,10 @@ public class MainActivity extends AppCompatActivity {
 			public void closed(TrackHandle t) { track_closed(t); }
 			public void process(TrackHandle t) { track_update(t); }
 		};
-		trackctl = new TrackCtl(core, this);
-		trackctl.connect();
+		if (core.play.play_min_system)
+			trackctl = new TrackCtlDirect(core, this);
+		else
+			trackctl = new TrackCtlSys(core, this);
 	}
 
 	/** Set UI objects and register event handlers */

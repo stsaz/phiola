@@ -6,6 +6,8 @@ package com.github.stsaz.phiola;
 import androidx.annotation.NonNull;
 
 import android.app.Activity;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.ClipboardManager;
 import android.content.ClipData;
 import android.content.Context;
@@ -128,8 +130,11 @@ class Core extends Util {
 					dbglog(TAG, "Callbacks.play_new()");
 					tq.post(() -> {
 							tq.removeCallbacks(delayed_abandon_focus);
-							if (sysaudio.audio_focus_request())
+							if (sysaudio.audio_focus_request()) {
 								track.play_on_create(meta);
+								if (play.play_min_system)
+									PlaySvc.start_once(context);
+							}
 						});
 				}
 
@@ -238,6 +243,13 @@ class Core extends Util {
 		}
 
 		return r;
+	}
+
+	String notif_channel_create(String id, String name) {
+		NotificationManager mgr = (NotificationManager)context.getSystemService(context.NOTIFICATION_SERVICE);
+		NotificationChannel chan = new NotificationChannel(id, name, NotificationManager.IMPORTANCE_LOW);
+		mgr.createNotificationChannel(chan);
+		return id;
 	}
 
 	Queue queue() {

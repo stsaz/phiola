@@ -119,6 +119,7 @@ public class SettingsActivity extends AppCompatActivity {
 		b.eAutoSkipTail.setText(core.play.auto_skip_tail.str());
 		b.swEqualizer.setChecked(core.play.equalizer_enabled);
 		equ = core.play.equalizer;
+		b.swPlayMinSystem.setChecked(core.play.play_min_system);
 	}
 
 	private void play_save() {
@@ -128,6 +129,7 @@ public class SettingsActivity extends AppCompatActivity {
 		core.play.equalizer_enabled = b.swEqualizer.isChecked();
 		core.play.equalizer = equ;
 		core.play.normalize();
+		core.play.play_min_system = b.swPlayMinSystem.isChecked();
 	}
 
 	@Override
@@ -185,7 +187,6 @@ public class SettingsActivity extends AppCompatActivity {
 			s = core.storage_path + "/phiola";
 		core.setts.pub_data_dir = s;
 
-		core.setts.svc_notification_disable = b.swSvcNotifDisable.isChecked();
 		core.setts.trash_dir = b.eTrashDir.getText().toString();
 		core.setts.file_del = b.swFileDel.isChecked();
 		core.setts.library_dir = b.eLibraryDir.getText().toString();
@@ -215,7 +216,6 @@ public class SettingsActivity extends AppCompatActivity {
 			: (rm == GUI.RECMODE_RADIO) ? RECBTN_REC_RADIO
 			: (rm == GUI.RECMODE_HIDE) ? RECBTN_REC_HIDE
 			: RECBTN_REC_MIC);
-		b.swSvcNotifDisable.setChecked(core.setts.svc_notification_disable);
 		b.swUiInfoInTitle.setChecked(core.gui().ainfo_in_title);
 
 		list_load();

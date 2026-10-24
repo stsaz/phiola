@@ -47,9 +47,7 @@ public class RecSvc extends Service {
 			Log.d(TAG, "onCreate");
 
 		core = Core.getInstance();
-
-		final int ID = 2;
-		startForeground(ID, notification_create());
+		startForeground(/*ID=*/ 2, notification_create());
 	}
 
 	@Override
@@ -64,6 +62,6 @@ public class RecSvc extends Service {
 	@Override
 	public void onDestroy() {
 		core.dbglog(TAG, "onDestroy");
-		core.unref();
+		core.close();
 	}
 }

@@ -58,13 +58,6 @@
 			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/sett_ui_info_in_title" />
 
-		<androidx.appcompat.widget.SwitchCompat
-			android:id="@+id/swSvcNotifDisable"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:layout_margin="@dimen/sett_margin"
-			android:text="@string/sett_svc_notif_disable" />
-
 
 		<TextView
 			android:layout_width="match_parent"
@@ -220,6 +213,14 @@
 			android:layout_height="wrap_content"
 			android:layout_margin="@dimen/sett_margin"
 			android:text="@string/sett_equalizer_enable" />
+
+		<androidx.appcompat.widget.SwitchCompat
+			android:id="@+id/swPlayMinSystem"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="@dimen/sett_margin"
+			android:text="@string/sett_play_min_system" />
+
 
 		<TextView
 			android:layout_width="match_parent"

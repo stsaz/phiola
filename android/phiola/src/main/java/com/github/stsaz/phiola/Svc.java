@@ -210,8 +210,6 @@ public class Svc extends MediaBrowserServiceCompat {
 	 */
 	void fg_prep() {
 		nfy = new NotificationCompat.Builder(this, notification_channel_create("playback", "Playback"));
-		if (core.setts.svc_notification_disable)
-			return;
 		nfy.setSmallIcon(R.drawable.ic_phiola);
 
 		// Launch UI by clicking the notification
@@ -286,10 +284,8 @@ public class Svc extends MediaBrowserServiceCompat {
 
 		sess_state(PlaybackStateCompat.STATE_BUFFERING, 0);
 
-		if (!core.setts.svc_notification_disable) {
-			nfy.setContentTitle(title);
-			nfy.setContentText(t.pmeta.artist);
-		}
+		nfy.setContentTitle(title);
+		nfy.setContentText(t.pmeta.artist);
 
 		fg();
 	}

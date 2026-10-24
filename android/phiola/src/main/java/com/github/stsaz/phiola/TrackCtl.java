@@ -10,18 +10,46 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 
+interface TrackCtlIf {
+	void close();
+	void pause();
+	void unpause();
+	void next();
+	void prev();
+	void seek(long pos_msec);
+}
+
+class TrackCtlDirect implements TrackCtlIf {
+	private Core core;
+	TrackCtlDirect(Core core, Activity activity) { this.core = core; }
+	public void close() {}
+	// public void stop() { core.track.stop(); }
+	public void pause() { core.track.pause(); }
+
+	public void unpause() {
+		if (core.track.state() == Track.STATE_NONE)
+			core.queue().active_play();
+		else
+			core.track.unpause();
+	}
+
+	public void next() { core.queue().order_next(); }
+	public void prev() { core.queue().order_prev(); }
+	public void seek(long pos_msec) { core.track.seek(pos_msec); }
+}
+
 /**
  * Bridge between UI and audio service.
  */
-class TrackCtl {
-	private static final String TAG = "phiola.TrackCtl";
+class TrackCtlSys implements TrackCtlIf {
+	private static final String TAG = "phiola.TrackCtlSys";
 	private Core core;
 	private Activity activity;
 
 	private MediaBrowserCompat browser;
 	private MediaControllerCompat ctl;
 
-	TrackCtl(Core cor, Activity activity) {
+	TrackCtlSys(Core cor, Activity activity) {
 		core = cor;
 		this.activity = activity;
 		browser = new MediaBrowserCompat(core.context, new ComponentName(core.context, Svc.class),
@@ -33,15 +61,12 @@ class TrackCtl {
 				},
 				null
 		);
+		browser.connect();
 	}
 
-	void close() {
+	public void close() {
 		core.dbglog(TAG, "browser.disconnect");
 		browser.disconnect();
-	}
-
-	void connect() {
-		browser.connect();
 	}
 
 	/**
@@ -76,30 +101,15 @@ class TrackCtl {
 
 	/*void play(int pos) {
 		ctl.getTransportControls().skipToQueueItem(pos);
-	}*/
-
-	void pause() {
-		ctl.getTransportControls().pause();
 	}
-
-	void unpause() {
-		ctl.getTransportControls().play();
-	}
-
-	/*void stop() {
+	public void stop() {
 		core.dbglog(TAG, "stop");
 		ctl.getTransportControls().stop();
 	}*/
 
-	void next() {
-		ctl.getTransportControls().skipToNext();
-	}
-
-	void prev() {
-		ctl.getTransportControls().skipToPrevious();
-	}
-
-	void seek(long pos_msec) {
-		ctl.getTransportControls().seekTo(pos_msec);
-	}
+	public void pause() { ctl.getTransportControls().pause(); }
+	public void unpause() { ctl.getTransportControls().play(); }
+	public void next() { ctl.getTransportControls().skipToNext(); }
+	public void prev() { ctl.getTransportControls().skipToPrevious(); }
+	public void seek(long pos_msec) { ctl.getTransportControls().seekTo(pos_msec); }
 }
