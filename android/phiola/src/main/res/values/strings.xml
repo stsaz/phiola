@@ -32,6 +32,7 @@
 	<string name="mfile">File Menu</string>
 	<string name="mfile_tags_show">File: Show Tags</string>
 	<string name="mfile_convert">File: Convert...</string>
+	<string name="mfile_share">File: Share...</string>
 	<string name="mfile_show">File: Show in Explorer</string>
 	<string name="mfile_del">File: Delete from Storage</string>
 	<string name="mfile_move">File: Quick Move</string>

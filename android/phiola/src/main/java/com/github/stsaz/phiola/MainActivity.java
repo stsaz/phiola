@@ -168,6 +168,9 @@ public class MainActivity extends AppCompatActivity {
 		case R.id.action_file_convert:
 			file_convert(); break;
 
+		case R.id.action_file_share:
+			file_share(url);  break;
+
 		case R.id.action_file_showcur:
 			explorer_file_current_show();  break;
 
@@ -1386,6 +1389,22 @@ public class MainActivity extends AppCompatActivity {
 				.putExtra("current_list_id", qi_old)
 				.putExtra("active_track_pos", trk_pos)
 			, REQUEST_CONVERT);
+	}
+
+	private void file_share(String url) {
+		Uri u;
+		try {
+			u = new PhiFileProvider().uri(this, url);
+		} catch (IllegalArgumentException e) {
+			core.dbglog(TAG, "file_share: %s", e);
+			UIUtil.msg_show(this, "Cannot share this file");
+			return;
+		}
+		Intent i = new Intent(Intent.ACTION_SEND);
+		i.setType("audio/*");
+		i.putExtra(Intent.EXTRA_STREAM, u);
+		i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+		startActivity(Intent.createChooser(i, null));
 	}
 
 	private void file_convert() {
