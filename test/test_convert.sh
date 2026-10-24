@@ -212,8 +212,15 @@ test_copy_seek() {
 	./phiola i -peaks $2 | grep -E "$3"
 }
 
+test_conv_rec() {
+	if [[ ! -f co.wav ]]; then
+		./phiola rec -rate 48000 -o co.wav -f -u 2
+	fi
+}
+
 test_copy_ogg_ogg() {
 	if [[ ! -f co_vorbis.ogg ]]; then
+		test_conv_rec
 		./phiola co co.wav -o co_vorbis.ogg -f
 		./phiola co co.wav -o co_opus.opus -f
 	fi
