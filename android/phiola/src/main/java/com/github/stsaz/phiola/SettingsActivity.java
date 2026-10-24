@@ -3,20 +3,72 @@
 
 package com.github.stsaz.phiola;
 
+import android.content.Context;
 import android.os.Bundle;
-
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.SeekBar;
+import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.stsaz.phiola.databinding.SettingsBinding;
 
 import java.lang.Math;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+class MLibDirsViewHolder extends RecyclerView.ViewHolder {
+	final TextView dir;
+	private final View bDel;
+
+	interface Parent {
+		int count();
+		String display_line(int pos);
+		void on_delete(int i);
+	}
+	private final Parent parent;
+
+	MLibDirsViewHolder(Parent parent, View itemView) {
+		super(itemView);
+		this.parent = parent;
+		dir = itemView.findViewById(R.id.lMLibDirText);
+		bDel = itemView.findViewById(R.id.bMLibDirDel);
+		bDel.setOnClickListener(v -> {
+				int i = getAdapterPosition();
+				if (i >= 0)
+					parent.on_delete(i);
+			});
+	}
+}
+
+class MLibDirsAdapter extends RecyclerView.Adapter<MLibDirsViewHolder> {
+	private final LayoutInflater inflater;
+	private final MLibDirsViewHolder.Parent parent;
+
+	MLibDirsAdapter(Context ctx, MLibDirsViewHolder.Parent parent) {
+		inflater = LayoutInflater.from(ctx);
+		this.parent = parent;
+	}
+
+	@NonNull
+	public MLibDirsViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+		View v = inflater.inflate(R.layout.library_dir_row, parent, false);
+		return new MLibDirsViewHolder(this.parent, v);
+	}
+
+	public void onBindViewHolder(@NonNull MLibDirsViewHolder holder, int position) {
+		holder.dir.setText(parent.display_line(position));
+	}
+
+	public int getItemCount() { return parent.count(); }
+}
 
 public class SettingsActivity extends AppCompatActivity {
 	private static final String TAG = "phiola.SettingsActivity";
@@ -40,7 +92,7 @@ public class SettingsActivity extends AppCompatActivity {
 		play_init();
 
 		b.eDataDir.setOnClickListener(v -> explorer.show(b.eDataDir, 0));
-		b.eLibraryDir.setOnClickListener(v -> explorer.show(b.eLibraryDir, ExplorerMenu.F_MULTI));
+		mlibdirs_init();
 
 		rec_init();
 
@@ -51,6 +103,49 @@ public class SettingsActivity extends AppCompatActivity {
 		b.bColor.setOnClickListener(v -> new DlgColor().show(this, color, (color) -> {
 			this.color = color;
 		}));
+	}
+
+	private ArrayList<String> mlibdirs;
+	private MLibDirsAdapter mlibdirs_adapter;
+
+	private void mlibdirs_init() {
+		mlibdirs = new ArrayList<>();
+		b.lvMLibDirs.setLayoutManager(new LinearLayoutManager(this));
+		mlibdirs_adapter = new MLibDirsAdapter(this, new MLibDirsViewHolder.Parent() {
+			public int count() { return mlibdirs.size(); }
+			public String display_line(int pos) { return mlibdirs.get(pos); }
+			public void on_delete(int i) {
+				mlibdirs.remove(i);
+				mlibdirs_adapter.notifyItemRemoved(i);
+			}
+		});
+		b.lvMLibDirs.setAdapter(mlibdirs_adapter);
+
+		b.eLibraryDirPick.setOnClickListener(v -> explorer.show(b.eLibraryDirPick, 0));
+		b.bLibraryDirAdd.setOnClickListener(v -> mlibdirs_add(b.eLibraryDirPick.getText().toString()));
+	}
+
+	private void mlibdirs_load(String dirs) {
+		if (dirs.isEmpty())
+			return;
+
+		for (String s : dirs.split(";")) {
+			if (!s.isEmpty())
+				mlibdirs.add(s);
+		}
+		mlibdirs_adapter.notifyDataSetChanged();
+	}
+
+	private void mlibdirs_add(String dir) {
+		if (dir.isEmpty())
+			return;
+		if (mlibdirs.contains(dir)) {
+			GUI.msg_show(this, "Already in the list");
+			return;
+		}
+		mlibdirs.add(dir);
+		mlibdirs_adapter.notifyItemInserted(mlibdirs.size() - 1);
+		b.eLibraryDirPick.setText("");
 	}
 
 	private ArrayAdapter<String> spinner_adapter(String[] options) {
@@ -177,7 +272,7 @@ public class SettingsActivity extends AppCompatActivity {
 		b.eDataDir.setText(core.setts.pub_data_dir);
 		b.eTrashDir.setText(core.setts.trash_dir);
 		b.swFileDel.setChecked(core.setts.file_del);
-		b.eLibraryDir.setText(core.setts.library_dir);
+		mlibdirs_load(core.setts.library_dir);
 		b.swDeprecatedMods.setChecked(core.setts.deprecated_mods);
 	}
 
@@ -189,7 +284,7 @@ public class SettingsActivity extends AppCompatActivity {
 
 		core.setts.trash_dir = b.eTrashDir.getText().toString();
 		core.setts.file_del = b.swFileDel.isChecked();
-		core.setts.library_dir = b.eLibraryDir.getText().toString();
+		core.setts.library_dir = String.join(";", mlibdirs);
 		core.setts.deprecated_mods = b.swDeprecatedMods.isChecked();
 	}
 

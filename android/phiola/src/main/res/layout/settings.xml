@@ -278,13 +278,37 @@
 			android:text="@string/sett_library_dir"
 			android:textColor="@color/text" />
 
-		<EditText
-			android:id="@+id/eLibraryDir"
+		<com.github.stsaz.phiola.FullRecyclerView
+			android:id="@+id/lvMLibDirs"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="@dimen/sett_margin"
-			android:inputType="text"
-			android:textSize="@dimen/text_editbox" />
+			android:nestedScrollingEnabled="false" />
+
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="horizontal"
+			android:gravity="center_vertical">
+
+			<EditText
+				android:id="@+id/eLibraryDirPick"
+				android:layout_width="0dp"
+				android:layout_height="wrap_content"
+				android:layout_weight="1"
+				android:layout_marginHorizontal="@dimen/sett_margin"
+				android:hint="@string/sett_mlibdir_pick_hint"
+				android:inputType="text"
+				android:textSize="@dimen/text_editbox" />
+
+			<Button
+				android:id="@+id/bLibraryDirAdd"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_marginHorizontal="@dimen/sett_margin"
+				android:text="@string/sett_mlibdir_add"
+				android:textColor="@color/text" />
+		</LinearLayout>
 
 		<androidx.appcompat.widget.SwitchCompat
 			android:id="@+id/swDeprecatedMods"

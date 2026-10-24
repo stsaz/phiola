@@ -108,7 +108,10 @@
 	<string name="sett_operation">Operation</string>
 	<string name="sett_file_del">Don\'t Move Files to Trash</string>
 	<string name="sett_trash_dir">Trash Directory (relative to storage mount-point):</string>
-	<string name="sett_library_dir">Music Library Directories (separated by ";"):</string>
+	<string name="sett_library_dir">Music Library Directories:</string>
+	<string name="sett_mlibdir_pick_hint">Pick directory</string>
+	<string name="sett_mlibdir_add">Add</string>
+	<string name="sett_mlibdir_delete">Delete</string>
 	<string name="sett_data_dir">App Data Directory:</string>
 	<string name="sett_deprecated_mods">Enable Deprecated Modules (ALAC)</string>
 

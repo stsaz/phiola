@@ -106,7 +106,7 @@
 	<string name="sett_operation">Operácie</string>
 	<string name="sett_file_del">Nepresúvať súbory do koša</string>
 	<string name="sett_trash_dir">Priečinok kôš (cesta je relatívna od koreňového priečinka úložiska):</string>
-	<string name="sett_library_dir">Priečinky hudobnej knižnice (Oddelené znakom ";"):</string>
+	<string name="sett_library_dir">Priečinky hudobnej knižnice:</string>
 	<string name="sett_data_dir">Priečinok s údajmi aplikácie:</string>
 	<string name="sett_deprecated_mods">Povoliť zastarané moduly (ALAC)</string>
 
