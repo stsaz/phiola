@@ -35,7 +35,6 @@ public class TagsActivity extends AppCompatActivity  {
 		b.lvTags.setOnItemClickListener((parent, view, position, id) -> view_click(position));
 
 		core = Core.getInstance();
-		core.gui().on_activity_show(this);
 		this.list_pos = getIntent().getIntExtra("pos", -1);
 		show();
 	}
@@ -122,7 +121,7 @@ public class TagsActivity extends AppCompatActivity  {
 		if (!edit_supported())
 			return;
 
-		core.gui().dlg_edit(this, "Edit Tag", meta[pos * 2], meta[i], "Apply", "Cancel"
+		UIUtil.dlg_edit(this, "Edit Tag", meta[pos * 2], meta[i], "Apply", "Cancel"
 			, (new_text) -> tag_edit_done(i, new_text));
 	}
 
@@ -158,7 +157,7 @@ public class TagsActivity extends AppCompatActivity  {
 		if (!edit_supported())
 			return;
 
-		core.gui().dlg_edit(this, "Add Tag", "Format: 'name=value'", "", "Add", "Cancel"
+		UIUtil.dlg_edit(this, "Add Tag", "Format: 'name=value'", "", "Add", "Cancel"
 			, (s) -> tag_add_split(s));
 	}
 
@@ -177,7 +176,7 @@ public class TagsActivity extends AppCompatActivity  {
 				value = fn.substring(dash + 3);
 		}
 
-		core.gui().dlg_edit(this, "Add Tag", name, value, "Add", "Cancel"
+		UIUtil.dlg_edit(this, "Add Tag", name, value, "Add", "Cancel"
 			, (s) -> tag_add(name, s));
 	}
 
@@ -241,6 +240,6 @@ public class TagsActivity extends AppCompatActivity  {
 		clear = false;
 		modified = false;
 		modified_bits = 0;
-		core.gui().msg_show(this, "Written tags to file \"%s\"", fn);
+		UIUtil.msg_show(this, "Written tags to file \"%s\"", fn);
 	}
 }

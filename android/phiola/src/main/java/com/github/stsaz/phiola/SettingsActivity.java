@@ -85,7 +85,6 @@ public class SettingsActivity extends AppCompatActivity {
 		setContentView(b.getRoot());
 
 		core = Core.getInstance();
-		core.gui().on_activity_show(this);
 		explorer = new ExplorerMenu(core, this);
 
 		ui_init();
@@ -140,7 +139,7 @@ public class SettingsActivity extends AppCompatActivity {
 		if (dir.isEmpty())
 			return;
 		if (mlibdirs.contains(dir)) {
-			GUI.msg_show(this, "Already in the list");
+			UIUtil.msg_show(this, "Already in the list");
 			return;
 		}
 		mlibdirs.add(dir);
@@ -296,22 +295,22 @@ public class SettingsActivity extends AppCompatActivity {
 
 	private void load() {
 		// Interface
-		b.swDark.setChecked(core.gui().theme == GUI.THM_DARK);
-		color = core.gui().main_color;
-		b.swShowFilter.setChecked(core.gui().filter_hide);
+		b.swDark.setChecked(core.gui.theme == GUI.THM_DARK);
+		color = core.gui.main_color;
+		b.swShowFilter.setChecked(core.gui.filter_hide);
 		b.spRecBtn.setAdapter(spinner_adapter(new String[] {
 				getString(R.string.brec_mic),
 				getString(R.string.brec_radio),
 				getString(R.string.brec_bookmark),
 				getString(R.string.brec_hide),
 			}));
-		int rm = core.gui().record_mode;
+		int rm = core.gui.record_mode;
 		b.spRecBtn.setSelection(
-			(core.gui().playback_marker_show) ? RECBTN_PL_MARKER
+			(core.gui.playback_marker_show) ? RECBTN_PL_MARKER
 			: (rm == GUI.RECMODE_RADIO) ? RECBTN_REC_RADIO
 			: (rm == GUI.RECMODE_HIDE) ? RECBTN_REC_HIDE
 			: RECBTN_REC_MIC);
-		b.swUiInfoInTitle.setChecked(core.gui().ainfo_in_title);
+		b.swUiInfoInTitle.setChecked(core.gui.ainfo_in_title);
 
 		list_load();
 
@@ -326,7 +325,7 @@ public class SettingsActivity extends AppCompatActivity {
 
 	private void save() {
 		// Interface
-		GUI gui = core.gui();
+		GUI gui = core.gui;
 
 		int i = GUI.THM_DEF;
 		if (b.swDark.isChecked())

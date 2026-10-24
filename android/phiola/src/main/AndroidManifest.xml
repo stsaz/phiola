@@ -83,7 +83,7 @@
 		</activity>
 
 		<service
-			android:name=".Svc"
+			android:name=".MediaSvc"
 			android:enabled="true"
 			android:exported="true">
 			<intent-filter>

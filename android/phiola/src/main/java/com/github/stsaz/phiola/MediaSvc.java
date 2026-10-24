@@ -24,8 +24,8 @@ import androidx.media.session.MediaButtonReceiver;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Svc extends MediaBrowserServiceCompat {
-	private static final String TAG = "phiola.Svc";
+public class MediaSvc extends MediaBrowserServiceCompat {
+	private static final String TAG = "phiola.MediaSvc";
 	private Core core;
 	private Track track;
 	private Queue queue;
@@ -260,7 +260,7 @@ public class Svc extends MediaBrowserServiceCompat {
 		playtime_msec = (int) PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN;
 		if (state == PlaybackStateCompat.STATE_STOPPED) {
 			sess.setActive(true);
-			startService(new Intent(this, Svc.class));
+			startService(new Intent(this, MediaSvc.class));
 		}
 
 		pstate.setActiveQueueItemId(queue.active_pos());

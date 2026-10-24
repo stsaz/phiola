@@ -31,7 +31,6 @@ public class ConvertActivity extends AppCompatActivity {
 		setContentView(b.getRoot());
 
 		core = Core.getInstance();
-		core.gui().on_activity_show(this);
 
 		init();
 		load();

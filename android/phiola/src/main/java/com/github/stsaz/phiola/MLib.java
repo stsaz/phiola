@@ -3,8 +3,6 @@
 
 package com.github.stsaz.phiola;
 
-import android.content.Context;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,15 +10,13 @@ import java.util.Collections;
 /** Music Library is just a quicker way to access the set of .m3u8 playlist files in a user-defined directory. */
 class MLib {
 	private static final String TAG = "phiola.MLib";
-	private final Context ctx;
 	private final Core core;
 	private String[] display_rows, file_names, display_rows_full, file_names_full;
 	private String lib_dir_cached, cur_filter;
 	private long mtime_cached;
 
-	MLib(Core core, Context ctx) {
+	MLib(Core core) {
 		this.core = core;
-		this.ctx = ctx;
 	}
 
 	private boolean cached(String[] dirs) {
@@ -43,11 +39,9 @@ class MLib {
 		return false;
 	}
 
-	void fill() {
-		if (core.setts.library_dir.isEmpty()) {
-			GUI.msg_show(ctx, "Please set 'Music Library Directories' in Settings");
-			return;
-		}
+	int fill() {
+		if (core.setts.library_dir.isEmpty())
+			return 1;
 
 		String[] dirs = core.setts.library_dir.split(";");
 		if (!cached(dirs)) {
@@ -69,6 +63,7 @@ class MLib {
 		this.display_rows = this.display_rows_full;
 		this.file_names = this.file_names_full;
 		this.cur_filter = null;
+		return 0;
 	}
 
 	void filter(String filter) {

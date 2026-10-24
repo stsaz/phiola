@@ -55,7 +55,7 @@ public class ListSave {
 			, core.setts.plist_save_dir, eName.getText().toString());
 
 		if (new File(fn).exists()) {
-			GUI.dlg_question(ctx, "File exists"
+			UIUtil.dlg_question(ctx, "File exists"
 				, String.format("File '%s' already exists.  Overwrite?", fn)
 				, "Overwrite", "Do nothing"
 				, (dialog, which) -> { save2(fn); }

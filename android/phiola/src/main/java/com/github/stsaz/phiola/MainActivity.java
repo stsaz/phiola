@@ -78,7 +78,6 @@ public class MainActivity extends AppCompatActivity {
 		track.observer_add(trk_nfy);
 
 		show_ui();
-		gui.on_activity_show(this);
 
 		// If already playing - get in sync
 		track.observer_notify(trk_nfy);
@@ -476,7 +475,7 @@ public class MainActivity extends AppCompatActivity {
 		core = Core.init_once(getApplicationContext());
 		core.dbglog(TAG, "init_mods()");
 
-		gui = core.gui();
+		gui = core.gui;
 		queue = core.queue();
 		quenfy = new QueueNotify() {
 			public void on_change(int how, int pos) {
@@ -507,8 +506,8 @@ public class MainActivity extends AppCompatActivity {
 			mode = AppCompatDelegate.MODE_NIGHT_YES;
 		AppCompatDelegate.setDefaultNightMode(mode);
 
-		explorer = new Explorer(core, this);
-		library = new MLib(core, this);
+		explorer = new Explorer(core);
+		library = new MLib(core);
 
 		b.lname.setOnClickListener((v) -> file_tags_show());
 
@@ -750,6 +749,7 @@ public class MainActivity extends AppCompatActivity {
 		if (core.rec_start((gui.rec_ext_app) ? Track.RECF_EXPORT : 0, this::rec_finished)) {
 			rec_state_set(true);
 			state_set(gui.state);
+			UIUtil.msg_show(this, getString(R.string.main_rec_started));
 		}
 	}
 
@@ -775,6 +775,10 @@ public class MainActivity extends AppCompatActivity {
 	private void rec_finished(int code, String filename) {
 		state_set(gui.state);
 		rec_state_set(false);
+
+		String s = (code == 0) ? getString(R.string.main_rec_fin)
+			: String.format(getString(R.string.main_rec_err), core.errstr(code));
+		UIUtil.msg_show(this, s);
 
 		if (gui.rec_ext_app) {
 			gui.rec_ext_app = false;
@@ -828,6 +832,7 @@ public class MainActivity extends AppCompatActivity {
 			core.rec_radio_start(this::rec_finished);
 			rec_state_set(true);
 			state_set(gui.state);
+			UIUtil.msg_show(this, getString(R.string.main_rec_started));
 		}
 	}
 
@@ -1001,10 +1006,12 @@ public class MainActivity extends AppCompatActivity {
 		if (!gui.filter_hide)
 			b.tfilter.setQuery("", false);
 
-		if (gui.view == GUI.V_EXPLORER)
+		if (gui.view == GUI.V_EXPLORER) {
 			explorer.fill();
-		else
-			library.fill();
+		} else {
+			if (library.fill() != 0)
+				UIUtil.msg_show(this, "Please set 'Music Library Directories' in Settings");
+		}
 
 		list_update();
 		if (gui.view == GUI.V_LIBRARY)

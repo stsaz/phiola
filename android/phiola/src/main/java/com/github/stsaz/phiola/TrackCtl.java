@@ -52,7 +52,7 @@ class TrackCtlSys implements TrackCtlIf {
 	TrackCtlSys(Core cor, Activity activity) {
 		core = cor;
 		this.activity = activity;
-		browser = new MediaBrowserCompat(core.context, new ComponentName(core.context, Svc.class),
+		browser = new MediaBrowserCompat(core.context, new ComponentName(core.context, MediaSvc.class),
 				new MediaBrowserCompat.ConnectionCallback() {
 					public void onConnected() {
 						core.dbglog(TAG, "MediaBrowserCompat.onConnected");
