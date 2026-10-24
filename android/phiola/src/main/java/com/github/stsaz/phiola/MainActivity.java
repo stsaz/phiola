@@ -647,14 +647,12 @@ public class MainActivity extends AppCompatActivity {
 
 		color_apply();
 
+		rec_state_set(gui.state_test(GUI.STATE_RECORDING));
 		if (gui.state_test(GUI.STATE_RECORDING)) {
-			rec_state_set(true);
 			if (track.is_recording_mic())
 				track.rec_mic_cb = this::rec_finished;
 			else
 				track.rec_rad_cb = this::rec_finished;
-		} else {
-			brec_description_set(false);
 		}
 		state_set(gui.state);
 	}
