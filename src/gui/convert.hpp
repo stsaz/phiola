@@ -4,6 +4,24 @@
 #include <gui/ac.hpp>
 #include <util/util.h>
 
+static const char* const dyn_vars_dir_conv[] = {
+	"@filepath",
+	"@nowdate",
+	"@artist",
+	"@album",
+};
+
+static const char* const dyn_vars_conv[] = {
+	"@filename",
+	"@artist",
+	"@title",
+	"@album",
+	"@tracknumber",
+	"@nowdate",
+	"@nowtime",
+	"@counter",
+};
+
 struct gui_wconvert {
 	ffui_windowxx		wnd;
 	ffui_labelxx		ldir, lname, lext, lfrom, luntil, ltags;
@@ -11,6 +29,7 @@ struct gui_wconvert {
 	ffui_comboboxxx		cbext;
 	ffui_checkboxxx		cbcopy, cbkeepdate, cboverwrite;
 	ffui_buttonxx		bbrowse, bstart;
+	ffui_menuxx			pmenu_name, pmenu_dir;
 
 	struct gui_ac ac;
 
@@ -228,6 +247,12 @@ static void wconvert_action(ffui_window *wnd, int id)
 	gui_wconvert *c = gg->wconvert;
 	switch (id) {
 
+	case A_CO_DIR_CHG:
+		edit_changed(&c->pmenu_dir, &c->edir, &c->wnd, dyn_vars_dir_conv, FF_COUNT(dyn_vars_dir_conv), A_CONV_DIR_VAR);  break;
+
+	case A_CO_NAME_CHG:
+		edit_changed(&c->pmenu_name, &c->ename, &c->wnd, dyn_vars_conv, FF_COUNT(dyn_vars_conv), A_CONV_NAME_VAR);  break;
+
 	case A_CONVERT_BROWSE:
 		wconvert_browse();  break;
 
@@ -250,6 +275,14 @@ static void wconvert_action(ffui_window *wnd, int id)
 			gui_event(GUI_EV_CONV_DONE);
 		break;
 	}
+
+	default:
+		if (id >= A_CONV_DIR_VAR
+			&& (uint)id < A_CONV_DIR_VAR + FF_COUNT(dyn_vars_dir_conv))
+			edit_menu_clicked(&c->edir, dyn_vars_dir_conv, id - A_CONV_DIR_VAR);
+		else if (id >= A_CONV_NAME_VAR
+			&& (uint)id < A_CONV_NAME_VAR + FF_COUNT(dyn_vars_conv))
+			edit_menu_clicked(&c->ename, dyn_vars_conv, id - A_CONV_NAME_VAR);
 	}
 }
 

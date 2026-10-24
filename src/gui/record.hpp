@@ -3,6 +3,12 @@
 
 #include <gui/ac.hpp>
 
+static const char* const dyn_vars_rec[] = {
+	"@nowdate",
+	"@nowtime",
+	"@counter",
+};
+
 struct gui_wrecord {
 	ffui_windowxx		wnd;
 	ffui_labelxx		ldir, lname, lext, ldev, lchan, l_rate, luntil;
@@ -10,6 +16,7 @@ struct gui_wrecord {
 	ffui_comboboxxx		cbext, cbdev, cbchan;
 	ffui_checkboxxx		cbloopback, cbexcl, cb_radio;
 	ffui_buttonxx		bbrowse, bstart;
+	ffui_menuxx			pmenu;
 
 	struct gui_ac ac;
 
@@ -317,6 +324,9 @@ static void wrecord_action(ffui_window *wnd, int id)
 {
 	gui_wrecord *w = gg->wrecord;
 	switch (id) {
+	case A_REC_NAME_CHG:
+		edit_changed(&w->pmenu, &w->ename, &w->wnd, dyn_vars_rec, FF_COUNT(dyn_vars_rec), A_REC_NAME_VAR);  break;
+
 	case A_REC_MODE:
 		w->mic_ctls_adapt(!w->cb_radio.checked());  break;
 
@@ -342,6 +352,11 @@ static void wrecord_action(ffui_window *wnd, int id)
 
 	case A_RECORD_START_STOP:
 		wrecord_start_stop();  break;
+
+	default:
+		if (id >= A_REC_NAME_VAR
+			&& (uint)id < A_REC_NAME_VAR + FF_COUNT(dyn_vars_rec))
+			edit_menu_clicked(&w->ename, dyn_vars_rec, id - A_REC_NAME_VAR);
 	}
 }
 

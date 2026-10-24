@@ -80,6 +80,7 @@
 
 // Record
 	X(A_RECORD_SHOW),
+		X(A_REC_NAME_CHG),
 		X(A_REC_MODE),
 		X(A_REC_LOOPBACK),
 		X(A_REC_BROWSE),
@@ -88,6 +89,8 @@
 
 // Convert
 	X(A_CONVERT_SHOW),
+		X(A_CO_DIR_CHG),
+		X(A_CO_NAME_CHG),
 		X(A_CONVERT_BROWSE),
 		X(A_CO_EXT_CHG),
 		X(A_CO_COPY),
