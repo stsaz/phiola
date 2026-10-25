@@ -81,6 +81,7 @@ static uint dir_read(struct dir_r *d, fntree_block **blk)
 
 	const char *name;
 	while ((name = ffdirscan_next(&ds))) {
+		path = fntree_path(*blk);
 		ffmem_free(fpath);
 		fpath = ffsz_allocfmt("%S%c%s", &path, FFPATH_SLASH, name);
 
