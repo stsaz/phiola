@@ -9,7 +9,7 @@ git clone https://github.com/stsaz/netmill
 git -C netmill checkout d946fa7f4234db5f5965125883be7b9140fe84bb
 
 git clone https://github.com/stsaz/avpack
-git -C avpack checkout dd36adefeb24f6002a1a882061510a3988c4be9f
+git -C avpack checkout eafd028bece170bf65aacdd680657e57aba9a52f
 
 git clone https://github.com/stsaz/ffaudio
 git -C ffaudio checkout 6a951156e68e33d3925076e680ac56478a648c74

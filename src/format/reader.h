@@ -304,8 +304,8 @@ static int fmtr_process(struct fmt_rd *f, phi_track *t)
 			break;
 
 		case AVPK_ERROR:
-			errlog(t, "avpk_read() @0x%xU: %s"
-				, res.error.offset, res.error.message);
+			errlog(t, "%s: avpk_read() @0x%xU: %s"
+				, t->conf.ifile.name, res.error.offset, res.error.message);
 			return PHI_ERR;
 		}
 	}
