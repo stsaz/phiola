@@ -56,9 +56,17 @@ static int conf_prepare(struct httpcl *h, struct nml_http_client_conf *c, phi_tr
 static void http_request(struct httpcl *h, ffstr url);
 #include <net/hls.h>
 
-static void nml_log(void *log_obj, uint level, const char *ctx, const char *id, const char *format, ...)
+uint phi_nml_log_level(uint phi_level)
 {
-	struct httpcl *h = log_obj;
+	if (phi_level >= PHI_LOG_EXTRA)
+		return NML_LOG_EXTRA;
+	if (phi_level >= PHI_LOG_DEBUG)
+		return NML_LOG_DEBUG;
+	return 0;
+}
+
+uint nml_phi_log_level(uint nml_level)
+{
 	static const uint levels[] = {
 		/*NML_LOG_SYSFATAL*/PHI_LOG_ERR | PHI_LOG_SYS,
 		/*NML_LOG_SYSERR*/	PHI_LOG_ERR | PHI_LOG_SYS,
@@ -70,7 +78,13 @@ static void nml_log(void *log_obj, uint level, const char *ctx, const char *id, 
 		/*NML_LOG_DEBUG*/	PHI_LOG_DEBUG,
 		/*NML_LOG_EXTRA*/	PHI_LOG_EXTRA,
 	};
-	level = levels[level];
+	return levels[nml_level];
+}
+
+static void nml_log(void *log_obj, uint level, const char *ctx, const char *id, const char *format, ...)
+{
+	struct httpcl *h = log_obj;
+	level = nml_phi_log_level(level);
 
 	va_list va;
 	va_start(va, format);
@@ -343,10 +357,7 @@ static nml_cache_ctx* conn_cache_new(struct httpcl *h)
 	struct nml_cache_conf *cc = ffmem_new(struct nml_cache_conf);
 	nml_cache_interface.conf(NULL, cc);
 
-	if (core->conf.log_level >= PHI_LOG_EXTRA)
-		cc->log_level = NML_LOG_EXTRA;
-	else if (core->conf.log_level >= PHI_LOG_DEBUG)
-		cc->log_level = NML_LOG_DEBUG;
+	cc->log_level = phi_nml_log_level(core->conf.log_level);
 	cc->log = nml_log;
 	cc->log_obj = h;
 
@@ -366,10 +377,7 @@ static int conf_prepare(struct httpcl *h, struct nml_http_client_conf *c, phi_tr
 {
 	nml_http_client_conf(NULL, c);
 	c->opaque = h;
-	if (core->conf.log_level >= PHI_LOG_EXTRA)
-		c->log_level = NML_LOG_EXTRA;
-	else if (core->conf.log_level >= PHI_LOG_DEBUG)
-		c->log_level = NML_LOG_DEBUG;
+	c->log_level = phi_nml_log_level(core->conf.log_level);
 	c->log = nml_log;
 	c->log_obj = h;
 
@@ -531,6 +539,7 @@ const phi_filter phi_http = {
 };
 
 extern const phi_filter phi_audiosv;
+extern void ausv_mod_close();
 
 static const void* net_iface(const char *name)
 {
@@ -550,6 +559,7 @@ static void net_close()
 		ffmem_free(phi_ssl_ctx);
 	}
 #endif
+	ausv_mod_close();
 }
 
 static const phi_mod phi_net_mod = {

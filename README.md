@@ -23,6 +23,7 @@ Contents:
 * [How to Use GUI](#how-to-use-gui)
 * [How to Use on Android](#how-to-use-on-android)
 * [How to Record from Radio](#how-to-record-from-radio)
+* [How to Stream Audio](#how-to-stream-audio)
 * [How to Use API](#how-to-use-api)
 * [Configuration](#configuration)
 * [External Libraries](#external-libraries)
@@ -297,9 +298,6 @@ phiola device list
 
 # Auto-rename all .opus files according to a pattern
 phiola rename *.opus -o "@tracknumber. @artist - @title"
-
-# Start HTTP audio streaming server (Opus, 128kbps)
-phiola server "My Music" -inc "*.flac" -shuffle -opus_q 128
 ```
 
 Currently supported commands:
@@ -475,6 +473,25 @@ Here's how you can reconfigure phiola for recording audio from an internet radio
 1. Tap the `Record` button (bottom-left button) to start recording; tap again to stop recording.  Your recorded files are stored inside the `Recordings` directory.
 
 > Note: phiola supports recording from AAC or MP3 radio streams.
+
+
+## How to Stream Audio
+
+phiola can act as an audio streaming server — just point it at a directory containing your audio files:
+
+```sh
+# Start an HTTP audio streaming server (Opus, 128kbps)
+phiola server "My Music" -inc "*.flac" -shuffle -opus_q 128
+
+# Start an HTTPS audio streaming server on port 443
+phiola server "My Music" -inc "*.flac" -shuffle -ssl your/cert.pem -port 443
+```
+
+TCP port `21014` is used by default.
+To check if the server works, run `phiola http://localhost:21014/` — it will play the stream.
+For testing, use `-ssl ""` to enable TLS with phiola's built-in self-signed certificate.
+
+> Note: phiola supports streaming in AAC or Opus.
 
 
 ## How to Use API

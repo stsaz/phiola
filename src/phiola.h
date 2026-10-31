@@ -6,13 +6,13 @@
 #include <ffbase/string.h>
 #include <ffbase/time.h>
 
-#define PHI_VERSION  21301
+#define PHI_VERSION  21400
 
 /** Inter-module compatibility version.
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  21100
+#define PHI_VERSION_CORE  21400
 
 typedef long long int64;
 typedef unsigned long long uint64;
@@ -755,6 +755,7 @@ struct phi_ui_if {
 struct phi_asv_conf {
 	uint max_clients;
 	ushort port;
+	ffstr ssl_cert;
 };
 
 
