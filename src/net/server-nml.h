@@ -63,35 +63,22 @@ static const struct nml_core nmlcore = {
 };
 
 
-static nml_wrk* nmlwrk_create(nml_core *core)
+extern void hs_start(ffsock csock, const ffsockaddr *peer, uint conn_id, struct nml_http_server_conf *conf);
+
+static void sv_on_accept(void *udata, ffsock csock, ffsockaddr *peer)
 {
-	*core = nmlcore;
-	return (nml_wrk*)gs;
+	struct ausv *s = udata;
+	uint conn_id = ffint_fetch_add(&s->conn_id, 1);
+	hs_start(csock, peer, conn_id, &s->htsv_conf);
 }
 
-static void nmlwrk_free(nml_wrk *w)
+static void sv_on_complete(void *udata, ffsock sk, struct zzkevent *kev)
 {
+	struct ausv *s = udata;
+	ffsock_close(sk);
+	if (kev)
+		core->kev_free(s->worker, (phi_kevent*)kev);
 }
-
-static int nmlwrk_conf(nml_wrk *w, struct nml_wrk_conf *conf)
-{
-	return 0;
-}
-
-static int nmlwrk_run(nml_wrk *w)
-{
-	return 0;
-}
-
-static void nmlwrk_stop(nml_wrk *w)
-{
-}
-
-static const nml_worker_if nmlwrk_if = {
-	nmlwrk_create, nmlwrk_free,
-	nmlwrk_conf,
-	nmlwrk_run, nmlwrk_stop,
-};
 
 
 struct ausv_cl {
@@ -375,20 +362,43 @@ err:
 
 #endif
 
+static int ausv_tcp_lisn_create(struct ausv *s, const struct phi_asv_conf *ac)
+{
+	struct nml_tcp_listener_conf lc;
+	nml_tcp_listener_interface.conf(NULL, &lc);
+
+	lc.log_level = phi_nml_log_level(core->conf.log_level);
+	if (!lc.log_level)
+		lc.log_level = NML_LOG_VERBOSE;
+	lc.log = nml_log;
+	lc.log_obj = s;
+
+	lc.core = nmlcore;
+	lc.on_accept = sv_on_accept;
+	lc.opaque = s;
+
+	lc.addr = s->addr;
+	if (ac->max_clients)
+		lc.backlog = ac->max_clients;
+
+	if (!(s->tl = nml_tcp_listener_interface.create()))
+		return -1;
+	return nml_tcp_listener_interface.conf(s->tl, &lc);
+}
+
 int ausv_create(struct ausv *s, const struct phi_asv_conf *ac, phi_track *t)
 {
-	s->sv = nml_http_server_interface.create();
-	struct nml_http_server_conf sc;
-	nml_http_server_interface.conf(NULL, &sc);
-	sc.response.server_name = FFSTR_Z("phiola/2");
-	sc.opaque = s;
-	sc.server.wif = &nmlwrk_if;
-	sc.server.lsif = &nml_tcp_listener_interface;
+	struct nml_http_server_conf *sc = &s->htsv_conf;
+	nml_http_server_interface.conf(NULL, sc);
+	sc->response.server_name = FFSTR_Z("phiola/2");
+	sc->opaque = s;
 	s->addr.port = ac->port;
-	sc.server.listen_addresses = &s->addr;
-	if (ac->max_clients)
-		sc.server.max_connections = ac->max_clients;
-	sc.chain = sv_chain;
+
+	sc->core = nmlcore;
+	sc->on_complete = sv_on_complete;
+	sc->boss = s;
+
+	sc->chain = sv_chain;
 
 #ifndef PHI_HTTP_NO_SSL
 	if (ac->ssl_cert.len) {
@@ -397,20 +407,20 @@ int ausv_create(struct ausv *s, const struct phi_asv_conf *ac, phi_track *t)
 			errlog(t, "can't initialize SSL context");
 			return -1;
 		}
-		sc.ssl_ctx = sv_ssl_ctx;
-		sc.chain = sv_ssl_chain;
+		sc->ssl_ctx = sv_ssl_ctx;
+		sc->chain = sv_ssl_chain;
 	}
 #endif
 
-	sc.log_level = phi_nml_log_level(core->conf.log_level);
-	if (!sc.log_level)
-		sc.log_level = NML_LOG_VERBOSE;
-	sc.log = nml_log;
-	sc.log_obj = s;
+	sc->log_level = phi_nml_log_level(core->conf.log_level);
+	if (!sc->log_level)
+		sc->log_level = NML_LOG_VERBOSE;
+	sc->log = nml_log;
+	sc->log_obj = s;
 
-	if (nml_http_server_interface.conf(s->sv, &sc))
+	if (ausv_tcp_lisn_create(s, ac))
 		return -1;
-
-	nml_http_server_interface.run(s->sv);
+	if (nml_tcp_listener_interface.run(s->tl))
+		return -1;
 	return 0;
 }

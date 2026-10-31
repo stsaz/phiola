@@ -37,7 +37,8 @@ struct nml_ssl_ctx *sv_ssl_ctx;
 #define ERRORS_MAX  20
 
 struct ausv {
-	nml_http_server *sv;
+	nml_tcp_listener *tl;
+	struct nml_http_server_conf htsv_conf;
 	ffvec conns, clients_paused; // nml_http_sv_conn*[]
 	struct nml_address addr;
 	phi_track *trk, *subtrack;
@@ -54,6 +55,7 @@ struct ausv {
 	uint64 next_pos_samples;
 	size_t buf_half_samples;
 	size_t half_pos;
+	uint conn_id;
 	uint worker;
 	uint clients;
 	uint qi;
@@ -65,7 +67,6 @@ struct ausv {
 	uint provider_paused :1;
 	uint output_full :1;
 };
-static struct ausv *gs;
 
 uint ausv_icy_meta_read(struct ausv *s, uint last_meta_uid, ffvec *buf);
 #include <net/server-nml.h>
@@ -242,14 +243,13 @@ static void ausv_close_delayed(struct ausv *s)
 	ffvec_free(&v);
 	FF_ASSERT(s->clients == 0);
 
-	nml_http_server_interface.free(s->sv);
+	nml_tcp_listener_interface.free(s->tl);
 	ffstr_free(&s->resp_headers);
 	ffring_free(s->iring);
 	ffring_free(s->oring);
 	ffvec_free(&s->meta);
 	ffvec_free(&s->clients_paused);
 	phi_track_free(s->trk, s);
-	gs = NULL;
 }
 
 static void ausv_close(struct ausv *s, phi_track *t)
@@ -351,7 +351,6 @@ static void* ausv_open(phi_track *t)
 	t->data_type = PHI_AC_PCM;
 
 	struct ausv *s = phi_track_allocT(t, struct ausv);
-	gs = s;
 	s->qif = core->mod("core.queue");
 	t->udata = s;
 	s->ogg_opus = ffsz_eq(t->conf.ofile.name, "stream.opus");
