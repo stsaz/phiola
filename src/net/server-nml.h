@@ -95,6 +95,7 @@ static const nml_worker_if nmlwrk_if = {
 
 
 struct ausv_cl {
+	uint conns_idx;
 	size_t rpos;
 	uint icy_meta_off;
 	uint last_meta_uid;
@@ -107,11 +108,27 @@ static void ausv_client_paused(struct ausv *s, nml_http_sv_conn *hsc)
 
 static void ausv_client_connected(struct ausv *s, nml_http_sv_conn *c)
 {
+	struct ausv_cl *sc = c->proxy;
+	*ffvec_pushT(&s->conns, nml_http_sv_conn*) = c;
+	sc->conns_idx = s->conns.len - 1;
 	s->clients++;
 }
 
 static void ausv_client_closed(struct ausv *s, nml_http_sv_conn *c)
 {
+	struct ausv_cl *sc = c->proxy;
+	if (s->conns.len) {
+		uint i = sc->conns_idx;
+		void **conns = s->conns.ptr;
+		if (i < s->conns.len - 1) {
+			nml_http_sv_conn *c2 = conns[s->conns.len - 1];
+			struct ausv_cl *sc2 = c2->proxy;
+			sc2->conns_idx = i; // Update array position of the other client
+			conns[i] = c2;
+		}
+		s->conns.len--;
+	}
+
 	// Remove this client from the list of suspended clients
 	nml_http_sv_conn **hsc;
 	FFSLICE_WALK(&s->clients_paused, hsc) {

@@ -41,6 +41,7 @@ struct cmd_srv {
 
 	struct phi_asv_conf ac;
 	phi_task task;
+	char *oname;
 };
 
 static void srv_action2(struct cmd_srv *s);
@@ -161,6 +162,8 @@ static void srv_action2(struct cmd_srv *s)
 	phi_track *t = track->create(&c);
 	track->filter(t, x->core->mod("http.server"), 0);
 	track->start(t);
+
+	s->oname = c.ofile.name;
 }
 
 #define O(m)  (void*)FF_OFF(struct cmd_srv, m)
@@ -182,6 +185,7 @@ static const struct ffarg cmd_srv[] = {
 
 static void cmd_srv_free(struct cmd_srv *s)
 {
+	ffmem_free(s->oname);
 	ffmem_free(s);
 }
 

@@ -38,7 +38,7 @@ struct nml_ssl_ctx *sv_ssl_ctx;
 
 struct ausv {
 	nml_http_server *sv;
-	ffvec clients_paused; // nml_http_sv_conn*[]
+	ffvec conns, clients_paused; // nml_http_sv_conn*[]
 	struct nml_address addr;
 	phi_track *trk, *subtrack;
 	phi_task task, task_unpause;
@@ -230,6 +230,16 @@ const struct phi_filter ausv_consumer = {
 
 static void ausv_close_delayed(struct ausv *s)
 {
+	core->sig(PHI_CORE_STOP);
+
+	// Force-close all connections
+	ffvec v = s->conns;
+	ffvec_null(&s->conns); // for faster ausv_client_closed()
+	nml_http_sv_conn **hsc;
+	FFSLICE_WALK(&v, hsc) {
+		(*hsc)->conf->cl_destroy(*hsc);
+	}
+	ffvec_free(&v);
 	FF_ASSERT(s->clients == 0);
 
 	nml_http_server_interface.free(s->sv);
@@ -282,6 +292,7 @@ static phi_track* ausv_track_start(struct ausv *s)
 		return NULL;
 	}
 
+	t->meta_autofree = 1;
 	t->udata = s;
 	track->start(t);
 	return t;
@@ -346,6 +357,7 @@ static void* ausv_open(phi_track *t)
 	s->ogg_opus = ffsz_eq(t->conf.ofile.name, "stream.opus");
 	s->trk = t;
 	s->worker = core->worker_assign(1);
+	ffvec_allocT(&s->conns, (ac->max_clients) ? ac->max_clients : 10000, void*);
 
 	uint n = msec_to_bytes_af(t->conf.oaudio.buf_time, &t->oaudio.format);
 	s->iring = ffring_alloc(n, FFRING_1_READER | FFRING_1_WRITER);
