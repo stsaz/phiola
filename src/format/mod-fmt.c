@@ -18,7 +18,6 @@ static const void* fmt_mod_iface_input(const char *name);
 
 extern const phi_filter
 	phi_aac_adts_write,
-	phi_ts_read,
 	phi_cue_read, phi_cue_hook,
 	phi_m3u_read, phi_m3u_write,
 	phi_pls_read;
@@ -83,7 +82,7 @@ static const void* fmt_mod_iface_input(const char *name)
 		{ "ogg",	&fmt_read },
 		{ "opus",	&fmt_read },
 		{ "pls",	&phi_pls_read },
-		{ "ts",		&phi_ts_read },
+		{ "ts",		&fmt_read },
 		{ "wav",	&fmt_read },
 		{ "wv",		&fmt_read },
 	};
@@ -113,7 +112,7 @@ static const void* fmt_mod_iface(const char *name)
 		{ "playlist",	&pl_if },
 		{ "pls",		&phi_pls_read },
 		{ "tag",		&phi_tag },
-		{ "ts",			&phi_ts_read },
+		{ "ts",			&fmt_read },
 		{ "wav",		&fmt_read },
 		{ "wav-write",	&fmt_write },
 		{ "wv",			&fmt_read },

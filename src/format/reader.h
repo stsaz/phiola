@@ -11,6 +11,7 @@
 #include <avpack/mp4-read.h>
 #include <avpack/mpc-read.h>
 #include <avpack/ogg-codec-read.h>
+#include <avpack/ts-codec-read.h>
 #include <avpack/wav-read.h>
 #include <avpack/wv-read.h>
 
@@ -38,6 +39,7 @@ static const struct avpkr_if *const avpk_formats[] = {
 	&avpk_mp4,
 	&avpk_mpc,
 	&avpk_ogg,
+	&avpk_ts,
 	&avpk_wav,
 	&avpk_wv,
 };
@@ -64,7 +66,9 @@ static void* fmtr_open(phi_track *t)
 		.opaque = f,
 	};
 
-	if (ffstr_eqz(&ext, "aac") && t->conf.stream_copy) {
+	if ((ffstr_eqz(&ext, "aac")
+		|| ffstr_eqz(&ext, "ts"))
+		&& t->conf.stream_copy) {
 		ffstr fn = FFSTR_INITZ(t->conf.ofile.name), oext;
 		ffstr_rsplitby(&fn, '.', NULL, &oext);
 		if (ffstr_ieqz(&oext, "aac")) // .aac -> .aac copy
@@ -72,8 +76,13 @@ static void* fmtr_open(phi_track *t)
 	}
 
 	const struct avpkr_if *rif = avpk_reader_find(ext.ptr, avpk_formats, FF_COUNT(avpk_formats));
-	if (rif)
+	if (rif) {
 		f->rd.ctx = phi_track_alloc(t, rif->context_size);
+		if (rif->format == AVPKF_TS) {
+			c.total_size = 0;
+			t->input.size = ~0ULL; // Prevent seek requests
+		}
+	}
 	if (avpk_open(&f->rd, rif, &c)) {
 		errlog(t, "avpk_open");
 		return PHI_OPEN_ERR;

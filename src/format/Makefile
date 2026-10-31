@@ -14,7 +14,6 @@ format.$(SO): mod-fmt.o \
 		aac-adts.o \
 		flac-fmt.o \
 		ogg.o \
-		ts-read.o \
 		\
 		tag.o \
 		playlist.o \
