@@ -173,6 +173,7 @@ ffmpeg_encode() {
 	ffmpeg -i $1 -y -c:a aac        fm_aac.avi    2>/dev/null
 	ffmpeg -i $1 -y -c:a aac        fm_aac.mkv    2>/dev/null
 	ffmpeg -i $1 -y -c:a aac        fm_aac.mp4    2>/dev/null
+	ffmpeg -i $1 -y -c:a aac        fm_aac.ts     2>/dev/null
 	ffmpeg -i $1 -y -c:a alac       fm_alac.mkv   2>/dev/null
 	ffmpeg -i $1 -y -c:a alac       fm_alac.mp4   2>/dev/null
 	ffmpeg -i $1 -y -c:a flac       fm_flac.flac  2>/dev/null
@@ -181,6 +182,7 @@ ffmpeg_encode() {
 	ffmpeg -i $1 -y -c:a libmp3lame fm_mp3.mkv    2>/dev/null
 	ffmpeg -i $1 -y -c:a libmp3lame fm_mp3.mp3    2>/dev/null
 	ffmpeg -i $1 -y -c:a libmp3lame -b:a 320k fm_mp3_320.mp3 2>/dev/null
+	ffmpeg -i $1 -y -c:a libmp3lame -b:a 320k fm_mp3_320.ts  2>/dev/null
 	ffmpeg -i $1 -y -c:a libopus    fm_opus.mkv   2>/dev/null
 	ffmpeg -i $1 -y -c:a libopus    fm_opus.ogg   2>/dev/null
 	ffmpeg -i $1 -y -c:a libvorbis  fm_vorbis.mkv 2>/dev/null

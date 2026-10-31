@@ -6,10 +6,10 @@ set -xeu
 cd ..
 
 git clone https://github.com/stsaz/netmill
-git -C netmill checkout d946fa7f4234db5f5965125883be7b9140fe84bb
+git -C netmill checkout 9bcd8c6a17d2641d493974659f0a6c69e4d31cc3
 
 git clone https://github.com/stsaz/avpack
-git -C avpack checkout eafd028bece170bf65aacdd680657e57aba9a52f
+git -C avpack checkout 88c02531561207c04afd456c2f148a93e0942b29
 
 git clone https://github.com/stsaz/ffaudio
 git -C ffaudio checkout 6a951156e68e33d3925076e680ac56478a648c74
@@ -21,4 +21,4 @@ git clone https://github.com/stsaz/ffsys
 git -C ffsys checkout 1f5881e8252db1ceb00a690c6098d424841a9df6
 
 git clone https://github.com/stsaz/ffbase
-git -C ffbase checkout 00dc6ca9ffced98699898cc4405f041a9d0406d3
+git -C ffbase checkout 2a7030bb4df67529f6180ae2f86b0a494df179ad

@@ -68,8 +68,12 @@ else
 		OPENSSL_SO := $(NML_3PT)/libssl.$(SO).4
 	endif
 
+OPENSSL_MAKE_ARGS :=
+ifeq "$(VERBOSE)" "low"
+	OPENSSL_MAKE_ARGS := -s
+endif
 $(OPENSSL_SO): $(NETMILL)/3pt/openssl/Makefile | $(NML_3PT)
-	$(MAKE)  -C $(NML_3PT)  -f $(NETMILL)/3pt/openssl/Makefile  -I $(NETMILL)/3pt/openssl  NML_3PT=$(NETMILL)/3pt $(NML_3PT_FLAGS)
+	$(MAKE) $(OPENSSL_MAKE_ARGS) -C $(NML_3PT)  -f $(NETMILL)/3pt/openssl/Makefile  -I $(NETMILL)/3pt/openssl  NML_3PT=$(NETMILL)/3pt $(NML_3PT_FLAGS)
 
 ffssl.o: $(NETMILL)/src/util/ffssl.c | $(OPENSSL_SO)
 	$(C) $(CFLAGS_NETMILL) -I$(FFSYS) $< -o $@
