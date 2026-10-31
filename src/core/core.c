@@ -84,9 +84,15 @@ static void core_sig(uint signal)
 {
 	dbglog("signal: %u", signal);
 	switch (signal) {
-	case PHI_CORE_STOP:
+	case PHI_CORE_STOP: {
+		struct worker *w = cc->wx.workers.ptr;
+		if (w->th == FFTHREAD_NULL
+			&& w->tid != ffthread_curid())
+			break; // run_detach=0 mode: Not main thread
 		wrkx_stop(&cc->wx);
+		wrkx_wait_stopped(&cc->wx);
 		break;
+	}
 	}
 }
 

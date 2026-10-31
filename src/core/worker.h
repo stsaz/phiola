@@ -196,13 +196,17 @@ static int wrk_create(struct worker *w, const struct wrk_conf *conf)
 	return 0;
 }
 
-static void wrk_destroy(struct worker *w)
+static void wrk_join(struct worker *w)
 {
 	if (w->th != FFTHREAD_NULL) {
-		zzkq_stop(&w->kq);
 		ffthread_join(w->th, -1, NULL);  w->th = FFTHREAD_NULL;
 		dbglog("thread exited");
 	}
+}
+
+static void wrk_destroy(struct worker *w)
+{
+	FF_ASSERT(w->th == FFTHREAD_NULL);
 	zzkqkcq_disconnect(&w->kq_kcq, w->kq.kq);
 	zzkq_tq_detach(&w->kq_tq, w->kq.kq);
 	zzkq_timer_destroy(&w->kq_timer, w->kq.kq);
@@ -243,12 +247,16 @@ void wrkx_wait_stopped(struct wrk_ctx *wx)
 {
 	struct worker *w;
 	FFSLICE_WALK(&wx->workers, w) {
-		wrk_destroy(w);
+		wrk_join(w);
 	}
 }
 
 void wrkx_destroy(struct wrk_ctx *wx)
 {
+	struct worker *w;
+	FFSLICE_WALK(&wx->workers, w) {
+		wrk_destroy(w);
+	}
 	ffvec_free(&wx->workers);
 }
 

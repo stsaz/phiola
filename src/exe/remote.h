@@ -52,9 +52,8 @@ static int remote_action(struct cmd_remote *r)
 	if (rcl->cmd(r->id, *(ffstr*)&r->cmd))
 		return 1;
 
-	x->core->sig(PHI_CORE_STOP);
 	x->exit_code = 0;
-	return 0;
+	return 1;
 }
 
 static int remote_fin(struct cmd_remote *r)

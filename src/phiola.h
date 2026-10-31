@@ -113,6 +113,8 @@ enum PHI_CORE_TIME {
 };
 
 enum PHI_CORE_SIG {
+	/** Stop all worker threads and wait for them to finish (except the main thread).
+	Must be sent from main thread. */
 	PHI_CORE_STOP,
 };
 
@@ -197,7 +199,9 @@ FF_EXTERN phi_core* phi_core_create(struct phi_core_conf *conf);
 /** Destroy the core object and all its resources. */
 FF_EXTERN void phi_core_destroy();
 
-/** Run until stopped with core->sig(PHI_CORE_STOP) */
+/** Run phiola core.
+conf.run_detach == 0: run until stopped with core->sig(PHI_CORE_STOP)
+conf.run_detach == 1: start thread, return immediately */
 FF_EXTERN void phi_core_run();
 
 

@@ -123,13 +123,11 @@ static int dev_list_action(struct cmd_dev_list *l)
 	ffstdout_write(buf.ptr, buf.len);
 	ffvec_free(&buf);
 
-	x->core->sig(PHI_CORE_STOP);
-
 	x->exit_code = 0;
 	if (l->filter && rp <= 0 && rc <= 0)
 		x->exit_code = 1;
 
-	return 0;
+	return 1;
 }
 
 static int dev_list_prepare()
