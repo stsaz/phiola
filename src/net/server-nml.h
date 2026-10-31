@@ -3,12 +3,11 @@
 
 static void nml_log(void *log_obj, uint level, const char *ctx, const char *id, const char *format, ...)
 {
-	struct ausv *s = log_obj;
 	level = nml_phi_log_level(level);
 
 	va_list va;
 	va_start(va, format);
-	core->conf.logv(core->conf.log_obj, level, "audio-server", s->trk, format, va);
+	core->conf.logv(core->conf.log_obj, level, "audio-server", NULL, format, va);
 	va_end(va);
 }
 
@@ -98,7 +97,7 @@ static const nml_worker_if nmlwrk_if = {
 struct ausv_cl {
 	size_t rpos;
 	uint icy_meta_off;
-	u_char last_meta_uid;
+	uint last_meta_uid;
 };
 
 static void ausv_client_paused(struct ausv *s, nml_http_sv_conn *hsc)
@@ -181,7 +180,6 @@ static int phi_sv_open(nml_http_sv_conn *c)
 	struct ausv_cl *sc = ffmem_new(struct ausv_cl);
 	sc->icy_meta_off = ~0U;
 	sc->last_meta_uid = s->meta_uid - 1;
-	sc->rpos = s->oring->rtail;
 	c->proxy = sc;
 
 	ausv_client_connected(s, c);
@@ -210,7 +208,7 @@ static void phi_sv_close(nml_http_sv_conn *c)
 Return the max. size of the next audio data chunk */
 static size_t phi_sv_icy_meta(nml_http_sv_conn *c, size_t n)
 {
-	const struct ausv *s = c->conf->opaque;
+	struct ausv *s = c->conf->opaque;
 	struct ausv_cl *sc = c->proxy;
 	ffvec *buf = &c->file.buf;
 
@@ -219,11 +217,10 @@ static size_t phi_sv_icy_meta(nml_http_sv_conn *c, size_t n)
 
 	if (sc->icy_meta_off == 0) {
 		sc->icy_meta_off = AUSV_CLIENT_BUF_SIZE_KB * 1024;
-		if (sc->last_meta_uid != s->meta_uid) {
+		uint mu = ausv_icy_meta_read(s, sc->last_meta_uid, buf);
+		if (sc->last_meta_uid != mu) {
 			// Meta has been changed
-			sc->last_meta_uid = s->meta_uid;
-			ffmem_copy(buf->ptr, s->meta.ptr, s->meta.len);
-			buf->len = s->meta.len;
+			sc->last_meta_uid = mu;
 		} else {
 			ffmem_copy(buf->ptr, "\0", 1);
 			buf->len = 1;
@@ -235,7 +232,9 @@ static size_t phi_sv_icy_meta(nml_http_sv_conn *c, size_t n)
 
 static inline int ring_peek_at(ffring *r, size_t off, size_t n, ffstr *d1, ffstr *d2)
 {
-	n = ffmin(n, r->wtail - off);
+	size_t wtail = FFINT_READONCE(r->wtail);
+	ffcpu_fence_acquire(); // read 'wtail' before data
+	n = ffmin(n, wtail - off);
 	size_t i = off & r->mask;
 	ffstr_set(d1, r->data + i, n);
 	ffstr_set(d2, r->data, 0);
@@ -253,6 +252,10 @@ static int phi_sv_process(nml_http_sv_conn *c)
 	ffvec *buf = &c->file.buf;
 
 	size_t n = phi_sv_icy_meta(c, ffvec_unused(buf));
+
+	size_t rtail = FFINT_READONCE(s->oring->rtail);
+	if ((ssize_t)(sc->rpos - rtail) < 0)
+		sc->rpos = rtail; // Catch up with the audio track
 
 	ffstr d1, d2;
 	n = ring_peek_at(s->oring, sc->rpos, n, &d1, &d2);

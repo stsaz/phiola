@@ -41,12 +41,13 @@ struct ausv {
 	ffvec clients_paused; // nml_http_sv_conn*[]
 	struct nml_address addr;
 	phi_track *trk, *subtrack;
-	phi_task task;
+	phi_task task, task_unpause;
 	phi_timer tmr;
 	const phi_queue_if *qif;
 	ffring *iring, *oring;
 	ffring_head rh;
 	ffvec meta;
+	fflock meta_lock;
 	ffstr resp_headers;
 	ffstr input;
 	uint64 total_msec;
@@ -57,8 +58,8 @@ struct ausv {
 	uint clients;
 	uint qi;
 	uint pkt;
+	uint meta_uid;
 	u_char consecutive_errors;
-	u_char meta_uid;
 	uint ogg_opus :1;
 	uint consumer_paused :1;
 	uint provider_paused :1;
@@ -66,6 +67,7 @@ struct ausv {
 };
 static struct ausv *gs;
 
+uint ausv_icy_meta_read(struct ausv *s, uint last_meta_uid, ffvec *buf);
 #include <net/server-nml.h>
 
 void ausv_mod_close()
@@ -126,10 +128,27 @@ static void ausv_icy_meta(struct ausv *s, ffstr artist, ffstr title)
 {
 	char buf[250];
 	ffsz_format(buf, sizeof(buf), "%S - %S", &artist, &title);
+	fflock_lock(&s->meta_lock);
 	s->meta.len = 0;
 	icymeta_add(&s->meta, FFSTR_Z("StreamTitle"), FFSTR_Z(buf));
 	icymeta_fin(&s->meta);
+	fflock_unlock(&s->meta_lock);
 	s->meta_uid++;
+}
+
+/** Read latest metadata.
+Thread: worker
+Return metadata revision number. */
+uint ausv_icy_meta_read(struct ausv *s, uint last_meta_uid, ffvec *buf)
+{
+	uint mu = FFINT_READONCE(s->meta_uid);
+	if (last_meta_uid != mu) {
+		fflock_lock(&s->meta_lock);
+		buf->len = ffmem_ncopy(buf->ptr, buf->cap, s->meta.ptr, s->meta.len);
+		fflock_unlock(&s->meta_lock);
+		// Note: 'meta_uid' may be already updated; the caller will catch up next time
+	}
+	return mu;
 }
 
 static void* ausv_provider_open(phi_track *t)
@@ -326,7 +345,7 @@ static void* ausv_open(phi_track *t)
 	t->udata = s;
 	s->ogg_opus = ffsz_eq(t->conf.ofile.name, "stream.opus");
 	s->trk = t;
-	s->worker = t->worker;
+	s->worker = core->worker_assign(1);
 
 	uint n = msec_to_bytes_af(t->conf.oaudio.buf_time, &t->oaudio.format);
 	s->iring = ffring_alloc(n, FFRING_1_READER | FFRING_1_WRITER);
@@ -338,6 +357,7 @@ static void* ausv_open(phi_track *t)
 		size_t cap = 0;
 		ffstr_growfmt(&s->resp_headers, &cap, "icy-br:%u\r\nicy-metaint:%u\r\n"
 			, kbps, AUSV_CLIENT_BUF_SIZE_KB * 1024);
+		ffvec_alloc(&s->meta, 255 * 16, 1); // Max ICY meta size
 	}
 
 	s->next_pos_samples = s->buf_half_samples = msec_to_samples(t->conf.oaudio.buf_time / 2, t->oaudio.format.rate);
@@ -384,7 +404,7 @@ static int ausv_process(struct ausv *s, phi_track *t)
 		return PHI_ASYNC;
 	}
 	dbglog(s->trk, "obuffer: %L%%", (s->oring->wtail - s->oring->rtail) * 100 / s->oring->cap);
-	ausv_client_unpause(s);
+	core->task(s->worker, &s->task_unpause, (void*)ausv_client_unpause, s);
 	return PHI_MORE;
 }
 
