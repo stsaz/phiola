@@ -37,14 +37,14 @@ ifeq "$(PHI_HTTP_SSL)" "0"
 	CFLAGS_NETMILL += -DPHI_HTTP_NO_SSL
 else
 	HTTP_OBJ += ffssl.o
-	CFLAGS_NETMILL += -I$(NML_3PT)/openssl-3.5.6/include
+	CFLAGS_NETMILL += -I$(NML_3PT)/openssl-4.1.0/include
 	LINKFLAGS_NETMILL := -L$(NML_3PT)
 	ifeq "$(OS)" "windows"
-		LINKFLAGS_NETMILL += -lssl-3-x64 -lcrypto-3-x64
+		LINKFLAGS_NETMILL += -lssl-4-x64 -lcrypto-4-x64
 		LIBS3 += \
-			$(NML_3PT)/libssl-3-x64.$(SO) \
-			$(NML_3PT)/libcrypto-3-x64.$(SO)
-		OPENSSL_SO := $(NML_3PT)/libssl-3-x64.$(SO)
+			$(NML_3PT)/libssl-4-x64.$(SO) \
+			$(NML_3PT)/libcrypto-4-x64.$(SO)
+		OPENSSL_SO := $(NML_3PT)/libssl-4-x64.$(SO)
 
 	else ifeq "$(SYS)" "android"
 		LINKFLAGS_NETMILL += -lssl -lcrypto
@@ -63,9 +63,9 @@ else
 	else
 		LINKFLAGS_NETMILL += -lssl -lcrypto
 		LIBS3 += \
-			$(NML_3PT)/libssl.$(SO).3 \
-			$(NML_3PT)/libcrypto.$(SO).3
-		OPENSSL_SO := $(NML_3PT)/libssl.$(SO).3
+			$(NML_3PT)/libssl.$(SO).4 \
+			$(NML_3PT)/libcrypto.$(SO).4
+		OPENSSL_SO := $(NML_3PT)/libssl.$(SO).4
 	endif
 
 $(OPENSSL_SO): $(NETMILL)/3pt/openssl/Makefile | $(NML_3PT)
