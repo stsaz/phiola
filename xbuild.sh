@@ -29,8 +29,8 @@ if ! podman container exists $CONTAINER_NAME ; then
 
 	# Create builder container
 	podman create --attach --tty \
-	 -v "$(pwd)":/build \
-	 -v "$PHIOLA_DIR/..":/src \
+	 -v "$(pwd)":/build:Z \
+	 -v "$PHIOLA_DIR/..":/src:Z \
 	 --workdir /build \
 	 --name $CONTAINER_NAME \
 	 $IMAGE_NAME \
