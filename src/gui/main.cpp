@@ -247,6 +247,8 @@ int wmain_ready()
 void wmain_track_new(void *param)
 {
 	gui_wmain *m = gg->wmain;
+	if (!m->ready)
+		return;
 	struct gui_track_info *ti = (struct gui_track_info*)param;
 
 	if (ti->q == gd->q_selected && !gd->q_filtered) {
@@ -271,6 +273,8 @@ void wmain_track_new(void *param)
 void wmain_track_close(void *param)
 {
 	gui_wmain *m = gg->wmain;
+	if (!m->ready)
+		return;
 	struct gui_track_info *ti = (struct gui_track_info*)param;
 
 	if (ti->q == gd->q_selected && !gd->q_filtered
@@ -288,6 +292,8 @@ void wmain_track_update(void *param)
 {
 	struct gui_track_info *ti = (struct gui_track_info*)param;
 	gui_wmain *m = gg->wmain;
+	if (!m->ready)
+		return;
 
 	m->tpos.set(ti->pos_sec);
 
@@ -909,6 +915,7 @@ void wmain_show()
 static void wmain_fin()
 {
 	gui_wmain *m = gg->wmain;
+	m->ready = 0;
 	core->timer(0, &m->redraw.timer, 0, NULL, NULL);
 	dbglog("%s  paint-events: %u/%u"
 		, __func__, m->redraw.n_actual, m->redraw.n_total);
