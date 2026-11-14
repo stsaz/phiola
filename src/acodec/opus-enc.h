@@ -77,7 +77,8 @@ static void opus_enc_tags(struct opus_enc *o, phi_track *t, ffstr *out)
 	uint i = 0;
 	ffstr name, val;
 	while (core->metaif->list(&t->meta, &i, &name, &val, PHI_META_UNIQUE)) {
-		if (ffstr_eqz(&name, "vendor"))
+		if (ffstr_eqz(&name, "vendor")
+			|| ffstr_eqz(&name, "picture"))
 			continue;
 		vorbistagwrite_add_name(&vtag, name, val);
 	}
