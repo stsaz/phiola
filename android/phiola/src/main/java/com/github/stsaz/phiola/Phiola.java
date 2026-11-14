@@ -284,8 +284,11 @@ class Phiola {
 		/** Read metadata for all entries. */
 		QUCOM_META_READ = 10,
 
-		/** Remove duplicate entries. */
+		/** Remove all entries that appear more than once. */
 		QUCOM_REMOVE_NON_UNIQUE = 11,
+
+		/** Remove duplicate entries. */
+		QUCOM_REMOVE_DUPS = 12,
 
 		/** Cancel an ongoing audio conversion operation. */
 		QUCOM_CONV_CANCEL = 13,

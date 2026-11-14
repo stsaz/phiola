@@ -12,7 +12,7 @@
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  21400
+#define PHI_VERSION_CORE  21500
 
 typedef long long int64;
 typedef unsigned long long uint64;
@@ -549,7 +549,8 @@ enum PHI_Q_SORT {
 /** Flags for `remove_multi()`. */
 enum PHI_Q_REMOVE {
 	PHI_Q_RM_NONEXIST = 1,	// Remove entries whose files no longer exist on disk
-	PHI_Q_RM_NONUNIQ = 2,	// Remove all duplicate entries (by URL)
+	PHI_Q_RM_NONUNIQ = 2,	// Sort & remove all entries that appear more than once (by URL)
+	PHI_Q_RM_DUPS = 4,		// Sort & remove duplicate entries (by URL)
 };
 
 /** Filter match types for `filter()`. */
@@ -768,6 +769,7 @@ struct phi_asv_conf {
 typedef void (*phi_playlist_cb)(void*, int);
 struct phi_playlist_conf {
 	ffslice include_str, exclude_str;
+	uint nodups :1;
 
 	phi_playlist_cb on_complete;
 	void *udata;

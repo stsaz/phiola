@@ -224,6 +224,9 @@ public class MainActivity extends AppCompatActivity {
 		case R.id.action_list_rm_non_unique:
 			queue.current_remove_multi(Phiola.QUCOM_REMOVE_NON_UNIQUE);  break;
 
+		case R.id.action_list_rm_dups:
+			queue.current_remove_multi(Phiola.QUCOM_REMOVE_DUPS);  break;
+
 		case R.id.action_list_clear:
 			list_clear();  break;
 

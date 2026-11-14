@@ -602,6 +602,9 @@ list_sort:
 	case A_LIST_REMOVE_NONEXIST:
 		gd->queue->remove_multi(gd->q_selected, PHI_Q_RM_NONEXIST);  break;
 
+	case A_LIST_REMOVE_DUPS:
+		gd->queue->remove_multi(gd->q_selected, PHI_Q_RM_DUPS);  break;
+
 	case A_PLAYPAUSE:
 		if (gd->playing_track)
 			gtrk_play_pause(gd->playing_track);

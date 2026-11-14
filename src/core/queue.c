@@ -780,6 +780,21 @@ static int q_rename_all(phi_queue_id q, const char *pattern, uint flags)
 	return 0;
 }
 
+static void q_rm_dups(phi_queue_id q, ffvec *new_index)
+{
+	struct q_entry **qe = q->index.ptr;
+	size_t last = (size_t)-1;
+	for (size_t i = 0;  i < q->index.len;  i++) {
+		if (last != (size_t)-1 && ffsz_eq(qe[i]->pub.url, qe[last]->pub.url)) {
+			qe_unref(qe[i]);
+			continue;
+		}
+
+		*ffvec_pushT(new_index, void*) = qe[i];
+		last = i;
+	}
+}
+
 static void q_rm_non_uniq(phi_queue_id q, ffvec *new_index)
 {
 	struct q_entry **qe = q->index.ptr;
@@ -810,14 +825,19 @@ static void q_remove_multi(phi_queue_id q, uint flags)
 	if (!q->index.len)
 		return;
 
-	if (flags & PHI_Q_RM_NONUNIQ)
+	if (flags & (PHI_Q_RM_NONUNIQ | PHI_Q_RM_DUPS))
 		q_sort(q, PHI_Q_SORT_FILENAME);
 
 	ffvec new_index = {};
 	ffvec_allocT(&new_index, q->index.len, void*);
 
-	if (flags & PHI_Q_RM_NONUNIQ) {
+	if (flags & PHI_Q_RM_DUPS) {
+		q_rm_dups(q, &new_index);
+		dbglog("removed %L duplicate entries", q->index.len - new_index.len);
+
+	} else if (flags & PHI_Q_RM_NONUNIQ) {
 		q_rm_non_uniq(q, &new_index);
+		dbglog("removed %L non-unique entries", q->index.len - new_index.len);
 
 	} else if (flags & PHI_Q_RM_NONEXIST) {
 		struct q_entry **it;
@@ -833,6 +853,7 @@ static void q_remove_multi(phi_queue_id q, uint flags)
 
 			qe_unref(qe);
 		}
+		dbglog("removed %L entries for non-existing files", q->index.len - new_index.len);
 	}
 
 	if (new_index.len == q->index.len) {
