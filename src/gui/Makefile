@@ -76,7 +76,7 @@ ifeq "$(OS)" "windows"
 else
 	$(CP) \
 		$(PHIOLA)/res/phiola.svg \
-		$(PHIOLA)/src/gui/res/*.png \
+		$(PHIOLA)/src/gui/res/*.svg \
 		$(APP_DIR)/mod/gui/
 	$(CP) $(PHIOLA)/src/gui/res/phiola-port.desktop \
 		$(APP_DIR)/mod/gui/phiola.desktop

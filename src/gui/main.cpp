@@ -231,7 +231,7 @@ static ffui_icon& res_icon_load(ffui_icon *ico, const char *name, uint resource_
 #ifdef FF_WIN
 		ffui_icon_load_res(ico, GetModuleHandleW(L"gui.dll"), xxwstr_buf<100>().utow(xxstr_buf<100>().zfmt("#%u", resource_id)), 0, 0);
 #else
-		ffui_icon_load(ico, xxstr_buf<4096>().zfmt("%S/mod/gui/%s.png", &core->conf.root, name));
+		ffui_icon_load(ico, xxstr_buf<4096>().zfmt("%S/mod/gui/%s.svg", &core->conf.root, name));
 #endif
 		PHI_ASSERT(ffui_icon_valid(ico));
 	}

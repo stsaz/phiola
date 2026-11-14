@@ -596,4 +596,3 @@ phiola is not a competitor to large-scale commercial projects; instead, its focu
 
 phiola is licensed under BSD-2.
 Please review the licenses of all third-party libraries before any commercial use.
-Playback control icons by [Icons8](https://icons8.com).
