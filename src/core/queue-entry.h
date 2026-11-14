@@ -548,6 +548,8 @@ int qe_filter(struct q_entry *e, ffstr filter, uint flags)
 	if (flags & PHI_QF_META) {
 		uint i = 0;
 		while (core->metaif->list(&e->pub.meta, &i, &name, &val, 0)) {
+			if (ffstr_eqz(&name, "picture"))
+				continue;
 			if (ffstr_ifindstr(&val, &filter) >= 0)
 				return 1;
 		}
