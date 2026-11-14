@@ -91,6 +91,8 @@ static void winfo_display(struct phi_queue_entry *qe)
 
 	uint i = 0;
 	while (core->metaif->list(meta, &i, &name, &val, 0)) {
+		if (ffs_skip_ranges(val.ptr, val.len, "\x20\x7e\x80\xff", 4) >= 0)
+			ffstr_setz(&val, "<binary data>");
 		winfo_addpair(name, val);
 		ffstr_dupstr(w->keys.push_z<ffstr>(), &name);
 	}
