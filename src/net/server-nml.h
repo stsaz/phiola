@@ -47,8 +47,19 @@ static void nmlcore_task(void *boss, nml_task *t, uint flags)
 
 static fftime nmlcore_date(void *boss, ffstr *dts)
 {
+	struct ausv *s = boss;
 	fftime t;
 	fftime_now(&t);
+
+	if (dts) {
+		fftime t1 = t;
+		t1.sec += FFTIME_1970_SECONDS;
+		ffdatetime dt;
+		fftime_split1(&dt, &t1);
+		fftime_tostr1(&dt, s->date_buf, sizeof(s->date_buf), FFTIME_DATE_YMD | FFTIME_HMS_MSEC);
+		s->date_buf[10] = 'T';
+		ffstr_set(dts, s->date_buf, sizeof(s->date_buf)-1);
+	}
 	return t;
 }
 
@@ -293,6 +304,7 @@ static const nml_http_sv_component nml_http_sv_phi_bridge = {
 #include <http-server/response.h>
 #include <http-server/response-send.h>
 #include <http-server/access-log.h>
+#include <http-server/keep-alive.h>
 
 static const nml_http_sv_component* sv_chain[] = {
 	&nml_http_sv_receive,
@@ -303,6 +315,7 @@ static const nml_http_sv_component* sv_chain[] = {
 	&nml_http_sv_response,
 	&nml_http_sv_send,
 	&nml_http_sv_accesslog,
+	&nml_http_sv_keepalive,
 	NULL,
 };
 
@@ -328,6 +341,7 @@ static const nml_http_sv_component* sv_ssl_chain[] = {
 	&nml_htsv_ssl_resp,
 	&nml_htsv_ssl_send,
 	&nml_http_sv_accesslog,
+	&nml_http_sv_keepalive,
 	NULL,
 };
 

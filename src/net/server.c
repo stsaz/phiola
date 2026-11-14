@@ -44,6 +44,7 @@ struct ausv {
 	phi_track *trk, *subtrack;
 	phi_task task, task_unpause;
 	phi_timer tmr;
+	char date_buf[FFS_LEN("0000-00-00T00:00:00.000")+1];
 	const phi_queue_if *qif;
 	ffring *iring, *oring;
 	ffring_head rh;
