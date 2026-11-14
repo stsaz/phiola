@@ -7,6 +7,14 @@
 static int qe_heal_ext(char *fn);
 static int qe_index(struct q_entry *e);
 
+/** Produce a track config from a template. */
+static struct phi_track_conf phi_track_conf_derive(const struct phi_track_conf *src)
+{
+	struct phi_track_conf c = *src;
+	c.afilter.equalizer = NULL;
+	return c;
+}
+
 
 struct q_entry_bukt {
 	uint offsets[8];
@@ -311,11 +319,11 @@ static int qe_play(struct q_entry *e, uint flags)
 		return 1;
 	}
 
-	struct phi_track_conf c = e->q->conf.tconf;
+	struct phi_track_conf c = phi_track_conf_derive(&e->q->conf.tconf);
 	c.ifile.name = e->pub.url;
 	c.seek_cdframes = e->pub.seek_cdframes;
 	c.until_cdframes = e->pub.until_cdframes;
-	c.afilter.equalizer = ffsz_dup_safe(c.afilter.equalizer);
+	c.afilter.equalizer = ffsz_dup_safe(e->q->conf.tconf.afilter.equalizer);
 	const phi_filter *ui_if = (e->q->conf.ui_module_if_set) ? e->q->conf.ui_module_if : core->mod(e->q->conf.ui_module);
 
 	const phi_track_if *track = core->track;
@@ -399,9 +407,8 @@ static int qe_expand(struct q_entry *e)
 			return -1;
 	}
 
-	struct phi_track_conf c = e->q->conf.tconf;
+	struct phi_track_conf c = phi_track_conf_derive(&e->q->conf.tconf);
 	c.ifile.name = e->pub.url;
-	c.afilter.equalizer = NULL;
 	phi_track *t = track->create(&c);
 	if (dir) {
 		if (!track->filter(t, &phi_queue_guard, 0)
@@ -477,13 +484,14 @@ end:
 
 static void qe_read_meta(struct q_entry *e)
 {
-	struct phi_track_conf c = e->q->conf.tconf;
+	struct phi_track_conf c = phi_track_conf_derive(&e->q->conf.tconf);
 	c.ifile.name = e->pub.url;
 	c.info_only = 1;
 	phi_track *t = core->track->create(&c);
 	core->track->filter(t, &phi_queue_guard, 0);
 	core->track->filter(t, core->mod("core.auto-input"), 0);
 	core->track->filter(t, core->mod("format.detect"), 0);
+	core->track->filter(t, &queue_agent, 0);
 
 	e->trk = t;
 	e->used++;

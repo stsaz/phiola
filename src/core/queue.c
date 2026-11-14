@@ -431,7 +431,6 @@ static void q_trk_closed(void *param)
 			return;
 		uint i = qe_index(e);
 		ffint_fetch_add(&e->q->conf.version, 1);
-		qm->on_change(q, 'm', i);
 		if (!(e = q_get(q, i + 1)))
 			return;
 		q->cursor = e;
