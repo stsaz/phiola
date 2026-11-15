@@ -6,7 +6,7 @@ set -xeu
 cd ..
 
 git clone https://github.com/stsaz/netmill
-git -C netmill checkout b3e00424c4132a8590fca94619853b3a03216431
+git -C netmill checkout 7f78e024f37497c977ae9106b013043cc1f34af0
 
 git clone https://github.com/stsaz/avpack
 git -C avpack checkout 88c02531561207c04afd456c2f148a93e0942b29
