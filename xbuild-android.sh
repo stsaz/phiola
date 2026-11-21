@@ -43,14 +43,14 @@ fi
 if ! podman container exists $CONTAINER_NAME ; then
 	if ! podman image exists $IMAGE_NAME ; then
 		# Create builder image
-		podman build -t $IMAGE_NAME -f builder/Dockerfile.android-local .
+		podman build -t $IMAGE_NAME -f "$PHIOLA_DIR/builder/Dockerfile.android-local" .
 	fi
 
 	# Create builder container
 	podman create --attach --tty \
 	 -v "$(pwd)":/build:Z \
 	 -v "$PHIOLA_DIR/..":/src:Z \
-	 -v $ANDROID_HOME:/Android:Z \
+	 -v $ANDROID_HOME:/Android:ro \
 	 -v $GRADLE_DIR:/root/.gradle:Z \
 	 -e ANDROID_HOME=/Android \
 	 -e ANDROID_BT_VER=$ANDROID_BT_VER \

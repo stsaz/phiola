@@ -3,6 +3,8 @@ RUN apt update && \
  apt install -y \
   make
 RUN apt install -y \
+ openjdk-21-jdk
+RUN apt install -y \
  curl \
  zstd zip unzip bzip2 xz-utils \
  patch \
@@ -12,5 +14,3 @@ RUN apt install -y \
  gettext \
  pkg-config \
  perl
-RUN apt install -y \
- openjdk-21-jdk
