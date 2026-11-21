@@ -10,6 +10,8 @@ import android.content.IntentFilter;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
+import android.media.AudioManager.OnAudioFocusChangeListener;
+import android.os.Build;
 
 class SysAudio {
 	private static final String TAG = "phiola.SysAudio";
@@ -55,8 +57,15 @@ class SysAudio {
 		cb.audio_focus(event);
 	}
 
+	private OnAudioFocusChangeListener focus_listener;
+
 	private void afocus_prepare() {
 		amgr = (AudioManager)core.context.getSystemService(Context.AUDIO_SERVICE);
+
+		if (Build.VERSION.SDK_INT < 26) {
+			focus_listener = this::audio_focus_changed;
+			return;
+		}
 
 		AudioFocusRequest.Builder afb = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN);
 		afb.setOnAudioFocusChangeListener(this::audio_focus_changed);
@@ -72,7 +81,12 @@ class SysAudio {
 		if (afocus)
 			return true;
 
-		int r = amgr.requestAudioFocus(focus_obj);
+		int r;
+		if (Build.VERSION.SDK_INT >= 26)
+			r = amgr.requestAudioFocus(focus_obj);
+		else
+			r = amgr.requestAudioFocus(focus_listener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+
 		core.dbglog(TAG, "requestAudioFocus: %d", r);
 		afocus = (r == AudioManager.AUDIOFOCUS_REQUEST_GRANTED);
 		return afocus;
@@ -82,7 +96,10 @@ class SysAudio {
 		if (!afocus)
 			return;
 		afocus = false;
-		amgr.abandonAudioFocusRequest(focus_obj);
-		core.dbglog(TAG, "abandonAudioFocusRequest");
+		if (Build.VERSION.SDK_INT >= 26)
+			amgr.abandonAudioFocusRequest(focus_obj);
+		else
+			amgr.abandonAudioFocus(focus_listener);
+		core.dbglog(TAG, "abandonAudioFocus");
 	}
 }

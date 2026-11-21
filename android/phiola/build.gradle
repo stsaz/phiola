@@ -6,7 +6,7 @@ android {
 	buildToolsVersion '35.0.0'
 	defaultConfig {
 		applicationId "com.github.stsaz.phiola"
-		minSdkVersion 26
+		minSdkVersion 23
 		targetSdk 33
 		versionCode 21500
 		versionName '2.15'

@@ -8,6 +8,8 @@ import android.os.ConditionVariable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
+import java.util.Random;
 
 class PhiolaQueue {
 	private Phiola phi;
@@ -210,9 +212,10 @@ class Queue {
 		this.core = core;
 		phi = core.phiola;
 		core.track.observer_add(new PlaybackObserver() {
-			public void opened(TrackHandle t) { play_on_open(t); }
-			public void close(TrackHandle t) { play_on_close(t); }
-		});
+				public void opened(TrackHandle t) { play_on_open(t); }
+				public void close(TrackHandle t) { play_on_close(t); }
+				public void closed(TrackHandle t) { play_on_closed(t); }
+			});
 		queues = new ArrayList<>();
 		nfy = new ArrayList<>();
 	}
@@ -537,6 +540,12 @@ class Queue {
 			return;
 
 		i_active = iq;
+		if (core.aplayer != null) {
+			trk_idx = it;
+			String url = phi.quEntry(queues.get(iq).q, trk_idx);
+			core.track.play_start_compat(url);
+			return;
+		}
 		core.phiola.quCmd(queues.get(iq).q, Phiola.QUCOM_PLAY, it);
 	}
 
@@ -578,16 +587,70 @@ class Queue {
 			queues.get(i_active).remove(trk_idx);
 		}
 
+		if (core.aplayer != null) {
+			next_prev_compat(1);
+			return;
+		}
 		phi.quCmd(queues.get(i_active).q, Phiola.QUCOM_PLAY_NEXT, -1);
 	}
 
 	/** Previous track by user command */
 	void order_prev() {
+		if (core.aplayer != null) {
+			next_prev_compat(-1);
+			return;
+		}
 		phi.quCmd(queues.get(i_active).q, Phiola.QUCOM_PLAY_PREV, -1);
 	}
 
+	private Random rnd;
+	private boolean random_split;
+
+	/** Get random index */
+	private int next_random(int n) {
+		if (n == 1)
+			return 0;
+		int i = rnd.nextInt();
+		i &= 0x7fffffff;
+		if (!random_split)
+			i %= n / 2;
+		else
+			i = n / 2 + (i % (n - (n / 2)));
+		random_split = !random_split;
+		return i;
+	}
+
+	private void next_prev_compat(int delta) {
+		if (trk_idx < 0)
+			trk_idx = curpos;
+		int i = trk_idx + delta;
+		int n = queues.get(i_active).count();
+
+		if (flags_test(Phiola.QC_RANDOM)) {
+			if (rnd == null)
+				rnd = new Random(new Date().getTime());
+			i = next_random(n);
+
+		} else if (flags_test(Phiola.QC_REPEAT)) {
+			if (i >= n)
+				i = 0;
+			else if (i < 0)
+				i = n - 1;
+		} else {
+			if (i < 0 || i >= n)
+				return;
+		}
+
+		String url = phi.quEntry(queues.get(i_active).q, i);
+		if (url == null)
+			return;
+		trk_idx = i;
+		core.track.play_start_compat(url);
+	}
+
 	private void play_on_open(TrackHandle t) {
-		trk_idx = t.pmeta.queue_pos;
+		if (core.aplayer == null)
+			trk_idx = t.pmeta.queue_pos;
 		curpos = trk_idx;
 		active = true;
 		queues.get(i_active).modified = true;
@@ -601,6 +664,11 @@ class Queue {
 		trk_idx = -1;
 		if ((t.close_status & Phiola.PCS_AUTOSTOP) != 0)
 			auto_stop_active = false;
+	}
+
+	private void play_on_closed(TrackHandle t) {
+		if (core.aplayer != null && t.close_status == 0)
+			next_prev_compat(1);
 	}
 
 	String active_track_url() {

@@ -40,11 +40,31 @@ class Track {
 
 	static final int
 		STATE_NONE = 0,
-		STATE_PLAYING = 1,
-		STATE_PAUSED = 2;
+		STATE_OPENING = 1,
+		STATE_PLAYING = 2,
+		STATE_PAUSED = 3;
 
-	Track(Core core) {
+	Track(Core core, APlayer aplayer) {
 		this.core = core;
+		if (aplayer != null) {
+			aplayer.pobs = new APlayer.Observer() {
+				public void on_create(Phiola.Meta meta) {
+					core.tq.post(() -> {
+						play_on_create(meta);
+					});
+				}
+				public void on_close(int status) {
+					core.tq.post(() -> {
+						play_on_close(status);
+					});
+				}
+				public void on_update(long pos_msec) {
+					core.tq.post(() -> {
+						play_on_update(pos_msec);
+					});
+				}
+			};
+		}
 		tplay = new TrackHandle();
 		observers = new ArrayList<>();
 		tplay.state = STATE_NONE;
@@ -70,7 +90,7 @@ class Track {
 	}
 
 	void observer_notify(PlaybackObserver f) {
-		if (tplay.state != STATE_NONE) {
+		if (tplay.state != STATE_NONE && tplay.pmeta != null) {
 			f.opened(tplay);
 			f.process(tplay);
 		}
@@ -132,6 +152,14 @@ class Track {
 		p.gain_db100 = core.rec.rec_gain_db100;
 		p.until_sec = core.rec.rec_until_sec;
 
+		if (core.arecorder != null) {
+			if (!core.arecorder.start(oname, p))
+				return null;
+			trec = new TrackHandle();
+			rec_mic_cb = cb;
+			return trec;
+		}
+
 		trec = new TrackHandle();
 		trec.phi_trk = core.phiola.recStart(oname, p);
 		if (trec.phi_trk == 0) {
@@ -147,6 +175,14 @@ class Track {
 	void record_stop(boolean fin) {
 		if (trec == null) return;
 
+		if (core.arecorder != null) {
+			String filename = core.arecorder.stop();
+			trec = null;
+			if (!fin)
+				core.rec_finished(0, 0, filename);
+			return;
+		}
+
 		if (trec.phi_trk != 0) {
 			core.phiola.recCtrl(trec.phi_trk, Phiola.RECL_STOP);
 			trec.phi_trk = 0;
@@ -156,6 +192,7 @@ class Track {
 	}
 
 	int record_pause_toggle() {
+		if (core.arecorder != null) return -1;
 		if (trec == null || trec.phi_trk == 0) return -1;
 
 		int cmd = Phiola.RECL_PAUSE;
@@ -186,6 +223,12 @@ class Track {
 		core.phiola.playRecord(null);
 	}
 
+	void play_start_compat(String url) {
+		tplay.state = STATE_OPENING;
+		if (core.aplayer.start(url) != 0)
+			play_on_close(-1);
+	}
+
 	private void trk_close() {
 		tplay.state = STATE_NONE;
 		for (int i = observers.size() - 1; i >= 0; i--) {
@@ -202,6 +245,10 @@ class Track {
 
 	void stop() {
 		core.dbglog(TAG, "stop");
+		if (core.aplayer != null) {
+			core.aplayer.stop();
+			return;
+		}
 		core.phiola.playCmd(Phiola.PC_STOP, 0);
 	}
 
@@ -209,7 +256,10 @@ class Track {
 		core.dbglog(TAG, "pause");
 		if (tplay.state == STATE_PLAYING) {
 			tplay.state = STATE_PAUSED;
-			core.phiola.playCmd(Phiola.PC_PAUSE_TOGGLE, 0);
+			if (core.aplayer != null)
+				core.aplayer.pause();
+			else
+				core.phiola.playCmd(Phiola.PC_PAUSE_TOGGLE, 0);
 			update();
 		}
 	}
@@ -218,7 +268,10 @@ class Track {
 		core.dbglog(TAG, "unpause: %d", tplay.state);
 		if (tplay.state == STATE_PAUSED) {
 			tplay.state = STATE_PLAYING;
-			core.phiola.playCmd(Phiola.PC_PAUSE_TOGGLE, 0);
+			if (core.aplayer != null)
+				core.aplayer.unpause();
+			else
+				core.phiola.playCmd(Phiola.PC_PAUSE_TOGGLE, 0);
 			update();
 		}
 	}
@@ -227,7 +280,10 @@ class Track {
 		core.dbglog(TAG, "seek: %d", msec);
 		if (tplay.state == STATE_PLAYING || tplay.state == STATE_PAUSED) {
 			tplay.pos_msec = msec;
-			core.phiola.playCmd(Phiola.PC_SEEK, msec);
+			if (core.aplayer != null)
+				core.aplayer.seek(msec);
+			else
+				core.phiola.playCmd(Phiola.PC_SEEK, msec);
 			update();
 		}
 	}
@@ -247,6 +303,7 @@ class Track {
 		if (m.title == null) m.title = "";
 		if (m.album == null) m.album = "";
 		if (m.date == null) m.date = "";
+		if (m.info == null) m.info = "";
 		tplay.pmeta = m;
 		tplay.name = Track.header(tplay);
 

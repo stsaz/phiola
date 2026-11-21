@@ -37,6 +37,8 @@ class Core extends Util {
 
 	GUI gui;
 	private Queue qu;
+	APlayer aplayer;
+	ARecorder arecorder;
 	Track track;
 	private SysAudio sysaudio;
 	Phiola phiola;
@@ -91,7 +93,11 @@ class Core extends Util {
 		rec = new RecSettings(this);
 		convert = new ConvertSettings(this);
 		gui = new GUI(this);
-		track = new Track(this);
+		if (Build.VERSION.SDK_INT < 26) {
+			aplayer = new APlayer(this);
+			arecorder = new ARecorder(this);
+		}
+		track = new Track(this, aplayer);
 		qu = new Queue(this);
 
 		sysaudio = new SysAudio(this, new SysAudio.Callback() {
@@ -196,7 +202,7 @@ class Core extends Util {
 		gui.state_update(GUI.STATE_RECORDING, GUI.STATE_RECORDING);
 	}
 
-	private void rec_finished(int mode, int code, String filename) {
+	void rec_finished(int mode, int code, String filename) {
 		gui.state_update(GUI.STATE_RECORDING | GUI.STATE_REC_PAUSED, 0);
 
 		if (code == 0 && rec.rec_list_add)
@@ -242,6 +248,9 @@ class Core extends Util {
 	}
 
 	String notif_channel_create(String id, String name) {
+		if (Build.VERSION.SDK_INT < 26)
+			return id;
+
 		NotificationManager mgr = (NotificationManager)context.getSystemService(context.NOTIFICATION_SERVICE);
 		NotificationChannel chan = new NotificationChannel(id, name, NotificationManager.IMPORTANCE_LOW);
 		mgr.createNotificationChannel(chan);

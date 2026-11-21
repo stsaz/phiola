@@ -8,6 +8,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaDescriptionCompat;
@@ -195,6 +196,9 @@ public class MediaSvc extends MediaBrowserServiceCompat {
 	}
 
 	private String notification_channel_create(String id, String name) {
+		if (Build.VERSION.SDK_INT < 26)
+			return id;
+
 		String r = "";
 		NotificationManager mgr = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 		if (mgr != null) {

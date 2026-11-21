@@ -204,6 +204,20 @@ public class SettingsActivity extends AppCompatActivity {
 				});
 			}
 		});
+
+		if (core.aplayer != null) {
+			b.swUiInfoInTitle.setEnabled(false);
+			b.swListRmOnErr.setEnabled(false);
+			b.sbPlayAutoSkip.setEnabled(false);
+			b.eAutoSkip.setEnabled(false);
+			b.sbPlayAutoSkipTail.setEnabled(false);
+			b.eAutoSkipTail.setEnabled(false);
+			b.sbPlayAutoStop.setEnabled(false);
+			b.eAutoStop.setEnabled(false);
+			b.swRgNorm.setEnabled(false);
+			b.swAutoNorm.setEnabled(false);
+			b.swEqualizer.setEnabled(false);
+		}
 	}
 
 	private void play_load() {
@@ -473,6 +487,24 @@ public class SettingsActivity extends AppCompatActivity {
 		b.sbRecUntil.setMax(rec_until_progress(12*3600));
 		b.spRecEnc.setAdapter(spinner_adapter(RecSettings.rec_formats));
 		b.sbRecGain.setMax(24); // 0..24
+
+		if (core.arecorder != null) {
+			b.swRecLongclick.setEnabled(false);
+			b.eRecName.setEnabled(false);
+			b.spRecChannels.setEnabled(false);
+			b.sbRecRate.setEnabled(false);
+			b.eRecRate.setEnabled(false);
+			b.spRecEnc.setEnabled(false);
+			b.spInFmt.setEnabled(false);
+			b.eRecBufLen.setEnabled(false);
+			b.sbRecUntil.setEnabled(false);
+			b.eRecUntil.setEnabled(false);
+			b.swRecDanorm.setEnabled(false);
+			b.sbRecGain.setEnabled(false);
+			b.eRecGain.setEnabled(false);
+			b.swRecExclusive.setEnabled(false);
+			b.spRecSource.setEnabled(false);
+		}
 	}
 
 	private void rec_load() {
