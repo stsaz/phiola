@@ -24,7 +24,7 @@ A_CFLAGS += \
 	-fPIC -fdata-sections -ffunction-sections -fstack-protector-strong -funwind-tables \
 	-no-canonical-prefixes \
 	--sysroot $(ANDROID_NDK_ROOT)/toolchains/llvm/prebuilt/linux-x86_64/sysroot \
-	-D_FORTIFY_SOURCE=2 -DANDROID -DNDEBUG
+	-DANDROID -DNDEBUG
 
 A_LINKFLAGS += -no-canonical-prefixes \
 	-Wl,-no-undefined -Wl,--gc-sections -Wl,--build-id=none -Wl,--no-rosegment

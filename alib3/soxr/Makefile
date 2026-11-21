@@ -23,7 +23,7 @@ $(DIR): $(PKG)
 
 $(DIR)/soxr-config.h: | $(DIR)
 	cd $(DIR) && cmake -Wno-dev -DCMAKE_BUILD_TYPE="Release" $(CMAKE_FLAGS) .
-	# cat $(ALIB3)/soxr/*.patch | patch -d $(DIR) -p1
+	cat $(ALIB3)/soxr/*.patch | patch -d $(DIR) -p1
 	# cd $(DIR) && make VERBOSE=1
 	$(SED) 's/AVUTIL_FOUND 1/AVUTIL_FOUND 0/' $(DIR)/soxr-config.h
 ifeq "$(CPU)" "amd64"

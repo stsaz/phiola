@@ -19,6 +19,8 @@ CPU := amd64
 LIB_DIR := libs/x86_64
 ifeq "$(CPU)" "arm64"
 	LIB_DIR := libs/arm64-v8a
+else ifeq "$(CPU)" "arm"
+	LIB_DIR := libs/armeabi-v7a
 endif
 APK_ID := com.github.stsaz.phiola
 APK := gradle/outputs/apk/release/phiola-release-unsigned.apk
@@ -116,10 +118,18 @@ CFLAGS += -I$(FFBASE)
 CFLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-for-loop-analysis
 CFLAGS += -g
 CFLAGS += -fPIC
+CFLAGS_OPT :=
 ifeq "$(DEBUG)" "1"
 	CFLAGS += -DFF_DEBUG -O0 -Werror -Wno-deprecated-declarations
 else
-	CFLAGS += -O3 -fno-strict-aliasing -fvisibility=hidden
+	ifeq "$(CPU)" "arm"
+		# Disable optimization on ARM for all modules by default.
+		# This prevents the compiler from generating the instructions that can lead to a crash due to unaligned memory access.
+		CFLAGS += -O0 -fvisibility=hidden
+		CFLAGS_OPT := -O3 -fno-strict-aliasing -fvisibility=hidden
+	else
+		CFLAGS += -O3 -fno-strict-aliasing -fvisibility=hidden
+	endif
 endif
 CFLAGS += $(CFLAGS_USER)
 CFLAGS_BASE := $(CFLAGS)

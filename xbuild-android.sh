@@ -82,6 +82,7 @@ make -j$JOBS \
  -I /src/phiola/android \
  ROOT_DIR=/src \
  CPU=$CPU \
+ PHI_HTTP_SSL=0 \
  $ARGS
 EOF
 
