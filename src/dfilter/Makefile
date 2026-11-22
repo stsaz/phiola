@@ -1,22 +1,5 @@
 # phiola data filters
 
-# Inherit:
-# C
-# CFLAGS
-# CPU
-# LINK
-# LINK_RPATH_ORIGIN
-# LINKFLAGS
-# OS
-# PHIOLA
-# ROOT_DIR
-# SO
-# SYS
-
-# Modify:
-# LIBS3
-# MODS
-
 FFPACK := $(ROOT_DIR)/ffpack
 FFPACK_BIN := ffpack
 FFPACK_FLAGS := FFPACK=$(FFPACK) OS=$(OS) SYS=$(SYS) COMPILER=$(COMPILER) CPU=$(CPU)

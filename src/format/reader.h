@@ -11,6 +11,7 @@
 #include <avpack/mp4-read.h>
 #include <avpack/mpc-read.h>
 #include <avpack/ogg-codec-read.h>
+#include <avpack/ts-codec-read.h>
 #include <avpack/wav-read.h>
 #include <avpack/wv-read.h>
 
@@ -38,6 +39,7 @@ static const struct avpkr_if *const avpk_formats[] = {
 	&avpk_mp4,
 	&avpk_mpc,
 	&avpk_ogg,
+	&avpk_ts,
 	&avpk_wav,
 	&avpk_wv,
 };
@@ -64,7 +66,9 @@ static void* fmtr_open(phi_track *t)
 		.opaque = f,
 	};
 
-	if (ffstr_eqz(&ext, "aac") && t->conf.stream_copy) {
+	if ((ffstr_eqz(&ext, "aac")
+		|| ffstr_eqz(&ext, "ts"))
+		&& t->conf.stream_copy) {
 		ffstr fn = FFSTR_INITZ(t->conf.ofile.name), oext;
 		ffstr_rsplitby(&fn, '.', NULL, &oext);
 		if (ffstr_ieqz(&oext, "aac")) // .aac -> .aac copy
@@ -72,8 +76,13 @@ static void* fmtr_open(phi_track *t)
 	}
 
 	const struct avpkr_if *rif = avpk_reader_find(ext.ptr, avpk_formats, FF_COUNT(avpk_formats));
-	if (rif)
+	if (rif) {
 		f->rd.ctx = phi_track_alloc(t, rif->context_size);
+		if (rif->format == AVPKF_TS) {
+			c.total_size = 0;
+			t->input.size = ~0ULL; // Prevent seek requests
+		}
+	}
 	if (avpk_open(&f->rd, rif, &c)) {
 		errlog(t, "avpk_open");
 		return PHI_OPEN_ERR;
@@ -150,12 +159,6 @@ static const char* fmtr_hdr(struct fmt_rd *f, phi_track *t, struct avpk_info *hd
 
 	switch (f->rd.ifa.format) {
 	case AVPKF_MKV:
-		if (t->conf.stream_copy) {
-			t->data_type =
-				(hdr->codec == AVPKC_OPUS) ? PHI_AC_OPUS
-				: (hdr->codec == AVPKC_VORBIS) ? PHI_AC_VORBIS
-				: 0;
-		}
 		if (hdr->codec == AVPKC_OPUS && t->conf.stream_copy)
 			t->oaudio.ogg_gen_opus_tag = 1; // .mkv has no Opus Tags packet
 		break;
@@ -186,6 +189,16 @@ static const char* fmtr_hdr(struct fmt_rd *f, phi_track *t, struct avpk_info *hd
 	case AVPKC_MP3:
 		if (t->conf.stream_copy)
 			t->data_type = PHI_AC_MP3;
+		break;
+
+	case AVPKC_OPUS:
+		if (t->conf.stream_copy)
+			t->data_type = PHI_AC_OPUS;
+		break;
+
+	case AVPKC_VORBIS:
+		if (t->conf.stream_copy)
+			t->data_type = PHI_AC_VORBIS;
 		break;
 
 	case AVPKC_PCM:
@@ -300,8 +313,8 @@ static int fmtr_process(struct fmt_rd *f, phi_track *t)
 			break;
 
 		case AVPK_ERROR:
-			errlog(t, "avpk_read() @0x%xU: %s"
-				, res.error.offset, res.error.message);
+			errlog(t, "%s: avpk_read() @0x%xU: %s"
+				, t->conf.ifile.name, res.error.offset, res.error.message);
 			return PHI_ERR;
 		}
 	}
@@ -323,7 +336,8 @@ data:
 		break;
 
 	case AVPKF_OGG:
-		t->oaudio.ogg_granule_pos = ((oggread*)f->rd.ctx)->page_endpos;
+		if (t->oaudio.ogg_copy)
+			t->oaudio.ogg_granule_pos = ((oggread*)f->rd.ctx)->page_endpos;
 		break;
 	}
 

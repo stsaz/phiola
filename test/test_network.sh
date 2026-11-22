@@ -13,6 +13,12 @@ test_server() {
 	kill -9 $!
 	sleep .1
 
+	./phiola server sv.flac -ssl mod/http-client.pem &
+	sleep .1
+	./phiola pl https://127.0.0.1:21014/ -u 3
+	kill -9 $!
+	sleep .1
+
 	./phiola server sv.flac -aac_q 64 &
 	sleep .1
 	./phiola pl http://127.0.0.1:21014/ -u 3

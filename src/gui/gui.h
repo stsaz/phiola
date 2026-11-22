@@ -15,67 +15,94 @@
 #include <util/util.h>
 #include <ffbase/args.h>
 
-struct gui_wmain;
-FF_EXTERN void wmain_init();
+
+enum GUI_CMD {
+	GUI_CMD_INIT,
+	GUI_CMD_FIN,
+	GUI_CMD_HIDE,
+};
+
+/** Broadcast a command.
+cmd: enum GUI_CMD */
+FF_EXTERN void gui_cmd(uint cmd);
+
+
+enum LIST_HDR {
+	H_INDEX,
+	H_ARTIST,
+	H_TITLE,
+	H_DUR,
+	H_INFO,
+	H_DATE,
+	H_ALBUM,
+	H_FN,
+	_H_LAST,
+};
+
+FF_EXTERN void wmain_cmd(uint cmd);
 FF_EXTERN void wmain_show();
 FF_EXTERN void wmain_userconf_write(ffconfw *cw);
 FF_EXTERN const struct ffarg wmain_args[];
-FF_EXTERN void wmain_fin();
+/** Get bitmask of the visible columns */
+FF_EXTERN uint wmain_cols_visible();
+FF_EXTERN void wmain_cols_visible_set(uint mask);
+FF_EXTERN void wmain_event(uint event);
 
-struct gui_winfo;
-FF_EXTERN void winfo_init();
-FF_EXTERN void winfo_fin();
-FF_EXTERN void winfo_show(uint show, uint idx);
+FF_EXTERN void winfo_cmd(uint cmd);
+FF_EXTERN void winfo_show(uint idx);
 FF_EXTERN void winfo_userconf_write(ffconfw *cw);
 FF_EXTERN const struct ffarg winfo_args[];
 
-struct gui_wrename;
-FF_EXTERN void wrename_init();
-FF_EXTERN void wrename_show(uint show, uint idx);
-FF_EXTERN void wrename_fin();
+FF_EXTERN void wrename_cmd(uint cmd);
+FF_EXTERN void wrename_show(uint idx);
+FF_EXTERN void wrename_show_list();
 
-struct gui_wsettings;
-FF_EXTERN void wsettings_init();
-FF_EXTERN void wsettings_show(uint show);
+FF_EXTERN void wsettings_cmd(uint cmd);
+FF_EXTERN void wsettings_show();
 FF_EXTERN void wsettings_userconf_write(ffconfw *cw);
 FF_EXTERN const struct ffarg wsettings_args[];
 
-struct gui_weqlz;
-FF_EXTERN void weqlz_init();
-FF_EXTERN void weqlz_show(uint show);
+FF_EXTERN void weqlz_cmd(uint cmd);
+FF_EXTERN void weqlz_show();
 
-struct gui_wgoto;
-FF_EXTERN void wgoto_init();
+FF_EXTERN void wgoto_cmd(uint cmd);
 
-struct gui_wlistadd;
-FF_EXTERN void wlistadd_init();
-FF_EXTERN void wlistadd_show(uint show);
+FF_EXTERN void wlistadd_cmd(uint cmd);
+FF_EXTERN void wlistadd_show();
 
-struct gui_wlistfilter;
-FF_EXTERN void wlistfilter_init();
-FF_EXTERN void wlistfilter_show(uint show);
+FF_EXTERN void wlistfilter_cmd(uint cmd);
+FF_EXTERN void wlistfilter_show();
 
-FF_EXTERN void wrecord_init();
-FF_EXTERN void wrecord_show(uint show);
+FF_EXTERN void wrecord_cmd(uint cmd);
+FF_EXTERN void wrecord_show();
 FF_EXTERN void wrecord_start_stop();
 FF_EXTERN void wrecord_userconf_write(ffconfw *cw);
 FF_EXTERN const struct ffarg wrecord_args[];
+FF_EXTERN void wrecord_event(uint event);
 
-struct gui_wconvert;
-FF_EXTERN void wconvert_init();
-FF_EXTERN void wconvert_show(uint show, ffslice items);
+FF_EXTERN void wconvert_cmd(uint cmd);
+FF_EXTERN void wconvert_show(ffslice items);
 FF_EXTERN void wconvert_set(int id, uint pos);
 FF_EXTERN void wconvert_userconf_write(ffconfw *cw);
 FF_EXTERN const struct ffarg wconvert_args[];
+FF_EXTERN void wconvert_event(uint event);
 
-struct gui_wabout;
-FF_EXTERN void wabout_init();
-FF_EXTERN void wabout_show(uint show);
+FF_EXTERN void wabout_cmd(uint cmd);
+FF_EXTERN void wabout_show();
 
-struct gui_wlog;
-FF_EXTERN void wlog_init();
+FF_EXTERN void wlog_cmd(uint cmd);
 FF_EXTERN void wlog_userconf_write(ffconfw *cw);
 FF_EXTERN const struct ffarg wlog_args[];
+
+FF_EXTERN void wmlib_cmd(uint cmd);
+FF_EXTERN void wmlib_show();
+FF_EXTERN void wmlib_userconf_write(ffconfw *cw);
+FF_EXTERN const struct ffarg wmlib_args[];
+
+FF_EXTERN void wcolumns_cmd(uint cmd);
+FF_EXTERN void wcolumns_show();
+FF_EXTERN void wcolumns_userconf_write(ffconfw *cw);
+FF_EXTERN const struct ffarg wcolumns_args[];
 
 struct gui {
 #ifdef __cplusplus
@@ -97,7 +124,8 @@ struct gui {
 	struct gui_winfo*		winfo;
 	struct gui_wrename*		wrename;
 	struct gui_wsettings*	wsettings;
-	struct gui_weqlz*	weqlz;
+	struct gui_columns*		wcolumns;
+	struct gui_weqlz*		weqlz;
 	struct gui_wgoto*		wgoto;
 	struct gui_wlistadd*	wlistadd;
 	struct gui_wlistfilter*	wlistfilter;
@@ -105,6 +133,7 @@ struct gui {
 	struct gui_wconvert*	wconvert;
 	struct gui_wabout*		wabout;
 	struct gui_wlog*		wlog;
+	struct gui_mlib*		wmlib;
 
 	ffui_loader	ldr;
 	ffvec		ui_conf; // Contents of 'ui.conf' file

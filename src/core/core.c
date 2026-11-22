@@ -11,6 +11,7 @@
 #include <ffsys/dylib.h>
 #include <ffsys/path.h>
 #include <ffsys/process.h>
+#include <ffsys/random.h>
 #include <ffsys/globals.h>
 #include <ffbase/vector.h>
 
@@ -66,6 +67,7 @@ struct core_ctx {
 
 	struct zzkcq kcq;
 	uint kcq_lazy_start :1;
+	uint random_init;
 
 	fflock mods_lock;
 	ffvec mods; // struct core_mod[]
@@ -82,9 +84,15 @@ static void core_sig(uint signal)
 {
 	dbglog("signal: %u", signal);
 	switch (signal) {
-	case PHI_CORE_STOP:
+	case PHI_CORE_STOP: {
+		struct worker *w = cc->wx.workers.ptr;
+		if (w->th == FFTHREAD_NULL
+			&& w->tid != ffthread_curid())
+			break; // run_detach=0 mode: Not main thread
 		wrkx_stop(&cc->wx);
+		wrkx_wait_stopped(&cc->wx);
 		break;
+	}
 	}
 }
 
@@ -245,12 +253,12 @@ static const phi_mod* core_mod_provide(ffstr file)
 			int e = mod_load(&lm, file);
 
 			fflock_lock(&cc->mods_lock);
+			m = ffslice_itemT(&cc->mods, index, struct core_mod);
 			if (ff_unlikely(e)) {
 				m->dl = FFDL_NULL;
 				fflock_unlock(&cc->mods_lock);
 				return NULL;
 			}
-			m = ffslice_itemT(&cc->mods, index, struct core_mod);
 			m->dl = lm.dl;
 			m->mod = lm.mod;
 			fflock_unlock(&cc->mods_lock);
@@ -321,6 +329,19 @@ static fftime core_time(ffdatetime *dt, uint flags)
 	}
 
 	return t;
+}
+
+static uint core_rand()
+{
+	if (!cc->random_init) {
+		fftime t;
+		fftime_now(&t);
+		ffrand_seed(fftime_sec(&t) + fftime_nsec(&t));
+		ffcpu_fence_release(); // seeding is complete before setting the flag
+		cc->random_init = 1;
+	}
+
+	return ffrand_get();
 }
 
 static void core_timer(uint worker, phi_timer *t, int interval_msec, phi_task_func func, void *param)
@@ -609,6 +630,7 @@ static phi_core _core = {
 	.track = &phi_track_iface,
 	.metaif = &phi_metaif,
 	.time = core_time,
+	.rand = core_rand,
 	.sig = core_sig,
 	.mod = core_mod,
 	.kev_alloc = core_kev_alloc,

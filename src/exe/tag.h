@@ -187,9 +187,8 @@ static int tag_action(struct cmd_tag *t)
 		r |= t->tag->edit(&conf);
 	}
 
-	x->core->sig(PHI_CORE_STOP);
 	x->exit_code = (!r) ? 0 : 1;
-	return 0;
+	return 1;
 }
 
 static int tag_prepare(struct cmd_tag *t)

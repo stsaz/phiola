@@ -31,6 +31,15 @@ struct audio_out {
 #endif
 };
 
+static void audio_out_finish(audio_out *a)
+{
+	dbglog(NULL, "stop/clear");
+	if (a->audio->stop(a->stream))
+		warnlog(NULL, "audio.stop: %s", a->audio->error(a->stream));
+	if (a->audio->clear(a->stream))
+		warnlog(NULL, "audio.clear: %s", a->audio->error(a->stream));
+}
+
 static void audio_out_reuse(audio_out *a)
 {
 	if (a->trk->oaudio.clear) {

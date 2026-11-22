@@ -62,7 +62,7 @@ public class About {
 		};
 		try {
 			Runtime.getRuntime().exec(args);
-			GUI.msg_show(ctx, ctx.getString(R.string.about_log_saved), fn);
+			UIUtil.msg_show(ctx, ctx.getString(R.string.about_log_saved), fn);
 		} catch (Exception e) {
 			core.errlog(TAG, "logs_save_file: %s", e);
 		}

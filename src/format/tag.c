@@ -223,7 +223,7 @@ static int tag_mp3_id3v2_process(struct tag_edit *t, struct id3v2write *w, ffstr
 				} else {
 					// Copy v3/v4 tag data preserving the original text encoding
 					uint n = sizeof(struct id3v2_framehdr);
-					if (id3v2.frame.flags & ID3V2_FRAME_DATALEN)
+					if (id3v2read_frame_flags(&id3v2) & ID3V2_FRAME_DATALEN)
 						n += 4;
 					ffstr_shift(&v, n);
 					r = _id3v2write_addframe(w, k.ptr, FFSTR_Z(""), v, -1);
@@ -413,20 +413,18 @@ static int tag_ogg_vtag_read(oggread *ogg, ffstr in, ffstr *page, uint *page_off
 		case OGGREAD_HEADER:
 			switch (state) {
 			case I_HDR:
-				if (ogg->page_counter != 1)
+				if (oggread_page_counter(ogg) != 1)
 					goto err;
-				if (pkt.len >= 7
-					&& !ffmem_cmp(pkt.ptr, "\x01vorbis", 7))
+				if (ffstr_matchz(&pkt, "\x01vorbis"))
 					state = I_VORBIS_TAGS;
-				else if (pkt.len >= 8
-					&& !ffmem_cmp(pkt.ptr, "OpusHead", 8))
+				else if (ffstr_matchz(&pkt, "OpusHead"))
 					state = I_OPUS_TAGS;
 				else
 					goto err;
 				continue;
 
 			case I_OPUS_TAGS:
-				if (ogg->page_counter != 2)
+				if (oggread_page_counter(ogg) != 2)
 					goto err;
 				if (!(r = opus_tags_read(pkt.ptr, pkt.len)))
 					goto err;
@@ -435,7 +433,7 @@ static int tag_ogg_vtag_read(oggread *ogg, ffstr in, ffstr *page, uint *page_off
 				break;
 
 			case I_VORBIS_TAGS:
-				if (ogg->page_counter != 2)
+				if (oggread_page_counter(ogg) != 2)
 					goto err;
 				if (!(r = vorbis_tags_read(pkt.ptr, pkt.len)))
 					goto err;
@@ -447,8 +445,7 @@ static int tag_ogg_vtag_read(oggread *ogg, ffstr in, ffstr *page, uint *page_off
 				continue;
 
 			case I_VORBIS_CB:
-				if (!(pkt.len >= 7
-					&& !ffmem_cmp(pkt.ptr, "\x05vorbis", 7)))
+				if (!ffstr_matchz(&pkt, "\x05vorbis"))
 					goto err;
 				*vcb = pkt;
 				break;
@@ -456,7 +453,7 @@ static int tag_ogg_vtag_read(oggread *ogg, ffstr in, ffstr *page, uint *page_off
 
 			if (!oggread_pkt_last(ogg))
 				goto err;
-			*page = ogg->chunk;
+			*page = oggread_page_data(ogg);
 			*page_off = oggread_page_offset(ogg);
 			*page_num = oggread_page_num(ogg);
 			return (state == I_OPUS_TAGS) ? 'o' : 'v';
@@ -624,7 +621,7 @@ static int tag_ogg(struct tag_edit *t)
 
 	// Prepare OGG page with Vorbis Tags and maybe Vorbis Codebook
 	ogw.page.number = tags_page_num;
-	oggwrite_create(&ogw, ogg.info.serial, 0);
+	oggwrite_create(&ogw, oggread_info(&ogg)->serial, 0);
 	ffstr wpage;
 	uint f = (vorbis_codebook.len) ? 0 : OGGWRITE_FFLUSH;
 	r = oggwrite_process(&ogw, &vt, &wpage, 0, f);
@@ -716,7 +713,7 @@ static int tag_flac(struct tag_edit *t)
 				break;
 
 			case FLAC_TPADDING:
-				padding_last = fr.last_hdr_block;
+				padding_last = flacread_last_hdr_block(&fr);
 				padding_len = output.len;
 				padding_hdr_off = flacread_meta_offset(&fr);
 				goto fin;

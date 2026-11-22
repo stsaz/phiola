@@ -1,30 +1,7 @@
 # phiola GUI
 
-# Inherit:
-# APP_DIR
-# C
-# CFLAGS
-# CP
-# CXX
-# CXXFLAGS
-# DEBUG_GUI
-# LINK_DL
-# LINK_PTHREAD
-# LINK_RPATH_ORIGIN
-# LINKFLAGS
-# LINKXX
-# MKDIR
-# OS
-# PHIOLA
-# ROOT_DIR
-# SO
-# WINDRES
-
-# Modify:
-# EXES
-# MODS
-
 FFGUI := $(ROOT_DIR)/ffgui
+AVPACK := $(ROOT_DIR)/avpack
 
 MODS += gui.$(SO)
 include $(FFGUI)/conf.mk
@@ -37,7 +14,7 @@ CFLAGS_GUI := $(CFLAGS) $(CFLAGS_GUI)
 LINKFLAGS_GUI := $(LINKXXFLAGS) $(LINKFLAGS_GUI)
 
 gui-mod.o: $(PHIOLA)/src/gui/mod.c
-	$(C) $(CFLAGS) $< -o $@
+	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
 gui-%.o: $(PHIOLA)/src/gui/%.c
 	$(C) $(CFLAGS_GUI) $< -o $@
 gui-%.o: $(PHIOLA)/src/gui/%.cpp
@@ -59,9 +36,11 @@ gui.$(SO): gui-mod.o \
 		gui-gui.o \
 		gui-main.o \
 		gui-dialogs.o \
+		gui-dialogs2.o \
 		$(GUI_RES) \
 		$(FFGUI_OBJ) \
 		\
+		sort.o \
 		str-format.o
 	$(LINKXX) -shared $+ $(LINKFLAGS_GUI) $(LINK_DL) -o $@
 
@@ -83,19 +62,21 @@ phiola-gui.exe: gui-windows.o \
 
 app-gui:
 	$(MKDIR) $(APP_DIR)/mod/gui
+	$(CP) \
+		$(PHIOLA)/src/gui/res/ui.conf \
+		$(PHIOLA)/src/gui/res/lang_*.conf \
+		$(APP_DIR)/mod/gui/
 ifeq "$(OS)" "windows"
 	$(CP) phiola-gui.exe $(APP_DIR)/
-	grep -v '# LINUX' $(PHIOLA)/src/gui/res/ui.conf > $(APP_DIR)/mod/gui/ui.conf
-	$(CP) $(PHIOLA)/src/gui/res/lang_*.conf \
+	$(CP) \
 		$(PHIOLA)/src/gui/res/theme-*.conf \
 		$(APP_DIR)/mod/gui/
 	sed -i 's/_/\&/' $(APP_DIR)/mod/gui/lang_*.conf
 	unix2dos $(APP_DIR)/mod/gui/*.conf
 else
-	grep -v '# WINDOWS' $(PHIOLA)/src/gui/res/ui.conf > $(APP_DIR)/mod/gui/ui.conf
-	$(CP) $(PHIOLA)/src/gui/res/lang_*.conf \
+	$(CP) \
 		$(PHIOLA)/res/phiola.svg \
-		$(PHIOLA)/src/gui/res/*.png \
+		$(PHIOLA)/src/gui/res/*.svg \
 		$(APP_DIR)/mod/gui/
 	$(CP) $(PHIOLA)/src/gui/res/phiola-port.desktop \
 		$(APP_DIR)/mod/gui/phiola.desktop

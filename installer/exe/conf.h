@@ -3,8 +3,10 @@
 #define DIR_NAME  "phiola-2"
 #define EXE_NAME  "phiola-gui.exe"
 #define LINK_NAME  "%USERPROFILE%\\Desktop\\phiola.lnk"
+#define START_MENU_LINK  "%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\phiola.lnk"
 #define CONF_PORTABLE  "mod\\gui\\user.conf"
 #define UNINSTALL_EXE  "shell\\uninstall.exe"
+#define DEL_MAX_FILES  100
 static const char phi_exts[][5] = {
 	"aac",
 	"ape",

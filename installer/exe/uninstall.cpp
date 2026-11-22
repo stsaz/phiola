@@ -2,28 +2,28 @@
 Simon Zolin, 2026 */
 
 #define MTX_NAME  "Local\\phiola-uninstall"
-#define DEL_MAX_FILES  100
+#define LOG_PATH  "%TMP%\\phiola-uninstall.log"
+#define TMP_EXE_PATH  "%TMP%\\phiola-uninstall.exe"
 #define CHILD_MTX_WAIT_MS  (60*1000)
 
+#include <util/windows-shell.h>
 #include <ffsys/environ.h>
 #include <conf.h>
 #include <utils.h>
 #include <util/util.hpp>
 #include <ffsys/error.h>
-#include <ffsys/dirscan.h>
 #include <ffsys/file.h>
 #include <ffsys/path.h>
 #include <ffsys/process.h>
 #include <ffsys/winreg.h>
 #include <ffsys/globals.h>
 #include <ffbase/args.h>
-#include <ffbase/fntree.h>
 #include <ffbase/vector.h>
 
 static int uninstall_spawn(const char *fn, const char *app_dir)
 {
 	xxptr tmp_exe;
-	if (!(tmp_exe.ptr = ffenv_expand(NULL, NULL, 0, "%TMP%\\phiola-uninstall.exe")))
+	if (!(tmp_exe.ptr = ffenv_expand(NULL, NULL, 0, TMP_EXE_PATH)))
 		return 1;
 
 	xxvec data;
@@ -73,6 +73,14 @@ static int uninstall_verify(ffstr dir, const char *self_fn)
 	return 0;
 }
 
+static xxvec vlog;
+static int job(int r, const char *path)
+{
+	vlog.add_f("%s %s\r\n"
+		, (!r) ? "OK " : "ERR", path);
+	return r;
+}
+
 /** Delete a file at the given env-expanded path. */
 static void uninstall_shortcut(const char *lnk)
 {
@@ -80,108 +88,6 @@ static void uninstall_shortcut(const char *lnk)
 	if (!(p.ptr = ffenv_expand(NULL, NULL, 0, lnk)))
 		return;
 	job(fffile_remove(p.ptr), p.ptr);
-}
-
-/** Scan the directory: delete files immediately, add subdirs to the tree.
-Reparse points (junction/symlink) are removed as links.
-limit: remaining N of entries allowed to process */
-static int uninstall_dir_scan(fntree_block **blk, int *limit)
-{
-	int r = 0;
-	size_t prefix;
-	ffdirscan ds = {};
-	xxvec fpath;
-	ffstr path = fntree_path(*blk);
-	if (ffdirscan_open(&ds, path.ptr, FFDIRSCAN_NOSORT))
-		return -1;
-
-	*limit -= ffdirscan_count(&ds);
-	if (*limit < 0) {
-		r = -1;
-		goto end;
-	}
-
-	fpath.alloc<char>(path.len + 1 + 255 + 1);
-	fpath.cat_f("%S\\", &path);
-	prefix = fpath.len;
-	const char *name;
-	while ((name = ffdirscan_next(&ds))) {
-		fpath.len = prefix;
-		fpath.cat_f("%s", name);
-
-		fffileinfo fi;
-		if (fffile_info_path(fpath.sz(), &fi))
-			continue;
-		uint attr = fffileinfo_attr(&fi);
-
-		if (attr & FILE_ATTRIBUTE_REPARSE_POINT) {
-			if (fffile_isdir(attr)) {
-				r |= job(ffdir_remove(fpath.sz()), fpath.sz());
-			} else {
-				r |= job(fffile_remove(fpath.sz()), fpath.sz());
-			}
-			continue;
-		}
-
-		if (fffile_isdir(attr)) {
-			fntree_entry *e;
-			if (!(e = fntree_addz(blk, name, 0)))
-				continue;
-			fntree_attach(e, fntree_create(fpath.str()));
-		} else {
-			r |= job(fffile_remove(fpath.sz()), fpath.sz());
-		}
-	}
-
-end:
-	ffdirscan_close(&ds);
-	return r;
-}
-
-/** Recursively delete the directory tree.
-Stop if more than 'limit' total entries are found (Note: some files may still be deleted). */
-static int uninstall_dir(const char *dir, uint limit)
-{
-	fffileinfo fi;
-	if (fffile_info_path(dir, &fi))
-		return -1;
-	if (fffileinfo_attr(&fi) & FILE_ATTRIBUTE_REPARSE_POINT) {
-		return job(ffdir_remove(dir), dir); // If the root is a reparse point: remove the link only
-	}
-
-	int r = 0;
-	fntree_block *root = fntree_create(FFSTR_Z(dir));
-	fntree_block *blk = root;
-	fntree_cursor cur = {};
-	fntree_entry *e = NULL;
-
-	// Scan; delete files; build the directory tree
-	for (;;) {
-		r |= uninstall_dir_scan(&blk, (int*)&limit);
-		if ((int)limit < 0) {
-			r = -1;
-			goto end;
-		}
-		if (e)
-			e->children = blk;
-
-		if (!(e = fntree_cur_next_r(&cur, &blk)))
-			break;
-		blk = e->children;
-	}
-
-	// Delete directories in post-order (deepest first, root last)
-	blk = root;
-	ffmem_zero_obj(&cur);
-	for (;;) {
-		if (!(blk = _fntr_blk_next_r_post(&cur, blk)))
-			break;
-		r |= job(ffdir_remove(fntree_path(blk).ptr), fntree_path(blk).ptr);
-	}
-
-end:
-	fntree_free_all(root);
-	return r;
 }
 
 static int uninstall_mode(xxstr line, xxstr *dir)
@@ -232,42 +138,6 @@ done:
 #define ui_msg_info(text, flags) \
 	ffui_msgdlg_showz("phiola uninstaller", text, flags | MB_ICONINFORMATION)
 
-typedef HANDLE ffmtx;
-#define FFMTX_NULL  NULL
-#define FFMTX_CREATE  1
-
-/** Create or open mutex object.
-name: optional name
-flags: FFMTX_CREATE or 0
-Return FFMTX_NULL on error */
-static inline ffmtx ffmtx_open(const char *name, uint flags)
-{
-	wchar_t wbuf[256], *wname = NULL;
-	if (name != NULL
-		&& NULL == (wname = ffsz_alloc_buf_utow(wbuf, FF_COUNT(wbuf), name)))
-		return FFMTX_NULL;
-
-	ffmtx h;
-	if (flags & FFMTX_CREATE)
-		h = CreateMutexW(NULL, 0, wname);
-	else
-		h = OpenMutexW(SYNCHRONIZE, 0, wname);
-
-	if (wname != wbuf)
-		ffmem_free(wname);
-	return h;
-}
-
-static inline int ffmtx_wait(ffmtx h, uint time_ms)
-{
-	int r = WaitForSingleObject(h, time_ms);
-	if (r == WAIT_OBJECT_0 || r == WAIT_ABANDONED)
-		r = 0;
-	else if (r == WAIT_TIMEOUT)
-		SetLastError(WSAETIMEDOUT);
-	return r;
-}
-
 #ifdef FF_DEBUG
 int main()
 #else
@@ -279,6 +149,7 @@ int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 	uint perform = uninstall_mode(cmd_line.ptr, &dir);
 	const char *e = NULL;
 	int r = 0;
+	ffmtx mtx = FFMTX_NULL;
 
 	char fn_buf[4096];
 	const char *fn;
@@ -288,12 +159,11 @@ int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 		goto err;
 	}
 
-	ffmtx mtx;
 	if (FFMTX_NULL == (mtx = ffmtx_open(MTX_NAME, FFMTX_CREATE))
 		|| ffmtx_wait(mtx, (!perform) ? 0 : CHILD_MTX_WAIT_MS)) {
 
 		if (!perform && mtx != FFMTX_NULL)
-			e = "Uninstallation is already in progress";
+			e = "Uninstallation is already in progress.";
 		else if (!perform)
 			e = "Failed to start the uninstaller.\n"
 				"Please try again.";
@@ -321,14 +191,14 @@ int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 			"Make sure phiola is closed.\n"
 			"Continue?"
 			, MB_YESNO))
-			return 0;
+			goto end;
 
 		if (uninstall_spawn(fn, xxvec().add_f("%S%Z", &dir).sz())) {
 			e = "Failed to start the uninstaller.\n"
 				"Please try again.";
 			goto err;
 		}
-		return 0;
+		goto end;
 	}
 
 	if (uninstall_verify(dir, fn)) {
@@ -338,23 +208,28 @@ int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 	}
 
 	vlog.alloc<char>(4096);
-	r |= shell_ext_unreg(EXE_NAME, (char*)phi_exts, sizeof(phi_exts[0]), FF_COUNT(phi_exts));
-	r |= env_path_remove(dir);
+	r |= shell_ext_unreg("phiola", EXE_NAME, (char*)phi_exts, sizeof(phi_exts[0]), FF_COUNT(phi_exts), job);
+	r |= env_path_remove(dir, job);
 	dir.ptr[dir.len] = '\0';
-	r |= uninstall_dir(dir.ptr, DEL_MAX_FILES);
+	r |= dir_remove_r(dir.ptr, DEL_MAX_FILES, job);
+	uninstall_shortcut(START_MENU_LINK);
 	uninstall_shortcut(LINK_NAME);
 
-	(void)fffile_writewhole(xxvec(ffenv_expand(NULL, NULL, 0, "%TMP%\\phiola-uninstall.log")).strz(), (char*)vlog.ptr, vlog.len, 0);
+	(void)fffile_writewhole(xxvec().acquire(ffenv_expand(NULL, NULL, 0, LOG_PATH)).strz(), (char*)vlog.ptr, vlog.len, 0);
 	if (r) {
 		e = "Uninstall finished with errors.\n"
 			"Some phiola files or settings may remain.\n"
-			"Please check the installation directory and remove anything left behind manually.";
+			"Please check the installation directory and delete any remaining files manually.";
 		goto err;
 	}
 	ui_msg_info("phiola was uninstalled.", 0);
-	return 0;
+	goto end;
 
 err:
 	ui_msg_warn(e, 0);
-	return 1;
+	r = 1;
+
+end:
+	ffmtx_close(mtx);
+	return !!r;
 }

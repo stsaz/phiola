@@ -1,9 +1,15 @@
 FROM debian:trixie-slim
-ARG NFPM_VER=2.46.3
-ARG NFPM_SHA256SUM=d6417f99d5fa32bba7a4e007084615d3897651498c2e443118c26b9ec3b698a8
 RUN apt update && \
  apt install -y \
   make
+RUN apt install -y \
+ clang lld
+RUN apt install -y \
+ libgtk-3-dev
+RUN apt install -y \
+ libasound2-dev libpulse-dev libjack-dev \
+ libdbus-1-dev \
+ libncurses-dev
 RUN apt install -y \
  curl \
  zstd zip unzip bzip2 xz-utils \
@@ -14,16 +20,9 @@ RUN apt install -y \
  gettext \
  pkg-config \
  perl
-RUN apt install -y \
- clang lld
+ARG NFPM_VER=2.46.3
+ARG NFPM_SHA256SUM=d6417f99d5fa32bba7a4e007084615d3897651498c2e443118c26b9ec3b698a8
 RUN curl -L -o nfpm.deb https://github.com/goreleaser/nfpm/releases/download/v${NFPM_VER}/nfpm_${NFPM_VER}_amd64.deb \
  && echo "${NFPM_SHA256SUM} *nfpm.deb" | sha256sum -c - \
  && dpkg -i nfpm.deb \
  && rm -f nfpm.deb
-RUN apt install -y \
- libasound2-dev libpulse-dev libjack-dev \
- libdbus-1-dev
-RUN apt install -y \
- libncurses-dev
-RUN apt install -y \
- libgtk-3-dev

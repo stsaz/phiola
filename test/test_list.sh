@@ -18,6 +18,11 @@ test_list() {
 	./phiola info test-sort.m3u | grep '#1 "A2 - T2" "list2.ogg"'
 	./phiola info test-sort2.m3u | grep '#1 "A2 - T2" "list2.ogg"'
 
+	# test -nodups
+	./phiola list create list3.ogg list2.ogg list3.ogg list2.ogg -o test-nodups.m3u
+	./phiola list sort -nodups test-nodups.m3u
+	[[ $(./phiola info test-nodups.m3u | grep -c '\.ogg') == 2 ]]
+
 	cat >/tmp/phiola-test.pls <<EOF
 [playlist]
 File1=`pwd`/list1.wav

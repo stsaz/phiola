@@ -48,6 +48,7 @@ static void exe_log(void *log_obj, uint flags, const char *module, phi_track *t,
 
 #define syserrlog(...)  exe_log(&x->log, PHI_LOG_ERR | PHI_LOG_SYS, NULL, NULL, __VA_ARGS__)
 #define errlog(...)  exe_log(&x->log, PHI_LOG_ERR, NULL, NULL, __VA_ARGS__)
+#define syswarnlog(...)  exe_log(&x->log, PHI_LOG_WARN | PHI_LOG_SYS, NULL, NULL, __VA_ARGS__)
 #define warnlog(...)  exe_log(&x->log, PHI_LOG_WARN, NULL, NULL, __VA_ARGS__)
 #define infolog(...)  exe_log(&x->log, PHI_LOG_INFO, NULL, NULL, __VA_ARGS__)
 #define userlog(...)  exe_log(&x->log, PHI_LOG_USER, NULL, NULL, __VA_ARGS__)
@@ -87,4 +88,13 @@ static void logs(struct zzlog *l)
 	int r = ffstd_attr(l->fd, FFSTD_VTERM, FFSTD_VTERM);
 	l->use_color = !r;
 	l->fd_file = (r < 0);
+}
+
+/** Enable/disable logging pass-through */
+void exe_log_ctl(uint flags)
+{
+	if (flags)
+		x->log.func = x->uif->log; // UI is ready to display logs
+	else
+		x->log.func = NULL;
 }

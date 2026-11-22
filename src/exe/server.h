@@ -22,6 +22,7 @@ Options:\n\
   `-channels` NUMBER      Channels number (default: 2)\n\
 \n\
   `-port` NUMBER          TCP port (default: 21014)\n\
+  `-ssl CERT.PEM`         Use TLS encryption\n\
   `-max_clients` NUMBER   Max. number of clients\n\
 ");
 	x->exit_code = 0;
@@ -31,6 +32,7 @@ Options:\n\
 struct cmd_srv {
 	ffvec	include, exclude; // ffstr[]
 	ffvec	input; // ffstr[]
+	const char *ssl_cert;
 	uint	aac_q;
 	uint	channels;
 	uint	opus_q;
@@ -39,6 +41,7 @@ struct cmd_srv {
 
 	struct phi_asv_conf ac;
 	phi_task task;
+	char *oname;
 };
 
 static void srv_action2(struct cmd_srv *s);
@@ -62,11 +65,29 @@ static int srv_input(struct cmd_srv *s, ffstr fn)
 
 static int srv_prepare(struct cmd_srv *s)
 {
+	int rc = 1;
 	if (!s->input.len)
 		return _ffargs_err(&x->cmd, 1, "please specify input file");
 
+	char *fn_def = NULL;
+	if (s->ssl_cert) {
+		const char *fn = s->ssl_cert;
+		if (!*fn)
+			fn = fn_def = ffsz_allocfmt("%S/mod/http-client.pem", &x->root_dir);
+		ffvec d = {};
+		if (fffile_readwhole(fn, &d, 1*1024*1024)) {
+			syserrlog("file read: %s", fn);
+			goto end;
+		}
+		s->ac.ssl_cert = ffvec_str(&d);
+	}
+
 	x->max_tasks = s->ac.max_clients;
-	return 0;
+	rc = 0;
+
+end:
+	ffmem_free(fn_def);
+	return rc;
 }
 
 static void playlist_prepare(struct cmd_srv *s)
@@ -141,6 +162,8 @@ static void srv_action2(struct cmd_srv *s)
 	phi_track *t = track->create(&c);
 	track->filter(t, x->core->mod("http.server"), 0);
 	track->start(t);
+
+	s->oname = c.ofile.name;
 }
 
 #define O(m)  (void*)FF_OFF(struct cmd_srv, m)
@@ -154,6 +177,7 @@ static const struct ffarg cmd_srv[] = {
 	{ "-opus_quality",	'u',	O(opus_q) },
 	{ "-port",			'u',	O(port) },
 	{ "-shuffle",		'1',	O(shuffle) },
+	{ "-ssl",			's',	O(ssl_cert) },
 	{ "\0\1",			'S',	srv_input },
 	{ "",				0,		srv_prepare },
 };
@@ -161,6 +185,7 @@ static const struct ffarg cmd_srv[] = {
 
 static void cmd_srv_free(struct cmd_srv *s)
 {
+	ffmem_free(s->oname);
 	ffmem_free(s);
 }
 

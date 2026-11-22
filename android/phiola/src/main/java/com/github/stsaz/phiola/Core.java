@@ -6,6 +6,8 @@ package com.github.stsaz.phiola;
 import androidx.annotation.NonNull;
 
 import android.app.Activity;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.ClipboardManager;
 import android.content.ClipData;
 import android.content.Context;
@@ -33,7 +35,7 @@ class Core extends Util {
 	private static final String CONF_FN = "phiola-user.conf";
 	static String PUB_DATA_DIR = "phiola";
 
-	private GUI gui;
+	GUI gui;
 	private Queue qu;
 	Track track;
 	private SysAudio sysaudio;
@@ -128,8 +130,11 @@ class Core extends Util {
 					dbglog(TAG, "Callbacks.play_new()");
 					tq.post(() -> {
 							tq.removeCallbacks(delayed_abandon_focus);
-							if (sysaudio.audio_focus_request())
+							if (sysaudio.audio_focus_request()) {
 								track.play_on_create(meta);
+								if (play.play_min_system)
+									PlaySvc.start_once(context);
+							}
 						});
 				}
 
@@ -183,20 +188,16 @@ class Core extends Util {
 			return false;
 		context.startService(new Intent(context, RecSvc.class));
 		gui.state_update(GUI.STATE_RECORDING, GUI.STATE_RECORDING);
-		GUI.msg_show(context, context.getString(R.string.main_rec_started));
 		return true;
 	}
 
 	public void rec_radio_start(Track.RecCallback cb) {
 		track.rec_radio(cb);
 		gui.state_update(GUI.STATE_RECORDING, GUI.STATE_RECORDING);
-		GUI.msg_show(context, context.getString(R.string.main_rec_started));
 	}
 
 	private void rec_finished(int mode, int code, String filename) {
 		gui.state_update(GUI.STATE_RECORDING | GUI.STATE_REC_PAUSED, 0);
-		GUI.msg_show(context, (code == 0) ? context.getString(R.string.main_rec_fin)
-			: String.format(context.getString(R.string.main_rec_err), errstr(code)));
 
 		if (code == 0 && rec.rec_list_add)
 			qu.current_add(filename, 0);
@@ -240,12 +241,15 @@ class Core extends Util {
 		return r;
 	}
 
-	Queue queue() {
-		return qu;
+	String notif_channel_create(String id, String name) {
+		NotificationManager mgr = (NotificationManager)context.getSystemService(context.NOTIFICATION_SERVICE);
+		NotificationChannel chan = new NotificationChannel(id, name, NotificationManager.IMPORTANCE_LOW);
+		mgr.createNotificationChannel(chan);
+		return id;
 	}
 
-	GUI gui() {
-		return gui;
+	Queue queue() {
+		return qu;
 	}
 
 	private String conf_file_name() { return work_dir + "/" + CONF_FN; }
@@ -324,8 +328,7 @@ class Core extends Util {
 
 	void errlog(String mod, String fmt, Object... args) {
 		Log.e(mod, String.format("%s: %s", mod, String.format(fmt, args)));
-		if (gui != null)
-			gui.on_error(fmt, args);
+		UIUtil.msg_show(context, fmt, args);
 	}
 
 	void dbglog(String mod, String fmt, Object... args) {

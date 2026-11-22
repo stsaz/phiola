@@ -1,17 +1,5 @@
 # phiola Core
 
-# Inherit:
-# C
-# CFLAGS
-# LINK
-# LINK_DL
-# LINK_PTHREAD
-# LINKFLAGS
-# OS
-# PHIOLA
-# SO
-# SYS
-
 AVPACK := $(ROOT_DIR)/avpack
 
 LINKFLAGS_CORE := $(LINKFLAGS)

@@ -34,8 +34,11 @@ struct gui_wmain {
 
 	char *vlist_col;
 	char *wnd_pos;
+	uint columns_hidden; // hidden columns bitarray
 	uint ready;
 };
+
+static ffui_icon& res_icon_load(ffui_icon *ico, const char *name, uint resource_id);
 
 #define _(m) FFUI_LDR_CTL(gui_wmain, m)
 FF_EXTERN const ffui_ldr_ctl wmain_ctls[] = {
@@ -56,18 +59,6 @@ FF_EXTERN const ffui_ldr_ctl wmain_ctls[] = {
 };
 #undef _
 
-enum LIST_HDR {
-	H_INDEX,
-	H_ARTIST,
-	H_TITLE,
-	H_DUR,
-	H_INFO,
-	H_DATE,
-	H_ALBUM,
-	H_FN,
-	_H_LAST,
-};
-
 static const char list_colname[][10] = {
 	"", // H_INDEX
 	"artist", // H_ARTIST
@@ -79,24 +70,92 @@ static const char list_colname[][10] = {
 	"", // H_FN
 };
 
-static void conf_vlist_col(ffui_viewxx &v, xxstr val)
-{
-	ffui_viewcolxx vc = {};
+static void vlist_col_from_conf(uint *width) {
+	gui_wmain *m = gg->wmain;
+	xxstr w(m->vlist_col);
 	uint i = 0;
-	while (val.len) {
+	while (w.len) {
 		xxstr s;
-		val.split_by(' ', &s, &val);
-		uint width;
-		if (!s.match_f("%u", &width)) {
-			vc.width(width);
-			v.column(i, vc);
-		}
+		w.split_by(' ', &s, &w);
+		uint n = s.uint16(0);
+		if (n)
+			width[i] = n;
 		i++;
 	}
 }
 
+/** Write column widths to string */
+static char* vlist_col_write() {
+	gui_wmain *m = gg->wmain;
+	xxvec v;
+	ffui_viewcolxx vc = {};
+	vc.width(0);
+	for (uint i = 0;  i != _H_LAST;  i++) {
+		uint w = m->vlist.column(i, &vc).width();
+		v.add_f("%u ", w);
+	}
+	char *r = v.strz();
+	v.reset();
+	return r;
+}
+
+/** Set columns width from a string value list */
+static void conf_vlist_col() {
+	gui_wmain *m = gg->wmain;
+	if (!m->vlist_col) return;
+
+	uint width[_H_LAST] = {};
+	vlist_col_from_conf(width);
+
+	ffui_viewcolxx vc = {};
+	for (uint i = 0;  i < _H_LAST;  i++) {
+		if (width[i]) {
+			vc.width(width[i]);
+			m->vlist.column(i, vc);
+		}
+	}
+
+	ffmem_free(m->vlist_col);
+	m->vlist_col = NULL;
+}
+
+/** Set column visibility */
+static void vlist_cols_showhide(uint flags) {
+	gui_wmain *m = gg->wmain;
+	if (flags && !m->columns_hidden) return; // All columns shown
+
+	ffui_viewcolxx vc = {};
+	for (uint i = 0;  i < _H_LAST;  i++) {
+		bool show = !(m->columns_hidden & (1U << i));
+		if (show && flags)
+			continue;
+
+#ifdef FF_WIN
+		vc.width(0);
+		uint w = m->vlist.column(i, &vc).width();
+		if (w && show)
+			continue; // Preserve the current width
+		ffui_viewcol_setwidth(&vc.vc, (show) ? 100 : 0);
+#else
+		ffui_viewcol_show(&vc.vc, show);
+#endif
+
+		m->vlist.column(i, vc);
+	}
+}
+
+// Note: 'struct gui{ columns_hidden }' is more logical, but currently there's no conf context for global gui settings
+uint wmain_cols_visible() { return ~gg->wmain->columns_hidden & ((1U << _H_LAST) - 1); }
+void wmain_cols_visible_set(uint mask) {
+	gg->wmain->columns_hidden = (mask)
+		? ~mask & ((1U << _H_LAST) - 1)
+		: 0; // Prevent showing empty view
+	vlist_cols_showhide(0);
+}
+
 #define O(m)  (void*)FF_OFF(struct gui_wmain, m)
 const ffarg wmain_args[] = {
+	{ "cols_hidden",'u',	O(columns_hidden) },
 	{ "vlist.col",	'=s',	O(vlist_col) },
 	{ "wmain.pos",	'=s',	O(wnd_pos) },
 	{}
@@ -107,14 +166,8 @@ void wmain_userconf_write(ffconfw *cw)
 {
 	gui_wmain *m = gg->wmain;
 
-	xxvec v;
-	ffui_viewcolxx vc = {};
-	vc.width(0);
-	for (uint i = 0;  i != _H_LAST;  i++) {
-		v.add_f("%u ", m->vlist.column(i, &vc).width());
-	}
-	m->vlist_col = v.strz();
-	v.reset();
+	ffmem_free(m->vlist_col);
+	m->vlist_col = vlist_col_write(); // Note: win32: original width values for hidden columns are lost
 
 	m->wnd_pos = wnd_pos_sz(&m->wnd);
 	ffarg_write_conf(cw, wmain_args, m);
@@ -122,7 +175,8 @@ void wmain_userconf_write(ffconfw *cw)
 	ffmem_free(m->vlist_col);
 }
 
-/** Set status bar text */
+/** Set status bar text.
+Thread: any */
 void wmain_status(const char *fmt, ...)
 {
 	gui_wmain *m = gg->wmain;
@@ -130,8 +184,45 @@ void wmain_status(const char *fmt, ...)
 	va_start(va, fmt);
 	char buf[1000];
 	ffsz_formatv(buf, sizeof(buf), fmt, va);
-	m->stbar.text(buf);
+	m->stbar.text(0, buf);
 	va_end(va);
+}
+
+/** Handle event.
+Thread: any */
+void wmain_event(uint event)
+{
+	gui_wmain *m = gg->wmain;
+	switch (event) {
+	case GUI_EV_PLAY_STOPPED:
+	case GUI_EV_PLAY_PAUSED:
+	case GUI_EV_PLAY_PLAYING: {
+		ffui_icon *ico;
+		if (event == GUI_EV_PLAY_PLAYING)
+			ico = &res_icon_load(&m->ico_pause, "pause", 7);
+		else
+			ico = &res_icon_load(&m->ico_play, "play", 3);
+		m->bpause.icon(*ico);
+		m->stbar.text(0, (event == GUI_EV_PLAY_PAUSED) ? "Paused" : "");
+		break;
+	}
+
+	case GUI_EV_REC_STARTED:
+	case GUI_EV_REC_DONE:
+	case GUI_EV_REC_ERR: {
+		const char *s[][2] = {
+			{ "Recording...", "[REC]" },
+			{ "Recording complete", "" },
+			{ "Recording error", "" },
+		};
+		uint i = (event == GUI_EV_REC_STARTED) ? 0
+			: (event == GUI_EV_REC_DONE) ? 1
+			: 2;
+		m->stbar.text(0, s[i][0]);
+		m->stbar.text(1, s[i][1]);
+		break;
+	}
+	}
 }
 
 static ffui_icon& res_icon_load(ffui_icon *ico, const char *name, uint resource_id)
@@ -140,28 +231,11 @@ static ffui_icon& res_icon_load(ffui_icon *ico, const char *name, uint resource_
 #ifdef FF_WIN
 		ffui_icon_load_res(ico, GetModuleHandleW(L"gui.dll"), xxwstr_buf<100>().utow(xxstr_buf<100>().zfmt("#%u", resource_id)), 0, 0);
 #else
-		ffui_icon_load(ico, xxstr_buf<4096>().zfmt("%S/mod/gui/%s.png", &core->conf.root, name));
+		ffui_icon_load(ico, xxstr_buf<4096>().zfmt("%S/mod/gui/%s.svg", &core->conf.root, name));
 #endif
 		PHI_ASSERT(ffui_icon_valid(ico));
 	}
 	return *ico;
-}
-
-void wmain_status_id(uint id)
-{
-	gui_wmain *m = gg->wmain;
-	ffui_icon *ico = NULL;
-	switch (id) {
-	case ST_STOPPED:
-	case ST_PAUSED:
-		ico = &res_icon_load(&m->ico_play, "play", 3);  break;
-
-	case ST_UNPAUSED:
-		ico = &res_icon_load(&m->ico_pause, "pause", 7);  break;
-	}
-
-	m->bpause.icon(*ico);
-	wmain_status((id == ST_PAUSED) ? "Paused" : "");
 }
 
 int wmain_ready()
@@ -173,6 +247,8 @@ int wmain_ready()
 void wmain_track_new(void *param)
 {
 	gui_wmain *m = gg->wmain;
+	if (!m->ready)
+		return;
 	struct gui_track_info *ti = (struct gui_track_info*)param;
 
 	if (ti->q == gd->q_selected && !gd->q_filtered) {
@@ -188,7 +264,7 @@ void wmain_track_new(void *param)
 		}
 	}
 
-	wmain_status_id(ST_UNPAUSED);
+	wmain_event(GUI_EV_PLAY_PLAYING);
 	m->tpos.range((ti->duration_sec != ~0U) ? ti->duration_sec : 0);
 
 	m->wnd.title(ti->buf);
@@ -197,6 +273,8 @@ void wmain_track_new(void *param)
 void wmain_track_close(void *param)
 {
 	gui_wmain *m = gg->wmain;
+	if (!m->ready)
+		return;
 	struct gui_track_info *ti = (struct gui_track_info*)param;
 
 	if (ti->q == gd->q_selected && !gd->q_filtered
@@ -207,13 +285,15 @@ void wmain_track_close(void *param)
 	m->wnd.title("phiola");
 	m->lpos.text("");
 	m->tpos.range(0);
-	wmain_status_id(ST_STOPPED);
+	wmain_event(GUI_EV_PLAY_STOPPED);
 }
 
 void wmain_track_update(void *param)
 {
 	struct gui_track_info *ti = (struct gui_track_info*)param;
 	gui_wmain *m = gg->wmain;
+	if (!m->ready)
+		return;
 
 	m->tpos.set(ti->pos_sec);
 
@@ -357,8 +437,6 @@ void wmain_list_delete(uint i)
 {
 	gui_wmain *m = gg->wmain;
 	uint new_index = (!i) ? 0 : i-1;
-	gd->current_scroll_vpos = m->vlist.scroll_vert();
-	list_select(new_index);
 	m->tabs.del(i);
 	m->tabs.select(new_index);
 }
@@ -404,7 +482,8 @@ static void q_on_change(phi_queue_id q, uint flags, uint pos)
 {
 	gui_wmain *m = gg->wmain;
 
-	if (q == gd->q_filtered)
+	if (q == gd->q_filtered
+		|| !gd->lists_load_done)
 		return;
 
 	uint cmd = (flags & 0xff);
@@ -462,7 +541,7 @@ static void q_on_change(phi_queue_id q, uint flags, uint pos)
 
 	case '.':
 		if (q == gd->q_convert)
-			wconvert_done();
+			gui_event(GUI_EV_CONV_DONE);
 		break;
 	}
 }
@@ -557,6 +636,24 @@ void wmain_list_select(uint n, uint scroll_vpos)
 	gui_task_uint(list_scroll, scroll_vpos);
 }
 
+/** Rename list at position 'i'.
+Thread: core */
+void wmain_list_rename(uint i, const char *name)
+{
+	gui_wmain *m = gg->wmain;
+	m->tabs.text(i, name);
+}
+
+void wmain_lists_load(struct lists_load_data *d)
+{
+	struct gui_wmain *m = gg->wmain;
+	for (uint i = 0;  i < d->n;  i++) {
+		m->tabs.add(list_name_i(i));
+	}
+	m->tabs.select(d->sel);
+	ffmem_free(d);
+}
+
 /** Add the files chosen by user */
 static void list_add_choose()
 {
@@ -580,19 +677,13 @@ static void list_save_choose_filename()
 {
 	gui_wmain *m = gg->wmain;
 	char *fn;
-	ffstr name = FFSTR_INITZ("Playlist.m3u8");
-	if (!(fn = ffui_dlg_save(&gg->dlg, &m->wnd, name.ptr, name.len)))
+	xxvec name;
+	name.acquire(list_cur_path());
+	if (!(fn = ffui_dlg_save(&gg->dlg, &m->wnd, name.sz(), name.len)))
 		return;
 
 	char *fn2 = ffsz_dup(fn);
 	gui_core_task_ptr(list_save, fn2);
-}
-
-static void tray_show(uint tray)
-{
-	gui_wmain *m = gg->wmain;
-	m->wnd.show(!tray);
-	m->tray.show(tray);
 }
 
 static void wmain_action(ffui_window *wnd, int id)
@@ -603,16 +694,6 @@ static void wmain_action(ffui_window *wnd, int id)
 
 	switch (id) {
 // File:
-	case A_FILE_INFO:
-		if ((i = m->vlist.selected_first()) >= 0)
-			winfo_show(1, i);
-		break;
-
-	case A_FILE_RENAME:
-		if ((i = m->vlist.selected_first()) >= 0)
-			wrename_show(1, i);
-		break;
-
 	case A_FILE_SHOWDIR:
 		gui_core_task_slice(file_dir_show, m->vlist.selected());  break;
 
@@ -621,13 +702,15 @@ static void wmain_action(ffui_window *wnd, int id)
 			gui_core_task_slice(file_del, m->vlist.selected());
 		break;
 
-	case A_SETTINGS_SHOW:
-		wsettings_show(1);  break;
-
 	case A_TRAY_MIN:
-		tray_show(1);  break;
-	case A_TRAY_CLICK:
-		tray_show(0);  break;
+	case A_TRAY_CLICK: {
+		bool tray = (id == A_TRAY_MIN);
+		m->tray.show(tray);
+		m->wnd.show(!tray);
+		if (tray)
+			gui_cmd(GUI_CMD_HIDE);
+		break;
+	}
 
 	case A_QUIT:
 		m->wnd.close();  break;
@@ -668,14 +751,8 @@ static void wmain_action(ffui_window *wnd, int id)
 	case A_LIST_ADD_FILE:
 		list_add_choose();  break;
 
-	case A_LIST_ADD:
-		wlistadd_show(1);  break;
-
 	case A_LIST_ADDTONEXT:
 		gui_core_task_slice(list_add_to_next, m->vlist.selected());  break;
-
-	case A_LIST_FILTER:
-		wlistfilter_show(1);  break;
 
 	case A_LIST_SAVE:
 		list_save_choose_filename();  break;
@@ -701,29 +778,15 @@ static void wmain_action(ffui_window *wnd, int id)
 		list_display((ffui_viewxx_disp*)m->vlist.dispinfo_item);  break;
 
 // Record:
-	case A_RECORD_SHOW:
-		wrecord_show(1);  break;
-
 	case A_RECORD_START_STOP:
 		wrecord_start_stop();  break;
 
 // Convert:
-	case A_CONVERT_SHOW: {
-		ffslice items = {};
-		if (!gd->tab_conversion)
-			items = m->vlist.selected();
-		wconvert_show(1, items);
-		break;
-	}
-
 	case A_CONVERT_POS_START:
 	case A_CONVERT_POS_END:
 		wconvert_set(id, ffmax((int)m->tpos.get() - 1, 0));  break;
 
 // Misc:
-	case A_ABOUT_SHOW:
-		wabout_show(1);  break;
-
 	case A_CLOSE:
 		gui_quit();
 
@@ -739,12 +802,55 @@ static void wmain_action(ffui_window *wnd, int id)
 	case A_FILE_DRAGDROP:
 		on_drop_files();  break;
 
+	case A_FILE_INFO:
+	case A_FILE_RENAME:
+	case A_MLIB_SHOW:
+	case A_SETTINGS_SHOW:
+	case A_LIST_RENAME:
+	case A_LIST_ADD:
+	case A_LIST_FILTER:
+	case A_RECORD_SHOW:
+	case A_CONVERT_SHOW:
+	case A_ABOUT_SHOW:
+		if (gui_dlg_load())
+			return;
+
+		switch (id) {
+		case A_FILE_INFO:
+			if ((i = m->vlist.selected_first()) >= 0)
+				winfo_show(i);
+			break;
+		case A_FILE_RENAME:
+			if ((i = m->vlist.selected_first()) >= 0)
+				wrename_show(i);
+			break;
+		case A_MLIB_SHOW: wmlib_show();  break;
+		case A_SETTINGS_SHOW: wsettings_show();  break;
+
+		case A_LIST_RENAME: wrename_show_list();  break;
+		case A_LIST_ADD: wlistadd_show();  break;
+		case A_LIST_FILTER: wlistfilter_show();  break;
+
+		case A_RECORD_SHOW: wrecord_show();  break;
+
+		case A_CONVERT_SHOW: {
+			ffslice items = {};
+			if (!gd->tab_conversion)
+				items = m->vlist.selected();
+			wconvert_show(items);
+			break;
+		}
+
+		case A_ABOUT_SHOW: wabout_show();  break;
+		}
+		break;
+
 	default:
 		gui_core_task_uint(ctl_action, id);
 	}
 }
 
-void wmain_init()
+static void wmain_init()
 {
 	gui_wmain *m = gui_allocT(gui_wmain);
 	gg->wmain = m;
@@ -754,6 +860,22 @@ void wmain_init()
 #else
 	m->vlist.paint_notify = 1;
 #endif
+
+	static const struct ffui_wnd_keymap kmap[] = {
+#ifdef FF_WIN
+		{ APPCOMMAND_MEDIA_PLAY_PAUSE,    A_PLAYPAUSE },
+		{ APPCOMMAND_MEDIA_STOP,          A_STOP },
+		{ APPCOMMAND_MEDIA_NEXTTRACK,     A_NEXT },
+		{ APPCOMMAND_MEDIA_PREVIOUSTRACK, A_PREV },
+#else
+		{ GDK_KEY_AudioPlay,	A_PLAYPAUSE },
+		{ GDK_KEY_AudioStop,	A_STOP },
+		{ GDK_KEY_AudioNext,	A_NEXT },
+		{ GDK_KEY_AudioPrev,	A_PREV },
+#endif
+	};
+	ffui_wnd_keymap(&m->wnd, kmap, FF_COUNT(kmap));
+
 	m->wnd.on_action = wmain_action;
 	m->wnd.onclose_id = A_CLOSE;
 	m->vlist.dispinfo_id = A_LIST_DISPLAY;
@@ -763,10 +885,8 @@ void wmain_show()
 {
 	gui_wmain *m = gg->wmain;
 
-	if (m->vlist_col)
-		conf_vlist_col(m->vlist, m->vlist_col);
-	ffmem_free(m->vlist_col);
-	m->vlist_col = NULL;
+	conf_vlist_col();
+	vlist_cols_showhide(1);
 
 	if (m->wnd_pos)
 		conf_wnd_pos_read(&m->wnd, FFSTR_Z(m->wnd_pos));
@@ -774,7 +894,6 @@ void wmain_show()
 	m->wnd_pos = NULL;
 
 	m->tvol.set(gd->conf.volume);
-	m->tabs.add("Playlist 1");
 	m->wnd.tab_auto_switch(&m->tabs);
 	m->wnd.show(1);
 	wmain_list_draw(gd->queue->count(gd->q_selected), 0);
@@ -793,10 +912,21 @@ void wmain_show()
 	m->ready = 1;
 }
 
-void wmain_fin()
+static void wmain_fin()
 {
 	gui_wmain *m = gg->wmain;
+	m->ready = 0;
 	core->timer(0, &m->redraw.timer, 0, NULL, NULL);
 	dbglog("%s  paint-events: %u/%u"
 		, __func__, m->redraw.n_actual, m->redraw.n_total);
+}
+
+void wmain_cmd(uint cmd)
+{
+	switch (cmd) {
+	case GUI_CMD_INIT:
+		wmain_init();  break;
+	case GUI_CMD_FIN:
+		wmain_fin();  break;
+	}
 }

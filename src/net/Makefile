@@ -1,22 +1,5 @@
 # phiola network module
 
-# Inherit:
-# C
-# CFLAGS
-# CFLAGS_BASE
-# DEBUG
-# FFSYS
-# LINK
-# LINK_PTHREAD
-# LINKFLAGS
-# PHIOLA
-# ROOT_DIR
-# SO
-
-# Modify:
-# LIBS3
-# MODS
-
 AVPACK := $(ROOT_DIR)/avpack
 NETMILL := $(ROOT_DIR)/netmill
 NML_3PT := netmill-3pt
@@ -54,14 +37,14 @@ ifeq "$(PHI_HTTP_SSL)" "0"
 	CFLAGS_NETMILL += -DPHI_HTTP_NO_SSL
 else
 	HTTP_OBJ += ffssl.o
-	CFLAGS_NETMILL += -I$(NML_3PT)/openssl-3.5.6/include
+	CFLAGS_NETMILL += -I$(NML_3PT)/openssl-4.1.0/include
 	LINKFLAGS_NETMILL := -L$(NML_3PT)
 	ifeq "$(OS)" "windows"
-		LINKFLAGS_NETMILL += -lssl-3-x64 -lcrypto-3-x64
+		LINKFLAGS_NETMILL += -lssl-4-x64 -lcrypto-4-x64
 		LIBS3 += \
-			$(NML_3PT)/libssl-3-x64.$(SO) \
-			$(NML_3PT)/libcrypto-3-x64.$(SO)
-		OPENSSL_SO := $(NML_3PT)/libssl-3-x64.$(SO)
+			$(NML_3PT)/libssl-4-x64.$(SO) \
+			$(NML_3PT)/libcrypto-4-x64.$(SO)
+		OPENSSL_SO := $(NML_3PT)/libssl-4-x64.$(SO)
 
 	else ifeq "$(SYS)" "android"
 		LINKFLAGS_NETMILL += -lssl -lcrypto
@@ -80,13 +63,17 @@ else
 	else
 		LINKFLAGS_NETMILL += -lssl -lcrypto
 		LIBS3 += \
-			$(NML_3PT)/libssl.$(SO).3 \
-			$(NML_3PT)/libcrypto.$(SO).3
-		OPENSSL_SO := $(NML_3PT)/libssl.$(SO).3
+			$(NML_3PT)/libssl.$(SO).4 \
+			$(NML_3PT)/libcrypto.$(SO).4
+		OPENSSL_SO := $(NML_3PT)/libssl.$(SO).4
 	endif
 
+OPENSSL_MAKE_ARGS :=
+ifeq "$(VERBOSE)" "low"
+	OPENSSL_MAKE_ARGS := -s
+endif
 $(OPENSSL_SO): $(NETMILL)/3pt/openssl/Makefile | $(NML_3PT)
-	$(MAKE)  -C $(NML_3PT)  -f $(NETMILL)/3pt/openssl/Makefile  -I $(NETMILL)/3pt/openssl  NML_3PT=$(NETMILL)/3pt $(NML_3PT_FLAGS)
+	$(MAKE) $(OPENSSL_MAKE_ARGS) -C $(NML_3PT)  -f $(NETMILL)/3pt/openssl/Makefile  -I $(NETMILL)/3pt/openssl  NML_3PT=$(NETMILL)/3pt $(NML_3PT_FLAGS)
 
 ffssl.o: $(NETMILL)/src/util/ffssl.c | $(OPENSSL_SO)
 	$(C) $(CFLAGS_NETMILL) -I$(FFSYS) $< -o $@

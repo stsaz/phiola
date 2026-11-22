@@ -342,3 +342,33 @@ end:
 	ffvec_free(&v);
 	return rc;
 }
+
+static inline int fffile_readwhole_add(const char *fn, ffvec *dst, ffuint64 limit)
+{
+	fffd f;
+	if (FFFILE_NULL == (f = fffile_open(fn, FFFILE_READONLY)))
+		return -1;
+
+	int r = -1;
+	ffuint64 sz = fffile_size(f);
+	if (sz > limit)
+		goto end; // user's limit is reached
+
+#ifndef FF_64
+	if (sz > 0xffffffff)
+		goto end; // too large file for 32-bit system
+#endif
+
+	if (NULL == ffvec_growT(dst, sz+1, char))
+		goto end;
+
+	if (sz != (ffsize)fffile_read(f, (char*)dst->ptr + dst->len, sz))
+		goto end;
+
+	dst->len += sz;
+	r = 0;
+
+end:
+	fffile_close(f);
+	return r;
+}

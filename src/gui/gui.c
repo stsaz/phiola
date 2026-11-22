@@ -76,8 +76,18 @@ static struct ffarg_ctx wconvert_args_f() {
 	return ax;
 }
 
+static struct ffarg_ctx wmlib_args_f() {
+	struct ffarg_ctx ax = { wmlib_args, gg->wmlib };
+	return ax;
+}
+
 static struct ffarg_ctx wsettings_args_f() {
 	struct ffarg_ctx ax = { wsettings_args, gg->wsettings };
+	return ax;
+}
+
+static struct ffarg_ctx wcolumns_args_f() {
+	struct ffarg_ctx ax = { wcolumns_args, gg->wcolumns };
 	return ax;
 }
 
@@ -97,10 +107,12 @@ static struct ffarg_ctx wlog_args_f() {
 }
 
 static const struct ffarg args[] = {
+	{ "columns",	'{',	wcolumns_args_f },
 	{ "convert",	'{',	wconvert_args_f },
 	{ "info",		'{',	winfo_args_f },
 	{ "log",		'{',	wlog_args_f },
 	{ "main",		'{',	wmain_args_f },
+	{ "mlib",		'{',	wmlib_args_f },
 	{ "mod",		'{',	guimod_args_f },
 	{ "record",		'{',	wrecord_args_f },
 	{ "settings",	'{',	wsettings_args_f },
@@ -152,8 +164,16 @@ static void gui_userconf_save()
 		winfo_userconf_write(&cw);
 	ffconfw_add_obj(&cw, '}');
 
+	ffconfw_add2obj(&cw, "mlib", '{');
+		wmlib_userconf_write(&cw);
+	ffconfw_add_obj(&cw, '}');
+
 	ffconfw_add2obj(&cw, "settings", '{');
 		wsettings_userconf_write(&cw);
+	ffconfw_add_obj(&cw, '}');
+
+	ffconfw_add2obj(&cw, "columns", '{');
+		wcolumns_userconf_write(&cw);
 	ffconfw_add_obj(&cw, '}');
 
 	ffconfw_add2obj(&cw, "log", '{');
@@ -170,12 +190,14 @@ extern const ffui_ldr_ctl
 	winfo_ctls[],
 	wrename_ctls[],
 	wsettings_ctls[],
+	wcolumns_ctls[],
 	weqlz_ctls[],
 	wgoto_ctls[],
 	wlistadd_ctls[],
 	wlistfilter_ctls[],
 	wrecord_ctls[],
 	wconvert_ctls[],
+	wmlib_ctls[],
 	wabout_ctls[],
 	wlog_ctls[];
 
@@ -197,12 +219,14 @@ static void* gui_getctl(void *udata, const ffstr *name)
 		_w(winfo, winfo_ctls),
 		_w(wrename, wrename_ctls),
 		_w(wsettings, wsettings_ctls),
+		_w(wcolumns, wcolumns_ctls),
 		_w(weqlz, weqlz_ctls),
 		_w(wgoto, wgoto_ctls),
 		_w(wlistfilter, wlistfilter_ctls),
 		_w(wlistadd, wlistadd_ctls),
 		_w(wrecord, wrecord_ctls),
 		_w(wconvert, wconvert_ctls),
+		_w(wmlib, wmlib_ctls),
 		_w(wabout, wabout_ctls),
 		_w(wlog, wlog_ctls),
 		FFUI_LDR_CTL_END
@@ -235,6 +259,7 @@ static int load_ui()
 	char *fn = ffsz_allocfmt("%Smod/gui/ui.conf", &core->conf.root);
 	ffui_ldr_init(&gg->ldr, gui_getctl, gui_getcmd, gg);
 	ffmem_copy(gg->ldr.language, core->conf.language, sizeof(gg->ldr.language));
+	gg->ldr.activates_default = 1;
 #ifdef FF_WIN
 	gg->ldr.hmod_resource = GetModuleHandleW(L"gui.dll");
 	if (!theme_load(&gg->dkth, (!gg->theme_dark_default) ? gd->conf.theme : "dark-classic")) {
@@ -384,18 +409,7 @@ void gui_init()
 	ffmem_zero(gg, n);
 	memarea_init(&gg->area, n - sizeof(struct gui));
 
-	wmain_init();
-	winfo_init();
-	wrename_init();
-	wsettings_init();
-	weqlz_init();
-	wgoto_init();
-	wlistadd_init();
-	wlistfilter_init();
-	wrecord_init();
-	wconvert_init();
-	wabout_init();
-	wlog_init();
+	gui_cmd(GUI_CMD_INIT);
 }
 
 void* gui_alloc(uint n)
@@ -442,8 +456,31 @@ end:
 void gui_quit()
 {
 	gui_userconf_save();
-	winfo_fin();
-	wrename_fin();
-	wmain_fin();
+	gui_cmd(GUI_CMD_FIN);
 	ffui_post_quitloop();
+}
+
+void gui_cmd(uint cmd)
+{
+	wmain_cmd(cmd);
+	winfo_cmd(cmd);
+	wrename_cmd(cmd);
+	wsettings_cmd(cmd);
+	wcolumns_cmd(cmd);
+	weqlz_cmd(cmd);
+	wgoto_cmd(cmd);
+	wlistadd_cmd(cmd);
+	wlistfilter_cmd(cmd);
+	wrecord_cmd(cmd);
+	wconvert_cmd(cmd);
+	wabout_cmd(cmd);
+	wlog_cmd(cmd);
+	wmlib_cmd(cmd);
+}
+
+void gui_event(uint event)
+{
+	wmain_event(event);
+	wrecord_event(event);
+	wconvert_event(event);
 }

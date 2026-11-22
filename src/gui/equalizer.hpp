@@ -148,16 +148,9 @@ static void weqlz_action(ffui_window *wnd, int id)
 	}
 }
 
-void weqlz_show(uint show)
+void weqlz_show()
 {
 	gui_weqlz *w = gg->weqlz;
-	if (gui_dlg_load())
-		return;
-
-	if (!show) {
-		w->wnd.show(0);
-		return;
-	}
 
 	if (!w->initialized) {
 		w->initialized = 1;
@@ -183,11 +176,24 @@ void weqlz_show(uint show)
 	w->wnd.present();
 }
 
-void weqlz_init()
+static void weqlz_init()
 {
 	gui_weqlz *w = gui_allocT(gui_weqlz);
 	w->wnd.hide_on_close = 1;
 	w->wnd.on_action = weqlz_action;
 	w->wnd.onclose_id = A_EQ_CLOSED;
 	gg->weqlz = w;
+}
+
+void weqlz_cmd(uint cmd)
+{
+	gui_weqlz *w = gg->weqlz;
+	switch (cmd) {
+	case GUI_CMD_INIT:
+		weqlz_init();  break;
+	case GUI_CMD_HIDE:
+		if (w->initialized)
+			w->wnd.show(0);
+		break;
+	}
 }

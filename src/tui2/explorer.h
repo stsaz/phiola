@@ -36,6 +36,7 @@ static int explorer_scan(const char *dir)
 	}
 	e->dirs_n = ndirs;
 
+	e->top = 0;
 	e->cur = 1; // "UP"
 	ffdirscanx_close(&e->dx);
 	e->dx = dx;

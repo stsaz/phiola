@@ -20,7 +20,7 @@ static inline int ffargs_process_conf(struct ffargs *as, const struct ffarg *sch
 	struct ffconf_obj c = {};
 	int (*on_done)(void*);
 	const struct ffarg *a = NULL;
-	int expecting_value = 0;
+	int expecting_value = 0, multi = 0;
 	ffstr arg, key = {};
 	int r;
 	for (;;) {
@@ -38,9 +38,12 @@ static inline int ffargs_process_conf(struct ffargs *as, const struct ffarg *sch
 			goto end;
 
 		} else if (!(rc == FFCONF_VAL || rc == FFCONF_VAL_NEXT) && expecting_value) {
-			break;
+			if (expecting_value > 0)
+				break;
+			expecting_value = 0; // multi-value arg: reached next key
+		}
 
-		} else if (rc == FFCONF_OBJ_OPEN) {
+		if (rc == FFCONF_OBJ_OPEN) {
 			continue;
 
 		} else if (rc == FFCONF_OBJ_CLOSE) {
@@ -50,7 +53,7 @@ static inline int ffargs_process_conf(struct ffargs *as, const struct ffarg *sch
 		}
 
 		if (expecting_value) {
-			expecting_value = 0;
+			expecting_value = (!multi) ? 0 : -1;
 			r = _ffargs_value(as, a, key, arg);
 			if (r) goto end;
 			continue;
@@ -66,6 +69,7 @@ static inline int ffargs_process_conf(struct ffargs *as, const struct ffarg *sch
 			int r = _ffargs_arg(as, a, arg);
 			if (r == -FFARGS_E_VAL) {
 				expecting_value = 1;
+				multi = _FFARG_MULTI(a);
 				key = arg;
 			} else if (r == -FFARGS_E_REDIR) {
 				continue;
@@ -76,7 +80,7 @@ static inline int ffargs_process_conf(struct ffargs *as, const struct ffarg *sch
 		}
 	}
 
-	if (expecting_value) {
+	if (expecting_value > 0) {
 		r = _ffargs_err(as, FFARGS_E_VAL, "expecting value after '%S'", &key);
 		goto end;
 	}

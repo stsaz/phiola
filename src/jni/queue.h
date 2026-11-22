@@ -326,6 +326,7 @@ enum {
 	QUCOM_PLAY_PREV = 9,
 	QUCOM_META_READ = 10,
 	QUCOM_REMOVE_NON_UNIQUE = 11,
+	QUCOM_REMOVE_DUPS = 12,
 	QUCOM_CONV_CANCEL = 13,
 	QUCOM_CONV_UPDATE = 14,
 };
@@ -360,6 +361,9 @@ static void qu_cmd(struct core_data *d)
 
 	case QUCOM_REMOVE_NON_UNIQUE:
 		x->queue.remove_multi(q, PHI_Q_RM_NONUNIQ);  break;
+
+	case QUCOM_REMOVE_DUPS:
+		x->queue.remove_multi(q, PHI_Q_RM_DUPS);  break;
 
 	case QUCOM_SORT:
 		x->queue.sort(q, d->param_int);  break;

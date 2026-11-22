@@ -158,6 +158,7 @@ static int vorbis_enc_encode(void *ctx, phi_track *t)
 	t->audio.pos = v->endpos;
 	v->granulepos = (pkt.granulepos) ? pkt.granulepos : 1;
 	v->endpos = v->granulepos;
+	t->oaudio.ogg_granule_pos = v->endpos;
 	dbglog(t, "encoded %L samples into %L bytes @%U [%U]"
 		, (v->in.len - v->pcmlen) / phi_af_size(&v->fmt), t->data_out.len
 		, t->audio.pos, v->endpos);

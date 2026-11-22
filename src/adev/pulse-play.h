@@ -28,8 +28,7 @@ static void pulse_close(void *ctx, phi_track *t)
 			mod->usedby = NULL;
 
 	} else if (mod->usedby == a) {
-		if (0 != ffpulse.stop(mod->out))
-			errlog(a->trk, "stop: %s", ffpulse.error(mod->out));
+		audio_out_finish(a);
 		core->timer(t->worker, &mod->tmr, -ABUF_CLOSE_WAIT, pulse_close_tmr, NULL);
 		mod->usedby = NULL;
 	}

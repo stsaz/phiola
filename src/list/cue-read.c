@@ -366,9 +366,15 @@ static void* cuehook_open(phi_track *t)
 	c->abs_seek = cdframes_to_samples(t->conf.seek_cdframes, t->audio.format.rate);
 	c->abs_seek_ms = cdframes_to_msec(t->conf.seek_cdframes);
 	dbglog(t, "abs_seek:%U (%Ums)", c->abs_seek, c->abs_seek_ms);
-	t->audio.total -= c->abs_seek;
-	if (t->conf.until_cdframes)
-		t->conf.until_msec += cdframes_to_msec(t->conf.until_cdframes - t->conf.seek_cdframes);
+	if (t->audio.total != ~0ULL)
+		t->audio.total -= c->abs_seek;
+	if (t->conf.until_cdframes) {
+		uint64 len = t->conf.until_cdframes - t->conf.seek_cdframes;
+		t->audio.total = cdframes_to_samples(len, t->audio.format.rate);
+		uint64 msec = cdframes_to_msec(len);
+		if (t->conf.until_type == PHI_UN_MSEC_BEGIN)
+			t->conf.until_msec = (t->conf.until_msec) ? ffmin(t->conf.until_msec, msec) : msec;
+	}
 	return c;
 }
 

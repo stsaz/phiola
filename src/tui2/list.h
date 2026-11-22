@@ -1,6 +1,11 @@
 /** phiola: TUI-ncurses: Playlist
 2026, Simon Zolin */
 
+struct list_info {
+	phi_queue_id q;
+	char *fn;
+};
+
 static void list_init()
 {
 	struct tui2_list *l = &mod->list;
@@ -8,41 +13,91 @@ static void list_init()
 	struct phi_queue_conf *qc = mod->queue->conf(NULL);
 	l->q_guard = qc->first_filter;
 	qc->name = ffsz_allocfmt("Playlist %u", 1);
+	struct list_info *li = ffvec_zpushT(&mod->list.lists, struct list_info);
+	li->q = mod->queue->select(0);
+}
+
+static struct list_info* list_get(phi_queue_id q)
+{
+	struct list_info *li;
+	FFSLICE_WALK(&mod->list.lists, li) {
+		if (li->q == q)
+			return li;
+	}
+	return NULL;
+}
+
+static struct list_info* list_selected()
+{
+	return ffslice_itemT(&mod->list.lists, mod->list.selected, struct list_info);
+}
+
+static void list_load_once(uint i)
+{
+	struct list_info *li = list_selected();
+	if (!li->fn) return;
+
+	dbglog("list: loading %s", li->fn);
+	struct phi_queue_entry qe = {
+		.url = li->fn,
+	};
+	li->fn = NULL;
+	mod->queue->add(li->q, &qe);
 }
 
 static void list_close()
 {
 	struct tui2_list *l = &mod->list;
 	core->timer(0, &l->tmr_list_redraw, 0, NULL, NULL);
+	struct list_info *li;
+	FFSLICE_WALK(&mod->list.lists, li) {
+		ffmem_free(li->fn);
+	}
+	ffvec_free(&mod->list.lists);
 }
 
 static void list_display()
 {
 	struct tui2_list *l = &mod->list;
-	uint y = Y_LIST, n;
+	uint x, y = Y_LIST, n;
+	const void *playing_qe = (mod->playing) ? playing_trk_qe(mod->playing) : NULL;
 	for (uint i = l->top;  i < l->top + mod->list_cap;  i++) {
 		const struct phi_queue_entry *qe = mod->queue->at(NULL, i);
 		if (!qe)
 			break;
 
+		mod->buf[0] = (qe == playing_qe) ? '>' : ' '; // Highlight currently playing track
+		mod->buf[1] = ' ';
+		n = 2;
+
 		if (url_checkz(qe->url)) {
-			n = tui2_printf("%u. %s", i + 1, qe->url);
+			n = tui2_appendf(n, "%u. %s", i + 1, qe->url);
 
 		} else {
 			ffstr artist = {}, title = {};
 			core->metaif->find(&qe->meta, FFSTR_Z("artist"), &artist, 0);
 			core->metaif->find(&qe->meta, FFSTR_Z("title"), &title, 0);
 			if (title.len) {
-				n = tui2_printf("%u. %S - %S", i + 1, &artist, &title);
+				n = tui2_appendf(n, "%u. %S - %S", i + 1, &artist, &title);
 			} else {
 				ffpath_split3_str(FFSTR_Z(qe->url), NULL, &title, NULL); // Use file name as title
-				n = tui2_printf("%u. %S", i + 1, &title);
+				n = tui2_appendf(n, "%u. %S", i + 1, &title);
 			}
 		}
 
 		ffncurses_line_clear(&mod->wmain, y);
 		uint clr = (i == l->cur) ? CLR_LIST_SEL : 0;
-		ffncurses_printn_attr(&mod->wmain, y++, 0, mod->buf, n, 0, clr);
+		ffncurses_printn_attr(&mod->wmain, y, 0, mod->buf, n, 0, clr);
+
+		if (qe->length_sec) {
+			char dur[16];
+			n = ffs_format_r0(dur, sizeof(dur), "%u:%02u", qe->length_sec / 60, qe->length_sec % 60);
+			x = ffncurses_width() - n; // right-align
+			if ((int)x >= 4)
+				ffncurses_printn_attr(&mod->wmain, y, x, dur, n, 0, clr);
+		}
+
+		y++;
 	}
 
 	while (y < Y_LIST + mod->list_cap) {
@@ -56,6 +111,34 @@ static void list_redraw_delayed(void *param)
 	list_display();
 	ffncurses_update(&mod->wmain);
 	l->redrawing = 0;
+}
+
+static void list_deleted(phi_queue_id q)
+{
+	if (q == mod->q_active)
+		mod->q_active = NULL;
+	struct list_info *li = list_get(q);
+	ffmem_free(li->fn);
+	uint i = li - (struct list_info*)mod->list.lists.ptr;
+	ffslice_rmT((ffslice*)&mod->list.lists, i, 1, struct list_info);
+	i = (i > 0) ? i - 1 : 0;
+	mod->list.selected = i;
+	list_load_once(i);
+	list_view_title();
+	list_redraw_delayed(NULL);
+}
+
+static void list_select(bool next)
+{
+	uint i = mod->list.selected;
+	i = (next)
+		? (i + 1) % mod->list.lists.len
+		: ffmin(i - 1, mod->list.lists.len - 1);
+	mod->list.selected = i;
+	mod->queue->select(i);
+	list_load_once(i);
+	list_view_title();
+	list_display();
 }
 
 static void q_on_change(phi_queue_id q, uint flags, uint pos)
@@ -72,18 +155,14 @@ static void q_on_change(phi_queue_id q, uint flags, uint pos)
 		break;
 
 	case 'd':
-		if (q == mod->q_active)
-			mod->q_active = NULL;
-		list_view_title();
-		list_redraw_delayed(NULL);
-		break;
+		list_deleted(q);  break;
 
 	case 'm':
 	case 'a':
 	case 'r':
 	case 'u':
 	case 'c':
-		if (q != mod->queue->select(PHI_QSEL_CUR))
+		if (q != list_selected()->q)
 			break; // An inactive list has been modified
 		if (!l->redrawing) {
 			l->redrawing = 1;
@@ -189,15 +268,19 @@ static int list_addurl_action(int k)
 	return r;
 }
 
-static phi_queue_id list_create()
+static phi_queue_id list_create(char *fn)
 {
 	struct tui2_list *l = &mod->list;
 	struct phi_queue_conf qc = {
 		.name = ffsz_allocfmt("Playlist %u", ++l->counter),
 		.first_filter = l->q_guard,
-		.ui_module = "tui.play",
+		.ui_module = "tui2.play",
 	};
-	return mod->queue->create(&qc); // -> on_change('n')
+	struct list_info *li = ffvec_zpushT(&mod->list.lists, struct list_info);
+	phi_queue_id q = mod->queue->create(&qc); // -> on_change('n')
+	li->q = q;
+	li->fn = fn;
+	return q;
 }
 
 static int file_trash(uint i)
@@ -296,7 +379,7 @@ static int list_action(int k, int key)
 	}
 
 	case '+':
-		list_create();  break;
+		list_create(NULL);  break;
 
 	case '-':
 		if (mod->queue->total() == 1)
@@ -307,9 +390,7 @@ static int list_action(int k, int key)
 
 	case '[':
 	case ']':
-		mod->queue->select((key == '[') ? PHI_QSEL_PREV : PHI_QSEL_NEXT);
-		list_view_title();
-		list_display();
+		list_select(key == ']');
 		break;
 
 	case '#':
@@ -406,17 +487,34 @@ static int lists_save()
 	}
 
 	char *fn = NULL;
-	uint i = 0, n = mod->queue->total();
-	for (;  i < n;  i++) {
-		phi_queue_id q = mod->queue->get(i);
+	uint i = 1;
+	struct list_info *li;
+	FFSLICE_WALK(&mod->list.lists, li) {
 		ffmem_free(fn);
-		fn = list_name(i + 1);
-		if (!mod->queue->save(q, fn, list_save_complete, NULL))
+		fn = list_name(i++);
+
+		if (li->fn) {
+			/* Safe to overwrite after delete.
+			Example:
+				list1 list2
+				^del  ^this
+			becomes:
+				list1
+				^this
+			*/
+			if (!ffsz_eq(li->fn, fn)
+				&& fffile_rename(li->fn, fn))
+				syswarnlog("file rename: %s", li->fn);
+			continue;
+		}
+
+		if (mod->queue->conf(li->q)->modified
+			&& !mod->queue->save(li->q, fn, list_save_complete, NULL))
 			l->save_pending++;
 	}
 
 	ffmem_free(fn);
-	fn = list_name(i + 1);
+	fn = list_name(i);
 	fffile_remove(fn);
 
 	ffmem_free(fn);
@@ -427,33 +525,34 @@ static int lists_save()
 static void lists_load()
 {
 	char *fn = NULL;
-	for (uint i = 1;;  i++) {
+	uint i;
+	for (i = 1;;  i++) {
 		fn = list_name(i);
-		fffileinfo fi;
-		if (fffile_info_path(fn, &fi))
+		if (!fffile_exists(fn))
 			break;
-		fftime mt = fffileinfo_mtime(&fi);
 
-		uint mt_set = 1;
-		phi_queue_id q = NULL;
+		phi_queue_id q;
 		if (i == 1) {
-			// Don't set `last_mod_time` if there are tracks added from command line.
-			// This prevents `m3u-read` from setting `modified=0` on the queue.
-			mt_set = (mod->queue->count(q) == 0);
+			struct list_info *li = mod->list.lists.ptr;
+			li->fn = fn;
+			q = NULL;
 		} else {
-			q = list_create();
+			q = list_create(fn); // q_on_change('n') selects the new list
 		}
-
-		if (mt_set) {
-			mt.sec += FFTIME_1970_SECONDS;
-			mod->queue->conf(q)->last_mod_time = mt;
-		}
-
-		struct phi_queue_entry qe = {
-			.url = fn,
-		};
 		fn = NULL;
-		mod->queue->add(q, &qe);
+		mod->queue->conf(q)->no_auto_modified = 1;
 	}
 	ffmem_free(fn);
+
+	if (mod->queue->count(NULL)) {
+		// There are tracks added from command line
+		mod->queue->conf(NULL)->no_auto_modified = 0;
+		mod->list.selected = 0;
+	}
+
+	uint n = i - 1;
+	i = mod->list.selected = ffmin(mod->list.selected, n - 1);
+	mod->queue->select(i);
+	list_load_once(i);
+	list_view_title();
 }

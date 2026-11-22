@@ -13,6 +13,23 @@ FF_EXTERN void gui_init();
 FF_EXTERN void gui_userconf_load();
 FF_EXTERN int FFTHREAD_PROCCALL gui_worker(void *param);
 
+
+enum GUI_EV {
+	GUI_EV_PLAY_STOPPED,
+	GUI_EV_PLAY_PAUSED,
+	GUI_EV_PLAY_PLAYING,
+	GUI_EV_REC_STARTED,
+	GUI_EV_REC_DONE,
+	GUI_EV_REC_ERR,
+	GUI_EV_CONV_DONE,
+};
+
+/** Broadcast an event.
+event: enum GUI_EV
+Thread: any */
+FF_EXTERN void gui_event(uint event);
+
+
 /** Execute commands within Core thread */
 FF_EXTERN void gui_core_task(void (*func)());
 FF_EXTERN void gui_core_task_uint(void (*func)(uint), uint i);
@@ -50,6 +67,10 @@ FF_EXTERN void list_filter(ffstr filter);
 FF_EXTERN struct phi_queue_entry* list_vis_qe_ref(uint i);
 FF_EXTERN uint list_vis_version();
 FF_EXTERN void list_conf_set(void *new_conf);
+FF_EXTERN const char* list_name_i(uint i);
+#define list_cur_name()  list_name_i(~0U)
+FF_EXTERN char* list_cur_path();
+FF_EXTERN void list_rename(void *sz);
 
 FF_EXTERN void ctl_play(uint i);
 FF_EXTERN void volume_set(uint vol);
@@ -61,21 +82,17 @@ FF_EXTERN void gui_stop(uint flags);
 
 FF_EXTERN void record_begin(void *param);
 FF_EXTERN int record_stop();
+FF_EXTERN void rec_radio_start(void *param);
+FF_EXTERN void rec_radio_stop();
 
 FF_EXTERN void convert_add(ffslice indices);
 FF_EXTERN void convert_begin(void *param);
 
+FF_EXTERN void mlib_play(char *path);
+
 FF_EXTERN const phi_adev_if* adev_find_mod();
 
 FF_EXTERN void wmain_status(const char *fmt, ...);
-enum STATUS_ID {
-	ST_STOPPED,
-	ST_PAUSED,
-	ST_UNPAUSED,
-};
-/**
-id: enum STATUS_ID */
-FF_EXTERN void wmain_status_id(uint id);
 FF_EXTERN int wmain_ready();
 FF_EXTERN void wmain_track_new(void *param);
 FF_EXTERN void wmain_track_close(void *param);
@@ -88,18 +105,20 @@ FF_EXTERN uint wmain_list_add(const char *name, uint i);
 FF_EXTERN void wmain_list_delete(uint i);
 FF_EXTERN void wmain_list_select(uint n, uint scroll_vpos);
 FF_EXTERN void wmain_list_draw(uint n, uint flags);
+FF_EXTERN void wmain_list_rename(uint i, const char *name);
+struct lists_load_data {
+	uint n, sel;
+};
+FF_EXTERN void wmain_lists_load(struct lists_load_data *d);
 
 FF_EXTERN void wgoto_show(uint pos);
-
-FF_EXTERN void wrecord_done();
-
-FF_EXTERN void wconvert_done();
 
 struct gtrk;
 
 struct list_info {
 	phi_queue_id q;
 	uint scroll_vpos;
+	char *fn, *path;
 };
 
 struct gui_track_info {
@@ -112,9 +131,11 @@ struct gui_track_info {
 struct gui_conf {
 	char*	eqlz;
 	char*	theme;
+	char*	mlib_dirs;
 	int		auto_skip_sec_percent, auto_skip_tail_sec_pct; // >0: sec; <0: percent
 	uint	seek_leap_delta, seek_step_delta;
 	uint	odev;
+	uint	list_selected;
 	uint	volume;
 	u_char	eqlz_on;
 	u_char	random;
@@ -122,6 +143,7 @@ struct gui_conf {
 	u_char	tags_keep_date;
 	u_char	repeat;
 	u_char	auto_select;
+	ffvec	list_names; // char*[]
 };
 
 struct gui_data {
@@ -142,6 +164,7 @@ struct gui_data {
 	uint marker_sec;
 
 	phi_track *recording_track;
+	char *tee_filename;
 
 	double gain_db;
 
@@ -166,6 +189,7 @@ struct gui_data {
 	uint quit :1;
 	uint ui_thread_busy :1;
 	uint lists_load_done :1;
+	uint rec_radio :1;
 
 	struct gui_conf conf;
 };
@@ -176,6 +200,9 @@ FF_EXTERN struct gui_data *gd;
 
 #define errlog(...) \
 	core->conf.log(core->conf.log_obj, PHI_LOG_ERR, "gui", NULL, __VA_ARGS__)
+
+#define syswarnlog(...) \
+	core->conf.log(core->conf.log_obj, PHI_LOG_WARN | PHI_LOG_SYS, "gui", NULL, __VA_ARGS__)
 
 #define warnlog(...) \
 	core->conf.log(core->conf.log_obj, PHI_LOG_WARN, "gui", NULL, __VA_ARGS__)
@@ -197,5 +224,9 @@ enum ACTION {
 	A_CLOSE,
 	A_FILE_DRAGDROP,
 	A_LIST_DISPLAY,
+	A_COLUMNS_CLOSED,
 	A_EQ_CLOSED,
+	A_REC_NAME_VAR = 2000,
+	A_CONV_NAME_VAR = 2100,
+	A_CONV_DIR_VAR = 2200,
 };

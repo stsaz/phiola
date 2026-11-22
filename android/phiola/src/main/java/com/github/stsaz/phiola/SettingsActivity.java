@@ -3,20 +3,72 @@
 
 package com.github.stsaz.phiola;
 
+import android.content.Context;
 import android.os.Bundle;
-
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.SeekBar;
+import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.stsaz.phiola.databinding.SettingsBinding;
 
 import java.lang.Math;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+class MLibDirsViewHolder extends RecyclerView.ViewHolder {
+	final TextView dir;
+	private final View bDel;
+
+	interface Parent {
+		int count();
+		String display_line(int pos);
+		void on_delete(int i);
+	}
+	private final Parent parent;
+
+	MLibDirsViewHolder(Parent parent, View itemView) {
+		super(itemView);
+		this.parent = parent;
+		dir = itemView.findViewById(R.id.lMLibDirText);
+		bDel = itemView.findViewById(R.id.bMLibDirDel);
+		bDel.setOnClickListener(v -> {
+				int i = getAdapterPosition();
+				if (i >= 0)
+					parent.on_delete(i);
+			});
+	}
+}
+
+class MLibDirsAdapter extends RecyclerView.Adapter<MLibDirsViewHolder> {
+	private final LayoutInflater inflater;
+	private final MLibDirsViewHolder.Parent parent;
+
+	MLibDirsAdapter(Context ctx, MLibDirsViewHolder.Parent parent) {
+		inflater = LayoutInflater.from(ctx);
+		this.parent = parent;
+	}
+
+	@NonNull
+	public MLibDirsViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+		View v = inflater.inflate(R.layout.library_dir_row, parent, false);
+		return new MLibDirsViewHolder(this.parent, v);
+	}
+
+	public void onBindViewHolder(@NonNull MLibDirsViewHolder holder, int position) {
+		holder.dir.setText(parent.display_line(position));
+	}
+
+	public int getItemCount() { return parent.count(); }
+}
 
 public class SettingsActivity extends AppCompatActivity {
 	private static final String TAG = "phiola.SettingsActivity";
@@ -33,14 +85,13 @@ public class SettingsActivity extends AppCompatActivity {
 		setContentView(b.getRoot());
 
 		core = Core.getInstance();
-		core.gui().on_activity_show(this);
 		explorer = new ExplorerMenu(core, this);
 
 		ui_init();
 		play_init();
 
 		b.eDataDir.setOnClickListener(v -> explorer.show(b.eDataDir, 0));
-		b.eLibraryDir.setOnClickListener(v -> explorer.show(b.eLibraryDir, ExplorerMenu.F_MULTI));
+		mlibdirs_init();
 
 		rec_init();
 
@@ -51,6 +102,49 @@ public class SettingsActivity extends AppCompatActivity {
 		b.bColor.setOnClickListener(v -> new DlgColor().show(this, color, (color) -> {
 			this.color = color;
 		}));
+	}
+
+	private ArrayList<String> mlibdirs;
+	private MLibDirsAdapter mlibdirs_adapter;
+
+	private void mlibdirs_init() {
+		mlibdirs = new ArrayList<>();
+		b.lvMLibDirs.setLayoutManager(new LinearLayoutManager(this));
+		mlibdirs_adapter = new MLibDirsAdapter(this, new MLibDirsViewHolder.Parent() {
+			public int count() { return mlibdirs.size(); }
+			public String display_line(int pos) { return mlibdirs.get(pos); }
+			public void on_delete(int i) {
+				mlibdirs.remove(i);
+				mlibdirs_adapter.notifyItemRemoved(i);
+			}
+		});
+		b.lvMLibDirs.setAdapter(mlibdirs_adapter);
+
+		b.eLibraryDirPick.setOnClickListener(v -> explorer.show(b.eLibraryDirPick, 0));
+		b.bLibraryDirAdd.setOnClickListener(v -> mlibdirs_add(b.eLibraryDirPick.getText().toString()));
+	}
+
+	private void mlibdirs_load(String dirs) {
+		if (dirs.isEmpty())
+			return;
+
+		for (String s : dirs.split(";")) {
+			if (!s.isEmpty())
+				mlibdirs.add(s);
+		}
+		mlibdirs_adapter.notifyDataSetChanged();
+	}
+
+	private void mlibdirs_add(String dir) {
+		if (dir.isEmpty())
+			return;
+		if (mlibdirs.contains(dir)) {
+			UIUtil.msg_show(this, "Already in the list");
+			return;
+		}
+		mlibdirs.add(dir);
+		mlibdirs_adapter.notifyItemInserted(mlibdirs.size() - 1);
+		b.eLibraryDirPick.setText("");
 	}
 
 	private ArrayAdapter<String> spinner_adapter(String[] options) {
@@ -119,6 +213,7 @@ public class SettingsActivity extends AppCompatActivity {
 		b.eAutoSkipTail.setText(core.play.auto_skip_tail.str());
 		b.swEqualizer.setChecked(core.play.equalizer_enabled);
 		equ = core.play.equalizer;
+		b.swPlayMinSystem.setChecked(core.play.play_min_system);
 	}
 
 	private void play_save() {
@@ -128,6 +223,7 @@ public class SettingsActivity extends AppCompatActivity {
 		core.play.equalizer_enabled = b.swEqualizer.isChecked();
 		core.play.equalizer = equ;
 		core.play.normalize();
+		core.play.play_min_system = b.swPlayMinSystem.isChecked();
 	}
 
 	@Override
@@ -175,7 +271,7 @@ public class SettingsActivity extends AppCompatActivity {
 		b.eDataDir.setText(core.setts.pub_data_dir);
 		b.eTrashDir.setText(core.setts.trash_dir);
 		b.swFileDel.setChecked(core.setts.file_del);
-		b.eLibraryDir.setText(core.setts.library_dir);
+		mlibdirs_load(core.setts.library_dir);
 		b.swDeprecatedMods.setChecked(core.setts.deprecated_mods);
 	}
 
@@ -185,10 +281,9 @@ public class SettingsActivity extends AppCompatActivity {
 			s = core.storage_path + "/phiola";
 		core.setts.pub_data_dir = s;
 
-		core.setts.svc_notification_disable = b.swSvcNotifDisable.isChecked();
 		core.setts.trash_dir = b.eTrashDir.getText().toString();
 		core.setts.file_del = b.swFileDel.isChecked();
-		core.setts.library_dir = b.eLibraryDir.getText().toString();
+		core.setts.library_dir = String.join(";", mlibdirs);
 		core.setts.deprecated_mods = b.swDeprecatedMods.isChecked();
 	}
 
@@ -200,23 +295,22 @@ public class SettingsActivity extends AppCompatActivity {
 
 	private void load() {
 		// Interface
-		b.swDark.setChecked(core.gui().theme == GUI.THM_DARK);
-		color = core.gui().main_color;
-		b.swShowFilter.setChecked(core.gui().filter_hide);
+		b.swDark.setChecked(core.gui.theme == GUI.THM_DARK);
+		color = core.gui.main_color;
+		b.swShowFilter.setChecked(core.gui.filter_hide);
 		b.spRecBtn.setAdapter(spinner_adapter(new String[] {
 				getString(R.string.brec_mic),
 				getString(R.string.brec_radio),
 				getString(R.string.brec_bookmark),
 				getString(R.string.brec_hide),
 			}));
-		int rm = core.gui().record_mode;
+		int rm = core.gui.record_mode;
 		b.spRecBtn.setSelection(
-			(core.gui().playback_marker_show) ? RECBTN_PL_MARKER
+			(core.gui.playback_marker_show) ? RECBTN_PL_MARKER
 			: (rm == GUI.RECMODE_RADIO) ? RECBTN_REC_RADIO
 			: (rm == GUI.RECMODE_HIDE) ? RECBTN_REC_HIDE
 			: RECBTN_REC_MIC);
-		b.swSvcNotifDisable.setChecked(core.setts.svc_notification_disable);
-		b.swUiInfoInTitle.setChecked(core.gui().ainfo_in_title);
+		b.swUiInfoInTitle.setChecked(core.gui.ainfo_in_title);
 
 		list_load();
 
@@ -231,7 +325,7 @@ public class SettingsActivity extends AppCompatActivity {
 
 	private void save() {
 		// Interface
-		GUI gui = core.gui();
+		GUI gui = core.gui;
 
 		int i = GUI.THM_DEF;
 		if (b.swDark.isChecked())

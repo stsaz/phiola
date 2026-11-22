@@ -77,7 +77,8 @@ static void opus_enc_tags(struct opus_enc *o, phi_track *t, ffstr *out)
 	uint i = 0;
 	ffstr name, val;
 	while (core->metaif->list(&t->meta, &i, &name, &val, PHI_META_UNIQUE)) {
-		if (ffstr_eqz(&name, "vendor"))
+		if (ffstr_eqz(&name, "vendor")
+			|| ffstr_eqz(&name, "picture"))
 			continue;
 		vorbistagwrite_add_name(&vtag, name, val);
 	}
@@ -175,6 +176,7 @@ static int opus_enc_encode(void *ctx, phi_track *t)
 
 	t->audio.pos = o->endpos;
 	o->endpos += samples;
+	t->oaudio.ogg_granule_pos = o->endpos;
 	dbglog(t, "encoded %L samples into %L bytes @%U [%U]"
 		, (in_len - o->in.len) / phi_af_size(&o->fmt), t->data_out.len
 		, t->audio.pos, o->endpos);

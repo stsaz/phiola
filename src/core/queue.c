@@ -4,7 +4,6 @@
 #include <track.h>
 #include <util/util.h>
 #include <ffbase/lock.h>
-#include <ffsys/random.h>
 
 extern const phi_core *core;
 extern const phi_track_if phi_track_iface;
@@ -125,12 +124,6 @@ static phi_queue_id qm_get(uint i)
 static phi_queue_id qm_select(int pos)
 {
 	switch (pos) {
-	case PHI_QSEL_PREV:
-		qm->default_idx = ffmin(qm->default_idx - 1, qm->lists.len - 1);  break;
-
-	case PHI_QSEL_NEXT:
-		qm->default_idx = (qm->default_idx + 1) % qm->lists.len;  break;
-
 	case PHI_QSEL_CUR:
 		break;
 
@@ -314,25 +307,13 @@ static int q_count(struct phi_queue *q)
 	return q->index.len;
 }
 
-/** Initialize random number generator */
-static void qm_rand_init()
-{
-	if (qm->random_ready) return;
-
-	qm->random_ready = 1;
-	fftime t;
-	fftime_now(&t);
-	ffrand_seed(t.sec);
-}
-
 /** Get random index */
 static uint q_random(struct phi_queue *q)
 {
 	ffsize n = q->index.len;
 	if (n <= 1)
 		return 0;
-	qm_rand_init();
-	ffsize i = ffrand_get();
+	ffsize i = core->rand();
 
 	if (!q->random_init) {
 		q->random_init = 1;
@@ -450,7 +431,6 @@ static void q_trk_closed(void *param)
 			return;
 		uint i = qe_index(e);
 		ffint_fetch_add(&e->q->conf.version, 1);
-		qm->on_change(q, 'm', i);
 		if (!(e = q_get(q, i + 1)))
 			return;
 		q->cursor = e;
@@ -557,22 +537,10 @@ static int q_save(struct phi_queue *q, const char *filename, void (*on_complete)
 	int r = ffpath_normalize(c.ofile.name, -1, c.ofile.name, ffsz_len(c.ofile.name), 0);
 	c.ofile.name[r] = '\0';
 
-	int skip = 0;
-	fffileinfo fi;
-	if (!q->conf.modified && !fffile_info_path(filename, &fi)) {
-		fftime mt = fffileinfo_mtime(&fi);
-		mt.sec += FFTIME_1970_SECONDS;
-		if (!fftime_cmp_val(mt, q->conf.last_mod_time)) {
-			skip = 1;
-			dbglog("q_save: '%s': skip (mtime)", filename);
-		}
-	}
-
 	phi_track *t = core->track->create(&c);
 	t->udata = q;
 	core->track->filter(t, &phi_qsave_guard, 0);
-	if (!skip
-		&& (!core->track->filter(t, core->mod("format.m3u-write"), 0)
+	if ((!core->track->filter(t, core->mod("format.m3u-write"), 0)
 			|| (compress
 				&& !core->track->filter(t, core->mod("zstd.compress"), 0))
 			|| !core->track->filter(t, core->mod("core.file-write"), 0))) {
@@ -681,10 +649,9 @@ static phi_queue_id q_filter(phi_queue_id q, ffstr filter, uint flags)
 /** Sort the index randomly */
 static void sort_random(phi_queue_id q)
 {
-	qm_rand_init();
 	struct q_entry **it, **e = (struct q_entry**)q->index.ptr;
 	FFSLICE_WALK(&q->index, it) {
-		ffsize n = ffrand_get() % q->index.len;
+		ffsize n = core->rand() % q->index.len;
 		void *tmp = *it;
 		*it = e[n];
 		e[n] = tmp;
@@ -813,6 +780,21 @@ static int q_rename_all(phi_queue_id q, const char *pattern, uint flags)
 	return 0;
 }
 
+static void q_rm_dups(phi_queue_id q, ffvec *new_index)
+{
+	struct q_entry **qe = q->index.ptr;
+	size_t last = (size_t)-1;
+	for (size_t i = 0;  i < q->index.len;  i++) {
+		if (last != (size_t)-1 && ffsz_eq(qe[i]->pub.url, qe[last]->pub.url)) {
+			qe_unref(qe[i]);
+			continue;
+		}
+
+		*ffvec_pushT(new_index, void*) = qe[i];
+		last = i;
+	}
+}
+
 static void q_rm_non_uniq(phi_queue_id q, ffvec *new_index)
 {
 	struct q_entry **qe = q->index.ptr;
@@ -843,14 +825,19 @@ static void q_remove_multi(phi_queue_id q, uint flags)
 	if (!q->index.len)
 		return;
 
-	if (flags & PHI_Q_RM_NONUNIQ)
+	if (flags & (PHI_Q_RM_NONUNIQ | PHI_Q_RM_DUPS))
 		q_sort(q, PHI_Q_SORT_FILENAME);
 
 	ffvec new_index = {};
 	ffvec_allocT(&new_index, q->index.len, void*);
 
-	if (flags & PHI_Q_RM_NONUNIQ) {
+	if (flags & PHI_Q_RM_DUPS) {
+		q_rm_dups(q, &new_index);
+		dbglog("removed %L duplicate entries", q->index.len - new_index.len);
+
+	} else if (flags & PHI_Q_RM_NONUNIQ) {
 		q_rm_non_uniq(q, &new_index);
+		dbglog("removed %L non-unique entries", q->index.len - new_index.len);
 
 	} else if (flags & PHI_Q_RM_NONEXIST) {
 		struct q_entry **it;
@@ -866,6 +853,7 @@ static void q_remove_multi(phi_queue_id q, uint flags)
 
 			qe_unref(qe);
 		}
+		dbglog("removed %L entries for non-existing files", q->index.len - new_index.len);
 	}
 
 	if (new_index.len == q->index.len) {

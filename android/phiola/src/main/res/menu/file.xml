@@ -8,6 +8,9 @@
 	<item android:id="@+id/action_file_convert"
 		android:title="@string/mfile_convert" />
 
+	<item android:id="@+id/action_file_share"
+		android:title="@string/mfile_share" />
+
 	<item android:id="@+id/action_file_showcur"
 		android:title="@string/mfile_show" />
 

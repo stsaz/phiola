@@ -1,17 +1,5 @@
 # phiola file format reader/writer
 
-# Inherit:
-# C
-# CFLAGS
-# LINK
-# LINKFLAGS
-# PHIOLA
-# ROOT_DIR
-# SO
-
-# Modify:
-# MODS
-
 AVPACK := $(ROOT_DIR)/avpack
 
 MODS += format.$(SO)
@@ -26,7 +14,6 @@ format.$(SO): mod-fmt.o \
 		aac-adts.o \
 		flac-fmt.o \
 		ogg.o \
-		ts-read.o \
 		\
 		tag.o \
 		playlist.o \

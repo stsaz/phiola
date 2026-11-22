@@ -70,12 +70,14 @@ struct dialog {
 };
 
 struct tui2_list {
+	ffvec lists; // struct list_info[]
 	ushort top, cur;
 	uint redrawing :1;
 	phi_timer tmr_list_redraw;
 	uint counter;
 	uint active_track;
 	uint save_pending;
+	uint selected;
 	const phi_filter *q_guard;
 };
 
@@ -119,6 +121,7 @@ struct tui2_mod {
 	char *user_conf_dir;
 	const phi_queue_if *queue;
 	phi_task task_init;
+	phi_log_ctl log_ctl;
 };
 static struct tui2_mod *mod;
 static const phi_core *core;
@@ -160,6 +163,7 @@ enum POPUP {
 
 static void list_view_title();
 static void tui2_exit();
+void* playing_trk_qe(struct tui2_play_trk *p);
 
 /** Copy text into the global buffer. */
 static uint tui2_printf(const char *fmt, ...)
@@ -228,6 +232,7 @@ static void tui2_play_started(struct tui2_play_trk *p, phi_track *t)
 	struct phi_queue_entry *qe = (struct phi_queue_entry*)t->qent;
 	mod->q_active = mod->queue->queue(qe);
 	mod->list.active_track = mod->queue->index(qe);
+	tui2_status("");
 }
 
 /** Reset the window title. */
@@ -244,6 +249,16 @@ static void tui2_play_finished(const struct tui2_play_trk *p)
 	mod->playing = NULL;
 	ffncurses_line_clear_x(&mod->wmain, Y_TITLE, X_TITLE);
 	ffncurses_line_clear(&mod->wmain, Y_PROGRESS);
+
+	uint i = mod->list.active_track;
+	if (i >= mod->list.top && i < mod->list.top + mod->list_cap) {
+		// Clear '>' mark
+		uint y = Y_LIST + i - mod->list.top;
+		mod->buf[0] = ' ';
+		uint clr = (i == mod->list.cur) ? CLR_LIST_SEL : 0;
+		ffncurses_printn_attr(&mod->wmain, y, 0, mod->buf, 1, 0, clr);
+	}
+
 	ffncurses_line_clear(&mod->wmain, mod->y_status);
 	ffncurses_update(&mod->wmain);
 	title_default();
@@ -466,7 +481,7 @@ static void list_view_title()
 		, brackets[mod->view_explorer][0], brackets[mod->view_explorer][1]);
 	len += r;
 
-	phi_queue_id sel = (mod->view_explorer) ? NULL : mod->queue->select(PHI_QSEL_CUR);
+	phi_queue_id sel = (mod->view_explorer) ? NULL : ffslice_itemT(&mod->list.lists, mod->list.selected, struct list_info)->q;
 	for (uint i = 0;  i < n;  i++) {
 		phi_queue_id q = mod->queue->get(i);
 		r = ffs_format(mod->buf + len, sizeof(mod->buf) - len, " | %s%s%s"
@@ -661,6 +676,9 @@ static void tui2_init()
 	mod->list_cap = ffncurses_height() - (Y_LIST+1);
 	((phi_core*)core)->conf.stdout_busy = 1;
 
+	if (mod->log_ctl)
+		mod->log_ctl(1);
+
 	// Draw UI
 	tui2_println(&mod->wmain, Y_TITLE, 0, "φ", 0, CLR_TITLE);
 	list_view_title();
@@ -706,6 +724,8 @@ static void tui2_exit()
 
 static void tui2_destroy()
 {
+	if (mod->log_ctl)
+		mod->log_ctl(0);
 	ffncurses_end();
 	list_close();
 	explorer_close();
@@ -713,14 +733,31 @@ static void tui2_destroy()
 	ffmem_alignfree(mod);
 }
 
+static void tui2_ui_conf(struct phi_ui_conf *c)
+{
+	mod->log_ctl = c->log_ctl;
+}
+
+static void tui2_log(void *udata, ffstr s)
+{
+	tui2_status("%S", &s);
+}
+
+static const struct phi_ui_if tui2_if = {
+	.conf = tui2_ui_conf,
+	.log = tui2_log,
+};
+
 static const void* tui2_iface(const char *name)
 {
-	if (ffsz_eq(name, "play"))
-		return &tui2_if_play;
-	else if (ffsz_eq(name, "master")) {
+	if (ffsz_eq(name, "master")) {
 		mod->master = 1;
 		return (void*)-1;
 	}
+	if (ffsz_eq(name, "play"))
+		return &tui2_if_play;
+	else if (ffsz_eq(name, "if"))
+		return &tui2_if;
 	return NULL;
 }
 

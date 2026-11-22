@@ -91,26 +91,21 @@ static void winfo_display(struct phi_queue_entry *qe)
 
 	uint i = 0;
 	while (core->metaif->list(meta, &i, &name, &val, 0)) {
+		if (ffs_skip_ranges(val.ptr, val.len, "\x20\x7e\x80\xff", 4) >= 0)
+			ffstr_setz(&val, "<binary data>");
 		winfo_addpair(name, val);
 		ffstr_dupstr(w->keys.push_z<ffstr>(), &name);
 	}
 	fflock_unlock((fflock*)&qe->lock);
 }
 
-void winfo_show(uint show, uint idx)
+void winfo_show(uint idx)
 {
 	gui_winfo *w = gg->winfo;
-	if (gui_dlg_load())
-		return;
 
 	if (w->qe)
 		gd->queue->unref(w->qe);
 	w->qe = NULL;
-
-	if (!show) {
-		w->wnd.show(0);
-		return;
-	}
 
 	struct phi_queue_entry *qe = list_vis_qe_ref(idx);
 	if (qe == NULL) return;
@@ -259,7 +254,7 @@ static void winfo_action(ffui_window *wnd, int id)
 	}
 }
 
-void winfo_init()
+static void winfo_init()
 {
 	gui_winfo *w = gui_allocT(gui_winfo);
 	w->wnd.hide_on_close = 1;
@@ -271,10 +266,25 @@ void winfo_init()
 	gg->winfo = w;
 }
 
-void winfo_fin()
+static void winfo_fin()
 {
 	gui_winfo *w = gg->winfo;
 	FFSLICE_FOREACH_T(&w->keys, ffstr_free, ffstr);
 	if (w->qe)
 		gd->queue->unref(w->qe);
+}
+
+void winfo_cmd(uint cmd)
+{
+	gui_winfo *w = gg->winfo;
+	switch (cmd) {
+	case GUI_CMD_INIT:
+		winfo_init();  break;
+	case GUI_CMD_FIN:
+		winfo_fin();  break;
+	case GUI_CMD_HIDE:
+		if (w->initialized)
+			w->wnd.show(0);
+		break;
+	}
 }

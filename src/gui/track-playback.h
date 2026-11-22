@@ -35,7 +35,7 @@ void gtrk_play_pause(struct gtrk *gt)
 		uint p = gt->t->oaudio.pause;
 		gt->t->oaudio.pause = 0;
 		dbglog1(gt->t, "unpausing");
-		wmain_status_id(ST_UNPAUSED);
+		gui_event(GUI_EV_PLAY_PLAYING);
 		if (!p)
 			core->track->wake(gt->t);
 		return;
@@ -48,7 +48,7 @@ void gtrk_play_pause(struct gtrk *gt)
 	if (gt->t->oaudio.adev_ctx)
 		gt->t->oaudio.adev_stop(gt->t->oaudio.adev_ctx);
 
-	wmain_status_id(ST_PAUSED);
+	gui_event(GUI_EV_PLAY_PAUSED);
 }
 
 /** Set seek position */
@@ -220,4 +220,26 @@ end:
 const phi_filter phi_gui_track = {
 	gtrk_open, gtrk_close, gtrk_process,
 	"gui"
+};
+
+
+static void* tee_out_open(phi_track *t)
+{
+	return (void*)1;
+}
+
+static void tee_out_close(void *f, phi_track *t)
+{
+	gui_event((t->error) ? GUI_EV_REC_ERR : GUI_EV_REC_DONE);
+	gd->rec_radio = 0;
+}
+
+static int tee_out_process(void *f, phi_track *t)
+{
+	return PHI_DONE;
+}
+
+const phi_filter gui_tee_out_guard = {
+	tee_out_open, tee_out_close, tee_out_process,
+	"gui-tee-out",
 };

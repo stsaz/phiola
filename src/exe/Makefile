@@ -1,25 +1,12 @@
 # phiola executor
 
-# Inherit:
-# C
-# CFLAGS
-# DOTEXE
-# LINK
-# LINK_DL
-# LINK_RPATH_ORIGIN
-# LINKFLAGS
-# OS
-# PHIOLA
-# SO
-# WINDRES
-
-# Modify:
-# EXES
+AVPACK := $(ROOT_DIR)/avpack
 
 EXES += phiola$(DOTEXE)
 
+CFLAGS_EXE := $(CFLAGS) -I$(AVPACK)
 %.o: $(PHIOLA)/src/exe/%.c
-	$(C) $(CFLAGS) $< -o $@
+	$(C) $(CFLAGS_EXE) $< -o $@
 
 _:=
 ifeq "$(OS)" "windows"

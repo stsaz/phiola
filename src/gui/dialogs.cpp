@@ -11,9 +11,9 @@
 #include <gui/goto.hpp>
 #include <gui/list-add.hpp>
 #include <gui/list-filter.hpp>
-#include <gui/record.hpp>
-#include <gui/convert.hpp>
 #include <gui/about.hpp>
 #include <gui/settings.hpp>
+#include <gui/columns.hpp>
 #include <gui/equalizer.hpp>
 #include <gui/log.hpp>
+#include <gui/mlib.hpp>

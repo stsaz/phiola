@@ -7,6 +7,9 @@ static int ls_help()
 Sort entries in playlist\n\
 \n\
     `phiola list sort` [M3U...]\n\
+Options:\n\
+\n\
+  `-nodups`               Remove duplicate tracks\n\
 ");
 	x->exit_code = 0;
 	return 1;
@@ -15,6 +18,7 @@ Sort entries in playlist\n\
 struct list_sort {
 	ffvec	input; // char*[]
 
+	u_char	nodups;
 	uint	counter;
 	int		result;
 };
@@ -44,6 +48,7 @@ static int ls_action(struct list_sort *ls)
 	if (!pl_if)
 		return 1;
 	struct phi_playlist_conf c = {
+		.nodups = ls->nodups,
 		.on_complete = ls_done,
 		.udata = ls,
 	};
@@ -58,6 +63,7 @@ static int ls_action(struct list_sort *ls)
 #define O(m)  (void*)FF_OFF(struct list_sort, m)
 static const struct ffarg list_sort_args[] = {
 	{ "-help",		'1',	ls_help },
+	{ "-nodups",	'1',	O(nodups) },
 	{ "\0\1",		's',	ls_input },
 	{ "",			0,		NULL }
 };

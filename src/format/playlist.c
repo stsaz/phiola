@@ -16,6 +16,7 @@ struct list_ctx {
 	const char *fn;
 	phi_task task;
 	phi_queue_id q;
+	uint nodups :1;
 
 	phi_playlist_cb on_complete;
 	void *udata;
@@ -25,6 +26,7 @@ static struct list_ctx* list_ctx_new(const char *fn, const struct phi_playlist_c
 {
 	struct list_ctx *lx = ffmem_calloc(1, (size) ? size : sizeof(struct list_ctx));
 	lx->queue = core->mod("core.queue");
+	lx->nodups = c->nodups;
 	lx->on_complete = c->on_complete;
 	lx->udata = c->udata;
 	lx->fn = fn;
@@ -42,7 +44,7 @@ static void lx_done(void *p, phi_track *t)
 
 static void lc_filled(struct list_ctx *lx)
 {
-	lx->queue->remove_multi(NULL, PHI_Q_RM_NONUNIQ);
+	lx->queue->remove_multi(NULL, PHI_Q_RM_DUPS);
 	lx->queue->save(NULL, lx->fn, lx_done, lx);
 }
 
@@ -73,7 +75,10 @@ static void pl_create(const char *fn, ffslice input_sz, uint flags, const struct
 
 static void ls_ready(struct list_ctx *lx)
 {
-	lx->queue->sort(lx->q, 0);
+	if (lx->nodups)
+        lx->queue->remove_multi(lx->q, PHI_Q_RM_DUPS);
+    else
+		lx->queue->sort(lx->q, 0);
 	lx->queue->save(lx->q, lx->fn, lx_done, lx);
 }
 

@@ -19,8 +19,14 @@ fi
 # "vX.Y" -> "X.Y"
 VERSION="${TAG#v}"
 
-# RPM: "X.Y-betaZ" -> "X.Y.0.betaZ"
-RPM_VER="${VERSION//-/.0.}"
+# RPM version: "X.Y.Z" -> "X.Y.Z", "X.Y" -> "X.Y.0", "X.Y-betaZ" -> "X.Y.0.betaZ"
+if [[ "$VERSION" == *-* ]]; then
+	RPM_VER="${VERSION//-/.0.}"
+elif [[ "$VERSION" == *.*.* ]]; then
+	RPM_VER="$VERSION"
+else
+	RPM_VER="${VERSION}.0"
+fi
 
 URL="https://github.com/stsaz/phiola/releases/download/$TAG"
 

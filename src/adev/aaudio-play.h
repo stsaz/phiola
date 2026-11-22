@@ -18,9 +18,7 @@ static void aao_close(audio_out *a, phi_track *t)
 			mod->user = NULL;
 
 	} else if (mod->user == a) {
-		dbglog(NULL, "stop");
-		if (!!ffaaudio.stop(mod->abuf))
-			errlog(t, "stop(): %s", ffaaudio.error(mod->abuf));
+		audio_out_finish(a);
 		core->timer(t->worker, &mod->tmr, -ABUF_CLOSE_WAIT, aa_buf_close, NULL);
 		mod->user = NULL;
 	}

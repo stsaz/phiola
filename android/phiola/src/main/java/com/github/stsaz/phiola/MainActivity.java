@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
 	private QueueNotify quenfy;
 	private Track track;
 	private PlaybackObserver trk_nfy;
-	private TrackCtl trackctl;
+	private TrackCtlIf trackctl;
 	private long total_dur_msec;
 	private int view_prev = GUI.V_EXPLORER;
 
@@ -78,7 +78,6 @@ public class MainActivity extends AppCompatActivity {
 		track.observer_add(trk_nfy);
 
 		show_ui();
-		gui.on_activity_show(this);
 
 		// If already playing - get in sync
 		track.observer_notify(trk_nfy);
@@ -169,6 +168,9 @@ public class MainActivity extends AppCompatActivity {
 		case R.id.action_file_convert:
 			file_convert(); break;
 
+		case R.id.action_file_share:
+			file_share(url);  break;
+
 		case R.id.action_file_showcur:
 			explorer_file_current_show();  break;
 
@@ -221,6 +223,9 @@ public class MainActivity extends AppCompatActivity {
 
 		case R.id.action_list_rm_non_unique:
 			queue.current_remove_multi(Phiola.QUCOM_REMOVE_NON_UNIQUE);  break;
+
+		case R.id.action_list_rm_dups:
+			queue.current_remove_multi(Phiola.QUCOM_REMOVE_DUPS);  break;
 
 		case R.id.action_list_clear:
 			list_clear();  break;
@@ -454,6 +459,14 @@ public class MainActivity extends AppCompatActivity {
 		String[] perms = new String[]{
 			Manifest.permission.RECORD_AUDIO,
 		};
+
+		if (Build.VERSION.SDK_INT >= 33) {
+			perms = new String[]{
+				Manifest.permission.RECORD_AUDIO,
+				Manifest.permission.POST_NOTIFICATIONS,
+			};
+		}
+
 		if (Build.VERSION.SDK_INT < 30) {
 			perms = new String[]{
 				Manifest.permission.RECORD_AUDIO,
@@ -468,7 +481,7 @@ public class MainActivity extends AppCompatActivity {
 		core = Core.init_once(getApplicationContext());
 		core.dbglog(TAG, "init_mods()");
 
-		gui = core.gui();
+		gui = core.gui;
 		queue = core.queue();
 		quenfy = new QueueNotify() {
 			public void on_change(int how, int pos) {
@@ -482,8 +495,10 @@ public class MainActivity extends AppCompatActivity {
 			public void closed(TrackHandle t) { track_closed(t); }
 			public void process(TrackHandle t) { track_update(t); }
 		};
-		trackctl = new TrackCtl(core, this);
-		trackctl.connect();
+		if (core.play.play_min_system)
+			trackctl = new TrackCtlDirect(core, this);
+		else
+			trackctl = new TrackCtlSys(core, this);
 	}
 
 	/** Set UI objects and register event handlers */
@@ -497,8 +512,8 @@ public class MainActivity extends AppCompatActivity {
 			mode = AppCompatDelegate.MODE_NIGHT_YES;
 		AppCompatDelegate.setDefaultNightMode(mode);
 
-		explorer = new Explorer(core, this);
-		library = new MLib(core, this);
+		explorer = new Explorer(core);
+		library = new MLib(core);
 
 		b.lname.setOnClickListener((v) -> file_tags_show());
 
@@ -624,26 +639,25 @@ public class MainActivity extends AppCompatActivity {
 			explorer_click();
 		}
 
+		b.brec.setVisibility((gui.record_mode == GUI.RECMODE_HIDE) ? View.INVISIBLE : View.VISIBLE);
 		if (gui.playback_marker_show)
 			b.brec.setImageResource(R.drawable.ic_replay);
-		else if (gui.record_mode == GUI.RECMODE_HIDE)
-			b.brec.setVisibility(View.INVISIBLE);
 		else if (gui.record_mode == GUI.RECMODE_RADIO)
 			b.brec.setImageResource(R.drawable.outline_arrow_circle_down);
+		else
+			b.brec.setImageResource(R.drawable.ic_rec);
 
 		if (gui.filter_hide)
 			b.tfilter.setVisibility(View.INVISIBLE);
 
 		color_apply();
 
+		rec_state_set(gui.state_test(GUI.STATE_RECORDING));
 		if (gui.state_test(GUI.STATE_RECORDING)) {
-			rec_state_set(true);
 			if (track.is_recording_mic())
 				track.rec_mic_cb = this::rec_finished;
 			else
 				track.rec_rad_cb = this::rec_finished;
-		} else {
-			brec_description_set(false);
 		}
 		state_set(gui.state);
 	}
@@ -734,13 +748,14 @@ public class MainActivity extends AppCompatActivity {
 	/** Start recording */
 	private void rec_start() {
 		if (!user_ask_record()) {
-			core.errlog(TAG, "No permissions for recording");
+			core.errlog(TAG, "No permissions for recording or notifications");
 			return;
 		}
 
 		if (core.rec_start((gui.rec_ext_app) ? Track.RECF_EXPORT : 0, this::rec_finished)) {
 			rec_state_set(true);
 			state_set(gui.state);
+			UIUtil.msg_show(this, getString(R.string.main_rec_started));
 		}
 	}
 
@@ -766,6 +781,10 @@ public class MainActivity extends AppCompatActivity {
 	private void rec_finished(int code, String filename) {
 		state_set(gui.state);
 		rec_state_set(false);
+
+		String s = (code == 0) ? getString(R.string.main_rec_fin)
+			: String.format(getString(R.string.main_rec_err), core.errstr(code));
+		UIUtil.msg_show(this, s);
 
 		if (gui.rec_ext_app) {
 			gui.rec_ext_app = false;
@@ -819,6 +838,7 @@ public class MainActivity extends AppCompatActivity {
 			core.rec_radio_start(this::rec_finished);
 			rec_state_set(true);
 			state_set(gui.state);
+			UIUtil.msg_show(this, getString(R.string.main_rec_started));
 		}
 	}
 
@@ -992,10 +1012,12 @@ public class MainActivity extends AppCompatActivity {
 		if (!gui.filter_hide)
 			b.tfilter.setQuery("", false);
 
-		if (gui.view == GUI.V_EXPLORER)
+		if (gui.view == GUI.V_EXPLORER) {
 			explorer.fill();
-		else
-			library.fill();
+		} else {
+			if (library.fill() != 0)
+				UIUtil.msg_show(this, "Please set 'Music Library Directories' in Settings");
+		}
 
 		list_update();
 		if (gui.view == GUI.V_LIBRARY)
@@ -1370,6 +1392,22 @@ public class MainActivity extends AppCompatActivity {
 				.putExtra("current_list_id", qi_old)
 				.putExtra("active_track_pos", trk_pos)
 			, REQUEST_CONVERT);
+	}
+
+	private void file_share(String url) {
+		Uri u;
+		try {
+			u = new PhiFileProvider().uri(this, url);
+		} catch (IllegalArgumentException e) {
+			core.dbglog(TAG, "file_share: %s", e);
+			UIUtil.msg_show(this, "Cannot share this file");
+			return;
+		}
+		Intent i = new Intent(Intent.ACTION_SEND);
+		i.setType("audio/*");
+		i.putExtra(Intent.EXTRA_STREAM, u);
+		i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+		startActivity(Intent.createChooser(i, null));
 	}
 
 	private void file_convert() {

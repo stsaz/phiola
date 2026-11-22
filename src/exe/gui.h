@@ -26,14 +26,6 @@ static int gui_input(struct cmd_gui *g, ffstr s)
 	return cmd_input(&g->input, s);
 }
 
-static void gui_log_ctl(uint flags)
-{
-	if (flags)
-		x->log.func = x->uif->log; // GUI is ready to display logs
-	else
-		x->log.func = NULL;
-}
-
 static int gui_single_mode(struct cmd_gui *g)
 {
 	int rc = 1;
@@ -84,7 +76,7 @@ static int gui_action(struct cmd_gui *g)
 		// show logs inside Logs window
 		x->uif = x->core->mod("gui.if");
 		struct phi_ui_conf uc = {
-			.log_ctl = gui_log_ctl,
+			.log_ctl = exe_log_ctl,
 		};
 		x->uif->conf(&uc);
 	}

@@ -10,6 +10,11 @@ struct tui2_play_trk {
 	uint paused :1;
 };
 
+void* playing_trk_qe(struct tui2_play_trk *p)
+{
+	return p->trk->qent;
+}
+
 static void* tui2_play_open(phi_track *t)
 {
 	struct tui2_play_trk *p = phi_track_allocT(t, struct tui2_play_trk);

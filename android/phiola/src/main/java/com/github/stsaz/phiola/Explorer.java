@@ -1,29 +1,23 @@
-/** phiola/Android
+/** phiola/Android: directory listing and navigation
 2022, Simon Zolin */
 
 package com.github.stsaz.phiola;
 
 import android.content.Intent;
 
-import androidx.core.app.ActivityCompat;
-
 import java.util.ArrayList;
 
 class Explorer {
 	private static final String TAG = "phiola.Explorer";
 	private final Core core;
-	private final GUI gui;
-	private final MainActivity main;
 
 	private boolean up_dir; // Show "UP" directory link
 	private String parent, display_path, cur_filter;
 	private String[] display_rows, file_names, display_rows_full, file_names_full;
 	private int n_dirs, n_dirs_full;
 
-	Explorer(Core core, MainActivity main) {
+	Explorer(Core core) {
 		this.core = core;
-		this.main = main;
-		gui = core.gui();
 	}
 
 	int count() {
@@ -39,7 +33,7 @@ class Explorer {
 
 		if (up_dir) {
 			if (pos == 0)
-				return main.getString(R.string.explorer_up);
+				return core.context.getString(R.string.explorer_up);
 			pos--;
 		}
 
@@ -87,10 +81,10 @@ class Explorer {
 
 	void fill() {
 		this.cur_filter = null;
-		if (gui.cur_path.isEmpty())
+		if (core.gui.cur_path.isEmpty())
 			list_show_root();
 		else
-			list_show(gui.cur_path);
+			list_show(core.gui.cur_path);
 	}
 
 	/** Read directory contents.
@@ -104,7 +98,7 @@ class Explorer {
 		this.n_dirs_full = f.n_directories;
 
 		this.display_path = String.format("[%s]", path);
-		gui.cur_path = path;
+		core.gui.cur_path = path;
 
 		/* Prevent from going upper than sdcard because
 		 it may be impossible to come back (due to file permissions) */
@@ -130,8 +124,8 @@ class Explorer {
 		this.n_dirs_full = core.storage_paths.length;
 		full_view();
 
-		this.display_path = main.getString(R.string.explorer_stg_dirs);
-		gui.cur_path = "";
+		this.display_path = core.context.getString(R.string.explorer_stg_dirs);
+		core.gui.cur_path = "";
 		this.up_dir = false;
 	}
 

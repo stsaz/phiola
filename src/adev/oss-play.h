@@ -29,9 +29,7 @@ static void oss_close(void *ctx, phi_track *t)
 			mod->out = NULL;
 
 		} else {
-			if (0 != ffoss.stop(mod->out))
-				errlog(t, "stop: %s", ffoss.error(mod->out));
-			ffoss.clear(mod->out);
+			audio_out_finish(a);
 		}
 
 		core->timer(t->worker, &mod->tmr, 0, NULL, NULL);

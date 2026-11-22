@@ -3,17 +3,17 @@ RUN apt update && \
  apt install -y \
   make
 RUN apt install -y \
+ openjdk-21-jdk
+RUN apt install -y \
  curl \
  zstd zip unzip bzip2 xz-utils \
  patch \
  dos2unix \
  cmake \
- autoconf libtool-bin \
+ autoconf automake libtool-bin \
  gettext \
  pkg-config \
  perl
-RUN apt install -y \
- openjdk-21-jdk
 
 ARG ANDROID_CLT_VER=14742923
 ARG ANDROID_PF_VER=33

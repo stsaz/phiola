@@ -106,6 +106,8 @@ static void track_close(phi_track *t)
 	}
 
 	conveyor_close(&t->conveyor, t);
+	if (t->meta_autofree)
+		core->metaif->destroy(&t->meta);
 	ffmem_free(t->output.name);
 
 	if (t->conf.print_time)

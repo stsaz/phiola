@@ -4,6 +4,7 @@
 struct gui_wlistfilter {
 	ffui_windowxx wnd;
 	ffui_editxx tfilter;
+	uint initialized :1;
 };
 
 FF_EXTERN const ffui_ldr_ctl wlistfilter_ctls[] = {
@@ -25,22 +26,32 @@ static void wlistfilter_action(ffui_window *wnd, int id)
 	}
 }
 
-void wlistfilter_show(uint show)
+void wlistfilter_show()
 {
 	gui_wlistfilter *w = gg->wlistfilter;
-	if (gui_dlg_load())
-		return;
-	if (show)
-		w->tfilter.focus();
-	w->wnd.show(show);
-	if (show)
-		w->wnd.present();
+	w->initialized = 1;
+	w->tfilter.focus();
+	w->wnd.show(1);
+	w->wnd.present();
 }
 
-void wlistfilter_init()
+static void wlistfilter_init()
 {
 	gui_wlistfilter *w = gui_allocT(gui_wlistfilter);
 	w->wnd.on_action = wlistfilter_action;
 	w->wnd.hide_on_close = 1;
 	gg->wlistfilter = w;
+}
+
+void wlistfilter_cmd(uint cmd)
+{
+	gui_wlistfilter *w = gg->wlistfilter;
+	switch (cmd) {
+	case GUI_CMD_INIT:
+		wlistfilter_init();  break;
+	case GUI_CMD_HIDE:
+		if (w->initialized)
+			w->wnd.show(0);
+		break;
+	}
 }

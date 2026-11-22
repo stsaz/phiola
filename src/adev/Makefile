@@ -1,20 +1,5 @@
 # phiola audio I/O modules
 
-# Inherit:
-# C
-# CFLAGS
-# CFLAGS_BASE
-# LINK
-# LINKFLAGS
-# OS
-# PHIOLA
-# ROOT_DIR
-# SO
-# SYS
-
-# Modify:
-# MODS
-
 FFAUDIO := $(ROOT_DIR)/ffaudio
 ADPFX := ad-
 

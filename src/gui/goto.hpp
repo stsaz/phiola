@@ -5,6 +5,7 @@ struct gui_wgoto {
 	ffui_windowxx	wnd;
 	ffui_editxx		etime;
 	ffui_buttonxx	bgo;
+	uint initialized :1;
 };
 
 FF_EXTERN const ffui_ldr_ctl wgoto_ctls[] = {
@@ -44,6 +45,8 @@ void wgoto_show(uint pos)
 	gui_wgoto *g = gg->wgoto;
 	if (gui_dlg_load())
 		return;
+
+	g->initialized = 1;
 	g->etime.text(xxvec().add_f("%02u:%02u", pos / 60, pos % 60).str());
 	g->etime.sel_all();
 	g->etime.focus();
@@ -51,10 +54,23 @@ void wgoto_show(uint pos)
 	g->wnd.present();
 }
 
-void wgoto_init()
+static void wgoto_init()
 {
 	gui_wgoto *g = gui_allocT(gui_wgoto);
 	gg->wgoto = g;
 	g->wnd.hide_on_close = 1;
 	g->wnd.on_action = wgoto_action;
+}
+
+void wgoto_cmd(uint cmd)
+{
+	gui_wgoto *w = gg->wgoto;
+	switch (cmd) {
+	case GUI_CMD_INIT:
+		wgoto_init();  break;
+	case GUI_CMD_HIDE:
+		if (w->initialized)
+			w->wnd.show(0);
+		break;
+	}
 }

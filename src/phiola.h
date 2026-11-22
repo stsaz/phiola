@@ -6,13 +6,13 @@
 #include <ffbase/string.h>
 #include <ffbase/time.h>
 
-#define PHI_VERSION  20902
+#define PHI_VERSION  21500
 
 /** Inter-module compatibility version.
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  20902
+#define PHI_VERSION_CORE  21500
 
 typedef long long int64;
 typedef unsigned long long uint64;
@@ -113,6 +113,8 @@ enum PHI_CORE_TIME {
 };
 
 enum PHI_CORE_SIG {
+	/** Stop all worker threads and wait for them to finish (except the main thread).
+	Must be sent from main thread. */
 	PHI_CORE_STOP,
 };
 
@@ -135,6 +137,9 @@ struct phi_core {
 	/** Get current time.
 	flags: enum PHI_CORE_TIME */
 	fftime (*time)(ffdatetime *dt, uint flags);
+
+	/** Get random number. */
+	uint (*rand)();
 
 	/** Get interface from a module.
 	Load module at first use.
@@ -194,7 +199,9 @@ FF_EXTERN phi_core* phi_core_create(struct phi_core_conf *conf);
 /** Destroy the core object and all its resources. */
 FF_EXTERN void phi_core_destroy();
 
-/** Run until stopped with core->sig(PHI_CORE_STOP) */
+/** Run phiola core.
+conf.run_detach == 0: run until stopped with core->sig(PHI_CORE_STOP)
+conf.run_detach == 1: start thread, return immediately */
 FF_EXTERN void phi_core_run();
 
 
@@ -361,10 +368,6 @@ struct phi_track_conf {
 	};
 
 	struct {
-		u_char	max_page_length_msec;
-	} ogg;
-
-	struct {
 		struct phi_af format;
 		uint	device_index; // 0:default
 		uint	buf_time; // msec
@@ -509,13 +512,13 @@ struct phi_queue_conf {
 		const phi_filter *ui_module_if;
 	};
 	struct phi_track_conf tconf;
-	fftime last_mod_time;
 	uint version;
 	uint conversion :1;
 	uint analyze :1;
 	uint random :1;
 	uint repeat_all :1;
 	uint modified :1;
+	uint no_auto_modified :1;
 	uint ui_module_if_set :1;
 };
 
@@ -546,7 +549,8 @@ enum PHI_Q_SORT {
 /** Flags for `remove_multi()`. */
 enum PHI_Q_REMOVE {
 	PHI_Q_RM_NONEXIST = 1,	// Remove entries whose files no longer exist on disk
-	PHI_Q_RM_NONUNIQ = 2,	// Remove all duplicate entries (by URL)
+	PHI_Q_RM_NONUNIQ = 2,	// Sort & remove all entries that appear more than once (by URL)
+	PHI_Q_RM_DUPS = 4,		// Sort & remove duplicate entries (by URL)
 };
 
 /** Filter match types for `filter()`. */
@@ -562,8 +566,6 @@ enum PHI_Q_RENAME {
 
 enum PHI_QSEL {
 	PHI_QSEL_CUR = 1<<31,		// Get the currently selected queue
-	PHI_QSEL_PREV,				// Select the previous queue
-	PHI_QSEL_NEXT,				// Select the next queue
 };
 
 typedef struct phi_queue* phi_queue_id;
@@ -758,6 +760,7 @@ struct phi_ui_if {
 struct phi_asv_conf {
 	uint max_clients;
 	ushort port;
+	ffstr ssl_cert;
 };
 
 
@@ -766,6 +769,7 @@ struct phi_asv_conf {
 typedef void (*phi_playlist_cb)(void*, int);
 struct phi_playlist_conf {
 	ffslice include_str, exclude_str;
+	uint nodups :1;
 
 	phi_playlist_cb on_complete;
 	void *udata;

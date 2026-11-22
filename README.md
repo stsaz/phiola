@@ -22,6 +22,8 @@ Contents:
 * [How to Use TUI](#how-to-use-tui)
 * [How to Use GUI](#how-to-use-gui)
 * [How to Use on Android](#how-to-use-on-android)
+* [How to Record from Radio](#how-to-record-from-radio)
+* [How to Stream Audio](#how-to-stream-audio)
 * [How to Use API](#how-to-use-api)
 * [Configuration](#configuration)
 * [External Libraries](#external-libraries)
@@ -60,8 +62,8 @@ Features and notes by platform:
 | File formats         | ✅ all supported | ✅ | ✅ | except `.mpc`, `.ape`, `.wv` |
 | Record what you hear | ✅ (PulseAudio) | ❌ | ✅ | ❌ |
 | Audio Streaming Server | ✅ (AAC,Opus) | ✅ (AAC,Opus) | ✅ (AAC,Opus) | ❌ |
-| Requirements         | glibc-2.41 | macOS 14 | Windows 7 | Android 8 (ARM64), Android 6 (ARM) |
-| HW Requirements      | AMD64, ARM64 | ARM64 | AMD64 | ARM64, ARM(incomplete) |
+| Requirements         | glibc-2.41 | macOS 14 | Windows 7 | Android 8 (ARM64) |
+| HW Requirements      | AMD64, ARM64 | ARM64 | AMD64 | ARM64 |
 
 > Important: the ALAC decoder is disabled by default because of potential security issues (see https://github.com/macosforge/alac).  You can still enable it on Android via `Settings -> Enable Deprecated Modules (ALAC)`; on desktop — by adding `DeprecatedMods` to `phiola.conf`.
 
@@ -69,6 +71,8 @@ Features and notes by platform:
 ## Install
 
 Download the latest package for your OS and CPU from [phiola Releases](https://github.com/stsaz/phiola/releases)
+
+> Note: phiola is no longer built for Android 6 (ARM) or Windows XP (x86).  If you need one, look for an older release.
 
 ### Linux
 
@@ -143,17 +147,6 @@ phiola "My Music" -random -seek 0:20
 
 # Play on Linux directly via ALSA (and not PulseAudio)
 phiola file.mp3 -audio alsa
-
-# Play an internet radio and save the tracks as local files.
-# These files will be named automatically using the metadata sent by the server.
-phiola http://server/stream -tee "@artist - @title.mp3"
-
-# Play an internet radio with on-demand recording
-phiola http://server/stream -recordable
-# Then at any time press Shift+R to start/stop recording
-
-# Play MP3 audio via HTTP and convert to a local 64-kbit/sec AAC file
-phiola http://server/music.mp3 -dup @stdout.wav | phiola convert @stdin -aac_q 64 -o output.m4a
 
 # Play audio with 3-band Equalizer:
 #  (low-shelf +3 dB; 600Hz band, 1.5 Q-factor width, -6 dB gain; high-shelf +3 dB)
@@ -305,9 +298,6 @@ phiola device list
 
 # Auto-rename all .opus files according to a pattern
 phiola rename *.opus -o "@tracknumber. @artist - @title"
-
-# Start HTTP audio streaming server (Opus, 128kbps)
-phiola server "My Music" -inc "*.flac" -shuffle -opus_q 128
 ```
 
 Currently supported commands:
@@ -425,18 +415,6 @@ Starting for the first time:
 * Or long-press on the directory with your music, it will be added to the playlist; tap `Play`
 * Tap on `Playlist` tab to switch the view to your playlist
 
-### Recording From Radio on Android
-
-By default the `Record` button starts recording from microphone.
-Here's how you can reconfigure phiola for recording audio from the internet radio:
-
-1. Go to `Settings`, then under the `First Control Button` setting, choose `Record From Radio`;  return to main screen.
-1. Go to `List` -> `List: Add...` and paste the URL; tap `Add`.
-1. Tap on the URL in the playlist to start playback.
-1. Tap on `Record` button (bottom-left button) to start recording; tap again to stop recording.  Your recorded files are stored inside `Recording` directory.
-
-> Note: phiola supports recording from AAC or MP3 radio streams.
-
 ### Starting/Stopping Recording via Intent Actions
 
 phiola can be controlled externally using Android intent actions — this is useful for automation, accessibility tools, or mapping hardware buttons:
@@ -451,6 +429,70 @@ Package: `com.github.stsaz.phiola`.
 adb shell am start -a android.provider.MediaStore.RECORD_SOUND -n com.github.stsaz.phiola/.MainActivity
 adb shell am start -a com.github.stsaz.phiola.RECORD_STOP -n com.github.stsaz.phiola/.MainActivity
 ```
+
+
+## How to Record from Radio
+
+### CLI
+
+```sh
+# Play an internet radio and save the tracks as local files.
+# These files will be named automatically using the metadata sent by the server.
+phiola http://server/stream -tee "@artist - @title.mp3"
+
+# Play an internet radio with on-demand recording
+phiola http://server/stream -recordable
+# Then at any time press Shift+R to start/stop recording
+
+# Play MP3 audio via HTTP and convert to a local 64-kbit/sec AAC file
+phiola http://server/music.mp3 -dup @stdout.wav | phiola convert @stdin -aac_q 64 -o output.m4a
+```
+
+> Note: The phiola CLI can either save the original stream (AAC or MP3) or convert to another supported format.
+
+### Desktop GUI
+
+By default, the `Start Recording` command starts recording from the microphone.
+Here's how you can reconfigure phiola for recording audio from an internet radio:
+
+1. Go to `List -> Add...` and paste the URL; press `Add`.
+1. Double-click on the URL in the playlist to start playback.
+1. Go to `Record -> Record...`, then check the `Record from Radio` box.
+1. Click the `Start Recording` button.
+
+> Note: phiola supports recording from AAC or MP3 radio streams.
+
+### Android
+
+By default, the `Record` button starts recording from the microphone.
+Here's how you can reconfigure phiola for recording audio from an internet radio:
+
+1. Go to `Settings`, then under the `First Control Button` setting, choose `Record From Radio`; return to the main screen.
+1. Go to `List -> List: Add...` and paste the URL; tap `Add`.
+1. Tap on the URL in the playlist to start playback.
+1. Tap the `Record` button (bottom-left button) to start recording; tap again to stop recording.  Your recorded files are stored inside the `Recordings` directory.
+
+> Note: phiola supports recording from AAC or MP3 radio streams.
+
+
+## How to Stream Audio
+
+phiola can act as an audio streaming server — just point it at a directory containing your audio files:
+
+```sh
+# Start an HTTP audio streaming server (Opus, 128kbps)
+phiola server "My Music" -inc "*.flac" -shuffle -opus_q 128
+
+# Start an HTTPS audio streaming server on port 443
+phiola server "My Music" -inc "*.flac" -shuffle -ssl your/cert.pem -port 443
+```
+
+TCP port `21014` is used by default.
+To check if the server works, run `phiola http://localhost:21014/` — it will play the stream.
+For testing, use `-ssl ""` to enable TLS with phiola's built-in self-signed certificate.
+
+> Note: phiola supports streaming in AAC or Opus.
+
 
 ## How to Use API
 
@@ -515,12 +557,13 @@ Additionally:
 * [avpack](https://github.com/stsaz/avpack) library provides multimedia file read/write capabilities
 * [ffaudio](https://github.com/stsaz/ffaudio) interface provides cross-platform audio I/O capabilities
 * [ffgui](https://github.com/stsaz/ffgui) - cross-platform GUI
+* [winapi-dark-theme](https://github.com/stsaz/winapi-dark-theme) - dark theme for Windows GUI
 * [netmill](https://github.com/stsaz/netmill) provides network capabilities
 
 
 ## Build
 
-[Build Instructions](BUILDING.md)
+[Build Instructions](doc/BUILDING.md)
 
 
 ## Bug report
@@ -553,4 +596,3 @@ phiola is not a competitor to large-scale commercial projects; instead, its focu
 
 phiola is licensed under BSD-2.
 Please review the licenses of all third-party libraries before any commercial use.
-Playback control icons by [Icons8](https://icons8.com).

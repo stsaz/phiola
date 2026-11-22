@@ -178,6 +178,7 @@ struct phi_track {
 	uint icy_meta_interval; // Upon receiving HTTP response, 'http' filter sets ICY meta interval for 'icy' filter
 	uint meta_changed :1; // Set by 'icy' filter when meta is changed; reset by 'ui' filter
 	uint meta_reading :1;
+	uint meta_autofree :1; // Free 'meta' on track close
 	uint playback :1;
 	uint q_notified :1;
 	uint tee_active :1; // Set by 'ui' to start/stop writing to file for tracks with `tee_dynamic=1`
@@ -245,8 +246,11 @@ struct phi_track {
 			const char *flac_vendor;
 			uint flac_frame_samples;
 
+			// stream_copy=0: granule-position value from encoder
+			// stream_copy=1: granule-position value from source
+			uint64 ogg_granule_pos;
+
 			// (ogg|mkv).read -> ogg.write
-			uint64 ogg_granule_pos; // stream_copy=1: granule-position value from source
 			uint ogg_gen_opus_tag :1; // ogg.write must generate Opus-tag packet
 			uint ogg_copy :1; // copying ogg -> ogg
 

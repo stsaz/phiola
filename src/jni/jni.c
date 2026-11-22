@@ -324,6 +324,7 @@ Java_com_github_stsaz_phiola_Phiola_destroy(JNIEnv *env, jobject thiz)
 	if (x == NULL) return;
 
 	dbglog("%s: enter", __func__);
+	x->core->sig(PHI_CORE_STOP);
 	phi_core_destroy();
 	jni_global_unref(x->Callbacks.obj);
 	jni_global_unref(x->QueueCallback.obj);

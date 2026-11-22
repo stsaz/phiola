@@ -7,6 +7,7 @@ struct gui_wabout {
 	ffui_windowxx wnd;
 	ffui_labelxx labout, lurl;
 	ffui_image ico;
+	uint initialized :1;
 };
 
 FF_EXTERN const ffui_ldr_ctl wabout_ctls[] = {
@@ -28,7 +29,7 @@ static void wabout_action(ffui_window *wnd, int id)
 	}
 }
 
-void wabout_init()
+static void wabout_init()
 {
 	gui_wabout *a = gui_allocT(gui_wabout);
 	a->wnd.hide_on_close = 1;
@@ -36,16 +37,10 @@ void wabout_init()
 	gg->wabout = a;
 }
 
-void wabout_show(uint show)
+void wabout_show()
 {
 	gui_wabout *a = gg->wabout;
-	if (gui_dlg_load())
-		return;
-
-	if (!show) {
-		a->wnd.show(0);
-		return;
-	}
+	a->initialized = 1;
 
 	char buf[255];
 	ffsz_format(buf, sizeof(buf),
@@ -64,4 +59,17 @@ void wabout_show(uint show)
 
 	a->wnd.show(1);
 	a->wnd.present();
+}
+
+void wabout_cmd(uint cmd)
+{
+	gui_wabout *w = gg->wabout;
+	switch (cmd) {
+	case GUI_CMD_INIT:
+		wabout_init();  break;
+	case GUI_CMD_HIDE:
+		if (w->initialized)
+			w->wnd.show(0);
+		break;
+	}
 }

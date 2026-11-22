@@ -106,8 +106,7 @@ static void wasapi_close(void *ctx, phi_track *t)
 {
 	audio_out *w = ctx;
 	if (mod->usedby == w) {
-		if (0 != ffwasapi.stop(mod->out))
-			errlog(w->trk, "stop: %s", ffwasapi.error(mod->out));
+		audio_out_finish(w);
 		if (t->chain_flags & PHI_FSTOP) {
 			core->timer(t->worker, &mod->tmr, -ABUF_CLOSE_WAIT, wasapi_close_tmr, NULL);
 		} else {

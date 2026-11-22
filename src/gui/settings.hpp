@@ -3,10 +3,12 @@
 
 struct gui_wsettings {
 	ffui_windowxx	wnd;
-	ffui_label		ltheme, ldev, lseek_by, lleap_by, lauto_skip, lauto_skip_tail;
-	ffui_editxx		eseek_by, eleap_by, eauto_skip, eauto_skip_tail;
+	ffui_label		ltheme, ldev, lseek_by, lleap_by, lauto_skip, lauto_skip_tail, llibrary_dir;
+	ffui_editxx		eseek_by, eleap_by, eauto_skip, eauto_skip_tail, elibrary_dir;
+	ffui_trackbarxx	tbauto_skip, tbauto_skip_tail;
 	ffui_checkboxxx	cbrg_norm, cbauto_norm, cbeqlz;
 	ffui_comboboxxx	cbdarktheme, cbdev;
+	ffui_buttonxx	bcolumns;
 	char*	wnd_pos;
 	uint	conf_odev;
 	uint	initialized :1;
@@ -17,10 +19,12 @@ FF_EXTERN const ffui_ldr_ctl wsettings_ctls[] = {
 	_(wnd),
 	_(ltheme),		_(cbdarktheme),
 	_(ldev),		_(cbdev),
+	_(bcolumns),
 	_(lseek_by),	_(eseek_by),
 	_(lleap_by),	_(eleap_by),
-	_(lauto_skip),	_(eauto_skip),
-	_(lauto_skip_tail),	_(eauto_skip_tail),
+	_(lauto_skip),	_(eauto_skip),	_(tbauto_skip),
+	_(lauto_skip_tail),	_(eauto_skip_tail),	_(tbauto_skip_tail),
+	_(llibrary_dir),	_(elibrary_dir),
 	_(cbrg_norm),
 	_(cbauto_norm),
 	_(cbeqlz),
@@ -59,6 +63,21 @@ static int auto_skip_read(xxstr s)
 	return s.uint32(0);
 }
 
+// 20%..1%; 0; 10sec..200sec by 10
+static int auto_skip_value(int progress) {
+	progress -= 20;
+	if (progress <= 0)
+		return progress;
+	return progress * 10;
+}
+static int auto_skip_progress(int n) {
+	if (n < 0)
+		return 20 - -n;
+	if (n <= 200)
+		return 20 + n / 10;
+	return 20;
+}
+
 static void wsettings_ui_to_conf()
 {
 	gui_wsettings *w = gg->wsettings;
@@ -81,6 +100,9 @@ static void wsettings_ui_to_conf()
 	gd->conf.seek_leap_delta = xxvec(w->eleap_by.text()).str().uint32(60);
 	gd->conf.auto_skip_sec_percent = auto_skip_read(xxvec(w->eauto_skip.text()).str());
 	gd->conf.auto_skip_tail_sec_pct = auto_skip_read(xxvec(w->eauto_skip_tail.text()).str());
+
+	ffmem_free(gd->conf.mlib_dirs);
+	gd->conf.mlib_dirs = w->elibrary_dir.text().ptr;
 }
 
 static void wsettings_theme(gui_wsettings *w)
@@ -96,6 +118,8 @@ static void wsettings_theme(gui_wsettings *w)
 		w->cbdarktheme.set(0);
 #endif
 }
+
+extern uint adevices_fill(uint flags, ffui_comboboxxx &cb, uint index);
 
 static void wsettings_ui_from_conf()
 {
@@ -116,8 +140,13 @@ static void wsettings_ui_from_conf()
 	w->eleap_by.text(s.zfmt("%u", gd->conf.seek_leap_delta));
 	w->eauto_skip.text(auto_skip_write(s, gd->conf.auto_skip_sec_percent));
 	w->eauto_skip_tail.text(auto_skip_write(s, gd->conf.auto_skip_tail_sec_pct));
+	w->tbauto_skip.set(auto_skip_progress(gd->conf.auto_skip_sec_percent));
+	w->tbauto_skip_tail.set(auto_skip_progress(gd->conf.auto_skip_tail_sec_pct));
 
 	w->cbeqlz.check(gd->conf.eqlz_on);
+
+	if (gd->conf.mlib_dirs)
+		w->elibrary_dir.text(gd->conf.mlib_dirs);
 }
 
 void wsettings_userconf_write(ffconfw *cw)
@@ -132,27 +161,31 @@ void wsettings_userconf_write(ffconfw *cw)
 static void wsettings_action(ffui_window *wnd, int id)
 {
 	gui_wsettings *w = gg->wsettings;
+	xxstr_buf<100> s;
+
 	switch (id) {
+	case A_COLUMNS_SHOW:
+		wcolumns_show();  break;
+
 	case A_SETS_EQLZ:
 		if (w->cbeqlz.checked())
-			weqlz_show(1);
+			weqlz_show();
 		break;
+
+	case A_SETS_AUTO_SKIP:
+		w->eauto_skip.text(auto_skip_write(s, auto_skip_value(w->tbauto_skip.get())));  break;
+
+	case A_SETS_AUTO_SKIP_TAIL:
+		w->eauto_skip_tail.text(auto_skip_write(s, auto_skip_value(w->tbauto_skip_tail.get())));  break;
 
 	case A_SETTINGS_APPLY:
 		wsettings_ui_to_conf();  break;
 	}
 }
 
-void wsettings_show(uint show)
+void wsettings_show()
 {
 	gui_wsettings *w = gg->wsettings;
-	if (gui_dlg_load())
-		return;
-
-	if (!show) {
-		w->wnd.show(0);
-		return;
-	}
 
 	if (!w->initialized) {
 		w->initialized = 1;
@@ -169,11 +202,24 @@ void wsettings_show(uint show)
 	w->wnd.present();
 }
 
-void wsettings_init()
+static void wsettings_init()
 {
 	gui_wsettings *w = gui_allocT(gui_wsettings);
 	w->wnd.hide_on_close = 1;
 	w->wnd.on_action = wsettings_action;
 	w->wnd.onclose_id = A_SETTINGS_APPLY;
 	gg->wsettings = w;
+}
+
+void wsettings_cmd(uint cmd)
+{
+	gui_wsettings *w = gg->wsettings;
+	switch (cmd) {
+	case GUI_CMD_INIT:
+		wsettings_init();  break;
+	case GUI_CMD_HIDE:
+		if (w->initialized)
+			w->wnd.show(0);
+		break;
+	}
 }

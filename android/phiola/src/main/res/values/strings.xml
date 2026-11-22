@@ -32,6 +32,7 @@
 	<string name="mfile">File Menu</string>
 	<string name="mfile_tags_show">File: Show Tags</string>
 	<string name="mfile_convert">File: Convert...</string>
+	<string name="mfile_share">File: Share...</string>
 	<string name="mfile_show">File: Show in Explorer</string>
 	<string name="mfile_del">File: Delete from Storage</string>
 	<string name="mfile_move">File: Quick Move</string>
@@ -50,6 +51,7 @@
 	<string name="mlist_rename">List: Rename...</string>
 	<string name="mlist_add">List: Add...</string>
 	<string name="mlist_remove_non_existing">List: Remove Non-Existing Files</string>
+	<string name="mlist_remove_dups">List: Remove Duplicates</string>
 	<string name="mlist_remove_non_unique">List: Remove Non-Unique Files</string>
 	<string name="mlist_trk_rm">Removed 1 entry</string>
 	<string name="mlist_clear">List: Clear</string>
@@ -84,7 +86,6 @@
 	<string name="sett_show_filter">Hide \'Search\' Edit Box</string>
 	<string name="sett_rec_btn">First Control Button:</string>
 	<string name="sett_ui_info_in_title">Show Audio Info in Title</string>
-	<string name="sett_svc_notif_disable">Disable System Notification (requires restart)</string>
 
 	<string name="sett_playlist">Playlist</string>
 	<string name="sett_random">Random</string>
@@ -95,6 +96,7 @@
 	<string name="sett_auto_stop">Auto-Stop Timer (min):</string>
 
 	<string name="sett_playback">Playback</string>
+	<string name="sett_play_min_system">Minimal System Integration for Max Performance: static notification, no HW media buttons (requires restart)</string>
 	<string name="sett_codepage">Codepage for Non-Unicode Tags</string>
 	<string name="sett_auto_skip">Auto-Skip the Beginning of Each Track (% or sec):</string>
 	<string name="sett_auto_skip_tail">Auto-Skip the Ending of Each Track (% or sec):</string>
@@ -108,7 +110,10 @@
 	<string name="sett_operation">Operation</string>
 	<string name="sett_file_del">Don\'t Move Files to Trash</string>
 	<string name="sett_trash_dir">Trash Directory (relative to storage mount-point):</string>
-	<string name="sett_library_dir">Music Library Directories (separated by ";"):</string>
+	<string name="sett_library_dir">Music Library Directories:</string>
+	<string name="sett_mlibdir_pick_hint">Pick directory</string>
+	<string name="sett_mlibdir_add">Add</string>
+	<string name="sett_mlibdir_delete">Delete</string>
 	<string name="sett_data_dir">App Data Directory:</string>
 	<string name="sett_deprecated_mods">Enable Deprecated Modules (ALAC)</string>
 
