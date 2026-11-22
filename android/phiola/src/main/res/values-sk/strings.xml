@@ -31,6 +31,7 @@
 	<string name="mfile">Ponuka Súbor</string>
 	<string name="mfile_tags_show">Súbor: Zobraziť značky</string>
 	<string name="mfile_convert">Súbor: Konvertovať...</string>
+	<string name="mfile_share">Súbor: Zdieľať...</string>
 	<string name="mfile_show">Súbor: Zobraziť v prieskumníku</string>
 	<string name="mfile_del">Súbor: Odstrániť z úložiska</string>
 	<string name="mfile_move">Súbor: Rýchlo presunúť</string>
@@ -49,7 +50,8 @@
 	<string name="mlist_rename">Playlist: Premenovať...</string>
 	<string name="mlist_add">Playlist: Pridať...</string>
 	<string name="mlist_remove_non_existing">Playlist: Odstrániť neexistujúce súbory</string>
-	<string name="mlist_remove_non_unique">Playlist: Odstrániť duplicitné súbory</string>
+	<string name="mlist_remove_dups">Playlist: Odstrániť duplicitné súbory</string>
+	<string name="mlist_remove_non_unique">Playlist: Odstrániť viacnásobné súbory</string>
 	<string name="mlist_trk_rm">Odstránených 1 položiek</string>
 	<string name="mlist_clear">Playlist: Vyprázdniť</string>
 	<string name="mlist_next_add_sel">Pridať do nasledujúceho playlistu</string>
@@ -93,6 +95,7 @@
 	<string name="sett_auto_stop">Čas automatického zastavenia (min):</string>
 
 	<string name="sett_playback">Prehrávanie</string>
+	<string name="sett_play_min_system">Minimálna integrácia so systémom pre lepší výkon: statické upozornenie, bez multimediálnych tlačidiel (vyžaduje reštart)</string>
 	<string name="sett_codepage">Kódová stránka pre značky, ktoré nie sú v systéme unicode</string>
 	<string name="sett_auto_skip">Automaticky preskočiť začiatok každého súboru (% alebo sec):</string>
 	<string name="sett_auto_skip_tail">Automaticky preskočiť koniec každého súboru (% alebo sec):</string>
@@ -107,6 +110,9 @@
 	<string name="sett_file_del">Nepresúvať súbory do koša</string>
 	<string name="sett_trash_dir">Priečinok kôš (cesta je relatívna od koreňového priečinka úložiska):</string>
 	<string name="sett_library_dir">Priečinky hudobnej knižnice:</string>
+	<string name="sett_mlibdir_pick_hint">Vybrať priečinok</string>
+	<string name="sett_mlibdir_add">Pridať</string>
+	<string name="sett_mlibdir_delete">Odstrániť</string>
 	<string name="sett_data_dir">Priečinok s údajmi aplikácie:</string>
 	<string name="sett_deprecated_mods">Povoliť zastarané moduly (ALAC)</string>
 
