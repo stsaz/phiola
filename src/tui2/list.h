@@ -417,6 +417,7 @@ static int list_action(int k, int key)
 	case 'R': {
 		struct phi_queue_conf *qc = mod->queue->conf(NULL);
 		qc->repeat_all = !qc->repeat_all;
+		list_view_title();
 		tui2_status("Repeat: %s", (qc->repeat_all) ? "on" : "off");
 		break;
 	}
@@ -424,6 +425,7 @@ static int list_action(int k, int key)
 	case 'Z': {
 		struct phi_queue_conf *qc = mod->queue->conf(NULL);
 		qc->random = !qc->random;
+		list_view_title();
 		tui2_status("Random: %s", (qc->random) ? "on" : "off");
 		break;
 	}

@@ -470,7 +470,7 @@ static int global_action(int k, int key)
 	return 0;
 }
 
-// "Explorer | [Playlist 1] | ..."
+// "Explorer | [Playlist 1] | ...  R Z"
 static void list_view_title()
 {
 	uint len = 0, n = mod->queue->total();
@@ -484,12 +484,18 @@ static void list_view_title()
 	phi_queue_id sel = (mod->view_explorer) ? NULL : ffslice_itemT(&mod->list.lists, mod->list.selected, struct list_info)->q;
 	for (uint i = 0;  i < n;  i++) {
 		phi_queue_id q = mod->queue->get(i);
-		r = ffs_format(mod->buf + len, sizeof(mod->buf) - len, " | %s%s%s"
+		r = ffs_format(mod->buf + len, sizeof(mod->buf) - len - 4, " | %s%s%s"
 			, brackets[q == sel][0], mod->queue->conf(q)->name, brackets[q == sel][1]);
 		if (r <= 0)
 			break; // Reached buffer limit
 		len += r;
 	}
+
+	struct phi_queue_conf *qc = mod->queue->conf(NULL);
+	if (qc->repeat_all)
+		len += ffs_format(mod->buf + len, sizeof(mod->buf) - len, " R");
+	if (qc->random)
+		len += ffs_format(mod->buf + len, sizeof(mod->buf) - len, " Z");
 
 	ffncurses_println_attr(&mod->wmain, Y_LIST_TITLE, 0, mod->buf, len, A_BOLD, CLR_TITLE);
 }
