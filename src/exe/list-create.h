@@ -24,9 +24,8 @@ struct list_create {
 	ffvec	include, exclude; // ffstr[]
 	ffvec	input; // char*[]
 	const char *output;
-	u_char	unique;
 
-	phi_task task;
+	phi_queue_id q;
 };
 
 static int lc_input(struct list_create *lc, const char *fn)
@@ -47,24 +46,50 @@ static int lc_exclude(struct list_create *lc, ffstr s)
 	return 0;
 }
 
-static void lc_done(void *udata, int result)
+static void lc_saved(void *param, phi_track *t)
 {
-	x->exit_code = result;
+	x->exit_code = t->error & 0xff;
+	x->core->sig(PHI_CORE_STOP);
+}
+
+static void lc_ready(struct list_create *lc)
+{
+	x->subcmd.q_expanded = NULL;
+
+	x->queue->remove_multi(lc->q, PHI_Q_RM_DUPS);
+
+	if (x->queue->save(lc->q, lc->output, lc_saved, lc))
+		goto err;
+	return;
+
+err:
+	x->exit_code = 1;
 	x->core->sig(PHI_CORE_STOP);
 }
 
 static int lc_action(struct list_create *lc)
 {
-	const phi_playlist_if *pl_if = x->core->mod("format.playlist");
-	if (!pl_if)
-		return 1;
-	struct phi_playlist_conf c = {
-		.include_str = *(ffslice*)&lc->include,
-		.exclude_str = *(ffslice*)&lc->exclude,
-		.on_complete = lc_done,
-		.udata = lc,
+	x->queue->on_change(q_on_change);
+	struct phi_queue_conf qc = {
+		.tconf = {
+			.ifile.include = *(ffslice*)&lc->include,
+			.ifile.exclude = *(ffslice*)&lc->exclude,
+		},
 	};
-	pl_if->create(lc->output, *(ffslice*)&lc->input, 0, &c);
+	lc->q = x->queue->create(&qc);
+
+	char **it;
+	FFSLICE_WALK(&lc->input, it) {
+		struct phi_queue_entry qe = {
+			.url = *it,
+		};
+		x->queue->add(lc->q, &qe);
+	}
+
+	if (!x->queue->status(lc->q))
+		lc_ready(lc);
+	else
+		x->subcmd.q_expanded = (phi_task_func)lc_ready;
 	return 0;
 }
 
@@ -74,7 +99,6 @@ static const struct ffarg list_create_args[] = {
 	{ "-help",		'1',	lc_help },
 	{ "-include",	'+S',	lc_include },
 	{ "-out",		's',	O(output) },
-	{ "-unique",	'1',	O(unique) }, // obsolete
 	{ "\0\1",		's',	lc_input },
 	{ "",			0,		NULL }
 };

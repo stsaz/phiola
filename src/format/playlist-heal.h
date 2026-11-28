@@ -9,8 +9,7 @@
 #include <ffbase/map.h>
 
 struct list_heal {
-	struct list_ctx lx;
-
+	const phi_queue_if *queue;
 	ffvec		pl_dir, ps_dir;
 	ffvec		buf;
 	ffmap		map; // "filename" -> struct lh_map_ent{ "/path/filename.ext" }
@@ -266,19 +265,6 @@ done:
 	return output.ptr;
 }
 
-static void lh_save_complete(void *param, phi_track *t)
-{
-	struct list_heal *lh = param;
-	ffvec_free(&lh->buf);
-	ffvec_free(&lh->pl_dir);
-	ffvec_free(&lh->ps_dir);
-	ffvec_free(&lh->ds_path);
-	ffdirscan_close(&lh->ds);
-	lh_free_table(lh);
-
-	lx_done(param, t);
-}
-
 /** Get absolute directory of the playlist file */
 static int abs_dir(ffstr fn, ffvec *buf, ffstr ps_dir)
 {
@@ -295,10 +281,10 @@ static int abs_dir(ffstr fn, ffvec *buf, ffstr ps_dir)
 	return 0;
 }
 
-static void lh_ready(void *param)
+void pl_heal(phi_queue_id q, const char *fn)
 {
-	struct list_heal *lh = param;
-	const char *lname = lh->lx.fn;
+	struct list_heal *lh = ffmem_new(struct list_heal);
+	lh->queue = core->mod("core.queue");
 
 	ffvec_alloc(&lh->ps_dir, 4*1024, 1);
 	if (ffps_curdir(lh->ps_dir.ptr, lh->ps_dir.cap)) {
@@ -307,12 +293,12 @@ static void lh_ready(void *param)
 	}
 	lh->ps_dir.len = ffsz_len(lh->ps_dir.ptr);
 
-	if (abs_dir(FFSTR_Z(lname), &lh->pl_dir, *(ffstr*)&lh->ps_dir))
+	if (abs_dir(FFSTR_Z(fn), &lh->pl_dir, *(ffstr*)&lh->ps_dir))
 		return;
 
 	uint nfixed = 0, ntotal = 0;
 	struct phi_queue_entry *qe;
-	for (uint i = 0;  (qe = lh->lx.queue->at(lh->lx.q, i));  i++) {
+	for (uint i = 0;  (qe = lh->queue->at(q, i));  i++) {
 		char *new_name;
 		if ((new_name = lh_heal(lh, qe->url))) {
 			qe->url = new_name;
@@ -321,21 +307,13 @@ static void lh_ready(void *param)
 		ntotal++;
 	}
 
-	infolog("%s: corrected %u/%u paths", lname, nfixed, ntotal);
-	lh->lx.queue->save(lh->lx.q, lname, lh_save_complete, lh);
-}
+	infolog("%s: corrected %u/%u paths", fn, nfixed, ntotal);
 
-void pl_heal(const char *fn, uint flags, const struct phi_playlist_conf *c)
-{
-	struct list_heal *lh = (void*)list_ctx_new(fn, c, sizeof(struct list_heal));
-
-	struct phi_queue_conf qc = {};
-	lh->lx.q = lh->lx.queue->create(&qc);
-
-	struct phi_queue_entry qe = {
-		.url = (void*)fn,
-	};
-	lh->lx.queue->add(lh->lx.q, &qe);
-
-	core->task(0, &lh->lx.task, (void*)lh_ready, lh);
+	ffvec_free(&lh->buf);
+	ffvec_free(&lh->pl_dir);
+	ffvec_free(&lh->ps_dir);
+	ffvec_free(&lh->ds_path);
+	ffdirscan_close(&lh->ds);
+	lh_free_table(lh);
+	ffmem_free(lh);
 }

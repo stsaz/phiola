@@ -17,11 +17,15 @@ Options:\n\
 
 struct list_sort {
 	ffvec	input; // char*[]
-
 	u_char	nodups;
+
+	phi_queue_id q;
+	phi_task task;
 	uint	counter;
 	int		result;
 };
+
+static void ls_action2(struct list_sort *ls);
 
 static int ls_input(struct list_sort *ls, const char *fn)
 {
@@ -29,34 +33,59 @@ static int ls_input(struct list_sort *ls, const char *fn)
 	return 0;
 }
 
-static void ls_done(void *param, int result)
+static void ls_saved(void *param, phi_track *t)
 {
 	struct list_sort *ls = param;
-	ls->result |= result;
-	if (ffint_fetch_add(&ls->counter, -1) - 1)
+	ls->result |= t->error & 0xff;
+	ls->counter++;
+	if (ls->counter < ls->input.len) {
+		x->core->task(0, &ls->task, (phi_task_func)ls_action2, ls);
 		return;
+	}
 
 	x->exit_code = ls->result;
 	x->core->sig(PHI_CORE_STOP);
 }
 
+static void ls_ready(struct list_sort *ls)
+{
+	x->subcmd.q_expanded = NULL;
+
+	if (ls->nodups)
+		x->queue->remove_multi(ls->q, PHI_Q_RM_DUPS);
+	else
+		x->queue->sort(ls->q, 0);
+
+	const char *fn = *ffslice_itemT(&ls->input, ls->counter, char*);
+	if (x->queue->save(ls->q, fn, ls_saved, ls))
+		goto err;
+	return;
+
+err:
+	x->exit_code = 1;
+	x->core->sig(PHI_CORE_STOP);
+}
+
+static void ls_action2(struct list_sort *ls)
+{
+	struct phi_queue_conf qc = {};
+	ls->q = x->queue->create(&qc);
+
+	struct phi_queue_entry qe = {
+		.url = *ffslice_itemT(&ls->input, ls->counter, char*),
+	};
+	x->queue->add(ls->q, &qe);
+
+	if (!x->queue->status(ls->q))
+		ls_ready(ls);
+	else
+		x->subcmd.q_expanded = (phi_task_func)ls_ready;
+}
+
 static int ls_action(struct list_sort *ls)
 {
-	ls->counter = ls->input.len;
-
-	const phi_playlist_if *pl_if = x->core->mod("format.playlist");
-	if (!pl_if)
-		return 1;
-	struct phi_playlist_conf c = {
-		.nodups = ls->nodups,
-		.on_complete = ls_done,
-		.udata = ls,
-	};
-
-	char **it;
-	FFSLICE_WALK(&ls->input, it) {
-		pl_if->sort(*it, 0, &c);
-	}
+	x->queue->on_change(q_on_change);
+	ls_action2(ls);
 	return 0;
 }
 

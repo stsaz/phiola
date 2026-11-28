@@ -766,18 +766,7 @@ struct phi_asv_conf {
 
 /** Playlist functions */
 
-typedef void (*phi_playlist_cb)(void*, int);
-struct phi_playlist_conf {
-	ffslice include_str, exclude_str;
-	uint nodups :1;
-
-	phi_playlist_cb on_complete;
-	void *udata;
-};
-
 typedef struct phi_playlist_if phi_playlist_if;
 struct phi_playlist_if {
-	void (*create)(const char *fn, ffslice input_sz, uint flags, const struct phi_playlist_conf *c);
-	void (*sort)(const char *fn, uint flags, const struct phi_playlist_conf *c);
-	void (*heal)(const char *fn, uint flags, const struct phi_playlist_conf *c);
+	void (*heal)(phi_queue_id q, const char *fn);
 };

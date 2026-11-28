@@ -24,10 +24,14 @@ Note: can NOT detect file renamings.\n\
 struct list_heal {
 	ffvec	input; // char*[]
 
-	ffvec	tasks; // fftask[]
-	uint	counter;
-	int		result;
+	const phi_playlist_if *pl_if;
+	phi_queue_id q;
+	phi_task task;
+	uint counter;
+	int result;
 };
+
+static void lh_action2(struct list_heal *lh);
 
 static int lh_input(struct list_heal *lh, const char *fn)
 {
@@ -35,33 +39,59 @@ static int lh_input(struct list_heal *lh, const char *fn)
 	return 0;
 }
 
-static void lh_done(void *param, int result)
+static void lh_saved(void *param, phi_track *t)
 {
 	struct list_heal *lh = param;
-	lh->result |= result;
-	if (ffint_fetch_add(&lh->counter, -1) - 1)
+	lh->result |= t->error & 0xff;
+	lh->counter++;
+	if (lh->counter < lh->input.len) {
+		x->core->task(0, &lh->task, (phi_task_func)lh_action2, lh);
 		return;
+	}
 
 	x->exit_code = lh->result;
 	x->core->sig(PHI_CORE_STOP);
 }
 
+static void lh_ready(struct list_heal *lh)
+{
+	x->subcmd.q_expanded = NULL;
+	const char *fn = *ffslice_itemT(&lh->input, lh->counter, char*);
+
+	if (!lh->pl_if) {
+		if (!(lh->pl_if = x->core->mod("format.playlist")))
+			goto err;
+	}
+	lh->pl_if->heal(lh->q, fn);
+	if (x->queue->save(lh->q, fn, lh_saved, lh))
+		goto err;
+	return;
+
+err:
+	x->exit_code = 1;
+	x->core->sig(PHI_CORE_STOP);
+}
+
+static void lh_action2(struct list_heal *lh)
+{
+	struct phi_queue_conf qc = {};
+	lh->q = x->queue->create(&qc);
+
+	struct phi_queue_entry qe = {
+		.url = *ffslice_itemT(&lh->input, lh->counter, char*),
+	};
+	x->queue->add(lh->q, &qe);
+
+	if (!x->queue->status(lh->q))
+		lh_ready(lh);
+	else
+		x->subcmd.q_expanded = (phi_task_func)lh_ready;
+}
+
 static int lh_action(struct list_heal *lh)
 {
-	lh->counter = lh->input.len;
-
-	const phi_playlist_if *pl_if = x->core->mod("format.playlist");
-	if (!pl_if)
-		return 1;
-	struct phi_playlist_conf c = {
-		.on_complete = lh_done,
-		.udata = lh,
-	};
-
-	char **it;
-	FFSLICE_WALK(&lh->input, it) {
-		pl_if->heal(*it, 0, &c);
-	}
+	x->queue->on_change(q_on_change);
+	lh_action2(lh);
 	return 0;
 }
 
