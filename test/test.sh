@@ -310,7 +310,7 @@ test_remote() {
 	sleep 5
 	./phiola remote stop
 	sleep 1
-	ps -q $CHILD && exit 1 # subprocess must exit
+	ps -p $CHILD && exit 1 # subprocess must exit
 	./phiola remote stop || true
 	./phiola i rec_remote.flac
 }

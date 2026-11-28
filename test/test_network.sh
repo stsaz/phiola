@@ -119,7 +119,7 @@ test_http_ctl() {
 	curl -s -b "$cookie" -X POST "$base/play/stop"
 	curl -s -b "$cookie" "$base/notfound"
 
-	ps -q "$pid" || exit 1
+	ps -p "$pid" || exit 1
 	kill "$pid" || true
 
 	# HTTPS
@@ -131,7 +131,7 @@ test_http_ctl() {
 	rm -f "$cookie"
 	[[ $(curl -sk -c "$cookie" -o /dev/null -w "%{http_code}" -X POST "$base/login" -d '{"pass":"test123"}') == 200 ]]
 	[[ $(curl -sk -b "$cookie" -o /dev/null -w "%{http_code}" "$base/play/status") == 200 ]]
-	ps -q "$pid" || exit 1
+	ps -p "$pid" || exit 1
 	kill "$pid" || true
 	rm -f "$cookie"
 }
