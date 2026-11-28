@@ -802,7 +802,7 @@ public class MainActivity extends AppCompatActivity {
 		Uri u = new PhiFileProvider().uri(this, file_name);
 		Intent r = new Intent();
 		r.setData(u);
-		r.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+		r.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 		setResult(RESULT_OK, r);
 		finish();
 		core.dbglog(TAG, "setResult RESULT_OK %s", u.getPath());

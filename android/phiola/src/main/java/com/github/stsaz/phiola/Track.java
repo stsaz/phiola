@@ -106,7 +106,11 @@ class Track {
 	}
 	RecCallback rec_mic_cb;
 	TrackHandle rec_start(int flags, RecCallback cb) {
-		String path = ((flags & RECF_EXPORT) == 0) ? core.rec.rec_path : core.storage_path + "/Recordings";
+		String path = core.rec.rec_path;
+		if ((flags & RECF_EXPORT) != 0
+			&& !path.startsWith(core.storage_path)) {
+			path = core.storage_path + "/Recordings"; // Require the exported output path on the main storage device
+		}
 		core.dir_make(path);
 		String oname = String.format("%s/%s.%s"
 			, path
