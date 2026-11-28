@@ -357,6 +357,7 @@ TESTS=(
 	# http
 	tee
 
+	http_ctl
 	remote
 	help
 )

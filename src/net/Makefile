@@ -27,6 +27,10 @@ else
 		netmill-http-server-conn.o
 endif
 
+ifneq "$(PHI_HTTP_CTL)" "0"
+	HTTP_OBJ += http-ctl.o
+endif
+
 CFLAGS_NETMILL := $(CFLAGS_BASE) -I$(NETMILL)/src
 ifeq "$(DEBUG)" "1"
 	CFLAGS_NETMILL += -DNML_ENABLE_LOG_EXTRA
@@ -84,10 +88,13 @@ $(NML_3PT):
 endif
 
 http.$(SO): $(HTTP_OBJ)
-	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) $(LINK_PTHREAD) $(LINKFLAGS_NETMILL) -o $@
+	$(LINK) -shared $+ $(LINKFLAGS) $(LINK_RPATH_ORIGIN) $(LINK_PTHREAD) $(LINKFLAGS_NETMILL) -lm -o $@
 
 icy.o: $(PHIOLA)/src/net/icy.c
 	$(C) $(CFLAGS) -I$(AVPACK) $< -o $@
+
+http-ctl.o: $(PHIOLA)/src/net/http-ctl.c | $(OPENSSL_SO)
+	$(C) $(CFLAGS) $(CFLAGS_HTTP) $(CFLAGS_NETMILL) -I$(NETMILL)/src -DNML_STATIC_LINKING $< -o $@
 
 %.o: $(PHIOLA)/src/net/%.c
 	$(C) $(CFLAGS) $(CFLAGS_HTTP) -I$(NETMILL)/src -DNML_STATIC_LINKING $< -o $@

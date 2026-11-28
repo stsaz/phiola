@@ -79,3 +79,59 @@ EOF
 
 	kill $nml_pid
 }
+
+test_http_ctl() {
+	if [[ ! -f httpctl.ogg ]]; then
+		./phiola rec -u 2 -m "title=mytrack" -o httpctl.ogg
+		cp httpctl.ogg httpctl2.ogg
+		cp httpctl.ogg httpctl3.ogg
+	fi
+
+	local base=http://127.0.0.1:21014
+	local cookie=phiola-cookies.txt
+	rm -f "$cookie"
+
+	./phiola pl -remote_proto http -remote_pass test123 httpctl*.ogg &
+	local pid=$!
+	sleep 1
+
+	curl -s "$base/" > /dev/null
+	curl -s "$base/login.html" > /dev/null
+
+	# API requires auth
+	[[ $(curl -s -o /dev/null -w "%{http_code}" "$base/play/status") == 401 ]]
+
+	# wrong password
+	[[ $(curl -s -o /dev/null -w "%{http_code}" -X POST "$base/login" -d '{"pass":"wrong"}') == 403 ]]
+
+	# correct password
+	[[ $(curl -s -c "$cookie" -o /dev/null -w "%{http_code}" -X POST "$base/login" -d '{"pass":"test123"}') == 200 ]]
+
+	# authenticated API calls
+	[[ $(curl -s -b "$cookie" -o /dev/null -w "%{http_code}" "$base/play/status") == 200 ]]
+	curl -s -b "$cookie" "$base/play/status"
+	curl -s -b "$cookie" -X POST "$base/play/play"
+	curl -s -b "$cookie" -X POST "$base/play/pause"
+	curl -s -b "$cookie" -X POST "$base/play/seek" -d '{"pos_pct":50}'
+	curl -s -b "$cookie" -X POST "$base/play/volume" -d '{"vol_pct":80}'
+	curl -s -b "$cookie" -X POST "$base/play/next"
+	curl -s -b "$cookie" -X POST "$base/play/prev"
+	curl -s -b "$cookie" -X POST "$base/play/stop"
+	curl -s -b "$cookie" "$base/notfound"
+
+	ps -q "$pid" || exit 1
+	kill "$pid" || true
+
+	# HTTPS
+	./phiola pl -remote_proto http -ssl mod/http-client.pem -remote_pass test123 httpctl*.ogg &
+	local pid=$!
+	sleep 1
+	base=https://127.0.0.1:21014
+	[[ $(curl -sk -o /dev/null -w "%{http_code}" "$base/play/status") == 401 ]]
+	rm -f "$cookie"
+	[[ $(curl -sk -c "$cookie" -o /dev/null -w "%{http_code}" -X POST "$base/login" -d '{"pass":"test123"}') == 200 ]]
+	[[ $(curl -sk -b "$cookie" -o /dev/null -w "%{http_code}" "$base/play/status") == 200 ]]
+	ps -q "$pid" || exit 1
+	kill "$pid" || true
+	rm -f "$cookie"
+}

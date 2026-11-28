@@ -5,7 +5,7 @@
 phiola is a fast audio player, recorder, converter, and streaming server for Linux, macOS, Windows, and Android.
 It can play audio files from your device or a remote server, record audio from your microphone or an internet radio stream, and convert audio into various formats.
 Its low CPU consumption helps extend the battery life of laptops and phones.
-You can control phiola via CLI, TUI, GUI, IPC socket (UNIX socket / named pipe), or its API (C / Java).
+You can control phiola via CLI, TUI, GUI, HTTP, IPC socket (UNIX socket / named pipe), or its API (C / Java).
 Its fast startup time makes it ideal for custom scripts used on a "play-and-exit" or "record-and-exit" basis.
 
 It is completely portable (all codecs are bundled), meaning you can run it directly from a read-only flash drive.
@@ -24,6 +24,7 @@ Contents:
 * [How to Use on Android](#how-to-use-on-android)
 * [How to Record from Radio](#how-to-record-from-radio)
 * [How to Stream Audio](#how-to-stream-audio)
+* [How to Use HTTP Remote Control](#how-to-use-http-remote-control)
 * [How to Use API](#how-to-use-api)
 * [Configuration](#configuration)
 * [External Libraries](#external-libraries)
@@ -45,7 +46,8 @@ Contents:
 	* DynamicAudioNormalizer, auto loudness and ReplayGain normalizer
 	* multi-band equalizer
 	* noise gate
-* Remote control: ability to start a background process and stop it from another terminal
+* Remote control over HTTP: start phiola on PC, then control playback (play/pause, next/prev, volume, etc.) remotely from a phone or web browser on your local network
+* Remote control (pipe): ability to start a background process and stop it from another terminal
 * Command Line Interface for Desktop OS
 * Terminal/Console UI for interaction at runtime
 * GUI for Windows, Linux, Android: manage your playlists and audio files
@@ -492,6 +494,61 @@ To check if the server works, run `phiola http://localhost:21014/` — it will p
 For testing, use `-ssl ""` to enable TLS with phiola's built-in self-signed certificate.
 
 > Note: phiola supports streaming in AAC or Opus.
+
+
+## How to Use HTTP Remote Control
+
+phiola can accept remote control commands over HTTP.
+This is useful when you want to start playback on your PC and then control it from another device on the same network (e.g., a phone) without returning to the PC.
+No app installation needed — it works with a web browser.
+
+**Step 1.**
+Start playback with the HTTP remote control interface.
+phiola starts an HTTP server on port `21014` by default.
+
+```sh
+phiola -remote_proto http -ssl your/cert.pem -remote_pass mypassword "My Music"
+```
+
+> For testing, use `-ssl ""` to enable TLS with phiola's built-in self-signed certificate.
+
+**Step 2.**
+Open `https://<your-pc-ip>:21014/` in a browser on your phone, where `<your-pc-ip>` is your PC's address on the local network (you'll be asked to enter the password you previously set with `-remote_pass`).
+Here's what this web interface provides:
+* Current track info (artist, title) and playback position
+* Play / Pause, Stop, Previous / Next
+* Seek bar and Volume control
+
+Done — your phone is now a remote control for phiola.
+
+### HTTP API
+
+You can issue commands and read status from your own app or a terminal:
+
+```sh
+# Log in
+curl -c cookies.txt -X POST https://<host>:21014/login -d '{"pass":"mypassword"}'
+
+# Get info for the currently playing track
+curl -b cookies.txt https://<host>:21014/play/status
+
+# Play next track
+curl -b cookies.txt -X POST https://<host>:21014/play/next
+```
+
+Endpoints:
+
+| HTTP Method and Path | Meaning |
+| --- | --- |
+| POST /login | Authenticate with `{"pass": "..."}` |
+| GET /play/status | Get current status |
+| POST /play/play | Play or resume after pause |
+| POST /play/pause | Pause |
+| POST /play/stop | Stop |
+| POST /play/next | Next track |
+| POST /play/prev | Previous track |
+| POST /play/seek | Seek to position in percents (e.g., `{"pos_pct": 50}`) |
+| POST /play/volume | Set volume (e.g., `{"vol_pct": 50}`) |
 
 
 ## How to Use API

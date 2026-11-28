@@ -539,15 +539,21 @@ const phi_filter phi_http = {
 };
 
 extern const phi_filter phi_audiosv;
+extern const phi_remote_sv_if hctl_sv_if;
+extern const phi_filter hctl_play_if;
 extern void ausv_mod_close();
 
 static const void* net_iface(const char *name)
 {
-	if (ffsz_eq(name, "client")) return &phi_http;
+	static const struct map_sz_vptr map[] = {
+		{ "client",		&phi_http },
+		{ "ctl-play",	&hctl_play_if },
+		{ "ctl-sv",		&hctl_sv_if },
 #ifndef PHI_HTTP_NO_SRV
-	if (ffsz_eq(name, "server")) return &phi_audiosv;
+		{ "server",		&phi_audiosv },
 #endif
-	return NULL;
+	};
+	return map_sz_vptr_findz2(map, FF_COUNT(map), name);
 }
 
 static void net_close()

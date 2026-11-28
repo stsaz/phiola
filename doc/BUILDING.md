@@ -109,3 +109,4 @@ Directory `phiola-2` is the application directory.  Copy it anywhere you want.
 | `PHI_GUI=0`       | Disable GUI |
 | `PHI_HTTP_SSL=0`  | Disable SSL |
 | `PHI_HTTP_SRV=0`  | Disable ICY server |
+| `PHI_REMOTE_AUTH=0` | Disable authentication for HTTP Remote Control |

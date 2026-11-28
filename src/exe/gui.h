@@ -41,7 +41,8 @@ static int gui_single_mode(struct cmd_gui *g)
 	}
 
 	const phi_remote_sv_if *rsv = x->core->mod("remote.server");
-	rsv->start("gui");
+	struct phi_remote_sv_conf rsc = { .name = "gui" };
+	rsv->start(&rsc);
 	rc = 0;
 
 end:

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>φphiola <span id="status">Login</span></h1>
+
+<p id="meta">Enter the remote control password.</p>
+
+<form id="lf">
+<input type="password" id="pass" name="pass" placeholder="Password" autofocus>
+
+<div class="controls">
+	<button id="go" type="submit">Login</button>
+</div>
+</form>
+
+<p id="error" class="error"></p>
+
+<script src="common.js"></script>
+<script>
+function login_handle(code) {
+	if (code != 200) {
+		id("error").textContent = (!code) ? "Request failed" : "Wrong password";
+		return;
+	}
+
+	location.replace("/");
+}
+
+function login_send(e) {
+	e.preventDefault();
+	if (!pass.value) return;
+	id("error").textContent = "";
+	request_post_body("/login", { pass: pass.value }, login_handle);
+}
+
+var pass = id("pass"), go = id("go");
+pass.oninput = () => go.disabled = !pass.value;
+id("lf").onsubmit = login_send;
+go.disabled = 1;
+</script>
+
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>φphiola <span id="status"></span></h1>
+
+<p id="name"></p>
+<p id="meta"><span id="pos"></span></p>
+
+<input type="range" id="seek" class="bar" min="0" max="100" value="0" step="1">
+
+<div class="controls">
+	<button id="playpause" title="Play/Pause"><img id="pp_icon" src="play.svg" alt="Play/Pause"></button>
+	<button id="stop" title="Stop"><img src="stop.svg" alt="Stop"></button>
+	<button id="prev" title="Previous"><img src="prev.svg" alt="Previous"></button>
+	<button id="next" title="Next"><img src="next.svg" alt="Next"></button>
+</div>
+
+<div class="volrow">
+	<span>Volume:</span>
+	<input type="range" id="volume" class="bar" min="0" max="100" value="100" step="1">
+</div>
+
+<script src="common.js"></script>
+<script>
+function time_fmt(s) {
+	return ((s / 60) | 0) + ":" + String(s % 60).padStart(2, "0");
+}
+
+var ui = {
+	playing: 0,
+	seeking: 0,
+	vol_drag: 0,
+};
+
+function seek_set(v) {
+	var s = id("seek");
+	s.value = v;
+	s.style.setProperty("--pct", v + "%");
+}
+
+function seek_input() {
+	ui.seeking = 1;
+	seek_set(id("seek").value);
+}
+
+function seek_send() {
+	ui.seeking = 0;
+	request_post_body("/play/seek", { pos_pct: id("seek").value | 0 });
+}
+
+function vol_set(v) {
+	var s = id("volume");
+	s.value = v;
+	s.style.setProperty("--pct", v + "%");
+}
+
+function vol_input() {
+	ui.vol_drag = 1;
+	vol_set(id("volume").value);
+}
+
+function vol_send() {
+	ui.vol_drag = 0;
+	request_post_body("/play/volume", { vol_pct: id("volume").value | 0 });
+}
+
+function status_clear() {
+	id("name").textContent = "";
+	id("status").textContent = "";
+	id("pos").textContent = "";
+	seek_set(0);
+	id("pp_icon").src = "play.svg";
+	ui.playing = 0;
+}
+
+function status_update(code, d) {
+	if (code != 200) {
+		if (code == 401)
+			location.replace("/login.html");
+		else
+			status_clear();
+		return;
+	}
+
+	if (!ui.vol_drag)
+		vol_set(d.volume);
+
+	if (d.status == "stopped") {
+		status_clear();
+		id("status").textContent = "Stopped";
+		return;
+	}
+
+	id("name").textContent = ((d.artist) ? d.artist + " - " : "") + d.title;
+	id("status").textContent = (d.status == "paused") ? "Paused" : "Playing";
+	id("pos").textContent = (d.total)
+		? time_fmt(d.pos) + " / " + time_fmt(d.total)
+		: time_fmt(d.pos);
+
+	if (d.total && !ui.seeking)
+		seek_set(Math.round(d.pos * 100 / d.total));
+
+	ui.playing = (d.status == "playing");
+	id("pp_icon").src = (ui.playing) ? "pause.svg" : "play.svg";
+}
+
+function status_recv() {
+	request_get_json("/play/status", status_update);
+}
+
+id("playpause").onclick = () => request_post("/play/" + (ui.playing ? "pause" : "play"));
+id("stop").onclick = () => request_post("/play/stop");
+id("next").onclick = () => request_post("/play/next");
+id("prev").onclick = () => request_post("/play/prev");
+id("seek").oninput = seek_input;
+id("seek").onchange = seek_send;
+id("volume").oninput = vol_input;
+id("volume").onchange = vol_send;
+
+setInterval(status_recv, 1000);
+status_recv();
+</script>
+
+</body>
+</html>

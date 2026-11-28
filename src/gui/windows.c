@@ -217,7 +217,8 @@ static int action()
 	}
 
 	const phi_remote_sv_if *rsv = x->core->mod("remote.server");
-	rsv->start("gui");
+	struct phi_remote_sv_conf rsc = { .name = "gui" };
+	rsv->start(&rsc);
 
 	struct phi_queue_conf qc = {
 		.first_filter = &phi_guard_gui,

@@ -61,6 +61,10 @@ Options:\n\
   `-perf`                 Print performance counters\n\
   `-remote`               Listen for incoming remote commands\n\
   `-remote_id` STRING     phiola instance ID\n\
+  `-remote_proto` STRING  Protocol for remote control: `http`, `pipe` (default)\n\
+  `-remote_port` NUMBER   TCP port for HTTP remote control (default: 21014)\n\
+  `-remote_pass` STRING   Password for HTTP remote control (required with `-remote_proto http`)\n\
+  `-ssl` CERT.PEM         Use TLS encryption (with `-remote_proto http`)\n\
   `-volume` NUMBER        Set initial volume level: 0..100\n\
   `-connect_timeout` NUMBER\n\
                         Connection timeout (in seconds): 1..255\n\
@@ -77,9 +81,12 @@ struct cmd_play {
 	const char*	auto_norm;
 	const char*	dup;
 	const char*	remote_id;
+	const char*	remote_pass;
+	const char*	ssl_cert;
 	const char*	equalizer;
 	const char*	tee;
 	ffstr	audio;
+	ffstr	ssl_cert_data;
 	ffvec	include, exclude; // ffstr[]
 	ffvec	input; // ffstr[]
 	ffvec	tracks; // uint[]
@@ -89,6 +96,7 @@ struct cmd_play {
 	u_char	random;
 	u_char	recordable;
 	u_char	remote;
+	u_char	remote_proto; // enum RP
 	u_char	repeat_all;
 	u_char	rg_norm;
 	u_char	seek_type;
@@ -100,12 +108,18 @@ struct cmd_play {
 	uint	device;
 	uint	number;
 	uint	rbuffer_kb;
+	uint	remote_port;
 	uint	recv_timeout;
 	uint	volume;
 	uint64	seek;
 	uint64	until;
 
 	phi_task task;
+};
+
+enum RP {
+	RP_PIPE = 1,
+	RP_HTTP,
 };
 
 static void play_action2(struct cmd_play *p);
@@ -138,6 +152,17 @@ static int play_until(struct cmd_play *p, ffstr s)
 	}
 
 	return cmd_time_value(&p->until, s);
+}
+
+static int play_remote_proto(struct cmd_play *p, ffstr s)
+{
+	if (ffstr_eqz(&s, "http"))
+		p->remote_proto = RP_HTTP;
+	else if (ffstr_eqz(&s, "pipe"))
+		p->remote_proto = RP_PIPE;
+	else
+		return _ffargs_err(&x->cmd, 1, "unknown value '%S'", &s);
+	return 0;
 }
 
 static int play_include(struct cmd_play *p, ffstr s)
@@ -225,7 +250,9 @@ static int play_action(struct cmd_play *p)
 	x->queue->on_change(q_on_change);
 	struct phi_queue_conf qc = {
 		.first_filter = &play_guard,
-		.ui_module = (p->tui2) ? "tui2.play" : "tui.play",
+		.ui_module = (p->remote_proto == RP_HTTP) ? "http.ctl-play"
+			: (p->tui2) ? "tui2.play"
+			: "tui.play",
 		.tconf = c,
 		.random = p->random,
 		.repeat_all = p->repeat_all,
@@ -243,9 +270,16 @@ static int play_action(struct cmd_play *p)
 	if (p->tui2)
 		tui2_prepare();
 
-	if (p->remote || p->remote_id) {
-		const phi_remote_sv_if *rsv = x->core->mod("remote.server");
-		if (rsv->start(p->remote_id))
+	if (p->remote_proto) {
+		const phi_remote_sv_if *rsv = x->core->mod((p->remote_proto == RP_HTTP) ? "http.ctl-sv" : "remote.server");
+		struct phi_remote_sv_conf rsc = {
+			.name = p->remote_id,
+			.port = (p->remote_port > 0 && p->remote_port < 0xffff) ? p->remote_port : 21014,
+			.ssl_cert = p->ssl_cert_data,
+		};
+		if (p->remote_pass)
+			rsc.pass = FFSTR_Z(p->remote_pass);
+		if (rsv->start(&rsc))
 			return -1;
 	}
 
@@ -268,6 +302,31 @@ static int play_check(struct cmd_play *p)
 {
 	if (!p->input.len)
 		return _ffargs_err(&x->cmd, 1, "please specify input file");
+
+	if (!p->remote_proto && (p->remote || p->remote_id))
+		p->remote_proto = RP_PIPE;
+	else if (p->remote_proto == RP_HTTP && p->remote)
+		return _ffargs_err(&x->cmd, 1, "-remote can only be used with -remote_proto=pipe");
+#ifndef PHI_REMOTE_NO_AUTH
+	else if (p->remote_proto == RP_HTTP && (!p->remote_pass || !*p->remote_pass))
+		return _ffargs_err(&x->cmd, 1, "-remote_pass is required with -remote_proto=http");
+#endif
+
+	if (p->ssl_cert) {
+		if (p->remote_proto != RP_HTTP)
+			return _ffargs_err(&x->cmd, 1, "-ssl can only be used with -remote_proto=http");
+		const char *fn = p->ssl_cert;
+		char *fn_def = NULL;
+		if (!*fn)
+			fn = fn_def = ffsz_allocfmt("%S/mod/http-client.pem", &x->root_dir);
+		ffvec d = {};
+		if (fffile_readwhole(fn, &d, 1*1024*1024)) {
+			ffmem_free(fn_def);
+			return _ffargs_err(&x->cmd, 1, "file read: %s", fn);
+		}
+		p->ssl_cert_data = ffvec_str(&d);
+		ffmem_free(fn_def);
+	}
 
 	if (p->tee && p->dup)
 		return _ffargs_err(&x->cmd, 1, "-tee and -dup can not be used together");
@@ -308,11 +367,15 @@ static const struct ffarg cmd_play[] = {
 	{ "-recv_timeout",	'u',	O(recv_timeout) },
 	{ "-remote",		'1',	O(remote) },
 	{ "-remote_id",		's',	O(remote_id) },
+	{ "-remote_pass",	's',	O(remote_pass) },
+	{ "-remote_port",	'u',	O(remote_port) },
+	{ "-remote_proto",	'S',	play_remote_proto },
 	{ "-repeat_all",	'1',	O(repeat_all) },
 	{ "-rgnorm",		'1',	O(rg_norm) },
 	{ "-s",				'S',	play_seek },
 	{ "-seek",			'S',	play_seek },
 	{ "-shuffle",		'1',	O(shuffle) },
+	{ "-ssl",			's',	O(ssl_cert) },
 	{ "-tee",			's',	O(tee) },
 	{ "-tracks",		'S',	play_tracks },
 	{ "-tui2",			'1',	O(tui2) },

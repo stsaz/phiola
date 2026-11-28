@@ -12,7 +12,7 @@
 It must be updated when incompatible changes are made to this file,
  then all modules must be rebuilt.
 The core will refuse to load modules built for any other core version. */
-#define PHI_VERSION_CORE  21500
+#define PHI_VERSION_CORE  21600
 
 typedef long long int64;
 typedef unsigned long long uint64;
@@ -694,9 +694,17 @@ struct phi_queue_if {
 
 /** Remote control */
 
+struct phi_remote_sv_conf {
+	const char *name;
+	ushort port;
+	ffstr ssl_cert;
+	ffstr pass;
+};
+
 typedef struct phi_remote_sv_if phi_remote_sv_if;
 struct phi_remote_sv_if {
-	int (*start)(const char *name);
+	int (*start)(struct phi_remote_sv_conf *conf);
+	void (*close)();
 };
 
 enum PHI_RCLF {

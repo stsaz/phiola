@@ -28,6 +28,9 @@ ifeq "$(ASAN)" "1"
 	LINKFLAGS += -fsanitize=address -shared-libasan
 endif
 CFLAGS += $(CFLAGS_USER)
+ifeq "$(PHI_REMOTE_AUTH)" "0"
+	CFLAGS += -DPHI_REMOTE_NO_AUTH
+endif
 CFLAGS_BASE := $(CFLAGS)
 CFLAGS += -I$(PHIOLA)/src -I$(FFSYS)
 CXXFLAGS := -std=gnu++98 $(CFLAGS) -fno-exceptions -fno-rtti
@@ -138,6 +141,10 @@ endif
 	$(CP) $(PHIOLA)/src/net/client.pem $(APP_DIR)/mod/http-client.pem
 ifneq "$(PHI_GUI)" "0"
 	$(SUBMAKE) app-gui
+endif
+
+ifneq "$(PHI_HTTP_CTL)" "0"
+	$(CP) -r $(PHIOLA)/src/net/www $(APP_DIR)/mod/
 endif
 
 ifeq "$(OS)" "windows"

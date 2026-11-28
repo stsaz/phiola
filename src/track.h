@@ -281,6 +281,8 @@ struct phi_track {
 	// ...
 };
 
+/** Allocate zero-initialized data. */
 #define phi_track_alloc(t, n)  (core)->track->memalloc(t, n)
 #define phi_track_allocT(t, T)  (core)->track->memalloc(t, sizeof(T))
+
 #define phi_track_free(t, ptr)  (core)->track->memfree(t, ptr)

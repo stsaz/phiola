@@ -203,11 +203,11 @@ static const char* rctl_prepare(const char *name)
 	return g->pipe_name.ptr;
 }
 
-static int rctl_start(const char *name)
+static int rctl_start(struct phi_remote_sv_conf *conf)
 {
 	if (g->server_pipe != FFPIPE_NULL) return -1; // only 1 server instance is supported
 
-	if (rctl_listen(rctl_prepare(name)))
+	if (rctl_listen(rctl_prepare(conf->name)))
 		return -1;
 	g->queue = g->core->mod("core.queue");
 	rctl_accept(NULL);
@@ -215,7 +215,7 @@ static int rctl_start(const char *name)
 }
 
 static const struct phi_remote_sv_if phi_rctl_sv = {
-	rctl_start
+	rctl_start, NULL
 };
 
 

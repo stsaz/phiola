@@ -267,7 +267,8 @@ static int rec_action(struct cmd_rec *r)
 
 	if (r->remote || r->remote_id) {
 		const phi_remote_sv_if *rsv = x->core->mod("remote.server");
-		if (rsv->start(r->remote_id))
+		struct phi_remote_sv_conf rsc = { .name = r->remote_id };
+		if (rsv->start(&rsc))
 			return -1;
 	}
 
