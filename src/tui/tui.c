@@ -471,31 +471,11 @@ static void color_init(struct tui_mod *c)
 	}
 }
 
-#ifdef FF_WIN
-
-static uint term_size()
-{
-	CONSOLE_SCREEN_BUFFER_INFO csbi;
-	if (!GetConsoleScreenBufferInfo(ffstdout, &csbi))
-		return 80;
-    return csbi.dwSize.X;
-}
-
-#else
-
-static uint term_size()
-{
-	struct winsize w;
-	if (ioctl(ffstdout, TIOCGWINSZ, &w))
-		return 80;
-	return w.ws_col;
-}
-
+#ifndef FF_WIN
 static void term_size_changed(int sig)
 {
 	mod->term_size_changed = 1;
 }
-
 #endif
 
 static void tui_prepare(uint f)
@@ -512,7 +492,10 @@ static void tui_prepare(uint f)
 		}
 #endif
 
-		int n = term_size();
+		struct ffstd_info_screen is = {};
+		int n = 80;
+		if (!ffstd_info_screen(ffstdout, &is))
+			n = is.width;
 		dbglog(NULL, "terminal width:%u", n);
 		n -= FFS_LEN("[] 000:00 / 000:00");
 		mod->progress_dots = ffmax(n, 0);
