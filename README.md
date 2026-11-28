@@ -143,7 +143,7 @@ phiola play file.mp3 *.flac "My Music" http://server/music.m3u
 phiola file.mp3 *.flac "My Music" http://server/music.m3u
 
 # Play all files within a directory in random order and auto-skip the first 20 seconds from each track
-phiola "My Music" -random -seek 0:20
+phiola "My Music" -shuffle -seek 0:20
 
 # Play on Linux directly via ALSA (and not PulseAudio)
 phiola file.mp3 -audio alsa

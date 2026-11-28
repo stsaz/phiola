@@ -13,7 +13,7 @@ INPUT                   File name or a directory\n\
 Options:\n\
   `-include` WILDCARD     Only include files matching a wildcard (case-insensitive)\n\
   `-exclude` WILDCARD     Exclude files & directories matching a wildcard (case-insensitive)\n\
-  `-shuffle`              Randomize input queue\n\
+  `-shuffle`              Shuffle the playlist\n\
 \n\
   `-aac_quality` NUMBER   AAC encoding bitrate:\n\
                           8..800 (CBR, kbit/s)\n\
@@ -90,8 +90,9 @@ end:
 	return rc;
 }
 
-static void playlist_prepare(struct cmd_srv *s)
+static int srv_action(struct cmd_srv *s)
 {
+	x->queue->on_change(q_on_change);
 	struct phi_queue_conf qc = {
 		.tconf = {
 			.ifile = {
@@ -109,17 +110,18 @@ static void playlist_prepare(struct cmd_srv *s)
 		x->queue->add(q, &qe);
 	}
 	ffvec_free(&s->input);
-}
 
-static int srv_action(struct cmd_srv *s)
-{
-	playlist_prepare(s);
-	x->core->task(0, &s->task, (void*)srv_action2, s);
+	if (!x->queue->status(NULL))
+		srv_action2(s); // No pending tracks (no expansion process)
+	else
+		x->subcmd.q_expanded = (phi_task_func)srv_action2;
 	return 0;
 }
 
 static void srv_action2(struct cmd_srv *s)
 {
+	x->subcmd.q_expanded = NULL;
+
 	if (s->shuffle)
 		x->queue->sort(NULL, PHI_Q_SORT_RANDOM);
 

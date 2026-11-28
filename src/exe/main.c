@@ -23,6 +23,7 @@
 struct exe_subcmd {
 	void (*cmd_free)(void*);
 	int (*action)(void*);
+	void (*q_expanded)(void*);
 	void *obj;
 };
 
@@ -110,6 +111,11 @@ static void version_print()
 static void q_on_change(phi_queue_id q, uint flags, uint pos)
 {
 	if ((flags & 0xff) == '.') { // the whole queue is processed
+
+		if (x->subcmd.q_expanded) {
+			x->subcmd.q_expanded(x->subcmd.obj);
+			return;
+		}
 
 		if (x->sum_duration) {
 			uint64 n = x->total_dur_msec / 1000;

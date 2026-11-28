@@ -30,7 +30,8 @@ Options:\n\
                         Supports runtime variable expansion (see `-tee`)\n\
 \n\
   `-repeat_all`           Repeat all tracks\n\
-  `-random`               Choose the next track randomly\n\
+  `-shuffle`              Shuffle the playlist\n\
+  `-random`               Choose the next track randomly (tracks may repeat)\n\
   `-number` NUMBER        Exit after N tracks played\n\
   `-tracks` NUMBER[,...]  Select only specific tracks in a .cue list\n\
 \n\
@@ -91,6 +92,7 @@ struct cmd_play {
 	u_char	repeat_all;
 	u_char	rg_norm;
 	u_char	seek_type;
+	u_char	shuffle;
 	u_char	tui2;
 	u_char	until_type;
 	uint	buffer;
@@ -102,7 +104,11 @@ struct cmd_play {
 	uint	volume;
 	uint64	seek;
 	uint64	until;
+
+	phi_task task;
 };
+
+static void play_action2(struct cmd_play *p);
 
 static int play_seek(struct cmd_play *p, ffstr s)
 {
@@ -237,14 +243,25 @@ static int play_action(struct cmd_play *p)
 	if (p->tui2)
 		tui2_prepare();
 
-	x->queue->play(NULL, NULL);
-
 	if (p->remote || p->remote_id) {
 		const phi_remote_sv_if *rsv = x->core->mod("remote.server");
 		if (rsv->start(p->remote_id))
 			return -1;
 	}
+
+	if (!x->queue->status(NULL))
+		play_action2(p); // No pending tracks (no expansion process)
+	else
+		x->subcmd.q_expanded = (phi_task_func)play_action2;
 	return 0;
+}
+
+static void play_action2(struct cmd_play *p)
+{
+	x->subcmd.q_expanded = NULL;
+	if (p->shuffle)
+		x->queue->sort(NULL, PHI_Q_SORT_RANDOM);
+	x->queue->play(NULL, NULL);
 }
 
 static int play_check(struct cmd_play *p)
@@ -260,6 +277,9 @@ static int play_check(struct cmd_play *p)
 		ffpath_splitname_str(FFSTR_Z((p->tee) ? p->tee : p->dup), &name, NULL);
 		x->stdout_busy = ffstr_eqz(&name, "@stdout");
 	}
+
+	if (p->shuffle && p->random)
+		return _ffargs_err(&x->cmd, 1, "-shuffle and -random can't be used together");
 
 	if (p->buffer)
 		x->timer_int_msec = ffmin(p->buffer / 2, x->timer_int_msec);
@@ -290,7 +310,9 @@ static const struct ffarg cmd_play[] = {
 	{ "-remote_id",		's',	O(remote_id) },
 	{ "-repeat_all",	'1',	O(repeat_all) },
 	{ "-rgnorm",		'1',	O(rg_norm) },
+	{ "-s",				'S',	play_seek },
 	{ "-seek",			'S',	play_seek },
+	{ "-shuffle",		'1',	O(shuffle) },
 	{ "-tee",			's',	O(tee) },
 	{ "-tracks",		'S',	play_tracks },
 	{ "-tui2",			'1',	O(tui2) },
